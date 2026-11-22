@@ -121,7 +121,7 @@ export function findKeydown(ctx: Grid, event: KeyboardEvent) {
 
 /**
  * Does an element of the find bar have the focus: the wheel and a swipe leave it there
- * (addScrollEventListeners), Esc and the close button move it into the grid
+ * (addScrollEventListeners, touchScroll), Esc and the close button move it into the grid
  */
 export function findBarHasFocus(ctx: Grid): boolean {
     const root = ctx.element.getRootNode() as Partial<DocumentOrShadowRoot>;

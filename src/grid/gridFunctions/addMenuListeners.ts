@@ -3,8 +3,8 @@ import { removeContextMenu } from './removeContextMenu';
 import { focusMenu } from './showMenu';
 
 /**
- * Closes the grid's open menu on a click outside it and on Esc. The menus are `popover="manual"`
- * (see openMenuElement), so the browser does neither.
+ * Closes the grid's open menu on a click outside it, a finger touching the page outside it and on Esc.
+ * The menus are `popover="manual"` (see openMenuElement), so the browser does none of it.
  *
  * And the keyboard of the menus (showMenu): whether the last input was a key or a pointer press - a
  * menu opened from the keyboard takes the focus - and ArrowDown / ArrowUp into a menu that was opened
@@ -45,10 +45,19 @@ export function addMenuListeners(ctx: Grid) {
         },
         { capture: true, signal }
     );
+    // a finger closes the menu as soon as it touches the page outside it - a tap, a swipe of the page, a
+    // long press for another menu - and not on the click of a tap only: a swipe and a long press have
+    // no click. Not a touch in a menu, nor in the open menu's popover (the date picker: it is no
+    // .simple-html-grid-menu, it keeps its clicks from the document itself)
     document.addEventListener(
         'pointerdown',
-        () => {
+        (event) => {
             ctx.keyboardUsed = false;
+            const target = event.target instanceof Element ? event.target : null;
+            const inMenu = !!target && (!!target.closest('.simple-html-grid-menu') || !!ctx.contextMenu?.contains(target));
+            if (event.pointerType === 'touch' && ctx.contextMenu && !inMenu) {
+                removeContextMenu(ctx);
+            }
         },
         { capture: true, signal }
     );

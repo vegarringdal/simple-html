@@ -31,7 +31,8 @@ import { triggerScrollEvent } from './triggerScrollEvent';
  *   click) and typing in a cell
  * - dragged past the top or the bottom of the rows the grid scrolls, past the left or right edge of the
  *   grid the middle columns scroll
- * - a finger does none of this: it scrolls the grid, see addScrollEventListeners.ts
+ * - a finger does none of this: it scrolls the grid (touchScroll.ts), a long press opens the row menu
+ *   (longPress.ts)
  *
  * The keyboard, in a cell (the cell's keydown calls rangeKeydown): Alt+Shift+arrows move the end of
  * the last range (from the focused cell when there is none), Esc clears the ranges. Shift+PageDown,

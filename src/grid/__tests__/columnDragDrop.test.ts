@@ -1,13 +1,25 @@
 // @vitest-environment happy-dom
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { isPopoverShown } from '../../__tests__/popoverStub';
 import type { Datasource } from '../../datasource/dataSource';
 import type { GridConfig } from '../gridConfig';
 import type { GridElement } from '../gridElement';
 import { DRAG_DISTANCE, TOUCH_HOLD } from '../gridFunctions/dragEvent';
+import type { HTMLCellElement } from '../gridFunctions/HTMLCellElement';
 import type { GridInterface } from '../gridInterface';
 import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { dragAndDrop, labelCell, pointerEvent, pointerOver, sleep, touchAt } from './interactionTestHelpers';
+import {
+    dragAndDrop,
+    labelCell,
+    menuItem,
+    openLabelMenu,
+    pointerEvent,
+    pointerOver,
+    sleep,
+    stubScrollSize,
+    touchAt
+} from './interactionTestHelpers';
 
 /**
  * Column drag/drop in the header and to/from the grouping panel, and the click on a label that
@@ -421,7 +433,7 @@ describe('drag/drop - a click or a drag', () => {
 describe('drag/drop - touch', () => {
     const touch = { pointerType: 'touch' };
 
-    // the touch listeners of the grid (addScrollEventListeners) scroll this element
+    // the touch listeners of the grid (touchScroll.ts) scroll this element
     const bodyScroller = (element: GridElement) => element.querySelector('.simple-html-grid-body-scroller') as HTMLElement;
 
     const touchEvent = (type: 'touchstart' | 'touchmove', target: Element, clientX: number, clientY: number) =>
@@ -439,6 +451,7 @@ describe('drag/drop - touch', () => {
 
     it('expect a finger held still for TOUCH_HOLD to drag, and the grid not to scroll under it', async () => {
         const { element, gridInterface } = await mountGrid(threeColumns(), data());
+        stubScrollSize(element);
         const label = labelCell(element, 'firstname');
         // the finger goes down on the text of the label, the touch events go there
         const text = label.querySelector('[data-attribute-header]') as HTMLElement;
@@ -449,13 +462,21 @@ describe('drag/drop - touch', () => {
         expect(ghost()).toBeNull();
         await sleep(TOUCH_HOLD + 20);
         expect(ghost()).not.toBeNull();
+        // in the top layer, over the column chooser and a dialog the grid is in
+        expect(ghost()?.popover).toBe('manual');
+        expect(isPopoverShown(ghost())).toBe(true);
         expect(label.hasPointerCapture(1)).toBe(true);
 
         // captured: the pointer events go to the label cell, the touch events stay on the text.
-        // Up 40px: a swipe like this scrolls the rows 40px (next test)
+        // Up 40px twice: a swipe like this scrolls the rows 40px (next test). The moves of the drag are
+        // canceled: nothing pans under it
         label.dispatchEvent(pointerEvent('pointermove', { ...touch, clientX: 250, clientY: 60 }));
-        text.dispatchEvent(touchEvent('touchmove', text, 250, 60));
+        const moves = [60, 20].map((y) => touchEvent('touchmove', text, 250, y));
+        for (const move of moves) {
+            text.dispatchEvent(move);
+        }
         expect(bodyScroller(element).scrollTop).toBe(0);
+        expect(moves.every((move) => move.defaultPrevented)).toBe(true);
 
         label.dispatchEvent(pointerEvent('pointerup', { ...touch, clientX: 250, clientY: 60 }));
         expect(centerRows(gridInterface)).toEqual([['age'], ['lastname'], ['firstname']]);
@@ -464,6 +485,7 @@ describe('drag/drop - touch', () => {
 
     it('expect a finger that moves before TOUCH_HOLD to scroll the grid, not drag or sort', async () => {
         const { element, datasource, gridInterface } = await mountGrid(threeColumns(), data());
+        stubScrollSize(element);
         const label = labelCell(element, 'firstname');
         const text = label.querySelector('[data-attribute-header]') as HTMLElement;
         pointerOver(zone(element, 'age', 'center'));
@@ -471,12 +493,67 @@ describe('drag/drop - touch', () => {
         text.dispatchEvent(pointerEvent('pointerdown', { ...touch, clientX: 10, clientY: 100 }));
         text.dispatchEvent(touchEvent('touchstart', text, 10, 100));
         text.dispatchEvent(pointerEvent('pointermove', { ...touch, clientX: 10, clientY: 60 }));
+        // the first move tells a swipe from a press, the rows follow the finger from there (touchScroll.ts)
         text.dispatchEvent(touchEvent('touchmove', text, 10, 60));
-        text.dispatchEvent(pointerEvent('pointerup', { ...touch, clientX: 10, clientY: 60 }));
+        text.dispatchEvent(pointerEvent('pointermove', { ...touch, clientX: 10, clientY: 20 }));
+        text.dispatchEvent(touchEvent('touchmove', text, 10, 20));
+        text.dispatchEvent(pointerEvent('pointerup', { ...touch, clientX: 10, clientY: 20 }));
         await sleep(TOUCH_HOLD + 20);
 
-        // swiped up 40px: the rows scroll down 40px
+        // swiped up 40px after that: the rows scroll down 40px
         expect(bodyScroller(element).scrollTop).toBe(40);
+        expect(ghost()).toBeNull();
+        expect(sorting(datasource)).toEqual([]);
+        expect(centerRows(gridInterface)).toEqual([['firstname'], ['lastname'], ['age']]);
+    });
+
+    it('expect a field of the column chooser to pan its list until a hold makes it a drag, then not', async () => {
+        const { element, gridInterface } = await mountGrid(threeColumns(), data());
+        openLabelMenu(element, 'age');
+        menuItem('Column chooser').click();
+        const field = Array.from(
+            document.querySelectorAll<HTMLCellElement>('.simple-html-grid-menu-sub .simple-html-grid-menu-item')
+        ).find((item) => item.$attribute === 'firstname') as HTMLCellElement;
+        expect(field.style.touchAction).toBe('pan-y');
+
+        // a swipe: the browser pans the list, nothing cancels its moves, nothing is dragged
+        field.dispatchEvent(pointerEvent('pointerdown', { ...touch, clientX: 10, clientY: 100 }));
+        field.dispatchEvent(pointerEvent('pointermove', { ...touch, clientX: 10, clientY: 60 }));
+        const pan = touchEvent('touchmove', field, 10, 60);
+        field.dispatchEvent(pan);
+        field.dispatchEvent(pointerEvent('pointercancel', touch));
+        await sleep(TOUCH_HOLD + 20);
+        expect(pan.defaultPrevented).toBe(false);
+        expect(ghost()).toBeNull();
+
+        // held: a drag, its moves canceled - the list does not pan under it. Dropped on a label's left
+        pointerOver(zone(element, 'age', 'left'));
+        field.dispatchEvent(pointerEvent('pointerdown', { ...touch, clientX: 10, clientY: 100 }));
+        await sleep(TOUCH_HOLD + 20);
+        expect(ghost()).not.toBeNull();
+        field.dispatchEvent(pointerEvent('pointermove', { ...touch, clientX: 10, clientY: 60 }));
+        const drag = touchEvent('touchmove', field, 10, 60);
+        field.dispatchEvent(drag);
+        field.dispatchEvent(pointerEvent('pointerup', { ...touch, clientX: 10, clientY: 60 }));
+
+        expect(drag.defaultPrevented).toBe(true);
+        expect(ghost()).toBeNull();
+        // a field of the chooser is a new column: inserted left of age (the one in the layout stays)
+        expect(centerRows(gridInterface).slice(-2)).toEqual([['firstname'], ['age']]);
+    });
+
+    it('expect a contextmenu on the field to end the drag a hold started: no drop, no sort (a long press, longPress.ts)', async () => {
+        const { element, datasource, gridInterface } = await mountGrid(threeColumns(), data());
+        const label = labelCell(element, 'firstname');
+        const text = label.querySelector('[data-attribute-header]') as HTMLElement;
+        pointerOver(zone(element, 'age', 'center'));
+
+        text.dispatchEvent(pointerEvent('pointerdown', { ...touch, clientX: 10, clientY: 100 }));
+        await sleep(TOUCH_HOLD + 20);
+        expect(ghost()).not.toBeNull();
+        text.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+        label.dispatchEvent(pointerEvent('pointerup', { ...touch, clientX: 250, clientY: 60 }));
+
         expect(ghost()).toBeNull();
         expect(sorting(datasource)).toEqual([]);
         expect(centerRows(gridInterface)).toEqual([['firstname'], ['lastname'], ['age']]);
@@ -484,10 +561,13 @@ describe('drag/drop - touch', () => {
 
     it('expect a swipe on the rows to scroll the grid', async () => {
         const { element } = await mountGrid(threeColumns(), data());
+        stubScrollSize(element);
         const cell = element.querySelector('input[data-attribute="firstname"]') as HTMLElement;
 
         cell.dispatchEvent(touchEvent('touchstart', cell, 10, 300));
+        // a swipe from here on, see touchScroll.ts
         cell.dispatchEvent(touchEvent('touchmove', cell, 10, 250));
+        cell.dispatchEvent(touchEvent('touchmove', cell, 10, 200));
 
         expect(bodyScroller(element).scrollTop).toBe(50);
     });

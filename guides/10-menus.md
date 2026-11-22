@@ -28,7 +28,8 @@ that the element it opens from is in: everything outside a modal dialog is inert
 not be clicked. A menu has the classes `simple-html-grid simple-html-grid-popover`.
 
 - There is one menu at a time: opening one closes the one before.
-- It closes on a click outside it, on Esc, when another menu opens, on scroll (with
+- It closes on a click outside it, a finger touching the page outside it, on Esc, when another menu
+  opens, on scroll (with
   `autoRemoveContextMenuOnScrollEvent: true`) and when the grid leaves the page. Clicking an item
   closes it too, then runs the item's action; a click in a block does not.
 - Opened with the mouse, the focus stays on the cell the menu was opened from: an item does not take
@@ -57,6 +58,29 @@ An item with a `›` opens a submenu beside it:
 - a click on an item in a submenu closes the whole menu, then runs the action. A click outside, Esc in
   the menu itself, another menu: everything closes
 - a submenu is a popover of its own, put in the menu's popover; submenus can have submenus
+
+### With a finger
+
+- **A long press** - a finger held still (10px) for 500ms - opens the menu a right click opens, at the
+  finger, while it is still down. Lifting it after that is no tap: the cell under it does not take the
+  focus (no keyboard pops up), nothing is selected, the menu stays open. A finger that moves is a
+  swipe, a second finger a pinch: no menu.
+- The long press sends a `contextmenu` event (a `PointerEvent` with `pointerType: 'touch'`) to the
+  element the finger is on, so a `contextmenu` listener of your own in the grid works with a finger as
+  it is. Safari on iOS sends no `contextmenu` for a long press; Chrome on Android does - whichever comes
+  first opens the menu, the other is canceled: one menu. A long press on an element without a menu (a
+  row number) stays a tap.
+- **Taps**: a tap on an item with a `›` opens its submenu, a tap on an item runs it, a tap outside
+  closes the menu (as soon as the finger touches the page, a swipe of the page too).
+- On a label the hold makes a drag first (200ms, see
+  [Moving and resizing columns](02-grid-config.md#moving-and-resizing-columns)): still held at 500ms
+  the header menu opens and the drag ends, nothing moves.
+- **Bigger targets**: on a touch screen (css `@media (pointer: coarse)`) the items of the menus and
+  submenus, the column chooser's fields, search and Close, the rows of the filter menu's value list,
+  the buttons of the value list and the filter editor are 36px high, and the filter editor's edges and
+  corners a finger can take (10px, 20px). With a mouse they stay as they are.
+- **The column chooser**: its list scrolls with a finger; a field held still for 200ms is dragged, and
+  is shown over the chooser while it is (the dragged field is a popover too).
 
 ### The keyboard
 

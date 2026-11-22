@@ -2974,3 +2974,87 @@
 .simple-html-grid textarea:focus {
     opacity: 1;
 }
+
+/****************************************************************************
+ * touch: a finger (longPress.ts, touchScroll.ts, dragEvent.ts)
+ */
+
+/* a double tap is the grid's - it opens the editor of a multiline cell or a lookup column (dblclick) -
+ * not the browser's zoom; panning and a pinch stay the browser's (touch-action: manipulation). The
+ * labels, the resize handles and the fill handle are `none`, the column chooser's fields `pan-y` */
+.simple-html-grid {
+    touch-action: manipulation;
+}
+
+/* the field dragged from the header or the column chooser is a popover (dragEvent.ts createGhost), in
+ * the top layer over the chooser: the browser's popover style centers it (inset: 0, margin: auto) and
+ * gives it padding and a scroll box. The drag places it with left / top and a transform */
+.simple-html-draggable-element[popover] {
+    inset: auto;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+}
+
+/**
+ * A screen that is touched (the primary pointer is coarse: a finger): the menus, their submenus, the
+ * column chooser, the filter menu's value list and the filter editor's grab areas get targets a finger
+ * hits - rows of 36px, as the 32-48px of the touch guidelines (Material 48dp, Apple 44pt) in a menu of
+ * the grid's small font. The grid's own rows keep their height: `cellHeight` is the app's
+ */
+@media (pointer: coarse) {
+    .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item {
+        height: 36px;
+        line-height: 36px;
+    }
+
+    .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item[aria-haspopup='menu']::after {
+        line-height: 36px;
+    }
+
+    /* the column chooser: its search, its list (more rows of the taller ones) and Close */
+    .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item-input {
+        height: 36px;
+    }
+
+    .simple-html-grid .simple-html-grid-menu-sub {
+        max-height: min(360px, 50vh);
+    }
+
+    .simple-html-grid .simple-html-grid-menu .simple-html-label-button-menu-bottom {
+        padding: 10px;
+    }
+
+    .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-search,
+    .simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-search,
+    .simple-html-grid .simple-html-grid-button {
+        height: 36px;
+    }
+
+    .simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-row {
+        min-height: 36px;
+    }
+
+    .simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-scroll {
+        max-height: min(360px, 50vh);
+    }
+
+    /* the filter editor: edges and corners a finger can take to resize it */
+    .simple-html-grid.filter-editor-content .handle-n,
+    .simple-html-grid.filter-editor-content .handle-s {
+        height: 10px;
+    }
+
+    .simple-html-grid.filter-editor-content .handle-w,
+    .simple-html-grid.filter-editor-content .handle-e {
+        width: 10px;
+    }
+
+    .simple-html-grid.filter-editor-content .handle-nw,
+    .simple-html-grid.filter-editor-content .handle-ne,
+    .simple-html-grid.filter-editor-content .handle-sw,
+    .simple-html-grid.filter-editor-content .handle-se {
+        width: 20px;
+        height: 20px;
+    }
+}

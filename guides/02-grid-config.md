@@ -76,7 +76,10 @@ The user changes the layout in the header, with a mouse, a pen or a finger:
 
 A press on a label is a click until it is a drag: with a mouse or a pen once it has moved 5px, with a
 finger once it has been held still for 200ms. A finger that moves sooner scrolls the grid, as a swipe
-on the rows does. Only the left mouse button, the first finger or the pen's tip drag and resize.
+on the rows does. A finger still held at 500ms is a long press: the header menu opens, the drag ends
+and nothing moves. Only the left mouse button, the first finger or the pen's tip drag and resize. The
+column chooser's list scrolls with a finger, a field held still for 200ms is dragged out of it, see
+[Touch](01-getting-started.md#touch).
 
 What the user makes of the layout is part of the grid's [state](03-state.md): `getState().layout`.
 

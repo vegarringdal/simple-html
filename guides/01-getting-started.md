@@ -105,9 +105,35 @@ Out of the box the user can:
   finger, see [Moving and resizing columns](02-grid-config.md#moving-and-resizing-columns)
 - group: drag a label to the panel above the header, see [Sorting and grouping](07-sorting-grouping.md)
 - right click a cell, a label or a header filter for a menu, see [Menus](10-menus.md)
+- all of it on a touch screen too, see [Touch](#touch)
 
 The grid is **readonly by default**. Set `readonly: false` in the config to edit cells, see
 [Editing](05-editing.md).
+
+## Touch
+
+On a phone or a tablet the grid works with a finger, nothing to set:
+
+- **Scrolling**: a swipe scrolls the rows, or the columns sideways - locked to the way it started (a
+  swipe that is mostly up and down does not drift sideways). Let go while it moves, it coasts on and
+  slows down; a touch stops it, and that touch is no tap. The page does not scroll along while the
+  grid scrolls. When the grid is at its edge that way (its first row, swiped down) the swipe scrolls
+  the page instead, as a scroll box of the browser does; the grid keeps a swipe it started to the end.
+  Two fingers are the browser's: a pinch zooms the page.
+- **Menus**: a long press (held still for half a second) opens the menu a right click opens - of a
+  cell, a header label, a header filter, a column number. In a menu a tap opens a submenu, a tap
+  outside closes it. On a touch screen (css `pointer: coarse`) the items are 36px high, see
+  [With a finger](10-menus.md#with-a-finger).
+- **Columns**: a label held still for 200ms is dragged, a tap sorts, see
+  [Moving and resizing columns](02-grid-config.md#moving-and-resizing-columns). The column chooser's
+  list scrolls with a finger, a field held still is dragged out of it.
+- **The rest**: a tap on a row number selects the row; a tap on a cell puts the focus in it - a
+  phone's keyboard opens only where the cell can be edited (a readonly cell's input is `readOnly`).
+  The filter editor is moved by its title bar and resized by its edges and corners. A finger makes no
+  range of cells: see [The mouse](17-selection-and-clipboard.md#the-mouse).
+
+Tried in Chromium's touch emulation (Chrome on Android is Chromium); Safari on iOS is not tried on a
+device. iOS sends no `contextmenu` for a long press, the grid times it itself.
 
 ## Why the fields matter
 

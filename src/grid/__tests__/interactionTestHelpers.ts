@@ -219,6 +219,19 @@ export function pointerOver(element: Element | null) {
 }
 
 /**
+ * Gives the two scrollers of a mounted grid room to scroll: happy-dom does no layout, its scrollHeight
+ * and scrollWidth are 0 - a grid that can not scroll leaves a swipe to the page (touchScroll.ts). The
+ * body scroller (the rows) `height` px of content, the middle scroller (the middle columns) `width`
+ */
+export function stubScrollSize(element: Element, height = 10000, width = 10000) {
+    const body = element.querySelector('.simple-html-grid-body-scroller') as HTMLElement;
+    const middle = element.querySelector('.simple-html-grid-middle-scroller') as HTMLElement;
+    Object.defineProperty(body, 'scrollHeight', { configurable: true, value: height });
+    Object.defineProperty(middle, 'scrollWidth', { configurable: true, value: width });
+    return { body, middle };
+}
+
+/**
  * a touch on `target` (a Touch for the `touches` of a TouchEvent)
  */
 export function touchAt(target: Element, clientX: number, clientY: number) {

@@ -20,6 +20,10 @@ let currentColumnSearchvalue = '';
  * columns are dragged from it and the grid is used, a click outside or another menu does not close
  * it. Its Close button does, Esc while the focus is in it (its search field), and the grid leaving
  * the page.
+ *
+ * A finger scrolls the list (its fields are `touch-action: pan-y`) and drags a field once it held it
+ * still for TOUCH_HOLD ms, as on the header. The dragged field is shown over the chooser: dragEvent's
+ * ghost is a popover too, shown after it.
  */
 export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTMLElement) {
     removeContextMenu(ctx);
@@ -95,8 +99,9 @@ export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTM
         );
         const cells = contextMenu.getElementsByClassName('simple-html-grid-menu-item');
 
+        // a finger scrolls the list up and down, and drags a field after holding it still (dragEvent.ts)
         for (let i = 0; i < cells.length; i++) {
-            dragEvent(ctx, cells[i] as HTMLCellElement, false, controller.signal);
+            dragEvent(ctx, cells[i] as HTMLCellElement, false, controller.signal, 'pan-y');
         }
     };
     ctx.columnChooserMenu = contextMenu;

@@ -2329,6 +2329,87 @@ in the console. All passed. Found and fixed:
   Ctrl+C, Esc, a layout change); menus regression 25/25, submenu 40/40, keyboard 52/52, full grid 11/11,
   row delete 6/6
 
+### Touch: swipes with momentum, the long press, menus for a finger (user request)
+
+* the user: "touch support needs to be better". Looked at with Chromium's touch emulation (a phone, 390 x
+  844, and a 1300 x 1400 touch screen), the touches sent with CDP `Input.dispatchTouchEvent`: a swipe of
+  300px scrolled the rows 435px (it read `scrollTop` from the synced view, a frame behind) and 38px
+  sideways, at the first row a swipe down moved neither the grid nor the page, the focus went into the
+  grid and out again on every move (28 times in a swipe of 30 moves), no momentum; a long press did
+  nothing (Chromium on Linux sends no `contextmenu` for it, nor does Safari on iOS; the click after it
+  acted on the cell); the column chooser could not be scrolled by a finger and its dragged field was
+  under it
+* **swipes** (touchScroll.ts, out of addScrollEventListeners.ts): read from and written to the two
+  scrollers themselves. A press until the finger moved `TOUCH_SLOP` (10px), then locked to the axis it
+  moved the most on (`lockAxis`, a tie is up/down) and the content follows the finger from that point -
+  as Chromium starts its own scroll after its slop, no jump. The focus leaves the cell once a swipe: the
+  focused element is blurred (not the old focus + blur of the hidden input on every move: focusing an
+  input can show a phone's keyboard). Two fingers end the swipe and are the browser's (a pinch zooms)
+* **the page or the grid**: decided when the axis is locked - the grid takes the swipe when it can
+  scroll that way and cancels its touchmoves to the end, else nothing is canceled and the page scrolls
+  (as a browser's scroll box hands a swipe on at its edge, `overscroll-behavior: auto`). Latched, as a
+  browser latches a swipe to one scroller: the page does not take over halfway. The moves before the
+  lock are canceled too; checked in Chromium that a canceled touchmove does not keep the browser from
+  scrolling the page on the moves after it (and that Chromium sends no touchmove inside its own slop,
+  ~38px in the emulation; the pointermoves come)
+* **momentum**: the finger's speed over its last 100ms (`fingerVelocity`), then a frame at a time
+  (requestAnimationFrame) `distance = v x dt`, `v x 0.998^dt` (iOS's normal deceleration: 1px/ms coasts
+  ~500px, ~2s), a frame at most 50ms. Stops below 0.02px/ms, at the end of the rows / columns, on a new
+  touch, when the grid is destroyed. The tap that stops it is no tap (its touchend canceled): no cell is
+  clicked, as on a phone's lists
+* **the long press** (longPress.ts, `addLongPress(root, signal)`, delegated: on the grid element, so the
+  cells, labels, filter row and the column numbers - and an app's own `contextmenu` listener - have it;
+  one line for an element in a popover of its own): 500ms held within 10px dispatches a `contextmenu`
+  PointerEvent (`pointerType: 'touch'`, button 2) on the element the finger went down on, at its point -
+  the handlers are the right click's, unchanged. One menu: the browser's own `contextmenu` while the
+  timer runs (Android) stops the timer; the browser's after ours, finger still down, is canceled and
+  stopped in the capture phase; a handler that sends it on inside ours (the label cell to its label)
+  passes. The lift after a long press that opened a menu (the event canceled) is no tap: its touchend is
+  canceled - checked in Chromium that this drops the mouse events and the click (else the click closed
+  the menu and focused the cell). A long press on an element without a menu (a row number) stays a tap
+* **the label**: the 200ms hold makes a drag first; a `contextmenu` on the field during the press (the
+  long press at 500ms, a right click during a mouse drag) ends it - no drop, no sort, the ghost gone
+* **the column chooser**: its fields `touch-action: pan-y` (a new `touchAction` of dragEvent), so the
+  list pans; held still 200ms a field drags and its touchmoves are canceled - the list does not pan under
+  it. The ghost of every drag is a `popover="manual"` now, shown after the chooser: the top of the top
+  layer, over the chooser and over a dialog the grid is in (on the body it was under both); css resets the
+  browser's popover style for it
+* **menus**: a finger touching the page outside the open menu closes it on its pointerdown (a swipe and
+  a long press have no click). A tap on a submenu item already opened it (mousemove + click of the tap:
+  showMenu.ts as it was). `@media (pointer: coarse)`: menu and submenu items, the chooser's fields,
+  search and Close, the value list's rows and search, the menus' search, the buttons of the value list
+  and the filter editor 36px; the chooser and value lists up to `min(360px, 50vh)`; the filter editor's
+  edges 10px and corners 20px (were 5 / 12). `touch-action: manipulation` on the grid: a double tap is
+  the cell's dblclick (the multiline and lookup editors), not a zoom
+* checked, nothing to change: a tap on a readonly cell focuses an input that is `readOnly` (no keyboard);
+  a tap on a row number selects; a tap on a date cell opens the picker; the filter editor moves and
+  resizes with a finger (pointer events, `touch-action: none` on its titlebar and handles)
+* docs: guide 01 (a Touch section), 10 (With a finger, closing), 02 (the long press on a label, the
+  chooser), 14 (the swipe blurs the cell), 17 (a long press is the row menu)
+* tests: longPress.test.ts (15: the timing with fake timers, the slop, let go / pointercancel, mouse and
+  pen, a second finger, the touchend canceled or not, the browser's contextmenu before / after ours, a
+  forwarded one, a removed element, the signal; in a grid the row, filter, column number and header
+  menus, the drag ended), touchScroll.test.ts (21: lockAxis, canScroll at the ends and half a px,
+  fingerVelocity, momentumStep and the whole coast, a swipe on a grid - lock, axis, the page's at the edge,
+  latched, two fingers, the focus once, momentum with faked animation frames, stops at the end, none after
+  a still finger, a tap stops it and is no tap, destroy stops it, the header); columnDragDrop.test.ts +2
+  (the chooser field pans until held, then its moves are canceled and it drops; contextmenu ends the
+  drag) and the ghost is a shown popover; gridMenus.test.ts +2 (a touch outside closes, the chooser's
+  pan-y). Changed on purpose: the swipe tests of columnDragDrop / columnResize move twice (the first move
+  locks) and give the scrollers room (`stubScrollSize`: happy-dom's scrollHeight is 0, a grid that can not
+  scroll leaves the swipe to the page). 2781 -> 2821 tests
+* browser (Chromium 1148): new `.claude/browser-checks/scripts/touch-check.js` 61/61 (the phone: swipe,
+  axis, page not along, focus once, momentum coasts and stops, a tap stops it without a click, sideways,
+  the page at the edge, two fingers zoom; the long press on a cell / label / filter / column number, no
+  menu before 500ms or after a move, one menu with the browser's contextmenu before or after ours, no
+  focus, no sort, the menu at the finger, submenu and item by taps, a tap outside closes, a row number
+  still selects; a touch screen: 36px items, the chooser scrolled, dragged with its ghost on top and
+  dropped, the filter editor moved and resized, the date picker, a double tap's editor without zoom, a
+  readonly cell; the mouse: 20px items, a held button opens nothing, a right click one menu, a column
+  dragged and dropped). The same check on the build before: 11/20 before it stopped (no long press).
+  Submenu 40/40, menus regression 25/25, keyboard 52/52, find 68/68, fill 12/12, full grid 11/11,
+  column menu 81/81
+
 ## Considered, not done
 
 ## Candidates / not started
@@ -2340,11 +2421,11 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
 * **The row numbers and Cmd**: Ctrl+click toggles a row, Cmd+click does not (`highlightRow` reads
   `ctrlKey`); a second Shift+click after Ctrl+clicks drops the rows the Ctrl+clicks selected. The column
   numbers do both
-* **The column chooser and a finger or a drag**: its items have `touch-action: none` (for the drag), so a
-  finger can not scroll a long chooser by them; the ghost of a dragged column is on the body, under the
-  chooser (top layer)
-* **Touch scrolling** reads `scrollTop` from the synced view (it may lag a move) and never stops the page
-  from scrolling along
+* **Touch, not tried on a device**: the touch work was checked in Chromium's emulation only. Safari on
+  iOS (no `contextmenu`, the long press timed by the grid; a canceled touchend dropping the click; the
+  callout and the loupe on a cell's input under `-webkit-touch-callout: none`) and Chrome on Android (its
+  own long press `contextmenu`, simulated in the check with one sent from the page; whether a long press
+  on an editable input also starts the browser's text selection) are worth a look on real phones
 
 ### Accessibility
 
@@ -2387,6 +2468,12 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
 
 ### Features
 
+* **Touch, smaller things**: a finger makes no range of cells (a long press is the row menu; a hold and a
+  drag could be one), so the fill handle (7px) is only there for ranges made by the keyboard; the editor
+  of a multiline cell hints "Ctrl+Enter to save, Esc to cancel", keys a phone has not (a tap outside
+  saves); the date picker's days are 22px rows (`datePickerConfig.rowHeight`), the filter editor's AND /
+  OR and icon buttons 24px - small for a finger; the docs site is not made for a phone (its sidebar takes
+  half the width: touch-check.js gives the grid the page with css of its own)
 * **Custom cells, the plan's "later"**: `focusButton` and `placeholderRow` on a custom cell, a `measure()`
   for `fitColumns()`, renderers for group rows, the totals row and header labels
 * **Formatters are fixed when the datasource is made**: there is no setter to switch a field's formatter

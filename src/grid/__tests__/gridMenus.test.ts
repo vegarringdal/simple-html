@@ -732,6 +732,19 @@ describe('menus - openMenu() and closeMenu()', () => {
         expect(menuOpen()).toBe(false);
     });
 
+    it('expect a finger touching outside to close it at once (no click comes for a swipe), a touch in it or a mouse press not', async () => {
+        const { gridInterface } = await mountGrid();
+        gridInterface.openMenu({ x: 0, y: 0 }, entries());
+        await sleep(0);
+
+        entry('test.section').dispatchEvent(pointerEvent('pointerdown', { pointerType: 'touch' }));
+        document.body.dispatchEvent(pointerEvent('pointerdown'));
+        expect(menuOpen()).toBe(true);
+
+        document.body.dispatchEvent(pointerEvent('pointerdown', { pointerType: 'touch' }));
+        expect(menuOpen()).toBe(false);
+    });
+
     it('expect the click that opened it not to close it', async () => {
         const { gridInterface } = await mountGrid();
         const button = document.createElement('button');
@@ -1065,6 +1078,16 @@ describe('menus - the column chooser', () => {
         expect(esc.defaultPrevented).toBe(true);
         expect(gridOf(element).columnChooserMenu).toBeNull();
         expect(document.activeElement).toBe(cell);
+    });
+
+    it('expect its fields to let a finger scroll the list (pan-y): a held field drags, see columnDragDrop.test.ts', async () => {
+        const { chooser } = await openChooser();
+        const fields = Array.from(
+            chooser.querySelectorAll<HTMLElement>('.simple-html-grid-menu-sub .simple-html-grid-menu-item')
+        );
+
+        expect(fields.length).toBeGreaterThan(0);
+        expect(fields.every((field) => field.style.touchAction === 'pan-y')).toBe(true);
     });
 
     it('expect its Close button to close it', async () => {

@@ -7,6 +7,7 @@ import { createElement } from './createElement';
 import { DIV } from './DIV';
 import { findKeydown } from './findBar';
 import { horizontalScrollHandler } from './horizontalScrollHandler';
+import { addLongPress } from './longPress';
 import { addClipboardListeners } from './rangeClipboard';
 import { addRangeListeners } from './rangeSelection';
 import { rebuildFooter } from './rebuildFooter';
@@ -27,8 +28,9 @@ export function createDom(ctx: Grid) {
     const header = createElement(DIV, 'simple-html-grid-header');
     const body = createElement(DIV, 'simple-html-grid-body');
 
-    // focus helper: the wheel and a swipe focus it and blur it again, to take the focus from the cell
-    // being edited (its row element is reused for another row while scrolling). Not a cell, so not in
+    // focus helper: the wheel focuses it and blurs it again, to take the focus from the cell being
+    // edited (its row element is reused for another row while scrolling). A swipe blurs the cell
+    // itself (touchScroll.ts): focusing an input could show a phone's keyboard. Not a cell, so not in
     // the tab order and hidden from a screen reader
     const tmp = document.createElement('input');
     tmp.style.opacity = '0';
@@ -125,6 +127,8 @@ export function createDom(ctx: Grid) {
     // a cell left out of a render while it was typed in is rendered once the focus leaves it
     ctx.element.addEventListener('focusout', () => onGridFocusOut(ctx), { signal: ctx.scrollListenersAbort?.signal });
     addMenuListeners(ctx);
+    // a long press of a finger opens the context menu of what it is on, as a right click does
+    addLongPress(ctx.element, ctx.scrollListenersAbort?.signal);
     // Find: Ctrl+F (Cmd+F) and F3 anywhere in the grid, see findBar.ts
     ctx.element.addEventListener('keydown', (event) => findKeydown(ctx, event), { signal: ctx.scrollListenersAbort?.signal });
     // Tab in the footer: out of the grid after its last button, back to the rows before its first, see tabExit.ts

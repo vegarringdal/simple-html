@@ -36,9 +36,10 @@ export function isPrimaryPress(event: PointerEvent) {
  * - While the pointer is captured, `event.target` is `source`, wherever the pointer is. On touch
  *   the browser captures the pointer to the element it went down on anyway. Ask
  *   `document.elementFromPoint()` what is under the pointer.
- * - A finger: the grid scrolls on touchmove (addScrollEventListeners.ts, on the grid element). The
- *   touchmove events of a finger followed here stop at `source`: the finger drags or resizes, the
- *   grid does not scroll under it.
+ * - A finger: the grid scrolls on touchmove (touchScroll.ts, on the grid element). The touchmove
+ *   events of a finger followed here stop at `source`: the finger drags or resizes, the grid does not
+ *   scroll under it. They are not canceled here: `source` has `touch-action: none` (or cancels them
+ *   itself once it drags, the column chooser's fields, see dragEvent.ts).
  *
  * Returns a function that stops following before the pointer is let go.
  */

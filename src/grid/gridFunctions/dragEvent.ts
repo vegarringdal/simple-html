@@ -9,6 +9,7 @@ import { getElementByClassName } from './getElementByClassName';
 import { getTextWidth } from './getTextWidth';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { horizontalScrollHandler } from './horizontalScrollHandler';
+import { popoverParent } from './showMenu';
 
 /**
  * a mouse or pen press that moves this many px is a drag, less is a click
@@ -64,12 +65,23 @@ type DragSource = {
  * - only the primary pointer with its main button starts anything (`isPrimaryPress`)
  * - the drop target is what is under the pointer when it is let go (`dropTargetAt`), see `dropColumn`
  * - pointercancel ends the drag without a drop
+ * - a long press of a finger (longPress.ts) opens the header menu: the `contextmenu` event on the field
+ *   ends the drag the hold started, without a drop
  *
- * `cell` gets `touch-action: none`: the browser would scroll or zoom the page under a finger that
- * drags, and send pointercancel. The grid scrolls on a swipe itself (addScrollEventListeners.ts).
+ * `cell` gets `touch-action: none` (`touchAction`): the browser would scroll or zoom the page under a
+ * finger that drags, and send pointercancel. The grid scrolls on a swipe itself (touchScroll.ts). The
+ * column chooser's fields are in a list a finger scrolls: `pan-y`, the browser pans the list on a swipe
+ * up or down (the drag stops, as on a swipe). Once a hold made it a drag, the finger's touchmove events
+ * are canceled: the list does not pan under the drag.
  */
-export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, abortSignal?: AbortSignal) {
-    cell.style.touchAction = 'none';
+export function dragEvent(
+    ctx: Grid,
+    cell: HTMLCellElement,
+    sortEnabled = true,
+    abortSignal?: AbortSignal,
+    touchAction: 'none' | 'pan-y' = 'none'
+) {
+    cell.style.touchAction = touchAction;
 
     cell.addEventListener(
         'pointerdown',
@@ -98,6 +110,8 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
             let ghost: HTMLElement | null = null;
             let hovered: HTMLElement | null = null;
             let holdTimer: ReturnType<typeof setTimeout> | undefined;
+            // the listeners of this press on the cell, removed when it ends
+            const press = new AbortController();
 
             const hover = (target: HTMLElement | null) => {
                 if (target !== hovered) {
@@ -113,12 +127,26 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
                 if (cell.isConnected) {
                     cell.setPointerCapture(down.pointerId);
                 }
+                if (isTouch) {
+                    // the finger drags: nothing pans under it (a chooser field is pan-y). The touch events go
+                    // to the element the finger went down on, in the cell
+                    cell.addEventListener('touchmove', (event) => event.preventDefault(), {
+                        passive: false,
+                        signal: press.signal
+                    });
+                }
                 setDragState(ctx, true);
                 return createGhost(ctx, cell, attribute, down.clientX, down.clientY);
             };
 
-            const endDrag = () => {
+            // the press is over: no hold to wait for, no listeners of it left on the cell
+            const endPress = () => {
                 clearTimeout(holdTimer);
+                press.abort();
+            };
+
+            const endDrag = () => {
+                endPress();
                 if (ghost) {
                     ghost.remove();
                     ghost = null;
@@ -135,8 +163,8 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
                             return;
                         }
                         if (isTouch) {
-                            // moved before the hold: a swipe, the grid scrolls (addScrollEventListeners.ts)
-                            clearTimeout(holdTimer);
+                            // moved before the hold: a swipe, the grid scrolls (touchScroll.ts)
+                            endPress();
                             stop();
                             return;
                         }
@@ -155,7 +183,7 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
                             dropColumn(ctx, source, target);
                         }
                     } else {
-                        clearTimeout(holdTimer);
+                        endPress();
                         if (sortEnabled) {
                             sortOn(ctx, attribute, event.shiftKey);
                         }
@@ -163,6 +191,17 @@ export function dragEvent(ctx: Grid, cell: HTMLCellElement, sortEnabled = true, 
                 },
                 cancel: endDrag
             });
+
+            // the header menu opened on the field (a long press, a right click while the mouse drags): no
+            // drag, no drop and no sort when the pointer is let go
+            cell.addEventListener(
+                'contextmenu',
+                () => {
+                    endDrag();
+                    stop();
+                },
+                { signal: press.signal }
+            );
 
             if (isTouch) {
                 holdTimer = setTimeout(() => {
@@ -204,7 +243,12 @@ function setDragState(ctx: Grid, on: boolean) {
 
 /**
  * the element that follows the pointer while dragging: the label of the field, in the grid's colors.
- * Placed with its top left corner at (x, y), the pointer moves it with a transform
+ * Placed with its top left corner at (x, y), the pointer moves it with a transform.
+ *
+ * A `popover="manual"`, shown: in the top layer, over the column chooser it can be dragged from (a
+ * popover itself) and over a dialog the grid is in - on the body it was under both. Shown last, it is
+ * the top of the top layer. Put where the grid's menus go (popoverParent), removed when the drag ends
+ * (removing a popover hides it)
  */
 function createGhost(ctx: Grid, cell: HTMLElement, attribute: string, x: number, y: number) {
     const gridConfig = ctx.gridInterface.__getGridConfig();
@@ -256,7 +300,9 @@ function createGhost(ctx: Grid, cell: HTMLElement, attribute: string, x: number,
     label.style.fontSize = fontSize;
     dragElement.appendChild(label);
 
-    document.body.appendChild(dragElement);
+    dragElement.popover = 'manual';
+    popoverParent(cell).appendChild(dragElement);
+    dragElement.showPopover();
     return dragElement;
 }
 

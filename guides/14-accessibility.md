@@ -354,7 +354,8 @@ there), nor are the button of a lookup cell, the marker of an edited cell and th
   start or the end of the grid (`tabindex="-1"`, hidden from a screen reader), and the browser's Tab
   goes on from there to what is before or after the grid.
 - The wheel and a swipe take the focus from the cell being edited: its row element is about to show
-  another row. The grid uses a hidden input for it, out of the tab order. Not from the find bar: no
+  another row. The wheel uses a hidden input for it, out of the tab order; a swipe blurs the cell,
+  once when it starts (focusing an input could open a phone's keyboard). Not from the find bar: no
   cell is edited, and Enter goes on finding. They save and close the
   editor of a multiline cell too, and a click outside it does: the focus is where the click put it.
 

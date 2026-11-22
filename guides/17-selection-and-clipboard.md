@@ -133,8 +133,8 @@ not make the row clicked the current row (the active cell stays where it was), C
 Shift+click do not open the date picker of a date cell and do not check a checkbox.
 
 **A pen** works as the mouse, where the browser does not take its drag for scrolling. **A finger**
-makes no range: a swipe scrolls the grid, and a long press is the browser's own (the menu of the row,
-or text selection). Use `setRanges()` from a button of your own, or a keyboard.
+makes no range: a swipe scrolls the grid, and a long press opens the row menu, see
+[Touch](01-getting-started.md#touch). Use `setRanges()` from a button of your own, or a keyboard.
 
 ### The keyboard
 

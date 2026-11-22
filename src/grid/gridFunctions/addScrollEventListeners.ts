@@ -2,6 +2,7 @@ import type { Grid } from '../grid';
 import { findBarHasFocus } from './findBar';
 import { getElementByClassName } from './getElementByClassName';
 import { horizontalScrollHandler } from './horizontalScrollHandler';
+import { addTouchScroll } from './touchScroll';
 import { verticalScrollHandler } from './verticalScrollHandler';
 
 /** WheelEvent.deltaMode: the deltas are lines, or pages (UI Events) - 0 is px */
@@ -141,64 +142,6 @@ export function addScrollEventListeners(ctx: Grid) {
         { passive: false, signal }
     );
 
-    /**
-     * touch: the rows and the header are not scroll containers the browser can pan (the views are
-     * overflow hidden, kept in sync with the two scrollers), so a swipe anywhere on the grid moves
-     * the scrollers by the finger's distance - both directions, no momentum. Their scroll events
-     * update the views and the virtual rows, as for the wheel and the scrollbars.
-     *
-     * Touch events, not pointer events: pointer events would need `touch-action: none` on the whole
-     * grid (or the browser cancels the pointer once it pans the page) and give nothing more.
-     *
-     * A finger that drags a column or resizes one (dragEvent.ts, rebuildHeaderColumns.ts) keeps its
-     * touchmove events from these listeners, see followPointer.ts
-     */
-    let lastY = 0;
-    let lastX = 0;
-    ctx.element.addEventListener(
-        'touchstart',
-        (event) => {
-            lastY = event.touches[0].clientY;
-            lastX = event.touches[0].clientX;
-        },
-        { passive: false, signal }
-    );
-
-    ctx.element.addEventListener(
-        'touchmove',
-        (event) => {
-            if (!findBarHasFocus(ctx)) {
-                ctx.focusElement.focus();
-                ctx.focusElement.blur();
-            }
-
-            const currentY = event.touches[0].clientY;
-            const deltaY = currentY - lastY;
-            lastY = currentY;
-            bodyScroller.scrollTop = bodyViewMiddle.scrollTop - deltaY;
-
-            const currentX = event.touches[0].clientX;
-            const deltaX = currentX - lastX;
-            lastX = currentX;
-            middleScroller.scrollLeft = bodyViewMiddle.scrollLeft - deltaX;
-
-            /* 
-                an idea...
-                
-                if(!event.target?.classList.contains('simple-html-grid-panel') && !event.target?.classList.contains('simple-html-grid-footer')){
-                    let currentY = event.touches[0].clientY;             
-                    const deltaY = currentY - lastY;
-                    lastY = currentY;
-                    const movementY = x.scrollTop - deltaY * 5;
-                    setScrollTop(getElementByClassName(ctx.element, 'simple-html-grid-body-scroller'), movementY);
-                } else{
-                    const currentX = event.touches[0].clientX;
-                    const deltaX = currentX - lastX;
-                    lastX = currentX;
-                    const movementX = x.scrollLeft - deltaX*5;
-                    setScrollLeft(getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller'), movementX)
-                } */
-        },
-        { passive: false, signal }
-    );
+    // a swipe scrolls the rows and the middle columns, with momentum: see touchScroll.ts
+    addTouchScroll(ctx, bodyScroller, middleScroller, signal);
 }

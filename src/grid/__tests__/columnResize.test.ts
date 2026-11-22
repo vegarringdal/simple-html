@@ -4,7 +4,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import type { GridConfig } from '../gridConfig';
 import type { GridInterface } from '../gridInterface';
 import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { gridOf, pointerEvent, resizeHandle, touchAt } from './interactionTestHelpers';
+import { gridOf, pointerEvent, resizeHandle, stubScrollSize, touchAt } from './interactionTestHelpers';
 
 /**
  * Resizing a column with the handle on the edge of its header. Pointer events: mouse, pen and touch.
@@ -138,7 +138,8 @@ describe('column resize', () => {
     it('expect a finger on the handle to resize, not to scroll the grid', async () => {
         const { element, gridInterface } = await mountGrid(config(), data());
         const handle = resizeHandle(element, 0);
-        const scroller = element.querySelector('.simple-html-grid-body-scroller') as HTMLElement;
+        // room to scroll: else the swipe would be the page's anyway
+        const scroller = stubScrollSize(element).body;
         const touch = { pointerType: 'touch' };
 
         // the browser would scroll the page under the finger and cancel the pointer
@@ -147,10 +148,13 @@ describe('column resize', () => {
         handle.dispatchEvent(pointerEvent('pointerdown', { ...touch, clientX: 100, clientY: 100 }));
         handle.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, touches: [touchAt(handle, 100, 100)] }));
         handle.dispatchEvent(pointerEvent('pointermove', { ...touch, clientX: 140, clientY: 60 }));
-        // the grid scrolls on touchmove (addScrollEventListeners): 40px up would scroll the rows 40px
-        handle.dispatchEvent(
-            new TouchEvent('touchmove', { bubbles: true, cancelable: true, touches: [touchAt(handle, 140, 60)] })
-        );
+        // the grid scrolls on touchmove (touchScroll.ts): a swipe from the first move, 40px up after it
+        // would scroll the rows 40px
+        for (const y of [60, 20]) {
+            handle.dispatchEvent(
+                new TouchEvent('touchmove', { bubbles: true, cancelable: true, touches: [touchAt(handle, 140, y)] })
+            );
+        }
         handle.dispatchEvent(pointerEvent('pointerup', { ...touch, clientX: 140, clientY: 60 }));
 
         expect(widths(gridInterface).center).toEqual([140, 100]);
