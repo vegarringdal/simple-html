@@ -1332,6 +1332,20 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Publishing to GitHub Packages: releases from the default branch, betas from any branch (user request)
+
+##### Package and tooling
+- The workflows `release` and `beta` (`.github/workflows`, run from the Actions tab) publish the package
+  to GitHub Packages as `@<owner>/simple-html-grid` - the scope of the repository's owner, GitHub
+  Packages takes no other; install it as `npm install @simple-html/grid@npm:@airemote/simple-html-grid`
+  so the imports stay. `release` runs from the default branch only, publishes the version of
+  package.json (`latest`) once and tags it `v<version>`; `beta` runs from any branch and publishes
+  `<version>-beta.<branch>.<run>` with the npm tag `beta-<branch>`. Both run every check first.
+  `scripts/githubPackage.js` makes the name, version and tag (tested).
+- package.json's version is 6.0.0.
+- The full grid sample has Excel buttons: the API the row menu's Export › uses (`getExcel()`,
+  `downloadExcel()`).
+
 #### The row menu keeps its shape: entries of a selection greyed out without one (user request)
 
 ##### Changed

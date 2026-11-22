@@ -1,0 +1,89 @@
+# Publishes the package to GitHub Packages (npm.pkg.github.com) as a release: the version in
+# package.json, npm tag `latest`, and a git tag v<version>. Only from the repository's default branch
+# (master): run it from the Actions tab, "Run workflow". From another branch it stops before anything
+# is published - betas come from beta.yml.
+#
+# The package is `@<owner>/simple-html-grid` there: GitHub Packages takes only the scope of the
+# repository's owner. Install it under its usual name with an npm alias, so the imports stay:
+#   npm install @simple-html/grid@npm:@<owner>/simple-html-grid
+# (an .npmrc with `@<owner>:registry=https://npm.pkg.github.com` and a token that may read packages).
+# See scripts/githubPackage.js.
+name: release
+
+on:
+    workflow_dispatch:
+
+permissions:
+    # the git tag of the release
+    contents: write
+    packages: write
+
+# one release at a time
+concurrency:
+    group: release
+    cancel-in-progress: false
+
+jobs:
+    release:
+        runs-on: ubuntu-latest
+        steps:
+            - name: only from the default branch
+              env:
+                  BRANCH: ${{ github.ref_name }}
+                  DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+              run: |
+                  if [ "$BRANCH" != "$DEFAULT_BRANCH" ]; then
+                      echo "::error::a release is published from $DEFAULT_BRANCH only, not from $BRANCH - use the beta workflow"
+                      exit 1
+                  fi
+
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+                  cache: npm
+                  registry-url: https://npm.pkg.github.com
+
+            # npm ci builds dist too (the prepare script)
+            - run: npm ci
+
+            # the checks of checks.yml: nothing is published that does not pass them
+            - run: npm run typecheck
+            - run: npx vitest run
+            - run: npx biome check . --diagnostic-level=error
+            - run: npm run check:typings
+            - run: npm run check:docs
+
+            - id: package
+              run: node scripts/githubPackage.js release
+
+            - name: the version must be new
+              env:
+                  VERSION: ${{ steps.package.outputs.version }}
+              run: |
+                  if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" > /dev/null; then
+                      echo "::error::v$VERSION is released already - change the version in package.json"
+                      exit 1
+                  fi
+
+            - run: npm publish --tag "${{ steps.package.outputs.tag }}"
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: tag the release
+              env:
+                  VERSION: ${{ steps.package.outputs.version }}
+              run: |
+                  git tag "v$VERSION"
+                  git push origin "v$VERSION"
+
+            - name: summary
+              env:
+                  NAME: ${{ steps.package.outputs.name }}
+                  VERSION: ${{ steps.package.outputs.version }}
+              run: |
+                  echo "Published $NAME@$VERSION (latest)" >> "$GITHUB_STEP_SUMMARY"
+                  echo '```' >> "$GITHUB_STEP_SUMMARY"
+                  echo "npm install @simple-html/grid@npm:$NAME@$VERSION" >> "$GITHUB_STEP_SUMMARY"
+                  echo '```' >> "$GITHUB_STEP_SUMMARY"

@@ -16,8 +16,26 @@ repo, see [Guides](#guides) below.
 
 ## Install
 
-The package is not on npm. Install it from a git branch, the `prepare` script builds `dist` on
-install:
+The package is not on npmjs.com. It is published to **GitHub Packages** as
+`@airemote/simple-html-grid` (the scope of the repository's owner): install it under its usual name
+with an npm alias, so the imports stay `@simple-html/grid`. GitHub Packages needs a token that may read
+packages (a personal access token with `read:packages`), in an `.npmrc` next to your package.json:
+
+```ini
+@airemote:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
+
+```sh
+npm install @simple-html/grid@npm:@airemote/simple-html-grid              # the last release
+npm install @simple-html/grid@npm:@airemote/simple-html-grid@beta-v6-maybe # the last beta of a branch
+```
+
+A release is published from the default branch only (the `release` workflow), a beta from any branch
+(the `beta` workflow, `<version>-beta.<branch>.<run>`, npm tag `beta-<branch>`); both run from the
+Actions tab and only publish what passes the checks. See `scripts/githubPackage.js`.
+
+Or install it from a git branch, the `prepare` script builds `dist` on install:
 
 ```json
 "dependencies": {
@@ -106,3 +124,6 @@ npm start # the docs and samples site on http://localhost:8080
   `samples/`
 - `npm test` runs the tests, `npm run check:docs` checks the guides, the JSDoc and their examples
 - `npm run build` builds `dist`, `npm run build:tgz` the tgz
+- publishing: the workflows `release` (the default branch only: the version of package.json, npm tag
+  `latest`, a git tag) and `beta` (any branch) in `.github/workflows`, run from the Actions tab - bump
+  the version in package.json before a release

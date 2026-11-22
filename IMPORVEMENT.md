@@ -2178,6 +2178,23 @@ in the console. All passed. Found and fixed:
   without one, usable with one), rangeClipboard.test.ts, rowMenuDelete.test.ts (+1 Row), rowHeights.test.ts.
   Browser: menus-regression 25/25, submenu 40/40, row-delete 6/6, a screenshot of Clear ›
 
+### Publishing to GitHub Packages (user request)
+
+* the user: "we should also have a deploy npm package, using github npm packages, and one to create beta
+  from any branch. but main release only from main"; and "export to excel needs to work through api too"
+  - it does (`getExcel()` / `downloadExcel()`, also without the grid on the page, gridExcel.test.ts pins
+  that); the full grid sample got buttons for it, a browser download checked (A1:AX5001, autofilter)
+* GitHub Packages takes a package only in the scope of the repository's owner: `@simple-html/grid` is
+  published as `@<owner>/simple-html-grid` (lower case), installed under its own name with an npm alias.
+  The name, the repository (the workflow's token may only publish to its own) and the version are set in
+  the workflow's checkout by scripts/githubPackage.js - never committed. `release`: the default branch only
+  (a step fails from another), a final version only, refused when the tag v<version> exists, `latest`, then
+  the git tag. `beta`: any branch, `<version>-beta.<slug>.<run>` (a new version every run), npm tag
+  `beta-<slug>`. Both run the checks of checks.yml first
+* package.json's version 6.0.0 (and the lockfile's root): v6 is the version in the works (CHANGELOG)
+* tests: scripts/__tests__/githubPackage.test.ts (the release, the beta, branch slugs, the errors); the
+  script run on a copy of package.json. The workflows themselves run on GitHub only
+
 ## Considered, not done
 
 ## Candidates / not started

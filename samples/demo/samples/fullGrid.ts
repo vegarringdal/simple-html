@@ -187,7 +187,7 @@ export const fullGrid: DemoSample = {
     group: 'Getting started',
     fullPage: true,
     description:
-        '50 columns of every kind - text, numbers (money edited as the plain number), dates, a date and time, checkboxes, a lookup, a badge, notes of several lines, monthly sales with aggregates - pinned left and right. Add 5 000 rows at a time, turn editing on and off, group, filter, sort, select ranges, Ctrl+F, Ctrl+D, Ctrl+Z, right click for the menus.',
+        '50 columns of every kind - text, numbers (money edited as the plain number), dates, a date and time, checkboxes, a lookup, a badge, notes of several lines, monthly sales with aggregates - pinned left and right. Add 5 000 rows at a time, turn editing on and off, group, filter, sort, select ranges, export to Excel (gridInterface.downloadExcel), Ctrl+F, Ctrl+D, Ctrl+Z, right click for the menus.',
     run(stage) {
         const style = document.createElement('style');
         style.textContent = STYLE;
@@ -237,6 +237,13 @@ export const fullGrid: DemoSample = {
         });
         ui.button('Undo', () => datasource.undo());
         ui.button('Redo', () => datasource.redo());
+        // the API the row menu's Export › uses: getExcel() gives the .xlsx as a Blob, downloadExcel() saves it
+        ui.button('Excel (all rows)', () => {
+            gridInterface.downloadExcel('full-grid.xlsx');
+        });
+        ui.button('Excel (selected rows)', () => {
+            gridInterface.downloadExcel('full-grid-selected.xlsx', { rows: 'selected', sheetName: 'Selected' });
+        });
         ui.button('Show changes', () => {
             const changes = datasource.getChanges();
             window.alert(
