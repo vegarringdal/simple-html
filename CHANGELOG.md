@@ -1332,6 +1332,55 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Filters: match case, operators per type, BETWEEN (user request)
+
+##### ⚠️ Breaking changes
+- `ColumnConfig.operator` must be an operator of the column's type that its header input takes (not
+  `IN`, `NOT_IN`, `IS_BLANK`, `IS_NOT_BLANK`, not `CONTAINS` on a number): a `TypeError` otherwise.
+- `NOT_EQUAL_TO` on a boolean is a real not-equal (it was read as `EQUAL`).
+- `FilterConditionNode` (getFilterTree) always has `caseSensitive`.
+
+##### Added
+- `FilterCondition.caseSensitive` and `where(field, operator, value, { caseSensitive: true })`: a text
+  compared as it is. Off by default.
+- The operator `BETWEEN`, value `[from, to]`, both ends in, for numbers, dates and date-times (a `date`
+  from the start of from's day to the end of to's day). A blank end is open, both blank is ignored, from
+  > to matches no row. In the header typed `10..20` (`10..`, `..20`; one value is that value / day), in
+  the filter editor two inputs, From and To.
+- `operatorsFor(type)`: the operators a type offers - text: =, ≠, contains, does not contain, begins
+  with, ends with, IN, NOT IN, blank, not blank; number / date / datetime: =, ≠, <, ≤, >, ≥, between, IN,
+  NOT IN, blank, not blank; boolean: =, ≠, blank, not blank.
+- `ColumnConfig.filterOperators` (the operators a column offers, in the type's order) and
+  `ColumnConfig.filterCaseSensitive` (a text or lookup column always matches case: header, value list,
+  row menu's Filter, editor). Both checked, `TypeError` on a wrong value.
+- The header menu: Filter › Match case (`filter.matchCase`, state `headerFilters[field].caseSensitive`;
+  the value list then keeps `Oslo` and `OSLO` apart), Operator › Less than, Greater than, Between, Does
+  not contain, Begins with, Ends with.
+- The filter editor: the operator picker offers the field's operators; an "Aa" toggle (Match case) on
+  each text condition; From / To for `BETWEEN`.
+- The footer: `Age between 10 and 20` (an open end `Age ≥ 10`), "Aa" after a value that matches case.
+  `getFilterString()`: `<<MATCH_CASE>>`, `BETWEEN '10' <<AND>> '20'`. `FilterConditionNode.valueTo`.
+- Texts `filter.operator.{lessThan,greaterThan,between,doesNotContain,beginWith,endWith}`,
+  `filter.matchCase` (+ `.hint`), `filter.placeholder.between`, `filterEditor.label.from` / `.to`,
+  `filterEditor.matchCase` (+ `.tooltip`, `filterEditor.matchCaseAlways.tooltip`),
+  `filterEditor.operator.BETWEEN`, `footer.betweenAnd`, `footer.matchCase` (+ `.tooltip`),
+  `footer.operator.BETWEEN`, `filterString.operator.BETWEEN`, `filterString.betweenAnd`,
+  `filterString.matchCase`.
+- The filtering guide's "Operators" is written per type, with how blank works for each and a SQL sketch
+  of each rule, for a backend that filters the same way.
+
+##### Changed
+- A condition with a blank value (null, undefined, `''`, an invalid Date) is ignored for every type, as
+  dates were; an emptied editor input is no value. `IN` / `NOT_IN` keep theirs (`[]`: IN no row).
+- A boolean blank (null, `''`, 0) compares as false, as the checkbox shows it: `EQUAL false` finds it.
+  `IS_BLANK` still matches null and not `false`.
+- A multi-line text is one text: `BEGIN_WITH`, `END_WITH` and wildcards match the whole value, `*` and
+  `%` span line breaks.
+- Text `<` / `>` compare without wildcards.
+- The old number and date operators (`CONTAINS`, `BEGIN_WITH` = `>=`, `END_WITH` = `<=`,
+  `DOES_NOT_CONTAIN` = `<`) still work in saved filters but are no longer offered.
+- The lookup dropdown grid's `CONTAINS` default is on its text columns only.
+
 #### The column numbers: Shift/Ctrl selection and a column menu (user request)
 
 ##### Added

@@ -778,6 +778,31 @@ number fields) and `IS_NOT_BLANK` leaves it out, and the header's value list (te
 0 and empty mean the same, and changing it would silently change what existing filters match. It
 is documented on `FilterOperator`.
 
+### Operators per type, and what changed in what they match
+
+Each field type offers its own operators now (`operatorsFor(type)`): text has no `<` / `>`, numbers
+and dates have no "contains" / "begins with", booleans have `EQUAL`, `NOT_EQUAL_TO` and the blank ones.
+The rules per type, for a backend that filters the same way, are in the filtering guide, "Operators".
+
+* **`ColumnConfig.operator` is checked**: it must be one of the column's type that the header input
+  can take - not `IN`, `NOT_IN`, `IS_BLANK`, `IS_NOT_BLANK`, and not `CONTAINS` on a number. Another
+  throws a `TypeError` when the config is set. A saved header filter state with an operator the
+  column does not offer is skipped, the column's default is used.
+* **Saved filters with the old number and date operators still work**: `CONTAINS` / `BEGIN_WITH` on a
+  number or date still mean `>=`, `END_WITH` `<=`, `DOES_NOT_CONTAIN` `<`. The menus and the editor no
+  longer offer them (the editor keeps one it opens with); use the comparisons or the new `BETWEEN`.
+* **A condition with a blank value filters nothing**, for every type (v5: only dates). A text
+  condition with value `''` or null used to find the empty rows, a number one the 0s. Use `IS_BLANK`.
+* **Booleans**: a blank (null, `''`, 0) compares as false, as the checkbox shows it, so `EQUAL false`
+  finds the blank rows too. `NOT_EQUAL_TO` on a boolean is a real not-equal (v5 read it as `EQUAL`).
+* **A multi-line text is one text**: `BEGIN_WITH`, `END_WITH` and a wildcard `EQUAL` match the whole
+  value, not one of its lines, and `*` / `%` span line breaks.
+* **Text `<` / `>`** compare the texts without wildcards (a `*` turned them into `EQUAL`).
+* **`getFilterTree()`**: every condition node has `caseSensitive` (a boolean), a `BETWEEN` node
+  `valueTo`.
+* **Menu hooks**: the header menu's Filter › has new entries (Match case, more operators) - see
+  `MENU_IDS.filter`.
+
 ## Options objects instead of boolean flags
 
 No method of `Datasource` or `DataContainer` takes a positional boolean any more. A call like
