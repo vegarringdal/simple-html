@@ -1332,6 +1332,21 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Header filters: the operator in the cell (user request)
+
+##### Added
+- Each header filter shows its operator as a symbol in its cell - `=` `≠` `<` `≤` `>` `≥` `a..b` (Between),
+  `*a*` (Contains), `!*a*` (Does not contain), `a*` (Begins with), `*a` (Ends with) - on the right of
+  text and lookup filters, on the left of number and date filters (none on booleans). A click, a tap or
+  **F4** in the filter opens the operator choice under it: the same as Filter › Operator ›, one code path.
+  A column offering one operator shows it without a choice; under 60px wide there is no symbol.
+- `GridConfig.filterOperatorIndicator` (default `true`; `false` in the lookup dropdown grid). Texts
+  `filter.indicator`, `filter.indicator.tooltip`, `filter.indicator.<FilterOperator>`. The input is
+  described by its operator for a screen reader.
+
+##### Fixed
+- Picking a header filter operator (Operator › too) lost the focus to the page: it stays in the filter.
+
 #### Undo row edits on new rows (user request)
 
 ##### Changed
