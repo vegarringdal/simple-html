@@ -1332,6 +1332,23 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Themes: TreDeSpace, light and dark (user request)
+
+##### Added
+- **`@simple-html/grid/theme-tredespace.css`**: a second theme in the colours of the TreDeSpace UI widget
+  library (its source, `src/treDeSpaceUI`: the slate scale and its light remap, the dock roles, the
+  widgets' own classes). Import it after `grid.css` and `date.css`, and put `data-grid-theme="tredespace"`
+  on `<html>` or `<body>` - there so it reaches the grid's popovers (menus, the filter editor, the date
+  picker, tooltips). Without the attribute the default theme is used: both can be on one page.
+- Light and dark follow `color-scheme`, as the default theme does: every value is a `light-dark()`, and
+  the widget library sets `color-scheme` itself (`data-theme="light"`), so the grid switches with it.
+  Square, as the widgets; WCAG AA for the same 119 text and line pairs as the default theme.
+- Variables `--simple-html-grid-scrollbar-thumb-color`, `--simple-html-grid-tooltip-bg-color`,
+  `--simple-html-grid-tooltip-font-color`, `--simple-html-grid-tooltip-border-color`. They default to the
+  colours used before: the default theme is unchanged, pixel for pixel.
+- Docs site: a "Grid theme" select (Default / TreDeSpace) with the dark/light toggle - four looks. Guide 13
+  has a Themes section, the colour table and what does not match the widgets yet.
+
 #### Display formats: Format › in the header menu (user request)
 
 ##### Added
