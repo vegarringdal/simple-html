@@ -3093,6 +3093,10 @@ in the console. All passed. Found and fixed:
   a tap beside it or Esc closes it
 * `.demo-grid-host` is 30 rows high at most (`--demo-grid-max-height`, with the default heights around the
   rows), 15 at least as before; the full grid sample is not capped
+* on a narrow screen the show button is above the page (`padding-top: 44px`), not beside it: beside it the
+  page lost 44px of a phone's 390 and the touch check's cells were pushed out of view. touch-check 61/61;
+  find-check's narrow grid is made by its own width now (a narrow window no longer makes a narrow grid),
+  68/68
 * site.test.ts +1; browser: new `.claude/browser-checks/scripts/sidebar-toggle-check.js` 15/15 (wide: hide,
   the page's width, remembered, show; phone: hidden, opens over the page, a page picked / a tap beside /
   Esc close it; a 2200px window: 30 rows, the full grid 85); full grid 11/11, sample height 5/5
