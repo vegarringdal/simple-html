@@ -1332,6 +1332,28 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Detail form: collapse, resize, softer fields; the column chooser: search, handles, rename (user request)
+
+##### Added
+- **The detail form collapses**: its title is a button (a chevron, `aria-expanded`): collapsed it is a 24px
+  strip at the right - a bar under the rows on a narrow grid. `DetailForm.expanded` (default true) is what
+  it shows; the title and the dialog's *Expanded* change it, the state keeps it.
+- **A splitter** on the form's left edge resizes it: a drag (mouse, pen, touch) or ArrowLeft / ArrowRight
+  on it (`role="separator"`, 10px a key); the columns follow live. `DetailForm.minWidth` (150 by default,
+  never less) and `maxWidth` - and never more than half the grid - set in the dialog next to Width; the
+  width dragged is the state's `width`.
+- **The fields of the form are moved by drag** in the dialog: a ⠿ handle at the right of each, a line where
+  it drops - Move up / Move down and Alt+↑ / Alt+↓ stay.
+- **The column chooser**: its search is an input you can see - a frame, a magnifying glass, *Search* - and
+  finds the labels (a user's too), not only the names of the fields; the list is in the order of the
+  labels. Each field has a ⠿ handle at its left, and a ✎ that renames the column right there - its label
+  in the state (`ColumnFormat.label`, as the grid config dialog's Label), empty its own again, Esc cancels.
+
+##### Changed
+- **The detail form's fields have a quiet frame** at rest (`--simple-html-grid-detail-input-border-color`),
+  the controls' frame on hover and focus; an error keeps its red.
+- Tab from the footer goes to the form's title button first.
+
 #### Find: Match case, and the find for SQL (user request)
 
 ##### Added
