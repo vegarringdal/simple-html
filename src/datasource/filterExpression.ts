@@ -22,7 +22,8 @@ import type { FieldType } from './field';
  *   invalid Date, in a date field). They take no `value`
  *
  * In a text value `*` and `%` are wildcards, any text: `where('name', 'EQUAL', 'per*2')` matches
- * `person2`.
+ * `person2`. `_` is one character, any - as in SQL `LIKE`: `'p_mp'` matches `pump` and `PUMP`, not
+ * `pmp`.
  *
  * **0 is blank.** A row value of 0 counts as blank, on purpose: in ERP style data 0 and empty mean
  * the same. `IS_BLANK` matches a 0 (the number, in any field - the text `'0'` is not blank) and

@@ -3,16 +3,16 @@
 exports[`the SQL of every operator, type and case > expect the SQL of mssql to be the snapshot 1`] = `
 "name EQUAL
   ([name] IS NOT NULL AND LOWER([name]) COLLATE Latin1_General_100_BIN2 LIKE @p1)
-  ["an%n[_]a!"]
+  ["an%n_a!"]
 name EQUAL caseSensitive
   ([name] IS NOT NULL AND [name] COLLATE Latin1_General_100_BIN2 LIKE @p1)
-  ["an%n[_]a!"]
+  ["an%n_a!"]
 name NOT_EQUAL_TO
   ([name] IS NULL OR NOT (LOWER([name]) COLLATE Latin1_General_100_BIN2 LIKE @p1))
-  ["an%n[_]a!"]
+  ["an%n_a!"]
 name NOT_EQUAL_TO caseSensitive
   ([name] IS NULL OR NOT ([name] COLLATE Latin1_General_100_BIN2 LIKE @p1))
-  ["an%n[_]a!"]
+  ["an%n_a!"]
 name LESS_THAN
   ([name] IS NULL OR LOWER([name]) COLLATE Latin1_General_100_BIN2 < @p1)
   ["an*n_a!"]
@@ -45,28 +45,28 @@ name BETWEEN caseSensitive
   ["a","m"]
 name CONTAINS
   ([name] IS NOT NULL AND LOWER([name]) COLLATE Latin1_General_100_BIN2 LIKE @p1)
-  ["%an%n[_]a!%"]
+  ["%an%n_a!%"]
 name CONTAINS caseSensitive
   ([name] IS NOT NULL AND [name] COLLATE Latin1_General_100_BIN2 LIKE @p1)
-  ["%an%n[_]a!%"]
+  ["%an%n_a!%"]
 name DOES_NOT_CONTAIN
   ([name] IS NULL OR NOT (LOWER([name]) COLLATE Latin1_General_100_BIN2 LIKE @p1))
-  ["%an%n[_]a!%"]
+  ["%an%n_a!%"]
 name DOES_NOT_CONTAIN caseSensitive
   ([name] IS NULL OR NOT ([name] COLLATE Latin1_General_100_BIN2 LIKE @p1))
-  ["%an%n[_]a!%"]
+  ["%an%n_a!%"]
 name BEGIN_WITH
   ([name] IS NOT NULL AND LOWER([name]) COLLATE Latin1_General_100_BIN2 LIKE @p1)
-  ["an%n[_]a!%"]
+  ["an%n_a!%"]
 name BEGIN_WITH caseSensitive
   ([name] IS NOT NULL AND [name] COLLATE Latin1_General_100_BIN2 LIKE @p1)
-  ["an%n[_]a!%"]
+  ["an%n_a!%"]
 name END_WITH
   ([name] IS NOT NULL AND LOWER([name]) COLLATE Latin1_General_100_BIN2 LIKE @p1)
-  ["%an%n[_]a!"]
+  ["%an%n_a!"]
 name END_WITH caseSensitive
   ([name] IS NOT NULL AND [name] COLLATE Latin1_General_100_BIN2 LIKE @p1)
-  ["%an%n[_]a!"]
+  ["%an%n_a!"]
 name IN
   (([name] IS NULL OR DATALENGTH([name]) = 0) OR (UPPER([name]) COLLATE Latin1_General_100_BIN2 LIKE @p1 OR UPPER([name]) COLLATE Latin1_General_100_BIN2 LIKE @p2 OR UPPER([name]) COLLATE Latin1_General_100_BIN2 LIKE @p3))
   ["ANN","NULL","B[%][_][[]X]"]
@@ -276,16 +276,16 @@ seen IS_NOT_BLANK
 exports[`the SQL of every operator, type and case > expect the SQL of oracle to be the snapshot 1`] = `
 "name EQUAL
   ("name" IS NOT NULL AND LOWER("name") LIKE :1 ESCAPE '!')
-  ["an%n!_a!!"]
+  ["an%n_a!!"]
 name EQUAL caseSensitive
   ("name" IS NOT NULL AND "name" LIKE :1 ESCAPE '!')
-  ["an%n!_a!!"]
+  ["an%n_a!!"]
 name NOT_EQUAL_TO
   ("name" IS NULL OR NOT (LOWER("name") LIKE :1 ESCAPE '!'))
-  ["an%n!_a!!"]
+  ["an%n_a!!"]
 name NOT_EQUAL_TO caseSensitive
   ("name" IS NULL OR NOT ("name" LIKE :1 ESCAPE '!'))
-  ["an%n!_a!!"]
+  ["an%n_a!!"]
 name LESS_THAN
   ("name" IS NULL OR LOWER("name") < :1)
   ["an*n_a!"]
@@ -318,28 +318,28 @@ name BETWEEN caseSensitive
   ["a","m"]
 name CONTAINS
   ("name" IS NOT NULL AND LOWER("name") LIKE :1 ESCAPE '!')
-  ["%an%n!_a!!%"]
+  ["%an%n_a!!%"]
 name CONTAINS caseSensitive
   ("name" IS NOT NULL AND "name" LIKE :1 ESCAPE '!')
-  ["%an%n!_a!!%"]
+  ["%an%n_a!!%"]
 name DOES_NOT_CONTAIN
   ("name" IS NULL OR NOT (LOWER("name") LIKE :1 ESCAPE '!'))
-  ["%an%n!_a!!%"]
+  ["%an%n_a!!%"]
 name DOES_NOT_CONTAIN caseSensitive
   ("name" IS NULL OR NOT ("name" LIKE :1 ESCAPE '!'))
-  ["%an%n!_a!!%"]
+  ["%an%n_a!!%"]
 name BEGIN_WITH
   ("name" IS NOT NULL AND LOWER("name") LIKE :1 ESCAPE '!')
-  ["an%n!_a!!%"]
+  ["an%n_a!!%"]
 name BEGIN_WITH caseSensitive
   ("name" IS NOT NULL AND "name" LIKE :1 ESCAPE '!')
-  ["an%n!_a!!%"]
+  ["an%n_a!!%"]
 name END_WITH
   ("name" IS NOT NULL AND LOWER("name") LIKE :1 ESCAPE '!')
-  ["%an%n!_a!!"]
+  ["%an%n_a!!"]
 name END_WITH caseSensitive
   ("name" IS NOT NULL AND "name" LIKE :1 ESCAPE '!')
-  ["%an%n!_a!!"]
+  ["%an%n_a!!"]
 name IN
   ("name" IS NULL OR UPPER("name") IN (:1, :2, :3))
   ["ANN","NULL","B%_[X]"]
@@ -549,16 +549,16 @@ seen IS_NOT_BLANK
 exports[`the SQL of every operator, type and case > expect the SQL of postgres to be the snapshot 1`] = `
 "name EQUAL
   ("name" IS NOT NULL AND LOWER("name") LIKE $1 ESCAPE '!')
-  ["an%n!_a!!"]
+  ["an%n_a!!"]
 name EQUAL caseSensitive
   ("name" IS NOT NULL AND "name" LIKE $1 ESCAPE '!')
-  ["an%n!_a!!"]
+  ["an%n_a!!"]
 name NOT_EQUAL_TO
   ("name" IS NULL OR NOT (LOWER("name") LIKE $1 ESCAPE '!'))
-  ["an%n!_a!!"]
+  ["an%n_a!!"]
 name NOT_EQUAL_TO caseSensitive
   ("name" IS NULL OR NOT ("name" LIKE $1 ESCAPE '!'))
-  ["an%n!_a!!"]
+  ["an%n_a!!"]
 name LESS_THAN
   ("name" IS NULL OR LOWER("name") COLLATE "C" < $1)
   ["an*n_a!"]
@@ -591,28 +591,28 @@ name BETWEEN caseSensitive
   ["a","m"]
 name CONTAINS
   ("name" IS NOT NULL AND LOWER("name") LIKE $1 ESCAPE '!')
-  ["%an%n!_a!!%"]
+  ["%an%n_a!!%"]
 name CONTAINS caseSensitive
   ("name" IS NOT NULL AND "name" LIKE $1 ESCAPE '!')
-  ["%an%n!_a!!%"]
+  ["%an%n_a!!%"]
 name DOES_NOT_CONTAIN
   ("name" IS NULL OR NOT (LOWER("name") LIKE $1 ESCAPE '!'))
-  ["%an%n!_a!!%"]
+  ["%an%n_a!!%"]
 name DOES_NOT_CONTAIN caseSensitive
   ("name" IS NULL OR NOT ("name" LIKE $1 ESCAPE '!'))
-  ["%an%n!_a!!%"]
+  ["%an%n_a!!%"]
 name BEGIN_WITH
   ("name" IS NOT NULL AND LOWER("name") LIKE $1 ESCAPE '!')
-  ["an%n!_a!!%"]
+  ["an%n_a!!%"]
 name BEGIN_WITH caseSensitive
   ("name" IS NOT NULL AND "name" LIKE $1 ESCAPE '!')
-  ["an%n!_a!!%"]
+  ["an%n_a!!%"]
 name END_WITH
   ("name" IS NOT NULL AND LOWER("name") LIKE $1 ESCAPE '!')
-  ["%an%n!_a!!"]
+  ["%an%n_a!!"]
 name END_WITH caseSensitive
   ("name" IS NOT NULL AND "name" LIKE $1 ESCAPE '!')
-  ["%an%n!_a!!"]
+  ["%an%n_a!!"]
 name IN
   (("name" IS NULL OR "name" = '') OR UPPER("name") COLLATE "C" IN ($1, $2, $3))
   ["ANN","NULL","B%_[X]"]
@@ -822,16 +822,16 @@ seen IS_NOT_BLANK
 exports[`the SQL of every operator, type and case > expect the SQL of sqlite to be the snapshot 1`] = `
 "name EQUAL
   ("name" IS NOT NULL AND LOWER("name") GLOB ?)
-  ["an*n_a!"]
+  ["an*n?a!"]
 name EQUAL caseSensitive
   ("name" IS NOT NULL AND "name" GLOB ?)
-  ["an*n_a!"]
+  ["an*n?a!"]
 name NOT_EQUAL_TO
   ("name" IS NULL OR NOT (LOWER("name") GLOB ?))
-  ["an*n_a!"]
+  ["an*n?a!"]
 name NOT_EQUAL_TO caseSensitive
   ("name" IS NULL OR NOT ("name" GLOB ?))
-  ["an*n_a!"]
+  ["an*n?a!"]
 name LESS_THAN
   ("name" IS NULL OR LOWER("name") COLLATE BINARY < ?)
   ["an*n_a!"]
@@ -864,28 +864,28 @@ name BETWEEN caseSensitive
   ["a","m"]
 name CONTAINS
   ("name" IS NOT NULL AND LOWER("name") GLOB ?)
-  ["*an*n_a!*"]
+  ["*an*n?a!*"]
 name CONTAINS caseSensitive
   ("name" IS NOT NULL AND "name" GLOB ?)
-  ["*an*n_a!*"]
+  ["*an*n?a!*"]
 name DOES_NOT_CONTAIN
   ("name" IS NULL OR NOT (LOWER("name") GLOB ?))
-  ["*an*n_a!*"]
+  ["*an*n?a!*"]
 name DOES_NOT_CONTAIN caseSensitive
   ("name" IS NULL OR NOT ("name" GLOB ?))
-  ["*an*n_a!*"]
+  ["*an*n?a!*"]
 name BEGIN_WITH
   ("name" IS NOT NULL AND LOWER("name") GLOB ?)
-  ["an*n_a!*"]
+  ["an*n?a!*"]
 name BEGIN_WITH caseSensitive
   ("name" IS NOT NULL AND "name" GLOB ?)
-  ["an*n_a!*"]
+  ["an*n?a!*"]
 name END_WITH
   ("name" IS NOT NULL AND LOWER("name") GLOB ?)
-  ["*an*n_a!"]
+  ["*an*n?a!"]
 name END_WITH caseSensitive
   ("name" IS NOT NULL AND "name" GLOB ?)
-  ["*an*n_a!"]
+  ["*an*n?a!"]
 name IN
   (("name" IS NULL OR "name" = '') OR UPPER("name") COLLATE BINARY IN (?, ?, ?))
   ["ANN","NULL","B%_[X]"]

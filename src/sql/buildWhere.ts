@@ -338,8 +338,8 @@ function compare(context: Context, column: Column, operator: FilterOperator, val
 }
 
 /**
- * Text: the pattern operators with LIKE (GLOB on sqlite) - `*` and `%` are wildcards, the rest is
- * literal - and the comparisons a text does not offer (LESS_THAN ...) code point by code point. Whether a
+ * Text: the pattern operators with LIKE (GLOB on sqlite) - `*` and `%` are wildcards (any text), `_` one
+ * character, the rest is literal - and the comparisons a text does not offer (LESS_THAN ...) code point by code point. Whether a
  * blank row (null, `''`) matches is the grid's answer for `''`
  */
 function compareText(context: Context, column: Column, operator: FilterOperator, text: string, exact: boolean): string {
@@ -357,7 +357,11 @@ function compareText(context: Context, column: Column, operator: FilterOperator,
     const fromStart = operator !== 'CONTAINS' && operator !== 'DOES_NOT_CONTAIN' && operator !== 'END_WITH';
     const toEnd = operator !== 'CONTAINS' && operator !== 'DOES_NOT_CONTAIN' && operator !== 'BEGIN_WITH';
     const any = dialect.anyText;
-    const literal = text.split(/[*%]/).map(dialect.patternLiteral).join(any);
+    // split on the wildcards, kept: the text between them at the even places, the wildcards at the odd
+    const literal = text
+        .split(/([*%_])/)
+        .map((part, index) => (index % 2 === 0 ? dialect.patternLiteral(part) : part === '_' ? dialect.oneChar : any))
+        .join('');
     const pattern = `${fromStart ? '' : any}${literal}${toEnd ? '' : any}`;
     const match = dialect.match(column.sql, foldedParam(context, pattern, exact), exact);
     const negated = operator === 'NOT_EQUAL_TO' || operator === 'DOES_NOT_CONTAIN';

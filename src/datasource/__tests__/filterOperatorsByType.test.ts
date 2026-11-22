@@ -150,6 +150,37 @@ describe('text', () => {
         expect(ids(signs, {}, where('name', 'EQUAL', 'a*b'))).toEqual(['dot', 'ab', 'star']);
     });
 
+    it('expect _ to be one character, any - as in SQL LIKE', () => {
+        const codes = [
+            { id: 'pump', name: 'PUMP-01' },
+            { id: 'pumpAB', name: 'pump-ab' },
+            { id: 'short', name: 'pump-1' },
+            { id: 'underscore', name: 'pump_01' },
+            { id: 'emoji', name: 'pump-🙂1' },
+            { id: 'line', name: 'pump\n01' },
+            { id: 'blank', name: null }
+        ];
+        // exactly one character: not none, not two
+        expect(ids(codes, {}, where('name', 'EQUAL', 'pump-__'))).toEqual(['pump', 'pumpAB', 'emoji']);
+        // a _ in the row is a character too: a _ can not be literal
+        expect(ids(codes, {}, where('name', 'EQUAL', 'pump_01'))).toEqual(['pump', 'underscore', 'line']);
+        expect(ids(codes, {}, where('name', 'BEGIN_WITH', 'p_mp'))).toEqual([
+            'pump',
+            'pumpAB',
+            'short',
+            'underscore',
+            'emoji',
+            'line'
+        ]);
+        expect(ids(codes, {}, where('name', 'END_WITH', '-_'))).toEqual(['short']);
+        expect(ids(codes, {}, where('name', 'CONTAINS', '_*1'))).toEqual(['pump', 'short', 'underscore', 'emoji', 'line']);
+        expect(ids(codes, {}, where('name', 'NOT_EQUAL_TO', 'pump-__'))).toEqual(['short', 'underscore', 'line', 'blank']);
+        // with caseSensitive the other letters keep their case
+        expect(ids(codes, {}, where('name', 'EQUAL', 'P_MP-01', { caseSensitive: true }))).toEqual(['pump']);
+        // a blank row is '': no character for _
+        expect(ids(codes, {}, where('name', 'EQUAL', '_'))).toEqual([]);
+    });
+
     it('expect a number in the row to be its text, a blank to be the text ""', () => {
         expect(text('EQUAL', '0')).toEqual(['zero']);
         expect(text('CONTAINS', 'x')).toEqual([]);

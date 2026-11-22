@@ -3237,6 +3237,96 @@ in the console. All passed. Found and fixed:
   `.claude/browser-checks/scripts/` (the shared folder could not be written from this worktree): the shared
   footer-no-filter-check.js and keyboard-check.js want the gear's Tab step
 
+### Text filters: `_` is one character (user request)
+
+* the user: "in text search it could be useful to be able to search with _ where that is random part, like
+  one do in sql normally". `*` and `%` were the only wildcards, `_` was literal (and escaped in the SQL)
+* objectFilter.ts `matchesText`: `_` becomes `.` in the regular expression, with the `u` flag so a letter
+  past U+FFFF (an emoji) is one character, as in SQL. `s` was there already: a line break is a character
+  too. No escape, as for `*` and `%`
+* sql: `Dialect.oneChar` (`_` for LIKE, `?` for GLOB); buildWhere splits the value on `*`, `%` and `_`,
+  keeping them, and makes each the dialect's wildcard. `patternLiteral` escapes only what can still be
+  literal: `!` (postgres, oracle), `[` (mssql), `[` and `?` (sqlite). `IN` values (mssql `LIKE`) keep
+  `[%]`, `[_]`, `[[]`
+* lookup columns filter their labels with objectFilter: they take `_` too. The value list's search and
+  `IN` do not
+* tests: filterOperatorsByType +1 (one character, not none or two, an emoji, a line break, a `_` in the row,
+  caseSensitive, a blank row); toSqlWhere +1 and the wildcard test changed, snapshots: only the parameter
+  values changed (`!_` / `[_]` to `_`, sqlite `_` to `?`). The SQLite comparison with the grid (3000 random
+  filters and every operator) got the patterns `_nn`, `AN_`, `___`, `*_b`, `a_\nb` and the row `a🙂b`;
+  its second text column had `a_b`, a pattern now as a `valueField`: `a-b`. The injection test skips the
+  values with `_`, as those with `*` and `%` - they find more than their own row
+* guides: filtering (the header filter, the backend rules), SQL (text, the dialect table, the
+  differences table); JSDoc of `FilterOperator`, `toSqlWhere`, `SqlColumnType`
+
+### Column settings: the filter operator (user request)
+
+* the user, with a screenshot of the dialog: "in column settings, we want to also be able to see default
+  operator"
+* columnSettings.ts: `ColumnSettings.operators`, the operator in use of every column but a checkbox one
+  (getHeaderFilterOperator) when the dialog opens. *Filter operator*: a picker (`.column-settings-operator`)
+  that opens the items of Operator › for the column (headerOperators - its `filterOperators`, a lookup
+  column's text ones), the one picked checked; a column with one operator shows its name. Under it
+  *Default: …* - the column's `operator`, else the type's (defaultHeaderOperator). Apply calls
+  setHeaderFilterOperator for each column whose operator changed - one code with Operator › and the
+  indicator. Reset column / Reset all set the default
+* the operator picker as wide as the format picker (320px at most)
+* columnSettings.test.ts +6 (a number column, the menu's operators and the ✓, nothing applied before
+  Apply; the config's `operator` as the default, a text and a lookup column; none for a checkbox, the name
+  for one operator; Apply: the state, the rows, the event once; Cancel; the state's operator, Reset column /
+  Reset all); the translation sample has the three texts in Norwegian
+* browser: new `column-settings-operator-check.js` 13/13 (light and dark: the picker, the default, the menu
+  in the dialog, Less than picked, Apply → the header's indicator shows `<`, no operator on a checkbox
+  column); column-settings-check 144/144
+
+### The tooltip behind the filter editor's fields (user request)
+
+* the user, a screenshot of the filter editor: "match case tooltip in filter editor is behind form elements..
+  this needs something better". The tooltip of Aa was cut by the value input of the next condition
+* why: `.simple-html-grid input { z-index: 1000 }` is every input under a `.simple-html-grid` element - the
+  filter editor dialog is one. The input is not positioned, but it is a flex item, and a flex item paints by
+  its z-index; the tooltip (`position: fixed`, a child of the dialog) had 600
+* grid.css: the tooltip's z-index is 10000 - over every layer of the grid (the highest is 2000). A tooltip
+  of a menu is in the menu's popover, the top layer, as before
+* tests: tooltipLayer.test.ts - the tooltip's z-index over every other one of grid.css, date.css and the
+  TreDeSpace theme. Browser: new `editor-tooltip-check.js` 11/11 (hovers each Aa of four conditions, light
+  and dark, and asks `elementsFromPoint` - with the tooltip's pointer-events on, it skips an element
+  without - what is on top at its middle and corners: the tooltip; it was 7/11 before the fix);
+  filter-case 73/73, column-settings 144/144
+
+### The value list: a text search (user request)
+
+* the user, a screenshot of the value list with "den" searched (Denmark, Sweden): "if search in box like this,
+  we need to be able to click its a text search only too". Apply was always an `IN` of the values found
+* contextmenuFilter.ts valueListBlock: with text in the search box and `CONTAINS` among the column's operators,
+  a checkbox *Filter on the text: contains "…"* (`.simple-html-grid-value-text-search`, the row style of
+  *Only values in filtered rows*). Checked, Apply and Enter call applyTextSearch: `CONTAINS` in the header
+  filter's state when it was another (`filter-operator-change`), filterCallback with the text, the header
+  rendered again - what rangeBlock's apply does. The values are a preview: checked and disabled, the box
+  `.simple-html-grid-value-preview` at 60% opacity, its rows without pointer events (the box still scrolls);
+  unchecked the draft of the values is as it was
+* tests: filterContextMenu.test.ts +6 (the option only with text, the preview and back, Apply: the filter,
+  the state, the cell, the event once, a row added later; Enter and `_`; no option without CONTAINS; a
+  lookup column's labels); texts.test.ts types a search (a digit) so the text is shown
+* browser: new `value-list-text-search-check.js` 33/33 (light, dark, TreDeSpace dark, a phone: the option,
+  the preview, Apply → CONTAINS "den", the cell and `*a*`, every row has den); value-list 51/51,
+  filter-submenu-close 17/17, menus-regression 25/25
+* guides: filtering (the value list), texts
+
+### Aggregates: less room around the lines, the values not bold (user request)
+
+* the user, screenshots of group rows with Avg / Sum / Avg: "think padding is a bit much when multiple
+  aggregates", "maybe using bold is a bit much too?". Every aggregate line was a whole `cellHeight` (22px),
+  a group row with two was 66px; the values took the group row's header bold
+* aggregates.ts: `aggregateRowHeights` uses cellHeightOf (rowHeights.ts) - the first line `cellHeight`, each
+  line more `multilineLineHeight`; new `aggregateLineBox` places a line as a taller cell's lines are placed
+  (linesUnderTop): a group row's aggregates from 19px, 15px apart; the totals row's first line as before,
+  the others under it. grid.css: `.simple-html-grid-group-aggregates .simple-html-grid-aggregate` in
+  `--simple-html-grid-font-weight`; the name keeps the header's bold, the totals row its bold
+* aggregates.test.ts: the heights and tops (37 / 52px, 19 / 34px); guide 18 (the group rows), JSDoc of
+  `multilineLineHeight`
+* browser: new `aggregate-lines-check.js` 11/11 (light and dark: 22 + 15 per line, the lines 15px apart, the
+  name 700 and the values 500, every text inside its row); full-grid 11/11, footer-summary 11/11
 ### Date filters: the date picker in the range block, a range picker for Between (user request)
 
 * the user, on a date column's filter: "our date picker needs to come when we select" (the range block's

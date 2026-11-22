@@ -17,8 +17,9 @@ Enter, or leaves the cell, and the grid filters on it:
 | boolean | a checkbox: no filter, then checked (`true`), then unchecked (`false`), then no filter again | `EQUAL` |
 
 - **A text filter matches the whole text** (`EQUAL`, ignoring case): `ann` finds `Ann` and `ANN`, but
-  not `Anna`. `*` and `%` are wildcards: `ann*` starts with ann, `*ann*` has ann in it. With
-  [Match case](#match-case) on, `Ann` does not find `ANN`.
+  not `Anna`. `*` and `%` are wildcards: `ann*` starts with ann, `*ann*` has ann in it. `_` is one
+  character, any - as in SQL `LIKE`: `p_mp` finds `pump` and `PUMP`, `pump-__` finds `pump-01` and
+  `pump-AB` but not `pump-1`. With [Match case](#match-case) on, `Ann` does not find `ANN`.
 - A number or date is typed as the field's formatter shows it (`12,5` works too, the date in the
   format of the placeholder) and parsed with the formatter.
 - **`BETWEEN`** (Filter › Operator › Between, number and date columns, or Between in the
@@ -80,7 +81,9 @@ const config: GridConfig = {
 ```
 
 The user can also pick the operator of a column in the header filter's menu (Filter › Operator ›,
-below), and type `*ann*` in any text header filter.
+below), with the [operator in the cell](#the-operator-in-the-cell), or in the
+[column settings dialog](08-formatting.md#the-column-settings-dialog) - it shows the column's default
+too - and type `*ann*` in any text header filter.
 
 A header filter only replaces the conditions on its own column, at the top of the filter. The rest
 of the filter is kept, and the column's condition is ANDed with it.
@@ -258,6 +261,11 @@ checkbox per value, as in a spreadsheet:
   every row.
 - The search box narrows the list to the texts with the search text in them, ignoring case (`*` and
   `%` are left out); Blank, which has no text, is not listed then.
+- **Filter on the text: contains "…"**, under the search box when it has text: checked, Apply filters
+  on the **text**, not the values - the header filter gets the operator `CONTAINS` (*Contains*, the `*a*`
+  in the cell) and the text, as if picked in Operator › and typed in the cell, and so rows added later
+  with the text are found too. `*`, `%` and `_` are wildcards there. The list stays as a preview of the
+  values with the text, greyed out. Not for a column whose `filterOperators` have no `CONTAINS`.
 - **Select all**, the header of the list, is checked when every value is, mixed when some are: a
   click checks every value, or none when every value is checked.
 - **Apply** filters the column on the **values** behind the checked texts - a filter as any other:
@@ -591,11 +599,13 @@ operatorsFor(datasource.getField('name').type); // the operators of the name fie
 *row* is the row value as text: null and undefined are `''`, anything else `String(value)` (`5` is
 `'5'`). Both texts are compared in lower case (`toLowerCase()`), or as they are with
 `caseSensitive: true`. `*` and `%` in the value stand for any text - none too, line breaks too, as
-`%` in SQL `LIKE`; there is no escape, and `_` is no wildcard. The rest of the value is taken as it is.
+`%` in SQL `LIKE`; `_` stands for one character, any - a line break too, a letter past U+FFFF (an
+emoji) is one - as `_` in `LIKE`. There is no escape: a `_` in the value can not be literal, it
+matches the `_` too. The rest of the value is taken as it is.
 A text of several lines is one text: `BEGIN_WITH` is the start of the whole value, not of a line.
 
 In the SQL, `t` is `LOWER(COALESCE(col, ''))` and `v` the value in lower case with its `*` and `%`
-as `%` (and the `_` and `\` of `LIKE` escaped, they are no wildcards here):
+as `%`, its `_` as it is (and the `\` of `LIKE` escaped, it is no escape here):
 
 | operator | matches | SQL, ignoring case |
 | --- | --- | --- |

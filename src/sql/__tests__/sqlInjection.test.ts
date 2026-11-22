@@ -228,7 +228,7 @@ describe('hostile values are parameters, never SQL', () => {
         insert.run(1000, 'innocent');
         HOSTILE.forEach((value, index) => {
             // the wildcards of the grid are wildcards: those values find more than themselves
-            if (/[*%]/.test(value)) {
+            if (/[*%_]/.test(value)) {
                 return;
             }
             const { sql, params } = run({ field: 'name', operator: 'EQUAL', value, caseSensitive: true }, 'sqlite');

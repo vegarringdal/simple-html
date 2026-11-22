@@ -437,6 +437,13 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
         openFilterMenu(element, field);
         checkMenu();
     }
+    // a search typed in the value list: its option to filter on the text. A digit: the check takes every
+    // letter left for a text of the grid's own
+    openFilterMenu(element, 'name');
+    const valueSearch = document.querySelector('.simple-html-grid-value-search') as HTMLInputElement;
+    valueSearch.value = '1';
+    valueSearch.dispatchEvent(new Event('input'));
+    checkMenu();
 
     // a header filter with BETWEEN: its placeholder, and From and To of the range block of its menu
     gridInterface.setState({ headerFilters: { age: { value: null, operator: 'BETWEEN' } } });

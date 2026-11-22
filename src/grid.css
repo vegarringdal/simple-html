@@ -1805,6 +1805,12 @@
     flex: 0 1 auto;
 }
 
+/* the values of a group row in the weight of the cells: only the group's name is bold - every line
+ * bold was a lot (the user). The totals row keeps its bold, as the totals of a spreadsheet */
+.simple-html-grid-group-aggregates .simple-html-grid-aggregate {
+    font-weight: var(--simple-html-grid-font-weight);
+}
+
 /* "Sum" in front of the value */
 .simple-html-grid-aggregate-label {
     font-size: 0.9em;
@@ -2242,6 +2248,16 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* a text search: the values are a preview of what it finds, greyed out - not to be checked or hovered
+ * (the list still scrolls: the wheel goes to the box under the rows) */
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-preview {
+    opacity: 0.6;
+}
+
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-preview .simple-html-grid-value-row {
+    pointer-events: none;
 }
 
 /* "Blank", the empty values: not a value of the column */
@@ -3287,7 +3303,9 @@
     flex: 1 1 auto;
 }
 
-.simple-html-grid.filter-editor-content .column-settings-input-row > .column-settings-format {
+/* the pickers of the format and of the filter operator: as wide as each other */
+.simple-html-grid.filter-editor-content .column-settings-input-row > .column-settings-format,
+.simple-html-grid.filter-editor-content .column-settings-input-row > .column-settings-operator {
     max-width: 320px;
 }
 
@@ -3401,10 +3419,12 @@
  * the element also carries .simple-html-grid, so font family/size/weight and the theme
  * colours come from there and the tooltip always matches the grid text.
  * The compound selector is only to win over the position/overflow in that base rule.
+ * Over every layer of the grid: its inputs are at 1000 (a flex item paints by its z-index, also when it is
+ * not positioned - the filter editor's fields were over the tooltip of Aa), its highest layer is at 2000
  */
 .simple-html-grid.simple-html-grid-tooltip {
     position: fixed;
-    z-index: 600;
+    z-index: 10000;
     max-width: 260px;
     width: max-content;
     height: auto;

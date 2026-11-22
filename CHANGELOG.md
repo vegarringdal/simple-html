@@ -1332,6 +1332,52 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Aggregates: lines of text, the values not bold (user request)
+
+##### Changed
+- **The lines of aggregates are lines of text**: under a group row's name, and after the first line of the
+  totals row, each aggregate line is `multilineLineHeight` high (15px by default), not a whole `cellHeight` -
+  as the lines of a multiline cell. A group row with sum and avg is 52px, not 66px.
+- **The values of a group row are in the weight of the cells**: only the group's name is bold. The totals
+  row keeps its bold.
+
+#### The value list: filter on the text searched (user request)
+
+##### Added
+- **Filter on the text: contains "…"** under the value list's search box, when it has text (and the column
+  offers `CONTAINS`): checked, Apply (or Enter) filters on the text instead of the values found - the header
+  filter gets `CONTAINS` and the text, as if picked in Operator › and typed in the cell, so rows added later
+  are found too; `*`, `%` and `_` are wildcards. The list stays as a greyed out preview. Text
+  `filter.values.textSearch`.
+
+#### Tooltips over every field (user request)
+
+##### Fixed
+- **The tooltip of Aa in the filter editor was behind the fields** of the conditions under it. Every input of
+  the grid has `z-index: 1000` (in a flex row that layers it, positioned or not) and the tooltip had 600:
+  it has 10000 now, over every layer of the grid - in the filter editor, the column settings and the header.
+
+#### Column settings: the filter operator of each column (user request)
+
+##### Added
+- **Filter operator** in the column settings dialog, for every column but a checkbox: a picker of the
+  operators the column's header filter offers (Operator ›'s), the one in use shown, *Default:* and the
+  operator the column starts with under it. Apply switches the header filters whose operator changed, as
+  Operator › does (the filter again, `headerFilters[field].operator` in the state, `filter-operator-change`);
+  Reset column / Reset all go back to the default. Texts `columnSettings.operator`, `.tooltip`, `.hint`.
+
+##### Changed
+- `columnSettings.none.lookup` says a lookup column has no format (it has an operator now).
+
+#### Text filters: `_` is one character, as in SQL `LIKE` (user request)
+
+##### ⚠️ Breaking changes
+- **`_` in a text filter is a wildcard now**: one character, any (`p_mp` finds `pump`, `pump-__` finds
+  `pump-01` but not `pump-1`), next to `*` and `%` for any text. There is no escape: a `_` in the value
+  also matches a `_`, but no longer only that. `toSqlWhere()` sends it as `_` of `LIKE` (`?` of `GLOB` on
+  SQLite) - it escaped it before. A letter past U+FFFF (an emoji) is one character, in the grid as in the
+  SQL. The value list's search and `IN` / `NOT_IN` take `_` as it is, as before.
+
 #### Column settings: formats, text templates and links in a dialog (user request)
 
 ##### Added

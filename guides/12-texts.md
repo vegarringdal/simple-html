@@ -374,6 +374,7 @@ and a lookup column.
 | `filter.values.search` | `Search values` | the name of the search box, for a screen reader |
 | `filter.values.searchPlaceholder` | `Search values` | the placeholder of the search box |
 | `filter.values.availableOnly` | `Only values in filtered rows` | the checkbox that lists only the values the other filters let through |
+| `filter.values.textSearch` | `Filter on the text: contains "{text}"` | the checkbox under the search box that filters on the text typed (`CONTAINS`), not the values found; `{text}` is the text |
 | `filter.values.rowsFound` | `{count} values` | under the search box, `{count}`: the number of values listed |
 | `filter.values.rowsFound.one` | `{count} value` | the same, when one value is listed |
 | `filter.values.truncated` | `Only the first {max} values are shown` | instead, `{max}`: the most values listed (100), when there are more |
@@ -611,7 +612,10 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.newTab` | `Open in a new tab` | the checkbox of `newTab` |
 | `columnSettings.insertField` | `Insert a field` | the `{ }` button beside a template: its name and tooltip |
 | `columnSettings.none.boolean` | `A checkbox column has no settings` | the settings of a boolean column |
-| `columnSettings.none.lookup` | `A lookup column shows the label of its value: it has no settings` | the settings of a lookup column |
+| `columnSettings.none.lookup` | `A lookup column shows the label of its value: it has no format` | the settings of a lookup column |
+| `columnSettings.operator` | `Filter operator` | the label of the operator picker, every column but a checkbox |
+| `columnSettings.operator.tooltip` | `The operator the header filter of the column uses` | its tooltip |
+| `columnSettings.operator.hint` | `Default: {operator}` | under it: the operator the column starts with, its name |
 | `columnSettings.preview.current` | `Preview, the current row` | the title of the preview of the current row |
 | `columnSettings.preview.first` | `Preview, the first row` | of the first row, without a current row |
 | `columnSettings.preview.none` | `No rows to preview` | without rows |

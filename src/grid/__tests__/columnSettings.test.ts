@@ -338,7 +338,7 @@ describe('column settings - the settings of each type', () => {
         expect(dialog().querySelector('.column-settings-preview')).toBeNull();
         gridInterface.openColumnSettings('code');
         expect(dialog().querySelector('.column-settings-none')?.textContent?.trim()).toEqual(
-            'A lookup column shows the label of its value: it has no settings'
+            'A lookup column shows the label of its value: it has no format'
         );
     });
 
@@ -567,5 +567,150 @@ describe('column settings - Apply and Reset', () => {
 
         button('Reset all').click();
         expect(input('text')?.value).toEqual('#{name}');
+    });
+});
+
+describe('column settings - the filter operator', () => {
+    const operatorPicker = () => dialog().querySelector('.column-settings-operator') as HTMLButtonElement | null;
+    const operatorField = () =>
+        Array.from(dialog().querySelectorAll('.column-settings-field')).find((field) =>
+            field.textContent?.includes('Filter operator')
+        ) as HTMLElement | undefined;
+    const hint = () => operatorField()?.querySelector('.column-settings-hint')?.textContent?.trim();
+    const items = () => Array.from(dialog().querySelectorAll<HTMLElement>('[data-menu-id^="filter.operator."]'));
+
+    it('expect a number column: the operator in use in the picker, the default under it, the operators of a number in its menu', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('balance');
+
+        expect(operatorPicker()?.textContent?.trim()).toEqual('Greater than or equal');
+        expect(operatorPicker()?.getAttribute('aria-label')).toEqual('Filter operator: Greater than or equal');
+        expect(operatorPicker()?.getAttribute('data-tooltip')).toEqual('The operator the header filter of the column uses');
+        expect(hint()).toEqual('Default: Greater than or equal');
+
+        operatorPicker()?.click();
+        expect(items().map((item) => item.dataset.menuId)).toEqual([
+            'filter.operator.equal',
+            'filter.operator.notEqualTo',
+            'filter.operator.lessThan',
+            'filter.operator.lessThanOrEqualTo',
+            'filter.operator.greaterThan',
+            'filter.operator.greaterThanOrEqualTo',
+            'filter.operator.between'
+        ]);
+        // the one in use is checked
+        expect(menuEntry('filter.operator.greaterThanOrEqualTo').getAttribute('aria-checked')).toEqual('true');
+        menuEntry('filter.operator.lessThan').click();
+
+        expect(operatorPicker()?.textContent?.trim()).toEqual('Less than');
+        // the default stays what it is, and nothing is applied yet
+        expect(hint()).toEqual('Default: Greater than or equal');
+        expect(gridInterface.getState().headerFilters.balance?.operator).toBeUndefined();
+    });
+
+    it('expect the column default from its operator (config), the text operators for a text and a lookup column', async () => {
+        const { gridInterface } = await mountGrid(
+            config({
+                columns: {
+                    ...config().columns,
+                    name: { label: 'Name', operator: 'BEGIN_WITH' }
+                }
+            }),
+            rows(),
+            fields()
+        );
+        gridInterface.openColumnSettings('name');
+        expect(operatorPicker()?.textContent?.trim()).toEqual('Begins with');
+        expect(hint()).toEqual('Default: Begins with');
+        operatorPicker()?.click();
+        expect(items().map((item) => item.dataset.menuId)).toContain('filter.operator.contains');
+        expect(items().map((item) => item.dataset.menuId)).not.toContain('filter.operator.lessThan');
+
+        // a lookup column filters its labels: the operators of a text
+        gridInterface.openColumnSettings('code');
+        expect(operatorPicker()?.textContent?.trim()).toEqual('Equal');
+    });
+
+    it('expect no operator for a checkbox column, the name only for a column with one operator', async () => {
+        const { gridInterface } = await mountGrid(
+            config({
+                columns: {
+                    ...config().columns,
+                    company: { label: 'Company', filterOperators: ['CONTAINS', 'IN'] }
+                }
+            }),
+            rows(),
+            fields()
+        );
+        gridInterface.openColumnSettings('active');
+        expect(operatorField()).toBeUndefined();
+
+        gridInterface.openColumnSettings('company');
+        expect(operatorPicker()).toBeNull();
+        expect(operatorField()?.querySelector('.column-settings-input-row')?.textContent?.trim()).toEqual('Contains');
+        expect(hint()).toEqual('Default: Contains');
+    });
+
+    it('expect Apply to switch the header filter as Operator › does: the filter again, the state, the event', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        const events: string[] = [];
+        gridInterface.on('filter-operator-change', (data) => events.push(`${data.field} ${data.operator}`));
+        // the header filter of balance has 100: ≥ 100 lets Ann through
+        gridInterface.getDatasource().filter(null);
+        gridInterface.setState({ headerFilters: { balance: { value: 100 } } });
+        gridInterface.openColumnSettings('balance');
+        operatorPicker()?.click();
+        menuEntry('filter.operator.lessThan').click();
+
+        button('Apply').click();
+        expect(gridInterface.getState().headerFilters.balance?.operator).toEqual('LESS_THAN');
+        expect(events).toEqual(['balance LESS_THAN']);
+        // < 100: Bob, his balance is 0
+        expect(
+            gridInterface
+                .getDatasource()
+                .getRows()
+                .map((row) => row.name)
+        ).toEqual(['Bob']);
+        // the filter has it
+        expect(JSON.stringify(gridInterface.getDatasource().getFilter())).toContain(
+            '"field":"balance","operator":"LESS_THAN","value":100'
+        );
+
+        // Apply again: nothing changed, no event
+        button('Apply').click();
+        expect(events).toEqual(['balance LESS_THAN']);
+    });
+
+    it('expect Cancel to leave the operator as it was', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('balance');
+        operatorPicker()?.click();
+        menuEntry('filter.operator.equal').click();
+        button('Cancel').click();
+
+        gridInterface.openColumnSettings('balance');
+        expect(operatorPicker()?.textContent?.trim()).toEqual('Greater than or equal');
+        expect(gridInterface.getState().headerFilters.balance?.operator).toBeUndefined();
+    });
+
+    it('expect the operator picked before (state) in the picker; Reset column and Reset all back to the default', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.setState({
+            headerFilters: { balance: { value: null, operator: 'BETWEEN' }, born: { value: null, operator: 'LESS_THAN' } }
+        });
+        gridInterface.openColumnSettings('balance');
+        expect(operatorPicker()?.textContent?.trim()).toEqual('Between');
+        button('Reset column').click();
+        expect(operatorPicker()?.textContent?.trim()).toEqual('Greater than or equal');
+
+        options()[LAYOUT.indexOf('born')].click();
+        expect(operatorPicker()?.textContent?.trim()).toEqual('Less than');
+        button('Reset all').click();
+        expect(operatorPicker()?.textContent?.trim()).toEqual('Greater than or equal');
+
+        button('Apply').click();
+        expect(gridInterface.getState().headerFilters.balance?.operator).toEqual('GREATER_THAN_OR_EQUAL_TO');
+        expect(gridInterface.getState().headerFilters.born?.operator).toEqual('GREATER_THAN_OR_EQUAL_TO');
     });
 });

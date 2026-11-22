@@ -184,9 +184,10 @@ export function rangeOperator(operator: FilterOperator): FilterOperator {
 /**
  * A text condition. The row value as text - a blank (null, undefined) is `''`, anything else
  * `String(value)` - and the value as text, both in lower case unless `caseSensitive`. `*` and `%` in
- * the value are wildcards: any text, none too, line breaks too. The rest of the value is taken as it
- * is, there is no escape. The text `LESS_THAN` ... (a text field does not offer them) compare the two
- * texts as JavaScript does, code unit by code unit, without wildcards
+ * the value are wildcards: any text, none too, line breaks too. `_` is one character, any - as in SQL
+ * `LIKE`. The rest of the value is taken as it is, there is no escape. The text `LESS_THAN` ... (a
+ * text field does not offer them) compare the two texts as JavaScript does, code unit by code unit,
+ * without wildcards
  */
 function compareText(rowValue: unknown, value: unknown, operator: FilterOperator, caseSensitive: boolean): boolean {
     const asText = (from: unknown) => {
@@ -222,12 +223,16 @@ function compareText(rowValue: unknown, value: unknown, operator: FilterOperator
 }
 
 /**
- * true when `row` has `text` in it, `*` and `%` in `text` standing for any text (`s`: line breaks
- * too). `fromStart`: at the start of `row`, `toEnd`: at its end - both: the whole of `row`
+ * true when `row` has `text` in it, `*` and `%` in `text` standing for any text, `_` for one character
+ * (`s`: line breaks too; `u`: a letter past U+FFFF - an emoji - is one character, as in SQL).
+ * `fromStart`: at the start of `row`, `toEnd`: at its end - both: the whole of `row`
  */
 function matchesText(row: string, text: string, fromStart: boolean, toEnd: boolean): boolean {
-    const pattern = text.replace(/[.^$+?()[\]{}\\|]/g, '\\$&').replace(/[*%]/g, '.*');
-    return new RegExp(`${fromStart ? '^' : ''}${pattern}${toEnd ? '$' : ''}`, 's').test(row);
+    const pattern = text
+        .replace(/[.^$+?()[\]{}\\|]/g, '\\$&')
+        .replace(/[*%]/g, '.*')
+        .replace(/_/g, '.');
+    return new RegExp(`${fromStart ? '^' : ''}${pattern}${toEnd ? '$' : ''}`, 'su').test(row);
 }
 
 /**

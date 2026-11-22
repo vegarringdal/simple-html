@@ -115,8 +115,11 @@ A group row with aggregates has the group's name on a line of its own, and the a
 under it, each in its column, over every row of the group: the rows of its sub groups, and of
 collapsed groups too. A collapsed group shows the same values as an expanded one. So a group row is
 1 + n lines high, n the most lines a column needs - a column with sum and avg makes it three lines.
-The name never covers a value. Without aggregates (or `groupAggregates: false`) a group row is one
-line.
+The name's line is a row high (`cellHeight`), each line of aggregates a line of text
+(`multilineLineHeight`, 15px by default), as the lines of a [multiline cell](05-editing.md#multiline-text): with the
+defaults a group row with sum and avg is `22 + 2 × 15` = 52px. The name never covers a value, and it is in
+the header's bold - the values are in the weight of the cells. Without aggregates (or
+`groupAggregates: false`) a group row is one line.
 
 ## The totals row
 

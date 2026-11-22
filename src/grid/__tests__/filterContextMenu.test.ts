@@ -464,6 +464,129 @@ describe('filter menu - the value list: Apply, Cancel and the keyboard', () => {
     });
 });
 
+describe('filter menu - the value list: a text search', () => {
+    const data = () => ['anna', 'anne', 'bob', 'dan', 'Annika'].map((firstname, i) => ({ firstname, lastname: 'x', age: i }));
+    const search = (text: string) => {
+        const box = document.querySelector('.simple-html-grid-value-search') as HTMLInputElement;
+        box.value = text;
+        box.dispatchEvent(new Event('input'));
+    };
+    const option = () => document.querySelector('.simple-html-grid-value-text-search') as HTMLLabelElement | null;
+    const optionBox = () => option()?.querySelector('input') as HTMLInputElement;
+    const toggleOption = () => {
+        optionBox().checked = !optionBox().checked;
+        optionBox().dispatchEvent(new Event('change'));
+    };
+    const apply = () =>
+        Array.from(document.querySelectorAll<HTMLButtonElement>('.simple-html-grid-value-buttons button'))[1].click();
+    const valueBoxes = () =>
+        Array.from(document.querySelectorAll<HTMLInputElement>('.simple-html-grid-value-scroll input')).map((box) => [
+            box.checked,
+            box.disabled
+        ]);
+
+    it('expect the option only with text in the search box, unchecked, saying the text', async () => {
+        const { element } = await mountGrid(simpleConfig(), data());
+        openFilterMenu(element, 'firstname');
+        expect(option()).toBeNull();
+
+        search('  an ');
+        expect(option()?.textContent?.trim()).toEqual('Filter on the text: contains "an"');
+        expect(optionBox().checked).toBe(false);
+        search('');
+        expect(option()).toBeNull();
+    });
+
+    it('expect the list a preview while it is checked: every value it found checked and greyed out, given back unchecked', async () => {
+        const { element } = await mountGrid(simpleConfig(), data());
+        openFilterMenu(element, 'firstname');
+        search('an');
+        valueRow('anna').click();
+        toggleOption();
+
+        expect(document.querySelector('.simple-html-grid-value-preview')).not.toBeNull();
+        expect(valueBoxes()).toEqual([
+            [true, true],
+            [true, true],
+            [true, true],
+            [true, true]
+        ]);
+        toggleOption();
+        expect(document.querySelector('.simple-html-grid-value-preview')).toBeNull();
+        // the draft of the values as it was
+        expect(valueBoxes().map(([checked]) => checked)).toEqual([false, true, true, true]);
+    });
+
+    it('expect Apply to filter on the text: CONTAINS in the header filter, the cell shows it, the event once', async () => {
+        const { element, datasource, gridInterface } = await mountGrid(simpleConfig(), data());
+        const events: string[] = [];
+        gridInterface.on('filter-operator-change', (event) => events.push(`${event.field} ${event.operator}`));
+        openFilterMenu(element, 'firstname');
+        search('an');
+        toggleOption();
+        apply();
+
+        expect(document.querySelector('.simple-html-grid-menu')).toBeNull();
+        expect(datasource.getFilter()).toEqual(and(where('firstname', 'CONTAINS', 'an')));
+        expect(names(datasource)).toEqual(['anna', 'anne', 'dan', 'Annika']);
+        expect(gridInterface.getState().headerFilters.firstname).toMatchObject({ value: 'an', operator: 'CONTAINS' });
+        expect(headerFilterInput(element, 'firstname').value).toEqual('an');
+        expect(events).toEqual(['firstname CONTAINS']);
+
+        // a row added later with the text is found too: it is a text filter, not a list of values
+        datasource.setData([...data(), { firstname: 'Johan', lastname: 'x', age: 9 }]);
+        datasource.filter(datasource.getFilter());
+        expect(names(datasource)).toContain('Johan');
+    });
+
+    it('expect Enter in the search box to apply the text search while it is checked, wildcards in it as in the cell', async () => {
+        const { element, datasource } = await mountGrid(simpleConfig(), data());
+        openFilterMenu(element, 'firstname');
+        search('a_n');
+        toggleOption();
+        const box = document.querySelector('.simple-html-grid-value-search') as HTMLInputElement;
+        box.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+
+        expect(datasource.getFilter()).toEqual(and(where('firstname', 'CONTAINS', 'a_n')));
+        // _ is one character: anna, anne (a-n-n), Annika
+        expect(names(datasource)).toEqual(['anna', 'anne', 'Annika']);
+    });
+
+    it('expect no option for a column whose filterOperators have no CONTAINS', async () => {
+        const config = simpleConfig();
+        config.columns = { firstname: { filterOperators: ['EQUAL', 'IN'] } };
+        const { element } = await mountGrid(config, data());
+        openFilterMenu(element, 'firstname');
+        search('an');
+        expect(option()).toBeNull();
+    });
+
+    it('expect a lookup column to search its labels', async () => {
+        const config: GridConfig = {
+            columns: { country: { label: 'Country', editor: { type: 'select', lookup: 'fcm-countries' } } },
+            layout: {
+                center: [
+                    { fields: ['firstname'], width: 100 },
+                    { fields: ['country'], width: 100 }
+                ]
+            }
+        };
+        const rows = [
+            { firstname: 'a', country: 'NO' },
+            { firstname: 'b', country: 'SE' },
+            { firstname: 'c', country: 'DK' }
+        ];
+        const { element, datasource } = await mountGrid(config, rows, {});
+        openFilterMenu(element, 'country');
+        search('den');
+        toggleOption();
+        apply();
+        // Sweden and Denmark have "den" in their labels
+        expect(names(datasource)).toEqual(['b', 'c']);
+        expect(headerFilterInput(element, 'country').value).toEqual('den');
+    });
+});
+
 describe('filter menu - the value list shows the texts of the cells, Apply filters on their values', () => {
     const lookupConfig = (): GridConfig => ({
         columns: {

@@ -79,6 +79,8 @@ const TEXTS = [
     '5',
     'a_b',
     'axb',
+    // one character for `_` (GLOB `?`), not two UTF-16 units
+    'a🙂b',
     'a!b',
     'a!!b',
     'a[b]',
@@ -106,7 +108,7 @@ const TEXTS = [
     'tab\there'
 ];
 // the other text column: no wildcards, the grid would take them as a pattern of the valueField
-const CODES = [null, '', 'ann', 'ANN', 'Anna', 'b', 'zeta', 'a_b', '0', 'null', ' ann '];
+const CODES = [null, '', 'ann', 'ANN', 'Anna', 'b', 'zeta', 'a-b', '0', 'null', ' ann '];
 const NUMBERS = [null, 0, 1, -1, 2.5, 5, 10, 100, -0.5, 3, 1e6, 0.1];
 const BOOLEANS = [null, true, false];
 
@@ -378,6 +380,12 @@ const ASCII_TEXTS = [
     '*',
     '**',
     'a_b',
+    // `_` is one character
+    '_nn',
+    'AN_',
+    '___',
+    '*_b',
+    'a_\nb',
     'a!b',
     'a!!b',
     'a[b]',

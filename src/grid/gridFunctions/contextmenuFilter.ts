@@ -161,6 +161,13 @@ function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
  * Nothing is filtered until Apply: the checkboxes are a draft, Cancel (or Esc, a click outside)
  * leaves the filter as it was.
  *
+ * **A text search** (the user: "if search in box like this, we need to be able to click its a text search
+ * only too"): with text in the search box, *Filter on the text: contains "…"* - when the column offers
+ * `CONTAINS`. Checked, Apply filters on the text instead of the values: the header filter gets the operator
+ * `CONTAINS` and the text, as if picked in Operator › and typed in its cell (the cell shows it, the
+ * indicator `*a*`); `*`, `%` and `_` in it are wildcards there. The list stays as a preview, greyed out:
+ * the values with the text in them, ignoring case.
+ *
  * The keyboard: Tab goes on from the menu's items into it (see itemKeydown in showMenu) - the search
  * box, the checkboxes, Cancel, Apply. ArrowDown / ArrowUp move between the search box and the
  * checkboxes, Space checks one, Enter in the search box or on a checkbox applies, as Apply does.
@@ -173,8 +180,12 @@ function valueListBlock(ctx: Grid, attribute: string, offered: FilterOperator[])
     const state = {
         searchInput: '',
         availableOnly: true,
+        // the search box's text is the filter, not the values checked
+        textSearch: false,
         data: dropDownFilterData(ctx, attribute, true, '')
     };
+    // a text search is a CONTAINS of the header filter: only when the column offers it
+    const canSearchText = offered.includes('CONTAINS');
 
     const block: MenuBlock = {
         type: 'block',
@@ -197,6 +208,10 @@ function valueListBlock(ctx: Grid, attribute: string, offered: FilterOperator[])
         if (!data) {
             return;
         }
+        if (textSearchOn()) {
+            applyTextSearch();
+            return;
+        }
         const valuesOf = (entries: ValueListEntry[]) => entries.flatMap((entry) => entry.values);
         const checked = valuesOf(data.entries.filter((entry) => data.checked.has(entry)));
         const unchecked = valuesOf(data.entries.filter((entry) => !data.checked.has(entry)));
@@ -204,6 +219,27 @@ function valueListBlock(ctx: Grid, attribute: string, offered: FilterOperator[])
             filterCallback(ctx, null, attribute, unchecked.length ? unchecked : null, true);
         } else {
             filterCallback(ctx, null, attribute, checked.length ? checked : null, false);
+        }
+        removeContextMenu(ctx);
+    };
+
+    /** true when Apply filters on the search box's text: the option checked, and text in the box */
+    const textSearchOn = () => canSearchText && state.textSearch && state.searchInput.trim() !== '';
+
+    /**
+     * The text search: as if CONTAINS was picked in Operator › and the text typed in the header filter
+     * (rangeBlock's apply does the same) - the operator, when it changed, is state with a
+     * `filter-operator-change` event; the cell is rendered again and shows the text. Then the menu closes
+     */
+    const applyTextSearch = () => {
+        const changed = getHeaderFilterOperator(ctx, attribute) !== 'CONTAINS';
+        if (changed) {
+            ctx.gridInterface.__setHeaderFilterOperator(attribute, 'CONTAINS');
+        }
+        filterCallback(ctx, state.searchInput.trim(), attribute);
+        rebuildHeaderColumns(ctx);
+        if (changed) {
+            operatorPicked(ctx, attribute, 'CONTAINS');
         }
         removeContextMenu(ctx);
     };
@@ -261,6 +297,14 @@ function valueListBlock(ctx: Grid, attribute: string, offered: FilterOperator[])
             reRender();
         };
 
+        const toggleTextSearch = () => {
+            state.textSearch = !state.textSearch;
+            reRender();
+        };
+
+        // a text search: the values are a preview, they can not be checked
+        const preview = textSearchOn();
+
         const toggleAvailableOnly = () => {
             state.availableOnly = !state.availableOnly;
             state.data = dropDownFilterData(ctx, attribute, state.availableOnly, state.searchInput);
@@ -283,7 +327,12 @@ function valueListBlock(ctx: Grid, attribute: string, offered: FilterOperator[])
         const valueRow = (entry: ValueListEntry) => {
             const count = data.truncated ? undefined : entry.count;
             return html`<label class="simple-html-grid-value-row">
-                <input type="checkbox" .checked=${live(data.checked.has(entry))} @change=${() => toggleValue(entry)} />
+                <input
+                    type="checkbox"
+                    .checked=${live(preview || data.checked.has(entry))}
+                    ?disabled=${preview}
+                    @change=${() => toggleValue(entry)}
+                />
                 <span
                     class=${entry.blank ? 'simple-html-grid-value-text simple-html-grid-value-blank' : 'simple-html-grid-value-text'}
                     @mouseenter=${showCutOffText}
@@ -308,6 +357,16 @@ function valueListBlock(ctx: Grid, attribute: string, offered: FilterOperator[])
                     @input=${search}
                 />
                 ${
+                    canSearchText && state.searchInput.trim() !== ''
+                        ? html`<label class="simple-html-grid-value-row simple-html-grid-value-option simple-html-grid-value-text-search">
+                              <input type="checkbox" .checked=${live(state.textSearch)} @change=${toggleTextSearch} />
+                              <span class="simple-html-grid-value-text" @mouseenter=${showCutOffText}
+                                  >${text('filter.values.textSearch', { text: state.searchInput.trim() })}</span
+                              >
+                          </label>`
+                        : nothing
+                }
+                ${
                     data.enableAvailableOnlyOption
                         ? html`<label class="simple-html-grid-value-row simple-html-grid-value-option">
                               <input type="checkbox" .checked=${live(state.availableOnly)} @change=${toggleAvailableOnly} />
@@ -316,13 +375,13 @@ function valueListBlock(ctx: Grid, attribute: string, offered: FilterOperator[])
                         : nothing
                 }
                 <div class="simple-html-grid-value-info" aria-live="polite">${info}</div>
-                <div class="simple-html-grid-value-box">
+                <div class=${preview ? 'simple-html-grid-value-box simple-html-grid-value-preview' : 'simple-html-grid-value-box'}>
                     <label class="simple-html-grid-value-row simple-html-grid-value-all">
                         <input
                             type="checkbox"
-                            .checked=${live(allChecked)}
-                            .indeterminate=${someChecked}
-                            ?disabled=${total === 0}
+                            .checked=${live(preview || allChecked)}
+                            .indeterminate=${!preview && someChecked}
+                            ?disabled=${preview || total === 0}
                             @change=${toggleAll}
                         />
                         <span class="simple-html-grid-value-text">${text('filter.values.selectAll')}</span>
