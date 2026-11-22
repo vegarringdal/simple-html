@@ -3403,10 +3403,12 @@
  * the element also carries .simple-html-grid, so font family/size/weight and the theme
  * colours come from there and the tooltip always matches the grid text.
  * The compound selector is only to win over the position/overflow in that base rule.
+ * Over every layer of the grid: its inputs are at 1000 (a flex item paints by its z-index, also when it is
+ * not positioned - the filter editor's fields were over the tooltip of Aa), its highest layer is at 2000
  */
 .simple-html-grid.simple-html-grid-tooltip {
     position: fixed;
-    z-index: 600;
+    z-index: 10000;
     max-width: 260px;
     width: max-content;
     height: auto;

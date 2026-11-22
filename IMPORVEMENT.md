@@ -3279,6 +3279,21 @@ in the console. All passed. Found and fixed:
   in the dialog, Less than picked, Apply → the header's indicator shows `<`, no operator on a checkbox
   column); column-settings-check 144/144
 
+### The tooltip behind the filter editor's fields (user request)
+
+* the user, a screenshot of the filter editor: "match case tooltip in filter editor is behind form elements..
+  this needs something better". The tooltip of Aa was cut by the value input of the next condition
+* why: `.simple-html-grid input { z-index: 1000 }` is every input under a `.simple-html-grid` element - the
+  filter editor dialog is one. The input is not positioned, but it is a flex item, and a flex item paints by
+  its z-index; the tooltip (`position: fixed`, a child of the dialog) had 600
+* grid.css: the tooltip's z-index is 10000 - over every layer of the grid (the highest is 2000). A tooltip
+  of a menu is in the menu's popover, the top layer, as before
+* tests: tooltipLayer.test.ts - the tooltip's z-index over every other one of grid.css, date.css and the
+  TreDeSpace theme. Browser: new `editor-tooltip-check.js` 11/11 (hovers each Aa of four conditions, light
+  and dark, and asks `elementsFromPoint` - with the tooltip's pointer-events on, it skips an element
+  without - what is on top at its middle and corners: the tooltip; it was 7/11 before the fix);
+  filter-case 73/73, column-settings 144/144
+
 ## Considered, not done
 
 ## Candidates / not started

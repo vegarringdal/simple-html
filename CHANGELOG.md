@@ -1332,6 +1332,13 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Tooltips over every field (user request)
+
+##### Fixed
+- **The tooltip of Aa in the filter editor was behind the fields** of the conditions under it. Every input of
+  the grid has `z-index: 1000` (in a flex row that layers it, positioned or not) and the tooltip had 600:
+  it has 10000 now, over every layer of the grid - in the filter editor, the column settings and the header.
+
 #### Column settings: the filter operator of each column (user request)
 
 ##### Added
