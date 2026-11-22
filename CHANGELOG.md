@@ -1332,6 +1332,12 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Docs site: the sidebar indented by level (user request)
+
+##### Changed
+- The docs site's sidebar is indented by level: a section's groups and pages under its title, a group's
+  pages past the group's arrow.
+
 #### Menus: the value list in use closes Filter › (user request)
 
 ##### Changed

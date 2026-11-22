@@ -2682,6 +2682,13 @@ in the console. All passed. Found and fixed:
   `.claude/browser-checks/scripts/filter-submenu-close-check.js` 17/17 (light and dark, the Filtering
   sample); submenu 40/40, menus regression 25/25, value list 51/51, filter ui 117/117, filter case 73/73
 
+### Docs site: the sidebar indented by level (user request)
+
+* the user, on the sidebar: "sub parts of menu need to have more indenting, so its easier to read". The
+  section titles, the groups (Getting started ...) and the pages were all 16px in. Now a section 16px, its
+  groups and its own pages (the guides) 28px, a group's pages 44px - past the group's arrow, so the sidebar
+  reads as a tree. Checked in Chromium, light and dark, every part unfolded
+
 ## Considered, not done
 
 ## Candidates / not started
