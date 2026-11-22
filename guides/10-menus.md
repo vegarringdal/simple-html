@@ -9,7 +9,7 @@ The grid has four right click menus:
 - the **header menu**, on a header label: pin, hide, remove sorting, the column chooser, then the
   submenus sizes, aggregates, grouping
 - the **filter menu**, on a header filter: the submenu filter (the operator, is blank, clear, the
-  filter editor), then the value list
+  filter editor), then the value list of a text column or the range block of a number or date column
 - the **column menu**, on a column number (the row of numbers under the header filters): the
   submenu select, then copy the column, the selected columns, the header names - see
   [Selection and clipboard](17-selection-and-clipboard.md#the-column-menu)
@@ -86,7 +86,8 @@ An item with a `›` opens a submenu beside it:
   the header menu opens and the drag ends, nothing moves.
 - **Bigger targets**: on a touch screen (css `@media (pointer: coarse)`) the items of the menus and
   submenus, the column chooser's fields, search and Close, the rows of the filter menu's value list,
-  the buttons of the value list and the filter editor are 36px high, and the filter editor's edges and
+  the operators and the input of its range block, the buttons of the value list, the range block and
+  the filter editor are 36px high, and the filter editor's edges and
   corners a finger can take (10px, 20px). With a mouse they stay as they are.
 - **The column chooser**: its list scrolls with a finger; a field held still for 200ms is dragged, and
   is shown over the chooser while it is (the dragged field is a popover too).
@@ -105,14 +106,17 @@ The menus follow the WAI-ARIA [menu pattern](https://www.w3.org/WAI/ARIA/apg/pat
 | ArrowRight | opens the submenu of the item, the focus on its first item |
 | ArrowLeft | closes the submenu, the focus back on its item |
 | Esc | in a submenu: closes it, the focus back on its item. In the menu: closes it, the focus goes back where it was |
-| Tab, Shift+Tab | closes the menu, the focus goes back where it was. In a menu with a block - the filter menu's value list - Tab is the browser's: it goes on into the block's inputs, and Shift+Tab back to the item the keyboard was on |
+| Tab, Shift+Tab | closes the menu, the focus goes back where it was. In a menu with a block - the filter menu's value list or range block - Tab is the browser's: it goes on into the block's inputs, and Shift+Tab back to the item the keyboard was on |
 
 For a screen reader the menu is a `menu`, an item a `menuitem` - a `menuitemcheckbox` with
 `aria-checked` when it has a `selected` callback (the aggregates, the dimmed values, the operator in
 use) - with `aria-disabled` when it is disabled. An item with a submenu has `aria-haspopup="menu"` and
 `aria-expanded`, its submenu is labelled by it. In the filter menu's value list the search box,
 the checkboxes, *Cancel* and *Apply* are stops of Tab; ArrowDown / ArrowUp move between the search
-box and the checkboxes, Enter in them applies, see [The value list](06-filtering.md#the-value-list).
+box and the checkboxes, Enter in them applies, see [The value list](06-filtering.md#the-value-list). In
+the range block the operators are a radio group - one stop of Tab, the arrows pick another one - then
+the input (From and To), *Cancel* and *Apply*; Enter applies, see
+[The range block](06-filtering.md#the-range-block).
 
 ## Changing the grid's menus
 
@@ -242,7 +246,7 @@ The menus as they open, a `›` is a submenu:
 ```text
 row menu                          header menu                     filter menu
 Undo / Redo ›                     Pin ›                           Filter ›
-Select ›                          Hide column                     the value list
+Select ›                          Hide column                     the value list / the range block
 Copy ›                            Remove sorting
 Paste ›                           ----                            in Filter ›:
 Clear ›                           Column chooser…                 Operator ›
@@ -382,6 +386,7 @@ the selection work. A group row's number has no menu.
 | `filter.filter.advancedSeparator` | a line | |
 | `filter.filter.advanced` | Advanced Filter…: opens the filter editor | |
 | `filter.values` | the value list: a search box, "Select all" and a checkbox per value, "Cancel" and "Apply". One `MenuBlock`, its texts are `filter.values.*` | a text field, a lookup column - that has `IN` |
+| `filter.range` | the range block: the operators of Operator › as a row of buttons (=, ≠, <, ≤, >, ≥, Between), an input - From and To for Between - "Cancel" and "Apply": as the operator picked in Operator › and the value typed in the header filter. One `MenuBlock`, its texts are `filter.range.*` | a number, date or datetime field, not a lookup column |
 
 See [Filtering](06-filtering.md#the-header-filter-menu) for what the filter menu's entries do.
 

@@ -135,6 +135,13 @@ const DEFAULTS = {
     'filter.values.blank': 'Blank',
     'filter.values.run': 'Apply',
     'filter.values.cancel': 'Cancel',
+    // the range block of a number or date column, 'filter.range': the input (From and To for Between) and
+    // its buttons. Its operators are named by the texts of Operator above, Between shows its text
+    'filter.range.value': 'Value',
+    'filter.range.from': 'From',
+    'filter.range.to': 'To',
+    'filter.range.run': 'Apply',
+    'filter.range.cancel': 'Cancel',
 
     // the column menu, right click on a column number (under the header filters): MENU_IDS.column
     'column.copy.column': 'Copy column',
@@ -448,7 +455,7 @@ export type Texts = { [id in TextId]?: string } & { [id: string]: string };
  *
  * | ids | where |
  * | --- | --- |
- * | `row.*`, `header.*`, `filter.*`, `column.*` | the right click menus: the ids of {@link MENU_IDS}. A hint (the text in parentheses) is `<id>.hint`. `filter.values.*`: the value list of the filter menu |
+ * | `row.*`, `header.*`, `filter.*`, `column.*` | the right click menus: the ids of {@link MENU_IDS}. A hint (the text in parentheses) is `<id>.hint`. `filter.values.*`: the value list of the filter menu, `filter.range.*` its range block |
  * | `columnChooser.*` | the column chooser |
  * | `filterEditor.*` | the filter editor, its field and operator menus. `filterEditor.operator.<FilterOperator>`: the names of the operators |
  * | `footer.*` | the footer: the row count, the filter chips. `footer.operator.<FilterOperator>`: the short names of the operators (`=`, `contains`) |

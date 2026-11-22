@@ -48,6 +48,17 @@ export function hideTooltip() {
 }
 
 /**
+ * hides the tooltip when it is in `container`: a menu that closes while it shows a tooltip of its own
+ * (the operators of the filter menu's range block) - the tooltip would keep the menu in memory, see
+ * hideTooltip. One shown somewhere else stays
+ */
+export function hideTooltipIn(container: Element) {
+    if (tooltipElement && container.contains(tooltipElement)) {
+        hideTooltip();
+    }
+}
+
+/**
  * places the tooltip above the element, flips it below when there is no room above, and
  * clamps it inside the window so it is never cut off at an edge
  */

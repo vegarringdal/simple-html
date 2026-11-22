@@ -315,16 +315,19 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     gridInterface.closeMenu();
     gridInterface.selectColumns([]);
 
-    // the filter menus: a number (the range operators), text with its value list, a value list that
+    // the filter menus: a number (the range operators, its range block), text with its value list, a value list that
     // is cut off, and one with one value (every row has the same notes)
     for (const field of ['age', 'name', 'country', 'notes']) {
         openFilterMenu(element, field);
         checkMenu();
     }
 
-    // a header filter with BETWEEN: its placeholder
+    // a header filter with BETWEEN: its placeholder, and From and To of the range block of its menu
     gridInterface.setState({ headerFilters: { age: { value: null, operator: 'BETWEEN' } } });
     check();
+    openFilterMenu(element, 'age');
+    check();
+    gridInterface.closeMenu();
     gridInterface.setState({ headerFilters: {} });
 
     // the filter editor: AND with an OR group, a condition compared with a field not picked yet. A text

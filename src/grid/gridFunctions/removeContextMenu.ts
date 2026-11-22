@@ -1,4 +1,5 @@
 import type { Grid } from '../grid';
+import { hideTooltipIn } from './tooltip';
 
 /**
  * Closes the grid's open menu, see openMenuElement, with its submenus: they are in its popover (see
@@ -19,7 +20,7 @@ export function removeContextMenu(ctx: Grid) {
 
 /**
  * Takes a menu (a popover) off the page: removed from the dom, the browser hides it and takes it out
- * of the top layer as well.
+ * of the top layer as well. A tooltip shown in it goes with it.
  *
  * When the focus is in it - a search field of the menu - the focus goes back to `returnFocus`, the
  * element that had it when the menu opened (the cell or header filter it was opened from). Removing
@@ -27,6 +28,8 @@ export function removeContextMenu(ctx: Grid) {
  */
 export function closePopover(popover: HTMLElement, returnFocus: Element | null) {
     const hadFocus = popover.contains(document.activeElement);
+    // a tooltip it shows goes with it, see hideTooltipIn
+    hideTooltipIn(popover);
     popover.remove();
     if (hadFocus && returnFocus instanceof HTMLElement && returnFocus.isConnected) {
         // the cell is where it was when the menu opened, the grid must not scroll to it

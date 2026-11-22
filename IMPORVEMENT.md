@@ -2702,6 +2702,62 @@ in the console. All passed. Found and fixed:
 * checked in Chromium (light and dark, a menu with its Copy › submenu; the computed shadow of both
   popovers); submenu 40/40, menus regression 25/25
 
+### Filter menu: a range block for numbers and dates (user request)
+
+* the user, on a date column's filter menu (only `Filter ›`): "date and numbers should have a easy way to set
+  between/greater/less in menu ui". A text column had the value list as the main tool of its menu; a number
+  or date column had to go through Operator ›, then type in the header filter (`10..20` for Between)
+* `filter.range` (contextmenuFilter.ts `rangeBlock`), a `MenuBlock` under Filter › where the value list is for
+  text, for number, date and datetime columns - not text and lookup columns (the value list), not boolean (the
+  header checkbox): a row of the operators of Operator › (`headerOperators`: the type's, or `filterOperators`,
+  in the type's order) as square buttons - `=` `≠` `<` `≤` `>` `≥` and `Between`, the one picked filled with the
+  accent colour, no rounded corners, colours only the grid.css variables - then one input, From and To (a
+  label each) for Between, then Cancel / Apply. As wide as the value list (220px)
+* the operators are native radios (one group per grid, `ariaIdPrefix`) inside labels that are the buttons: one
+  stop of Tab, the arrows pick another one - the browser's, checked in Chromium. Named by the texts of Operator
+  › (`filter.operator.*`, the group `filter.operator`), which are their tooltips too (`data-tooltip`,
+  attachTooltips on the block, `tooltips: false` respected); the symbols are no texts, Between shows its text.
+  Picked with the mouse (`ctx.keyboardUsed` false) the focus goes on to the input: a click, the value, Enter
+* prefilled from the header filter: its operator (getHeaderFilterOperator), its value as the cell shows it -
+  a BETWEEN's ends in From and To. Picking Between takes the value as From, another operator after it the
+  first end (as filterCallback does with a `[from, to]`)
+* Apply (Enter in an input or on an operator) is the typing path, not a second one: the operator - only when it
+  changed, so a default operator is not stored where typing would not store it - with
+  `__setHeaderFilterOperator` and the `filter-operator-change` event (`operatorPicked`, shared with Operator ›);
+  the value as typed text through `filterCallback` (`from..to` for Between, an empty end open, `..` / empty no
+  filter); the header rendered again. So the state, the cell, the chip, getFilterString() are what typing gives
+  (a test compares both ways for every operator of a number, a date and a datetime). Cancel / Esc / a click
+  outside: nothing filtered
+* the date picker is not offered in the block: opening it is opening a grid menu, which closes the filter menu
+  (one menu at a time). Dates are typed in the format of the placeholder; the header cell keeps its picker
+* on the way: `closePopover` hides a tooltip shown in the menu it closes (`hideTooltipIn`, tooltip.ts): a
+  tooltip left in a closed menu kept the menu - and its grid - in memory until the next tooltip
+* texts `filter.range.value`, `.from`, `.to`, `.run`, `.cancel` (English, the Norwegian sample); MENU_IDS.filter
+  `filter.range` after `filter.values`; touch (`pointer: coarse`): the operators and inputs 36px
+* docs: guide 06 (The header filter menu, a new "The range block", BETWEEN), 10 (the menus, keyboard, touch, the
+  id), 12 (the texts, a section "The range block"); JSDoc of MENU_IDS, MenuBlock, GridMenus, the
+  `filter-operator-change` event, contextmenuFilter.ts
+* tests: new filterRangeBlock.test.ts (50): where it is shown (number, date, datetime - not text, boolean, a
+  lookup on a number), MENU_IDS / the defaults, the hook removing and replacing it; the operators (order,
+  names, tooltips, radios), `filterOperators` and `operator`; placeholders; prefilled (typed, Operator ›,
+  BETWEEN with an open end, a date, a state from JSON); Apply = typing for the 7 operators x number / date /
+  datetime (state, cell, filter, rows, chips, getFilterString, events); a date's day; Between both ends and each
+  open end; empty clears, the rest of the filter kept; Cancel, Esc (the focus back), Enter in To and on an
+  operator, not the Enter of a composition; the draft (Between takes the value, back takes the first end); the
+  focus after a mouse pick and a keyboard pick; Tab in / Shift+Tab out, the submenu closing; the tooltip gone
+  with the menu, `tooltips: false`. Changed on purpose: gridMenus.test (the text column's tree has no
+  `filter.range`), texts.test (the range block's From and To opened). 3096 -> 3146 tests
+* browser (Chromium 1148): new `range-block-check.js` 81/81 (light and dark, 1300x1400, the Filtering sample):
+  Age `>` 30 with Enter (rows, cell, state, chip `Age > 30`), Between 30..40 with Apply (chip `Age between 30
+  and 40`), reopened prefilled, To emptied (`30..`), emptied (no condition), Esc; the Filter › submenu closed by
+  the block; date ≥ and Between a month, the header's date picker still there; the keyboard (Shift+F10, Tab,
+  Shift+Tab, ArrowLeft, Tab to the input, Cancel, Apply, Enter on a radio); no rounded corners, the fill.
+  value-list 51/51, filter-ui 117/117, filter-case 73/73, filter-submenu-close 17/17, menus-regression 25/25;
+  submenu-check 40/40 with one scenario changed on purpose: "near the bottom" used the Age filter menu, which
+  is now taller than its Filter › submenu (it opens above the cell) - it uses the boolean column and its Blank ›
+  now. The new and the changed script are in this worktree's `.claude/browser-checks/scripts/` (the shared
+  folder could not be written), with `range-block-touch-shot.js` (the 36px targets)
+
 ## Considered, not done
 
 ## Candidates / not started

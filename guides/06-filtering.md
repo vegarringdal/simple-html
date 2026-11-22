@@ -21,8 +21,8 @@ Enter, or leaves the cell, and the grid filters on it:
   [Match case](#match-case) on, `Ann` does not find `ANN`.
 - A number or date is typed as the field's formatter shows it (`12,5` works too, the date in the
   format of the placeholder) and parsed with the formatter.
-- **`BETWEEN`** (Filter › Operator › Between, number and date columns) takes both ends in the one
-  input, with `..` between them: `10..20` is 10 to 20, both included; `10..` is 10 or more, `..20` 20
+- **`BETWEEN`** (Filter › Operator › Between, number and date columns, or Between in the
+  [range block](#the-range-block)) takes both ends in the one input, with `..` between them: `10..20` is 10 to 20, both included; `10..` is 10 or more, `..20` 20
   or less; `10` alone is 10 to 10 (a date: that day). Each end is parsed with the formatter, as a
   single value is: `2026-01-01..2026-03-31`. The placeholder says `from..to`, and the cell shows the
   value that way (`10..20`). The date picker of a date cell picks one day: from and to that day.
@@ -138,8 +138,10 @@ What each header cell shows is part of the [state](03-state.md#header-filters-in
 
 ### The header filter menu
 
-Right click a header filter for its menu: the submenu **Filter ›**, then the **value list** (for
-text fields and [lookup columns](20-lookups.md)), the main tool, in the menu itself. In Filter ›:
+Right click a header filter for its menu: the submenu **Filter ›**, then the main tool, in the menu
+itself: the **value list** for text fields and [lookup columns](20-lookups.md), the
+**range block** for number, date and datetime fields - a boolean column has neither, its header
+filter is a checkbox. In Filter ›:
 
 - **Operator ›** picks the operator the column's header filter uses, the one in use has a ✓: for text
   Equal, Not Equal, Contains, Does not contain, Begins with and Ends with; for numbers and dates Equal,
@@ -154,7 +156,8 @@ text fields and [lookup columns](20-lookups.md)), the main tool, in the menu its
 - **Advanced Filter…** opens the [filter editor](#the-filter-editor)
 
 From the keyboard: Shift+F10 (or the menu key) on the header filter opens the menu with the focus on
-Filter ›, ArrowRight goes into it; Tab goes from Filter › into the value list.
+Filter ›, ArrowRight goes into it; Tab goes from Filter › into the value list or the range block,
+Shift+Tab back.
 
 ```sample filter-operator-header
 ```
@@ -193,6 +196,45 @@ checkbox per value, as in a spreadsheet:
   as it was: nothing is filtered while you check and uncheck.
 - The keyboard: Tab goes from the menu's items into the search box, the checkboxes and the buttons;
   ArrowDown / ArrowUp move between the search box and the checkboxes, Space checks one.
+
+### The range block
+
+The range block is the part of the filter menu of a number, date or datetime column - where a text
+column has the value list - to filter on a range in one go: an operator and a value, without picking
+Operator › first and then typing in the header filter.
+
+```text
+[ = ][ ≠ ][ < ][ ≤ ][ > ][ ≥ ][ Between ]       [ = ][ ≠ ][ < ][ ≤ ][ > ][ ≥ ][ Between ]
+[ 30                                  ]       From [ 2026-01-01                    ]
+                     [Cancel] [Apply]         To   [ 2026-03-31                    ]
+                                                                  [Cancel] [Apply]
+```
+
+- **The operators** are those of Operator ›, in the same order - `=`, `≠`, `<`, `≤`, `>`, `≥` and
+  Between - or the ones of the column's `filterOperators`. The one picked is filled. Each is named for
+  a screen reader by its text in Operator › ("Greater than"), which is its tooltip too.
+- **One input**, two for **Between**: **From** and **To**. Either can be left empty, an open end: From
+  10 alone is 10 or more, To 20 alone 20 or less. A value is typed as in the header filter, parsed with
+  the field's formatter; the placeholder says how (`YYYY-MM-DD`, `Number`). A date column has no date
+  picker in the block: the date is typed - a click on the header filter itself still opens the picker.
+- It opens with what the header filter has: its operator, its value - a `BETWEEN`'s ends in From and
+  To. Picking Between takes the value as From; another operator after Between the first end as the
+  value.
+- **Apply** - or Enter in an input, or on an operator - does what the header filter does when the
+  operator is picked in Operator › and the value typed in the cell (`10..20` for Between): the
+  operator, when it changed, is state (`headerFilters[field].operator`) and the grid sends
+  `filter-operator-change`; the value replaces the column's conditions, as typing does, and the cell
+  shows it (`10..20`). The state, the footer's chip, `getFilterString()` and the filter editor have
+  what typing gives. An empty input is no filter on the column, as an empty cell. **Cancel** (or Esc,
+  or a click outside) closes the menu, the filter stays as it was: nothing is filtered while you pick
+  and type.
+- The keyboard: Tab goes from the menu's items into the block, Shift+Tab back. The operators are a
+  radio group, one stop of Tab: ArrowLeft / ArrowRight (or ArrowUp / ArrowDown) pick another one. Then
+  the input (From, To), Cancel and Apply. An operator clicked with the mouse puts the focus in the
+  input: a click, the value, Enter.
+
+It is a block of the menu, `filter.range`: a `menus.filter` hook can hide it, move it or put a block
+of its own in its place, see [Menus](10-menus.md#the-built-in-ids).
 
 ### Filters from the row menu
 

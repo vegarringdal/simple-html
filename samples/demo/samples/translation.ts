@@ -130,6 +130,11 @@ const norwegian: Record<TextId, string> = {
     'filter.values.blank': 'Tom',
     'filter.values.run': 'Bruk',
     'filter.values.cancel': 'Avbryt',
+    'filter.range.value': 'Verdi',
+    'filter.range.from': 'Fra',
+    'filter.range.to': 'Til',
+    'filter.range.run': 'Bruk',
+    'filter.range.cancel': 'Avbryt',
 
     // the column menu, on a column number
     'column.copy.column': 'Kopier kolonne',

@@ -174,18 +174,19 @@ describe('menus - the built-in ids', () => {
 
         openFilterMenu(element, 'firstname');
 
-        // not the operators of a number
+        // not the operators of a number, nor its range block
         const numberOnly = [
             'filter.operator.lessThan',
             'filter.operator.lessThanOrEqualTo',
             'filter.operator.greaterThan',
             'filter.operator.greaterThanOrEqualTo',
-            'filter.operator.between'
+            'filter.operator.between',
+            'filter.range'
         ];
         expect(menuTreeIds()).toEqual(MENU_IDS.filter.filter((id) => !numberOnly.includes(id)));
     });
 
-    it('expect the range operators of a number column, without the value list', async () => {
+    it('expect the range operators of a number column and its range block, without the value list', async () => {
         const { element } = await mountGrid();
 
         openFilterMenu(element, 'age');

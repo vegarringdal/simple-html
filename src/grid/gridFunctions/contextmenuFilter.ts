@@ -1,12 +1,20 @@
 import { html, nothing, render } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
+import type { FieldType } from '../../datasource/field';
 import { and, type FilterExpression, type FilterOperator, isFilterGroup, where } from '../../datasource/filterExpression';
+import { isBlank } from '../../datasource/isBlank';
 import type { TextId } from '../../texts';
 import type { Grid } from '../grid';
 import type { MenuBlock, MenuContext, MenuEntry, MenuItem } from '../gridMenus';
 import { clearAllColumnFilters } from './clearAllColumnFilters';
 import type { ColType } from './colType';
-import { columnOperators, headerFilterType, isAlwaysCaseSensitive, isHeaderOperator } from './columnFilterOptions';
+import {
+    columnOperators,
+    headerFilterType,
+    headerOperators,
+    isAlwaysCaseSensitive,
+    isHeaderOperator
+} from './columnFilterOptions';
 import { DROPDOWN_FILTER_MAX_ROWS, dropDownFilterData, type ValueListEntry } from './dropDownFilterData';
 import { filterCallback } from './filterCallback';
 import { getHeaderFilterOperator, isHeaderFilterCaseSensitive } from './getHeaderFilterOperator';
@@ -16,6 +24,7 @@ import { openFilterEditor } from './openFilterEditor';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { removeContextMenu } from './removeContextMenu';
 import { placeUnderCell, showMenu } from './showMenu';
+import { attachTooltips, tooltipsEnabled } from './tooltip';
 
 /**
  * Opens the filter menu, the right click menu of a header filter: the default entries (see
@@ -70,12 +79,13 @@ const OPERATOR_TEXTS: Partial<Record<FilterOperator, TextId>> = {
 /**
  * The filter menu's default entries, new objects every call: the submenu Filter (`filter.filter`) -
  * the submenu operator, "Match case", the submenu blank, clear, clear all, a line, the filter editor -
- * then the value list, the main tool, not in a submenu. The entries kept the ids they had before they
- * were in Filter. The ids are documented in MENU_IDS.filter.
+ * then the main tool, not in a submenu: the value list of a text or lookup column, the range block of a
+ * number or date column (each hides itself for the other columns). The entries kept the ids they had
+ * before they were in Filter. The ids are documented in MENU_IDS.filter.
  *
  * What it offers are the column's operators (columnOperators: the type's, or its `filterOperators`):
- * Operator › those the header filter's input takes, Blank › IS_BLANK / IS_NOT_BLANK, the value list IN
- * (and NOT_IN when it has it)
+ * Operator › and the range block those the header filter's input takes, Blank › IS_BLANK /
+ * IS_NOT_BLANK, the value list IN (and NOT_IN when it has it)
  */
 function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
     // a lookup column filters on its labels: the operators of a text (filterCallback)
@@ -97,12 +107,7 @@ function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
         filterCallback(ctx, ctx.gridInterface.__getHeaderFilter(attribute)?.value ?? null, attribute);
         // the cell shows its value for the operator (a BETWEEN's from..to) and its placeholder
         rebuildHeaderColumns(ctx);
-        ctx.gridInterface.__callSubscribers('filter-operator-change', {
-            field: attribute,
-            operator: picked,
-            column: ctx.gridInterface.__getGridConfig().columns[attribute],
-            rebuildHeader: () => rebuildHeaderColumns(ctx)
-        });
+        operatorPicked(ctx, attribute, picked);
     };
 
     /**
@@ -180,8 +185,22 @@ function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
                 { id: 'filter.filter.advanced', label: text('filter.filter.advanced'), action: () => openFilterEditor(ctx) }
             ]
         },
-        valueListBlock(ctx, attribute, offered)
+        valueListBlock(ctx, attribute, offered),
+        rangeBlock(ctx, attribute, type, headerOperators(column, type), current)
     ];
+}
+
+/**
+ * The `filter-operator-change` event: an operator picked in Operator ›, or applied with the range block
+ * (rangeBlock). After the filter ran with it and the header was rendered again
+ */
+function operatorPicked(ctx: Grid, attribute: string, operator: FilterOperator) {
+    ctx.gridInterface.__callSubscribers('filter-operator-change', {
+        field: attribute,
+        operator,
+        column: ctx.gridInterface.__getGridConfig().columns[attribute],
+        rebuildHeader: () => rebuildHeaderColumns(ctx)
+    });
 }
 
 /**
@@ -369,6 +388,203 @@ function valueListBlock(ctx: Grid, attribute: string, offered: FilterOperator[])
                     </button>
                     <button type="button" class="simple-html-grid-button simple-html-grid-button-primary" @click=${apply}>
                         ${text('filter.values.run')}
+                    </button>
+                </div>`,
+            element
+        );
+    };
+
+    reRender();
+    return block;
+}
+
+/**
+ * What an operator of the range block shows (rangeBlock): its symbol. Between has none, it shows its
+ * name - the text of Operator ›'s Between
+ */
+const OPERATOR_SYMBOLS: Partial<Record<FilterOperator, string>> = {
+    EQUAL: '=',
+    NOT_EQUAL_TO: '≠',
+    LESS_THAN: '<',
+    LESS_THAN_OR_EQUAL_TO: '≤',
+    GREATER_THAN: '>',
+    GREATER_THAN_OR_EQUAL_TO: '≥'
+};
+
+/**
+ * The range block of the filter menu of a number, date or datetime column (`filter.range`): its main
+ * tool, where a text column has the value list. A row of the operators of Operator › - =, ≠, <, ≤, >, ≥
+ * and Between, the one picked filled - an input for the value, two for Between (From and To, either can
+ * be left empty: an open end), then Cancel and Apply. One block with an element of its own, which it
+ * renders again when another operator is picked.
+ *
+ * It opens with what the header filter has: its operator, its value - a BETWEEN's `[from, to]` in From
+ * and To. What is picked and typed is a draft, nothing is filtered until Apply (or Enter in the block).
+ * Apply does what the header filter does when the operator is picked in Operator › and the value typed
+ * in the cell: the operator, when it changed, is state with a `filter-operator-change` event; the value -
+ * `from..to` for Between - goes to filterCallback as typed text, parsed with the field's formatter
+ * (parseFilter); the cell is rendered again and shows it. An input left empty is no filter on the column,
+ * as an empty cell. The placeholder of an input is the formatter's (a date's format), else "Number".
+ *
+ * The keyboard: Tab goes on from the menu's items into it (see itemKeydown in showMenu), Shift+Tab back.
+ * The operators are radio buttons, one stop of Tab: the arrows move between them, as in any radio group.
+ * Picked with the mouse, the focus goes on to the input: a click, the value, Enter. Enter in an input or
+ * on an operator applies, as Apply does; Cancel (or Esc, a click outside) leaves the filter as it was.
+ *
+ * Not for a lookup column - it filters on its labels, as text (headerFilterType) - nor a boolean one, its
+ * header filter is a checkbox: the block is not shown, nothing is rendered in it.
+ * @param operators the column's operators of the header filter's input (headerOperators), in the type's order
+ * @param current the operator the header filter uses (getHeaderFilterOperator), picked when it opens
+ */
+function rangeBlock(
+    ctx: Grid,
+    attribute: string,
+    type: FieldType,
+    operators: FilterOperator[],
+    current: FilterOperator
+): MenuBlock {
+    const element = document.createElement('div');
+    element.setAttribute('data-menu-id', 'filter.range');
+    element.className = 'simple-html-grid-range';
+
+    const shown = (type === 'number' || type === 'date' || type === 'datetime') && operators.length > 0;
+    const block: MenuBlock = { type: 'block', id: 'filter.range', element, visible: () => shown };
+    if (!shown) {
+        return block;
+    }
+
+    const text = (id: TextId) => gridText(ctx, id);
+    const { formatter } = ctx.gridInterface.getDatasource().getField(attribute);
+    // what an empty input says to type: as an empty header filter, the formatter's placeholder - a date's
+    // format - else the type's
+    const placeholder = formatter.placeholder || (type === 'number' ? text('filter.placeholder.number') : '');
+    // the radios of the operators are one group, and the ids of From and To: one per grid, the menu of
+    // another grid can be open too
+    const group = `${ctx.ariaIdPrefix}-range`;
+    // each operator with its name - for a screen reader and the tooltip - and its symbol
+    const choices = operators.flatMap((operator) => {
+        const id = OPERATOR_TEXTS[operator];
+        return id ? [{ operator, name: text(id), symbol: OPERATOR_SYMBOLS[operator] }] : [];
+    });
+
+    /**
+     * The draft: the operator picked and the text of the inputs - [value, ''] for one, [from, to] for
+     * Between. From the header filter's value, as its cell shows it: a BETWEEN's ends one in each
+     */
+    const endText = (end: unknown) => (isBlank(end) ? '' : formatter.format(end));
+    const value = ctx.gridInterface.__getHeaderFilter(attribute)?.value;
+    const state = {
+        operator: current,
+        texts: Array.isArray(value) ? [endText(value[0]), endText(value[1])] : [endText(value), '']
+    };
+
+    /**
+     * One input for an operator that is not Between: the value is the first text, From when it has one,
+     * else To - as the header filter takes a BETWEEN's first end for another operator (filterCallback)
+     */
+    const singleValue = () => {
+        if (state.operator !== 'BETWEEN' && state.texts[0].trim() === '') {
+            state.texts = [state.texts[1], ''];
+        }
+    };
+    singleValue();
+
+    /**
+     * As if the operator was picked in Operator › and the value typed in the header filter, see the
+     * function. Then the menu closes
+     */
+    const apply = () => {
+        const [first, second] = state.texts.map((typed) => typed.trim());
+        const changed = state.operator !== current;
+        if (changed) {
+            ctx.gridInterface.__setHeaderFilterOperator(attribute, state.operator);
+        }
+        // a BETWEEN as typed: from..to, an empty end is open, `..` no filter
+        filterCallback(ctx, state.operator === 'BETWEEN' ? `${first}..${second}` : first, attribute);
+        // the cell shows the value as if it was typed there, and the placeholder of the operator
+        rebuildHeaderColumns(ctx);
+        if (changed) {
+            operatorPicked(ctx, attribute, state.operator);
+        }
+        removeContextMenu(ctx);
+    };
+
+    /**
+     * Another operator in the draft. Picked with the mouse (the last input was no key) the focus goes on
+     * to the input: the arrows of the keyboard stay in the group
+     */
+    const pick = (operator: FilterOperator) => {
+        state.operator = operator;
+        singleValue();
+        reRender();
+        if (!ctx.keyboardUsed) {
+            element.querySelector<HTMLInputElement>('input[type="text"]')?.focus();
+        }
+    };
+
+    // Enter in an input - a value, From, To or an operator's radio - applies. Not the Enter that ends the
+    // composing of a character (an input method editor). The buttons are the browser's: Enter and Space
+    // click them
+    element.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.isComposing && event.target instanceof HTMLInputElement) {
+            event.preventDefault();
+            apply();
+        }
+    });
+    // the names of the operators, shown when the pointer rests on them
+    attachTooltips(element, () => tooltipsEnabled(ctx));
+
+    const reRender = () => {
+        /**
+         * An input: the text of the draft at `index`, kept in it as it is typed
+         * @param name its name for a screen reader, nothing when a label names it (From, To)
+         * @param id for its label
+         */
+        const input = (index: number, name: string | typeof nothing, id: string | typeof nothing) =>
+            html`<input
+                class="simple-html-grid-range-input"
+                type="text"
+                id=${id}
+                aria-label=${name}
+                placeholder=${placeholder}
+                .value=${live(state.texts[index])}
+                @input=${(event: Event) => {
+                    state.texts[index] = (event.target as HTMLInputElement).value;
+                }}
+            />`;
+
+        /**
+         * An operator: a radio, invisible, in a label that is the button - its symbol, the tooltip its name
+         * (Between shows its name, no tooltip). The one picked is checked
+         */
+        const operatorButton = (choice: (typeof choices)[number]) =>
+            html`<label class="simple-html-grid-range-operator" data-tooltip=${choice.symbol ? choice.name : nothing}>
+                <input
+                    type="radio"
+                    name=${group}
+                    aria-label=${choice.name}
+                    .checked=${live(choice.operator === state.operator)}
+                    @change=${() => pick(choice.operator)}
+                />
+                <span aria-hidden="true">${choice.symbol ?? choice.name}</span>
+            </label>`;
+
+        const ends = html`<div class="simple-html-grid-range-ends">
+            <label for=${`${group}-from`}>${text('filter.range.from')}</label>${input(0, nothing, `${group}-from`)}
+            <label for=${`${group}-to`}>${text('filter.range.to')}</label>${input(1, nothing, `${group}-to`)}
+        </div>`;
+
+        render(
+            html`<div class="simple-html-grid-range-operators" role="radiogroup" aria-label=${text('filter.operator')}>
+                    ${choices.map(operatorButton)}
+                </div>
+                ${state.operator === 'BETWEEN' ? ends : input(0, text('filter.range.value'), nothing)}
+                <div class="simple-html-grid-range-buttons">
+                    <button type="button" class="simple-html-grid-button" @click=${() => removeContextMenu(ctx)}>
+                        ${text('filter.range.cancel')}
+                    </button>
+                    <button type="button" class="simple-html-grid-button simple-html-grid-button-primary" @click=${apply}>
+                        ${text('filter.range.run')}
                     </button>
                 </div>`,
             element

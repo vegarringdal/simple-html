@@ -185,7 +185,8 @@ export interface MenuSeparator {
  * from an item of its menu.
  *
  * The header filter menu's value list (search box, checkboxes, "Cancel" and "Apply") is a block of the grid's
- * own, `'filter.values'`: hide or move it as one entry, it is not built from items.
+ * own, `'filter.values'`: hide or move it as one entry, it is not built from items. So is the range block
+ * of a number or date column (its operators, an input, "Cancel" and "Apply"), `'filter.range'`.
  *
  * Also for something bigger than a list of items in a menu of your own: a second grid as a dropdown,
  * which then closes with the grid's menus (outside click, scroll, another menu opening).
@@ -311,7 +312,7 @@ export interface MenuPosition {
  * - `header`: right click on a header label - pin, hide, remove sorting, column chooser, then the
  *   submenus size, aggregate, grouping
  * - `filter`: right click on a header filter - clear, the submenus blank and operator, the filter
- *   editor, the value list
+ *   editor, the value list (text) or the range block (numbers and dates)
  * - `column`: right click on a column number (the row of numbers under the header filters) - the
  *   select submenu, the copies of the column, of the selected columns and of their header names
  *
@@ -380,14 +381,15 @@ export interface GridMenus {
  * (`header.column.*`: pin, hide, remove sorting, the column chooser). The ids stay the same between
  * versions, so a menu changed by id keeps working. They are text ids too: the label of an entry is
  * the text of its id, its hint the text `<id>.hint` - see {@link TEXTS} and {@link setTexts}. The
- * "shown as" below is the English text; the separators and `filter.values` have no text of their own.
+ * "shown as" below is the English text; the separators and the blocks `filter.values` and `filter.range`
+ * have no text of their own.
  *
  * The menus as they open, a `›` is a submenu:
  *
  * ```text
  * row menu                          header menu                     filter menu
  * Undo / Redo ›                     Pin ›                           Filter ›
- * Select ›                          Hide column                     the value list
+ * Select ›                          Hide column                     the value list / the range block
  * Copy ›                            Remove sorting
  * Paste ›                           ----                            in Filter ›:
  * Clear ›                           Column chooser…                 Operator ›
@@ -523,6 +525,7 @@ export interface GridMenus {
  * | `filter.filter.advancedSeparator` | a line | |
  * | `filter.filter.advanced` | Advanced Filter… - the filter editor | |
  * | `filter.values` | the value list: search box, "Select all" and a checkbox per value, "Cancel" and "Apply" - a {@link MenuBlock}, its texts are `filter.values.*` | a text field, a lookup column - with `IN` |
+ * | `filter.range` | the range block: the operators of Operator › as a row of buttons (=, ≠, <, ≤, >, ≥, Between), an input - From and To for Between - "Cancel" and "Apply": as the operator picked in Operator › and the value typed in the header filter. A {@link MenuBlock}, its texts are `filter.range.*` | a number, date or datetime field, not a lookup column |
  *
  * Column menu (`GridMenus.column`), right click on a column number - the row of numbers under the
  * header filters - or Shift+F10 on one with the focus. Select ›, then the copies, flat: a Copy › around
@@ -664,7 +667,8 @@ export const MENU_IDS = {
         'filter.filter.clearAll',
         'filter.filter.advancedSeparator',
         'filter.filter.advanced',
-        'filter.values'
+        'filter.values',
+        'filter.range'
     ],
     /** the column menu's ids, right click on a column number */
     column: [

@@ -91,9 +91,9 @@ The ids are grouped by area, the area first. Within an area:
 
 - **A menu entry's text has the entry's id**, see [Menus](10-menus.md#the-built-in-ids): the text of the
   entry `row.copy.cell` is `row.copy.cell`, the label of the submenu `row.copy` is `row.copy`. The
-  text in parentheses after an entry, its hint, is `<id>.hint`. The separators and the value list
-  (`filter.values`, a block) have no text of their own, the parts of the value list are
-  `filter.values.*`.
+  text in parentheses after an entry, its hint, is `<id>.hint`. The separators and the blocks - the
+  value list (`filter.values`) and the range block (`filter.range`) - have no text of their own, the
+  parts of the value list are `filter.values.*`, those of the range block `filter.range.*`.
 - **A tooltip is `<id>.tooltip`**: `filterEditor.filterOnly` is the button, `filterEditor.filterOnly.tooltip`
   its tooltip. A tooltip of an icon has no text without `.tooltip`.
 - **An operator has a name in each place it is shown**, the `FilterOperator` at the end:
@@ -302,7 +302,7 @@ Right click on a header filter.
 | `filter.filter.isBlank` | `Is blank` | replaces the column's conditions with `IS_BLANK` |
 | `filter.filter.isNotBlank` | `Is not blank` | replaces the column's conditions with `IS_NOT_BLANK` |
 | `filter.filter.advanced` | `Advanced Filter…` | opens the filter editor |
-| `filter.operator` | `Operator` | the operator submenu, in the filter submenu, not a boolean field. The column's operators (`filterOperators`) |
+| `filter.operator` | `Operator` | the operator submenu, in the filter submenu, not a boolean field. The column's operators (`filterOperators`). Also the name of the row of operators of the range block |
 | `filter.operator.equal` | `Equal` | not a boolean field |
 | `filter.operator.notEqualTo` | `Not Equal` | not a boolean field |
 | `filter.operator.lessThan` | `Less than` | a number or date field |
@@ -334,6 +334,23 @@ and a lookup column.
 | `filter.values.blank` | `Blank` | the value of the empty cells |
 | `filter.values.run` | `Apply` | the button that filters on the checked values |
 | `filter.values.cancel` | `Cancel` | the button that closes the menu without filtering |
+
+### The range block
+
+The part of the filter menu of a number, date or datetime column with its operators as buttons and
+an input - From and To for Between. The buttons show the symbols `=`, `≠`, `<`, `≤`, `>`, `≥` - no
+texts - and the text `filter.operator.between`. Each is named by the text of its entry in Operator ›
+(`filter.operator.equal` ...), for a screen reader and as its tooltip; the row of them by
+`filter.operator`. An empty input shows the placeholder of an empty header filter: the date format, or
+`filter.placeholder.number`.
+
+| id | English | shown |
+| --- | --- | --- |
+| `filter.range.value` | `Value` | the name of the input, for a screen reader |
+| `filter.range.from` | `From` | the label of the first input, with Between |
+| `filter.range.to` | `To` | the label of the second input, with Between |
+| `filter.range.run` | `Apply` | the button that filters, as typing in the header filter |
+| `filter.range.cancel` | `Cancel` | the button that closes the menu without filtering |
 
 ### Column menu
 

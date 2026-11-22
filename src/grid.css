@@ -2205,6 +2205,119 @@
     outline-offset: 1px;
 }
 
+/**
+ * The range block of the filter menu (contextmenuFilter.ts) of a number or date column, where a text
+ * column has the value list, as wide: the operators in a row, an input - From and To for Between - and
+ * Cancel / Apply
+ */
+.simple-html-grid .simple-html-grid-range {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-sizing: border-box;
+    min-width: 220px;
+    max-width: 320px;
+    padding: 6px 8px 8px;
+    border-top: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+/* the operators: square buttons side by side, one line between two, as wide as the block */
+.simple-html-grid .simple-html-grid-range .simple-html-grid-range-operators {
+    display: flex;
+}
+
+/* an operator: the label is the button, its radio is in it - invisible, over all of it */
+.simple-html-grid .simple-html-grid-range .simple-html-grid-range-operator {
+    position: relative;
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 5px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-weight: var(--simple-html-grid-font-weight-header);
+    white-space: nowrap;
+    user-select: none;
+    cursor: pointer;
+}
+
+.simple-html-grid .simple-html-grid-range .simple-html-grid-range-operator + .simple-html-grid-range-operator {
+    border-left: 0;
+}
+
+.simple-html-grid .simple-html-grid-range .simple-html-grid-range-operator:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+/* the one picked: filled with the accent colour, as the AND / OR in use of the filter editor */
+.simple-html-grid .simple-html-grid-range .simple-html-grid-range-operator:has(input:checked) {
+    border-color: var(--simple-html-grid-accent-color);
+    background-color: var(--simple-html-grid-accent-color);
+    color: var(--simple-html-grid-accent-font-color);
+    cursor: default;
+}
+
+.simple-html-grid .simple-html-grid-range .simple-html-grid-range-operator input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: inherit;
+}
+
+/* the keyboard on an operator: the outline on the button, outside - inside a filled one it would not
+ * show - over the buttons next to it */
+.simple-html-grid .simple-html-grid-range .simple-html-grid-range-operator:has(input:focus-visible) {
+    z-index: 1;
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: 1px;
+}
+
+/* the inputs: framed as the value list's search box */
+.simple-html-grid .simple-html-grid-range .simple-html-grid-range-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 24px;
+    margin: 0;
+    padding: 0 6px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    text-align: left;
+}
+
+.simple-html-grid .simple-html-grid-range .simple-html-grid-range-input::placeholder {
+    color: var(--simple-html-grid-sec-font-color);
+    opacity: 1;
+}
+
+/* From and To: a label and its input on each line, the inputs lined up */
+.simple-html-grid .simple-html-grid-range .simple-html-grid-range-ends {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 4px 6px;
+}
+
+.simple-html-grid .simple-html-grid-range .simple-html-grid-range-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 2px;
+}
+
 .simple-html-draggable-element {
     pointer-events: none;
 }
@@ -3037,8 +3150,8 @@
 
 /**
  * A screen that is touched (the primary pointer is coarse: a finger): the menus, their submenus, the
- * column chooser, the filter menu's value list and the filter editor's grab areas get targets a finger
- * hits - rows of 36px, as the 32-48px of the touch guidelines (Material 48dp, Apple 44pt) in a menu of
+ * column chooser, the filter menu's value list and range block and the filter editor's grab areas get
+ * targets a finger hits - rows of 36px, as the 32-48px of the touch guidelines (Material 48dp, Apple 44pt) in a menu of
  * the grid's small font. The grid's own rows keep their height: `cellHeight` is the app's
  */
 @media (pointer: coarse) {
@@ -3066,6 +3179,8 @@
 
     .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-search,
     .simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-search,
+    .simple-html-grid .simple-html-grid-range .simple-html-grid-range-operator,
+    .simple-html-grid .simple-html-grid-range .simple-html-grid-range-input,
     .simple-html-grid .simple-html-grid-button {
         height: 36px;
     }
