@@ -10,6 +10,10 @@ formatters are registered under ids from the start, your own you register with
 A formatter gives text. To draw a cell another way - a badge, a bar, a link - give the column a cell
 renderer, see [Custom cells](21-custom-cells.md): it gets the formatter's text too.
 
+How a column *shows* its values - a date as `22.11.2026` or as the week `2026-W47`, a number as
+`1 234 567,89` - the user can pick in the header menu, without a formatter of your own: see
+[Display formats](#display-formats).
+
 ## What a formatter does
 
 A formatter is a plain object with two methods and three optional parts:
@@ -189,6 +193,188 @@ A formatter that reads a setting of your own (the number of decimals, say) can c
 shows: call `gridInterface.rebuild()` after the setting changed, so the cells and the header
 filters show it.
 
+## Display formats
+
+A display format is how a column shows its values, picked by the user: right click a column label,
+**Format ›**. A date column shows its dates as ISO, Norwegian, US ... or a part of them - the week,
+the day of the week, the days until; a number column picks its decimals, its thousands separator and
+its decimal mark. It is a view setting, like a column's width: only the text shown changes, the value
+stays as it is - an edited cell shows the value, the header filter is typed as before. It is part of
+the state, so `getState()` keeps it.
+
+Give a column the format it starts with in the config, `ColumnConfig.format`: an object with a part
+for the field's type, `date` for a `date` or `datetime` field, `number` for a `number` field.
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    columns: {
+        born: { format: { date: 'norwegian' } }, // 22.11.2026
+        due: { format: { date: 'daysUntil' } }, // 3: in three days
+        updated: { format: { date: 'norwegianTime' } }, // 22.11.2026 13:45 (a datetime field)
+        balance: { format: { number: { decimals: 2, thousands: ' ', decimal: ',' } } } // 1 234 567,89
+    },
+    layout: {
+        center: [
+            { fields: ['born'], width: 100 },
+            { fields: ['due'], width: 80 },
+            { fields: ['updated'], width: 130 },
+            { fields: ['balance'], width: 120 }
+        ]
+    }
+};
+```
+
+A format that does not fit the field throws a `TypeError` when the grid is made, or `updateConfig()`
+or `setState()` is given it: an id that is not a date format, a part for another type (`date` on a
+number field), a time format on a `date` field, a number format with a part it does not have, and a
+format on a lookup column (`editor`: its cells show a label). Text and boolean columns have no
+format, and no Format › in their header menu.
+
+```sample full-grid
+```
+
+### The date formats
+
+What 2026-11-22 13:45:12, a Sunday, is shown as. The time formats are for a `datetime` field only.
+
+| `date` | shows | |
+| --- | --- | --- |
+| `'iso'` | `2026-11-22` | |
+| `'norwegian'` | `22.11.2026` | |
+| `'norwegianShort'` | `22.11.26` | |
+| `'us'` | `11/22/2026` | |
+| `'uk'` | `22/11/2026` | |
+| `'medium'` | `Nov 22, 2026` | `22. nov. 2026` with `format.locale` `nb-NO` |
+| `'long'` | `November 22, 2026` | `22. november 2026` |
+| `'full'` | `Sunday, November 22, 2026` | `søndag 22. november 2026` |
+| `'isoTime'` | `2026-11-22 13:45` | `datetime` |
+| `'isoSeconds'` | `2026-11-22 13:45:12` | `datetime` |
+| `'norwegianTime'` | `22.11.2026 13:45` | `datetime` |
+| `'norwegianSeconds'` | `22.11.2026 13:45:12` | `datetime` |
+| `'time'` | `13:45` | `datetime` |
+| `'timeSeconds'` | `13:45:12` | `datetime` |
+| `'weekday'` | `Sunday` | `søndag` |
+| `'weekIso'` | `2026-W47` | ISO 8601, see below |
+| `'weekUs'` | `2026-W48` | see below |
+| `'month'` | `2026-11` | |
+| `'quarter'` | `2026 Q4` | |
+| `'year'` | `2026` | |
+| `'daysUntil'` | `0` | whole days from today, see below |
+
+The local day and time are shown, as the date formatters show them. A `datetime` column with a date
+format shows the date only: `'norwegian'` is `22.11.2026`.
+
+- **Week, ISO** (ISO 8601, as in Norway and most of Europe): a week starts on Monday, week 1 is the
+  week with the year's first Thursday. A week belongs to one year, the year of its Thursday: the first
+  days of January can be the last week of the year before, the last days of December week 1 of the
+  next. 2027-01-01 is `2026-W53`, 2024-12-30 is `2025-W01`. A year has 52 or 53 weeks.
+- **Week, US** (as Excel's `WEEKNUM`): a week starts on Sunday, week 1 is the week of January 1, and
+  a week across New Year is split - 2026-12-31 is `2026-W53`, 2027-01-01 `2027-W01`. 53 weeks, 54
+  in a leap year that starts on a Saturday (2000).
+- **Days until**: the whole days from today to the date - `1` tomorrow, `0` today, `-1` yesterday.
+  The time of day and summer time do not count. Today is the day the cell is rendered: a grid left
+  open over midnight shows yesterday's count until its cells are rendered again - a scroll, an edit,
+  `gridInterface.refresh()`. It has no timer of its own; call `refresh()` from one of yours to keep it
+  up to date.
+
+#### The language of the names
+
+The names of the months and the days - `medium`, `long`, `full`, `weekday` - are made by
+`Intl.DateTimeFormat` in the language of the text `format.locale`, `'en-US'` by default. It is set
+with the other texts (see [Texts](12-texts.md#display-formats)): the Norwegian texts of an app give
+`'nb-NO'`, and the dates follow. A tag Intl does not take (`'nb_NO'`) shows English.
+
+How a week and a quarter are written are texts too, with `{year}`, `{week}` (two digits) and
+`{quarter}` filled in:
+
+```ts
+import { setTexts } from '@simple-html/grid';
+
+setTexts({
+    'format.locale': 'nb-NO', // søndag 22. november 2026
+    'format.weekIso': 'uke {week} {year}', // uke 47 2026
+    'format.quarter': '{quarter}. kvartal {year}' // 4. kvartal 2026
+});
+```
+
+### The number formats
+
+A `number` part has four optional parts; `{}` shows the number as it is, without separators:
+
+| part | takes | left out |
+| --- | --- | --- |
+| `decimals` | `0` to `4` | the decimals the number has, as the field's formatter shows them |
+| `thousands` | `' '`, `','`, `'.'` or `"'"` | none |
+| `decimal` | `'.'` or `','` | `'.'` |
+| `percent` | `true`: the number times 100, with ` %` after it | `false` |
+
+What 1234567.891 is shown as:
+
+| `number` | shows |
+| --- | --- |
+| `{ thousands: ' ', decimal: ',' }` | `1 234 567,891` (the menu's Norwegian) |
+| `{ thousands: ',' }` | `1,234,567.891` (English) |
+| `{ thousands: "'" }` | `1'234'567.891` (Swiss) |
+| `{}` | `1234567.891` (Plain) |
+| `{ decimals: 2, thousands: ' ', decimal: ',' }` | `1 234 567,89` |
+| `{ decimals: 0 }` | `1234568` |
+| `{ decimals: 1, percent: true }` on 0.256 | `25.6 %` |
+
+- **Rounded half away from zero, of the number as it is written**: `2.5` is `3`, `-2.5` is `-3`,
+  `1.005` with two decimals is `1.01` - `toFixed(2)` gives `1.00`, of the binary value
+  1.00499999.... A negative number rounded to 0 has no minus: `-0.001` is `0.00`.
+- **The decimals as is** are the ones the number has, at most 20, as the field's formatter writes
+  them: `0.1 + 0.2` is `0.30000000000000004`. No exponent: `1e21` is a 1 and 21 zeros.
+- **The characters are plain ASCII**: the space is U+0020, not the no-break space
+  `Intl.NumberFormat('nb-NO')` writes - a cell is one line, and Find finds a space typed. The minus
+  is `-`, not the `−` (U+2212) of `nb-NO`. The apostrophe is `'`, not the `’` of Chromium's `de-CH`.
+- **One character can not be both separators**: `{ thousands: ',', decimal: ',' }` throws a
+  `TypeError`, and so does `{ thousands: '.' }` (the decimal mark is `.` when it is left out). In
+  the menu a separator the other one has is greyed out.
+- **From the menu**, a column without a format starts with the decimal mark its formatter shows:
+  *Decimals › 2* on a `numberComma` field gives `{ decimals: 2, decimal: ',' }`.
+- A value that is no finite number, and a blank, is shown by the field's formatter - a blank as an
+  empty cell. So is a date column's value that is no date.
+
+### What a display format changes
+
+Only what the grid shows as the cell's text, and what follows the cells. The value, and everything
+that reads or writes it, keep to the field's formatter:
+
+| where | shows |
+| --- | --- |
+| the cells, a readonly cell with the focus too | the display format |
+| a cell being edited (it has the focus) | the value, as the field's formatter writes it for editing (`formatForEdit`): a cell shown as `2026-W47` is edited as `2026-11-22`, `1 234 567,89` as `1234567.891`. What is typed is parsed by the field's formatter |
+| a renderer of your own (`ColumnConfig.renderer`) | `text` is the display format, `value` the value |
+| the edited marker's tooltip, "Original value" | the display format |
+| the aggregates in the group rows and the totals row | the display format of a number column, see [Aggregates](18-aggregates.md#how-they-are-shown) |
+| the summary of the selected cells in the footer | the display format of the first number field, its decimals - as is: two at most |
+| Find, the fitted width (`fitColumns()`), the dimmed repeated values | the text the cells show |
+| the header filter, its placeholder | the field's formatter: **you type a date, not a week** - `2026-11-22`, not `2026-W47` |
+| the filter chips, the filter editor, `getFilterString()` | the field's formatter: a filter is on the value |
+| the names of the group rows | the field's formatter, made by the datasource |
+| sorting, grouping | the value: a column shown as weeks sorts and groups by its dates |
+| copy (Ctrl+C, Copy ›) and the CSV export | the field's formatter: the value, so a paste reads it back - `2026-W47` and `1 234 567,89` it could not |
+| the Excel export | the value, with an Excel number format like the display format where Excel has one, see [Export](15-export.md#typed-cells) |
+
+### In the state
+
+The formats are `GridState.formats`, keyed by field: what the columns' `format` starts with and the
+menu changes. `setState({ formats })` replaces them all - to change one column, start from the ones
+there are:
+
+```ts
+const { formats } = gridInterface.getState(); // { born: { date: 'norwegian' } }
+
+gridInterface.setState({ formats: { ...formats, balance: { number: { decimals: 2 } } } });
+gridInterface.setState({ formats: {} }); // every column shows its field's formatter
+gridInterface.resetState(); // the formats of the config again
+```
+
+See [State](03-state.md#display-formats-in-the-state).
+
 ## The type from another field
 
 For property/value style data - a column of values of different types - a text column can take the
@@ -234,4 +420,5 @@ const config: GridConfig = {
 
 The column option `numberOverride` changes what a number cell shows, not the value:
 `'ZERO_TO_BLANK'` shows 0 as an empty cell, `'BLANK_TO_ZERO'` an empty cell as `0`. See
-[Grid config](02-grid-config.md#column-options).
+[Grid config](02-grid-config.md#column-options). With a display format the 0 is the format's:
+`'BLANK_TO_ZERO'` with two decimals shows `0,00`, and `'ZERO_TO_BLANK'` empties what shows as `0,00`.

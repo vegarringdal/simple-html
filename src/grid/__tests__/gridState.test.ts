@@ -91,7 +91,8 @@ describe('getState', () => {
             filter: null,
             headerFilters: {},
             aggregates: {},
-            totalsRow: false
+            totalsRow: false,
+            formats: {}
         });
     });
 
@@ -438,7 +439,8 @@ describe('initialState', () => {
             ...config.initialState,
             layout: { left: [], center: config.layout.center, right: [] },
             aggregates: {},
-            totalsRow: false
+            totalsRow: false,
+            formats: {}
         });
     });
 

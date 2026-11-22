@@ -113,10 +113,13 @@ export function downloadBlob(blob: Blob, filename: string) {
 }
 
 /**
- * A function that gives the text of a field of a row: the text the grid's cell shows (as
- * renderRowCell builds it), or the value as it is stored. The clipboard of the cell ranges copies the
- * text the cells show with it too (rangeClipboard.ts), and the Excel export writes it for a value that
- * is not of its cell's type.
+ * A function that gives the text of a field of a row: the text of the field's formatter, as the
+ * grid's cell shows it without a display format (renderRowCell), or the value as it is stored. The
+ * clipboard of the cell ranges copies with it too (rangeClipboard.ts), and the Excel export writes it
+ * for a value that is not of its cell's type.
+ *
+ * Not the column's display format (`ColumnConfig.format`): the CSV and copy are the value - a paste
+ * reads it back with the field's formatter, `2026-W47` or `1 234,56` it could not
  */
 export function cellText(gridInterface: GridInterface<any>, field: string, formatted: boolean): (row: Entity) => string {
     if (!formatted) {

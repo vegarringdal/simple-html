@@ -3,9 +3,11 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 // the date picker element registers itself on import, the package entry does this for users
 import '../../date/dateElement';
+import { DateFormatterYYYYMMDDTHHMMSS } from '../../datasource/DateFormatterYYYYMMDDTHHMMSS';
 import { Datasource } from '../../datasource/dataSource';
 import type { Entity } from '../../datasource/entity';
 import { and, type FilterCondition, type FilterOperator, or, where } from '../../datasource/filterExpression';
+import { registerFormatter } from '../../datasource/formatterRegistry';
 import { DateInterface } from '../../date/dateInterface';
 import type { IDateConfig } from '../../date/interfaces';
 import { setTexts, TEXTS, type Texts } from '../../texts';
@@ -54,6 +56,12 @@ const OPERATORS: FilterOperator[] = [
 const isDatasourceText = (id: string) => /^(validation|filterString|grouping)\./.test(id);
 
 /**
+ * format.locale is no text shown: the language of the names of a date's display format (Format ›), a
+ * tag for Intl. Russian, so the names it gives - in the hints of Format › - have no Latin letters
+ */
+const LOCALE_ID = 'format.locale';
+
+/**
  * every text as «id», with the {names} of its default after it: the values are still shown
  */
 function fakeTexts(only: (id: string) => boolean): Texts {
@@ -61,11 +69,14 @@ function fakeTexts(only: (id: string) => boolean): Texts {
     for (const [id, text] of Object.entries(TEXTS)) {
         if (only(id)) {
             const names = text.match(/\{\w+\}/g) ?? [];
-            texts[id] = `«${id}»${names.map((name) => ` ${name}`).join('')}`;
+            texts[id] = id === LOCALE_ID ? 'ru-RU' : `«${id}»${names.map((name) => ` ${name}`).join('')}`;
         }
     }
     return texts;
 }
+
+/** the ids no part of the grid showed: every id but format.locale, which is not shown */
+const notShown = (seen: Set<string>) => Object.keys(TEXTS).filter((id) => !seen.has(id) && id !== LOCALE_ID);
 
 // 102 countries, 101 of them let through by the filter on age: the value list is cut off at 100
 const COUNTRIES = Array.from({ length: 102 }, (_, i) => `«c${i}»`);
@@ -95,6 +106,13 @@ const rows = () => [
     }))
 ];
 
+// the datetime column: the hint of Default in its Format › is its formatter's text - data, like a cell's.
+// Without the T of the built-in one, a letter that is no text
+registerFormatter('texts-datetime', {
+    ...DateFormatterYYYYMMDDTHHMMSS,
+    format: (value) => DateFormatterYYYYMMDDTHHMMSS.format(value).replace('T', ' ')
+});
+
 // country is a custom cell: the editor of one line opens over it
 registerCellRenderer('texts-test', (host) => ({
     update: ({ text }) => {
@@ -111,6 +129,7 @@ const config = (texts?: Texts): GridConfig => ({
             { fields: ['country'], width: 100 },
             { fields: ['age'], width: 100 },
             { fields: ['born'], width: 100 },
+            { fields: ['updated'], width: 100 },
             { fields: ['active'], width: 100 },
             { fields: ['notes'], width: 100 },
             { fields: ['code'], width: 100 }
@@ -123,6 +142,8 @@ const config = (texts?: Texts): GridConfig => ({
         age: { label: '«Age»' },
         // the placeholder of a date filter is the formatter's (YYYY-MM-DD), not a text
         born: { label: '«Born»', placeholderFilter: '«born»' },
+        // a datetime: its Format › has the formats with the time
+        updated: { label: '«Updated»', placeholderFilter: '«updated»' },
         active: { label: '«Active»' },
         notes: { label: '«Notes»' },
         code: { label: '«Code»', editor: { type: 'select', lookup: 'texts-codes' } }
@@ -146,6 +167,7 @@ const fields = {
             ]
         },
         born: 'date' as const,
+        updated: { type: 'datetime' as const, formatter: 'texts-datetime' },
         active: 'boolean' as const,
         notes: { multiline: true }
     }
@@ -302,8 +324,14 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     checkMenu();
     openLabelMenu(element, 'country');
     checkMenu();
-    // a number column: its Aggregate submenu has sum, average, min and max too
+    // a number column: its Aggregate submenu has sum, average, min and max too, its Format › the number
+    // formats. A date and a datetime column: the date formats, with the time - their hints are examples
+    // in the language of format.locale
     openLabelMenu(element, 'age');
+    checkMenu();
+    openLabelMenu(element, 'born');
+    checkMenu();
+    openLabelMenu(element, 'updated');
     checkMenu();
     (document.querySelector('[data-menu-id="header.column.chooser"]') as HTMLElement).click();
     check();
@@ -485,7 +513,7 @@ describe('texts in the grid - every text replaced', { timeout: 30_000 }, () => {
         await showEverything(await mountGrid(config(), rows(), fields), check);
         await showConflicts(undefined, check);
 
-        expect(Object.keys(TEXTS).filter((id) => !seen.has(id))).toEqual([]);
+        expect(notShown(seen)).toEqual([]);
     });
 
     it("expect the grid's texts from its config, and the datasource's from setTexts()", async () => {
@@ -497,7 +525,7 @@ describe('texts in the grid - every text replaced', { timeout: 30_000 }, () => {
         await showEverything(await mountGrid(config(gridTexts), rows(), fields), check);
         await showConflicts(gridTexts, check);
 
-        expect(Object.keys(TEXTS).filter((id) => !seen.has(id))).toEqual([]);
+        expect(notShown(seen)).toEqual([]);
     });
 });
 

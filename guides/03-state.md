@@ -17,6 +17,7 @@ it with `getState()`, give it back with `setState()`, and go back to the start w
 | `headerFilters` | what each header filter cell shows: the value, the operator picked in its menu and its Match case |
 | `aggregates` | the aggregate functions of the columns, keyed by field (`{ balance: ['sum', 'avg'] }`): what `ColumnConfig.aggregate` starts with and the header menu changes, see [Aggregates](18-aggregates.md#from-the-header-menu) |
 | `totalsRow` | whether the totals row is shown: `GridConfig.totalsRow`, turned on and off in the header menu |
+| `formats` | the display formats of the columns, keyed by field (`{ born: { date: 'weekIso' } }`): what `ColumnConfig.format` starts with and the header menu's Format › changes, see [Display formats](08-formatting.md#display-formats) |
 
 ```ts
 const state = gridInterface.getState();
@@ -136,6 +137,30 @@ them in `initialState`, or on the datasource after the grid is made.
 
 `updateConfig({ initialState })` changes what the next `resetState()` goes back to, it changes
 nothing now. Call `resetState()` after it to apply it at once.
+
+## Display formats in the state
+
+`formats` is keyed by field: how each column shows its values - a view setting of the user, like a
+column's width. Only the columns with a format are listed; a column left out shows its field's
+formatter (the menu's *Default*).
+
+```ts
+import type { GridState } from '@simple-html/grid';
+
+const formats: GridState['formats'] = {
+    born: { date: 'norwegian' }, // 22.11.2026
+    due: { date: 'weekIso' }, // 2026-W47
+    balance: { number: { decimals: 2, thousands: ' ', decimal: ',' } } // 1 234 567,89
+};
+gridInterface.setState({ formats });
+```
+
+- It starts as the columns' `format` in the config (or `initialState.formats`), and `resetState()`
+  goes back to it. `updateConfig({ columns })` gives the columns new options: their formats are the
+  new config's from then on.
+- `setState({ formats })` replaces every column's format - start from `getState().formats` to change
+  one. A format that does not fit its field throws a `TypeError`, and nothing of the state changes.
+- It is plain JSON: a state saved with `JSON.stringify` gives the same formats back.
 
 ## Header filters in the state
 

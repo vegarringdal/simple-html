@@ -106,17 +106,36 @@ export interface XlsxDate {
     time: boolean;
     /** the order of the date's parts */
     order: XlsxDateOrder;
+    /**
+     * an Excel number format that replaces the one of `time` and `order`: `'dddd'`, `'yyyy-mm'` - for a
+     * column's display format (ColumnConfig.format). A `.` and a `/` are escaped with a backslash:
+     * unescaped, a `.` is the decimal mark and a `/` the date separator of the computer's language
+     */
+    format?: string;
+}
+
+/**
+ * A number cell with an Excel number format: `{ number: 1234.5, format: '#,##0.00' }`. For a column's
+ * display format (ColumnConfig.format). Excel shows the separators of the computer's language: `,` and
+ * `.` in the format are the thousands separator and the decimal mark there.
+ */
+export interface XlsxNumber {
+    /** the number, finite */
+    number: number;
+    /** the Excel number format code */
+    format: string;
 }
 
 /**
  * The value of a cell:
  * - a number: a number cell, General format. Not a finite number (NaN, Infinity): written as text
+ * - an {@link XlsxNumber}: a number cell with a number format
  * - a boolean: a boolean cell, TRUE / FALSE
  * - an {@link XlsxDate}: a date cell
  * - a string: text, with wrapped lines when it has a line break. `''` is no cell
  * - `null`: no cell
  */
-export type XlsxCell = string | number | boolean | XlsxDate | null;
+export type XlsxCell = string | number | boolean | XlsxDate | XlsxNumber | null;
 
 /**
  * A column of the sheet.
@@ -455,6 +474,9 @@ function cellXml(value: XlsxCell, reference: string, styles: Styles, bold: boole
     if (typeof value === 'boolean') {
         return `<c r="${reference}"${style(false)} t="b"><v>${value ? 1 : 0}</v></c>`;
     }
+    if (typeof value === 'object' && 'number' in value) {
+        return `<c r="${reference}"${style(false, value.format)} t="n"><v>${String(value.number)}</v></c>`;
+    }
     if (typeof value === 'object') {
         const serial = excelSerial(value.date, value.time);
         if (serial === null) {
@@ -462,7 +484,8 @@ function cellXml(value: XlsxCell, reference: string, styles: Styles, bold: boole
                 `buildXlsx(): ${reference} has a date Excel can not hold (before 1900 or after 9999, or invalid)`
             );
         }
-        return `<c r="${reference}"${style(false, dateFormatCode(value.time, value.order))} t="n"><v>${String(serial)}</v></c>`;
+        const format = value.format ?? dateFormatCode(value.time, value.order);
+        return `<c r="${reference}"${style(false, format)} t="n"><v>${String(serial)}</v></c>`;
     }
     // text, and a number that is not finite
     const text = cellText(String(value));

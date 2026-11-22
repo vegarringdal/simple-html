@@ -94,7 +94,9 @@ Each value is a line in its column: the label at the left - `Sum`, the texts `ag
 `setTexts({ 'aggregate.sum': 'Σ' })`.
 
 - **The field's formatter formats the value**: a `balance` field with a formatter of two decimals
-  shows its sum with two decimals. Nothing is rounded before that - an average of whole numbers is
+  shows its sum with two decimals. A column's display format (`ColumnConfig.format`, the header menu's
+  Format ›) does too: `{ number: { decimals: 2, thousands: ' ', decimal: ',' } }` shows the sum as
+  `1 234 565,39`, see [Display formats](08-formatting.md#display-formats). Nothing is rounded before that - an average of whole numbers is
   `34.666666666666664` until the formatter makes it `34.7`. A formatter that shows whole numbers as
   they are and the rest with one decimal suits a field of whole numbers, see the sample. `count` is
   shown as a whole number.

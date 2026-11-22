@@ -93,6 +93,51 @@ const norwegian: Record<TextId, string> = {
     'header.aggregate.max': 'Maks',
     'header.aggregate.count': 'Antall',
     'header.aggregate.totalsRow': 'Totalrad',
+    // Format ›: the hints are examples, made by the grid
+    'header.format': 'Format',
+    'header.format.default': 'Standard',
+    'header.format.date.iso': 'ISO',
+    'header.format.date.norwegian': 'Norsk',
+    'header.format.date.norwegianShort': 'Norsk, kort år',
+    'header.format.date.us': 'USA',
+    'header.format.date.uk': 'Britisk',
+    'header.format.date.medium': 'Kort månedsnavn',
+    'header.format.date.long': 'Månedsnavn',
+    'header.format.date.full': 'Dag- og månedsnavn',
+    'header.format.date.isoTime': 'ISO med klokkeslett',
+    'header.format.date.isoSeconds': 'ISO med sekunder',
+    'header.format.date.norwegianTime': 'Norsk med klokkeslett',
+    'header.format.date.norwegianSeconds': 'Norsk med sekunder',
+    'header.format.date.time': 'Klokkeslett',
+    'header.format.date.timeSeconds': 'Klokkeslett med sekunder',
+    'header.format.date.weekday': 'Ukedag',
+    'header.format.date.weekIso': 'Uke, ISO',
+    'header.format.date.weekUs': 'Uke, USA',
+    'header.format.date.month': 'Måned',
+    'header.format.date.quarter': 'Kvartal',
+    'header.format.date.year': 'År',
+    'header.format.date.daysUntil': 'Dager til',
+    'header.format.number.norwegian': 'Norsk',
+    'header.format.number.english': 'Engelsk',
+    'header.format.number.swiss': 'Sveitsisk',
+    'header.format.number.plain': 'Uten skilletegn',
+    'header.format.decimals': 'Desimaler',
+    'header.format.decimals.asIs': 'Som verdien',
+    'header.format.decimals.0': '0',
+    'header.format.decimals.1': '1',
+    'header.format.decimals.2': '2',
+    'header.format.decimals.3': '3',
+    'header.format.decimals.4': '4',
+    'header.format.thousands': 'Tusenskille',
+    'header.format.thousands.none': 'Ingen',
+    'header.format.thousands.space': 'Mellomrom',
+    'header.format.thousands.comma': 'Komma',
+    'header.format.thousands.dot': 'Punktum',
+    'header.format.thousands.apostrophe': 'Apostrof',
+    'header.format.decimalMark': 'Desimaltegn',
+    'header.format.decimalMark.dot': 'Punktum',
+    'header.format.decimalMark.comma': 'Komma',
+    'header.format.percent': 'Prosent',
     'header.grouping': 'Gruppering',
     'header.grouping.expandAll': 'Utvid alle',
     'header.grouping.collapseAll': 'Slå sammen alle',
@@ -264,6 +309,12 @@ const norwegian: Record<TextId, string> = {
     'aggregate.max': 'Maks',
     'aggregate.count': 'Antall',
     'aggregate.total': 'Totalt',
+    // the language of the names in a date's display format: søndag 22. november 2026. A week: uke 47
+    // 2026, a quarter: 4. kvartal 2026
+    'format.locale': 'nb-NO',
+    'format.weekIso': 'uke {week} {year}',
+    'format.weekUs': 'uke {week} {year}',
+    'format.quarter': '{quarter}. kvartal {year}',
 
     // for screen readers
     'grid.label': 'Tabell',
@@ -375,7 +426,7 @@ export const translation: DemoSample = {
     title: 'Translation',
     group: 'Config',
     description:
-        'Every text has an id. This grid starts in Norwegian with texts in its config: right click a cell, a header or a header filter, open the filter editor (click the footer) or the date picker of a date. The validation messages and getFilterString() are made by the datasource, which has no grid: they follow the texts of the page, setTexts(). Click "Validate" before and after "setTexts(norwegian)" - an age over 50 fails. A text set at runtime shows after the next rebuild, a validation message the next time the value is validated.',
+        'Every text has an id. This grid starts in Norwegian with texts in its config - the date column too, its display format names the days and months in the language of format.locale: right click a cell, a header or a header filter, open the filter editor (click the footer) or the date picker of a date. The validation messages and getFilterString() are made by the datasource, which has no grid: they follow the texts of the page, setTexts(). Click "Validate" before and after "setTexts(norwegian)" - an age over 50 fails. A text set at runtime shows after the next rebuild, a validation message the next time the value is validated.',
     run(stage) {
         const ui = createStage(stage);
         const config = baseGridConfig();
@@ -384,6 +435,11 @@ export const translation: DemoSample = {
         config.initialState = {
             filter: and(where('country', 'IN', ['Norway', 'Sweden']), where('age', 'GREATER_THAN_OR_EQUAL_TO', 30))
         };
+        // a display format with names: in the language of format.locale - søndag 22. november 2026
+        config.columns = { date1: { format: { date: 'full' } } };
+        config.layout.center = config.layout.center.map((column) =>
+            column.fields.includes('date1') ? { ...column, width: Math.max(column.width, 190) } : column
+        );
 
         const { datasource, gridInterface } = mountGrid(ui.gridHost, config, undefined, {
             fields: { ...baseFields(), age: { type: 'number', validate: ['required', { id: 'max', value: 50 }] } }

@@ -3,11 +3,14 @@ import { assertOptions } from '../datasource/assertOptions';
 import type { Datasource, EntityUnion } from '../datasource/dataSource';
 import type { DatasourceEvents } from '../datasource/datasourceEvents';
 import { type Entity, isGroupRow } from '../datasource/entity';
+import type { FieldType } from '../datasource/field';
 import { type FilterExpression, type FilterOperator, operatorsFor } from '../datasource/filterExpression';
+import type { Formatter } from '../datasource/formatter';
 import { Emitter, type EventHandler } from '../emitter';
 import { assertTexts } from '../texts';
 import type { CellRange } from './cellRange';
 import { getCellRenderer } from './cellRendererRegistry';
+import { assertColumnFormat, type ColumnFormat, displayFormatter, formatTexts, hasDisplayFormat } from './columnFormat';
 import type { CsvOptions } from './csv';
 import type { FindResult } from './findResult';
 import type { Grid } from './grid';
@@ -98,6 +101,8 @@ export class GridInterface<T> {
     private configLayout: Required<GridLayout>;
     // the aggregates of the config's columns: what resetState() goes back to, see GridState.aggregates
     private configAggregates: Record<string, AggregateFunction[]> = {};
+    // the display formats of the config's columns: what resetState() goes back to, see GridState.formats
+    private configFormats: Record<string, ColumnFormat> = {};
     private initialState: Partial<GridState>;
     // the functions: isReadonly, cellClass, menus. A copy, updateHooks() changes it
     private hooks: GridHooks<T>;
@@ -179,10 +184,10 @@ export class GridInterface<T> {
      * hooks), a column has v5's `mandatory` (it is the field's `required` rule), `texts` is not an
      * object of strings, `multilineTooltipLines` or `multilineLineHeight` is not a whole number of 1 or
      * more, a column's `aggregate` is no aggregate function or needs a number field, a column's
-     * `editor` is wrong - its lookup not registered, see {@link ColumnEditor} - a column's `renderer`
-     * is not the id of a registered cell renderer, or is given with an `editor`, or a column's
-     * `filterOperators`, `operator` or `filterCaseSensitive` does not fit its type, see
-     * {@link ColumnConfig}
+     * `format` does not fit its field (see {@link ColumnFormat}), a column's `editor` is wrong - its
+     * lookup not registered, see {@link ColumnEditor} - a column's `renderer` is not the id of a
+     * registered cell renderer, or is given with an `editor`, or a column's `filterOperators`,
+     * `operator` or `filterCaseSensitive` does not fit its type, see {@link ColumnConfig}
      *
      * @example
      * ```ts
@@ -204,6 +209,7 @@ export class GridInterface<T> {
         assertTooltipLines(gridConfig);
         assertLineHeight(gridConfig);
         assertAggregates(gridConfig, datasource);
+        assertFormats(gridConfig, datasource);
         assertRenderers(gridConfig);
         assertFilterOptions(gridConfig, datasource);
         this.lookupColumns = lookupColumnsOf(gridConfig.columns, datasource);
@@ -220,6 +226,7 @@ export class GridInterface<T> {
         };
         this.configLayout = copyLayout(layout);
         this.configAggregates = aggregatesOfColumns(this.gridConfig.columns);
+        this.configFormats = formatsOfColumns(this.gridConfig.columns);
         // structuredClone, not JSON: it keeps the Dates of a filter
         this.initialState = structuredClone(initialState ?? {});
 
@@ -230,7 +237,8 @@ export class GridInterface<T> {
 
     /**
      * The state of the grid now: what the user changed - column order, pinning and widths, sorting,
-     * grouping, expanded groups, the filter and what the header filters show. See {@link GridState}.
+     * grouping, expanded groups, the filter and what the header filters show, the aggregates, the
+     * totals row and the display formats of the columns. See {@link GridState}.
      *
      * It is a copy: changing it changes nothing in the grid, and what the user does later does not
      * change it. Give it to {@link setState} to go back to it.
@@ -259,13 +267,15 @@ export class GridInterface<T> {
             filter: structuredClone(datasource.getFilter()),
             headerFilters: structuredClone(this.headerFilters),
             aggregates: aggregatesOfColumns(this.gridConfig.columns),
-            totalsRow: this.gridConfig.totalsRow
+            totalsRow: this.gridConfig.totalsRow,
+            formats: formatsOfColumns(this.gridConfig.columns)
         };
     }
 
     /**
      * Sets the state: column order, pinning and widths, sorting, grouping, expanded groups, the filter
-     * and what the header filters show. See {@link GridState}.
+     * and what the header filters show, the aggregates, the totals row and the display formats of the
+     * columns. See {@link GridState}.
      *
      * **Applies what is given and keeps the rest**: `setState({ sorting })` changes the sort and
      * nothing else. To set everything, pass a whole state, e.g. one from {@link getState}. Within a
@@ -280,6 +290,8 @@ export class GridInterface<T> {
      * Set both to have a header filter's condition and its cell agree, as `getState()` gives them.
      *
      * @param state the parts to set
+     * @throws a `TypeError` for aggregates or display formats (`formats`) that do not fit their fields,
+     * see {@link ColumnConfig} `aggregate` and {@link ColumnFormat} - before anything changes
      *
      * @sample grid-state
      * @example
@@ -343,7 +355,8 @@ export class GridInterface<T> {
             filter: initialState.filter ?? null,
             headerFilters: initialState.headerFilters ?? {},
             aggregates: initialState.aggregates ?? structuredClone(this.configAggregates),
-            totalsRow: initialState.totalsRow ?? this.options.totalsRow ?? false
+            totalsRow: initialState.totalsRow ?? this.options.totalsRow ?? false,
+            formats: initialState.formats ?? structuredClone(this.configFormats)
         };
     }
 
@@ -373,10 +386,11 @@ export class GridInterface<T> {
      * @throws a `TypeError` when `config` has `isReadonly`, `cellClass` or `menus` (those are hooks),
      * a column has v5's `mandatory` (it is the field's `required` rule), `texts` is not an object of
      * strings, `multilineTooltipLines` or `multilineLineHeight` is not a whole number of 1 or more, a
-     * column's `aggregate` is no aggregate function or needs a number field, a column's `editor` is
-     * wrong - its lookup not registered, see {@link ColumnEditor} - a column's `renderer` is not the
-     * id of a registered cell renderer, or is given with an `editor`, or a column's `filterOperators`,
-     * `operator` or `filterCaseSensitive` does not fit its type, see {@link ColumnConfig}
+     * column's `aggregate` is no aggregate function or needs a number field, a column's `format` does
+     * not fit its field (see {@link ColumnFormat}), a column's `editor` is wrong - its lookup not
+     * registered, see {@link ColumnEditor} - a column's `renderer` is not the id of a registered cell
+     * renderer, or is given with an `editor`, or a column's `filterOperators`, `operator` or
+     * `filterCaseSensitive` does not fit its type, see {@link ColumnConfig}
      *
      * @sample misc-options
      * @example
@@ -396,6 +410,7 @@ export class GridInterface<T> {
         assertTooltipLines(config);
         assertLineHeight(config);
         assertAggregates(config, this.dataSource);
+        assertFormats(config, this.dataSource);
         assertRenderers(config);
         assertFilterOptions(config, this.dataSource);
         // checked before anything changes, like the rest
@@ -414,6 +429,7 @@ export class GridInterface<T> {
         if ('columns' in config) {
             this.gridConfig.columns = structuredClone(columns ?? {});
             this.configAggregates = aggregatesOfColumns(this.gridConfig.columns);
+            this.configFormats = formatsOfColumns(this.gridConfig.columns);
         }
         if (lookupColumns) {
             // the list open for a column of the old config is closed, the cells are rendered anew
@@ -482,6 +498,9 @@ export class GridInterface<T> {
         if (state.aggregates) {
             assertAggregates({ columns: columnsWithAggregates(state.aggregates) }, this.dataSource, 'setState: aggregates');
         }
+        if (state.formats) {
+            this.assertStateFormats(state.formats);
+        }
         this.suppressEvents = true;
 
         if (state.layout) {
@@ -502,6 +521,18 @@ export class GridInterface<T> {
         }
         if (state.totalsRow !== undefined) {
             this.gridConfig.totalsRow = state.totalsRow === true;
+        }
+
+        // every column gets the format listed for it, the others none
+        if (state.formats) {
+            for (const column of Object.values(this.gridConfig.columns)) {
+                delete column.format;
+            }
+            for (const [field, format] of Object.entries(state.formats)) {
+                if (hasDisplayFormat(format)) {
+                    this.gridConfig.columns[field] = { ...this.gridConfig.columns[field], format };
+                }
+            }
         }
 
         if (state.headerFilters) {
@@ -1910,6 +1941,43 @@ export class GridInterface<T> {
     }
 
     /**
+     * @internal
+     * The formatter the grid shows a value of a field with - the one place the grid turns a value into
+     * the text of a cell (renderRowCell, cellTextOf, the aggregates, the footer's summary): the field's
+     * formatter (`datasource.getFormatter(field, type)`), with the column's display format when it has
+     * one (`ColumnConfig.format`, `GridState.formats`, see columnFormat.ts) - its `format` is the display
+     * format's text, `formatForEdit` and `parse` stay the field's. The names of a date format are in
+     * the language of the text `format.locale`, a week and a quarter written as `format.weekIso`,
+     * `format.weekUs` and `format.quarter` say.
+     *
+     * Not for a lookup column (its lookup's formatter shows a label), nor for a cell whose type is not
+     * the field's (`dynamicCellTypeColumn` on a text field: a text field has no format)
+     * @param type the cell's type, see getCellType. Left out, the field's
+     */
+    public __getCellFormatter(field: string, type?: FieldType): Formatter {
+        const formatter = this.dataSource.getFormatter(field, type);
+        const format = this.gridConfig.columns[field]?.format;
+        if (!hasDisplayFormat(format) || (type !== undefined && type !== this.dataSource.getField(field).type)) {
+            return formatter;
+        }
+        return displayFormatter(formatter, format, formatTexts(this.gridConfig.texts));
+    }
+
+    /**
+     * The display formats of a state given to setState() fit their fields, see assertColumnFormat
+     * @throws a `TypeError` naming the field, before anything changes
+     */
+    private assertStateFormats(formats: unknown) {
+        if (typeof formats !== 'object' || formats === null || Array.isArray(formats)) {
+            throw new TypeError(`setState: formats is an object of formats by field, got ${JSON.stringify(formats)}`);
+        }
+        for (const [field, format] of Object.entries(formats)) {
+            const lookup = this.gridConfig.columns[field]?.editor !== undefined;
+            assertColumnFormat(format, field, this.dataSource.getField(field).type, lookup, `setState: formats.${field}`);
+        }
+    }
+
+    /**
      * The datasource sorts the lookup columns on the label their cells show, see Datasource.__setSortValue
      */
     private setSortValues() {
@@ -2295,6 +2363,21 @@ function assertAggregates(config: Partial<GridConfig>, datasource: Datasource<an
 }
 
 /**
+ * A column's `format` fits its field, see assertColumnFormat: a date part for a date or datetime field,
+ * a number part for a number field, of the values they take, and none on a lookup column
+ * @throws a `TypeError` naming the column and what it takes
+ */
+function assertFormats(config: Partial<GridConfig>, datasource: Datasource<any>) {
+    for (const [field, column] of Object.entries(config.columns ?? {})) {
+        if (!column || typeof column !== 'object') {
+            continue;
+        }
+        const type = datasource.getField(field).type;
+        assertColumnFormat(column.format, field, type, column.editor !== undefined, `GridConfig: columns.${field}.format`);
+    }
+}
+
+/**
  * A column's `renderer` is the id of a registered cell renderer: a typo, or a renderer registered after
  * the grid is made, would else show the default cell without a word. And not next to an `editor`: a
  * lookup column draws its cell itself, its label and its button
@@ -2387,6 +2470,20 @@ function aggregatesOfColumns(columns: Record<string, ColumnConfig>): Record<stri
         }
     }
     return aggregates;
+}
+
+/**
+ * The display formats of the columns, for the state: the fields whose format shows something, a copy
+ * each
+ */
+function formatsOfColumns(columns: Record<string, ColumnConfig>): Record<string, ColumnFormat> {
+    const formats: Record<string, ColumnFormat> = {};
+    for (const [field, column] of Object.entries(columns)) {
+        if (hasDisplayFormat(column?.format)) {
+            formats[field] = structuredClone(column.format);
+        }
+    }
+    return formats;
 }
 
 /**

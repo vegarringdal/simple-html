@@ -3,6 +3,7 @@ import { DateFormatterDDMMYYYY } from '../../datasource/DateFormatterDDMMYYYY';
 import { DateFormatterDDMMYYYYTHHMMSS } from '../../datasource/DateFormatterDDMMYYYYTHHMMSS';
 import type { Entity } from '../../datasource/entity';
 import type { Formatter } from '../../datasource/formatter';
+import { type DateFormat, hasDisplayFormat, type NumberFormat } from '../columnFormat';
 import type { GridInterface } from '../gridInterface';
 import {
     assertSheetName,
@@ -104,6 +105,9 @@ export function gridSheet(gridInterface: GridInterface<any>, method: ExcelMethod
  * | `number` | a finite number | a number, General format: every digit, as the grid shows it |
  * | `date` | a valid `Date` | a serial date, its local day, formatted `yyyy-mm-dd` (`dd.mm.yyyy` with a DDMMYYYY formatter) |
  * | `datetime` | a valid `Date` | a serial date with the time to the second, `yyyy-mm-dd hh:mm:ss` |
+ *
+ * A column's display format (`ColumnConfig.format`) gives the cell an Excel number format like it,
+ * where Excel has one - see excelDateFormat and excelNumberFormat. The value stays the value.
  * | `boolean` | `true` / `false` | a boolean, TRUE / FALSE |
  * | any | null, undefined, `''`, an invalid `Date` | no cell |
  * | any | anything else | text: what the cell shows, the formatter's text |
@@ -128,16 +132,22 @@ function excelCell(gridInterface: GridInterface<any>, field: string): (row: Enti
     const dynamic = !!column?.dynamicCellTypeColumn;
     // as the cells: numberOverride follows the field's type, not the cell's
     const numberOverride = fieldType === 'number' ? column?.numberOverride : undefined;
+    // the column's display format as an Excel number format, undefined where Excel has none. A column
+    // with dynamicCellTypeColumn is a text field: it has no display format
+    const format = hasDisplayFormat(column?.format) ? column.format : undefined;
+    const numberFormat = format?.number ? excelNumberFormat(format.number) : undefined;
+    const dateFormat = format?.date ? excelDateFormat(format.date) : undefined;
+    const number = (value: number): XlsxCell => (numberFormat ? { number: value, format: numberFormat } : value);
 
     return (row) => {
         const type = dynamic ? getCellType({ gridInterface }, field, row) : fieldType;
         const value = row[field];
 
         if (value === null || value === undefined || value === '') {
-            return numberOverride === 'BLANK_TO_ZERO' ? 0 : null;
+            return numberOverride === 'BLANK_TO_ZERO' ? number(0) : null;
         }
         if (type === 'number' && typeof value === 'number' && Number.isFinite(value)) {
-            return numberOverride === 'ZERO_TO_BLANK' && value === 0 ? null : value;
+            return numberOverride === 'ZERO_TO_BLANK' && value === 0 ? null : number(value);
         }
         if (type === 'boolean' && typeof value === 'boolean') {
             return value;
@@ -148,7 +158,8 @@ function excelCell(gridInterface: GridInterface<any>, field: string): (row: Enti
             }
             const time = type === 'datetime';
             if (excelSerial(value, time) !== null) {
-                return { date: value, time, order: dateOrder(datasource.getFormatter(field, type)) };
+                const order = dateOrder(datasource.getFormatter(field, type));
+                return dateFormat ? { date: value, time, order, format: dateFormat } : { date: value, time, order };
             }
         }
         return shownText(row) || null;
@@ -161,6 +172,53 @@ function excelCell(gridInterface: GridInterface<any>, field: string): (row: Enti
  */
 function dateOrder(formatter: Formatter): XlsxDateOrder {
     return formatter === DateFormatterDDMMYYYY || formatter === DateFormatterDDMMYYYYTHHMMSS ? 'DMY' : 'YMD';
+}
+
+/**
+ * The Excel number formats of the date display formats Excel can show. A `.` and a `/` are escaped:
+ * unescaped they are the decimal mark and the date separator of the computer's language. `dddd` is the
+ * day's name in Excel's language. Not here, so the date in the field's order (dateOrder): `medium`,
+ * `long` and `full` (the names and their order are Intl's, in the language of `format.locale`), the
+ * weeks, the quarter and the days until - Excel's number formats have none of them
+ */
+const EXCEL_DATE_FORMATS: Partial<Record<DateFormat, string>> = {
+    iso: 'yyyy-mm-dd',
+    norwegian: 'dd\\.mm\\.yyyy',
+    norwegianShort: 'dd\\.mm\\.yy',
+    us: 'mm\\/dd\\/yyyy',
+    uk: 'dd\\/mm\\/yyyy',
+    weekday: 'dddd',
+    month: 'yyyy-mm',
+    year: 'yyyy',
+    isoTime: 'yyyy-mm-dd hh:mm',
+    isoSeconds: 'yyyy-mm-dd hh:mm:ss',
+    norwegianTime: 'dd\\.mm\\.yyyy hh:mm',
+    norwegianSeconds: 'dd\\.mm\\.yyyy hh:mm:ss',
+    time: 'hh:mm',
+    timeSeconds: 'hh:mm:ss'
+};
+
+/**
+ * The Excel number format of a date display format, undefined where Excel has none: see
+ * EXCEL_DATE_FORMATS
+ */
+export function excelDateFormat(format: DateFormat): string | undefined {
+    return EXCEL_DATE_FORMATS[format];
+}
+
+/**
+ * The Excel number format of a number display format: the decimals, `#,##0` with a thousands
+ * separator, `%` with percent (Excel shows the number times 100) - `#,##0.00`, `0.0%`. Excel shows the
+ * separators of the computer's language, not the characters of the format. undefined without
+ * `decimals`: General, every decimal - a number format of Excel's has a fixed number of them
+ */
+export function excelNumberFormat(format: NumberFormat): string | undefined {
+    if (format.decimals === undefined) {
+        return undefined;
+    }
+    const integer = format.thousands ? '#,##0' : '0';
+    const fraction = format.decimals ? `.${'0'.repeat(format.decimals)}` : '';
+    return `${integer}${fraction}${format.percent ? '%' : ''}`;
 }
 
 /**

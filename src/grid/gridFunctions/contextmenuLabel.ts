@@ -6,6 +6,7 @@ import type { MenuContext, MenuEntry, MenuSubmenu } from '../gridMenus';
 import { aggregatesOf } from './aggregates';
 import type { ColType } from './colType';
 import { contextMenuColumnChooser } from './contextMenuColumnChooser';
+import { formatSubmenu } from './formatSubmenu';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { placeUnderCell, showMenu } from './showMenu';
@@ -45,7 +46,7 @@ export function contextmenuLabel(
 
 /**
  * The header menu's default entries, new objects every call: pin (a submenu), hide, remove sorting,
- * the column chooser, then the submenus size, aggregate and grouping. The ids are documented in
+ * the column chooser, then the submenus size, format (formatSubmenu.ts), aggregate and grouping. The ids are documented in
  * MENU_IDS.header
  */
 function headerMenuEntries(
@@ -212,6 +213,7 @@ function headerMenuEntries(
                 }
             ]
         },
+        formatSubmenu(ctx, attribute),
         aggregateSubmenu(ctx, attribute),
         {
             type: 'submenu',

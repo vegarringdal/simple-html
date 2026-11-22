@@ -310,7 +310,7 @@ export interface MenuPosition {
  * - `row`: right click on a cell or a row number - the submenus undo, select, copy, paste, clear,
  *   delete, filter, view, size, export
  * - `header`: right click on a header label - pin, hide, remove sorting, column chooser, then the
- *   submenus size, aggregate, grouping
+ *   submenus size, format (a date or number column), aggregate, grouping
  * - `filter`: right click on a header filter - clear, the submenus blank and operator, the filter
  *   editor, the value list (text) or the range block (numbers and dates)
  * - `column`: right click on a column number (the row of numbers under the header filters) - the
@@ -394,9 +394,9 @@ export interface GridMenus {
  * Paste ›                           ----                            in Filter ›:
  * Clear ›                           Column chooser…                 Operator ›
  * Delete ›                          Size ›                          Blank ›
- * Filter ›                          Aggregate ›                     Clear Filter
- * View ›                            Grouping ›                      Clear All Filters
- * Size ›                                                            ----
+ * Filter ›                          Format ›                        Clear Filter
+ * View ›                            Aggregate ›                     Clear All Filters
+ * Size ›                            Grouping ›                      ----
  * Export ›                                                          Advanced Filter…
  *
  * column menu                       in Select › of the row menu:     in Select › of the column menu:
@@ -486,6 +486,20 @@ export interface GridMenus {
  * | `header.size.all` | Fit all columns (`fitColumns()`) | |
  * | `header.size.resetColumn` | Reset column width - the width of the config (`resetColumnWidths([field])`) | |
  * | `header.size.resetAll` | Reset all column widths (`resetColumnWidths()`) | |
+ * | `header.format` | Format › - a submenu: how the cells show the value, the display format in use with a ✓ (`GridState.formats`, see {@link ColumnFormat}). Each hint is an example: today, or 1234567.891 | a date, datetime or number field, not a lookup column |
+ * | `header.format.default` | Default - no display format: the field's formatter | |
+ * | `header.format.defaultSeparator` | a line | |
+ * | `header.format.date.iso` ... `header.format.date.full` | ISO, Norwegian, Norwegian short year, US, UK, Short month name, Month name, Day and month name - the date written out (`ColumnFormat.date`) | a date or datetime field |
+ * | `header.format.timeSeparator` | a line | a datetime field |
+ * | `header.format.date.isoTime` ... `header.format.date.timeSeconds` | ISO with time, ISO with seconds, Norwegian with time, Norwegian with seconds, Time, Time with seconds | a datetime field |
+ * | `header.format.partSeparator` | a line | a date or datetime field |
+ * | `header.format.date.weekday` ... `header.format.date.daysUntil` | Day of week, Week ISO, Week US, Month, Quarter, Year, Days until | a date or datetime field |
+ * | `header.format.number.norwegian` ... `header.format.number.plain` | Norwegian (1 234 567,891), English, Swiss, Plain: the separators (`ColumnFormat.number`), the decimals kept | a number field |
+ * | `header.format.settingsSeparator` | a line | a number field |
+ * | `header.format.decimals` | Decimals › - As is, 0 to 4 (`header.format.decimals.asIs`, `.0` ... `.4`) | a number field |
+ * | `header.format.thousands` | Thousands separator › - None, Space, Comma, Dot, Apostrophe (`.none`, `.space`, `.comma`, `.dot`, `.apostrophe`). The character of the decimal mark greyed out | a number field |
+ * | `header.format.decimalMark` | Decimal mark › - Dot, Comma (`.dot`, `.comma`). The character of the thousands separator greyed out | a number field |
+ * | `header.format.percent` | Percent, a toggle: the number times 100 with ` %` | a number field |
  * | `header.aggregate` | Aggregate › - a submenu | |
  * | `header.aggregate.sum` | Sum - a toggle with a ✓ when on: the column's sum in the group rows and the totals row (`GridState.aggregates`) | a number field |
  * | `header.aggregate.avg` | Average, a toggle | a number field |
@@ -631,6 +645,54 @@ export const MENU_IDS = {
         'header.size.all',
         'header.size.resetColumn',
         'header.size.resetAll',
+        'header.format',
+        'header.format.default',
+        'header.format.defaultSeparator',
+        'header.format.date.iso',
+        'header.format.date.norwegian',
+        'header.format.date.norwegianShort',
+        'header.format.date.us',
+        'header.format.date.uk',
+        'header.format.date.medium',
+        'header.format.date.long',
+        'header.format.date.full',
+        'header.format.timeSeparator',
+        'header.format.date.isoTime',
+        'header.format.date.isoSeconds',
+        'header.format.date.norwegianTime',
+        'header.format.date.norwegianSeconds',
+        'header.format.date.time',
+        'header.format.date.timeSeconds',
+        'header.format.partSeparator',
+        'header.format.date.weekday',
+        'header.format.date.weekIso',
+        'header.format.date.weekUs',
+        'header.format.date.month',
+        'header.format.date.quarter',
+        'header.format.date.year',
+        'header.format.date.daysUntil',
+        'header.format.number.norwegian',
+        'header.format.number.english',
+        'header.format.number.swiss',
+        'header.format.number.plain',
+        'header.format.settingsSeparator',
+        'header.format.decimals',
+        'header.format.decimals.asIs',
+        'header.format.decimals.0',
+        'header.format.decimals.1',
+        'header.format.decimals.2',
+        'header.format.decimals.3',
+        'header.format.decimals.4',
+        'header.format.thousands',
+        'header.format.thousands.none',
+        'header.format.thousands.space',
+        'header.format.thousands.comma',
+        'header.format.thousands.dot',
+        'header.format.thousands.apostrophe',
+        'header.format.decimalMark',
+        'header.format.decimalMark.dot',
+        'header.format.decimalMark.comma',
+        'header.format.percent',
         'header.aggregate',
         'header.aggregate.sum',
         'header.aggregate.avg',

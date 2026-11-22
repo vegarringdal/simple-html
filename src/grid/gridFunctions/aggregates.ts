@@ -148,8 +148,9 @@ export function showsGroupAggregates(config: ParsedGridConfig): boolean {
 }
 
 /**
- * An aggregate as text: `count` as a whole number, the others with the field's formatter. '' for
- * null, the average (min, max) of no numbers
+ * An aggregate as text: `count` as a whole number, the others as the cells show a value - the field's
+ * formatter, with the column's display format (`ColumnConfig.format`: `1 234,50`). '' for null, the
+ * average (min, max) of no numbers
  */
 function formatAggregate(ctx: Grid, field: string, fn: AggregateFunction, value: number | null): string {
     if (value === null) {
@@ -158,7 +159,7 @@ function formatAggregate(ctx: Grid, field: string, fn: AggregateFunction, value:
     if (fn === 'count') {
         return String(value);
     }
-    return ctx.gridInterface.getDatasource().getFormatter(field).format(value);
+    return ctx.gridInterface.__getCellFormatter(field).format(value);
 }
 
 /**

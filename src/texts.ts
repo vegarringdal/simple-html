@@ -96,6 +96,53 @@ const DEFAULTS = {
     'header.aggregate.max': 'Max',
     'header.aggregate.count': 'Count',
     'header.aggregate.totalsRow': 'Totals row',
+    // Format ›: how the column's cells show the value (ColumnConfig.format) - the date formats in a date
+    // or datetime column, the number formats in a number column. The hints are examples made from today
+    // and from 1234567.891, not texts
+    'header.format': 'Format',
+    'header.format.default': 'Default',
+    'header.format.date.iso': 'ISO',
+    'header.format.date.norwegian': 'Norwegian',
+    'header.format.date.norwegianShort': 'Norwegian, short year',
+    'header.format.date.us': 'US',
+    'header.format.date.uk': 'UK',
+    'header.format.date.medium': 'Short month name',
+    'header.format.date.long': 'Month name',
+    'header.format.date.full': 'Day and month name',
+    'header.format.date.isoTime': 'ISO with time',
+    'header.format.date.isoSeconds': 'ISO with seconds',
+    'header.format.date.norwegianTime': 'Norwegian with time',
+    'header.format.date.norwegianSeconds': 'Norwegian with seconds',
+    'header.format.date.time': 'Time',
+    'header.format.date.timeSeconds': 'Time with seconds',
+    'header.format.date.weekday': 'Day of week',
+    'header.format.date.weekIso': 'Week, ISO',
+    'header.format.date.weekUs': 'Week, US',
+    'header.format.date.month': 'Month',
+    'header.format.date.quarter': 'Quarter',
+    'header.format.date.year': 'Year',
+    'header.format.date.daysUntil': 'Days until',
+    'header.format.number.norwegian': 'Norwegian',
+    'header.format.number.english': 'English',
+    'header.format.number.swiss': 'Swiss',
+    'header.format.number.plain': 'Plain',
+    'header.format.decimals': 'Decimals',
+    'header.format.decimals.asIs': 'As is',
+    'header.format.decimals.0': '0',
+    'header.format.decimals.1': '1',
+    'header.format.decimals.2': '2',
+    'header.format.decimals.3': '3',
+    'header.format.decimals.4': '4',
+    'header.format.thousands': 'Thousands separator',
+    'header.format.thousands.none': 'None',
+    'header.format.thousands.space': 'Space',
+    'header.format.thousands.comma': 'Comma',
+    'header.format.thousands.dot': 'Dot',
+    'header.format.thousands.apostrophe': 'Apostrophe',
+    'header.format.decimalMark': 'Decimal mark',
+    'header.format.decimalMark.dot': 'Dot',
+    'header.format.decimalMark.comma': 'Comma',
+    'header.format.percent': 'Percent',
     'header.grouping': 'Grouping',
     'header.grouping.expandAll': 'Expand all',
     'header.grouping.collapseAll': 'Collapse all',
@@ -281,6 +328,15 @@ const DEFAULTS = {
     'aggregate.count': 'Count',
     'aggregate.total': 'Total',
 
+    // the display formats of the columns (ColumnConfig.format): the language of the names of a date
+    // format - medium, long, full, the day of the week. Not a text shown: a BCP 47 language tag for
+    // Intl.DateTimeFormat, 'nb-NO' shows 'søndag 22. november 2026'. One Intl does not take is English.
+    // Then how a week and a quarter are written: {week} has two digits
+    'format.locale': 'en-US',
+    'format.weekIso': '{year}-W{week}',
+    'format.weekUs': '{year}-W{week}',
+    'format.quarter': '{year} Q{quarter}',
+
     // the placeholder of an empty header filter, by the field's type - a date filter shows its
     // formatter's format (YYYY-MM-DD), a boolean filter is a checkbox
     'filter.placeholder.text': 'Text',
@@ -463,6 +519,7 @@ export type Texts = { [id in TextId]?: string } & { [id: string]: string };
  * | `filterEditor.*` | the filter editor, its field and operator menus. `filterEditor.operator.<FilterOperator>`: the names of the operators |
  * | `footer.*` | the footer: the row count, the filter chips, the "No filter" button. `footer.operator.<FilterOperator>`: the short names of the operators (`=`, `contains`) |
  * | `aggregate.*` | the aggregates of the columns: the label in front of a value in the group rows and the totals row (`aggregate.<AggregateFunction>`), and the label of the totals row |
+ * | `format.*` | the display formats of the columns (`ColumnConfig.format`): `format.locale` the language of the names of a date, a BCP 47 tag for `Intl.DateTimeFormat` (`'en-US'`; not shown, `'nb-NO'` shows `søndag 22. november 2026`), and how a week and a quarter are written |
  * | `grid.*` | labels for screen readers |
  * | `find.*` | the find bar of Ctrl+F: the input, the count of the matches, "Filter rows", the buttons |
  * | `rowStatus.*` | the state of a row on its row number: the tooltip, and the text for a screen reader |

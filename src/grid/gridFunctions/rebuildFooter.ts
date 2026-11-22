@@ -93,8 +93,9 @@ function renderChildren(ctx: Grid, group: FilterGroupNode) {
 
 /**
  * The summary of the selected cells at the footer's right (selectionSummary.ts): how many have a value,
- * and of the numbers the sum, average, smallest and largest - shown with the formatter of the first
- * number field, two decimals at most. All of it in its tooltip too, when it is cut. null when the
+ * and of the numbers the sum, average, smallest and largest - shown as the cells of the first number
+ * field show a value (its formatter, with its display format), two decimals at most - the decimals of
+ * the display format when it has them. All of it in its tooltip too, when it is cut. null when the
  * ranges are one cell or none
  * @param top where it starts: on the line of the filter's row (Clear and the chips, or "No filter")
  *   under the horizontal scrollbar's band, else the whole height - in the middle, like the row count
@@ -106,8 +107,9 @@ function summaryTemplate(ctx: Grid, top: number) {
     }
     const parts = [gridText(ctx, 'footer.summary.count', { count: summary.count })];
     if (summary.numberField && summary.sum !== null && summary.avg !== null && summary.min !== null && summary.max !== null) {
-        const formatter = ctx.gridInterface.getDatasource().getFormatter(summary.numberField);
-        const shown = (value: number) => formatter.format(Math.round(value * 100) / 100);
+        const formatter = ctx.gridInterface.__getCellFormatter(summary.numberField);
+        const decimals = ctx.gridInterface.__getGridConfig().columns[summary.numberField]?.format?.number?.decimals;
+        const shown = (value: number) => formatter.format(decimals === undefined ? Math.round(value * 100) / 100 : value);
         parts.push(
             gridText(ctx, 'footer.summary.sum', { sum: shown(summary.sum) }),
             gridText(ctx, 'footer.summary.avg', { avg: shown(summary.avg) }),

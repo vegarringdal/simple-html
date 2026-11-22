@@ -128,11 +128,38 @@ type of the cell is the field's type (see [the datasource](04-datasource.md)), o
   before the time where the grid's formatter has a `T`.
 - A column's `numberOverride` is followed, as in the cells: `BLANK_TO_ZERO` writes 0 for a blank,
   `ZERO_TO_BLANK` an empty cell for 0.
+- A column's display format (`ColumnConfig.format`, the header menu's Format ›, see
+  [Display formats](08-formatting.md#display-formats)) gives its cells an Excel number format like
+  it - the value stays the value, a date a date and a number a number. See the table below.
 - A number has at most 15 significant digits in Excel: a longer id is better kept as text.
 - A text longer than 32 767 characters, what an Excel cell holds, is cut there. Control characters
   (U+0000 to U+001F but tab, CR and LF), which XML can not hold, are left out.
 - `formatted` and `escapeFormulas`, the CSV options, have no place here: the values are typed, and
   text is never a formula (see [No formulas](#no-formulas)).
+
+#### Display formats in Excel
+
+| display format | Excel number format |
+| --- | --- |
+| `{ date: 'iso' }` | `yyyy-mm-dd` |
+| `{ date: 'norwegian' }`, `'norwegianShort'` | `dd\.mm\.yyyy`, `dd\.mm\.yy` |
+| `{ date: 'us' }`, `'uk'` | `mm\/dd\/yyyy`, `dd\/mm\/yyyy` |
+| `{ date: 'isoTime' }`, `'isoSeconds'` | `yyyy-mm-dd hh:mm`, `yyyy-mm-dd hh:mm:ss` |
+| `{ date: 'norwegianTime' }`, `'norwegianSeconds'` | `dd\.mm\.yyyy hh:mm`, `dd\.mm\.yyyy hh:mm:ss` |
+| `{ date: 'time' }`, `'timeSeconds'` | `hh:mm`, `hh:mm:ss` |
+| `{ date: 'weekday' }` | `dddd`: the day's name in Excel's language |
+| `{ date: 'month' }`, `'year'` | `yyyy-mm`, `yyyy` |
+| `{ date: 'medium' }`, `'long'`, `'full'`, `'weekIso'`, `'weekUs'`, `'quarter'`, `'daysUntil'` | none of Excel's: the date in the field's order, as without a format |
+| `{ number: { decimals: 2 } }` | `0.00` |
+| `{ number: { decimals: 2, thousands: ' ' } }` (any separator) | `#,##0.00` |
+| `{ number: { decimals: 1, percent: true } }` | `0.0%` |
+| `{ number: {} }`, a number format without `decimals` | General: every decimal |
+
+The `.` and `/` of a date are escaped: unescaped, they are the decimal mark and the date separator
+of the computer's language. A number's separators are Excel's: `,` and `.` in a number format are the
+thousands separator and the decimal mark of the computer Excel runs on, so `#,##0.00` is
+`1 234 567,89` in a Norwegian Excel and `1,234,567.89` in an English one - the characters picked in
+the grid are not written.
 
 ### Dates and time zones
 
@@ -286,7 +313,8 @@ gridInterface.downloadCsv('selected.csv', { rows: 'selected', separator: ';' });
 ### Formatted or raw values
 
 By default (`formatted: true`) each value is written as the cell shows it, the text of the field's
-formatter (see [Formatting](08-formatting.md)):
+formatter (see [Formatting](08-formatting.md)) - not a column's display format (`2026-W47`,
+`1 234 567,89`): the CSV is the values, a program or a paste reads them back:
 
 | value | field | written |
 | --- | --- | --- |
