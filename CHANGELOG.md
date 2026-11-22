@@ -1332,6 +1332,32 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### The column numbers: Shift/Ctrl selection and a column menu (user request)
+
+##### Added
+- The column numbers (the row under the header filters) select like the row numbers: a click selects
+  that column, Ctrl/Cmd+click toggles one, Shift+click selects from the last click to this one - across
+  the pinned sections. A column of stacked fields is one number.
+- `gridInterface.getSelectedColumns()` (the numbers, ascending) and `selectColumns(numbers)` (`[]`
+  clears, a number that is no column is a `TypeError`); the event `column-selection-change`
+  (`{ columns, fields }`).
+- **The column menu**: right click on a number, or Shift+F10 / the menu key on a focused one. Copy
+  column (all rows), Copy selected columns (all rows), a line, Copy header names, Copy header name, Copy
+  selected header names - the entries of the selected columns greyed out with none selected. A column
+  copies as the row menu's copies do (tab separated text with the header line when `copyHeaders` is on,
+  and an html table; every displayed data row); names are one tab separated line. Ids in
+  `MENU_IDS.column`, the hook `menus.column`, `MenuContext.menu` `'column'`, texts `column.copy.*`.
+- On a focused column number: Ctrl/Cmd+C copies the selected columns (or its own column), Esc clears the
+  selection.
+
+##### Changed
+- The column selection is cleared when the layout's columns change (moved, pinned, hidden, added): it
+  pointed at another column before. It is kept on resize, filter, sort and grouping.
+- A selection change redraws the numbers in place instead of the whole header.
+- Accessibility: the column numbers are a header row of gridcells with `aria-selected` (they take the
+  focus now, so they can not stay `aria-hidden`): every `aria-rowindex` below the header, and
+  `aria-rowcount`, is one higher.
+
 #### Multiline rows: the lines of a note a text line apart (user request)
 
 ##### Changed
