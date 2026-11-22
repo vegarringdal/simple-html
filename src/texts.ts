@@ -295,6 +295,11 @@ const DEFAULTS = {
     'columnSettings.badge.text': 'Text',
     'columnSettings.badge.link': 'Link',
     'columnSettings.badge.problem': 'Error',
+    'columnSettings.badge.multiline': 'Multiline',
+    'columnSettings.badge.readonly': 'Read only',
+    // editing: a text column's text of several lines, any column not edited in an editable grid
+    'columnSettings.multiline': 'Multiline',
+    'columnSettings.readonly': 'Read only',
     'columnSettings.badge.checkbox': 'Checkbox',
     'columnSettings.badge.numberOverride': 'Blank / 0',
     'columnSettings.badge.label': 'Label',

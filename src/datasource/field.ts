@@ -112,7 +112,8 @@ export interface FieldConfig {
      * A text cell whose value has a line break is shown and edited like this without the option too:
      * the input of a cell can not hold a line break (the browser strips them). The option is for a
      * field of several lines whose values have none yet. Text fields only: `true` on another type
-     * throws when the datasource is made. Default `false`
+     * throws when the datasource is made. Default `false`. A grid's column can turn it on or off for its
+     * cells (`ColumnFormat.multiline`, Multiline in the grid config dialog)
      *
      * @sample multiline
      */

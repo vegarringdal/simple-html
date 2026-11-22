@@ -17,7 +17,8 @@ import {
     displayFormatter,
     formatTexts,
     hasDisplayFormat,
-    hasValueFormat
+    hasValueFormat,
+    readonlyOf
 } from './columnFormat';
 import type { CsvOptions } from './csv';
 import type { FindResult } from './findResult';
@@ -2097,7 +2098,8 @@ export class GridInterface<T> {
      * @param row a row of the datasource, so one of its `EntityUnion<T>` rows
      */
     public __isCellReadonly(row: Entity, field: string): boolean {
-        const readonlyByConfig = this.gridConfig.columns[field]?.readonly ?? false;
+        // the user's (format.readonly) over the column's
+        const readonlyByConfig = readonlyOf(this.gridConfig.columns[field]);
         const readonly = this.hooks.isReadonly?.(row as EntityUnion<T>, field, readonlyByConfig);
         return typeof readonly === 'boolean' ? readonly : readonlyByConfig;
     }
