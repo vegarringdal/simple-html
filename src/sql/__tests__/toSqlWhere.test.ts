@@ -1,6 +1,8 @@
 // @vitest-environment node
-import { describe, expect, it } from 'vitest';
-import { FILTER_OPERATORS, type FilterOperator } from '../../datasource/filterExpression';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { and, FILTER_OPERATORS, type FilterOperator } from '../../datasource/filterExpression';
+import { formatTexts } from '../../grid/columnFormat';
+import { dateConditions } from '../../grid/filterAsShown';
 import { type SqlColumn, type SqlDialect, type SqlOptions, toSqlWhere } from '../../sql';
 
 /**
@@ -799,5 +801,88 @@ describe('the options', () => {
 
     it('expect the options to be checked also when there is no filter', () => {
         expect(() => toSqlWhere(null, { dialect: 'postgres', columns: { a: 'a b' } })).toThrow(/letters, digits and _/);
+    });
+});
+
+describe('a header filter as shown: a week is a range of the column, no date functions', () => {
+    // the grid makes its dates in the time zone of the browser: Oslo, as options.timeZone
+    const originalTimeZone = process.env.TZ;
+    beforeAll(() => {
+        process.env.TZ = 'Europe/Oslo';
+    });
+    afterAll(() => {
+        if (originalTimeZone === undefined) {
+            delete process.env.TZ;
+        } else {
+            process.env.TZ = originalTimeZone;
+        }
+    });
+
+    /** the conditions the header filter makes of `2026-W47` typed in a column shown as weekIso */
+    const week = (field: string, operator: FilterOperator, type: 'date' | 'datetime') =>
+        and(...dateConditions(field, operator, new Date(2026, 10, 16), type, 'weekIso', formatTexts(), new Date(2026, 10, 22)));
+
+    it('expect = 2026-W47 to be from Monday to before the Monday after: an index on the column works', () => {
+        expect(sql(week('born', 'EQUAL', 'date'))).toEqual({
+            sql: '("born" IS NOT NULL AND "born" >= CAST($1 AS timestamp) AND "born" < CAST($2 AS timestamp))',
+            params: ['2026-11-16 00:00:00', '2026-11-23 00:00:00']
+        });
+        // a datetime column: the same range, its last second included
+        expect(sql(week('seen', 'EQUAL', 'datetime'))).toEqual({
+            sql: '("seen" IS NOT NULL AND "seen" >= CAST($1 AS timestamp) AND "seen" < CAST($2 AS timestamp))',
+            params: ['2026-11-16 00:00:00', '2026-11-23 00:00:00']
+        });
+    });
+
+    it('expect > the week to be from the Monday after, ≤ to before it, ≠ outside it or null', () => {
+        expect(sql(week('born', 'GREATER_THAN', 'date'))).toEqual({
+            sql: '("born" IS NOT NULL AND "born" >= CAST($1 AS timestamp))',
+            params: ['2026-11-23 00:00:00']
+        });
+        expect(sql(week('seen', 'LESS_THAN_OR_EQUAL_TO', 'datetime'))).toEqual({
+            sql: '("seen" IS NOT NULL AND "seen" < CAST($1 AS timestamp))',
+            params: ['2026-11-23 00:00:00']
+        });
+        expect(sql(week('born', 'NOT_EQUAL_TO', 'date'))).toEqual({
+            sql: '(("born" IS NOT NULL AND "born" < CAST($1 AS timestamp)) OR ("born" IS NOT NULL AND "born" >= CAST($2 AS timestamp)) OR "born" IS NULL)',
+            params: ['2026-11-16 00:00:00', '2026-11-23 00:00:00']
+        });
+    });
+
+    it('expect 2026-W40..2026-W47 in each dialect: Monday of week 40 to before the Monday after week 47', () => {
+        const filter = and(
+            ...dateConditions(
+                'born',
+                'BETWEEN',
+                [new Date(2026, 8, 28), new Date(2026, 10, 16)],
+                'date',
+                'weekIso',
+                formatTexts(),
+                new Date(2026, 10, 22)
+            )
+        );
+        expect(DIALECTS.map((dialect) => sql(filter, dialect))).toEqual([
+            {
+                sql: '("born" IS NOT NULL AND "born" >= CAST($1 AS timestamp) AND "born" < CAST($2 AS timestamp))',
+                params: ['2026-09-28 00:00:00', '2026-11-23 00:00:00']
+            },
+            {
+                sql: `("born" IS NOT NULL AND "born" >= TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS') AND "born" < TO_DATE(:2, 'YYYY-MM-DD HH24:MI:SS'))`,
+                params: ['2026-09-28 00:00:00', '2026-11-23 00:00:00']
+            },
+            {
+                sql: '(julianday("born") IS NOT NULL AND julianday("born") >= julianday(?) AND julianday("born") < julianday(?))',
+                params: ['2026-09-28 00:00:00', '2026-11-23 00:00:00']
+            },
+            {
+                sql: '([born] IS NOT NULL AND [born] >= CAST(@p1 AS datetime2(0)) AND [born] < CAST(@p2 AS datetime2(0)))',
+                params: ['2026-09-28T00:00:00', '2026-11-23T00:00:00']
+            }
+        ]);
+    });
+
+    it('expect the conditions to be plain data: the same SQL after the filter went through JSON', () => {
+        const filter = week('born', 'NOT_EQUAL_TO', 'date');
+        expect(sql(JSON.parse(JSON.stringify(filter)))).toEqual(sql(filter));
     });
 });

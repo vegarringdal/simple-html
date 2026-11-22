@@ -8,15 +8,21 @@ import {
 } from '../../datasource/filterExpression';
 import { type Formatter, parseFilterText } from '../../datasource/formatter';
 import { isBlank } from '../../datasource/isBlank';
+import { dateConditions, isOutsidePeriod } from '../filterAsShown';
 import type { Grid } from '../grid';
 import { getHeaderFilterOperator, isHeaderFilterCaseSensitive } from './getHeaderFilterOperator';
+import { asShownDateFormat, headerFilterFormatter } from './headerFilterFormatter';
 import { valuesWithLabel } from './lookupColumn';
 
 /**
  * filters columns
  * used by header filters. Stores what the header filter cell shows (`GridState.headerFilters`) and
  * replaces the column's conditions in the datasource's filter. A header filter that matches case
- * (isHeaderFilterCaseSensitive) gives its conditions `caseSensitive: true`
+ * (isHeaderFilterCaseSensitive) gives its conditions `caseSensitive: true`.
+ *
+ * A column that filters as shown (headerFilterFormatter.ts, filterAsShown.ts) reads the text as its cells
+ * show it - `2026-W47`, `1 234,5` - and stores the value as before: a date the start of the period typed.
+ * Its conditions are of the whole period (dateConditions): `= 2026-W47` is a BETWEEN of Monday and Sunday
  * @param value what the user typed, or the column's current header filter value (a Date or number, the
  * `[from, to]` of a BETWEEN) when the filter is run again with another operator or "Match case" - that
  * is formatted first, the formatter parses text only
@@ -26,7 +32,9 @@ import { valuesWithLabel } from './lookupColumn';
  */
 export function filterCallback(ctx: Grid, value: unknown, field: string, filterArray?: unknown[] | null, notinArray?: boolean) {
     const datasource = ctx.gridInterface.getDatasource();
-    const { type, formatter } = datasource.getField(field);
+    const { type } = datasource.getField(field);
+    // the field's formatter, or the one of the display format when the column filters as shown
+    const formatter = headerFilterFormatter(ctx, field, ctx.gridInterface.__getGridConfig().columns[field]?.format);
     const operator = getHeaderFilterOperator(ctx, field);
     // the [from, to] of a BETWEEN run again with another operator: its first end
     const single = Array.isArray(value) && operator !== 'BETWEEN' ? (isBlank(value[0]) ? value[1] : value[0]) : value;
@@ -70,13 +78,22 @@ export function filterCallback(ctx: Grid, value: unknown, field: string, filterA
     const caseSensitive = isHeaderFilterCaseSensitive(ctx, field);
     const options = { caseSensitive };
 
+    // a date filtered as shown: the conditions of the whole period typed (not a lookup column, it is text)
+    const asShownDate = lookupColumn ? null : asShownDateFormat(ctx, field);
+
     // no type on the condition, the datasource reads it from its fields
     if (filterValue !== null && filterValue !== undefined && filterValue !== '') {
-        filter.children.push(
-            byLabel
-                ? where(field, 'IN', valuesWithLabel(lookupColumn, operator, String(filterValue), caseSensitive), options)
-                : where(field, operator, filterValue, options)
-        );
+        if (byLabel) {
+            filter.children.push(
+                where(field, 'IN', valuesWithLabel(lookupColumn, operator, String(filterValue), caseSensitive), options)
+            );
+        } else if (asShownDate) {
+            filter.children.push(
+                ...dateConditions(field, operator, filterValue, type, asShownDate.format, asShownDate.texts, new Date())
+            );
+        } else {
+            filter.children.push(where(field, operator, filterValue, options));
+        }
     }
 
     if (filterArray) {
@@ -125,17 +142,24 @@ function asFilterValue(value: unknown): string | number | boolean | Date | null 
 
 /**
  * The conditions a column's header filter owns in a filter: the top level conditions on the column - of
- * an AND group, or the filter itself when it is one condition on the column (see filterWithoutColumn).
- * [] for none, and for an OR root: a header filter never writes into one
+ * an AND group, or the filter itself when it is one condition on the column (see filterWithoutColumn) -
+ * and those of the OR group of a `≠` filtered as shown (isOutsidePeriod). [] for none, and for an OR
+ * root: a header filter never writes into one
  */
 export function columnConditions(filter: FilterExpression | null, field: string): FilterCondition[] {
     if (!filter) {
         return [];
     }
     if (isFilterGroup(filter)) {
-        return filter.group === 'OR'
-            ? []
-            : filter.children.filter((child): child is FilterCondition => !isFilterGroup(child) && child.field === field);
+        if (filter.group === 'OR') {
+            return isOutsidePeriod(filter, field) ? (filter.children as FilterCondition[]) : [];
+        }
+        return filter.children.flatMap((child): FilterCondition[] => {
+            if (isFilterGroup(child)) {
+                return isOutsidePeriod(child, field) ? (child.children as FilterCondition[]) : [];
+            }
+            return child.field === field ? [child] : [];
+        });
     }
     return filter.field === field ? [filter] : [];
 }
@@ -172,7 +196,8 @@ export function sameConditions(a: FilterCondition[], b: FilterCondition[]): bool
  * conditions, a copy - the old filter is still the one the datasource holds.
  * An OR root is kept whole inside a new AND group - AND(OR group, header condition) - so typing
  * in a header narrows a filter built in the filter editor instead of throwing it away. So is a
- * single condition at the root, unless it is on this column: then it is the column's own.
+ * single condition at the root, unless it is on this column: then it is the column's own. The OR
+ * group of a `≠` filtered as shown (isOutsidePeriod) is the column's own too.
  */
 function filterWithoutColumn(oldFilter: FilterExpression | null, attribute: string): FilterGroup {
     if (!oldFilter) {
@@ -180,9 +205,16 @@ function filterWithoutColumn(oldFilter: FilterExpression | null, attribute: stri
     }
 
     if (isFilterGroup(oldFilter)) {
+        if (isOutsidePeriod(oldFilter, attribute)) {
+            return and();
+        }
         // anything but OR is AND, as the filter runs it
         if (oldFilter.group !== 'OR') {
-            return and(...oldFilter.children.filter((child) => isFilterGroup(child) || child.field !== attribute));
+            return and(
+                ...oldFilter.children.filter((child) =>
+                    isFilterGroup(child) ? !isOutsidePeriod(child, attribute) : child.field !== attribute
+                )
+            );
         }
         // an empty OR group filters nothing, there is nothing to keep
         return oldFilter.children.length ? and(oldFilter) : and();

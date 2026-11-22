@@ -295,6 +295,27 @@ The text is converted with a fixed format, so no session setting changes it:
   `new Date(y, m, d)` does. The tests compare every instant with JavaScript's own `Date` in a dozen time
   zones.
 
+### A week typed in the grid
+
+A column shown as weeks, months, quarters ([display formats](08-formatting.md#display-formats)) takes
+its header filter as the cells show it: `2026-W47`. The grid makes **ordinary date conditions** of it -
+the week is a `BETWEEN` of its Monday and Sunday ([Filter as shown](08-formatting.md#filter-as-shown)) -
+so the SQL needs no `EXTRACT(WEEK ...)`, `DATEPART(ISO_WEEK ...)` or `strftime('%W')`, and each dialect
+writes the range it writes for any day - an index on the column works:
+
+| typed in the grid | the filter | PostgreSQL, a `date` column |
+| --- | --- | --- |
+| `= 2026-W47` | `BETWEEN [2026-11-16, 2026-11-22]` | `"due" >= '2026-11-16 00:00:00' AND "due" < '2026-11-23 00:00:00'` |
+| `≥ 2026-W47` | `GREATER_THAN_OR_EQUAL_TO 2026-11-16` | `"due" >= '2026-11-16 00:00:00'` |
+| `> 2026-W47` | `GREATER_THAN 2026-11-22` | `"due" >= '2026-11-23 00:00:00'` |
+| `≤ 2026-W47` | `LESS_THAN_OR_EQUAL_TO 2026-11-22` | `"due" < '2026-11-23 00:00:00'` |
+| `≠ 2026-W47` | an OR group: `LESS_THAN 2026-11-16`, `GREATER_THAN 2026-11-22`, `IS_BLANK` | `("due" < '2026-11-16 00:00:00') OR ("due" >= '2026-11-23 00:00:00') OR "due" IS NULL` |
+| `2026-W40..2026-W47` | `BETWEEN [2026-09-28, 2026-11-22]` | `"due" >= '2026-09-28 00:00:00' AND "due" < '2026-11-23 00:00:00'` |
+
+(The values are parameters, `$1`, and each comparison has `"due" IS NOT NULL AND` in front, as above.) A
+`datetime` column gets Sunday 23:59:59 as the end, the SQL is the same: `< '2026-11-23 00:00:00'`. The
+week is the user's: its days are in the browser's time zone, as `timeZone` reads them.
+
 ### BETWEEN
 
 `[from, to]`, both included: `GREATER_THAN_OR_EQUAL_TO from AND LESS_THAN_OR_EQUAL_TO to`, each with

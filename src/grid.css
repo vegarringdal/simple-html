@@ -3363,6 +3363,14 @@
     outline-offset: 1px;
 }
 
+/* a setting that can not be changed for the column (Filter as shown of a time of day): greyed out, the
+ * hint under it says why */
+.simple-html-grid.filter-editor-content .column-settings-check:has(input:disabled),
+.simple-html-grid.filter-editor-content .column-settings-check input:disabled {
+    color: var(--simple-html-grid-sec-font-color);
+    cursor: default;
+}
+
 /* the checked and the unchecked value of a column's checkboxes: side by side, under each other when the
  * dialog is made narrow */
 .simple-html-grid.filter-editor-content .column-settings-values {

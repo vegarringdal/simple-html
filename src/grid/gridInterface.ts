@@ -565,7 +565,13 @@ export class GridInterface<T> {
         if (state.headerFilters) {
             this.headerFilters = {};
             for (const [field, headerFilter] of Object.entries(state.headerFilters)) {
-                this.storeHeaderFilter(field, headerFilter.value, headerFilter.operator, headerFilter.caseSensitive === true);
+                this.storeHeaderFilter(
+                    field,
+                    headerFilter.value,
+                    headerFilter.operator,
+                    headerFilter.caseSensitive === true,
+                    typeof headerFilter.filterOnType === 'boolean' ? headerFilter.filterOnType : undefined
+                );
             }
         }
 
@@ -1790,8 +1796,8 @@ export class GridInterface<T> {
 
     /**
      * @internal
-     * the header filter of a column: what its cell shows, the operator picked in its menu and its
-     * "Match case"
+     * the header filter of a column: what its cell shows, the operator picked in its menu, its "Match
+     * case" and its filter as you type
      */
     public __getHeaderFilter(field: string): HeaderFilter | undefined {
         return this.headerFilters[field];
@@ -1804,7 +1810,13 @@ export class GridInterface<T> {
      */
     public __setHeaderFilterValue(field: string, value: unknown) {
         const headerFilter = this.headerFilters[field];
-        this.storeHeaderFilter(field, value, headerFilter?.operator, headerFilter?.caseSensitive === true);
+        this.storeHeaderFilter(
+            field,
+            value,
+            headerFilter?.operator,
+            headerFilter?.caseSensitive === true,
+            headerFilter?.filterOnType
+        );
     }
 
     /**
@@ -1813,7 +1825,13 @@ export class GridInterface<T> {
      */
     public __setHeaderFilterOperator(field: string, operator: FilterOperator) {
         const headerFilter = this.headerFilters[field];
-        this.storeHeaderFilter(field, headerFilter?.value, operator, headerFilter?.caseSensitive === true);
+        this.storeHeaderFilter(
+            field,
+            headerFilter?.value,
+            operator,
+            headerFilter?.caseSensitive === true,
+            headerFilter?.filterOnType
+        );
     }
 
     /**
@@ -1822,7 +1840,23 @@ export class GridInterface<T> {
      */
     public __setHeaderFilterCaseSensitive(field: string, caseSensitive: boolean) {
         const headerFilter = this.headerFilters[field];
-        this.storeHeaderFilter(field, headerFilter?.value, headerFilter?.operator, caseSensitive);
+        this.storeHeaderFilter(field, headerFilter?.value, headerFilter?.operator, caseSensitive, headerFilter?.filterOnType);
+    }
+
+    /**
+     * @internal
+     * sets a column's filter as you type (filterOnType.ts), keeps the value, the operator and "Match
+     * case". undefined: the column's default, left out of the state
+     */
+    public __setHeaderFilterOnType(field: string, filterOnType: boolean | undefined) {
+        const headerFilter = this.headerFilters[field];
+        this.storeHeaderFilter(
+            field,
+            headerFilter?.value,
+            headerFilter?.operator,
+            headerFilter?.caseSensitive === true,
+            filterOnType
+        );
     }
 
     /**
@@ -1854,13 +1888,20 @@ export class GridInterface<T> {
     }
 
     /**
-     * stores a column's header filter, or removes it when it has no value, no operator and no "Match
-     * case" - so getState() lists only the header filters in use. An empty value ('' or undefined) is
-     * stored as null, `operator` and `caseSensitive` only when they are set
+     * stores a column's header filter, or removes it when it has no value, no operator, no "Match
+     * case" and no filter as you type of the user's - so getState() lists only the header filters in
+     * use. An empty value ('' or undefined) is stored as null, `operator`, `caseSensitive` and
+     * `filterOnType` only when they are set
      */
-    private storeHeaderFilter(field: string, value: unknown, operator: FilterOperator | undefined, caseSensitive: boolean) {
+    private storeHeaderFilter(
+        field: string,
+        value: unknown,
+        operator: FilterOperator | undefined,
+        caseSensitive: boolean,
+        filterOnType?: boolean
+    ) {
         const empty = value === null || value === undefined || value === '';
-        if (empty && !operator && !caseSensitive) {
+        if (empty && !operator && !caseSensitive && filterOnType === undefined) {
             delete this.headerFilters[field];
             return;
         }
@@ -1870,6 +1911,9 @@ export class GridInterface<T> {
         }
         if (caseSensitive) {
             headerFilter.caseSensitive = true;
+        }
+        if (filterOnType !== undefined) {
+            headerFilter.filterOnType = filterOnType;
         }
         this.headerFilters[field] = headerFilter;
     }
@@ -2583,6 +2627,7 @@ function assertRenderers(config: Partial<GridConfig>) {
  *   input takes (isHeaderOperator)
  * - `operator`: one of those the header filter takes, of `filterOperators` when it is given
  * - `filterCaseSensitive`: a boolean, `true` for a text column only
+ * - `filterOnType`: a boolean
  * @throws a `TypeError` naming the column, what it has and what it takes
  */
 function assertFilterOptions(config: Partial<GridConfig>, datasource: Datasource<any>) {
@@ -2626,6 +2671,10 @@ function assertFilterOptions(config: Partial<GridConfig>, datasource: Datasource
         }
         if (filterCaseSensitive !== undefined && typeof filterCaseSensitive !== 'boolean') {
             throw new TypeError(`${name}.filterCaseSensitive is true or false, got ${JSON.stringify(filterCaseSensitive)}`);
+        }
+        const { filterOnType } = column as Record<string, unknown>;
+        if (filterOnType !== undefined && typeof filterOnType !== 'boolean') {
+            throw new TypeError(`${name}.filterOnType is true or false, got ${JSON.stringify(filterOnType)}`);
         }
         if (filterCaseSensitive === true && type !== 'text') {
             throw new TypeError(

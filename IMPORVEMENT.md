@@ -3594,6 +3594,124 @@ in the console. All passed. Found and fixed:
   column-settings-operator 13/13, display-format 39/39, full-grid 11/11, custom-cells 39/39. The new script
   is in this worktree's `.claude/browser-checks/scripts/`
 
+### Header filters: filter as shown, filter as you type (user request)
+
+The user: "when we set to iso week etc, it could be useful if it could also use that formatting as filter?
+Is that possible with sql etc? Maybe a way to set if filter is supposed to follow formatting?" and "In
+operator part, we could have added filter after typing, so you don't need to hit enter too, can be useful
+some places, prob should be under column settings too".
+
+**Filter as shown** (`ColumnFormat.filterAsShown`, on by default; new `src/grid/filterAsShown.ts` - pure,
+and `gridFunctions/headerFilterFormatter.ts` - the grid's side):
+
+* the header filter of a column with a display format takes the text as the cells show it. A date format
+  is a period - parseDateAs: a day (iso, norwegian, norwegianShort - 00-29 is 20xx as Excel, us, uk; medium /
+  long / full read with Intl's order and month names of `format.locale`), a week (weekIso: Monday-Sunday,
+  week 1 has January 4; weekUs: Sunday-Saturday inside the year, 2026-W53 is 27-31 Dec, 2027-W01 1-2 Jan -
+  the templates `format.weekIso` / `.weekUs` / `.quarter` read back, `uke 47 2026` too, any case), month,
+  quarter, year, daysUntil (today + n), the minute (isoTime, norwegianTime) and the second. weekday, time,
+  timeSeconds are no period: today's parsing (NOT_FILTERED_AS_SHOWN). An ISO date typed (and the ISO text
+  of a Date from JSON) is read as the period it is in (readDateAs). canFilterAsShown tries a sample date
+  through the format and back: a translated template without `{year}`, a language whose names are not
+  read back, are not filtered as shown
+* **the filter stays plain conditions** (dateConditions): `=` BETWEEN start and last, `≥` start, `>` last,
+  `<` start, `≤` last, BETWEEN `[start(from), last(to)]`, open ends kept. The last is the last day for a
+  `date` field, 23:59:59 for a `datetime` (they compare the day / the second). A one-day period on a
+  `date` field, one second on a `datetime`, is the condition as before (`EQUAL` the day). **≠ of a
+  period**: an OR group `LESS_THAN start, GREATER_THAN last, IS_BLANK` - as NOT_EQUAL_TO a day matches a
+  blank date (the grid and the SQL do). The header filter owns that group (isOutsidePeriod, the exact
+  shape): filterWithoutColumn replaces it, columnConditions flattens it - so typing again does not stack
+  groups, and the filter editor's Apply clears the cell when the group changed. toSqlWhere is unchanged:
+  a week is `col >= Monday AND col < next Monday` in each dialect, the index works
+* **what the state stores**: as before, the parsed value - a Date, the **start of the period typed**
+  (`2026-W47` is Monday 00:00, a BETWEEN the starts of both ends), a number. The cell shows it through the
+  header filter's formatter (asShownFormatter: `format` in the display format, `parseFilter` the period's
+  start, an example as the placeholder) - `2026-W47` again after a render and after JSON (the ISO text is
+  formatted as a Date is). Considered: storing the typed text - it round-trips trivially, but a format
+  changed afterwards could no longer read it, and daysUntil would drift from its fixed conditions. With the
+  date the cell always shows what is filtered (daysUntil `5` shows `4` tomorrow: the dates are fixed)
+* the formatter is swapped in one place for every reader of the text (headerFilterFormatter): the cell,
+  filterCallback, the placeholder (defaultFilterPlaceholder, now with the dialog's draft format), the range
+  block of the filter menu (its inputs, the pickers), the date picker and the range picker from the cell
+  (a day picked in a week column writes `2026-W47`; pickerRange opens the range picker from Monday of the
+  first week to Sunday of the last). A number format: parseNumberAs (its thousands separator and any space
+  out, its decimal mark, a dot also when it is no separator; percent a hundredth), shown with the format's
+  separators and the decimals the number has (formatNumberTyped: `12.34` stays, not rounded to `12.3`)
+* a format changed by the user (Format ›, the dialog's Apply) runs a header filter with a value again when
+  the column now reads its text another way (refilterChangedFormats): week → month shows `2026-11` and
+  filters November, → Default the day. `setState({ formats })` from code leaves the filter. Format ›
+  Default drops `filterAsShown`
+* the datetime formats take the whole text only (`2026-11-22 13:45`): a shorter text (the date alone) would
+  be stored as its start and come back as the first minute - an ISO date typed is that minute, as the cell
+  then shows
+* assertColumnFormat: `filterAsShown` true or false, for a date / datetime / number field, not a lookup
+* the dialog: *Filter as shown* under the format picker (formatSettings), on by default, `filterAsShown:
+  false` when off; greyed out with the hint *Not for the day of the week or the time of day...* for a
+  format that can not
+
+**Filter as you type** (new `gridFunctions/filterOnType.ts`):
+
+* state like Match case: `HeaderFilter.filterOnType` (true / false, only when it differs from the default,
+  `__setHeaderFilterOnType`; storeHeaderFilter keeps an entry that only has it). Defaults:
+  `ColumnConfig.filterOnType`, else `GridConfig.filterOnType`, else off. Never a boolean column. The
+  config check: true or false
+* the toggle `filter.filterOnType` (✓ while on): at the bottom of the operator choice under a line
+  (`filter.filterOnTypeSeparator` - openOperatorChoice; Operator › itself is unchanged), in Filter › after
+  Match case (MENU_IDS.filter), and the dialog's *Filter as you type* after the operator (applied as the
+  toggle, Reset column / all back to the default)
+* renderHeaderFilter: an `input` listener starts a 300ms pause (FILTER_ON_TYPE_DELAY, one per grid, a
+  WeakMap); at its end the text is filtered when it differs from the last filtered and parses
+  (filterTextParses: a number with a digit, a date of year 1000-9999 - `202`, `2026-W` half typed do not;
+  a BETWEEN each end; text always; empty removes the filter) and the cell still shows the same column (the
+  cells are reused). Enter, blur, change and opening a menu cancel the pause; Enter does not run again on a
+  text filtered while typing (it does as before without filter as you type). keepHeaderFilterFocus
+  (exported) keeps the caret too - the filter renders the rows, not the header, so the input stays
+
+**A fix found by the browser check** (not of this feature, it made the operator choice look broken):
+rebuildHeaderColumns made the middle header columns at the start of the section, and only a scroll placed
+them - a header rendered on its own (an operator picked, a filter of the menu applied, Clear, the filter
+editor) while scrolled sideways showed the first middle columns and empty headers over the ones in view.
+horizontalScrollHandler's header part is `placeHeaderColumns(ctx, type)` now, called by
+rebuildHeaderColumns for the middle section too (scrollHandlers.test.ts has it).
+
+* texts: `filter.filterOnType`, `filter.placeholder.daysUntil`, `columnSettings.filterAsShown` / `.hint` /
+  `.off`, `columnSettings.filterOnType` / `.hint`; the guide's tables, the Norwegian sample
+* docs: 06-filtering (Filter as shown, Filter as you type, the operator choice, Filter ›), 08-formatting
+  (*Filter as shown* with the formats and operators, what a display format changes, the dialog), 22-sql (*A
+  week typed in the grid*), 03-state (what the state holds), 02-grid-config (the options' tables),
+  12-texts; JSDoc of `ColumnFormat`,
+  `ColumnConfig.filterOnType`, `GridConfig.filterOnType`, `HeaderFilter`, `GridState.headerFilters`,
+  MENU_IDS
+* tests: filterAsShown.test.ts (42: every format read back, the weeks around New Year - 2027-01-01 in
+  2026-W53, weekUs 2026-W53 / 2027-W01 - summer time, the named dates in English and Norwegian, daysUntil
+  with a fake clock, the minute and second, readDateAs of an ISO text and JSON, numbers with separators and
+  percent, the formatter, each operator's conditions and the rows they select), filterAsShownGrid.test.ts
+  (31: typed weeks and each operator, the ≠ group replaced, BETWEEN, the cell after a render, the state
+  through JSON and run again, isoTime, daysUntil, numbers, percent, weekday kept, placeholders, switched
+  off, the check, lookups, the date picker and the range picker writing weeks, the range block, Format ›
+  month / Default running again, setState leaving it, the filter editor's clear, the dialog's checkbox),
+  filterOnType.test.ts (21: the pause with fake timers, focus and caret, Enter / blur once, a cell reused,
+  dates / weeks / numbers half typed, BETWEEN, defaults, the operator choice and Filter ›, boolean columns,
+  JSON and resetState, the config check, the dialog), toSqlWhere +4 (a week as a range in every dialect,
+  ≠, >, JSON), sqlSqlite +1 (the conditions of 14 typed periods × 8 operators on every date column and
+  storage against a real SQLite: the same rows), scrollHandlers +1; updated: filterOperatorIndicator (the
+  choice's end, End), gridMenus (Filter ›), columnFormat(Grid) (the key list; the old "keeps the field
+  formatter" tests with `filterAsShown: false`), texts (the walk shows the new ids). 3652 tests, 157 files
+* browser (Chromium 1148, the full grid sample, light and dark): new `filter-as-shown-check.js` 61/61 -
+  Equal from the operator choice and `2026-W47`: only week 47 (50 of 5000 rows), a BETWEEN of Monday and
+  Sunday, `2026-W47` again after a render; the placeholder `2026-W47`; the date picker's 18 November writes
+  `2026-W47`; Between `2026-W40..2026-W47`, the range picker opens on 28 September, 7-20 September writes
+  `2026-W37..2026-W38`; Updated switched to Norwegian, `16.11.2026` the whole day (00:00 to 23:59:59);
+  Credit `5 000,5` is 5000.5, shown so again; Company: Filter as you type turned on in the choice (✓, the
+  state), Begins with - no filter in the pause, the rows change without Enter, the focus and the caret (3)
+  stay, a letter in the middle keeps the caret after it, Enter after the pause runs no filter; the dialog's
+  two checkboxes, greyed out with its hint for Day of week; no page errors. Screenshots in
+  `.claude/browser-checks/shots/filter-as-shown/` of this worktree. The shared checks against it:
+  range-block 81/81, date-range 168/168, display-format 39/39, filter-case 73/73, column-settings 144/144,
+  column-settings-more 141/141, keyboard 53/53, touch 61/61; operator-indicator 67/77 - it expected the
+  choice to end with Between (its ids, End): the copy in this worktree's scripts expects the line and
+  Filter as you type at the end (End, ArrowUp, Enter picks Between) and passes 79/79
+
 ## Considered, not done
 
 ## Candidates / not started
@@ -3664,8 +3782,8 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
   a checkbox column's header filter as a checkbox (it is typed now: `1`)
 * **Display formats, more** (see *Display formats* above): grouping by the format - a group per week,
   month, quarter or year (needs a group value function in the datasource; the group names are the field
-  formatter's now); a header filter typed in the format (`2026-W47`, a week number) and a value list of
-  weeks for a date column; copy and CSV of the text shown as an option; Days until kept up to date over
+  formatter's now); a value list of weeks for a date column (the header filter takes `2026-W47` now, see
+  *Filter as shown*); copy and CSV of the text shown as an option; Days until kept up to date over
   midnight (a timer); more formats - US with time on a 12-hour clock, `november 2026`, a week without
   its year, short day names, a currency, negatives in parentheses or red, more than 4 decimals; the
   names formats in Excel with its locale codes (`[$-414]`, its names and order differ from Intl's)

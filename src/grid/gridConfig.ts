@@ -164,6 +164,26 @@ export type GridConfig = {
      */
     filterOperatorIndicator?: boolean;
     /**
+     * the header filters filter as you type, default `false`: after a short pause in typing (300ms), no
+     * Enter needed - a number or date column when the text is a number or a date, not half typed. The
+     * default of every column, a column's own `filterOnType` wins; the user turns it on and off per
+     * column (the operator choice of the header filter, Filter › in its menu, the grid config dialog),
+     * which is state: `GridState.headerFilters[field].filterOnType`. Not a boolean column, its checkbox
+     * filters on a click. See the filtering guide, "Filter as you type"
+     *
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     filterOnType: true, // every header filter filters while typing
+     *     columns: { notes: { filterOnType: false } }, // but this one on Enter
+     *     layout: { center: [{ fields: ['name'], width: 150 }, { fields: ['notes'], width: 200 }] }
+     * };
+     * ```
+     */
+    filterOnType?: boolean;
+    /**
      * shows the settings button, a gear at the right end of the footer, default `true`: it opens the
      * grid config dialog - each column's display format, a text column's template and link, applied
      * to the state (`GridState.formats`), so `getState()` keeps what the user set. Its name and tooltip
@@ -606,6 +626,25 @@ export type ColumnConfig = {
      */
     filterCaseSensitive?: boolean;
     /**
+     * `true`: the column's header filter filters as you type, after a short pause (300ms) - no Enter
+     * needed. A number or date column filters when the text is a number or a date, not while one is half
+     * typed. Left out: the grid's `filterOnType`, else `false`. The user turns it on and off in the
+     * operator choice of the header filter, Filter › in its menu and the grid config dialog - state,
+     * `GridState.headerFilters[field].filterOnType`. Ignored on a boolean column: its checkbox filters on
+     * a click
+     *
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     columns: { name: { operator: 'CONTAINS', filterOnType: true } }, // a search as you type
+     *     layout: { center: [{ fields: ['name'], width: 150 }] }
+     * };
+     * ```
+     */
+    filterOnType?: boolean;
+    /**
      * the name of another column whose value in the row is the type of this cell -
      * `'text' | 'number' | 'boolean' | 'date' | 'datetime'`. A number/text/date etc in the same
      * column, for property/value style data. Only for a `text` field (the default), and a value that
@@ -880,8 +919,8 @@ export interface GridState {
     filter: FilterExpression | null;
     /**
      * what the header filter cells show, keyed by field: the value typed or picked, the operator
-     * picked in the header filter's menu and whether its "Match case" is on. Only the columns that have
-     * one of them are listed.
+     * picked in the header filter's menu, whether its "Match case" is on and its filter as you type.
+     * Only the columns that have one of them are listed.
      *
      * The rows are filtered by `filter`: these are what the header shows, the conditions they made are
      * in `filter` already. A state from `getState()` has both.
@@ -925,14 +964,22 @@ export interface GridState {
  *     name: { value: 'Ann*', caseSensitive: true }, // typed in the name column, "Match case" on
  *     age: { value: 30, operator: 'LESS_THAN_OR_EQUAL_TO' }, // the operator picked in the menu
  *     balance: { value: [1000, 5000], operator: 'BETWEEN' }, // typed as 1000..5000
- *     active: { value: true } // a boolean column's checkbox
+ *     active: { value: true }, // a boolean column's checkbox
+ *     city: { value: 'Os*', filterOnType: true }, // filter as you type turned on
+ *     due: { value: new Date(2026, 10, 16), operator: 'EQUAL' } // `2026-W47` typed, the column shown as weekIso
  * };
  * ```
  */
 export interface HeaderFilter {
     /**
      * what the header filter cell shows: the text typed, the date picked, `true`/`false` for a
-     * checkbox, `[from, to]` for `BETWEEN` (an open end null). null is empty
+     * checkbox, `[from, to]` for `BETWEEN` (an open end null). null is empty.
+     *
+     * A number or a date typed is stored as its value: a number, a `Date`. In a column that filters as
+     * shown (`ColumnFormat.filterAsShown`) the date is the start of the period typed - `2026-W47` is
+     * stored as Monday 2026-11-16 00:00, `2026-W40..2026-W47` as `[Monday of week 40, Monday of week 47]`
+     * - and the cell shows it in the column's format again: `2026-W47`. The conditions of the whole week
+     * are in `GridState.filter`
      */
     value: unknown;
     /**
@@ -942,6 +989,12 @@ export interface HeaderFilter {
     operator?: FilterOperator;
     /** `true` when "Match case" is on in the header filter's menu, see `ColumnConfig.filterCaseSensitive` */
     caseSensitive?: boolean;
+    /**
+     * filter as you type, as the user turned it on (`true`) or off (`false`) in the operator choice, the
+     * filter menu or the grid config dialog. Left out: the column's `filterOnType`, else the grid's -
+     * listed only when the user's differs from it. See `ColumnConfig.filterOnType`
+     */
+    filterOnType?: boolean;
 }
 
 /**

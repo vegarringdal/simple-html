@@ -86,6 +86,8 @@ const RANGE_CHOICE = [
     'filter.operator.greaterThanOrEqualTo',
     'filter.operator.between'
 ];
+/** the end of every choice, under the operators: a line and the toggle of filter as you type (filterOnType.ts) */
+const CHOICE_END = ['filter.filterOnTypeSeparator', 'filter.filterOnType'];
 
 const names = (element: GridElement) =>
     ((element as any).grid.gridInterface.getDatasource() as Datasource).getDataRows().map((row) => row.name);
@@ -229,20 +231,20 @@ describe('operator indicator - a click opens the operator choice', () => {
         const { element } = await mount({}, { name: { operator: 'CONTAINS' } });
         (indicatorOf(element, 'name') as HTMLElement).click();
         expect(openMenus()).toHaveLength(1);
-        expect(menuIds()).toEqual(TEXT_CHOICE);
+        expect(menuIds()).toEqual([...TEXT_CHOICE, ...CHOICE_END]);
         expect(checkedIds()).toEqual(['filter.operator.contains']);
 
         (indicatorOf(element, 'born') as HTMLElement).click();
         // one menu at a time
         expect(openMenus()).toHaveLength(1);
-        expect(menuIds()).toEqual(RANGE_CHOICE);
+        expect(menuIds()).toEqual([...RANGE_CHOICE, ...CHOICE_END]);
         expect(checkedIds()).toEqual(['filter.operator.greaterThanOrEqualTo']);
     });
 
     it("expect only the column's filterOperators, as Operator › has them", async () => {
         const { element } = await mount({}, { age: { filterOperators: ['EQUAL', 'BETWEEN', 'IS_BLANK'] } });
         (indicatorOf(element, 'age') as HTMLElement).click();
-        expect(menuIds()).toEqual(['filter.operator.equal', 'filter.operator.between']);
+        expect(menuIds()).toEqual(['filter.operator.equal', 'filter.operator.between', ...CHOICE_END]);
         // the type's default is not offered: the first one is used
         expect(checkedIds()).toEqual(['filter.operator.equal']);
     });
@@ -320,7 +322,7 @@ describe('operator indicator - a click opens the operator choice', () => {
         const indicator = indicatorOf(element, 'name') as HTMLElement;
         indicator.dispatchEvent(new PointerEvent('click', { bubbles: true, cancelable: true, pointerType: 'touch' }));
         expect(openMenus()).toHaveLength(1);
-        expect(menuIds()).toEqual(TEXT_CHOICE);
+        expect(menuIds()).toEqual([...TEXT_CHOICE, ...CHOICE_END]);
         expect(document.activeElement).not.toBe(headerFilterInput(element, 'name'));
     });
 
@@ -363,7 +365,7 @@ describe('operator indicator - the keyboard', () => {
         age.focus();
         expect(key(age, 'F4').defaultPrevented).toBe(true);
         expect(openMenus()).toHaveLength(1);
-        expect(menuIds()).toEqual(RANGE_CHOICE);
+        expect(menuIds()).toEqual([...RANGE_CHOICE, ...CHOICE_END]);
         expect(document.activeElement?.getAttribute('data-menu-id')).toEqual('filter.operator.equal');
 
         key(document.activeElement as Element, 'Escape');
@@ -377,6 +379,9 @@ describe('operator indicator - the keyboard', () => {
         age.focus();
         key(age, 'F4');
         key(document.activeElement as Element, 'End');
+        // the last item is Filter as you type, under a line: the arrow goes over the line
+        expect(document.activeElement?.getAttribute('data-menu-id')).toEqual('filter.filterOnType');
+        key(document.activeElement as Element, 'ArrowUp');
         expect(document.activeElement?.getAttribute('data-menu-id')).toEqual('filter.operator.between');
         key(document.activeElement as Element, 'Enter');
 
@@ -470,7 +475,7 @@ describe('operator indicator - turned off, and narrow columns', () => {
         name.focus();
         expect(key(name, 'F4').defaultPrevented).toBe(true);
         expect(openMenus()).toHaveLength(1);
-        expect(menuIds()).toEqual(TEXT_CHOICE);
+        expect(menuIds()).toEqual([...TEXT_CHOICE, ...CHOICE_END]);
         // placed under the cell: its rect was measured
         expect(place).toHaveBeenCalled();
     });

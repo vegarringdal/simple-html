@@ -363,6 +363,7 @@ Right click on a header filter.
 | `filter.operator.endWith` | `Ends with` | a text field |
 | `filter.matchCase` | `Match case` | the toggle of a text column in the filter submenu, a ✓ while it is on |
 | `filter.matchCase.hint` | `always` | its hint, on a column that always matches case (`filterCaseSensitive`) |
+| `filter.filterOnType` | `Filter as you type` | the toggle of filter as you type, a ✓ while it is on: in the filter submenu and at the bottom of the operator choice, not a boolean field |
 
 ### The value list
 
@@ -609,6 +610,9 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.label` | `Label` | the label of the input of the column's label, every column: empty is the column's own, the input shows it |
 | `columnSettings.format` | `Format` | the label of the format picker of a date or number column |
 | `columnSettings.format.tooltip` | `How the cells show the value` | its tooltip |
+| `columnSettings.filterAsShown` | `Filter as shown` | the checkbox under the format of a date or number column: the header filter takes the text as the cells show it |
+| `columnSettings.filterAsShown.hint` | `The header filter takes the text as the cells show it: a week, a month, a year is the whole of it` | under it |
+| `columnSettings.filterAsShown.off` | `Not for the day of the week or the time of day: the header filter takes the field's format` | under it instead, greyed out: a format that is no period of time |
 | `columnSettings.text` | `Text shown` | the label of a text column's template of its text |
 | `columnSettings.text.placeholder` | `{firstname} {lastname}` | its placeholder, a template as it is written |
 | `columnSettings.text.hint` | `Empty: the cell's own text. {value} is the cell's value, {field} the value of another field` | under it |
@@ -631,6 +635,8 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.operator` | `Filter operator` | the label of the operator picker, every column but a checkbox |
 | `columnSettings.operator.tooltip` | `The operator the header filter of the column uses` | its tooltip |
 | `columnSettings.operator.hint` | `Default: {operator}` | under it: the operator the column starts with, its name |
+| `columnSettings.filterOnType` | `Filter as you type` | the checkbox after the operator, every column but a checkbox |
+| `columnSettings.filterOnType.hint` | `After a short pause, no Enter needed` | under it |
 | `columnSettings.preview.current` | `Preview, the current row` | the title of the preview of the current row |
 | `columnSettings.preview.first` | `Preview, the first row` | of the first row, without a current row |
 | `columnSettings.preview.none` | `No rows to preview` | without rows |
@@ -683,13 +689,15 @@ row numbers show it.
 ### Header filters
 
 What an empty header filter shows, when its column has no `placeholderFilter` of its own. A date
-filter shows its formatter's format (`YYYY-MM-DD`), a boolean filter is a checkbox.
+filter shows its formatter's format (`YYYY-MM-DD`) - filtered as shown, an example of its display format
+(`2026-W47`, see [Filtering](06-filtering.md#filter-as-shown)) - a boolean filter is a checkbox.
 
 | id | English | shown |
 | --- | --- | --- |
 | `filter.placeholder.text` | `Text` | an empty header filter of a text field |
 | `filter.placeholder.number` | `Number` | an empty header filter of a number field |
 | `filter.placeholder.between` | `from..to` | an empty header filter whose operator is `BETWEEN`, any type |
+| `filter.placeholder.daysUntil` | `Days from today` | an empty header filter of a date column shown as `daysUntil`, filtered as shown - a number of days is typed |
 
 The operator indicator in a header filter cell (`filterOperatorIndicator`, see
 [Filtering](06-filtering.md#the-operator-in-the-cell)): the symbol of the operator the filter uses,

@@ -287,9 +287,10 @@ describe('display formats in the grid - editing keeps to the field formatter', (
     });
 });
 
-describe('display formats in the grid - the header filter keeps to the field formatter', () => {
+// filtered as shown - the default - in filterAsShownGrid.test.ts
+describe('display formats in the grid - with filterAsShown: false the header filter keeps to the field formatter', () => {
     it('expect a date typed, not a week, and the placeholder of the field formatter', async () => {
-        const { element, datasource } = await mount({ born: { format: { date: 'weekIso' } } });
+        const { element, datasource } = await mount({ born: { format: { date: 'weekIso', filterAsShown: false } } });
         expect(headerFilterInput(element, 'born').placeholder).toEqual('YYYY-MM-DD');
 
         typeInHeaderFilter(element, 'born', '2027-01-01');
@@ -301,7 +302,7 @@ describe('display formats in the grid - the header filter keeps to the field for
     });
 
     it('expect a number typed as the field formatter reads it', async () => {
-        const { element, datasource } = await mount({ balance: { format: NORWEGIAN_2 } });
+        const { element, datasource } = await mount({ balance: { format: { ...NORWEGIAN_2, filterAsShown: false } } });
 
         // the plain number: 1 000,5 would be read as 1
         typeInHeaderFilter(element, 'balance', '1000,5');

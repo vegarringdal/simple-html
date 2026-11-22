@@ -172,6 +172,9 @@ const DEFAULTS = {
     // the toggle of a text column, in Filter. The hint when the column always matches case
     'filter.matchCase': 'Match case',
     'filter.matchCase.hint': 'always',
+    // the toggle of a column that is no checkbox, in Filter and at the bottom of the operator choice: the
+    // header filter filters while the user types, after a short pause
+    'filter.filterOnType': 'Filter as you type',
     // its value list, the block 'filter.values'
     'filter.values.search': 'Search values',
     'filter.values.searchPlaceholder': 'Search values',
@@ -304,6 +307,13 @@ const DEFAULTS = {
     // a date, datetime or number column: the picker of its format, the entries of Format ›
     'columnSettings.format': 'Format',
     'columnSettings.format.tooltip': 'How the cells show the value',
+    // under the format of a date or number column: its header filter takes the text as the cells show it.
+    // Off and greyed out, with the second hint, for a format that is no period of time
+    'columnSettings.filterAsShown': 'Filter as shown',
+    'columnSettings.filterAsShown.hint':
+        'The header filter takes the text as the cells show it: a week, a month, a year is the whole of it',
+    'columnSettings.filterAsShown.off':
+        "Not for the day of the week or the time of day: the header filter takes the field's format",
     // a text column: the text it shows and its link. The placeholders and hints show a template as it is
     // written, their {names} are not filled in
     'columnSettings.text': 'Text shown',
@@ -332,6 +342,9 @@ const DEFAULTS = {
     'columnSettings.operator': 'Filter operator',
     'columnSettings.operator.tooltip': 'The operator the header filter of the column uses',
     'columnSettings.operator.hint': 'Default: {operator}',
+    // every column but a checkbox, beside its operator: the header filter filters while the user types
+    'columnSettings.filterOnType': 'Filter as you type',
+    'columnSettings.filterOnType.hint': 'After a short pause, no Enter needed',
     // the preview: the row it shows, and what is wrong with a template - {field} is the field as written
     // in braces, or the label of the column that is empty
     'columnSettings.preview.current': 'Preview, the current row',
@@ -449,6 +462,8 @@ const DEFAULTS = {
     'filter.placeholder.number': 'Number',
     // a header filter with BETWEEN: the two ends are typed with .. between them
     'filter.placeholder.between': 'from..to',
+    // a date column shown as the days until the date, filtered as shown: a number of days is typed
+    'filter.placeholder.daysUntil': 'Days from today',
     // the operator indicator of a header filter (GridConfig.filterOperatorIndicator): its name for a
     // screen reader, its tooltip - {operator} is the operator as Operator › names it - and the symbol of
     // each operator

@@ -1200,6 +1200,7 @@ describe('menus - the default menus, short', () => {
         expect(Array.from(submenu.children, (child) => child.getAttribute('data-menu-id'))).toEqual([
             'filter.operator',
             'filter.matchCase',
+            'filter.filterOnType',
             'filter.filter.blank',
             'filter.filter.clear',
             'filter.filter.clearAll',
@@ -1246,8 +1247,9 @@ describe('menus - the default menus, short', () => {
                         : entry.id === 'filter.filter.blank'
                           ? 'filter.filter.'
                           : `${entry.id}.`;
-                // the operator submenu is in Filter with the id it had before, Match case next to it
-                const inFilter = ['filter.operator', 'filter.matchCase'];
+                // the operator submenu is in Filter with the id it had before, Match case and Filter as you
+                // type next to it
+                const inFilter = ['filter.operator', 'filter.matchCase', 'filter.filterOnType'];
                 outOfPlace.push(
                     ...entry.entries
                         .map((inner) => inner.id)

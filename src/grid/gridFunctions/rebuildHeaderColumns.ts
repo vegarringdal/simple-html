@@ -14,7 +14,7 @@ import { getGroupingWidth } from './getGroupingWidth';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { headerLabelKeydown } from './headerLabelKeydown';
-import { horizontalScrollHandler } from './horizontalScrollHandler';
+import { horizontalScrollHandler, placeHeaderColumns } from './horizontalScrollHandler';
 import { getMiddleColumnsNeeded } from './rebuildRowColumns';
 import { renderCell } from './renderCell';
 import { updateHorizontalScrollWidth } from './updateHorizontalScrollWidth';
@@ -319,6 +319,10 @@ export function rebuildHeaderColumns(ctx: Grid) {
         0,
         RIGHT_PINNED_COLTYPE
     );
+
+    // the middle columns were made at the start of the section: where the rows' columns are when it is
+    // scrolled sideways - a header rendered on its own has no scroll after it (horizontalScrollHandler.ts)
+    placeHeaderColumns(ctx, MIDDLE_PINNED_COLTYPE);
 
     /**
      * for slection in top left cornor

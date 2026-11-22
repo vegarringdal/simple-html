@@ -532,6 +532,7 @@ export interface GridMenus {
  * | `filter.operator.beginWith` | Begins with | a text field |
  * | `filter.operator.endWith` | Ends with | a text field |
  * | `filter.matchCase` | Match case - a toggle with a ✓ (`GridState.headerFilters[field].caseSensitive`). On and greyed out, with the hint "always", for a column with `filterCaseSensitive` | a text field, a lookup column |
+ * | `filter.filterOnType` | Filter as you type - a toggle with a ✓: the header filter filters after a pause in typing (`GridState.headerFilters[field].filterOnType`, `ColumnConfig.filterOnType`) | not a boolean field |
  * | `filter.filter.blank` | Blank › - a submenu in Filter › | |
  * | `filter.filter.isBlank` | Is blank - the column's conditions replaced with `IS_BLANK` | the column has `IS_BLANK` |
  * | `filter.filter.isNotBlank` | Is not blank | the column has `IS_NOT_BLANK` |
@@ -543,7 +544,8 @@ export interface GridMenus {
  * | `filter.range` | the range block: the operators of Operator › as a row of buttons (=, ≠, <, ≤, >, ≥, Between), an input - From and To for Between - "Cancel" and "Apply": as the operator picked in Operator › and the value typed in the header filter. A {@link MenuBlock}, its texts are `filter.range.*` | a number, date or datetime field, not a lookup column |
  *
  * The items of Operator › are the operator choice of the header filter's operator indicator too
- * (`GridConfig.filterOperatorIndicator`), a menu of its own: `GridMenus.filter` is not called for it.
+ * (`GridConfig.filterOperatorIndicator`), a menu of its own: `GridMenus.filter` is not called for it. Under
+ * them, after a line (`filter.filterOnTypeSeparator`), it has `filter.filterOnType`.
  *
  * Column menu (`GridMenus.column`), right click on a column number - the row of numbers under the
  * header filters - or Shift+F10 on one with the focus. Select ›, then the copies, flat: a Copy › around
@@ -727,6 +729,7 @@ export const MENU_IDS = {
         'filter.operator.beginWith',
         'filter.operator.endWith',
         'filter.matchCase',
+        'filter.filterOnType',
         'filter.filter.blank',
         'filter.filter.isBlank',
         'filter.filter.isNotBlank',

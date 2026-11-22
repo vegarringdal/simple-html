@@ -2,10 +2,11 @@ import { html, type TemplateResult } from 'lit-html';
 import type { FilterOperator } from '../../datasource/filterExpression';
 import type { TextId } from '../../texts';
 import type { Grid } from '../grid';
-import type { MenuContext } from '../gridMenus';
+import type { MenuContext, MenuEntry } from '../gridMenus';
 import { sectionColumns } from './cellRowKeyNavigationCellRowHandler';
 import type { ColType } from './colType';
 import { headerFilterType, headerOperators } from './columnFilterOptions';
+import { filterOnTypeItem } from './filterOnType';
 import { getHeaderFilterOperator } from './getHeaderFilterOperator';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
@@ -22,8 +23,9 @@ import { placeAt, showMenu } from './showMenu';
  *
  * A click or a tap on it opens the operator choice under it: the items of the filter menu's
  * Filter › Operator ›, the operator in use checked, and picking one does what Operator › does
- * (headerOperatorMenu.ts). F4 in the header filter opens it too. A column that offers one operator
- * only shows it, but it can not be clicked: there is nothing to choose.
+ * (headerOperatorMenu.ts) - then, under a line, the toggle "Filter as you type" (filterOnType.ts). F4
+ * in the header filter opens it too. A column that offers one operator only shows it, but it can not be
+ * clicked: there is nothing to choose.
  */
 
 /**
@@ -155,9 +157,10 @@ export function canChooseOperator(ctx: Grid, attribute: string): boolean {
 /**
  * Opens the operator choice of a column's header filter under `anchor` - the indicator, or the cell
  * when it has none (F4 in a cell without one): a menu of the grid (showMenu) with the items of
- * Filter › Operator › (headerOperatorItems), the operator in use checked. Its context is the filter
- * menu's, the cell it is in. Opened from the keyboard the focus is on its first item, Esc closes it and
- * the focus goes back where it was
+ * Filter › Operator › (headerOperatorItems), the operator in use checked, then a line
+ * (`filter.filterOnTypeSeparator`) and "Filter as you type" (`filter.filterOnType`, a ✓ while it is on).
+ * Its context is the filter menu's, the cell it is in. Opened from the keyboard the focus is on its
+ * first item, Esc closes it and the focus goes back where it was
  */
 export function openOperatorChoice(ctx: Grid, cell: HTMLCellElement, attribute: string, anchor: HTMLElement) {
     const datasource = ctx.gridInterface.getDatasource();
@@ -171,7 +174,12 @@ export function openOperatorChoice(ctx: Grid, cell: HTMLCellElement, attribute: 
         gridInterface: ctx.gridInterface,
         datasource
     };
-    showMenu(ctx, headerOperatorItems(ctx, attribute), context, placeAt(anchor));
+    const entries: MenuEntry[] = [
+        ...headerOperatorItems(ctx, attribute),
+        { type: 'separator', id: 'filter.filterOnTypeSeparator' },
+        filterOnTypeItem(ctx, attribute)
+    ];
+    showMenu(ctx, entries, context, placeAt(anchor));
 }
 
 /**

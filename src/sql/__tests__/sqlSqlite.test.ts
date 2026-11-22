@@ -4,11 +4,14 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Datasource } from '../../datasource/dataSource';
 import type { FieldType } from '../../datasource/field';
 import {
+    and,
     FILTER_OPERATORS,
     type FilterCondition,
     type FilterExpression,
     type FilterOperator
 } from '../../datasource/filterExpression';
+import { type DateFormat, formatTexts } from '../../grid/columnFormat';
+import { dateConditions, parseDateAs } from '../../grid/filterAsShown';
 import { type SqlColumn, type SqlDateStorage, toSqlWhere } from '../../sql';
 
 /**
@@ -671,6 +674,64 @@ describe('toSqlWhere on SQLite selects the rows the grid selects', () => {
             check(data, tree(rnd, 0), mismatches);
         }
         expect(mismatches.slice(0, 5)).toEqual([]);
+    });
+
+    it('expect the conditions of a header filter as shown - weeks, months, minutes - to select the same rows', () => {
+        // what the grid makes of the text typed in a column with a display format (filterAsShown.ts): the
+        // period of the text, each operator on it - around the clock changes in Oslo too
+        const texts = formatTexts();
+        const today = new Date(2026, 10, 22, 10);
+        const typed: [DateFormat, string][] = [
+            ['weekIso', '2026-W47'],
+            ['weekIso', '2026-W43'],
+            ['weekIso', '2026-W13'],
+            ['weekUs', '2026-W48'],
+            ['month', '2026-11'],
+            ['month', '2026-03'],
+            ['quarter', '2026 Q4'],
+            ['year', '2026'],
+            ['year', '2000'],
+            ['norwegian', '22.11.2026'],
+            ['daysUntil', '-1'],
+            ['isoTime', '2026-11-22 00:00'],
+            ['isoTime', '2026-03-29 03:00'],
+            ['norwegianSeconds', '22.11.2026 12:30:00']
+        ];
+        const operators: FilterOperator[] = [
+            'EQUAL',
+            'NOT_EQUAL_TO',
+            'LESS_THAN',
+            'LESS_THAN_OR_EQUAL_TO',
+            'GREATER_THAN',
+            'GREATER_THAN_OR_EQUAL_TO'
+        ];
+        const mismatches: Mismatch[] = [];
+        let count = 0;
+        for (const field of matrixFields) {
+            const type = FIELDS[field].type;
+            if (type !== 'date' && type !== 'datetime') {
+                continue;
+            }
+            for (const [format, text] of typed) {
+                // a format of the time of day is for a datetime column only
+                if (type === 'date' && (format === 'isoTime' || format === 'norwegianSeconds')) {
+                    continue;
+                }
+                const start = parseDateAs(text, format, texts, today)?.start;
+                expect(start, `${format} ${text}`).toBeInstanceOf(Date);
+                for (const operator of operators) {
+                    check(data, and(...dateConditions(field, operator, start, type, format, texts, today)), mismatches);
+                    count++;
+                }
+                // a BETWEEN from this period to the year's end, and one open at its start
+                const end = new Date(2026, 11, 31);
+                check(data, and(...dateConditions(field, 'BETWEEN', [start, end], type, format, texts, today)), mismatches);
+                check(data, and(...dateConditions(field, 'BETWEEN', [null, start], type, format, texts, today)), mismatches);
+                count += 2;
+            }
+        }
+        expect(mismatches.slice(0, 5)).toEqual([]);
+        expect(count).toBeGreaterThan(800);
     });
 
     it('expect most of the filters to select some rows but not all - the comparison is not empty', () => {

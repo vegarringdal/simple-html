@@ -304,13 +304,13 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
     check();
     (document.querySelector('[data-menu-id="header.format.number.norwegian"]') as HTMLElement).click();
     check();
-    // Show blank as 0 (Show as checkbox, Show blank as 0, Show 0 as blank, Use the column label), a label
-    // and a placeholder of the user's: their badges
-    toggle(1);
+    // Show blank as 0 (Show as checkbox, Filter as shown, Show blank as 0, Show 0 as blank, Use the column
+    // label, Filter as you type), a label and a placeholder of the user's: their badges
+    toggle(2);
     type('label', '«age2»');
     type('placeholder', '«x»');
     check();
-    toggle(3);
+    toggle(4);
     check();
     // shown as checkboxes: the two values, their hint, each problem of them
     toggle(0);
@@ -320,6 +320,11 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
     type('checked', '«x»');
     check();
     type('checked', '0');
+    check();
+    // a date column shown as the day of the week: Filter as shown greyed out, its hint says why
+    option('«Born»').click();
+    (dialog().querySelector('.column-settings-format') as HTMLElement).click();
+    (document.querySelector('[data-menu-id="header.format.date.weekday"]') as HTMLElement).click();
     check();
     // a checkbox and a lookup column: no settings
     option('«Active»').click();
@@ -495,6 +500,14 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     valueSearch.value = '1';
     valueSearch.dispatchEvent(new Event('input'));
     checkMenu();
+
+    // a date column shown as the days until the date, filtered as shown: the placeholder of the range
+    // block of its menu (its header filter has the column's placeholderFilter)
+    gridInterface.setState({ formats: { born: { date: 'daysUntil' } } });
+    openFilterMenu(element, 'born');
+    check();
+    gridInterface.closeMenu();
+    gridInterface.setState({ formats: {} });
 
     // a header filter with BETWEEN: its placeholder, and From and To of the range block of its menu
     gridInterface.setState({ headerFilters: { age: { value: null, operator: 'BETWEEN' } } });

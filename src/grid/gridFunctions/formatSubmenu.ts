@@ -16,6 +16,7 @@ import {
 import type { Grid } from '../grid';
 import type { MenuEntry, MenuItem, MenuSubmenu } from '../gridMenus';
 import { gridText } from './gridText';
+import { refilterChangedFormats } from './headerFilterFormatter';
 
 /**
  * Format › in the header menu: how the column's cells show the value, picked by the user - the display
@@ -80,13 +81,16 @@ export interface FormatTarget {
 }
 
 /**
- * The format in the grid's state, for the header menu: GridState.formats
+ * The format in the grid's state, for the header menu: GridState.formats. A header filter of the column
+ * with a value runs again when the column reads its text in another way now (refilterChangedFormats: a
+ * week filtered as shown switched to a month)
  */
 function stateTarget(ctx: Grid, attribute: string): FormatTarget {
     const gridInterface = ctx.gridInterface;
     return {
         current: () => gridInterface.__getGridConfig().columns[attribute]?.format,
         set: (format) => {
+            const before = gridInterface.getState().formats;
             const formats = gridInterface.getState().formats;
             if (format) {
                 formats[attribute] = format;
@@ -94,6 +98,7 @@ function stateTarget(ctx: Grid, attribute: string): FormatTarget {
                 delete formats[attribute];
             }
             gridInterface.setState({ formats });
+            refilterChangedFormats(ctx, before);
         }
     };
 }
@@ -133,13 +138,15 @@ export function formatSubmenu(ctx: Grid, attribute: string, target: FormatTarget
 
     /**
      * sets the column's date or number format, undefined: none (Default). The rest of the column's format
-     * - its label, its blank / 0 ... from the column settings - stays as it is
+     * - its label, its blank / 0, its filter as shown ... from the column settings - stays as it is;
+     * Default drops filter as shown, there is no format to filter as
      */
     const set = (part: Pick<ColumnFormat, 'date' | 'number'> | undefined) => {
         const next: ColumnFormat = { ...current(), ...part };
         if (!part) {
             delete next.date;
             delete next.number;
+            delete next.filterAsShown;
         }
         target.set(hasDisplayFormat(next) ? next : undefined);
     };

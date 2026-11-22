@@ -199,7 +199,7 @@ gridInterface.getState().detailForm; // { show: true, fields: ['company', 'notes
 ## Header filters in the state
 
 `headerFilters` is keyed by field. Only the columns whose header filter has a value, an operator
-picked in its menu or Match case on are listed:
+picked in its menu, Match case on or filter as you type turned on or off by the user are listed:
 
 ```ts
 import type { GridState } from '@simple-html/grid';
@@ -209,7 +209,9 @@ const headerFilters: GridState['headerFilters'] = {
     age: { value: 30, operator: 'LESS_THAN_OR_EQUAL_TO' }, // the operator picked in the menu
     city: { value: 'Oslo', caseSensitive: true }, // Match case on in its menu: OSLO is left out
     balance: { value: [1000, 5000], operator: 'BETWEEN' }, // typed as 1000..5000
-    active: { value: true } // a boolean column's checkbox
+    active: { value: true }, // a boolean column's checkbox
+    notes: { value: null, filterOnType: true }, // filter as you type turned on in its operator choice
+    due: { value: new Date(2026, 10, 16), operator: 'EQUAL' } // `2026-W47` typed, the column shown as weekIso
 };
 ```
 
@@ -219,6 +221,19 @@ column does not offer (its `filterOperators` changed since it was saved) is pass
 `operator` is used. Match case (`caseSensitive`) is state too, `true` or left out; a column with
 `filterCaseSensitive` always matches case, whatever the state has. A `BETWEEN`'s value is
 `[from, to]`, an open end `null`. See [Filtering](06-filtering.md#header-filters).
+
+Filter as you type (`filterOnType`) is the user's, `true` or `false`: listed only when it differs from
+the column's default (its `filterOnType`, else the grid's), so `resetState()` goes back to the config's.
+See [Filter as you type](06-filtering.md#filter-as-you-type).
+
+A column that filters as shown - a display format such as `weekIso`, see
+[Filter as shown](08-formatting.md#filter-as-shown) - stores its value as any date column does: a
+`Date`, the **start of the period typed**. `2026-W47` is Monday 2026-11-16 00:00, `2026-11` November 1,
+`2026-W40..2026-W47` the Mondays of both weeks (`[from, to]`). The cell shows it in the format again,
+`2026-W47`; through JSON the Date is its ISO text (`'2026-11-15T23:00:00.000Z'` in Oslo), which the cell
+reads the same. The conditions of the whole week are in `filter`: the state has both, as `getState()`
+gives them. A state of a week typed when the column was shown as weeks, set after its format changed,
+shows the date in the new format - the filter is what was saved until the header filter runs again.
 
 To set a filter from code that the header also shows, set both:
 
