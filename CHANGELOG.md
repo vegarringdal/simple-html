@@ -1332,6 +1332,27 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Column settings: a label, a placeholder, blank / 0, checkboxes (user request)
+
+##### Added
+- In the Columns tab of the grid config dialog, kept in the state with the formats (`GridState.formats`), each
+  winning over the column's own option - and a developer can set them in `ColumnConfig.format`:
+  - **Label** (`ColumnFormat.label`): the column's label everywhere the grid names it - the header, the
+    menus, the filter editor, the footer's chips, the headers of copy, CSV and Excel.
+  - **Filter placeholder** (`placeholder`) or **Use the column label** (`placeholderLabel: true`): the
+    header filter's placeholder, over `placeholderFilter` and Between's "from..to".
+  - **Show blank as 0** / **Show 0 as blank** for a number column (`numberOverride`: `'BLANK_TO_ZERO'`,
+    `'ZERO_TO_BLANK'`, or `'NONE'` to turn the column's own off).
+  - **Show as checkbox** for a text or number column of `1` / `0` (`checkbox: { checked?, unchecked? }`,
+    `'1'` / `'0'` by default, the exported type `CheckboxFormat`): a cell is checked when its value is the
+    checked one; a click or Space writes the checked / unchecked value as the field's type wants. Copy,
+    exports, sorting and filters keep the value.
+  - The column list shows what is set: Checkbox, Blank / 0, Label, Placeholder.
+- A format that does not fit throws a `TypeError`, from the config and from `setState()`.
+
+##### Fixed
+- Format › replaced the whole format of the column: it changes its date or number part only now.
+
 #### Grid config: the tabs Columns and Detail form, a detail form of the current row (user request)
 
 ##### Added
