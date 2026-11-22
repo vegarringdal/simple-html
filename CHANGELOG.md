@@ -1332,6 +1332,26 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Touch: less padding (user request)
+
+##### Changed
+- On a touch screen (`pointer: coarse`) the buttons, the range block's operators and inputs and the searches
+  keep their 24px (they were 36px, out of line with the rest of a dialog), and the rows of the menus, the
+  column chooser and the filter menu's value list are 28px (were 36px).
+
+##### Added
+- `--simple-html-grid-touch-row-height` (`28px`): the height of those rows on a touch screen.
+
+#### Docs site: hide the sidebar, sample grids at most 30 rows (user request)
+
+##### Added
+- A ☰ button hides the docs site's sidebar and one in the corner shows it again (remembered). On a phone it
+  starts hidden and opens over the page.
+
+##### Changed
+- A sample's grid is 30 rows high at most (15 at least), so a long page scrolls past it; the full grid
+  sample is not capped.
+
 #### Themes: TreDeSpace, light and dark (user request)
 
 ##### Added

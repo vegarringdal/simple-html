@@ -16,6 +16,7 @@ import {
     scrollToPlace
 } from './pages';
 import { SAMPLES } from './sampleList';
+import { addSidebarToggle } from './sidebarToggle';
 import { applyGridTheme, currentGridTheme, GRID_THEMES, type GridTheme, initTheme, toggleTheme } from './theme';
 
 initTheme();
@@ -179,6 +180,9 @@ navSection(
 const main = document.createElement('main');
 main.className = 'main';
 app.appendChild(main);
+
+// the ☰ buttons: the sidebar can be hidden, on a phone it opens over the page
+addSidebarToggle(app, sidebar, sidebarHeader);
 
 // the page on screen
 let currentPage: Page | undefined;

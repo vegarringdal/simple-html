@@ -3068,6 +3068,35 @@ in the console. All passed. Found and fixed:
   pixels differ. submenu-check 40/40, menus-regression 25/25, sample-height 5/5, full-grid 11/11. The new scripts
   are in this worktree's `.claude/browser-checks/scripts/` (the shared folder could not be written)
 
+### Touch: less padding (user request)
+
+* the user, testing on a phone: the filter editor's buttons - "some buttons is higher than I like" - and
+  the menus and the value list - "dont like extreme padding". On a touch screen (`pointer: coarse`) the
+  buttons, the range block's operators and inputs and the searches were 36px (the dialog's AND / OR 24px,
+  out of line), the rows of menus, the column chooser and the value list 36px
+* now the buttons, operators, inputs and searches keep their 24px (the WCAG 2.2 minimum target), in line
+  with the rest of a dialog; the rows of lists are 28px - `--simple-html-grid-touch-row-height`, a size
+  variable (left out of the colour tests of both themes), so an app can set its own. The column chooser's
+  bottom padding 6px (was 10px)
+* checked in Chromium on a phone (390 x 844, touch): every button of the filter editor 24px; touch-check
+  61/61 (its 36px expectations now 28px), touch-select 66/66, range block 81/81, value list 51/51,
+  TreDeSpace 141/141. Guides 01, 10, 13
+
+### Docs site: a ☰ to hide the sidebar, sample grids at most 30 rows (user request)
+
+* the user, on a phone: "maybe we should also set max height in samples on grid, so its max 25-30 rows..
+  so it does not mess up scrolling. Able to remove side menu might be useful / hamburger menu". On a phone
+  the sidebar took half the width, and a sample page as long as it had a grid of 60 rows
+* sidebarToggle.ts: a ☰ in the sidebar's header hides it (`body.sidebar-hidden`), a ☰ in the top left
+  corner shows it; a wide window remembers it (localStorage `simple-html-demo-sidebar`). Narrow
+  (`max-width: 760px`): hidden to start with, it opens over the page (280px at most), a page picked in it,
+  a tap beside it or Esc closes it
+* `.demo-grid-host` is 30 rows high at most (`--demo-grid-max-height`, with the default heights around the
+  rows), 15 at least as before; the full grid sample is not capped
+* site.test.ts +1; browser: new `.claude/browser-checks/scripts/sidebar-toggle-check.js` 15/15 (wide: hide,
+  the page's width, remembered, show; phone: hidden, opens over the page, a page picked / a tap beside /
+  Esc close it; a 2200px window: 30 rows, the full grid 85); full grid 11/11, sample height 5/5
+
 ## Considered, not done
 
 ## Candidates / not started

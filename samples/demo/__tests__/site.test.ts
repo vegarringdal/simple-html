@@ -107,6 +107,24 @@ describe('docs site', { timeout: 30_000 }, () => {
         expect(document.body.dataset.gridTheme).toBeUndefined();
     });
 
+    it('hides and shows the sidebar with its ☰ buttons, and remembers it (a wide window)', () => {
+        const hide = document.querySelector<HTMLButtonElement>('.sidebar-toggle');
+        const show = document.querySelector<HTMLButtonElement>('.sidebar-open');
+        expect(hide?.getAttribute('aria-label')).toBe('Hide the menu');
+        expect(show?.getAttribute('aria-label')).toBe('Show the menu');
+        expect(document.body.classList.contains('sidebar-hidden')).toBe(false);
+
+        hide?.click();
+        expect(document.body.classList.contains('sidebar-hidden')).toBe(true);
+        expect(show?.getAttribute('aria-expanded')).toBe('false');
+        expect(localStorage.getItem('simple-html-demo-sidebar')).toBe('hidden');
+
+        show?.click();
+        expect(document.body.classList.contains('sidebar-hidden')).toBe(false);
+        expect(hide?.getAttribute('aria-expanded')).toBe('true');
+        expect(localStorage.getItem('simple-html-demo-sidebar')).toBe('shown');
+    });
+
     it('renders the work in progress page: the open items of the plan and the known issues', async () => {
         await open('#status/work-in-progress');
 

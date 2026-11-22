@@ -127,7 +127,8 @@ body {
 }
 
 .sidebar-header {
-    padding: 16px 16px 12px;
+    position: relative;
+    padding: 16px 48px 12px 16px;
     border-bottom: 1px solid var(--demo-side-border);
 }
 
@@ -304,6 +305,65 @@ body {
 .theme-btn:hover {
     color: var(--demo-side-strong);
     border-color: var(--demo-side-button-hover);
+}
+
+/* the ☰ buttons (sidebarToggle.ts): hide the sidebar (in its header), show it again (the top left corner
+   of the page). Square, as the grid */
+.sidebar-toggle,
+.sidebar-open {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    font-size: 16px;
+    line-height: 1;
+    color: var(--demo-side-strong);
+    background: var(--demo-side-bg);
+    border: 1px solid var(--demo-side-border);
+    cursor: pointer;
+}
+
+.sidebar-toggle:hover,
+.sidebar-open:hover {
+    background: var(--demo-side-hover);
+}
+
+.sidebar-toggle {
+    position: absolute;
+    top: 12px;
+    right: 10px;
+}
+
+.sidebar-open {
+    display: none;
+    position: fixed;
+    top: 8px;
+    left: 8px;
+    z-index: 20;
+}
+
+body.sidebar-hidden .sidebar {
+    display: none;
+}
+
+body.sidebar-hidden .sidebar-open {
+    display: block;
+}
+
+/* the page clear of the show button */
+body.sidebar-hidden .main {
+    padding-left: 44px;
+}
+
+/* a phone or a narrow window: the sidebar opens over the page (sidebarToggle.ts NARROW) */
+@media (max-width: 760px) {
+    .sidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 30;
+        width: min(280px, 85vw);
+    }
 }
 
 /* ------------------------------------------------------------------- main */
@@ -483,9 +543,13 @@ body {
  */
 .demo-grid-host {
     --demo-grid-height: calc(25px + 22px + 22px + 18px + 15 * 22px + 45px + 16px);
+    /* and 30 rows at most: a sample page as high as a long window (a phone with the sidebar over it) had a
+       grid of 60 rows, the page scrolled in the grid more than past it */
+    --demo-grid-max-height: calc(25px + 22px + 22px + 18px + 30 * 22px + 45px + 16px);
     flex: 1;
     position: relative;
     min-height: var(--demo-grid-height);
+    max-height: var(--demo-grid-max-height);
 }
 
 /* in a guide the stage is as high as its parts: the grid fills its host, which needs a height of its own */
@@ -522,6 +586,7 @@ body {
 /* a full page sample (fullPage): the grid is most of the window high, also when the page scrolls - and
    15 rows at least, in a low window too */
 .stage-full .demo-grid-host {
+    max-height: none;
     min-height: max(var(--demo-grid-height), calc(100vh - 190px));
 }
 
