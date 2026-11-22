@@ -127,7 +127,7 @@ On a phone or a tablet the grid works with a finger, nothing to set:
   Two fingers are the browser's: a pinch zooms the page.
 - **Menus**: a long press (held still for half a second) opens the menu a right click opens - of a
   cell, a row number, a header label, a header filter, a column number. In a menu a tap opens a
-  submenu, a tap outside closes it. On a touch screen (css `pointer: coarse`) the items are 36px high,
+  submenu, a tap outside closes it. On a touch screen (css `pointer: coarse`) the items are 28px high,
   see [With a finger](10-menus.md#with-a-finger).
 - **Selecting**: a finger has no Shift and no Ctrl. A tap on a row number toggles the row - the first
   tap selects, more taps add or remove (in `'single'` mode a tap selects the one row) - and a tap on a

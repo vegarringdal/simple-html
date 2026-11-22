@@ -445,6 +445,7 @@ The fonts:
 | --- | --- | --- |
 | `--simple-html-grid-font-family` | all text | `'Roboto', 'Helvetica', 'Arial', 'sans-serif'` |
 | `--simple-html-grid-font-size` | all text | `11px`. A larger font needs a larger `cellHeight` and `multilineLineHeight` (grid options, in px) |
+| `--simple-html-grid-touch-row-height` | on a touch screen (`pointer: coarse`): the height of a menu item, a column chooser field, a row of the filter menu's value list | `28px`. With a mouse they keep their own height |
 | `--simple-html-grid-font-weight` | the cells, the inputs | `500` |
 | `--simple-html-grid-font-weight-header` | the labels, the menu sections, group rows, buttons | `700` |
 | `--simple-html-grid-font-weight-cell` | the menu items, the filter editor's title and captions | `--simple-html-grid-font-weight` |

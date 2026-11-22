@@ -85,10 +85,10 @@ An item with a `›` opens a submenu beside it:
   [Moving and resizing columns](02-grid-config.md#moving-and-resizing-columns)): still held at 500ms
   the header menu opens and the drag ends, nothing moves.
 - **Bigger targets**: on a touch screen (css `@media (pointer: coarse)`) the items of the menus and
-  submenus, the column chooser's fields, search and Close, the rows of the filter menu's value list,
-  the operators and the input of its range block, the buttons of the value list, the range block and
-  the filter editor are 36px high, and the filter editor's edges and
-  corners a finger can take (10px, 20px). With a mouse they stay as they are.
+  submenus, the column chooser's fields, search and Close, and the rows of the filter menu's value list
+  are 28px high (`--simple-html-grid-touch-row-height`), and the filter editor's edges and corners a finger can take (10px, 20px). The buttons,
+  the range block's operators and inputs and the searches keep their size, 24px - the WCAG 2.2 minimum
+  target - in line with the rest of a dialog. With a mouse everything stays as it is.
 - **The column chooser**: its list scrolls with a finger; a field held still for 200ms is dragged, and
   is shown over the chooser while it is (the dragged field is a popover too).
 

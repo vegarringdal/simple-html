@@ -132,6 +132,9 @@
 
     /* the text: the cells, the menus, the filter editor */
     --simple-html-grid-font-size: 11px;
+    /* on a touch screen (pointer: coarse): the height of a menu item, a column chooser field and a row of
+       the filter menu's value list - room for a finger, not much more. With a mouse they keep their own */
+    --simple-html-grid-touch-row-height: 28px;
     --simple-html-grid-font-weight: 500;
     /* the labels, the menu section headings, group rows, buttons */
     --simple-html-grid-font-weight-header: 700;
@@ -3244,17 +3247,17 @@
  */
 @media (pointer: coarse) {
     .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item {
-        height: 36px;
-        line-height: 36px;
+        height: var(--simple-html-grid-touch-row-height);
+        line-height: var(--simple-html-grid-touch-row-height);
     }
 
     .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item[aria-haspopup='menu']::after {
-        line-height: 36px;
+        line-height: var(--simple-html-grid-touch-row-height);
     }
 
     /* the column chooser: its search, its list (more rows of the taller ones) and Close */
     .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item-input {
-        height: 36px;
+        height: var(--simple-html-grid-touch-row-height);
     }
 
     .simple-html-grid .simple-html-grid-menu-sub {
@@ -3262,19 +3265,15 @@
     }
 
     .simple-html-grid .simple-html-grid-menu .simple-html-label-button-menu-bottom {
-        padding: 10px;
+        padding: 6px;
     }
 
-    .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-search,
-    .simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-search,
-    .simple-html-grid .simple-html-grid-range .simple-html-grid-range-operator,
-    .simple-html-grid .simple-html-grid-range .simple-html-grid-range-input,
-    .simple-html-grid .simple-html-grid-button {
-        height: 36px;
-    }
+    /* the buttons, the range block's operators and inputs and the searches keep their size (24px, the
+       WCAG 2.2 minimum target): taller they were out of line with the rest of a dialog (the user: "some
+       buttons is higher than I like"). The rows of lists are what a finger needs room for */
 
     .simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-row {
-        min-height: 36px;
+        min-height: var(--simple-html-grid-touch-row-height);
     }
 
     .simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-scroll {

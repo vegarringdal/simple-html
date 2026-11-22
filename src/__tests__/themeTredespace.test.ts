@@ -38,7 +38,7 @@ const gridVariables = variables(takeRule(readCss('grid.css'), '.simple-html-grid
 const dateVariables = variables(takeRule(readCss('date.css'), '.simple-html-date').body);
 
 // the sizes and weights of the font stay the grid's
-const KEPT = /-font-(size|weight)/;
+const KEPT = /-font-(size|weight)|-touch-row-height/;
 
 // the variables that are one colour in light and dark: the library's tints (red-500, blue-500,
 // amber-500 at an alpha), shadows of black, its Tooltip (dark in both), nothing between the stripes

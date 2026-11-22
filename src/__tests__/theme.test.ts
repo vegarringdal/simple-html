@@ -113,7 +113,7 @@ describe('theme - light and dark', () => {
     it('expect a colour variable to be light-dark(<light>, <dark>), or one plain colour for both', () => {
         // the ones that are another variable (the scrollbar thumbs, the tooltips) take its light and dark
         const colours = [...gridVariables, ...dateVariables].filter(
-            ([name, value]) => !/-font-(size|weight|family)/.test(name) && !value.startsWith('var(')
+            ([name, value]) => !/-font-(size|weight|family)|-touch-row-height/.test(name) && !value.startsWith('var(')
         );
 
         for (const [name, value] of colours) {
