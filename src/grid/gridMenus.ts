@@ -482,20 +482,27 @@ export interface GridMenus {
  * | id | shown as | shown when |
  * | --- | --- | --- |
  * | `filter.filter` | Filter › - a submenu, first in the menu: the entries below up to the value list | |
- * | `filter.operator` | Operator › - a submenu in Filter ›, the operator in use has a ✓ | not a boolean field |
- * | `filter.operator.greaterThanOrEqualTo` | Greater than or equal | a number, date or datetime field |
- * | `filter.operator.lessThanOrEqualTo` | Less than or equal | a number, date or datetime field |
+ * | `filter.operator` | Operator › - a submenu in Filter ›, the operator in use has a ✓. The column's operators the header filter's input takes (`ColumnConfig.filterOperators`, else its type's, see {@link operatorsFor}) | not a boolean field |
  * | `filter.operator.equal` | Equal | not a boolean field |
- * | `filter.operator.notEqualTo` | Not Equal | a text field |
+ * | `filter.operator.notEqualTo` | Not Equal | not a boolean field |
+ * | `filter.operator.lessThan` | Less than | a number, date or datetime field |
+ * | `filter.operator.lessThanOrEqualTo` | Less than or equal | a number, date or datetime field |
+ * | `filter.operator.greaterThan` | Greater than | a number, date or datetime field |
+ * | `filter.operator.greaterThanOrEqualTo` | Greater than or equal | a number, date or datetime field |
+ * | `filter.operator.between` | Between - typed as `from..to` | a number, date or datetime field |
  * | `filter.operator.contains` | Contains | a text field |
+ * | `filter.operator.doesNotContain` | Does not contain | a text field |
+ * | `filter.operator.beginWith` | Begins with | a text field |
+ * | `filter.operator.endWith` | Ends with | a text field |
+ * | `filter.matchCase` | Match case - a toggle with a ✓ (`GridState.headerFilters[field].caseSensitive`). On and greyed out, with the hint "always", for a column with `filterCaseSensitive` | a text field, a lookup column |
  * | `filter.filter.blank` | Blank › - a submenu in Filter › | |
- * | `filter.filter.isBlank` | Is blank - the column's conditions replaced with `IS_BLANK` | |
- * | `filter.filter.isNotBlank` | Is not blank | |
+ * | `filter.filter.isBlank` | Is blank - the column's conditions replaced with `IS_BLANK` | the column has `IS_BLANK` |
+ * | `filter.filter.isNotBlank` | Is not blank | the column has `IS_NOT_BLANK` |
  * | `filter.filter.clear` | Clear Filter - the column's conditions | |
  * | `filter.filter.clearAll` | Clear All Filters | |
  * | `filter.filter.advancedSeparator` | a line | |
  * | `filter.filter.advanced` | Advanced Filter… - the filter editor | |
- * | `filter.values` | the value list: search box, "Select all" and a checkbox per value, "Cancel" and "Apply" - a {@link MenuBlock}, its texts are `filter.values.*` | a text field, a lookup column |
+ * | `filter.values` | the value list: search box, "Select all" and a checkbox per value, "Cancel" and "Apply" - a {@link MenuBlock}, its texts are `filter.values.*` | a text field, a lookup column - with `IN` |
  *
  * Column menu (`GridMenus.column`), right click on a column number - the row of numbers under the
  * header filters - or Shift+F10 on one with the focus. Flat, no submenu: every entry is a copy. The
@@ -602,11 +609,18 @@ export const MENU_IDS = {
     filter: [
         'filter.filter',
         'filter.operator',
-        'filter.operator.greaterThanOrEqualTo',
-        'filter.operator.lessThanOrEqualTo',
         'filter.operator.equal',
         'filter.operator.notEqualTo',
+        'filter.operator.lessThan',
+        'filter.operator.lessThanOrEqualTo',
+        'filter.operator.greaterThan',
+        'filter.operator.greaterThanOrEqualTo',
+        'filter.operator.between',
         'filter.operator.contains',
+        'filter.operator.doesNotContain',
+        'filter.operator.beginWith',
+        'filter.operator.endWith',
+        'filter.matchCase',
         'filter.filter.blank',
         'filter.filter.isBlank',
         'filter.filter.isNotBlank',

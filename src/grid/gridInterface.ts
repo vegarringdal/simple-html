@@ -3,7 +3,7 @@ import { assertOptions } from '../datasource/assertOptions';
 import type { Datasource, EntityUnion } from '../datasource/dataSource';
 import type { DatasourceEvents } from '../datasource/datasourceEvents';
 import { type Entity, isGroupRow } from '../datasource/entity';
-import type { FilterExpression, FilterOperator } from '../datasource/filterExpression';
+import { type FilterExpression, type FilterOperator, operatorsFor } from '../datasource/filterExpression';
 import { Emitter, type EventHandler } from '../emitter';
 import { assertTexts } from '../texts';
 import type { CellRange } from './cellRange';
@@ -25,6 +25,7 @@ import type {
 import type { GridEvents } from './gridEvents';
 import { aggregateRowHeights, normalizeAggregates } from './gridFunctions/aggregates';
 import { assertRanges, layoutKey, type RangeState, rangeState, sameRanges } from './gridFunctions/cellRanges';
+import { headerOperators, isHeaderOperator } from './gridFunctions/columnFilterOptions';
 import { renderColumnNumbers } from './gridFunctions/columnNumbers';
 import { type ColumnSelection, clickColumn, NO_COLUMNS, numberedColumns } from './gridFunctions/columnSelection';
 import { fillDown } from './gridFunctions/fillDown';
@@ -178,8 +179,10 @@ export class GridInterface<T> {
      * hooks), a column has v5's `mandatory` (it is the field's `required` rule), `texts` is not an
      * object of strings, `multilineTooltipLines` or `multilineLineHeight` is not a whole number of 1 or
      * more, a column's `aggregate` is no aggregate function or needs a number field, a column's
-     * `editor` is wrong - its lookup not registered, see {@link ColumnEditor} - or a column's `renderer`
-     * is not the id of a registered cell renderer, or is given with an `editor`
+     * `editor` is wrong - its lookup not registered, see {@link ColumnEditor} - a column's `renderer`
+     * is not the id of a registered cell renderer, or is given with an `editor`, or a column's
+     * `filterOperators`, `operator` or `filterCaseSensitive` does not fit its type, see
+     * {@link ColumnConfig}
      *
      * @example
      * ```ts
@@ -202,6 +205,7 @@ export class GridInterface<T> {
         assertLineHeight(gridConfig);
         assertAggregates(gridConfig, datasource);
         assertRenderers(gridConfig);
+        assertFilterOptions(gridConfig, datasource);
         this.lookupColumns = lookupColumnsOf(gridConfig.columns, datasource);
         this.dataSource = datasource;
         this.hooks = { ...hooks };
@@ -370,8 +374,9 @@ export class GridInterface<T> {
      * a column has v5's `mandatory` (it is the field's `required` rule), `texts` is not an object of
      * strings, `multilineTooltipLines` or `multilineLineHeight` is not a whole number of 1 or more, a
      * column's `aggregate` is no aggregate function or needs a number field, a column's `editor` is
-     * wrong - its lookup not registered, see {@link ColumnEditor} - or a column's `renderer` is not the
-     * id of a registered cell renderer, or is given with an `editor`
+     * wrong - its lookup not registered, see {@link ColumnEditor} - a column's `renderer` is not the
+     * id of a registered cell renderer, or is given with an `editor`, or a column's `filterOperators`,
+     * `operator` or `filterCaseSensitive` does not fit its type, see {@link ColumnConfig}
      *
      * @sample misc-options
      * @example
@@ -392,6 +397,7 @@ export class GridInterface<T> {
         assertLineHeight(config);
         assertAggregates(config, this.dataSource);
         assertRenderers(config);
+        assertFilterOptions(config, this.dataSource);
         // checked before anything changes, like the rest
         const lookupColumns = 'columns' in config ? lookupColumnsOf(config.columns, this.dataSource) : null;
         const { columns, layout, initialState, ...options } = config;
@@ -501,7 +507,7 @@ export class GridInterface<T> {
         if (state.headerFilters) {
             this.headerFilters = {};
             for (const [field, headerFilter] of Object.entries(state.headerFilters)) {
-                this.storeHeaderFilter(field, headerFilter.value, headerFilter.operator);
+                this.storeHeaderFilter(field, headerFilter.value, headerFilter.operator, headerFilter.caseSensitive === true);
             }
         }
 
@@ -1667,7 +1673,8 @@ export class GridInterface<T> {
 
     /**
      * @internal
-     * the header filter of a column: what its cell shows and the operator picked in its menu
+     * the header filter of a column: what its cell shows, the operator picked in its menu and its
+     * "Match case"
      */
     public __getHeaderFilter(field: string): HeaderFilter | undefined {
         return this.headerFilters[field];
@@ -1675,18 +1682,30 @@ export class GridInterface<T> {
 
     /**
      * @internal
-     * sets what a column's header filter cell shows, keeps the operator picked. null/'' is empty
+     * sets what a column's header filter cell shows, keeps the operator picked and "Match case".
+     * null/'' is empty
      */
     public __setHeaderFilterValue(field: string, value: unknown) {
-        this.storeHeaderFilter(field, value, this.headerFilters[field]?.operator);
+        const headerFilter = this.headerFilters[field];
+        this.storeHeaderFilter(field, value, headerFilter?.operator, headerFilter?.caseSensitive === true);
     }
 
     /**
      * @internal
-     * sets the operator picked in a column's header filter menu, keeps the value
+     * sets the operator picked in a column's header filter menu, keeps the value and "Match case"
      */
     public __setHeaderFilterOperator(field: string, operator: FilterOperator) {
-        this.storeHeaderFilter(field, this.headerFilters[field]?.value, operator);
+        const headerFilter = this.headerFilters[field];
+        this.storeHeaderFilter(field, headerFilter?.value, operator, headerFilter?.caseSensitive === true);
+    }
+
+    /**
+     * @internal
+     * turns a column's "Match case" (its header filter menu) on or off, keeps the value and the operator
+     */
+    public __setHeaderFilterCaseSensitive(field: string, caseSensitive: boolean) {
+        const headerFilter = this.headerFilters[field];
+        this.storeHeaderFilter(field, headerFilter?.value, headerFilter?.operator, caseSensitive);
     }
 
     /**
@@ -1718,16 +1737,24 @@ export class GridInterface<T> {
     }
 
     /**
-     * stores a column's header filter, or removes it when it has no value and no operator - so
-     * getState() lists only the header filters in use. An empty value ('' or undefined) is stored as null
+     * stores a column's header filter, or removes it when it has no value, no operator and no "Match
+     * case" - so getState() lists only the header filters in use. An empty value ('' or undefined) is
+     * stored as null, `operator` and `caseSensitive` only when they are set
      */
-    private storeHeaderFilter(field: string, value: unknown, operator: FilterOperator | undefined) {
+    private storeHeaderFilter(field: string, value: unknown, operator: FilterOperator | undefined, caseSensitive: boolean) {
         const empty = value === null || value === undefined || value === '';
-        if (empty && !operator) {
+        if (empty && !operator && !caseSensitive) {
             delete this.headerFilters[field];
-        } else {
-            this.headerFilters[field] = operator ? { value: empty ? null : value, operator } : { value };
+            return;
         }
+        const headerFilter: HeaderFilter = { value: empty ? null : value };
+        if (operator) {
+            headerFilter.operator = operator;
+        }
+        if (caseSensitive) {
+            headerFilter.caseSensitive = true;
+        }
+        this.headerFilters[field] = headerFilter;
     }
 
     /**
@@ -2272,6 +2299,67 @@ function assertRenderers(config: Partial<GridConfig>) {
         if (column.editor !== undefined) {
             throw new TypeError(
                 `GridConfig: columns.${field} has a renderer and an editor: a lookup column draws its own cell (the label and its button), leave one of them out`
+            );
+        }
+    }
+}
+
+/**
+ * A column's `filterOperators`, `operator` and `filterCaseSensitive` fit its type (a lookup column's is
+ * text, it filters on its labels): TypeScript catches neither an operator of another type nor a text
+ * option on a number, and a config from plain JavaScript or JSON can have anything - the menus would
+ * offer what the column can not filter on, or nothing
+ * - `filterOperators`: a list of the type's operators (operatorsFor), with one the header filter's
+ *   input takes (isHeaderOperator)
+ * - `operator`: one of those the header filter takes, of `filterOperators` when it is given
+ * - `filterCaseSensitive`: a boolean, `true` for a text column only
+ * @throws a `TypeError` naming the column, what it has and what it takes
+ */
+function assertFilterOptions(config: Partial<GridConfig>, datasource: Datasource<any>) {
+    for (const [field, column] of Object.entries(config.columns ?? {})) {
+        if (!column || typeof column !== 'object') {
+            continue;
+        }
+        const { operator, filterOperators, filterCaseSensitive } = column as Record<string, unknown>;
+        // a lookup column filters on its labels, as text (headerFilterType)
+        const type = column.editor !== undefined ? 'text' : datasource.getField(field).type;
+        const name = `GridConfig: columns.${field}`;
+        const list = (operators: string[]) => operators.map((op) => `'${op}'`).join(', ');
+        if (filterOperators !== undefined) {
+            const ofType = operatorsFor(type);
+            if (!Array.isArray(filterOperators) || filterOperators.length === 0) {
+                throw new TypeError(
+                    `${name}.filterOperators is a list of operators of a ${type} column (${list(ofType)}), got ${JSON.stringify(filterOperators)}`
+                );
+            }
+            for (const op of filterOperators) {
+                if (!ofType.some((ofTypeOp) => ofTypeOp === op)) {
+                    throw new TypeError(
+                        `${name}.filterOperators has ${JSON.stringify(op)}, not an operator of a ${type} column: ${list(ofType)}`
+                    );
+                }
+            }
+            // each of them is an operator now
+            if (!(filterOperators as FilterOperator[]).some(isHeaderOperator)) {
+                throw new TypeError(
+                    `${name}.filterOperators needs an operator for the header filter's input: one of ${list(ofType.filter(isHeaderOperator))}`
+                );
+            }
+        }
+        if (operator !== undefined) {
+            const offered = headerOperators(column, type);
+            if (!offered.some((op) => op === operator)) {
+                throw new TypeError(
+                    `${name}.operator is ${JSON.stringify(operator)}, the header filter of this ${type} column takes ${list(offered)}`
+                );
+            }
+        }
+        if (filterCaseSensitive !== undefined && typeof filterCaseSensitive !== 'boolean') {
+            throw new TypeError(`${name}.filterCaseSensitive is true or false, got ${JSON.stringify(filterCaseSensitive)}`);
+        }
+        if (filterCaseSensitive === true && type !== 'text') {
+            throw new TypeError(
+                `${name}.filterCaseSensitive is for a text column, '${field}' is ${type}: its filters have no case`
             );
         }
     }

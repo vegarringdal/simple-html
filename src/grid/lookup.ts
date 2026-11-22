@@ -70,8 +70,9 @@ export interface LookupFromDatasource {
     /**
      * the dropdown grid (`type: 'grid'`): its columns and options, plain JSON. Default one column of
      * `labelField`, or `valueField` and `labelField` when they differ. Left out of it: no grouping
-     * panel (`panelHeight: 0`), no footer, no row state, and the header filters search anywhere in the
-     * text (`operator: 'CONTAINS'` for a column without an operator). The select does not use it
+     * panel (`panelHeight: 0`), no footer, no row state, and the header filters of the text columns
+     * search anywhere in the text (`operator: 'CONTAINS'` for a text column without an operator). The
+     * select does not use it
      */
     config?: GridConfig;
     /** a lookup of a datasource has no grid interface */

@@ -1,17 +1,31 @@
 import type { FilterOperator } from '../../datasource/filterExpression';
 import type { Grid } from '../grid';
+import { defaultHeaderOperator, headerFilterType, headerOperators, isAlwaysCaseSensitive } from './columnFilterOptions';
 
 /**
  * The operator a column's header filter uses: the one the user picked in the header filter's menu
- * (state), else the column's `operator` (config), else the default for the field's type - a text's for
- * a lookup column, it filters on its labels (filterCallback).
+ * (state) when the column offers it - a saved state can have one the config no longer offers - else
+ * the column's `operator` (config), else the default for the field's type (defaultHeaderOperator). A
+ * text's for a lookup column, it filters on its labels (filterCallback).
  */
 export function getHeaderFilterOperator(ctx: Grid, field: string): FilterOperator {
-    const datasource = ctx.gridInterface.getDatasource();
-    const type = ctx.gridInterface.__getLookupColumn(field) ? 'text' : datasource.getField(field).type;
+    const type = headerFilterType(ctx.gridInterface, field);
+    const column = ctx.gridInterface.__getGridConfig().columns[field];
+    const picked = ctx.gridInterface.__getHeaderFilter(field)?.operator;
+    return picked && headerOperators(column, type).includes(picked) ? picked : defaultHeaderOperator(column, type);
+}
+
+/**
+ * true when a column's header filter matches case: a text column (a lookup column too) whose
+ * `filterCaseSensitive` is set, or whose "Match case" is on in its menu (state,
+ * `GridState.headerFilters[field].caseSensitive`). Its conditions - the value typed, the value list -
+ * get `caseSensitive: true`
+ */
+export function isHeaderFilterCaseSensitive(ctx: Grid, field: string): boolean {
+    const type = headerFilterType(ctx.gridInterface, field);
+    const column = ctx.gridInterface.__getGridConfig().columns[field];
     return (
-        ctx.gridInterface.__getHeaderFilter(field)?.operator ||
-        ctx.gridInterface.__getGridConfig().columns[field]?.operator ||
-        datasource.getFilterFromType(type)
+        isAlwaysCaseSensitive(column, type) ||
+        (type === 'text' && ctx.gridInterface.__getHeaderFilter(field)?.caseSensitive === true)
     );
 }

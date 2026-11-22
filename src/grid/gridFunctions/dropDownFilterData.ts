@@ -2,6 +2,7 @@ import { Filter, inListKey } from '../../datasource/filter';
 import { and, type FilterExpression, isFilterGroup } from '../../datasource/filterExpression';
 import type { Grid } from '../grid';
 import { cellTextOf } from './cellText';
+import { isHeaderFilterCaseSensitive } from './getHeaderFilterOperator';
 
 /**
  * the most entries the value list shows, Blank not counted
@@ -16,7 +17,8 @@ export interface ValueListEntry {
     /**
      * the text as the column's cells show it (cellTextOf): the formatter's text, a lookup's label. Values
      * shown with texts that differ in case only are one entry - `IN` compares ignoring case, it can not
-     * filter them apart - with the text of the first row. `''` for the blank entry
+     * filter them apart - with the text of the first row; not when the header filter matches case.
+     * `''` for the blank entry
      */
     text: string;
     /**
@@ -53,7 +55,9 @@ export interface ValueListData {
 /**
  * The value list of a column's filter menu: the texts its cells show, with their values and number of
  * rows. For a text field and a lookup column (ColumnConfig.editor - a number field too, its cells show
- * text labels); null for the rest.
+ * text labels); null for the rest. When the column's header filter matches case
+ * (isHeaderFilterCaseSensitive) values and texts that differ in case are entries of their own, as the
+ * `IN` it applies (with `caseSensitive`) tells them apart.
  * @param availableOnly "Only values in filtered rows": only the rows the other filters let through
  * @param searchInput the search text: only the texts with it in them, ignoring case. `*` and `%` are
  * left out, they are no wildcards here
@@ -92,9 +96,13 @@ export function dropDownFilterData(
 
     const textOf = cellTextOf(ctx, attribute);
     const formatter = datasource.getFormatter(attribute);
+    // the IN of a text field matches case then, and so do the texts of the entries
+    const caseSensitive = isHeaderFilterCaseSensitive(ctx, attribute);
+    const textKeyOf = (text: string) => (caseSensitive ? text : text.toUpperCase());
 
     /**
-     * The entries by the key `IN` compares a value as (inListKey), and by their text in upper case. A
+     * The entries by the key `IN` compares a value as (inListKey), and by their text in upper case (as it
+     * is when the header filter matches case). A
      * value is keyed first: its rows are in one entry, whatever text another row of it shows - an entry
      * never splits values the `IN` it applies can not tell apart. The text is read once per value
      */
@@ -104,12 +112,12 @@ export function dropDownFilterData(
 
     for (const row of data) {
         const value = row[attribute];
-        const key = inListKey(value, type, formatter);
+        const key = inListKey(value, type, formatter, caseSensitive && type === 'text');
         let entry = byValue.get(key);
         if (!entry) {
             const text = key === 'NULL' ? '' : textOf(row).text;
             // '' is the blank entry
-            const textKey = text.toUpperCase();
+            const textKey = textKeyOf(text);
             entry = byText.get(textKey);
             if (!entry) {
                 entry = { text, blank: text === '', values: [], count: 0 };

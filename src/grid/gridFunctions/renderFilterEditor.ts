@@ -7,13 +7,15 @@ import {
     type FilterExpression,
     type FilterGroup,
     type FilterOperator,
-    where
+    isRange
 } from '../../datasource/filterExpression';
 import { parseFilterText } from '../../datasource/formatter';
+import { isBlank } from '../../datasource/isBlank';
 import { TextFormatter } from '../../datasource/textFormatter';
 import { findText, type TextId } from '../../texts';
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
+import { editorOperators, isAlwaysCaseSensitive } from './columnFilterOptions';
 import { contextMenuAttributes } from './contextMenuAttributes';
 import { contextMenuOperator } from './contextMenuOperator';
 import { contextmenuDate } from './contextmenuDate';
@@ -52,27 +54,51 @@ export function isGroupDraft(draft: GroupDraft | ConditionDraft): draft is Group
 
 /**
  * The filter the editor applies: its groups and the conditions that are complete. A draft the filter
- * would ignore is left out - no field or operator picked, "compare with field" without the field, a
- * date without a value - so the datasource only gets conditions that filter. Groups are kept as they
- * are, also empty ones (the filter ignores those).
+ * would ignore is left out - no field or operator picked, "compare with field" without the field, no
+ * value, a BETWEEN without an end - so the datasource only gets conditions that filter. Groups are kept
+ * as they are, also empty ones (the filter ignores those). A condition on a text field gets
+ * `caseSensitive: true` when its toggle (Aa) is on, or its column always matches case; on another type
+ * it is left out, it would be ignored.
+ * @param alwaysCaseSensitive true for a field whose column always matches case (filterCaseSensitive)
  */
-export function draftToFilter(draft: GroupDraft, datasource: Datasource): FilterGroup {
+export function draftToFilter(
+    draft: GroupDraft,
+    datasource: Datasource,
+    alwaysCaseSensitive: (field: string) => boolean = () => false
+): FilterGroup {
     const children: FilterExpression[] = [];
     for (const child of draft.children) {
         if (isGroupDraft(child)) {
-            children.push(draftToFilter(child, datasource));
+            children.push(draftToFilter(child, datasource, alwaysCaseSensitive));
             continue;
         }
-        const { field, operator, value, valueField } = child;
+        const { field, operator, value } = child;
+        // BETWEEN takes its ends from the value, it compares with no field
+        const valueField = operator === 'BETWEEN' ? undefined : child.valueField;
         if (!field || !operator || valueField === '') {
             continue;
         }
-        const condition: FilterCondition = valueField ? { field, operator, valueField } : where(field, operator, value);
-        if (!isIgnoredCondition(condition, datasource.getField(field).type)) {
+        let condition: FilterCondition = { field, operator };
+        if (valueField) {
+            condition = { field, operator, valueField };
+        } else if (value !== undefined) {
+            condition = { field, operator, value };
+        }
+        if (datasource.getField(field).type === 'text' && (child.caseSensitive === true || alwaysCaseSensitive(field))) {
+            condition.caseSensitive = true;
+        }
+        if (!isIgnoredCondition(condition)) {
             children.push(condition);
         }
     }
     return { group: draft.group === 'OR' ? 'OR' : 'AND', children };
+}
+
+/**
+ * The ends of a BETWEEN in the editor: its value, `[from, to]` - `[null, null]` before one is typed
+ */
+function rangeOf(value: unknown): [unknown, unknown] {
+    return isRange(value) ? [value[0], value[1]] : [null, null];
 }
 
 /**
@@ -208,7 +234,8 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft, history: Fi
         </button>`;
 
     /**
-     * A condition, one row: field, operator, value, switch value / column, delete
+     * A condition, one row: field, operator, value, match case (a text field), switch value / column,
+     * delete
      * @param children the conditions and groups of the group it is in
      */
     const condition = (arg: ConditionDraft, children: (GroupDraft | ConditionDraft)[]) => {
@@ -219,57 +246,72 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft, history: Fi
         const valueLabel = text('filterEditor.label.value');
 
         /**
-         * the date picker under the value input of a date condition: a click on it, or Enter. The input
-         * is no cell, the picker only opens under it
+         * A value input: the value as the field's formatter shows it, what is typed parsed with it
+         * (parseFilter) - an empty input is no value, null: the number formatter would read it as 0. A
+         * date field's opens the date picker under it on a click or Enter - the input is no cell, the
+         * picker only opens under it
+         * @param name its name for a screen reader, and its placeholder
+         * @param current the value it shows
+         * @param write puts a value typed or picked in the draft
          */
-        const openDatePicker = (event: MouseEvent | KeyboardEvent) => {
-            const input = event.target as HTMLCellElement & HTMLInputElement;
-            setTimeout(() => {
-                contextmenuDate(ctx, event as MouseEvent, input, parseFilterText(formatter, input.value), (value) =>
-                    edit(input, () => {
-                        arg.value = value;
-                    })
-                );
-            }, 2);
+        const valueInput = (name: string, current: unknown, write: (value: unknown) => void) => {
+            const openDatePicker = (event: MouseEvent | KeyboardEvent) => {
+                const input = event.target as HTMLCellElement & HTMLInputElement;
+                setTimeout(() => {
+                    contextmenuDate(ctx, event as MouseEvent, input, parseFilterText(formatter, input.value), (value) =>
+                        edit(input, () => write(value))
+                    );
+                }, 2);
+            };
+
+            /**
+             * the text of the input in the draft: on every key (one step of the undo history from when it
+             * got the focus) and on change. Losing the focus or the change event ends the step
+             */
+            const typedValue = (event: Event) => {
+                const input = event.target as HTMLInputElement;
+                typed(input, () => write(input.value.trim() === '' ? null : parseFilterText(formatter, input.value)));
+            };
+
+            // live(): the elements are kept between renders, what the user typed is in the input, not in lit
+            return html`<input
+                class="filter-editor-value"
+                type="text"
+                aria-label=${name}
+                placeholder=${name}
+                .value=${live(formatter.format(current) || '')}
+                @keydown=${(event: KeyboardEvent) => {
+                    if (event.key === 'Enter' && isDate) {
+                        openDatePicker(event);
+                    }
+                }}
+                @input=${typedValue}
+                @change=${(event: Event) => {
+                    typedValue(event);
+                    history.endTyping(event.target as HTMLInputElement);
+                }}
+                @blur=${(event: FocusEvent) => history.endTyping(event.target as HTMLInputElement)}
+                @click=${(event: MouseEvent) => {
+                    if (isDate) {
+                        openDatePicker(event);
+                    }
+                }}
+            />`;
         };
 
-        /**
-         * the text of the input in the draft: on every key (one step of the undo history from when it
-         * got the focus) and on change. Losing the focus or the change event ends the step
-         */
-        const typedValue = (event: Event) => {
-            const input = event.target as HTMLInputElement;
-            typed(input, () => {
-                arg.value = parseFilterText(formatter, input.value);
-            });
-        };
+        let value: TemplateResult | typeof nothing = valueInput(valueLabel, arg.value, (written) => {
+            arg.value = written;
+        });
 
-        // live(): the elements are kept between renders, what the user typed is in the input, not in lit
-        let value: TemplateResult | typeof nothing = html`<input
-            class="filter-editor-value"
-            type="text"
-            aria-label=${valueLabel}
-            placeholder=${valueLabel}
-            .value=${live(formatter.format(arg.value) || '')}
-            @keydown=${(event: KeyboardEvent) => {
-                if (event.key === 'Enter' && isDate) {
-                    openDatePicker(event);
-                }
-            }}
-            @input=${typedValue}
-            @change=${(event: Event) => {
-                typedValue(event);
-                history.endTyping(event.target as HTMLInputElement);
-            }}
-            @blur=${(event: FocusEvent) => history.endTyping(event.target as HTMLInputElement)}
-            @click=${(event: MouseEvent) => {
-                if (isDate) {
-                    openDatePicker(event);
-                }
-            }}
-        />`;
-
-        if (arg.operator === 'IN' || arg.operator === 'NOT_IN') {
+        if (arg.operator === 'BETWEEN') {
+            // two inputs, from and to: an end left empty is open
+            const [from, to] = rangeOf(arg.value);
+            value = html`${valueInput(text('filterEditor.label.from'), from, (written) => {
+                arg.value = [written, rangeOf(arg.value)[1]];
+            })}${valueInput(text('filterEditor.label.to'), to, (written) => {
+                arg.value = [rangeOf(arg.value)[0], written];
+            })}`;
+        } else if (arg.operator === 'IN' || arg.operator === 'NOT_IN') {
             // a value per line
             const lines = Array.isArray(arg.value)
                 ? arg.value.filter((line) => line !== '').join('\n')
@@ -302,7 +344,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft, history: Fi
             value = nothing;
         }
 
-        if (arg.valueField !== undefined) {
+        if (arg.valueField !== undefined && arg.operator !== 'BETWEEN') {
             // compare with another field of the row, '' until it is picked
             value = picker(
                 'filter-editor-pick-column',
@@ -329,7 +371,15 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft, history: Fi
                 (button) =>
                     contextMenuAttributes(ctx, button, arg.field, (attribute) =>
                         edit(button, () => {
-                            // the type comes from the datasource's fields, the condition has none
+                            // the type comes from the datasource's fields, the condition has none. An
+                            // operator the new field does not offer is taken away: pick another
+                            if (
+                                attribute !== arg.field &&
+                                arg.operator &&
+                                !editorOperators(ctx.gridInterface, attribute).includes(arg.operator)
+                            ) {
+                                arg.operator = undefined;
+                            }
                             arg.field = attribute;
                         })
                     )
@@ -341,23 +391,61 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft, history: Fi
                 text('filterEditor.pickOperator'),
                 text('filterEditor.pickOperator.tooltip'),
                 (button) =>
-                    contextMenuOperator(ctx, button, arg.operator, (operator) =>
-                        edit(button, () => {
-                            arg.operator = operator;
-                        })
+                    contextMenuOperator(ctx, button, arg.operator, editorOperators(ctx.gridInterface, arg.field), (operator) =>
+                        edit(button, () => pickOperator(arg, operator))
                     )
             )}
             <div class="filter-editor-value-slot">${value}</div>
-            ${iconButton(
-                SWAP_ICON,
-                text(arg.valueField !== undefined ? 'filterEditor.useValue.tooltip' : 'filterEditor.useAttribute.tooltip'),
-                () => {
-                    // '' is "compare with a field" before the field is picked, undefined is a value
-                    arg.valueField = arg.valueField === undefined ? '' : undefined;
-                }
-            )}
+            ${caseToggle(arg)}
+            ${
+                // BETWEEN compares with its two values, not with a field
+                arg.operator === 'BETWEEN'
+                    ? ICON_SPACE
+                    : iconButton(
+                          SWAP_ICON,
+                          text(
+                              arg.valueField !== undefined ? 'filterEditor.useValue.tooltip' : 'filterEditor.useAttribute.tooltip'
+                          ),
+                          () => {
+                              // '' is "compare with a field" before the field is picked, undefined is a value
+                              arg.valueField = arg.valueField === undefined ? '' : undefined;
+                          }
+                      )
+            }
             ${iconButton(TRASH_ICON, text('filterEditor.deleteCondition.tooltip'), () => removeFrom(children, arg))}
         </div>`;
+    };
+
+    /**
+     * Match case, the toggle of a condition on a text field (not IS_BLANK / IS_NOT_BLANK, they compare
+     * nothing): "Aa", pressed (aria-pressed) while the condition matches case - the room of it, empty, on
+     * the others (ICON_SPACE). A column that always matches case (filterCaseSensitive) has it pressed and
+     * greyed out - aria-disabled, so it keeps the focus and its tooltip - and a click changes nothing
+     */
+    const caseToggle = (arg: ConditionDraft) => {
+        const field = arg.field ? ctx.gridInterface.getDatasource().getField(arg.field) : null;
+        if (field?.type !== 'text' || arg.operator === 'IS_BLANK' || arg.operator === 'IS_NOT_BLANK') {
+            return ICON_SPACE;
+        }
+        const always = isAlwaysCaseSensitive(ctx.gridInterface.__getGridConfig().columns[field.name], field.type);
+        const tooltip = text(always ? 'filterEditor.matchCaseAlways.tooltip' : 'filterEditor.matchCase.tooltip');
+        return html`<button
+            type="button"
+            class="filter-editor-icon filter-editor-case"
+            aria-pressed=${String(always || arg.caseSensitive === true)}
+            aria-disabled=${always ? 'true' : nothing}
+            aria-label=${tooltip}
+            data-tooltip=${tooltip}
+            @click=${(event: MouseEvent) => {
+                if (!always) {
+                    edit(event.currentTarget as HTMLElement, () => {
+                        arg.caseSensitive = arg.caseSensitive !== true;
+                    });
+                }
+            }}
+        >
+            ${text('filterEditor.matchCase')}
+        </button>`;
     };
 
     /**
@@ -461,7 +549,10 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft, history: Fi
         removeContextMenu(ctx);
         const datasource = ctx.gridInterface.getDatasource();
         const before = datasource.getFilter();
-        const filter = draftToFilter(structuredClone(filterArg), datasource);
+        const columns = ctx.gridInterface.__getGridConfig().columns;
+        const filter = draftToFilter(structuredClone(filterArg), datasource, (field) =>
+            isAlwaysCaseSensitive(columns[field], datasource.getField(field).type)
+        );
         datasource.filter(filter.children.length ? filter : null);
         ctx.gridInterface.__clearChangedHeaderFilters(before, datasource.getFilter());
         rebuildHeaderColumns(ctx);
@@ -559,6 +650,22 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft, history: Fi
     if (!dialog.contains(document.activeElement)) {
         dialog.focus({ preventScroll: true });
     }
+}
+
+/**
+ * An operator picked for a condition. To BETWEEN: the value it had is its start (`[from, null]`), a
+ * list is no start; it compares with its values, not a field. From BETWEEN: its first end is the
+ * value. Another operator keeps the value
+ */
+function pickOperator(arg: ConditionDraft, operator: FilterOperator) {
+    if (operator === 'BETWEEN' && arg.operator !== 'BETWEEN') {
+        arg.value = [Array.isArray(arg.value) || arg.value === undefined ? null : arg.value, null];
+        arg.valueField = undefined;
+    } else if (operator !== 'BETWEEN' && arg.operator === 'BETWEEN') {
+        const [from, to] = rangeOf(arg.value);
+        arg.value = isBlank(from) ? (isBlank(to) ? undefined : to) : from;
+    }
+    arg.operator = operator;
 }
 
 /**
@@ -679,6 +786,12 @@ const icon = (path: string) =>
     >
         <path d=${path} />
     </svg>`;
+
+/**
+ * the room of an icon a condition does not have - the toggle of a text field, the switch of a BETWEEN -
+ * so the pickers and the values of the conditions of a group stay under each other
+ */
+const ICON_SPACE = html`<span class="filter-editor-icon-space"></span>`;
 
 /** a trash can: delete the condition or the group */
 const TRASH_ICON = icon('M4 7h16M10 4h4M6 7l1 13h10l1-13M10 11v6M14 11v6');

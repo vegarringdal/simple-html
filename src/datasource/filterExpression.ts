@@ -1,34 +1,37 @@
+import { assertOptions } from './assertOptions';
+import type { FieldType } from './field';
+
 /**
  * How a {@link FilterCondition} compares the row's value with its `value`. The field's type (from
- * the datasource's `fields`, `'text'` when it is not listed) decides how the two are compared.
+ * the datasource's `fields`, `'text'` when it is not listed) decides how the two are compared, and
+ * which operators the grid offers for it: see {@link operatorsFor}. The filtering guide has the exact
+ * rules of every operator for every type, written for a backend that has to filter the same way.
  *
- * - `EQUAL` - text: the same, ignoring case - the whole text, `'an'` does not match `'Ann'` (use a
- *   wildcard, `'an*'`, or `CONTAINS`). Number: the same. `date`: the same day, `datetime`: the same second
- * - `NOT_EQUAL_TO` - the opposite of `EQUAL`
- * - `LESS_THAN` - number and date: smaller / earlier. Text: compared as lower case text
- * - `LESS_THAN_OR_EQUAL_TO` - `LESS_THAN` or `EQUAL`
- * - `GREATER_THAN` - number and date: larger / later. Text: compared as lower case text
- * - `GREATER_THAN_OR_EQUAL_TO` - `GREATER_THAN` or `EQUAL`
- * - `CONTAINS` - text: has the value somewhere in it, ignoring case. Number and date: `GREATER_THAN_OR_EQUAL_TO`
- * - `DOES_NOT_CONTAIN` - text: does not have the value in it, ignoring case. Number and date: `LESS_THAN`
- * - `BEGIN_WITH` - text: starts with the value, ignoring case. Number and date: `GREATER_THAN_OR_EQUAL_TO`
- * - `END_WITH` - text: ends with the value, ignoring case. Number and date: `LESS_THAN_OR_EQUAL_TO`
- * - `IN` - one of a list: `value` is an array (or text with one value per line), compared as upper case text. Number and date fields compare their formatted text. `'NULL'` in the list matches a blank
- * - `NOT_IN` - the opposite of `IN`
- * - `IS_BLANK` - the row value is null, undefined, `''` or 0 (or an invalid Date, in a date field). Takes no `value`
- * - `IS_NOT_BLANK` - the opposite of `IS_BLANK`. Takes no `value`
+ * - `EQUAL` / `NOT_EQUAL_TO` - the same / not the same. Text: the whole text, ignoring case unless
+ *   the condition is `caseSensitive` - `'an'` does not match `'Ann'` (use a wildcard, `'an*'`, or
+ *   `CONTAINS`). `date`: the same day, `datetime`: the same second
+ * - `CONTAINS` / `DOES_NOT_CONTAIN`, `BEGIN_WITH`, `END_WITH` - text: has the value in it / has not,
+ *   starts with it, ends with it
+ * - `LESS_THAN`, `LESS_THAN_OR_EQUAL_TO`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL_TO` - number and
+ *   date: smaller / earlier, larger / later
+ * - `BETWEEN` - number and date: from `value[0]` to `value[1]`, both ends included: `[10, 20]`. A
+ *   blank end is open, `[10, null]` is `GREATER_THAN_OR_EQUAL_TO 10`
+ * - `IN` / `NOT_IN` - one of a list / none of it: `value` is an array (or text with one value per
+ *   line). `'NULL'` in the list matches a blank
+ * - `IS_BLANK` / `IS_NOT_BLANK` - the row value is blank / is not: null, undefined, `''` or 0 (or an
+ *   invalid Date, in a date field). They take no `value`
  *
- * In a text value `*` and `%` are wildcards: `where('name', 'EQUAL', 'per*2')` matches `person2`.
- * A blank row date (null, `''`, an invalid Date) is never before, after or on a date: of the
- * comparisons it only matches `NOT_EQUAL_TO`. A `boolean` field compares every operator as `EQUAL`,
- * apart from `IN` / `NOT_IN` and the blank ones.
+ * In a text value `*` and `%` are wildcards, any text: `where('name', 'EQUAL', 'per*2')` matches
+ * `person2`.
  *
  * **0 is blank.** A row value of 0 counts as blank, on purpose: in ERP style data 0 and empty mean
  * the same. `IS_BLANK` matches a 0 (the number, in any field - the text `'0'` is not blank) and
  * `IS_NOT_BLANK` leaves it out, and the header's value list (shown for text fields) puts a 0 under its
- * "Blank" entry. `IN` / `NOT_IN` take a 0 in a text field as `'NULL'`; a number field compares its
- * formatted text there, `'0'`. The other way round, a blank row value of
- * a number field compares as 0: `where('age', 'LESS_THAN', 5)` matches the rows without an age.
+ * "Blank" entry. The other way round, a blank row value of a number field compares as 0 -
+ * `where('age', 'LESS_THAN', 5)` matches the rows without an age - and of a boolean field as `false`.
+ *
+ * An operator the field's type does not offer (`CONTAINS` on a number, in a filter saved with v5)
+ * still filters the way it did, see the guide's "Operators a type does not offer".
  *
  * @sample filtering
  * @example
@@ -37,6 +40,7 @@
  *
  * datasource.filter(where('age', 'GREATER_THAN_OR_EQUAL_TO', 18));
  * datasource.filter(where('name', 'CONTAINS', 'son'));
+ * datasource.filter(where('age', 'BETWEEN', [18, 30]));
  * datasource.filter(where('country', 'IN', ['Norway', 'Sweden']));
  * datasource.filter(where('email', 'IS_BLANK'));
  * ```
@@ -47,6 +51,7 @@ export type FilterOperator =
     | 'GREATER_THAN_OR_EQUAL_TO'
     | 'LESS_THAN'
     | 'GREATER_THAN'
+    | 'BETWEEN'
     | 'CONTAINS'
     | 'NOT_EQUAL_TO'
     | 'DOES_NOT_CONTAIN'
@@ -58,18 +63,120 @@ export type FilterOperator =
     | 'IS_NOT_BLANK';
 
 /**
+ * @internal
+ * every operator, to check one that comes from plain js or JSON
+ */
+export const FILTER_OPERATORS: readonly FilterOperator[] = [
+    'EQUAL',
+    'NOT_EQUAL_TO',
+    'LESS_THAN',
+    'LESS_THAN_OR_EQUAL_TO',
+    'GREATER_THAN',
+    'GREATER_THAN_OR_EQUAL_TO',
+    'BETWEEN',
+    'CONTAINS',
+    'DOES_NOT_CONTAIN',
+    'BEGIN_WITH',
+    'END_WITH',
+    'IN',
+    'NOT_IN',
+    'IS_BLANK',
+    'IS_NOT_BLANK'
+];
+
+/**
+ * the operators of a number, date and datetime field, in the order the grid shows them
+ */
+const RANGE_OPERATORS: readonly FilterOperator[] = [
+    'EQUAL',
+    'NOT_EQUAL_TO',
+    'LESS_THAN',
+    'LESS_THAN_OR_EQUAL_TO',
+    'GREATER_THAN',
+    'GREATER_THAN_OR_EQUAL_TO',
+    'BETWEEN',
+    'IN',
+    'NOT_IN',
+    'IS_BLANK',
+    'IS_NOT_BLANK'
+];
+
+/**
+ * the operators of each type, in the order the grid shows them, see operatorsFor
+ */
+const OPERATORS_OF_TYPE: Readonly<Record<FieldType, readonly FilterOperator[]>> = {
+    text: [
+        'EQUAL',
+        'NOT_EQUAL_TO',
+        'CONTAINS',
+        'DOES_NOT_CONTAIN',
+        'BEGIN_WITH',
+        'END_WITH',
+        'IN',
+        'NOT_IN',
+        'IS_BLANK',
+        'IS_NOT_BLANK'
+    ],
+    number: RANGE_OPERATORS,
+    date: RANGE_OPERATORS,
+    datetime: RANGE_OPERATORS,
+    boolean: ['EQUAL', 'NOT_EQUAL_TO', 'IS_BLANK', 'IS_NOT_BLANK']
+};
+
+/**
+ * The operators of a field type: the ones that mean something for it, in the order the grid shows
+ * them. The grid offers these, and only these, in a header filter's menu and in the filter editor - a
+ * column's `filterOperators` can offer fewer.
+ *
+ * | type | operators |
+ * | --- | --- |
+ * | `text` | `EQUAL`, `NOT_EQUAL_TO`, `CONTAINS`, `DOES_NOT_CONTAIN`, `BEGIN_WITH`, `END_WITH`, `IN`, `NOT_IN`, `IS_BLANK`, `IS_NOT_BLANK` |
+ * | `number`, `date`, `datetime` | `EQUAL`, `NOT_EQUAL_TO`, `LESS_THAN`, `LESS_THAN_OR_EQUAL_TO`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL_TO`, `BETWEEN`, `IN`, `NOT_IN`, `IS_BLANK`, `IS_NOT_BLANK` |
+ * | `boolean` | `EQUAL`, `NOT_EQUAL_TO`, `IS_BLANK`, `IS_NOT_BLANK` |
+ *
+ * The datasource still filters on an operator a type does not offer - `CONTAINS` on a number, in a
+ * filter saved with v5 - the way it did, see {@link FilterOperator}.
+ *
+ * @param type a field type. One that is no type gives the operators of `text`, the type of a field
+ * that is not listed
+ * @returns a new list each call
+ *
+ * @sample filtering
+ * @example
+ * ```ts
+ * import { operatorsFor } from '@simple-html/grid';
+ *
+ * operatorsFor('boolean'); // ['EQUAL', 'NOT_EQUAL_TO', 'IS_BLANK', 'IS_NOT_BLANK']
+ * operatorsFor(datasource.getField('age').type).includes('BETWEEN'); // true for a number field
+ * ```
+ */
+export function operatorsFor(type: FieldType): FilterOperator[] {
+    return [...(OPERATORS_OF_TYPE[type] ?? OPERATORS_OF_TYPE.text)];
+}
+
+/**
+ * @internal
+ * true if the value is one of the operators
+ */
+export function isFilterOperator(value: unknown): value is FilterOperator {
+    return FILTER_OPERATORS.some((operator) => operator === value);
+}
+
+/**
  * One test on one field: `field` `operator` `value`. The field's type comes from the datasource's
  * `fields` (`'text'` when it is not listed), the condition has none of its own.
  *
  * - `field` - the property on the row
  * - `operator` - how to compare, see {@link FilterOperator}
  * - `value` - what to compare with. Left out for `IS_BLANK` / `IS_NOT_BLANK`, an array for `IN` /
- *   `NOT_IN`, a `Date` for date fields. A number value compares as a number and a `Date` as a date,
- *   also on a field that is not listed
- * - `valueField` - compare with another field of the same row instead of `value`
+ *   `NOT_IN`, `[from, to]` for `BETWEEN`, a `Date` for date fields. A number value compares as a
+ *   number and a `Date` as a date, also on a field that is not listed
+ * - `valueField` - compare with another field of the same row instead of `value` (not `BETWEEN`)
+ * - `caseSensitive` - `true`: a text is compared with upper and lower case as they are
  *
- * A condition without `field` or `operator`, and a date condition without the value it needs, is
- * ignored: it does not filter out anything.
+ * A condition without `field` or `operator` is ignored: it does not filter out anything. So is one
+ * without the value it needs: a blank `value` (null, undefined, `''`, an invalid Date) and no
+ * `valueField`, or a `BETWEEN` without a `[from, to]` that has an end.
  *
  * {@link where} builds one. A `valueField` condition is written out:
  *
@@ -79,6 +186,7 @@ export type FilterOperator =
  * import { where } from '@simple-html/grid';
  *
  * where('age', 'GREATER_THAN', 18); // { field: 'age', operator: 'GREATER_THAN', value: 18 }
+ * where('name', 'EQUAL', 'Ann', { caseSensitive: true }); // finds Ann, not ANN
  *
  * // rows changed after they were approved
  * datasource.filter({ field: 'changed', operator: 'GREATER_THAN', valueField: 'approved' });
@@ -89,10 +197,29 @@ export interface FilterCondition {
     field: string;
     /** how to compare, see {@link FilterOperator} */
     operator: FilterOperator;
-    /** what to compare with, not used by `IS_BLANK` / `IS_NOT_BLANK` or when `valueField` is set */
+    /**
+     * what to compare with, not used by `IS_BLANK` / `IS_NOT_BLANK` or when `valueField` is set. An
+     * array for `IN` / `NOT_IN`, `[from, to]` for `BETWEEN`
+     */
     value?: unknown;
-    /** the name of another field: the row's value of that field is what is compared with */
+    /**
+     * the name of another field: the row's value of that field is what is compared with. Not used
+     * by `BETWEEN`, it takes its ends from `value`
+     */
     valueField?: string;
+    /**
+     * `true`: a text is compared with upper and lower case as they are - `'Ann'` does not find `'ANN'`
+     * or `'ann'`. Default `false`: case is ignored, the two texts are compared in lower case (`IN` /
+     * `NOT_IN`: in upper case). Only `true` turns it on.
+     *
+     * For the conditions that compare text: on a `text` field (also a field that is not listed),
+     * with a value that is no number and no `Date`. Every text operator takes it: `EQUAL` and
+     * `NOT_EQUAL_TO` (wildcards too), `CONTAINS`, `DOES_NOT_CONTAIN`, `BEGIN_WITH`, `END_WITH`, `IN` /
+     * `NOT_IN` (the list as it is, write a blank as `'NULL'`), and the `LESS_THAN` ... a text field
+     * does not offer. Ignored on a number, date, datetime and boolean field - their `IN` compares the
+     * formatted text ignoring case - and by `IS_BLANK` / `IS_NOT_BLANK`.
+     */
+    caseSensitive?: boolean;
 }
 
 /**
@@ -198,7 +325,11 @@ export function or(...children: FilterExpression[]): FilterGroup {
  * @param field the field to test, the property on the row
  * @param operator how to compare, see {@link FilterOperator}
  * @param value what to compare with. Leave it out for `IS_BLANK` / `IS_NOT_BLANK`, the condition
- * then has no `value` property
+ * then has no `value` property. `[from, to]` for `BETWEEN`, an end can be null
+ * @param options.caseSensitive `true` to compare a text with upper and lower case as they are, see
+ * {@link FilterCondition}. Default `false`: the condition has no `caseSensitive` property
+ * @throws a `TypeError` for a `BETWEEN` whose value is not `[from, to]`, and for options that are not
+ * an object (`where(field, operator, value, true)`)
  *
  * @sample filtering
  * @example
@@ -207,12 +338,38 @@ export function or(...children: FilterExpression[]): FilterGroup {
  *
  * where('age', 'GREATER_THAN', 18); // { field: 'age', operator: 'GREATER_THAN', value: 18 }
  * where('born', 'LESS_THAN', new Date(2000, 0, 1));
+ * where('age', 'BETWEEN', [18, 30]); // 18 to 30, both included
+ * where('age', 'BETWEEN', [18, null]); // 18 or more
  * where('country', 'NOT_IN', ['Norway', 'Sweden']);
+ * where('name', 'BEGIN_WITH', 'Mc', { caseSensitive: true }); // { ..., caseSensitive: true }
  * where('email', 'IS_BLANK'); // { field: 'email', operator: 'IS_BLANK' }
  * ```
  */
-export function where(field: string, operator: FilterOperator, value?: unknown): FilterCondition {
-    return value === undefined ? { field, operator } : { field, operator, value };
+export function where(
+    field: string,
+    operator: FilterOperator,
+    value?: unknown,
+    options: { caseSensitive?: boolean } = {}
+): FilterCondition {
+    assertOptions('where', options, "where('name', 'EQUAL', 'Ann', { caseSensitive: true })");
+    if (operator === 'BETWEEN' && !isRange(value)) {
+        throw new TypeError(
+            `where('${field}', 'BETWEEN', value): value is [from, to], an end can be null - got ${JSON.stringify(value)}`
+        );
+    }
+    const condition: FilterCondition = value === undefined ? { field, operator } : { field, operator, value };
+    if (options.caseSensitive === true) {
+        condition.caseSensitive = true;
+    }
+    return condition;
+}
+
+/**
+ * @internal
+ * true for the value of a `BETWEEN`: an array of two, `[from, to]`. An end can be blank, it is open
+ */
+export function isRange(value: unknown): value is [unknown, unknown] {
+    return Array.isArray(value) && value.length === 2;
 }
 
 /**

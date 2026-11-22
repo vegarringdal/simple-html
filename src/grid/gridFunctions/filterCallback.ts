@@ -6,17 +6,20 @@ import {
     isFilterGroup,
     where
 } from '../../datasource/filterExpression';
-import { parseFilterText } from '../../datasource/formatter';
+import { type Formatter, parseFilterText } from '../../datasource/formatter';
+import { isBlank } from '../../datasource/isBlank';
 import type { Grid } from '../grid';
-import { getHeaderFilterOperator } from './getHeaderFilterOperator';
+import { getHeaderFilterOperator, isHeaderFilterCaseSensitive } from './getHeaderFilterOperator';
 import { valuesWithLabel } from './lookupColumn';
 
 /**
  * filters columns
  * used by header filters. Stores what the header filter cell shows (`GridState.headerFilters`) and
- * replaces the column's conditions in the datasource's filter
- * @param value what the user typed, or the column's current header filter value (a Date or number) when
- * the filter is run again with another operator - that is formatted first, the formatter parses text only
+ * replaces the column's conditions in the datasource's filter. A header filter that matches case
+ * (isHeaderFilterCaseSensitive) gives its conditions `caseSensitive: true`
+ * @param value what the user typed, or the column's current header filter value (a Date or number, the
+ * `[from, to]` of a BETWEEN) when the filter is run again with another operator or "Match case" - that
+ * is formatted first, the formatter parses text only
  * @param field the column's field
  * @param filterArray the values of the filter menu's value list (contextmenuFilter.ts): an `IN` of them,
  * or a `NOT_IN` with `notinArray`. The header filter cell is emptied then, a list is nothing it can show
@@ -24,7 +27,11 @@ import { valuesWithLabel } from './lookupColumn';
 export function filterCallback(ctx: Grid, value: unknown, field: string, filterArray?: unknown[] | null, notinArray?: boolean) {
     const datasource = ctx.gridInterface.getDatasource();
     const { type, formatter } = datasource.getField(field);
-    const text = typeof value === 'string' ? value : formatter.format(value);
+    const operator = getHeaderFilterOperator(ctx, field);
+    // the [from, to] of a BETWEEN run again with another operator: its first end
+    const single = Array.isArray(value) && operator !== 'BETWEEN' ? (isBlank(value[0]) ? value[1] : value[0]) : value;
+    // what was typed is parsed as it is, a value of the state is formatted first
+    const text = typeof single === 'string' ? single : headerFilterText(single, formatter);
     // a lookup column (ColumnConfig.editor) shows labels: the text typed finds the lookup rows whose
     // label matches, the rows are filtered on their values - a text filter, also for a number field
     const lookupColumn = ctx.gridInterface.__getLookupColumn(field);
@@ -34,7 +41,11 @@ export function filterCallback(ctx: Grid, value: unknown, field: string, filterA
         case 'date':
         case 'datetime':
         case 'number':
-            filterValue = text === '' ? null : asFilterValue(parseFilterText(formatter, text));
+            if (operator === 'BETWEEN') {
+                filterValue = parseRangeText(formatter, text);
+            } else {
+                filterValue = text === '' ? null : asFilterValue(parseFilterText(formatter, text));
+            }
 
             break;
         case 'boolean':
@@ -53,27 +64,53 @@ export function filterCallback(ctx: Grid, value: unknown, field: string, filterA
      */
     const filter = filterWithoutColumn(datasource.getFilter(), field);
 
-    const operator = getHeaderFilterOperator(ctx, field);
-    // blank or not blank is the cell's own value, not a label
-    const byLabel = lookupColumn && typeof filterValue === 'string' && operator !== 'IS_BLANK' && operator !== 'IS_NOT_BLANK';
+    // the header's operators take a typed value (isHeaderOperator), a lookup column's text ones
+    const byLabel = lookupColumn && typeof filterValue === 'string';
+    // "Match case": the column's filterCaseSensitive or its menu's toggle, a text column only
+    const caseSensitive = isHeaderFilterCaseSensitive(ctx, field);
+    const options = { caseSensitive };
 
     // no type on the condition, the datasource reads it from its fields
     if (filterValue !== null && filterValue !== undefined && filterValue !== '') {
         filter.children.push(
             byLabel
-                ? where(field, 'IN', valuesWithLabel(lookupColumn, operator, String(filterValue)))
-                : where(field, operator, filterValue)
+                ? where(field, 'IN', valuesWithLabel(lookupColumn, operator, String(filterValue), caseSensitive), options)
+                : where(field, operator, filterValue, options)
         );
     }
 
     if (filterArray) {
-        filter.children.push(where(field, notinArray ? 'NOT_IN' : 'IN', filterArray));
+        filter.children.push(where(field, notinArray ? 'NOT_IN' : 'IN', filterArray, options));
     }
 
     // a value list: the cell is cleared, the list is not something it can show
     ctx.gridInterface.__setHeaderFilterValue(field, filterArray ? null : filterValue);
 
     datasource.filter(filter);
+}
+
+/**
+ * The text of a header filter's value, as its input shows it: the formatter's text, the two ends of a
+ * BETWEEN's `[from, to]` with `..` between them (an open end is no text: `10..`)
+ */
+export function headerFilterText(value: unknown, formatter: Formatter): string {
+    if (Array.isArray(value)) {
+        return value.map((end) => (isBlank(end) ? '' : formatter.format(end))).join('..');
+    }
+    return formatter.format(value);
+}
+
+/**
+ * The `[from, to]` of a BETWEEN typed in a header filter: `from..to`, each end parsed with the
+ * formatter (parseFilter, as a single value is). An end left out is open, null: `10..` is 10 or more,
+ * `..20` 20 or less. A text without `..` is both ends: `10` is 10 to 10, a date the whole day. null when
+ * neither end is a value: no condition
+ */
+export function parseRangeText(formatter: Formatter, text: string): [unknown, unknown] | null {
+    const at = text.indexOf('..');
+    const ends = at === -1 ? [text, text] : [text.slice(0, at), text.slice(at + 2)];
+    const [from, to] = ends.map((end) => (end.trim() === '' ? null : asFilterValue(parseFilterText(formatter, end.trim()))));
+    return isBlank(from) && isBlank(to) ? null : [from, to];
 }
 
 /**
@@ -104,8 +141,8 @@ export function columnConditions(filter: FilterExpression | null, field: string)
 }
 
 /**
- * true when two lists of conditions are the same: the fields, operators, `valueField`s and values - a
- * date by its time, a list value by its items
+ * true when two lists of conditions are the same: the fields, operators, `valueField`s, values - a
+ * date by its time, a list value by its items - and `caseSensitive`
  */
 export function sameConditions(a: FilterCondition[], b: FilterCondition[]): boolean {
     const sameValue = (x: unknown, y: unknown): boolean => {
@@ -124,6 +161,7 @@ export function sameConditions(a: FilterCondition[], b: FilterCondition[]): bool
                 condition.field === b[i].field &&
                 condition.operator === b[i].operator &&
                 condition.valueField === b[i].valueField &&
+                (condition.caseSensitive === true) === (b[i].caseSensitive === true) &&
                 sameValue(condition.value, b[i].value)
         )
     );

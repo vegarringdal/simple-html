@@ -135,7 +135,9 @@ describe('a single condition at the root', () => {
         expect(ds.getFilterTree()).toEqual({
             kind: 'group',
             group: 'AND',
-            children: [{ kind: 'condition', label: 'Age', operator: 'GREATER_THAN', value: '10', hasValue: true }]
+            children: [
+                { kind: 'condition', label: 'Age', operator: 'GREATER_THAN', value: '10', hasValue: true, caseSensitive: false }
+            ]
         });
     });
 });
@@ -159,7 +161,8 @@ describe('valueField - compare with another field of the row', () => {
             label: 'min',
             operator: 'LESS_THAN',
             value: '[Age]',
-            hasValue: true
+            hasValue: true,
+            caseSensitive: false
         });
     });
 

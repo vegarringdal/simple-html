@@ -475,14 +475,28 @@ describe('filter editor - a condition is one row', () => {
     }
     const rows = () => Array.from(container().querySelectorAll('.filter-editor-condition'));
 
-    it('expect field, operator, value, switch and delete in one row, no label row', async () => {
-        await openWith({ field: 'firstname', operator: 'EQUAL', value: 'first1' });
+    it('expect field, operator, value, match case (text), switch and delete in one row, no label row', async () => {
+        await openWith(
+            { field: 'firstname', operator: 'EQUAL', value: 'first1' },
+            { field: 'age', operator: 'EQUAL', value: 10 }
+        );
 
-        expect(rows()).toHaveLength(1);
+        expect(rows()).toHaveLength(2);
         expect(parts(rows()[0])).toEqual([
             'filter-editor-pick',
             'filter-editor-pick',
             'filter-editor-value-slot',
+            'filter-editor-icon',
+            'filter-editor-icon',
+            'filter-editor-icon'
+        ]);
+        expect(rows()[0].children[3].classList.contains('filter-editor-case')).toBe(true);
+        // a number has no case: the room of the toggle, so the rows line up
+        expect(parts(rows()[1])).toEqual([
+            'filter-editor-pick',
+            'filter-editor-pick',
+            'filter-editor-value-slot',
+            'filter-editor-icon-space',
             'filter-editor-icon',
             'filter-editor-icon'
         ]);
@@ -562,14 +576,16 @@ describe('filter editor - a condition is one row', () => {
             icons.map((icon) => [icon.tagName, icon.getAttribute('aria-label') === icon.getAttribute('data-tooltip')])
         ).toEqual([
             ['BUTTON', true],
+            ['BUTTON', true],
             ['BUTTON', true]
         ]);
         expect(icons.map((icon) => icon.getAttribute('aria-label'))).toEqual([
+            'Match case',
             'Compare against another column instead of a typed in value',
             'Delete this condition'
         ]);
         // the icon is decoration, the button has the name
-        expect(icons[0].querySelector('svg')?.getAttribute('aria-hidden')).toEqual('true');
+        expect(icons[1].querySelector('svg')?.getAttribute('aria-hidden')).toEqual('true');
     });
 
     it('expect delete to take the condition out, the focus kept on the delete of the next one', async () => {
@@ -577,7 +593,8 @@ describe('filter editor - a condition is one row', () => {
             { field: 'firstname', operator: 'EQUAL', value: 'first1' },
             { field: 'age', operator: 'EQUAL', value: 10 }
         );
-        const trash = () => rows()[0].querySelectorAll<HTMLButtonElement>('.filter-editor-icon')[1];
+        const trash = () =>
+            rows()[0].querySelector<HTMLButtonElement>('[aria-label="Delete this condition"]') as HTMLButtonElement;
         trash().focus();
 
         trash().click();
@@ -590,7 +607,7 @@ describe('filter editor - a condition is one row', () => {
 
     it('expect the focus to go to the dialog when the last condition is deleted: Tab goes on from there', async () => {
         await openWith({ field: 'firstname', operator: 'EQUAL', value: 'first1' });
-        const trash = rows()[0].querySelectorAll<HTMLButtonElement>('.filter-editor-icon')[1];
+        const trash = rows()[0].querySelector<HTMLButtonElement>('[aria-label="Delete this condition"]') as HTMLButtonElement;
         trash.focus();
 
         trash.click();
@@ -765,12 +782,14 @@ describe('filter editor - the keyboard', () => {
         expect(checked).toEqual(['Equal']);
         expect(document.activeElement?.textContent?.trim()).toEqual('Equal');
 
+        // the operators of a number, in their order: Equal, Not Equal To, Less Than ...
         press(document.activeElement as HTMLElement, 'ArrowDown');
-        expect(document.activeElement?.textContent?.trim()).toEqual('Less Than Or Equal To');
+        press(document.activeElement as HTMLElement, 'ArrowDown');
+        expect(document.activeElement?.textContent?.trim()).toEqual('Less Than');
         press(document.activeElement as HTMLElement, 'Enter');
 
         expect(container().querySelector('.simple-html-grid-menu')).toBeNull();
-        expect(operator.textContent?.trim()).toEqual('Less Than Or Equal To');
+        expect(operator.textContent?.trim()).toEqual('Less Than');
         // the menu gives the focus back to its picker, which is kept
         expect(document.activeElement).toBe(operator);
     });
@@ -1569,7 +1588,7 @@ describe('filter editor - undo and redo, the focus', () => {
         await openWith();
         const operator = () => container().querySelectorAll<HTMLElement>('.filter-editor-pick-operator')[1];
         operator().click();
-        menuItem('Contains').click();
+        menuItem('Less Than').click();
         container().focus();
 
         undoKey(container());
@@ -1579,7 +1598,7 @@ describe('filter editor - undo and redo, the focus', () => {
         container().focus();
         redoKey(container());
         expect(document.activeElement).toBe(operator());
-        expect(operator().textContent?.trim()).toEqual('Contains');
+        expect(operator().textContent?.trim()).toEqual('Less Than');
     });
 
     it('expect a condition deleted and undone to get the focus on its delete again', async () => {

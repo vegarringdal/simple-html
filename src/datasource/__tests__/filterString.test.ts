@@ -88,7 +88,9 @@ describe('datasource filter tree (footer chips)', () => {
         expect(ds2.getFilterTree()).toEqual({
             kind: 'group',
             group: 'AND',
-            children: [{ kind: 'condition', label: 'name', operator: 'EQUAL', value: 'person1', hasValue: true }]
+            children: [
+                { kind: 'condition', label: 'name', operator: 'EQUAL', value: 'person1', hasValue: true, caseSensitive: false }
+            ]
         });
     });
 
@@ -98,8 +100,8 @@ describe('datasource filter tree (footer chips)', () => {
             kind: 'group',
             group: 'OR',
             children: [
-                { kind: 'condition', label: 'group', operator: 'EQUAL', value: 'group1', hasValue: true },
-                { kind: 'condition', label: 'name', operator: 'CONTAINS', value: 'person', hasValue: true }
+                { kind: 'condition', label: 'group', operator: 'EQUAL', value: 'group1', hasValue: true, caseSensitive: false },
+                { kind: 'condition', label: 'name', operator: 'CONTAINS', value: 'person', hasValue: true, caseSensitive: false }
             ]
         });
     });
@@ -111,7 +113,8 @@ describe('datasource filter tree (footer chips)', () => {
             label: 'name',
             operator: 'IS_BLANK',
             value: '',
-            hasValue: false
+            hasValue: false,
+            caseSensitive: false
         });
     });
 
@@ -128,7 +131,8 @@ describe('datasource filter tree (footer chips)', () => {
             label: 'group',
             operator: 'EQUAL',
             value: 'group1',
-            hasValue: true
+            hasValue: true,
+            caseSensitive: false
         });
     });
 });

@@ -9,8 +9,9 @@ import { cellFilterKeyNavigationCellRowHandler } from './cellFilterKeyNavigation
 import type { ColType } from './colType';
 import { contextmenuDate } from './contextmenuDate';
 import { contextmenuFilter } from './contextmenuFilter';
-import { filterCallback } from './filterCallback';
+import { filterCallback, headerFilterText } from './filterCallback';
 import { getColumnLabel } from './getColumnLabel';
+import { getHeaderFilterOperator } from './getHeaderFilterOperator';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 
@@ -42,8 +43,12 @@ export function renderHeaderFilter(
         const formatter: Formatter = lookup ? TextFormatter : field.formatter;
 
         // the column's own placeholder, else the formatter's (a date's format, YYYY-MM-DD), else the
-        // field's type: "Text", "Number" (texts filter.placeholder.*). A boolean filter is a checkbox
-        const placeholderFilter = cellConfig.placeholderFilter || formatter.placeholder || typePlaceholder(ctx, type);
+        // field's type: "Text", "Number" (texts filter.placeholder.*). A BETWEEN's: "from..to". A boolean
+        // filter is a checkbox
+        const between = getHeaderFilterOperator(ctx, attribute) === 'BETWEEN';
+        const placeholderFilter =
+            cellConfig.placeholderFilter ||
+            (between ? gridText(ctx, 'filter.placeholder.between') : formatter.placeholder || typePlaceholder(ctx, type));
 
         // what the cell shows, from the state's header filters. ?? and not ||: false and 0 are filters too
         let currentValue: unknown = ctx.gridInterface.__getHeaderFilter(attribute)?.value ?? '';
@@ -105,7 +110,8 @@ export function renderHeaderFilter(
                     cell as any
                 );
             } else {
-                const currentText = formatter.format(currentValue);
+                // a BETWEEN's [from, to] as from..to
+                const currentText = headerFilterText(currentValue, formatter);
 
                 let lastFilter = currentText;
                 let skipFocus = false;

@@ -158,8 +158,9 @@ export function writeCellValue(gridInterface: GridInterface<any>, row: Entity, f
  * text field's filter matches (wildcards included): what a lookup column's header filter filters on,
  * as `IN` - the user types what the cells show, the label, and the rows hold the value. The values
  * once each, in the order of the rows
+ * @param caseSensitive true when the header filter matches case: the label is compared as it is
  */
-export function valuesWithLabel(column: LookupColumn, operator: FilterOperator, text: string): unknown[] {
+export function valuesWithLabel(column: LookupColumn, operator: FilterOperator, text: string, caseSensitive = false): unknown[] {
     const values = new Set<unknown>();
     const { lookup } = column;
     for (const row of lookup.datasource.getAllData()) {
@@ -169,7 +170,7 @@ export function valuesWithLabel(column: LookupColumn, operator: FilterOperator, 
             continue;
         }
         const label = { label: lookup.labelOf(row) };
-        if (!values.has(value) && objectFilter(label, { field: 'label', operator, value: text, type: 'text' })) {
+        if (!values.has(value) && objectFilter(label, { field: 'label', operator, value: text, type: 'text', caseSensitive })) {
             values.add(value);
         }
     }

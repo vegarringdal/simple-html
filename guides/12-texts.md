@@ -288,19 +288,27 @@ Right click on a header filter.
 
 | id | English | shown |
 | --- | --- | --- |
-| `filter.filter` | `Filter` | the filter submenu, first in the menu: the operator, blank, clear and the filter editor |
+| `filter.filter` | `Filter` | the filter submenu, first in the menu: the operator, match case, blank, clear and the filter editor |
 | `filter.filter.clear` | `Clear Filter` | removes the column's conditions |
 | `filter.filter.clearAll` | `Clear All Filters` | removes the whole filter |
 | `filter.filter.blank` | `Blank` | the blank submenu, in the filter submenu |
 | `filter.filter.isBlank` | `Is blank` | replaces the column's conditions with `IS_BLANK` |
 | `filter.filter.isNotBlank` | `Is not blank` | replaces the column's conditions with `IS_NOT_BLANK` |
 | `filter.filter.advanced` | `Advanced Filter…` | opens the filter editor |
-| `filter.operator` | `Operator` | the operator submenu, in the filter submenu, not a boolean field |
-| `filter.operator.greaterThanOrEqualTo` | `Greater than or equal` | a number or date field |
-| `filter.operator.lessThanOrEqualTo` | `Less than or equal` | a number or date field |
+| `filter.operator` | `Operator` | the operator submenu, in the filter submenu, not a boolean field. The column's operators (`filterOperators`) |
 | `filter.operator.equal` | `Equal` | not a boolean field |
-| `filter.operator.notEqualTo` | `Not Equal` | a text field |
+| `filter.operator.notEqualTo` | `Not Equal` | not a boolean field |
+| `filter.operator.lessThan` | `Less than` | a number or date field |
+| `filter.operator.lessThanOrEqualTo` | `Less than or equal` | a number or date field |
+| `filter.operator.greaterThan` | `Greater than` | a number or date field |
+| `filter.operator.greaterThanOrEqualTo` | `Greater than or equal` | a number or date field |
+| `filter.operator.between` | `Between` | a number or date field, typed as `from..to` |
 | `filter.operator.contains` | `Contains` | a text field |
+| `filter.operator.doesNotContain` | `Does not contain` | a text field |
+| `filter.operator.beginWith` | `Begins with` | a text field |
+| `filter.operator.endWith` | `Ends with` | a text field |
+| `filter.matchCase` | `Match case` | the toggle of a text column in the filter submenu, a ✓ while it is on |
+| `filter.matchCase.hint` | `always` | its hint, on a column that always matches case (`filterCaseSensitive`) |
 
 ### The value list
 
@@ -364,6 +372,8 @@ Right click on a column number, the row of numbers under the header filters.
 | `filterEditor.label.field` | `Field` | the name of the field picker of a condition, for a screen reader: `Field: Country` |
 | `filterEditor.label.operator` | `Operator` | the name of the operator picker |
 | `filterEditor.label.value` | `Value` | the name and the placeholder of the value input, the name of the column picker that replaces it |
+| `filterEditor.label.from` | `From` | the name and the placeholder of the first value input of a `BETWEEN` |
+| `filterEditor.label.to` | `To` | of its second value input |
 | `filterEditor.pickAttribute` | `Field` | in the field picker of a condition without a field |
 | `filterEditor.pickAttribute.tooltip` | `Pick which column this condition looks at` | its tooltip |
 | `filterEditor.pickOperator` | `Operator` | in the operator picker of a condition without an operator |
@@ -373,6 +383,9 @@ Right click on a column number, the row of numbers under the header filters.
 | `filterEditor.deleteCondition.tooltip` | `Delete this condition` | tooltip and name of the trash icon of a condition |
 | `filterEditor.useValue.tooltip` | `Compare against a typed in value instead of another column` | tooltip and name of the icon that switches to a value |
 | `filterEditor.useAttribute.tooltip` | `Compare against another column instead of a typed in value` | tooltip and name of the icon that switches to another field |
+| `filterEditor.matchCase` | `Aa` | the toggle of a condition on a text field, filled while the condition matches case |
+| `filterEditor.matchCase.tooltip` | `Match case` | its tooltip and name |
+| `filterEditor.matchCaseAlways.tooltip` | `Match case: always, for this column` | its tooltip and name on a column that always matches case (`filterCaseSensitive`): on, greyed out |
 | `filterEditor.undo` | `Undo` | the name of the undo icon in the footer: takes the last edit back |
 | `filterEditor.undo.tooltip` | `Undo (Ctrl+Z)` | its tooltip, with the key |
 | `filterEditor.undo.tooltip.mac` | `Undo (⌘Z)` | its tooltip on a Mac |
@@ -398,6 +411,7 @@ The names of the operators, in the operator menu and on a condition:
 | `filterEditor.operator.GREATER_THAN_OR_EQUAL_TO` | `Greater Than Or Equal To` |
 | `filterEditor.operator.LESS_THAN` | `Less Than` |
 | `filterEditor.operator.GREATER_THAN` | `Greater Than` |
+| `filterEditor.operator.BETWEEN` | `Between` |
 | `filterEditor.operator.CONTAINS` | `Contains` |
 | `filterEditor.operator.NOT_EQUAL_TO` | `Not Equal To` |
 | `filterEditor.operator.DOES_NOT_CONTAIN` | `Does Not Contain` |
@@ -421,6 +435,9 @@ The names of the operators, in the operator menu and on a condition:
 | `footer.and` | `AND` | between the chips of an AND group |
 | `footer.or` | `OR` | between the chips of an OR group |
 | `footer.changedOnly` | `Changed rows only` | the chip in front of the filter's while only the changed rows are shown (`datasource.filterChangedOnly()`) |
+| `footer.betweenAnd` | `and` | between the two values of a `BETWEEN` chip: `Age between 10 and 20` |
+| `footer.matchCase` | `Aa` | the marker after the value of a condition that matches case |
+| `footer.matchCase.tooltip` | `Match case` | its tooltip (`title`) |
 | `footer.findFilter` | `Find: {text}` | the chip while Find's *Filter rows* hides rows. `{text}`: the text the rows are filtered with |
 | `footer.summary` | `Selected cells` | the name of the summary of the selected cells at the footer's right, for a screen reader |
 | `footer.summary.count` | `Count: {count}` | the cells of the ranges with a value, any type |
@@ -438,6 +455,7 @@ The short names of the operators, on a chip:
 | `footer.operator.GREATER_THAN_OR_EQUAL_TO` | `≥` |
 | `footer.operator.LESS_THAN` | `<` |
 | `footer.operator.GREATER_THAN` | `>` |
+| `footer.operator.BETWEEN` | `between` |
 | `footer.operator.CONTAINS` | `contains` |
 | `footer.operator.NOT_EQUAL_TO` | `≠` |
 | `footer.operator.DOES_NOT_CONTAIN` | `does not contain` |
@@ -471,6 +489,7 @@ filter shows its formatter's format (`YYYY-MM-DD`), a boolean filter is a checkb
 | --- | --- | --- |
 | `filter.placeholder.text` | `Text` | an empty header filter of a text field |
 | `filter.placeholder.number` | `Number` | an empty header filter of a number field |
+| `filter.placeholder.between` | `from..to` | an empty header filter whose operator is `BETWEEN`, any type |
 
 ### Find
 
@@ -614,13 +633,15 @@ rule can be in a message by its name.
 
 ### getFilterString()
 
-Made by the datasource: `setTexts()` only. The whole string is upper cased:
-`'filterString.operator.EQUAL': 'equal_to'` is shown as `<<EQUAL_TO>>`.
+Made by the datasource: `setTexts()` only. The whole string is upper cased - the values of a condition
+that matches case excepted: `'filterString.operator.EQUAL': 'equal_to'` is shown as `<<EQUAL_TO>>`.
 
 | id | English | shown |
 | --- | --- | --- |
 | `filterString.and` | `AND` | joins the conditions of an AND group |
 | `filterString.or` | `OR` | joins the conditions of an OR group |
+| `filterString.betweenAnd` | `and` | between the two values of a `BETWEEN`: `'10' <<AND>> '20'` |
+| `filterString.matchCase` | `match_case` | after a condition that matches case: `[NAME] <<EQUAL_TO>> 'Ann' <<MATCH_CASE>>` |
 
 | id | English |
 | --- | --- |
@@ -629,6 +650,7 @@ Made by the datasource: `setTexts()` only. The whole string is upper cased:
 | `filterString.operator.GREATER_THAN_OR_EQUAL_TO` | `greater_than_or_equal` |
 | `filterString.operator.LESS_THAN` | `less_than` |
 | `filterString.operator.GREATER_THAN` | `greater_than` |
+| `filterString.operator.BETWEEN` | `between` |
 | `filterString.operator.CONTAINS` | `contains` |
 | `filterString.operator.NOT_EQUAL_TO` | `not_equal_to` |
 | `filterString.operator.DOES_NOT_CONTAIN` | `does_not_contain` |

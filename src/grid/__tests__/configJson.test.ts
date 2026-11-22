@@ -59,9 +59,17 @@ const fullConfig = (): GridConfig => ({
             placeholderRow: 'required',
             placeholderFilter: 'search',
             operator: 'CONTAINS',
+            filterOperators: ['CONTAINS', 'BEGIN_WITH', 'IN', 'NOT_IN', 'IS_BLANK'],
+            filterCaseSensitive: true,
             focusButton: 'SHOW_IF_GRID_NOT_READONLY'
         },
-        age: { label: 'Age', readonly: true, numberOverride: 'ZERO_TO_BLANK', aggregate: 'avg' },
+        age: {
+            label: 'Age',
+            readonly: true,
+            numberOverride: 'ZERO_TO_BLANK',
+            aggregate: 'avg',
+            filterOperators: ['GREATER_THAN_OR_EQUAL_TO', 'BETWEEN', 'IS_BLANK']
+        },
         born: { placeholderFilter: 'from' },
         value: { dynamicCellTypeColumn: 'valueType', allowPasteClearOnly: true },
         country: { label: 'Country', aggregate: 'count' },
@@ -180,7 +188,7 @@ describe('config as JSON - GridState', () => {
         datasource.group([{ attribute: 'country', title: 'Country' }]);
         datasource.expandGroup('Sweden');
         datasource.sort([{ attribute: 'age', ascending: false }], { add: true });
-        gridInterface.setState({ headerFilters: { name: { value: null, operator: 'CONTAINS' } } });
+        gridInterface.setState({ headerFilters: { name: { value: null, operator: 'CONTAINS', caseSensitive: true } } });
         typeInHeaderFilter(element, 'name', 'a');
         gridInterface.setState({
             layout: { left: [{ fields: ['country'], width: 90 }], center: config.layout.center.slice(0, 2) }
@@ -196,8 +204,11 @@ describe('config as JSON - GridState', () => {
         // a sanity check that the state has every part
         expect(state.grouping).toHaveLength(1);
         expect(state.expandedGroups).toEqual(['Sweden']);
-        expect(state.headerFilters).toEqual({ name: { value: 'a', operator: 'CONTAINS' } });
-        expect(state.filter).not.toBeNull();
+        expect(state.headerFilters).toEqual({ name: { value: 'a', operator: 'CONTAINS', caseSensitive: true } });
+        expect(state.filter).toEqual({
+            group: 'AND',
+            children: [{ field: 'name', operator: 'CONTAINS', value: 'a', caseSensitive: true }]
+        });
     });
 
     it('expect setState() with the JSON copy to give another grid the same state and rows', async () => {

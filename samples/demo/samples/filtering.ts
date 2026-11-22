@@ -6,7 +6,7 @@ export const filtering: DemoSample = {
     title: 'Filtering',
     group: 'Datasource',
     description:
-        'Users can type in the filter row under the headers, or use the built-in filter editor for advanced conditions. From code you build a filter with where(), and() and or() - a single condition, or AND/OR groups nested as deep as you need. A condition has no type of its own: the datasource takes it from its fields. The filter is plain data, getFilter() gives it back.',
+        'Users can type in the filter row under the headers, or use the built-in filter editor for advanced conditions. From code you build a filter with where(), and() and or() - a single condition, or AND/OR groups nested as deep as you need. A condition has no type of its own: the datasource takes it from its fields, and each type has its operators (operatorsFor): BETWEEN for numbers and dates, CONTAINS for text. A text condition can match case: where(field, operator, value, { caseSensitive: true }), "Match case" in a header filter\'s menu, Aa in the filter editor. The filter is plain data, getFilter() gives it back.',
     run(stage) {
         const ui = createStage(stage);
         const { datasource, gridInterface } = mountGrid(ui.gridHost, baseGridConfig());
@@ -17,6 +17,14 @@ export const filtering: DemoSample = {
         });
         ui.button('Norway AND age < 30', () => {
             datasource.filter(and(where('country', 'EQUAL', 'Norway'), where('age', 'LESS_THAN', 30)));
+        });
+        ui.button('age between 30 and 40', () => {
+            // both ends included, [30, null] is 30 or more
+            datasource.filter(where('age', 'BETWEEN', [30, 40]));
+        });
+        ui.button('company starts with "A", matching case', () => {
+            // caseSensitive: "a" in lower case is not found
+            datasource.filter(where('company', 'BEGIN_WITH', 'A', { caseSensitive: true }));
         });
         ui.button('(Norway OR Sweden) AND from July', () => {
             // groups nest

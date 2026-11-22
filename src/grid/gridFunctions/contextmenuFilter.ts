@@ -6,9 +6,10 @@ import type { Grid } from '../grid';
 import type { MenuBlock, MenuContext, MenuEntry, MenuItem } from '../gridMenus';
 import { clearAllColumnFilters } from './clearAllColumnFilters';
 import type { ColType } from './colType';
+import { columnOperators, headerFilterType, isAlwaysCaseSensitive, isHeaderOperator } from './columnFilterOptions';
 import { DROPDOWN_FILTER_MAX_ROWS, dropDownFilterData, type ValueListEntry } from './dropDownFilterData';
 import { filterCallback } from './filterCallback';
-import { getHeaderFilterOperator } from './getHeaderFilterOperator';
+import { getHeaderFilterOperator, isHeaderFilterCaseSensitive } from './getHeaderFilterOperator';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { openFilterEditor } from './openFilterEditor';
@@ -49,19 +50,44 @@ export function contextmenuFilter(
 }
 
 /**
+ * The text of each operator of the header filter's Operator ›, its id in MENU_IDS.filter too, in the
+ * order of the menu. The operators the header filter's input takes (isHeaderOperator)
+ */
+const OPERATOR_TEXTS: Partial<Record<FilterOperator, TextId>> = {
+    EQUAL: 'filter.operator.equal',
+    NOT_EQUAL_TO: 'filter.operator.notEqualTo',
+    LESS_THAN: 'filter.operator.lessThan',
+    LESS_THAN_OR_EQUAL_TO: 'filter.operator.lessThanOrEqualTo',
+    GREATER_THAN: 'filter.operator.greaterThan',
+    GREATER_THAN_OR_EQUAL_TO: 'filter.operator.greaterThanOrEqualTo',
+    BETWEEN: 'filter.operator.between',
+    CONTAINS: 'filter.operator.contains',
+    DOES_NOT_CONTAIN: 'filter.operator.doesNotContain',
+    BEGIN_WITH: 'filter.operator.beginWith',
+    END_WITH: 'filter.operator.endWith'
+};
+
+/**
  * The filter menu's default entries, new objects every call: the submenu Filter (`filter.filter`) -
- * the submenus operator and blank, clear, clear all, a line, the filter editor - then the value list,
- * the main tool, not in a submenu. The entries kept the ids they had before they were in Filter. The
- * ids are documented in MENU_IDS.filter
+ * the submenu operator, "Match case", the submenu blank, clear, clear all, a line, the filter editor -
+ * then the value list, the main tool, not in a submenu. The entries kept the ids they had before they
+ * were in Filter. The ids are documented in MENU_IDS.filter.
+ *
+ * What it offers are the column's operators (columnOperators: the type's, or its `filterOperators`):
+ * Operator › those the header filter's input takes, Blank › IS_BLANK / IS_NOT_BLANK, the value list IN
+ * (and NOT_IN when it has it)
  */
 function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
     // a lookup column filters on its labels: the operators of a text (filterCallback)
-    const type = ctx.gridInterface.__getLookupColumn(attribute)
-        ? 'text'
-        : ctx.gridInterface.getDatasource().getField(attribute).type;
+    const type = headerFilterType(ctx.gridInterface, attribute);
+    const column = ctx.gridInterface.__getGridConfig().columns[attribute];
+    const offered = columnOperators(column, type);
 
     // the operator picked before (state), else the column's, else the type's default
     const current = getHeaderFilterOperator(ctx, attribute);
+    // "Match case": always for a filterCaseSensitive column, the toggle can not turn it off
+    const caseSensitive = isHeaderFilterCaseSensitive(ctx, attribute);
+    const alwaysCaseSensitive = isAlwaysCaseSensitive(column, type);
 
     /**
      * the operator picked is state, the filter runs again with the value the cell has
@@ -69,6 +95,8 @@ function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
     const setOperator = (picked: FilterOperator) => {
         ctx.gridInterface.__setHeaderFilterOperator(attribute, picked);
         filterCallback(ctx, ctx.gridInterface.__getHeaderFilter(attribute)?.value ?? null, attribute);
+        // the cell shows its value for the operator (a BETWEEN's from..to) and its placeholder
+        rebuildHeaderColumns(ctx);
         ctx.gridInterface.__callSubscribers('filter-operator-change', {
             field: attribute,
             operator: picked,
@@ -77,22 +105,27 @@ function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
         });
     };
 
-    // a boolean column has no operators to choose from. Number and date columns have the range ones,
-    // text columns not equal and contains
-    const hasOperators = () => type !== 'boolean';
-    const isRange = () => type === 'date' || type === 'datetime' || type === 'number';
-    const isText = () => type !== 'boolean' && !isRange();
+    /**
+     * "Match case" is state too, the filter runs again with it: as picking an operator does
+     */
+    const setCaseSensitive = () => {
+        ctx.gridInterface.__setHeaderFilterCaseSensitive(attribute, !caseSensitive);
+        filterCallback(ctx, ctx.gridInterface.__getHeaderFilter(attribute)?.value ?? null, attribute);
+    };
 
     const text = (id: TextId) => gridText(ctx, id);
 
-    // the id of the entry is the id of its text
-    const operatorItem = (id: TextId, operator: FilterOperator, visible: () => boolean): MenuItem => ({
-        id,
-        label: text(id),
-        visible,
-        selected: () => current === operator,
-        action: () => setOperator(operator)
-    });
+    // every one of them, shown when the column offers it - not on a boolean column: its header filter is
+    // a checkbox. The id of the entry is the id of its text
+    const operatorItems = Object.entries(OPERATOR_TEXTS).map(
+        ([operator, id]): MenuItem => ({
+            id,
+            label: text(id),
+            visible: () => type !== 'boolean' && offered.some((op) => op === operator && isHeaderOperator(op)),
+            selected: () => current === operator,
+            action: () => setOperator(operator as FilterOperator)
+        })
+    );
 
     return [
         {
@@ -104,15 +137,19 @@ function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
                     type: 'submenu',
                     id: 'filter.operator',
                     label: text('filter.operator'),
-                    visible: hasOperators,
-                    // the operator in use has a check mark
-                    entries: [
-                        operatorItem('filter.operator.greaterThanOrEqualTo', 'GREATER_THAN_OR_EQUAL_TO', isRange),
-                        operatorItem('filter.operator.lessThanOrEqualTo', 'LESS_THAN_OR_EQUAL_TO', isRange),
-                        operatorItem('filter.operator.equal', 'EQUAL', hasOperators),
-                        operatorItem('filter.operator.notEqualTo', 'NOT_EQUAL_TO', isText),
-                        operatorItem('filter.operator.contains', 'CONTAINS', isText)
-                    ]
+                    // the operator in use has a check mark. Left out with none shown: a boolean's
+                    entries: operatorItems
+                },
+                {
+                    // a toggle with a check mark, for a text column. On and greyed out when the column
+                    // always matches case (filterCaseSensitive), with the hint "always"
+                    id: 'filter.matchCase',
+                    label: text('filter.matchCase'),
+                    hint: alwaysCaseSensitive ? text('filter.matchCase.hint') : undefined,
+                    visible: () => type === 'text',
+                    selected: () => caseSensitive,
+                    disabled: () => alwaysCaseSensitive,
+                    action: setCaseSensitive
                 },
                 {
                     type: 'submenu',
@@ -122,11 +159,13 @@ function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
                         {
                             id: 'filter.filter.isBlank',
                             label: text('filter.filter.isBlank'),
+                            visible: () => offered.includes('IS_BLANK'),
                             action: () => setBlankOrNotBlank(ctx, attribute, 'IS_BLANK')
                         },
                         {
                             id: 'filter.filter.isNotBlank',
                             label: text('filter.filter.isNotBlank'),
+                            visible: () => offered.includes('IS_NOT_BLANK'),
                             action: () => setBlankOrNotBlank(ctx, attribute, 'IS_NOT_BLANK')
                         }
                     ]
@@ -141,7 +180,7 @@ function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
                 { id: 'filter.filter.advanced', label: text('filter.filter.advanced'), action: () => openFilterEditor(ctx) }
             ]
         },
-        valueListBlock(ctx, attribute)
+        valueListBlock(ctx, attribute, offered)
     ];
 }
 
@@ -149,7 +188,9 @@ function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
  * The excel style value list, the main tool of the filter menu: a search box, a checkbox per text the
  * column's cells show with its number of rows, "Select all" over them, then Cancel and Apply. One block
  * (`filter.values`) with an element of its own, which it renders again as the user checks values and
- * types. For a text field and a lookup column, dropDownFilterData gives null for the rest.
+ * types. For a text field and a lookup column, dropDownFilterData gives null for the rest - and not
+ * for a column whose `filterOperators` have no IN. When the header filter matches case the list keeps
+ * texts that differ in case apart, and its IN / NOT_IN match case (filterCallback).
  *
  * Nothing is filtered until Apply: the checkboxes are a draft, Cancel (or Esc, a click outside)
  * leaves the filter as it was.
@@ -158,7 +199,7 @@ function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
  * box, the checkboxes, Cancel, Apply. ArrowDown / ArrowUp move between the search box and the
  * checkboxes, Space checks one, Enter in the search box or on a checkbox applies, as Apply does.
  */
-function valueListBlock(ctx: Grid, attribute: string): MenuBlock {
+function valueListBlock(ctx: Grid, attribute: string, offered: FilterOperator[]): MenuBlock {
     const element = document.createElement('div');
     element.setAttribute('data-menu-id', 'filter.values');
     element.className = 'simple-html-grid-value-list';
@@ -169,15 +210,21 @@ function valueListBlock(ctx: Grid, attribute: string): MenuBlock {
         data: dropDownFilterData(ctx, attribute, true, '')
     };
 
-    const block: MenuBlock = { type: 'block', id: 'filter.values', element, visible: () => state.data !== null };
+    const block: MenuBlock = {
+        type: 'block',
+        id: 'filter.values',
+        element,
+        visible: () => state.data !== null && offered.includes('IN')
+    };
     const text = (id: TextId, values?: Record<string, unknown>) => gridText(ctx, id, values);
 
     /**
      * Filters the column on the values behind the checked texts, as the header filter does
      * (filterCallback: the column's conditions are replaced): an `IN` with them, or a `NOT_IN` with the
      * values of the unchecked ones when there are fewer of those - the values not listed (the
-     * DROPDOWN_FILTER_MAX_ROWS cap) stay then. After a search always an `IN`: the values it found and
-     * are checked. None unchecked, or none checked: no condition of the list. Then the menu closes
+     * DROPDOWN_FILTER_MAX_ROWS cap) stay then; not when the column's `filterOperators` have no `NOT_IN`.
+     * After a search always an `IN`: the values it found and are checked. None unchecked, or none
+     * checked: no condition of the list. Then the menu closes
      */
     const apply = () => {
         const data = state.data;
@@ -187,7 +234,7 @@ function valueListBlock(ctx: Grid, attribute: string): MenuBlock {
         const valuesOf = (entries: ValueListEntry[]) => entries.flatMap((entry) => entry.values);
         const checked = valuesOf(data.entries.filter((entry) => data.checked.has(entry)));
         const unchecked = valuesOf(data.entries.filter((entry) => !data.checked.has(entry)));
-        if (!data.searched && unchecked.length < checked.length) {
+        if (!data.searched && unchecked.length < checked.length && offered.includes('NOT_IN')) {
             filterCallback(ctx, null, attribute, unchecked.length ? unchecked : null, true);
         } else {
             filterCallback(ctx, null, attribute, checked.length ? checked : null, false);

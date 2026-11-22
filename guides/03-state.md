@@ -14,7 +14,7 @@ it with `getState()`, give it back with `setState()`, and go back to the start w
 | `grouping` | the grouping, as `datasource.getGrouping()` |
 | `expandedGroups` | the ids of the expanded groups |
 | `filter` | the filter the rows are filtered by, as `datasource.getFilter()`. `null` when there is none |
-| `headerFilters` | what each header filter cell shows: the value and the operator picked in its menu |
+| `headerFilters` | what each header filter cell shows: the value, the operator picked in its menu and its Match case |
 | `aggregates` | the aggregate functions of the columns, keyed by field (`{ balance: ['sum', 'avg'] }`): what `ColumnConfig.aggregate` starts with and the header menu changes, see [Aggregates](18-aggregates.md#from-the-header-menu) |
 | `totalsRow` | whether the totals row is shown: `GridConfig.totalsRow`, turned on and off in the header menu |
 
@@ -139,8 +139,8 @@ nothing now. Call `resetState()` after it to apply it at once.
 
 ## Header filters in the state
 
-`headerFilters` is keyed by field. Only the columns whose header filter has a value, or an operator
-picked in its menu, are listed:
+`headerFilters` is keyed by field. Only the columns whose header filter has a value, an operator
+picked in its menu or Match case on are listed:
 
 ```ts
 import type { GridState } from '@simple-html/grid';
@@ -148,13 +148,18 @@ import type { GridState } from '@simple-html/grid';
 const headerFilters: GridState['headerFilters'] = {
     name: { value: 'ann*' }, // typed in the name column
     age: { value: 30, operator: 'LESS_THAN_OR_EQUAL_TO' }, // the operator picked in the menu
+    city: { value: 'Oslo', caseSensitive: true }, // Match case on in its menu: OSLO is left out
+    balance: { value: [1000, 5000], operator: 'BETWEEN' }, // typed as 1000..5000
     active: { value: true } // a boolean column's checkbox
 };
 ```
 
 The operator picked in a header filter's menu is state. The column's `operator` in the config is
-only the operator its header filter starts with, the grid never changes it. See
-[Filtering](06-filtering.md#header-filters).
+only the operator its header filter starts with, the grid never changes it. An operator of the state the
+column does not offer (its `filterOperators` changed since it was saved) is passed by: the column's
+`operator` is used. Match case (`caseSensitive`) is state too, `true` or left out; a column with
+`filterCaseSensitive` always matches case, whatever the state has. A `BETWEEN`'s value is
+`[from, to]`, an open end `null`. See [Filtering](06-filtering.md#header-filters).
 
 To set a filter from code that the header also shows, set both:
 

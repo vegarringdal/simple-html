@@ -17,11 +17,18 @@ Enter, or leaves the cell, and the grid filters on it:
 | boolean | a checkbox: no filter, then checked (`true`), then unchecked (`false`), then no filter again | `EQUAL` |
 
 - **A text filter matches the whole text** (`EQUAL`, ignoring case): `ann` finds `Ann` and `ANN`, but
-  not `Anna`. `*` and `%` are wildcards: `ann*` starts with ann, `*ann*` has ann in it.
+  not `Anna`. `*` and `%` are wildcards: `ann*` starts with ann, `*ann*` has ann in it. With
+  [Match case](#match-case) on, `Ann` does not find `ANN`.
 - A number or date is typed as the field's formatter shows it (`12,5` works too, the date in the
   format of the placeholder) and parsed with the formatter.
+- **`BETWEEN`** (Filter › Operator › Between, number and date columns) takes both ends in the one
+  input, with `..` between them: `10..20` is 10 to 20, both included; `10..` is 10 or more, `..20` 20
+  or less; `10` alone is 10 to 10 (a date: that day). Each end is parsed with the formatter, as a
+  single value is: `2026-01-01..2026-03-31`. The placeholder says `from..to`, and the cell shows the
+  value that way (`10..20`). The date picker of a date cell picks one day: from and to that day.
 - The `operator` option of a column sets the operator its header filter starts with, see
-  [below](#a-contains-search).
+  [below](#a-contains-search); `filterOperators` the ones it offers, see
+  [The operators a column offers](#the-operators-a-column-offers).
 - Emptying the cell removes the column's condition.
 
 ### A contains search
@@ -54,6 +61,75 @@ below), and type `*ann*` in any text header filter.
 A header filter only replaces the conditions on its own column, at the top of the filter. The rest
 of the filter is kept, and the column's condition is ANDed with it.
 
+### Match case
+
+A text compares ignoring case by default: `oslo` finds `Oslo` and `OSLO`. A condition with
+`caseSensitive: true` compares upper and lower case as they are, see [the filter format](#the-filter-format).
+In the grid:
+
+- **Match case** in a text column's header filter menu (Filter › Match case, a ✓ while it is on): the
+  column's header filter gives its conditions `caseSensitive: true` - the value typed, and the
+  [value list](#the-value-list), which then lists texts that differ in case (`Oslo`, `OSLO`) apart.
+  Turning it on or off runs the header filter again with the value its cell has, as picking an operator
+  does. It is state: `headerFilters[field].caseSensitive`. A lookup column has it too: the label is
+  matched with its case, and the `IN` of the values found has `caseSensitive: true`.
+- **`filterCaseSensitive: true`** on a column: its conditions always match case - the header filter,
+  the value list, the row menu's "Filter:" and the filter editor. Its Match case is shown on, greyed
+  out, with the hint *(always)*; the filter editor's toggle too. For a text column (and a lookup column),
+  `true` on another type throws a `TypeError` when the grid is made.
+- **Aa** in the filter editor, on each condition of a text field: pressed (filled) while it matches
+  case, see [the filter editor](#the-filter-editor).
+- The footer shows **Aa** after the value of a chip that matches case, `getFilterString()` keeps the
+  case of its value and adds `<<MATCH_CASE>>`.
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    columns: {
+        sku: { filterCaseSensitive: true, operator: 'BEGIN_WITH' } // `AB` does not find `ab-100`
+    },
+    layout: { center: [{ fields: ['sku'], width: 120 }] }
+};
+```
+
+### The operators a column offers
+
+Each type has its operators, `operatorsFor(type)` - see [Operators](#operators). The header filter
+menu's Operator › offers the ones its input takes (not `IN` / `NOT_IN`, the value list's, nor
+`IS_BLANK` / `IS_NOT_BLANK`, the Blank submenu's), the filter editor's operator picker all of them.
+
+`filterOperators` on a column offers fewer, in the type's order:
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    columns: {
+        // a search only: no Equal or Ends with, no Not blank, no value list (it needs IN)
+        name: { filterOperators: ['CONTAINS', 'BEGIN_WITH', 'IS_BLANK'] },
+        // an exact number or a range, BETWEEN to start with
+        age: { filterOperators: ['EQUAL', 'BETWEEN', 'IS_BLANK', 'IS_NOT_BLANK'], operator: 'BETWEEN' }
+    },
+    layout: { center: [{ fields: ['name'], width: 150 }, { fields: ['age'], width: 80 }] }
+};
+```
+
+- Operator › offers those its input takes; Blank › its Is blank / Is not blank when it has them (and is
+  left out with neither); the value list needs `IN`, and uses `NOT_IN` for the unchecked values only
+  when it has `NOT_IN` too (else always an `IN` of the checked ones). The filter editor's picker offers
+  them for the field.
+- The header filter starts with its `operator`, else the type's default (`EQUAL`, or
+  `GREATER_THAN_OR_EQUAL_TO` for a number or date) when the list has it, else its first operator the
+  header filter takes. An operator of the state that the list does not have is passed by.
+- A `TypeError` when the grid is made or `updateConfig()` is given the column: an operator the type does
+  not have (`CONTAINS` on a number), an empty list, a list without an operator for the header filter's
+  input, an `operator` that is not in it. A lookup column filters as text in its header: its list is
+  of text operators.
+- It is what the user can pick, not a rule of the filter: `datasource.filter()` and a state from
+  `setState()` can have any condition, and the row menu's "Filter:" is `EQUAL` (`IS_BLANK` for an empty
+  cell) whatever the column offers.
+
 What each header cell shows is part of the [state](03-state.md#header-filters-in-the-state):
 `getState().headerFilters`.
 
@@ -65,10 +141,13 @@ What each header cell shows is part of the [state](03-state.md#header-filters-in
 Right click a header filter for its menu: the submenu **Filter ›**, then the **value list** (for
 text fields and [lookup columns](20-lookups.md)), the main tool, in the menu itself. In Filter ›:
 
-- **Operator ›** picks the operator the column's header filter uses, the one in use has a ✓: Equal,
-  Not Equal and Contains for text, Greater than or equal, Less than or equal and Equal for numbers
-  and dates. The filter runs again with it, and the grid sends a `filter-operator-change` event. The
-  operator picked is state (`headerFilters[field].operator`).
+- **Operator ›** picks the operator the column's header filter uses, the one in use has a ✓: for text
+  Equal, Not Equal, Contains, Does not contain, Begins with and Ends with; for numbers and dates Equal,
+  Not Equal, Less than, Less than or equal, Greater than, Greater than or equal and Between - or the
+  ones of the column's `filterOperators`. A boolean column has none. The filter runs again with it, and
+  the grid sends a `filter-operator-change` event. The operator picked is state
+  (`headerFilters[field].operator`).
+- **Match case** (text columns) turns matching case on and off, see [Match case](#match-case)
 - **Blank ›** **Is blank** / **Is not blank** replace the column's conditions with `IS_BLANK` /
   `IS_NOT_BLANK`
 - **Clear Filter** removes the conditions on this column, **Clear All Filters** the whole filter
@@ -91,7 +170,8 @@ checkbox per value, as in a spreadsheet:
   Over the list: how many values it has.
 - Values shown the same are **one entry**, their rows counted together: two values a formatter shows
   as `1234`, two codes with one label. So are texts that differ in case only (`Oslo`, `OSLO`): `IN`
-  compares ignoring case, it can not filter them apart. The entry shows the text of the first row.
+  compares ignoring case, it can not filter them apart. The entry shows the text of the first row. With
+  [Match case](#match-case) on they are entries of their own, and Apply's `IN` matches case.
 - **"Blank"** (in italics), first, is every empty value - `null`, `''` and also `0` (see
   [0 is blank](#0-is-blank)) - and a value whose cell shows no text. `false` is a value of its own.
 - It lists the first 100 texts, and then says so. The counts are only shown when every value is
@@ -122,7 +202,8 @@ Right click a cell for the row menu. Its "Filter:" part filters on the value of 
   filters
 - **Add to filter (and)** ANDs `field = value` with the filter there is
 
-An empty cell gives `IS_BLANK` instead of `= value`.
+An empty cell gives `IS_BLANK` instead of `= value`. On a column with `filterCaseSensitive` the
+condition matches case.
 
 ## The filter editor
 
@@ -135,14 +216,28 @@ document.getElementById('advanced-filter')!.addEventListener('click', () => grid
 ```
 
 It starts with the filter there is. A condition is one row: a field (every field the grid knows),
-an operator (all of them, see [below](#operators)) and a value - or another field to compare with,
-the arrows switch between the two - then the trash can. The field and the operator are pickers: a
-button that opens a menu under it, the field's with a search box. A group is a line down the left of
-what is in it, its header on top: **AND** / **OR** (the one in use filled), **+ Condition**,
-**+ Group**, then wrap it in a new group and delete it. "Apply & close" and "Apply" apply it,
-"Cancel" leaves the filter as it was. A condition with no field or operator picked is left out when
-it is applied. Applying it empties the header filter cells of the columns whose conditions it
-changed; a header filter whose conditions are as they were keeps its text.
+an operator and a value - or another field to compare with, the arrows switch between the two - then
+the trash can. The field and the operator are pickers: a button that opens a menu under it, the
+field's with a search box. A group is a line down the left of what is in it, its header on top:
+**AND** / **OR** (the one in use filled), **+ Condition**, **+ Group**, then wrap it in a new group
+and delete it. "Apply & close" and "Apply" apply it, "Cancel" leaves the filter as it was. A condition
+with no field or operator picked, or no value, is left out when it is applied: an empty value input is
+no value. Applying it empties the header filter cells of the columns whose conditions it changed; a
+header filter whose conditions are as they were keeps its text.
+
+- **The operators of the field**: the picker offers the operators of the field's type (see
+  [Operators](#operators)) - or of its column's `filterOperators` - and a text's while no field is
+  picked. A lookup column's field has the operators of its type: the editor edits the values (`NO`),
+  not the labels. Picking a field whose type does not have the operator picked takes the operator
+  away: pick one again. A condition with an operator its type does not offer - from a filter saved
+  with v5, from code - shows it, and keeps it when it is applied.
+- **Aa**, Match case, after the value of a condition on a text field (not Is Blank / Is Not Blank):
+  pressed (filled) while the condition matches case, a click turns it on or off. It gives the condition
+  `caseSensitive: true`. On a column with `filterCaseSensitive` it is pressed and greyed out.
+- **Between** has two value inputs, *From* and *To*, each read with the field's formatter (a date opens
+  the date picker under it): one left empty is an open end. It compares with its values, so it has no
+  switch to another field. Picking Between takes the value there was as its start; another operator
+  picked after it takes the start as its value.
 
 Every control is a button or an input, Tab goes through them in the order they are shown: the `✕`,
 then each group's header and its conditions, then Undo, Redo, Cancel, Apply, Apply & close. A
@@ -195,7 +290,8 @@ on a Mac.
 The footer shows the number of rows shown (`datasource.length()`, group rows included) and the
 number of rows there are (`12/500`), and the
 filter as a row of chips: field, operator, value, with the groups in brackets. "✕ Clear" removes the
-whole filter, a click on the chips opens the filter editor. The labels are the column labels, the
+whole filter, a click on the chips opens the filter editor. A `BETWEEN` is `Age between 10 and 20`
+(an open end: `Age ≥ 10`), a condition that matches case has **Aa** after its value. The labels are the column labels, the
 rest are texts (`footer.*`, the operators `footer.operator.*`), see [Texts](12-texts.md#footer). The
 values of a lookup column are shown as its cells show them, by their labels (`Country in Norway`);
 the filter editor shows the values (`NO`), they are what it edits.
@@ -279,8 +375,19 @@ const filter: FilterExpression = { group: 'AND', children: [condition, group] };
 datasource.filter(filter);
 ```
 
-`where(field, operator, value?)`, `and(...children)` and `or(...children)` build the same objects.
-`where('email', 'IS_BLANK')` leaves `value` out.
+`where(field, operator, value?, { caseSensitive? })`, `and(...children)` and `or(...children)` build
+the same objects. `where('email', 'IS_BLANK')` leaves `value` out, `caseSensitive` is only there when
+it is `true`:
+
+```ts
+import { where } from '@simple-html/grid';
+
+where('name', 'EQUAL', 'Ann', { caseSensitive: true }); // { field: 'name', operator: 'EQUAL', value: 'Ann', caseSensitive: true }
+where('age', 'BETWEEN', [18, 30]); // { field: 'age', operator: 'BETWEEN', value: [18, 30] }
+where('age', 'BETWEEN', [18, null]); // 18 or more
+```
+
+`where()` throws a `TypeError` for a `BETWEEN` whose value is not `[from, to]`.
 
 A condition has no type of its own. It is compared as the type of its field in the datasource's
 `fields` (`text` when the field is not listed). A number value always compares as a number, and a
@@ -293,41 +400,183 @@ A condition has no type of its own. It is compared as the type of its field in t
 datasource.filter({ field: 'changed', operator: 'GREATER_THAN', valueField: 'approved' });
 ```
 
-**Ignored**: a condition without `field` or `operator`, a condition on a date field without a value,
-and an empty group filter nothing out. An empty group is kept as it is (`filter(and())` keeps every
-row); use `filter(null)` for no filter.
+**Ignored**: these filter nothing out, and `getFilterString()`, `getFilterTree()` and the footer leave
+them out:
+
+- a condition without `field` or `operator`
+- a condition without the value it needs: a blank `value` - null, undefined, `''` or an invalid
+  `Date` - and no `valueField`, for every operator but `IS_BLANK`, `IS_NOT_BLANK`, `IN` and `NOT_IN`.
+  `{ field: 'name', operator: 'EQUAL', value: '' }` does not find the empty names: use `IS_BLANK`
+- a `BETWEEN` whose value is not `[from, to]`, or whose two ends are blank (a `valueField` is not used
+  by `BETWEEN`)
+- an empty group. It is kept as it is (`filter(and())` keeps every row); use `filter(null)` for no
+  filter
+
+`IN` / `NOT_IN` without a list (or with `[]`) are not ignored: `IN` matches no row, `NOT_IN` every row.
 
 ## Operators
 
-The field's type decides how a condition compares the row's value with its value.
+The field's type (the datasource's `fields`, `text` when the field is not listed) decides how a
+condition compares the row's value - *row* below - with its value. This is the exact rule set: a
+backend that filters the same rows (a SQL `WHERE` made from the filter) has to follow it. The SQL in
+the tables is a sketch of the meaning, `col` the column and `:v` the value: case, collation and how a
+database compares texts are the backend's.
 
-| operator | text | number | date, datetime |
-| --- | --- | --- | --- |
-| `EQUAL` | the whole text, ignoring case. `*` and `%` are wildcards | the same number | the same day (`date`) or second (`datetime`) |
-| `NOT_EQUAL_TO` | not `EQUAL` | not `EQUAL` | not `EQUAL`. A blank row date matches |
-| `LESS_THAN` | before, compared as lower case text | smaller | earlier |
-| `LESS_THAN_OR_EQUAL_TO` | `LESS_THAN` or `EQUAL` | smaller or the same | earlier or the same |
-| `GREATER_THAN` | after, compared as lower case text | larger | later |
-| `GREATER_THAN_OR_EQUAL_TO` | `GREATER_THAN` or `EQUAL` | larger or the same | later or the same |
-| `CONTAINS` | has the value in it, ignoring case | as `GREATER_THAN_OR_EQUAL_TO` | as `GREATER_THAN_OR_EQUAL_TO` |
-| `DOES_NOT_CONTAIN` | does not have the value in it | as `LESS_THAN` | as `LESS_THAN` |
-| `BEGIN_WITH` | starts with the value | as `GREATER_THAN_OR_EQUAL_TO` | as `GREATER_THAN_OR_EQUAL_TO` |
-| `END_WITH` | ends with the value | as `LESS_THAN_OR_EQUAL_TO` | as `LESS_THAN_OR_EQUAL_TO` |
-| `IN` | one of a list, ignoring case | one of a list, as the formatter shows the number | one of a list, as the formatter shows the date |
-| `NOT_IN` | not `IN` | not `IN` | not `IN` |
-| `IS_BLANK` | `null`, `undefined`, `''` or `0` | `null`, `undefined`, `''` or `0` | `null`, `undefined`, `''` or an invalid date |
-| `IS_NOT_BLANK` | not `IS_BLANK` | not `IS_BLANK` | not `IS_BLANK` |
+Two rules come first:
 
-- A **boolean** field compares every operator as `EQUAL`, apart from `IN`, `NOT_IN`, `IS_BLANK` and
-  `IS_NOT_BLANK`. The value must be `true` or `false`.
-- `IN` / `NOT_IN` take a list as `value`: `where('country', 'IN', ['Norway', 'Sweden'])`. Text with
-  one value per line works too. `'NULL'` in the list matches an empty value. On a number field a
-  number in the list is formatted as the rows are: `where('price', 'IN', [2])` finds the 2 a formatter
-  shows as `2.00`; text in the list is the text shown (`'2.00'`).
-- A **blank row date** is not before, after or on any date: of the comparisons it only matches
-  `NOT_EQUAL_TO`.
-- A **blank number** compares as 0: `where('age', 'LESS_THAN', 5)` also matches the rows without an
-  age.
+- **The type of the value wins over the field's**: a number value compares as a number and a `Date`
+  value as a date, also on a text field or a field that is not listed. `where('code', 'GREATER_THAN',
+  6)` on a text field compares numbers.
+- **A condition without a value is ignored**, see [the filter format](#the-filter-format): a blank
+  value never means "is blank", that is `IS_BLANK`.
+
+### The operators of each type
+
+`operatorsFor(type)` gives them, in this order. The grid offers these, and only these, in the header
+filter menu and the filter editor; a column's `filterOperators` can offer fewer.
+
+| type | operators |
+| --- | --- |
+| text | `EQUAL`, `NOT_EQUAL_TO`, `CONTAINS`, `DOES_NOT_CONTAIN`, `BEGIN_WITH`, `END_WITH`, `IN`, `NOT_IN`, `IS_BLANK`, `IS_NOT_BLANK` |
+| number, date, datetime | `EQUAL`, `NOT_EQUAL_TO`, `LESS_THAN`, `LESS_THAN_OR_EQUAL_TO`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL_TO`, `BETWEEN`, `IN`, `NOT_IN`, `IS_BLANK`, `IS_NOT_BLANK` |
+| boolean | `EQUAL`, `NOT_EQUAL_TO`, `IS_BLANK`, `IS_NOT_BLANK` |
+
+```ts
+import { operatorsFor } from '@simple-html/grid';
+
+operatorsFor('number').includes('CONTAINS'); // false
+operatorsFor(datasource.getField('name').type); // the operators of the name field
+```
+
+### Text
+
+*row* is the row value as text: null and undefined are `''`, anything else `String(value)` (`5` is
+`'5'`). Both texts are compared in lower case (`toLowerCase()`), or as they are with
+`caseSensitive: true`. `*` and `%` in the value stand for any text - none too, line breaks too, as
+`%` in SQL `LIKE`; there is no escape, and `_` is no wildcard. The rest of the value is taken as it is.
+A text of several lines is one text: `BEGIN_WITH` is the start of the whole value, not of a line.
+
+In the SQL, `t` is `LOWER(COALESCE(col, ''))` and `v` the value in lower case with its `*` and `%`
+as `%` (and the `_` and `\` of `LIKE` escaped, they are no wildcards here):
+
+| operator | matches | SQL, ignoring case |
+| --- | --- | --- |
+| `EQUAL` | the whole text. With a wildcard: the pattern, the whole text | `t = 'v'`, with a wildcard `t LIKE 'v'` |
+| `NOT_EQUAL_TO` | not `EQUAL`: a blank row matches | `NOT (t = 'v')` |
+| `CONTAINS` | the value somewhere in it | `t LIKE '%v%'` |
+| `DOES_NOT_CONTAIN` | not `CONTAINS`: a blank row matches | `NOT (t LIKE '%v%')` |
+| `BEGIN_WITH` | starts with the value | `t LIKE 'v%'` |
+| `END_WITH` | ends with the value | `t LIKE '%v'` |
+| `IN` | one of a list, see [below](#in-and-not_in) | `UPPER(col) IN (...)`, and `'NULL'` as `col IS NULL OR col = ''` |
+| `NOT_IN` | not `IN`: none of the list | `NOT (...)` of `IN` |
+| `IS_BLANK` | null, undefined, `''` (and the number 0, in plain js data) | `col IS NULL OR col = ''` |
+| `IS_NOT_BLANK` | not `IS_BLANK` | `col IS NOT NULL AND col <> ''` |
+
+With `caseSensitive: true` leave out the `LOWER()` / `UPPER()`: compare the texts as they are.
+
+### Number
+
+*row* is `Number(row value)`; a blank (null, undefined, `''`) and what is no number is **0**. The value
+is `Number(value)`, what is no number 0 too.
+
+| operator | matches | SQL |
+| --- | --- | --- |
+| `EQUAL` / `NOT_EQUAL_TO` | the same number / not | `COALESCE(col, 0) = :v` / `<>` |
+| `LESS_THAN`, `LESS_THAN_OR_EQUAL_TO`, `GREATER_THAN`, `GREATER_THAN_OR_EQUAL_TO` | smaller, smaller or the same, larger, larger or the same | `COALESCE(col, 0) < :v` ... |
+| `BETWEEN` | from `value[0]` to `value[1]`, both included | `COALESCE(col, 0) BETWEEN :from AND :to` |
+| `IN` / `NOT_IN` | one of a list, compared as the formatter shows the number | |
+| `IS_BLANK` | null, undefined, `''` or 0 | `col IS NULL OR col = 0` |
+| `IS_NOT_BLANK` | not `IS_BLANK` | `col IS NOT NULL AND col <> 0` |
+
+So `where('age', 'LESS_THAN', 5)` matches the rows without an age, and `EQUAL 0` matches them too.
+
+### Date and datetime
+
+*row* and the value are compared as timestamps: a `date` field on the day (the time of both is left
+out), a `datetime` field to the second (the milliseconds are left out). A value of text (a `Date` after
+JSON, ISO text) is read as a date. **A blank row date** - null, undefined, `''`, an invalid date - is
+not on, before or after any date: of the comparisons it only matches `NOT_EQUAL_TO`.
+
+| operator | matches | SQL, a `date` field |
+| --- | --- | --- |
+| `EQUAL` | the same day (`date`) or second (`datetime`) | `CAST(col AS DATE) = :v` |
+| `NOT_EQUAL_TO` | not `EQUAL`: a blank row date matches | `col IS NULL OR CAST(col AS DATE) <> :v` |
+| `LESS_THAN` ... `GREATER_THAN_OR_EQUAL_TO` | earlier, earlier or the same, later, later or the same. Never a blank | `CAST(col AS DATE) < :v` ... |
+| `BETWEEN` | a `date`: from the start of `from`'s day to the end of `to`'s day. A `datetime`: from `from` to `to`, to the second. Never a blank | `CAST(col AS DATE) BETWEEN :from AND :to` |
+| `IN` / `NOT_IN` | one of a list, compared as the formatter shows the date (`2026-01-31`) | |
+| `IS_BLANK` | null, undefined, `''`, an invalid date (and 0) | `col IS NULL` |
+| `IS_NOT_BLANK` | not `IS_BLANK` | `col IS NOT NULL` |
+
+### Boolean
+
+*row* is the value, a blank (null, undefined, `''`, 0) is **false**: the cell shows it unchecked. The
+value is `true` or `false`, compared with `===`.
+
+| operator | matches | SQL |
+| --- | --- | --- |
+| `EQUAL true` | `true` | `col = TRUE` |
+| `EQUAL false` | `false` and the blanks | `col = FALSE OR col IS NULL` |
+| `NOT_EQUAL_TO` | not `EQUAL`: `NOT_EQUAL_TO true` is `false` and the blanks | `NOT (...)` of `EQUAL` |
+| `IS_BLANK` | null, undefined, `''` (and 0). `false` is a value | `col IS NULL` |
+| `IS_NOT_BLANK` | not `IS_BLANK`: `true` and `false` | `col IS NOT NULL` |
+
+### BETWEEN
+
+`value` is `[from, to]`, both ends included. It is `GREATER_THAN_OR_EQUAL_TO from` and
+`LESS_THAN_OR_EQUAL_TO to`, each with the rules of the type - a blank number is 0, a blank date is in
+no range.
+
+- **A blank end is open**: `[10, null]` is `GREATER_THAN_OR_EQUAL_TO 10`, `[null, 20]` is
+  `LESS_THAN_OR_EQUAL_TO 20`. Blank is null, undefined, `''` or an invalid date - 0 is an end. Both ends
+  blank: the condition is ignored.
+- **`from` after `to`** (`[20, 10]`) matches no row, as `BETWEEN 20 AND 10` in SQL: the range is
+  empty. The ends are not swapped - that would hide a typo.
+- A `valueField` is not used: the ends are the value.
+
+### IN and NOT_IN
+
+`value` is a list, or a text with one value per line. Each value of the list and the row value are
+compared as text, in upper case (`toUpperCase()`) - as they are with `caseSensitive: true` on a text
+field. No wildcards.
+
+- **A blank row value** - null, undefined, `''` and 0 in a text field - is the text `'NULL'`: `'NULL'`
+  in the list matches the blanks. A row whose text is `null` (in any case; `NULL` with `caseSensitive`)
+  is matched by it too. With `caseSensitive` write the blank as `'NULL'`, in upper case.
+- **A number or date field** compares the text its formatter shows: the row value and a number in the
+  list are formatted (`[2]` finds the 2 a formatter shows as `2.00`), a text in the list is taken as
+  the text shown (`'2.00'`). There a 0 is `'0'`, not `'NULL'`. `caseSensitive` is not used.
+- No list, or `[]`: `IN` matches no row, `NOT_IN` every row.
+
+```ts
+import { where } from '@simple-html/grid';
+
+where('country', 'IN', ['Norway', 'Sweden']); // ignoring case
+where('country', 'IN', ['Norway', 'NULL']); // or blank
+where('code', 'NOT_IN', ['AB', 'ab'], { caseSensitive: true }); // as they are
+```
+
+### Case
+
+`caseSensitive: true` is for the conditions that compare text: a text field (also one that is not
+listed) with a value that is no number and no `Date`, and `IN` / `NOT_IN` on a text field. It is not
+used on a number, date, datetime or boolean field, nor by `IS_BLANK` / `IS_NOT_BLANK`; only `true` turns
+it on. Without it the texts are compared in lower case (`IN`: upper case), as JavaScript does - a
+backend's case-insensitive collation may differ for a few letters (`ß`, the Turkish `İ`).
+
+### Operators a type does not offer
+
+The datasource still filters on an operator the field's type does not offer - a filter saved with
+v5, a filter of code - the way v5 did. The grid does not offer them, the filter editor shows one and
+keeps it. They are legacy; a backend can treat them as these:
+
+| type | operator | is |
+| --- | --- | --- |
+| number, date, datetime | `CONTAINS`, `BEGIN_WITH` (and an operator of plain js that is none) | `GREATER_THAN_OR_EQUAL_TO` |
+| number, date, datetime | `END_WITH` | `LESS_THAN_OR_EQUAL_TO` |
+| number, date, datetime | `DOES_NOT_CONTAIN` | `LESS_THAN` |
+| text | `LESS_THAN` ... `GREATER_THAN_OR_EQUAL_TO`, `BETWEEN` | the two texts compared as JavaScript does (code unit by code unit), in lower case or as they are with `caseSensitive`. No wildcards |
+| boolean | any other operator | `EQUAL` |
+| boolean | `IN` / `NOT_IN` | the text `TRUE` / `FALSE` / `NULL` |
 
 ### 0 is blank
 
@@ -336,6 +585,17 @@ A row value of `0` counts as blank, on purpose: in ERP style data 0 and empty me
 the value list puts 0 under "Blank". The text `'0'` is not blank. `IN` on a number field compares
 the formatted text, so there 0 is `'0'`, not `'NULL'`. The `required` validation rule takes 0 as
 missing too, see [Validation](05-editing.md#the-built-in-rules).
+
+The other way round, a blank compares as the empty value of its type: a blank number as 0
+(`LESS_THAN 5` matches it), a blank boolean as `false` (`EQUAL false` matches it), a blank text as
+`''`. A blank date is no date at all. So, per type:
+
+| type | blank (`IS_BLANK`) | a blank row value compares as |
+| --- | --- | --- |
+| text | null, undefined, `''` | `''` |
+| number | null, undefined, `''`, 0 | 0 |
+| date, datetime | null, undefined, `''`, an invalid date | no date: only `NOT_EQUAL_TO` matches it |
+| boolean | null, undefined, `''` - `false` is a value | `false` |
 
 ## The filter as text
 
@@ -357,13 +617,18 @@ people.getFilterString((field) => (field === 'country' ? 'Land' : field));
 
 people.getFilterTree();
 // { kind: 'group', group: 'AND', children: [
-//     { kind: 'condition', label: 'country', operator: 'EQUAL', value: 'Norway', hasValue: true },
+//     { kind: 'condition', label: 'country', operator: 'EQUAL', value: 'Norway', hasValue: true, caseSensitive: false },
 //     { kind: 'group', group: 'OR', children: [ ...the two age conditions ] }
 // ] }
 ```
 
 - `getFilterString()` is `''` and `getFilterTree()` is `null` when no filter is set, or nothing of
   it is left.
+- A condition that matches case keeps the case of its value in `getFilterString()` and ends with
+  `<<MATCH_CASE>>`: `[NAME] <<EQUAL_TO>> 'Ann' <<MATCH_CASE>>`; in the tree it has `caseSensitive: true`
+  (only where it is used: a number condition with it is `false`).
+- A `BETWEEN` is `[AGE] <<BETWEEN>> '10' <<AND>> '20'`, an open end `''`. In the tree `value` is the
+  start and `valueTo` the end, `''` for an open end.
 - The values are formatted with the field's formatter, the values of `IN` / `NOT_IN` are shown as
   they are. The tree's root is always a group, also for a single condition.
 - `getFilterTree(label, formatterOf)` takes a formatter for the values of a field too, the `IN` /
