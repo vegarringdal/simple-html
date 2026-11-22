@@ -111,7 +111,7 @@ const GRID_LIGHT: Record<string, string> = {
     '--simple-html-grid-readonly-stripe-color': 'rgb(255, 0, 0)',
     '--simple-html-grid-required-stripe-color': 'rgb(0, 8, 255)',
     '--simple-html-grid-stripe-bg-color': 'rgb(255, 255, 255)',
-    '--simple-html-grid-menu-shadow-color': 'black',
+    '--simple-html-grid-menu-shadow-color': 'rgba(0, 0, 0, 0.28)',
     '--simple-html-grid-dialog-shadow-color': 'rgba(0, 0, 0, 0.32)',
     '--simple-html-grid-tooltip-shadow-color': 'rgba(0, 0, 0, 0.28)',
     '--simple-html-grid-scrollbar-shadow-color': 'rgb(0 0 0 / 30%)',
@@ -132,7 +132,6 @@ const DATE_LIGHT: Record<string, string> = {
 
 // the variables that are one plain colour, the same in light and dark
 const SAME_IN_DARK = [
-    '--simple-html-grid-menu-shadow-color',
     '--simple-html-grid-scrollbar-shadow-color',
     '--simple-html-grid-readonly-stripe-color'
 ];

@@ -110,7 +110,7 @@
     --simple-html-grid-find-current-border-color: light-dark(#9a3412, #fed7aa);
     /* shadows: the menus, the filter editor, the tooltips, the scrollbar thumbs. A plain colour is the
        same in light and dark */
-    --simple-html-grid-menu-shadow-color: black;
+    --simple-html-grid-menu-shadow-color: light-dark(rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.6));
     --simple-html-grid-dialog-shadow-color: light-dark(rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.6));
     --simple-html-grid-tooltip-shadow-color: light-dark(rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.5));
     --simple-html-grid-scrollbar-shadow-color: rgb(0 0 0 / 30%);
@@ -1845,6 +1845,10 @@
     inset: auto;
     margin: 0;
     padding: 0;
+    /* a menu's drop shadow, on the popover: the menu in it is clipped by its overflow (it scrolls a long
+       menu), an element's own shadow is not. Every popover of the grid has it - the menus, submenus, the
+       column chooser, the date picker, the lookup's dropdown, the multiline editor */
+    box-shadow: 2px 4px 12px var(--simple-html-grid-menu-shadow-color);
 }
 
 /* the browser hides a popover that is not open with display: none, .simple-html-grid would show it */
@@ -1857,7 +1861,6 @@
     flex-direction: column;
     position: relative;
     background-color: var(--simple-html-grid-main-bg-color);
-    box-shadow: 10px 5px 5px var(--simple-html-grid-menu-shadow-color);
     border: 1px solid var(--simple-html-grid-main-bg-border);
 }
 

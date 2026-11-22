@@ -1332,6 +1332,17 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Menus: a drop shadow (user request)
+
+##### Fixed
+- The menus' shadow was clipped by their popover and never showed. Every popover of the grid (menus,
+  submenus, the column chooser, the date picker, the lookup's dropdown, the multiline editor) has a soft
+  drop shadow now.
+
+##### Changed
+- `--simple-html-grid-menu-shadow-color` is `rgba(0, 0, 0, 0.28)` in light and `rgba(0, 0, 0, 0.6)` in dark
+  (was `black`), the shadow `2px 4px 12px` (was `10px 5px 5px`).
+
 #### Docs site: the sidebar indented by level (user request)
 
 ##### Changed

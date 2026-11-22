@@ -310,7 +310,7 @@ On `.simple-html-grid`, in `grid.css`.
 | `--simple-html-grid-readonly-stripe-color` | the red stripes of a readonly cell in an editable grid (`.simple-html-readonly`) | `rgb(255, 0, 0)` | `rgb(255, 0, 0)` |
 | `--simple-html-grid-required-stripe-color` | the blue stripes of an empty required cell (`.simple-html-mandatory`) | `rgb(0, 8, 255)` | `rgb(120, 140, 255)` |
 | `--simple-html-grid-stripe-bg-color` | between the stripes | `rgb(255, 255, 255)` | `transparent` |
-| `--simple-html-grid-menu-shadow-color` | the shadow of the menus | `black` | `black` |
+| `--simple-html-grid-menu-shadow-color` | the drop shadow of the menus and the other popovers (column chooser, date picker, dropdowns) | `rgba(0, 0, 0, 0.28)` | `rgba(0, 0, 0, 0.6)` |
 | `--simple-html-grid-dialog-shadow-color` | the shadow of the filter editor | `rgba(0, 0, 0, 0.32)` | `rgba(0, 0, 0, 0.6)` |
 | `--simple-html-grid-tooltip-shadow-color` | the shadow of the tooltips | `rgba(0, 0, 0, 0.28)` | `rgba(0, 0, 0, 0.5)` |
 | `--simple-html-grid-scrollbar-shadow-color` | the shadow in a scrollbar thumb (Safari, the other browsers use `scrollbar-color`) | `rgb(0 0 0 / 30%)` | `rgb(0 0 0 / 30%)` |

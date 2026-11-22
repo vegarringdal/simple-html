@@ -2689,6 +2689,19 @@ in the console. All passed. Found and fixed:
   groups and its own pages (the guides) 28px, a group's pages 44px - past the group's arrow, so the sidebar
   reads as a tree. Checked in Chromium, light and dark, every part unfolded
 
+### Menus: a drop shadow (user request)
+
+* the user: "all menus should prob have drop of shadow, so its more typical like a menu". The menu had one
+  (`10px 5px 5px black` on `.simple-html-grid-menu`), but its popover - exactly its size, `overflow:
+  hidden` from `.simple-html-grid`, the scroll box of a long menu - clipped all of it: none showed. The
+  shadow is on the popover now (`.simple-html-grid.simple-html-grid-popover`), which an element's own
+  overflow does not clip: every popover of the grid has it - the menus and submenus, the column chooser,
+  the date picker, the lookup's dropdown, the multiline editor. Softer, as a menu's: `2px 4px 12px`,
+  `--simple-html-grid-menu-shadow-color` light `rgba(0, 0, 0, 0.28)`, dark `rgba(0, 0, 0, 0.6)` (was
+  `black` in both). theme.test.ts and guide 13 follow
+* checked in Chromium (light and dark, a menu with its Copy › submenu; the computed shadow of both
+  popovers); submenu 40/40, menus regression 25/25
+
 ## Considered, not done
 
 ## Candidates / not started
