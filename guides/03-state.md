@@ -17,7 +17,7 @@ it with `getState()`, give it back with `setState()`, and go back to the start w
 | `headerFilters` | what each header filter cell shows: the value, the operator picked in its menu and its Match case |
 | `aggregates` | the aggregate functions of the columns, keyed by field (`{ balance: ['sum', 'avg'] }`): what `ColumnConfig.aggregate` starts with and the header menu changes, see [Aggregates](18-aggregates.md#from-the-header-menu) |
 | `totalsRow` | whether the totals row is shown: `GridConfig.totalsRow`, turned on and off in the header menu |
-| `formats` | the display formats of the columns, keyed by field (`{ born: { date: 'weekIso' } }`): what `ColumnConfig.format` starts with and the header menu's Format › changes, see [Display formats](08-formatting.md#display-formats) |
+| `formats` | the display formats of the columns, keyed by field (`{ born: { date: 'weekIso' } }`, `{ email: { link: { url: 'mailto:{email}' } } }`): what `ColumnConfig.format` starts with and the header menu's Format › and the column settings dialog change, see [Display formats](08-formatting.md#display-formats) and [Templates and links](08-formatting.md#templates-and-links) |
 
 ```ts
 const state = gridInterface.getState();
@@ -150,7 +150,9 @@ import type { GridState } from '@simple-html/grid';
 const formats: GridState['formats'] = {
     born: { date: 'norwegian' }, // 22.11.2026
     due: { date: 'weekIso' }, // 2026-W47
-    balance: { number: { decimals: 2, thousands: ' ', decimal: ',' } } // 1 234 567,89
+    balance: { number: { decimals: 2, thousands: ' ', decimal: ',' } }, // 1 234 567,89
+    name: { text: '{name} ({id})' }, // Ann (12)
+    company: { link: { url: 'https://crm.example.com/customer/{id}', newTab: true } } // a link
 };
 gridInterface.setState({ formats });
 ```
@@ -158,6 +160,13 @@ gridInterface.setState({ formats });
 - It starts as the columns' `format` in the config (or `initialState.formats`), and `resetState()`
   goes back to it. `updateConfig({ columns })` gives the columns new options: their formats are the
   new config's from then on.
+- The user changes it in the header menu (Format ›) and the column settings dialog (the gear in the
+  footer): its Apply is a `setState({ formats })`. Save `getState()` to keep what the user set, see
+  [The column settings dialog](08-formatting.md#the-column-settings-dialog).
+- **A saved state runs nothing**: the templates of a text column (`text`, `link.url`) are text with
+  `{field}` placeholders, not code. A state from storage or another user can have a link to
+  `javascript:` in it - `setState()` throws a `TypeError` for it - or a field that holds one, which is
+  shown as text, not as a link. See [Templates, not code](08-formatting.md#templates-not-code).
 - `setState({ formats })` replaces every column's format - start from `getState().formats` to change
   one. A format that does not fit its field throws a `TypeError`, and nothing of the state changes.
 - It is plain JSON: a state saved with `JSON.stringify` gives the same formats back.

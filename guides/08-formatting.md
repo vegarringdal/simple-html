@@ -7,12 +7,15 @@ The datasource's options name a formatter by its id: `formatter: 'numberComma'`.
 formatters are registered under ids from the start, your own you register with
 `registerFormatter()`. So the options are plain JSON and can be stored, the formatters stay code.
 
-A formatter gives text. To draw a cell another way - a badge, a bar, a link - give the column a cell
+A formatter gives text. To draw a cell another way - a badge, a bar, a select - give the column a cell
 renderer, see [Custom cells](21-custom-cells.md): it gets the formatter's text too.
 
 How a column *shows* its values - a date as `22.11.2026` or as the week `2026-W47`, a number as
 `1 234 567,89` - the user can pick in the header menu, without a formatter of your own: see
-[Display formats](#display-formats).
+[Display formats](#display-formats). A text column can show a template of the row's fields,
+`{firstname} {lastname}`, and be a link, `https://crm.example.com/customer/{id}` or `mailto:{email}`:
+see [Templates and links](#templates-and-links). The user sets all of them in the
+[column settings dialog](#the-column-settings-dialog), the gear in the footer.
 
 ## What a formatter does
 
@@ -374,6 +377,181 @@ gridInterface.resetState(); // the formats of the config again
 ```
 
 See [State](03-state.md#display-formats-in-the-state).
+
+## Templates and links
+
+A text column has two more parts in its format: `text`, a template of what its cells show, and
+`link`, which makes its cells links. Both are templates: text with `{field}` placeholders, each filled
+in with the value of a field of the row.
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    columns: {
+        // Ann Lee: the text of two fields
+        firstname: { format: { text: '{firstname} {lastname}' } },
+        // 12 kg: the cell's own value, {value}, and text - weight is a text field: a number field has none
+        weight: { format: { text: '{value} kg' } },
+        // a link to the customer, its text the company and the id: Acme Corp (12)
+        company: {
+            format: { text: '{company} ({id})', link: { url: 'https://crm.example.com/customer/{id}', newTab: true } }
+        },
+        // a link that writes an email, one that calls, one to the address the field holds
+        email: { format: { link: { url: 'mailto:{email}' } } },
+        phone: { format: { link: { url: 'tel:{phone}' } } },
+        website: { format: { link: { url: '{website}', newTab: true } } }
+    },
+    layout: {
+        center: [
+            { fields: ['firstname'], width: 140 },
+            { fields: ['weight'], width: 80 },
+            { fields: ['company'], width: 160 },
+            { fields: ['email'], width: 180 },
+            { fields: ['phone'], width: 120 },
+            { fields: ['website'], width: 180 }
+        ]
+    }
+};
+```
+
+```sample full-grid
+```
+
+### The placeholders
+
+- **`{field}`** is the value of a field of the row, as text: as the field's formatter writes it -
+  `2026-11-22` for a date, `1234.5` for a number - not in a display format, and the value of a lookup
+  field, not its label. The field does not have to be a column: `{id}` can be a field the grid does not
+  show. A field the row does not have is empty.
+- **`{value}`** is the cell's own value: a template that fits any column. A field named `value` can not
+  be reached from another column.
+- **A brace that is not a placeholder is text**: `{}`, `{a` and `}` are shown as they are. A name is
+  everything between the braces, spaces too: `{ id }` is the field ` id `.
+- **A name that starts with `__`** is the grid's own (`{__rowState}`): a template with one throws a
+  `TypeError`.
+- `text` is not `''`: leave it out for the cell's own text.
+
+### Templates, not code
+
+The formats are part of the state, and a saved state can come from storage, a backend or another user.
+So a template runs nothing: there are no expressions, no `eval`, no `new Function`, no html. A value is
+always text - `<img src=x onerror=...>` in a field is shown as those characters - and the text of a
+cell and of a link is put in the page as text, never as html.
+
+### The address of a link
+
+`link.url` is where the cells link to. The grid builds it for each row, and checks it:
+
+| `url` | Acme Corp, id 12, ann@example.com, +47 123 45 678 | |
+| --- | --- | --- |
+| `'https://crm.example.com/customer/{id}'` | `https://crm.example.com/customer/12` | |
+| `'https://duckduckgo.com/?q={company}'` | `https://duckduckgo.com/?q=Acme%20Corp` | the values are encoded |
+| `'mailto:{email}'` | `mailto:ann@example.com` | the `@` of a mailto: stays |
+| `'tel:{phone}'` | `tel:+47%20123%2045%20678` | the `+` of a tel: stays |
+| `'{website}'` | the address the field holds, `https://acme.example.com` | one placeholder alone |
+
+- **It starts with its scheme, written out**: `https://`, `http://`, `mailto:` or `tel:`. Or it is one
+  placeholder alone, a field that holds the whole address. Anything else throws a `TypeError` when the
+  grid is made or `setState()` / `updateConfig()` is given it: `javascript:...`, `data:...`, `ftp:...`,
+  a relative `/customer/{id}`, a scheme from a value `{scheme}://...`, `{base}/customer/{id}`.
+- **The values are encoded** with `encodeURIComponent`: a value can not end the path, add a query or a
+  header, or change the host - `a/b?c` is `a%2Fb%3Fc`. In a `mailto:` and a `tel:` address the `@` and
+  the `+` stay as they are: they are part of the address and add nothing (a header or a parameter needs
+  `?`, `&`, `=` or `;`, which are encoded).
+- **A whole address from a field** is taken as it is, its spaces at the ends trimmed.
+- **Then it is checked** with `new URL()`: it is an absolute address of one of the four schemes - after
+  the browser's own clean up (tabs and line breaks taken out, the scheme in lower case: `java
+script:`
+  is `javascript:`). The address linked to is the one `new URL()` gives, so what was checked is what the
+  browser opens; an international host is written as punycode, a lookalike `exаmple.com` (with a
+  Cyrillic `а`) shows as `xn--exmple-4nf.com` where the browser shows the address.
+- **A row whose address is not one of those shows its text, no link**: a field of the address that is
+  empty in the row, a value `.` or `..` (the browser would step up the path), a field whose whole
+  address is `javascript:alert(1)`, `data:...` or relative, text that is no address.
+
+A field that holds a whole address can link anywhere on the web. When the data is not yours to trust,
+write the site in the template - `https://crm.example.com/customer/{id}` - and the field only fills in
+a part of it.
+
+### A link cell
+
+The cell shows an `<a>` with the cell's text (its template's, with `text`), underlined in
+`--simple-html-grid-link-color`. In a new tab with `newTab: true` (`target="_blank"`,
+`rel="noopener noreferrer"`), else in the page.
+
+| what | does |
+| --- | --- |
+| a click on the text | opens the link, and makes the row the current row |
+| Ctrl/Cmd+click, a middle click on the text | the browser's: opens it in a new tab - no range of cells |
+| Shift+click on the text | a range of cells, as on any cell: does not open it |
+| Alt+click, the second click of a double click | does not open it |
+| a click beside the text | the cell, as any cell: the focus, the current row |
+| Alt+Enter on the cell | opens the link, as a click on it (Google Sheets' key) |
+| Enter, F2, a character typed, a double click beside the text | edit the cell's value - not the text of the template - in the grid's editor of one line over the cell, Enter saves, Esc cancels |
+| a right click | the row menu |
+
+The cell is a custom cell the grid draws itself (see [Custom cells](21-custom-cells.md)): it has the
+focus - the link in it is out of the tab order and a press on its text focuses the cell - so the
+arrows, Tab, the ranges, copy, paste, Delete, Ctrl+D, Ctrl+Z and Find work on it as on any cell. In a
+readonly grid the cells are links too, and nothing opens the editor. A screen reader finds the link in
+the cell, its name its text; the cell has `aria-keyshortcuts="Alt+Enter"`.
+
+A column with a `renderer` of its own draws its cells: it gets the template's text as `text`, the
+grid draws no link. The default cell's `focusButton` and `placeholderRow` are not on a link cell.
+
+### What a template and a link change
+
+As a display format: only what the cells show, and what follows the cells.
+
+| where | |
+| --- | --- |
+| the cells | the template's text; the link with its address |
+| a cell being edited | the value, as the field's formatter writes it: a cell shown as `Acme Corp (12)` is edited as `Acme Corp` |
+| Find, the fitted width, the dimmed repeated values | the text the cells show: Find finds `(12)` |
+| the edited marker's tooltip, "Original value" | the template with the original value as `{value}` |
+| a renderer of your own | `text` is the template's text |
+| copy, paste, the CSV export, the Excel export | the value - no template, no link: a paste reads it back. Excel gets text, not a `HYPERLINK` |
+| the filter menu's value list, the header filter, the filter chips | the value: a template with other fields would show one value two ways in two rows |
+| sorting, grouping | the value |
+
+A template and a link are for a `text` field, and not for a lookup column (`editor`): a format with
+them on another type throws a `TypeError`. A cell of another type in a `dynamicCellTypeColumn` is
+shown as its type, without them.
+
+## The column settings dialog
+
+The gear at the right end of the footer opens it - and *Column settings…* in the header menu, on that
+column, and `gridInterface.openColumnSettings(field)` from a button of your own. `settingsButton: false`
+hides the gear ([Grid config](02-grid-config.md#grid-options)).
+
+- **The columns** of the layout are at the left, in their order, each with its type and what it has
+  set - *Format*, *Text*, *Link*, or *Error*. The arrows, Home, End, PageUp / PageDown and a letter pick
+  one, a click too.
+- **A date, datetime or number column** has its format: a picker that opens the entries of Format ›,
+  the same list as the header menu.
+- **A text column** has *Text shown* (the template, empty for the cell's own text), *Show as link*,
+  *Address* and *Open in a new tab*. The `{ }` button beside a template opens a menu of the fields -
+  the columns' and those of the row, by their labels, with a search - and puts the one picked in at the
+  caret: no need to know the names of the fields.
+- **The preview** shows what the cell shows in the current row (else the first row shown): the text,
+  the link - a click opens it in a new tab - and its address, and why the row has no link (a field
+  that is empty in it, an address that is not allowed, a field that does not exist).
+- **A problem of a template** is shown under it at once: no address, one that does not start with its
+  scheme, `javascript:` and the other schemes that are not allowed, a field of the grid's own. The
+  column is marked *Error*, and Apply does nothing until it is fixed.
+- **Apply** sets the formats of the state, `setState({ formats })`: `getState()` has them - to save
+  them, see [Saving it](03-state.md#saving-it). *Apply & close* applies and closes, *Cancel* (and the ✕,
+  Esc) closes without applying. *Reset column* and *Reset all* go back to the formats the grid starts
+  with - `ColumnConfig.format`, or `initialState.formats` - in the dialog, until Apply.
+
+It is a modal dialog of the filter editor's kind: the focus goes into it when it opens and back to
+where it was when it closes, it is moved by its title bar and resized from every edge and corner. The
+texts are `columnSettings.*`, see [Texts](12-texts.md#column-settings).
+
+A developer sets the formats the grid starts with in `ColumnConfig.format`; what the user sets in the
+dialog is the state. To keep the user's settings, save `getState()` (or its `formats`) and give it back
+with `setState()` the next time.
 
 ## The type from another field
 

@@ -80,6 +80,9 @@
     --simple-html-grid-lookup-button-bg-color: light-dark(#e2e8f0, #283548);
     --simple-html-grid-lookup-icon-color: light-dark(#475569, oklch(70.4% 0.04 256.788));
     --simple-html-grid-lookup-active-bg-color: light-dark(#dbeafe, oklch(28.2% 0.091 267.935));
+    /* the text of a link, underlined: blue-800 in light, blue-100 in dark - the library's blue-400
+       accent is under 4.5:1 to the tints of Find and a range on a selected row, its blue-600 in light */
+    --simple-html-grid-link-color: light-dark(#1e40af, oklch(93.2% 0.032 255.585));
     /* the totals row: slate-800 as the library's title bars, its text slate-100 (--dock-text-hi) */
     --simple-html-grid-totals-bg-color: light-dark(#e2e8f0, #283548);
     --simple-html-grid-totals-font-color: light-dark(#0f172a, oklch(96.8% 0.007 247.896));

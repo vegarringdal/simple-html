@@ -500,6 +500,7 @@ export interface GridMenus {
  * | `header.format.thousands` | Thousands separator › - None, Space, Comma, Dot, Apostrophe (`.none`, `.space`, `.comma`, `.dot`, `.apostrophe`). The character of the decimal mark greyed out | a number field |
  * | `header.format.decimalMark` | Decimal mark › - Dot, Comma (`.dot`, `.comma`). The character of the thousands separator greyed out | a number field |
  * | `header.format.percent` | Percent, a toggle: the number times 100 with ` %` | a number field |
+ * | `header.settings` | Column settings… - the column settings dialog on this column (`gridInterface.openColumnSettings(field)`): its display format, a text column's template and link | |
  * | `header.aggregate` | Aggregate › - a submenu | |
  * | `header.aggregate.sum` | Sum - a toggle with a ✓ when on: the column's sum in the group rows and the totals row (`GridState.aggregates`) | a number field |
  * | `header.aggregate.avg` | Average, a toggle | a number field |
@@ -696,6 +697,7 @@ export const MENU_IDS = {
         'header.format.decimalMark.dot',
         'header.format.decimalMark.comma',
         'header.format.percent',
+        'header.settings',
         'header.aggregate',
         'header.aggregate.sum',
         'header.aggregate.avg',

@@ -72,6 +72,10 @@
     --simple-html-grid-lookup-button-bg-color: light-dark(#e9edf2, #374151);
     --simple-html-grid-lookup-icon-color: light-dark(#475569, #e2e8f0);
     --simple-html-grid-lookup-active-bg-color: light-dark(#dbe7f3, #2f4f80);
+    /* the text of a link: a cell of a text column with a link (ColumnFormat.link) and the link in the
+       column settings' preview, underlined. At least 4.5:1 against the rows and the selected rows -
+       under the tints of an error, a range and Find too - the inputs and the bars */
+    --simple-html-grid-link-color: light-dark(#1e3a8a, #e8f1ff);
     /* the totals row under the rows (GridConfig.totalsRow): its background and its text */
     --simple-html-grid-totals-bg-color: light-dark(#e8edf3, #2a3441);
     --simple-html-grid-totals-font-color: light-dark(#1f2328, #f9fafb);
@@ -1175,6 +1179,26 @@
     font-family: var(--simple-html-grid-font-family);
     font-size: var(--simple-html-grid-font-size);
     font-weight: var(--simple-html-grid-font-weight);
+}
+
+/**
+ * the link of a text column (ColumnFormat.link, linkCell.ts): the <a> in the host of its custom cell, its
+ * text cut with an ellipsis. With an address it is underlined in the link colour and the pointer is a
+ * hand over it; without one (the row has no address the grid links to) it is the cell's text
+ */
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-cell-link {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: inherit;
+    text-decoration: none;
+}
+
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-cell-link[href] {
+    color: var(--simple-html-grid-link-color);
+    text-decoration: underline;
+    cursor: pointer;
 }
 
 /**
@@ -2471,6 +2495,49 @@
     flex: 0 0 auto;
 }
 
+/* the settings button (GridConfig.settingsButton, rebuildFooter.ts): a gear at the right end of the
+ * footer, on the line of the filter's row (its top is set to the horizontal scrollbar's band). No frame,
+ * framed under the pointer as the icon buttons of the filter editor. With it the footer keeps 32px on
+ * both sides (has-settings): the filter's row stays in the middle and never reaches under the gear, the
+ * summary of the selected cells ends left of it */
+.simple-html-grid .footer-settings {
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    width: 26px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 0;
+    background-color: transparent;
+    color: var(--simple-html-grid-main-font-color);
+    cursor: pointer;
+    pointer-events: all;
+}
+
+.simple-html-grid .footer-settings:hover {
+    border-color: var(--simple-html-grid-control-border-color);
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid .footer-settings .footer-settings-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.simple-html-grid .footer-inner.has-settings {
+    padding-left: 32px;
+    padding-right: 32px;
+}
+
+.simple-html-grid .footer-inner.has-settings .footer-summary {
+    right: 36px;
+}
+
 /* "changed rows only" (datasource.filterChangedOnly()): a chip of its own in front of the filter's,
  * not part of it - not a button, it keeps its size */
 .simple-html-grid .footer-filter-changed-only {
@@ -3091,6 +3158,233 @@
 }
 
 /**
+ * The column settings dialog (columnSettings.ts): a dialog of the filter editor's look - it has the
+ * class filter-editor-content too, its title bar, body, footer and resize handles are the filter
+ * editor's. Wider; its body the list of the columns at the left and the settings of the one picked at
+ * the right, side by side - under each other when the dialog is made narrow
+ */
+.simple-html-grid.filter-editor-content.column-settings {
+    width: 720px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-body {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+/* the columns: a listbox framed as the inputs, its option picked lit as a selected row. The list has
+ * the focus (aria-activedescendant): the outline is on the option picked */
+.simple-html-grid.filter-editor-content .column-settings-list {
+    flex: 1 1 200px;
+    min-width: 160px;
+    max-width: 260px;
+    max-height: 360px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    background-color: var(--simple-html-grid-sec-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-list:focus-visible {
+    outline: none;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-option {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 3px 6px;
+    cursor: pointer;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-option:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-option[aria-selected='true'] {
+    background-color: var(--simple-html-grid-main-bg-selected-odd);
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-list:focus-visible .column-settings-option[aria-selected='true'] {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: -2px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-option-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* the type of a column: in the list in the text colour (on a selected option too), in the heading quiet */
+.simple-html-grid.filter-editor-content .column-settings-option-type {
+    flex: none;
+    font-weight: var(--simple-html-grid-font-weight);
+}
+
+/* what a column has set - Format, Text, Link, Error - a small box on the inputs' background, so its text
+ * keeps its contrast on a selected option */
+.simple-html-grid.filter-editor-content .column-settings-badge {
+    flex: none;
+    padding: 0 4px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-size: 0.9em;
+    font-weight: var(--simple-html-grid-font-weight);
+    line-height: 1.4;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-badge-problem {
+    border-color: var(--simple-html-grid-error-color);
+    color: var(--simple-html-grid-danger-font-color);
+}
+
+/* the settings of the column picked: its name and type, the settings, the preview */
+.simple-html-grid.filter-editor-content .column-settings-panel {
+    flex: 3 1 280px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-heading {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: calc(var(--simple-html-grid-font-size) + 2px);
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-heading .column-settings-option-type {
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+/* a setting: its label, the input (or the picker) and its field button, the hint and the problems */
+.simple-html-grid.filter-editor-content .column-settings-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-label {
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-input-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-input-row > .filter-editor-value {
+    flex: 1 1 auto;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-input-row > .column-settings-format {
+    max-width: 320px;
+}
+
+/* { }: put a field in the template, framed as the toggle of Match case */
+.simple-html-grid.filter-editor-content .column-settings-insert {
+    border-color: var(--simple-html-grid-control-border-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight-header);
+    line-height: 22px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-hint {
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+/* a problem of a template: the danger colour, with a line in the error colour in front - it is said in
+ * words too, not by its colour only */
+.simple-html-grid.filter-editor-content .column-settings-problem {
+    padding-left: 6px;
+    border-left: 2px solid var(--simple-html-grid-error-color);
+    color: var(--simple-html-grid-danger-font-color);
+}
+
+/* Show as link, Open in a new tab: a checkbox and its text, as the value list's */
+.simple-html-grid.filter-editor-content .column-settings-check {
+    display: flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-check input {
+    flex: none;
+    width: 13px;
+    height: 13px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--simple-html-grid-accent-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-check input:focus-visible {
+    outline-offset: 1px;
+}
+
+/* a checkbox or a lookup column: it has no settings */
+.simple-html-grid.filter-editor-content .column-settings-none {
+    color: var(--simple-html-grid-sec-font-color);
+    font-style: italic;
+}
+
+/* the preview: the row's text as the cell shows it, its link and address, why it has none */
+.simple-html-grid.filter-editor-content .column-settings-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px 8px;
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+    background-color: var(--simple-html-grid-sec-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-preview-title {
+    color: var(--simple-html-grid-sec-font-color);
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-preview-cell {
+    min-height: 1.3em;
+    overflow-wrap: anywhere;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-preview-link {
+    color: var(--simple-html-grid-link-color);
+    text-decoration: underline;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-preview-address {
+    color: var(--simple-html-grid-sec-font-color);
+    font-family: ui-monospace, monospace;
+    overflow-wrap: anywhere;
+}
+
+/* Reset column, Reset all: at the left end of the footer, the buttons that apply at the right */
+.simple-html-grid.filter-editor-content .column-settings-resets {
+    display: flex;
+    gap: 6px;
+    margin-right: auto;
+}
+
+/* Apply while a template has a problem: greyed out, aria-disabled - it keeps the focus and its tooltip */
+.simple-html-grid.filter-editor-content .simple-html-grid-button[aria-disabled='true'] {
+    filter: opacity(0.5);
+    cursor: default;
+}
+
+/**
  * Built in tooltip.
  *
  * The element is created once and shown on document.body - or in the dialog or menu of the
@@ -3278,6 +3572,14 @@
 
     .simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-scroll {
         max-height: min(360px, 50vh);
+    }
+
+    /* the column settings dialog: the rows of its list of the columns, as the value list's rows. Its
+       buttons, inputs and the gear in the footer keep their size */
+    .simple-html-grid.filter-editor-content .column-settings-option {
+        box-sizing: border-box;
+        align-items: center;
+        min-height: var(--simple-html-grid-touch-row-height);
     }
 
     /* the filter editor: edges and corners a finger can take to resize it */

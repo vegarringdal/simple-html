@@ -1,6 +1,7 @@
 import type { Entity } from '../datasource/entity';
 import { addMenuListeners } from './gridFunctions/addMenuListeners';
 import type { ColumnCache, RowCache } from './gridFunctions/colType';
+import { closeColumnSettings } from './gridFunctions/columnSettings';
 import { createDom } from './gridFunctions/createDom';
 import { releaseAllRenderers } from './gridFunctions/customCell';
 import { closeFind, type FindBar, findDataChanged } from './gridFunctions/findBar';
@@ -93,6 +94,8 @@ export class Grid {
     public lastPress: LastPress | null = null;
     // the filter editor, a modal dialog: see renderFilterEditor. Null when it is closed
     public filterEditor?: HTMLDialogElement | null;
+    // the column settings dialog, modal too: see columnSettings.ts. Null when it is closed
+    public columnSettings?: HTMLDialogElement | null;
     // the column chooser, a popover that stays open while columns are dragged from it
     public columnChooserMenu?: HTMLElement | null;
     // the editor of a multiline cell, a popover over the cell: see openTextEditor. Null when it is closed
@@ -221,6 +224,7 @@ export class Grid {
         closeLookupEditor(this);
         removeContextMenu(this);
         closeFilterEditor(this);
+        closeColumnSettings(this);
         this.columnChooserMenu?.remove();
         this.columnChooserMenu = null;
         // shown for a cell of this grid maybe: it is not in the element either

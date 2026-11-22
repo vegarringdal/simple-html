@@ -758,6 +758,9 @@ describe('lookups - the dropdown grid', () => {
         press(focusCell(element, 'customerId', 0), 'F4');
         expect(dropdownInterface().__getGridConfig().filterOperatorIndicator).toBe(false);
         expect(dropdown().querySelectorAll('.simple-html-grid-filter-operator')).toHaveLength(0);
+        // no settings button either (and no footer to put it in)
+        expect(dropdownInterface().__getGridConfig().settingsButton).toBe(false);
+        expect(dropdown().querySelector('.footer-settings')).toBeNull();
 
         press(headerFilterInput(dropdown(), 'name'), 'F4');
         expect(document.querySelectorAll('.simple-html-grid-menu')).toHaveLength(0);

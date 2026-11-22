@@ -3097,6 +3097,130 @@ in the console. All passed. Found and fixed:
   the page's width, remembered, show; phone: hidden, opens over the page, a page picked / a tap beside /
   Esc close it; a 2200px window: 30 rows, the full grid 85); full grid 11/11, sample height 5/5
 
+### Column settings: a dialog, templates and links of a text column (user request)
+
+* the user: "on text we also like to add formatting rules with inline editor, so we can set that a value is
+  link with adding suffix/expression what link is based on values etc. maybe a own config wheel bottom right
+  corner, what gives us a dialog for setting rules/default ... so it can be saved later. for links we also
+  might need to set label based on expression or from another column etc"
+* **the rule**, two keys of the same per-column object as `date` / `number` (`ColumnConfig.format`,
+  `GridState.formats`): `text` - a template of what a text column's cells show (`'{firstname} {lastname}'`,
+  `'{value} kg'`, `'{company}'`), also the link's label - and `link: { url, newTab? }`. The label is not a
+  part of the link: it is the column's text, so a template without a link (a display template) and a link
+  with the cell's own text are the same two keys. Exported type `LinkFormat`. Checked by
+  `assertColumnFormat` (TypeError): a text field only, not a lookup column, `text` not `''`, `link` an object
+  of `url` / `newTab`, no `{__...}` placeholder, the address's scheme
+* **templates, not code** (cellTemplate.ts, pure functions): `{field}` placeholders only - a name is
+  anything but braces; a brace that is no placeholder is text; `{value}` is the cell's own value; the text of
+  a field is its formatter's (`2026-11-22`, `1234.5`; not a display format, not a lookup's label), own
+  properties of the row only (`{constructor}` is empty). No eval, no Function, no html: the cell text goes in
+  with `textContent` / lit, a value `<img onerror>` is shown as text
+* **the address** (`linkOf`): the template starts with `https://`, `http://`, `mailto:` or `tel:` written out,
+  or is one placeholder alone (the field holds the whole address) - else a TypeError (`javascript:`, `data:`,
+  `ftp:`, relative `/customer/{id}`, `{scheme}://`, `{base}/x`). Values are `encodeURIComponent`-ed (the `@`
+  of a `mailto:` and the `+` of a `tel:` kept: they add no header or parameter, `? & = ;` stay encoded); a
+  value `.` / `..` gives no link (the URL parser would step up the path; `%2e` is a dot to it too); a lone
+  surrogate gives no link (encodeURIComponent throws a URIError). Then `new URL()` (absolute) and
+  `url.protocol` in the four - after the parser's clean up (`java\nscript:` is `javascript:`); the href is
+  `url.href`, what was checked (a lookalike host as punycode). A row whose address fails - an empty
+  placeholder, `javascript:alert(1)` / `data:` in a whole-address field, `" onmouseover=` (encoded),
+  `%0a` (encoded) - shows its text without a link. Checked against hostile values in the data and in the
+  template, in happy-dom and in Chromium
+* **the cell** (linkCell.ts): a custom cell of the grid's own (`renderer` id `''`, which
+  `registerCellRenderer` refuses) - an `<a>` with `textContent` and `href`, `target="_blank"` +
+  `rel="noopener noreferrer"` with `newTab`, no `href` (no link, not focusable) for a row without an address.
+  A plain click on the text and Ctrl/Cmd+click (a new tab, no range: rangePointerDown skips it) open it; a
+  middle click is the browser's; Shift+click (a range), Alt+click and the second click of a double click do
+  not. A press on the text focuses the host (mousedown default prevented: no focus on the link, no text
+  selection, no link drag), a right click leaves the focus and opens the row menu. Editing as a custom cell:
+  Enter, F2, typing, a double click *beside* the text open the editor of one line with the value (the
+  template formatter's `formatForEdit`); **Alt+Enter** opens the link (as Google Sheets;
+  `aria-keyshortcuts`). Readonly grids show links. A column's own `renderer` wins (it gets the template text)
+* **what follows the cells**: the template through `__getCellFormatter(field, type, row)` (it takes the row
+  now) and `cellTextOf` - Find, fitColumns, dimmed repeats, rowHeights; the edited marker's original value
+  is the template with the original `{value}`. The value: copy, paste, CSV, Excel (text, no `HYPERLINK`:
+  a formula of data and a 255-character limit for a small gain - a candidate), sorting, grouping, the header
+  filter, and the filter menu's value list (`cellTextOf(..., { template: false })`: a template of other
+  fields shows one value two ways)
+* **the gear** (rebuildFooter.ts): a `<button class="footer-settings">` at the right end of the footer on the
+  filter row's line, a 16px gear of square teeth (inline svg, `aria-hidden`), named and titled "Column
+  settings" (`footer.settings`), `aria-haspopup="dialog"`, the last stop of Tab in the footer (footerStops
+  finds it). With it the footer has 32px on both sides (`has-settings`): the centered filter row never
+  reaches under it, the summary of the selected cells ends 6px left of it (`right: 36px`), fitSummary /
+  chipsUnderSummary measure as before - the latter fixed: it tested "starts left of the summary and reaches
+  into it", chips that start right of the summary's start (now possible, the summary starts further left)
+  were not collapsed; it is an overlap test now (gridFooter.test.ts +1). Checked at 1300px and 380px, with
+  and without a filter. It opens the
+  dialog on the column of the cell that had the focus when it was pressed (`activeCellOfMenu`), else the first.
+  `GridConfig.settingsButton` (default `true`; `false` in a lookup's dropdown grid, and none in a footer of
+  no height). Also *Column settings…* in the header menu (`header.settings`, after Format ›, MENU_IDS) and
+  `gridInterface.openColumnSettings(field?)`
+* **the dialog** (columnSettings.ts): a modal `<dialog class="simple-html-grid filter-editor-content
+  column-settings">` of the filter editor's kind: its frame, title bar, body, footer, buttons and resize
+  handles are the filter editor's classes and css; drag / resize / show moved from renderFilterEditor.ts to
+  dialogFrame.ts and used by both (moved, not copied). Left: a `listbox` of the layout's columns (unique,
+  `data-field`), each with its type and a badge (Format / Text / Link / Error), one Tab stop,
+  `aria-activedescendant`, arrows / Home / End / PageUp / PageDown / a letter. Right: a date / datetime /
+  number column - a picker that opens the entries of Format › (`formatSubmenu` takes a `FormatTarget` now:
+  the state for the header menu, the dialog's draft here - one list of formats); a text column - Text shown,
+  Show as link (a new link opens in a new tab at first), Address, Open in a new tab, each template with a
+  `{ }` button: a menu of the fields of the columns and of the row (contextMenuAttributes takes a list now),
+  the pick put in at the caret; a checkbox / lookup column - none. The preview: the current row (else the
+  first shown) through `__getCellFormatter(..., format)` / `__getLinkResult(..., format)` - the grid's own
+  code with the draft format - the link (in a new tab), its address, and the row's problems (empty field,
+  unknown field, no valid address, a scheme not allowed). A template's own problems are under it at once
+  (`aria-invalid`, `aria-describedby`, live regions), the column is marked Error and Apply / Apply & close are
+  `aria-disabled` and do nothing. Apply = `setState({ formats })` (so `getState()` keeps it, "saved later");
+  Reset column / Reset all = the start formats (`initialState.formats` ?? the config's, `__getStartFormats`),
+  in the draft until Apply; Cancel / ✕ / Esc close without applying, the focus back where it was
+* **colours**: `--simple-html-grid-link-color` `light-dark(#1e3a8a, #e8f1ff)`, TreDeSpace `light-dark(#1e40af,
+  blue-100)` - 4.5:1 on the rows, selected rows, under the error / range / Find tints, the inputs and the
+  bars, in the four looks (CONTRAST_PAIRS +23, also the danger text on the dialog). The library's blue-400 is
+  2.2:1 under Find's tint on a selected row. No border-radius anywhere; the checkboxes are the browser's, as
+  the value list's. Touch (`pointer: coarse`): the list's rows `--simple-html-grid-touch-row-height`, the
+  buttons, inputs and the gear keep their size
+* texts: 47 ids (`columnSettings.*` 45, `header.settings`, `footer.settings`), the guide's tables, the
+  Norwegian sample; the placeholders and hints show `{names}` as written (texts.test.ts knows them)
+* docs: 08-formatting.md (Templates and links: the placeholders, templates not code, the address, a link
+  cell, what changes; The column settings dialog), 02 (`settingsButton`, `format`), 03 (formats, a saved
+  state runs nothing), 10 (header.settings), 12 (Column settings), 13 (the variable, TreDeSpace), 14 (the
+  gear, a link cell, Alt+Enter, the dialog's keys), 15 (Excel / CSV are the value), 17, 21; JSDoc of
+  `ColumnFormat`, `LinkFormat`, `ColumnConfig.format`, `GridState.formats`, `settingsButton`,
+  `openColumnSettings()`; the full grid sample: City a template with the country code of another column,
+  Fruit a search link (a new tab) whose text has the country code too, Email mailto:, Phone tel:, buttons
+  Column settings / Save formats / Load formats (localStorage, try/catch). Company and City stay inputs:
+  theme-tredespace-check.js clicks their cells
+* tests: new cellTemplate.test.ts (24: placeholders, fields of a row, encoding, schemes, `.`/`..`, lone
+  surrogates, javascript:/data:/vbscript:/file:, tabs and line breaks, entities, `%3A`, lookalike schemes and
+  hosts, `" onmouseover=`, `<img>`, `%0a`), linkColumn.test.ts (28: the cells, hostile data, click vs Shift /
+  Alt / double click / Ctrl without a range / right click, Alt+Enter, editing the value, the arrows, a text
+  template input, copy / CSV / Excel / Find / sort / value list, state JSON round trip, setState / config
+  TypeErrors, renderer wins), columnSettings.test.ts (28: the gear and its option, the header menu, the API,
+  modal and close, the list and its keys, each type's panel, the preview, links and their problems, the field
+  menu at the caret, Apply / Apply & close / Cancel / Reset / initialState); columnFormat +7, accessibility
+  (the gear is the footer's last stop, +1 without it), gridMenus, lookups (no gear in the dropdown grid),
+  texts (a walk through the dialog: every id shown, no English), theme contrast pairs; typings consumer.
+  3418 tests, 149 files
+* browser (Chromium 1148, 1300x1400): new `column-settings-check.js` 144/144 - in the four looks (default /
+  TreDeSpace, light / dark): the gear's place and name, no overlap with the summary and the filter's row at
+  1300px and 380px (with a filter too), the dialog from the gear on the focused cell's column, modal with the
+  focus in it, no rounded corners, number Norwegian / date Week ISO through the picker, a text template of two
+  columns, Show as link, `javascript:` refused at once with Apply held back, a field put in at the caret from
+  the `{ }` menu, the preview link and address, Apply & close with the focus back on the gear, the cells as
+  links with the template's text, the state, a click opening a popup (intercepted), Ctrl+click without a
+  range, Shift+click nothing, a press beside the text focusing the cell, Alt+Enter, F2 editing the value, a
+  double click beside the text, a right click's row menu, `javascript:` / `data:` / `java\nscript:` in the
+  data no links and nothing run, resetState / setState(JSON), the header menu's entry and Esc (focus back),
+  Enter on the gear, Tab to the ✕ and the list, the list's outline, a same-tab link navigating. A probe:
+  a middle click on a link opens a new tab, Alt+click nothing (no tab, no download). The shared checks:
+  display-format 39/39, footer-summary 11/11, full-grid 11/11, submenu 40/40 (the header menu has Column
+  settings…), menus-regression 25/25, theme-tredespace 141/141 (with the library's live page);
+  footer-no-filter 49/52 and keyboard 51/52 as they are - they expect Tab from "No filter" / the chips to
+  leave the grid, and narrow chips under the summary collapsed (fixed above); copies with the gear as a stop
+  of Tab: 53/53 and 53/53. The new scripts and the copies are in this worktree's
+  `.claude/browser-checks/scripts/` (the shared folder could not be written from this worktree): the shared
+  footer-no-filter-check.js and keyboard-check.js want the gear's Tab step
+
 ## Considered, not done
 
 ## Candidates / not started
@@ -3155,6 +3279,13 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
 
 ### Features
 
+* **Column settings, more** (see *Column settings* above): conditional colour rules (a cell's colour by its
+  value - `{ when: { operator, value }, class }`, checked as the templates are, no code); a template and a
+  link on a number or date column (`{value} kg` on a number, a link from an order number); relative
+  addresses within the app (resolved against a base the config gives, the base's origin kept); an "Open link"
+  entry in the row menu; a `HYPERLINK` in the Excel export (a formula of data, Excel's 255 characters); the
+  dialog's own undo (the filter editor has one); `placeholderRow` and `focusButton` on a link cell; more of
+  the column in the dialog (its label, width, aggregates, readonly) - the whole of a column's view in one place
 * **Display formats, more** (see *Display formats* above): grouping by the format - a group per week,
   month, quarter or year (needs a group value function in the datasource; the group names are the field
   formatter's now); a header filter typed in the format (`2026-W47`, a week number) and a value list of

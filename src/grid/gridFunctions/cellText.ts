@@ -1,7 +1,8 @@
 import type { Entity } from '../../datasource/entity';
 import type { FieldType } from '../../datasource/field';
 import type { Formatter } from '../../datasource/formatter';
-import { hasDisplayFormat } from '../columnFormat';
+import { cellFieldText, fillTemplate } from '../cellTemplate';
+import { hasValueFormat } from '../columnFormat';
 import type { Grid } from '../grid';
 import type { ColumnConfig } from '../gridConfig';
 import { getCellType } from './getCellType';
@@ -43,20 +44,28 @@ export function overrideNumberText(text: string, numberOverride: ColumnConfig['n
  * @param formatter the formatter of the cell, GridInterface.__getCellFormatter
  */
 export function zeroText(column: ColumnConfig | undefined, formatter: Formatter): string {
-    return hasDisplayFormat(column?.format) ? formatter.format(0) : '0';
+    return hasValueFormat(column?.format) ? formatter.format(0) : '0';
 }
 
 /**
  * A function that gives what a cell of the field shows for a row, as renderRowCell shows it: the type
  * of the cell (`dynamicCellTypeColumn` can change it per row), its text and whether it is multiline. A
  * lookup column's text is the label of the value (lookupColumn.ts), a column with a display format
- * (`ColumnConfig.format`) the display format's text.
+ * (`ColumnConfig.format`) the display format's text - a text column's template filled in for the row
+ * (`ColumnFormat.text`, the text of its link too).
  * The field and its options are looked up once, for fitting the sizes to many rows.
  *
  * Reads the interface only, it works without a connected grid too.
  * @param ctx the grid, or an object with the grid's interface
+ * @param options.template `false`: the cell's own text, not its column's template - for what is about
+ * the value, the filter menu's value list (a template can show the same value two ways in two rows).
+ * Default `true`
  */
-export function cellTextOf(ctx: Pick<Grid, 'gridInterface'>, field: string): (row: Entity) => CellText {
+export function cellTextOf(
+    ctx: Pick<Grid, 'gridInterface'>,
+    field: string,
+    options: { template?: boolean } = {}
+): (row: Entity) => CellText {
     // a lookup column (ColumnConfig.editor) shows the label of the value: text of one line
     const lookupFormatter = ctx.gridInterface.__getLookupColumn(field)?.formatter;
     if (lookupFormatter) {
@@ -69,11 +78,19 @@ export function cellTextOf(ctx: Pick<Grid, 'gridInterface'>, field: string): (ro
     // with the column's display format: a cell of another type than the field's has none
     const formatter = ctx.gridInterface.__getCellFormatter(field);
     const zero = fieldConfig.type === 'number' ? zeroText(column, formatter) : '0';
+    // the template of a text column: filled in for each row, its placeholders are fields of the row
+    const template = options.template !== false && fieldConfig.type === 'text' ? column?.format?.text : undefined;
+
+    /** the text of a cell of the field's type */
+    const textOf = (row: Entity) =>
+        template === undefined
+            ? formatter.format(row[field])
+            : fillTemplate(template, cellFieldText(field, row[field], formatter, ctx.gridInterface.__fieldTextOf(row)));
 
     return (row) => {
         // getCellType reads the row only for a dynamicCellTypeColumn, the field's type otherwise
         const type = column?.dynamicCellTypeColumn ? getCellType(ctx, field, row) : fieldConfig.type;
-        const formatted = (type === fieldConfig.type ? formatter : datasource.getFormatter(field, type)).format(row[field]);
+        const formatted = type === fieldConfig.type ? textOf(row) : datasource.getFormatter(field, type).format(row[field]);
         // as the cell: by the field's type, numberOverride is an option of a number column
         const text = fieldConfig.type === 'number' ? overrideNumberText(formatted, column?.numberOverride, zero) : formatted;
         return { type, text, multiline: isMultilineCell(fieldConfig, type, text) };

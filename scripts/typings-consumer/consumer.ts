@@ -58,6 +58,7 @@ import {
     type IDateConfig,
     isGroupRow,
     type LayoutColumn,
+    type LinkFormat,
     type Lookup,
     type LookupFromDatasource,
     type LookupFromGridInterface,
@@ -938,6 +939,20 @@ const tooManyDecimals: NumberFormat = { decimals: 5 };
 // @ts-expect-error a thousands separator is one of ' ', ',', '.', "'"
 const underscore: NumberFormat = { thousands: '_' };
 console.log(formatColumns, bareFormat, unknownDate, tooManyDecimals, underscore);
+
+// a text column: a template of its text and a link, templates - text with {field} placeholders
+const customerLink: LinkFormat = { url: 'https://crm.example.com/customer/{id}', newTab: true };
+const linkColumns: Record<string, ColumnConfig> = {
+    company: { format: { text: '{company} ({id})', link: customerLink } },
+    email: { format: { link: { url: 'mailto:{email}' } } }
+};
+gridInterface.updateConfig({ settingsButton: false });
+gridInterface.openColumnSettings('company');
+// @ts-expect-error a link is an object with its address, not the address
+const bareLink: ColumnFormat = { link: 'https://x.com' };
+// @ts-expect-error the label of a link is the text of the column, ColumnFormat.text
+const linkLabel: LinkFormat = { url: 'https://x.com', label: '{name}' };
+console.log(linkColumns, bareLink, linkLabel);
 
 // the sql entry, through the package's "exports" (bundler resolution here, node16 in tsconfig.sql.json):
 // a filter of the grid is a filter toSqlWhere takes

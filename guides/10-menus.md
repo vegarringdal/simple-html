@@ -252,9 +252,9 @@ Paste ›                           ----                            in Filter �
 Clear ›                           Column chooser…                 Operator ›
 Delete ›                          Size ›                          Match case
 Filter ›                          Format ›                        Blank ›
-View ›                            Aggregate ›                     Clear Filter
-Size ›                            Grouping ›                      Clear All Filters
-Export ›                                                          ----
+View ›                            Column settings…                Clear Filter
+Size ›                            Aggregate ›                     Clear All Filters
+Export ›                          Grouping ›                      ----
                                                                   Advanced Filter…
 
 column menu                       in Select › of the row menu:    in Select › of the column menu:
@@ -408,6 +408,7 @@ the selection work. A group row's number has no menu.
 | `header.format.decimalMark.dot` | Dot. Greyed out while the thousands separator is that character | a number field |
 | `header.format.decimalMark.comma` | Comma | a number field |
 | `header.format.percent` | Percent, a toggle: the number times 100 with ` %` | a number field |
+| `header.settings` | Column settings… - opens the column settings dialog on this column (`gridInterface.openColumnSettings(field)`): its display format, a text column's template and link, see [The column settings dialog](08-formatting.md#the-column-settings-dialog) | |
 | `header.aggregate` | Aggregate › - a submenu | |
 | `header.aggregate.sum` | Sum - a toggle with a ✓ when on: the column's sum in the group rows and the totals row, see [Aggregates](18-aggregates.md) | a number field |
 | `header.aggregate.avg` | Average, a toggle | a number field |

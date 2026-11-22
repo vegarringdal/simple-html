@@ -323,6 +323,7 @@ Right click on a header label.
 | `header.format.decimalMark.dot` | `Dot` | `1.5` |
 | `header.format.decimalMark.comma` | `Comma` | `1,5` |
 | `header.format.percent` | `Percent` | turns percent on or off: 0.256 is `25.6 %` |
+| `header.settings` | `Column settings…` | opens the column settings dialog on the column, see [Column settings](#column-settings) |
 | `header.aggregate` | `Aggregate` | the aggregate submenu |
 | `header.aggregate.sum` | `Sum` | turns the column's sum on or off |
 | `header.aggregate.avg` | `Average` | turns its average on or off |
@@ -522,6 +523,7 @@ The names of the operators, in the operator menu and on a condition:
 | `footer.summary.avg` | `Average: {avg}` | their average |
 | `footer.summary.min` | `Min: {min}` | the smallest |
 | `footer.summary.max` | `Max: {max}` | the largest |
+| `footer.settings` | `Column settings` | the name and tooltip (`title`) of the gear at the footer's right end (`GridConfig.settingsButton`): it opens the column settings dialog |
 
 The short names of the operators, on a chip:
 
@@ -571,6 +573,63 @@ not take (`'nb_NO'`) shows English. The others write a week and a quarter: `{wee
 | `format.weekIso` | `{year}-W{week}` | a week, ISO: `2026-W47`. Norwegian, say: `uke {week} {year}` |
 | `format.weekUs` | `{year}-W{week}` | a week, US: `2026-W48` |
 | `format.quarter` | `{year} Q{quarter}` | a quarter: `2026 Q4`. Norwegian, say: `{quarter}. kvartal {year}` |
+
+### Column settings
+
+The column settings dialog: the gear in the footer, *Column settings…* in the header menu,
+`gridInterface.openColumnSettings()` - see [The column settings dialog](08-formatting.md#the-column-settings-dialog).
+Its format picker shows the texts of Format › (`header.format.*`). The placeholders and the hints of
+the templates show a template as it is written: their `{value}`, `{field}`, `{id}` are not filled in,
+keep the braces - `{value}` is the cell's own value in a template, keep it as it is. In the problems
+`{field}` is filled in: the placeholder as it was written, `{firstnme}`, or the label of a column.
+
+| id | English | shown |
+| --- | --- | --- |
+| `columnSettings.title` | `Column settings` | the title of the dialog, its name for a screen reader |
+| `columnSettings.title.tooltip` | `Drag to move the dialog` | the title's tooltip |
+| `columnSettings.close.tooltip` | `Close without applying` | the ✕: its name and tooltip |
+| `columnSettings.columns` | `Columns` | the name of the list of the columns, for a screen reader |
+| `columnSettings.type.text` | `Text` | the type of a text column, in the list and over its settings |
+| `columnSettings.type.number` | `Number` | a number column |
+| `columnSettings.type.boolean` | `Checkbox` | a boolean column |
+| `columnSettings.type.date` | `Date` | a date column |
+| `columnSettings.type.datetime` | `Date and time` | a datetime column |
+| `columnSettings.type.lookup` | `Lookup` | a lookup column (`ColumnConfig.editor`) |
+| `columnSettings.badge.format` | `Format` | in the list: the column has a date or number format |
+| `columnSettings.badge.text` | `Text` | the column has a template of its text |
+| `columnSettings.badge.link` | `Link` | the column is a link |
+| `columnSettings.badge.problem` | `Error` | a template of the column has a problem: Apply waits for it |
+| `columnSettings.format` | `Format` | the label of the format picker of a date or number column |
+| `columnSettings.format.tooltip` | `How the cells show the value` | its tooltip |
+| `columnSettings.text` | `Text shown` | the label of a text column's template of its text |
+| `columnSettings.text.placeholder` | `{firstname} {lastname}` | its placeholder, a template as it is written |
+| `columnSettings.text.hint` | `Empty: the cell's own text. {value} is the cell's value, {field} the value of another field` | under it |
+| `columnSettings.link` | `Show as link` | the checkbox that makes the column a link |
+| `columnSettings.url` | `Address` | the label of the address |
+| `columnSettings.url.placeholder` | `https://example.com/customer/{id}` | its placeholder |
+| `columnSettings.url.hint` | `Starts with https://, http://, mailto: or tel: - or is one {field} that holds the whole address` | under it |
+| `columnSettings.newTab` | `Open in a new tab` | the checkbox of `newTab` |
+| `columnSettings.insertField` | `Insert a field` | the `{ }` button beside a template: its name and tooltip |
+| `columnSettings.none.boolean` | `A checkbox column has no settings` | the settings of a boolean column |
+| `columnSettings.none.lookup` | `A lookup column shows the label of its value: it has no settings` | the settings of a lookup column |
+| `columnSettings.preview.current` | `Preview, the current row` | the title of the preview of the current row |
+| `columnSettings.preview.first` | `Preview, the first row` | of the first row, without a current row |
+| `columnSettings.preview.none` | `No rows to preview` | without rows |
+| `columnSettings.problem.urlEmpty` | `Write the address` | Show as link is on, the address is empty |
+| `columnSettings.problem.urlStart` | `Start the address with https://, http://, mailto: or tel: - or give one field alone` | the address does not start with its scheme |
+| `columnSettings.problem.protocol` | `Not a link the grid opens: only https:, http:, mailto: and tel:` | the address, or the one a field holds, has another scheme: `javascript:`, `data:` ... |
+| `columnSettings.problem.internal` | `{field} is the grid's own, not a field` | `{field}`: a placeholder that starts with `__` |
+| `columnSettings.problem.unknownField` | `No field {field} in this row` | `{field}`: a placeholder that is no column, no field and not in the row of the preview |
+| `columnSettings.problem.blank` | `{field} is empty in this row: no link, the text only` | `{field}`: the label of the column of the address that is empty |
+| `columnSettings.problem.invalid` | `No valid address in this row: no link, the text only` | what the row fills in is no address |
+| `columnSettings.resetColumn` | `Reset column` | the button: the column's settings as the grid starts with them |
+| `columnSettings.resetColumn.tooltip` | `The settings the column starts with` | its tooltip |
+| `columnSettings.resetAll` | `Reset all` | the button: every column's |
+| `columnSettings.resetAll.tooltip` | `The settings every column starts with` | its tooltip |
+| `columnSettings.cancel` | `Cancel` | closes the dialog without applying |
+| `columnSettings.apply` | `Apply` | sets the formats of the grid's state, the dialog stays open |
+| `columnSettings.apply.tooltip` | `Apply to the grid, the dialog stays open` | its tooltip |
+| `columnSettings.applyAndClose` | `Apply & close` | applies and closes |
 
 ### Header filters
 

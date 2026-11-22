@@ -90,6 +90,7 @@ a screen shows it.
 | selected rows, menu item under the pointer, the active option | blue-950 (its selected TreeView row, Select) | `#dbeafe` | `#162556` |
 | the other selected rows | midway blue-950 - blue-900 | `#cde2fe` | `#192f72` |
 | focus outline, the line of a range, Apply, the value list's checkboxes | blue-400 (`--dock-accent`) | `#2563eb` | `#51a2ff` |
+| links (a link column, the column settings' preview) | blue-800, blue-100 | `#1e40af` | `#dbeafe` |
 | text on Apply | slate-950 (its picked day) | `#f1f5f9` | `#080f21` |
 | frames of the controls of the value list and the filter editor | slate-500 | `#64748b` | `#62748e` |
 | a range's tint | blue-500 at 15% (its info chip) | | |
@@ -103,7 +104,7 @@ a screen shows it.
 | font | `ui-sans-serif, system-ui, sans-serif` (its panels) | | |
 
 `theme-tredespace.css` names the token of every variable. The contrasts are the default theme's:
-text 4.5:1 or more to its background, lines and marks 3:1, light and dark (WCAG AA). Five colours
+text 4.5:1 or more to its background, lines and marks 3:1, light and dark (WCAG AA). Six colours
 differ from the widgets for that, or because the grid has one colour where the widgets have two:
 
 - placeholders and quiet text are slate-400: the library's placeholder slate-500 is under 4.5:1
@@ -116,6 +117,8 @@ differ from the widgets for that, or because the grid has one colour where the w
   picked day (blue-400) has slate-950 text, the date picker's text is slate-200
 - the line of the current match of Find is amber-200: amber-400 is under 3:1 to the match's tint on a
   selected row
+- the links are blue-800 in light and blue-100 in dark, not the accent blue-400: a link's text keeps
+  4.5:1 under the tints of Find and a range on a selected row, blue-400 has 2.2:1 there
 
 And: a menu's frame is the grid's line (slate-800, the library's Menu has slate-700), a menu item
 under the pointer is the selected blue (the library's Menu has slate-800, its Select blue-950), the
@@ -377,8 +380,8 @@ On `.simple-html-grid`, in `grid.css`.
 
 | variable | colours | light | dark |
 | --- | --- | --- | --- |
-| `--simple-html-grid-main-bg-color` | the labels, the panel, the footer, the row selector, group rows, the menus, the filter editor | `#f5f5f5` | `#374151` |
-| `--simple-html-grid-sec-bg-color` | the filter row, the inputs, pickers and buttons of the filter editor and the value list, the value list's box, the filter chips, the tooltips (through `--simple-html-grid-tooltip-bg-color`) | `#ffffff` | `#4b5563` |
+| `--simple-html-grid-main-bg-color` | the labels, the panel, the footer, the row selector, group rows, the menus, the filter editor and the column settings dialog | `#f5f5f5` | `#374151` |
+| `--simple-html-grid-sec-bg-color` | the filter row, the inputs, pickers and buttons of the filter editor and the value list, the value list's box, the filter chips, the list of the columns and the preview of the column settings, the tooltips (through `--simple-html-grid-tooltip-bg-color`) | `#ffffff` | `#4b5563` |
 | `--simple-html-grid-alt-bg-color` | scrollbar tracks, the search input of the column chooser, the focus button of a cell | `#ffffff` | `#4b5563` |
 | `--simple-html-grid-main-bg-even` | the even rows | `#ffffff` | `#4b5563` |
 | `--simple-html-grid-main-bg-odd` | the odd rows | `#f7f7f7` | `#5a6370` |
@@ -411,25 +414,26 @@ On `.simple-html-grid`, in `grid.css`.
 | `--simple-html-grid-lookup-button-bg-color` | the button of a lookup column (`ColumnConfig.editor`) | `#e9edf2` | `#374151` |
 | `--simple-html-grid-lookup-icon-color` | the triangle on it, at least 3:1 to it | `#475569` | `#e2e8f0` |
 | `--simple-html-grid-lookup-active-bg-color` | the active option of the select of a lookup column | `#dbe7f3` | `#2f4f80` |
+| `--simple-html-grid-link-color` | the text of a link: a cell of a link column ([Templates and links](08-formatting.md#templates-and-links)), underlined, and the link in the preview of the column settings. At least 4.5:1 to the rows, the selected rows, under the tints of an error, a range and Find, and to the inputs and the bars | `#1e3a8a` | `#e8f1ff` |
 | `--simple-html-grid-totals-bg-color` | the totals row under the rows (`totalsRow`), see [Aggregates](18-aggregates.md) | `#e8edf3` | `#2a3441` |
 | `--simple-html-grid-totals-font-color` | the text of the totals row | `#1f2328` | `#f9fafb` |
 | `--simple-html-grid-aggregate-label-color` | the label in front of an aggregate (`Sum`) in a group row and the totals row. At least 4.5:1 to both | `#57606a` | `#c9d1d9` |
 | `--simple-html-grid-group-line-color` | the grouping columns: the line of each level down its group's rows, the frame of a group row's `+` / `-` box. At least 3:1 to the group rows | `#8c8c8c` | `#9ca3af` |
 | `--simple-html-grid-warning-font-color` | the "only the first 100 values" warning of the filter menu's value list | `red` | `#fca5a5` |
-| `--simple-html-grid-danger-font-color` | the footer's Clear filter button under the pointer: its text | `#c0392b` | `#fecaca` |
+| `--simple-html-grid-danger-font-color` | the footer's Clear filter button under the pointer: its text. A problem of a template in the column settings dialog, at least 4.5:1 to the dialog and the inputs | `#c0392b` | `#fecaca` |
 | `--simple-html-grid-danger-border` | the footer's Clear filter button under the pointer: its border | `#d98282` | `#f87171` |
 | `--simple-html-grid-readonly-stripe-color` | the red stripes of a readonly cell in an editable grid (`.simple-html-readonly`) | `rgb(255, 0, 0)` | `rgb(255, 0, 0)` |
 | `--simple-html-grid-required-stripe-color` | the blue stripes of an empty required cell (`.simple-html-mandatory`) | `rgb(0, 8, 255)` | `rgb(120, 140, 255)` |
 | `--simple-html-grid-stripe-bg-color` | between the stripes | `rgb(255, 255, 255)` | `transparent` |
 | `--simple-html-grid-menu-shadow-color` | the drop shadow of the menus and the other popovers (column chooser, date picker, dropdowns) | `rgba(0, 0, 0, 0.28)` | `rgba(0, 0, 0, 0.6)` |
-| `--simple-html-grid-dialog-shadow-color` | the shadow of the filter editor | `rgba(0, 0, 0, 0.32)` | `rgba(0, 0, 0, 0.6)` |
+| `--simple-html-grid-dialog-shadow-color` | the shadow of the filter editor and the column settings dialog | `rgba(0, 0, 0, 0.32)` | `rgba(0, 0, 0, 0.6)` |
 | `--simple-html-grid-tooltip-shadow-color` | the shadow of the tooltips | `rgba(0, 0, 0, 0.28)` | `rgba(0, 0, 0, 0.5)` |
 | `--simple-html-grid-tooltip-bg-color` | the background of the tooltips | `--simple-html-grid-sec-bg-color` | |
 | `--simple-html-grid-tooltip-font-color` | the text of the tooltips | `--simple-html-grid-main-font-color` | |
 | `--simple-html-grid-tooltip-border-color` | the frame of the tooltips | `--simple-html-grid-pinned-border` | |
 | `--simple-html-grid-scrollbar-thumb-color` | the scrollbar thumbs (the tracks are `--simple-html-grid-alt-bg-color`) | `--simple-html-grid-main-bg-selected-odd` | |
 | `--simple-html-grid-scrollbar-shadow-color` | the shadow in a scrollbar thumb (Safari, the other browsers use `scrollbar-color`) | `rgb(0 0 0 / 30%)` | `rgb(0 0 0 / 30%)` |
-| `--simple-html-grid-backdrop-color` | the layer over the page behind the filter editor | `rgba(129, 127, 127, 0.2)` | `rgba(0, 0, 0, 0.4)` |
+| `--simple-html-grid-backdrop-color` | the layer over the page behind the filter editor and the column settings dialog | `rgba(129, 127, 127, 0.2)` | `rgba(0, 0, 0, 0.4)` |
 
 `--simple-html-grid-grouping-border` and `--simple-html-grid-main-hr-border` are still set, but
 nothing in `grid.css` uses them. The four that name another variable are that one's colour, light

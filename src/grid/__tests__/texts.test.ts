@@ -62,13 +62,24 @@ const isDatasourceText = (id: string) => /^(validation|filterString|grouping)\./
 const LOCALE_ID = 'format.locale';
 
 /**
+ * the texts that show a template as it is written - the placeholders and hints of the column settings'
+ * templates: their {names} are no values, nothing fills them in
+ */
+const TEMPLATE_EXAMPLES = new Set([
+    'columnSettings.text.placeholder',
+    'columnSettings.text.hint',
+    'columnSettings.url.placeholder',
+    'columnSettings.url.hint'
+]);
+
+/**
  * every text as «id», with the {names} of its default after it: the values are still shown
  */
 function fakeTexts(only: (id: string) => boolean): Texts {
     const texts: Texts = {};
     for (const [id, text] of Object.entries(TEXTS)) {
         if (only(id)) {
-            const names = text.match(/\{\w+\}/g) ?? [];
+            const names = TEMPLATE_EXAMPLES.has(id) ? [] : (text.match(/\{\w+\}/g) ?? []);
             texts[id] = id === LOCALE_ID ? 'ru-RU' : `«${id}»${names.map((name) => ` ${name}`).join('')}`;
         }
     }
@@ -235,6 +246,82 @@ const conditions = (operators: FilterOperator[]): FilterCondition[] =>
         }
         return where('name', operator, operator === 'BETWEEN' ? ['«ann»', '«bob»'] : '«ann»', options);
     });
+
+/**
+ * The column settings dialog: the list of every kind of column, the settings of a text column - its
+ * template, a link and each problem of an address - of a number column (its format picker), of a checkbox
+ * and a lookup column, and the preview of the current row, the first row and none
+ */
+function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: () => void) {
+    const dialog = () => document.querySelector('dialog.column-settings') as HTMLDialogElement;
+    const input = (part: string) => dialog().querySelector(`input[id$="-settings-${part}"]`) as HTMLInputElement;
+    const type = (part: string, value: string) => {
+        input(part).value = value;
+        input(part).dispatchEvent(new Event('input', { bubbles: true }));
+    };
+    const checkbox = (index: number) => dialog().querySelectorAll<HTMLInputElement>('.column-settings-check input')[index];
+    const toggle = (index: number) => {
+        checkbox(index).checked = !checkbox(index).checked;
+        checkbox(index).dispatchEvent(new Event('change', { bubbles: true }));
+    };
+    const option = (label: string) =>
+        Array.from(dialog().querySelectorAll<HTMLElement>('[role="option"]')).find((element) =>
+            element.textContent?.includes(label)
+        ) as HTMLElement;
+
+    // no current row: the first row is the preview's. A text column with nothing set
+    datasource.currentEntity = null;
+    gridInterface.openColumnSettings('name');
+    check();
+    // a template that names a field of the grid's own
+    type('text', '{__«x»}');
+    check();
+    // a template: the column's badge
+    type('text', '{name}');
+    check();
+    // a link: no address, then one that does not start with its scheme, then one of another scheme
+    toggle(0);
+    check();
+    type('url', '«zz»');
+    check();
+    type('url', 'ftp://«x»');
+    check();
+    // the address from a field that is not in the row: empty in it, and no such field
+    type('url', '{«zz»}');
+    check();
+    // the address from a field that holds no address: the first row shown has the age 20
+    type('url', '{age}');
+    check();
+    // a number column: its format picker and the menu of the formats - one picked, the badge
+    option('«Age»').click();
+    check();
+    (dialog().querySelector('.column-settings-format') as HTMLElement).click();
+    check();
+    (document.querySelector('[data-menu-id="header.format.number.norwegian"]') as HTMLElement).click();
+    check();
+    // a checkbox and a lookup column: no settings
+    option('«Active»').click();
+    check();
+    option('«Code»').click();
+    check();
+    (
+        Array.from(dialog().querySelectorAll('button')).find((button) =>
+            button.textContent?.includes('columnSettings.cancel')
+        ) as HTMLElement
+    ).click();
+
+    // the current row, then no rows at all
+    datasource.setRowAsCurrentEntity(0);
+    gridInterface.openColumnSettings('name');
+    check();
+    gridInterface.openColumnSettings('name');
+    datasource.currentEntity = null;
+    datasource.filter(where('age', 'GREATER_THAN', 100_000));
+    gridInterface.openColumnSettings('name');
+    check();
+    datasource.filter(null);
+    (dialog().querySelector('.filter-editor-close') as HTMLElement).click();
+}
 
 /**
  * Opens every part of the grid that shows a text, and checks each
@@ -405,6 +492,9 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     clickIcon('«filterEditor.clearAll.tooltip»');
     check();
     clickIcon('«filterEditor.closeButton.tooltip»');
+
+    // the column settings dialog, see showColumnSettings
+    showColumnSettings({ element, datasource, gridInterface }, check);
 
     // the footer: a chip for each operator, five at a time, an OR group in the first
     datasource.filter(and(...conditions(OPERATORS.slice(0, 3)), or(...conditions(OPERATORS.slice(3, 5)))));

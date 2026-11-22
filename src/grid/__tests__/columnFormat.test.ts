@@ -20,6 +20,7 @@ import {
     formatTexts,
     formatValueAs,
     hasDisplayFormat,
+    hasValueFormat,
     isoWeek,
     usWeek
 } from '../columnFormat';
@@ -370,6 +371,16 @@ describe('display formats - the value of a cell', () => {
         expect(hasDisplayFormat({})).toBe(false);
         expect(hasDisplayFormat({ date: 'iso' })).toBe(true);
         expect(hasDisplayFormat({ number: {} })).toBe(true);
+        expect(hasDisplayFormat({ text: '{value} kg' })).toBe(true);
+        expect(hasDisplayFormat({ link: { url: '{website}' } })).toBe(true);
+    });
+
+    it('expect hasValueFormat only for a date or number format: a template needs the row', () => {
+        expect(hasValueFormat(undefined)).toBe(false);
+        expect(hasValueFormat({ date: 'iso' })).toBe(true);
+        expect(hasValueFormat({ number: {} })).toBe(true);
+        expect(hasValueFormat({ text: '{value} kg' })).toBe(false);
+        expect(hasValueFormat({ link: { url: '{website}' } })).toBe(false);
     });
 });
 
@@ -460,8 +471,8 @@ describe('display formats - the check of a format', () => {
         expect(check('weekIso', 'date')).toThrow(/is "weekIso", it is an object: \{ date: 'norwegian' \}/);
         expect(check(null, 'date')).toThrow(TypeError);
         expect(check([], 'date')).toThrow(TypeError);
-        expect(check({ link: 'x' }, 'text')).toThrow(
-            new TypeError("GridConfig: columns.field.format has 'link', a format has date, number")
+        expect(check({ color: 'red' }, 'text')).toThrow(
+            new TypeError("GridConfig: columns.field.format has 'color', a format has date, number, text, link")
         );
     });
 
@@ -497,6 +508,67 @@ describe('display formats - the check of a format', () => {
         expect(check({ number: { thousands: '.' } }, 'number')).toThrow(/left out, the decimal mark is '\.'/);
         expect(check({ number: { thousands: '.', decimal: ',' } }, 'number')).not.toThrow();
         expect(check({ number: { thousands: ',', decimal: '.' } }, 'number')).not.toThrow();
+    });
+
+    it('expect a template and a link on a text field, and on no other type', () => {
+        expect(check({ text: '{name} ({id})' }, 'text')).not.toThrow();
+        expect(check({ link: { url: 'https://x.com/{id}', newTab: true } }, 'text')).not.toThrow();
+        expect(check({ text: '{company}', link: { url: 'mailto:{email}' } }, 'text')).not.toThrow();
+        expect(check({ text: '{value} kg' }, 'number')).toThrow(
+            new TypeError("GridConfig: columns.field.format.text is for a text field, 'field' is number")
+        );
+        expect(check({ link: { url: '{website}' } }, 'date')).toThrow(
+            new TypeError("GridConfig: columns.field.format.link is for a text field, 'field' is date")
+        );
+        expect(check({ link: { url: '{website}' } }, 'boolean')).toThrow(TypeError);
+        // a date part on a text field still says what it says
+        expect(check({ date: 'iso' }, 'text')).toThrow(/format.date is for a date or datetime field/);
+    });
+
+    it('expect no template and no link on a lookup column: its cells show a label', () => {
+        expect(check({ text: '{value}' }, 'text', true)).toThrow(/a lookup column \(editor\) shows the label/);
+        expect(check({ link: { url: '{website}' } }, 'text', true)).toThrow(/a lookup column \(editor\) shows the label/);
+    });
+
+    it("expect a template to be text that is not empty, without a placeholder of the grid's own", () => {
+        expect(check({ text: '' }, 'text')).toThrow(/format.text is "", it is a template/);
+        expect(check({ text: 12 }, 'text')).toThrow(/format.text is 12, it is a template/);
+        expect(check({ text: null }, 'text')).toThrow(TypeError);
+        expect(check({ text: '{__rowState}' }, 'text')).toThrow(
+            new TypeError(
+                "GridConfig: columns.field.format.text has {__rowState}: a name that starts with __ is the grid's own, not a field"
+            )
+        );
+    });
+
+    it('expect a link to be an object with its address, and newTab true or false', () => {
+        expect(check({ link: 'https://x.com' }, 'text')).toThrow(/format.link is "https:\/\/x.com", it is an object/);
+        expect(check({ link: {} }, 'text')).toThrow(/format.link.url is undefined, it is the address/);
+        expect(check({ link: { url: '' } }, 'text')).toThrow(/format.link.url is "", it is the address/);
+        expect(check({ link: { url: 'https://x.com', label: '{name}' } }, 'text')).toThrow(
+            new TypeError("GridConfig: columns.field.format.link has 'label', a link has url, newTab")
+        );
+        expect(check({ link: { url: 'https://x.com', newTab: 'yes' } }, 'text')).toThrow(
+            /format.link.newTab is "yes", it is true or false/
+        );
+        expect(check({ link: { url: 'https://x.com', newTab: false } }, 'text')).not.toThrow();
+    });
+
+    it('expect the address of a link to start with https, http, mailto or tel, or to be one placeholder', () => {
+        for (const url of ['https://x.com/{id}', 'http://x.com', 'mailto:{email}', 'tel:{phone}', '{website}', 'HTTPS://X.COM']) {
+            expect(check({ link: { url } }, 'text'), url).not.toThrow();
+        }
+        expect(check({ link: { url: 'javascript:alert({id})' } }, 'text')).toThrow(
+            new TypeError(
+                'GridConfig: columns.field.format.link.url is "javascript:alert({id})": a link to javascript: is not allowed, only https:, http:, mailto:, tel:'
+            )
+        );
+        expect(check({ link: { url: 'data:text/html,{x}' } }, 'text')).toThrow(/a link to data: is not allowed/);
+        expect(check({ link: { url: '/customer/{id}' } }, 'text')).toThrow(
+            /format.link.url is "\/customer\/\{id\}": it starts with https:\/\/, http:\/\/, mailto: or tel:, or is one \{field\}/
+        );
+        expect(check({ link: { url: '{base}/customer/{id}' } }, 'text')).toThrow(/it starts with https:\/\//);
+        expect(check({ link: { url: 'https://x.com/{__controller}' } }, 'text')).toThrow(/has \{__controller\}/);
     });
 });
 

@@ -723,6 +723,9 @@ describe('accessibility - grouping', () => {
     });
 });
 
+/** the settings button, the gear at the footer's right end: the footer's last stop of Tab */
+const settingsButton = (element: GridElement) => element.querySelector('.footer-settings') as HTMLElement;
+
 describe('accessibility - Tab out of the grid (it was a keyboard trap)', () => {
     const lastCell = (element: GridElement, row: number) => cellInput(element, 'id', row);
 
@@ -731,12 +734,15 @@ describe('accessibility - Tab out of the grid (it was a keyboard trap)', () => {
         const input = lastCell(element, 2);
         input.focus();
 
-        // the footer's one stop without a filter: "No filter"
+        // the footer's first stop without a filter: "No filter"
         expect(keydown(input, 'Tab', { code: 'Tab' }).defaultPrevented).toBe(true);
         const noFilter = document.activeElement as HTMLElement;
         expect(noFilter.classList.contains('footer-filter-none')).toBe(true);
+        // between the footer's buttons the browser's Tab: on to the settings button
+        expect(keydown(noFilter, 'Tab', { code: 'Tab' }).defaultPrevented).toBe(false);
+        expect(document.activeElement).toBe(noFilter);
 
-        const event = keydown(noFilter, 'Tab', { code: 'Tab' });
+        const event = keydown(settingsButton(element), 'Tab', { code: 'Tab' });
 
         expect(event.defaultPrevented).toBe(false);
         expect(document.activeElement).toBe(element.lastElementChild);
@@ -772,7 +778,7 @@ describe('accessibility - Tab out of the grid (it was a keyboard trap)', () => {
         const noFilter = element.querySelector('.footer-filter-none') as HTMLElement;
         expect(document.activeElement).toBe(noFilter);
 
-        expect(keydown(noFilter, 'Tab', { code: 'Tab' }).defaultPrevented).toBe(false);
+        expect(keydown(settingsButton(element), 'Tab', { code: 'Tab' }).defaultPrevented).toBe(false);
         expect(document.activeElement).toBe(element.lastElementChild);
     });
 
@@ -804,7 +810,7 @@ describe('accessibility - Tab out of the grid (it was a keyboard trap)', () => {
 
         expect(keydown(filter, 'Tab', { code: 'Tab' }).defaultPrevented).toBe(true);
         expect(document.activeElement).toBe(noFilter);
-        expect(keydown(noFilter, 'Tab', { code: 'Tab' }).defaultPrevented).toBe(false);
+        expect(keydown(settingsButton(element), 'Tab', { code: 'Tab' }).defaultPrevented).toBe(false);
         expect(document.activeElement).toBe(element.lastElementChild);
     });
 
@@ -880,7 +886,7 @@ describe('accessibility - the group rows and the footer on the way of Tab', () =
 
         expect(tab(groupButton(element, 'Oslo')).defaultPrevented).toBe(true);
         expect(active()).toBe(element.querySelector('.footer-filter-none'));
-        expect(tab(active()).defaultPrevented).toBe(false);
+        expect(tab(settingsButton(element)).defaultPrevented).toBe(false);
         expect(active()).toBe(element.lastElementChild);
     });
 
@@ -901,7 +907,7 @@ describe('accessibility - the group rows and the footer on the way of Tab', () =
         expect(active()).toBe(cellInput(element, 'firstname', 4));
     });
 
-    it('expect the footer after the last row while the rows are filtered: Clear, the chips, then out of the grid', async () => {
+    it('expect the footer after the last row while the rows are filtered: Clear, the chips, the settings button, then out of the grid', async () => {
         const { element, datasource } = await mountGrid(pinnedConfig(), people(5), fields);
         datasource.filter(where('age', 'GREATER_THAN', 20));
         const clear = element.querySelector('.footer-filter-clear') as HTMLElement;
@@ -912,8 +918,10 @@ describe('accessibility - the group rows and the footer on the way of Tab', () =
         // between the footer's buttons the browser's Tab
         expect(tab(clear).defaultPrevented).toBe(false);
         expect(active()).toBe(clear);
-        // after the last one: the end of the grid, the browser goes on from there
         expect(tab(chips).defaultPrevented).toBe(false);
+        expect(active()).toBe(clear);
+        // after the last one, the settings button: the end of the grid, the browser goes on from there
+        expect(tab(settingsButton(element)).defaultPrevented).toBe(false);
         expect(active()).toBe(element.lastElementChild);
 
         // back: Shift+Tab on Clear to the last cell of the last row
@@ -943,18 +951,30 @@ describe('accessibility - the group rows and the footer on the way of Tab', () =
         expect(active()).toBe(groupButton(element, 'Oslo'));
     });
 
-    it('expect "No filter" after the last row without a filter: its one stop, then out of the grid, and back', async () => {
+    it('expect "No filter" after the last row without a filter, the settings button, then out of the grid, and back', async () => {
         const { element } = await mountGrid(pinnedConfig(), people(5), fields);
         const noFilter = element.querySelector('.footer-filter-none') as HTMLElement;
 
         expect(tab(lastCell(element, 4)).defaultPrevented).toBe(true);
         expect(active()).toBe(noFilter);
-        // the last stop of the footer: the end of the grid, the browser goes on from there
         expect(tab(noFilter).defaultPrevented).toBe(false);
+        // the last stop of the footer: the end of the grid, the browser goes on from there
+        expect(tab(settingsButton(element)).defaultPrevented).toBe(false);
         expect(active()).toBe(element.lastElementChild);
 
         expect(tab(noFilter, true).defaultPrevented).toBe(true);
         expect(active()).toBe(lastCell(element, 4));
+    });
+
+    it('expect "No filter" the last stop of the footer without the settings button (settingsButton: false)', async () => {
+        const { element } = await mountGrid({ ...pinnedConfig(), settingsButton: false }, people(5), fields);
+        const noFilter = element.querySelector('.footer-filter-none') as HTMLElement;
+
+        expect(settingsButton(element)).toBeNull();
+        expect(tab(lastCell(element, 4)).defaultPrevented).toBe(true);
+        expect(active()).toBe(noFilter);
+        expect(tab(noFilter).defaultPrevented).toBe(false);
+        expect(active()).toBe(element.lastElementChild);
     });
 
     it('expect no stop in a footer of no height, with a filter or without: out of the grid', async () => {

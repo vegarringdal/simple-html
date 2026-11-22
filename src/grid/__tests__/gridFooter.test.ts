@@ -213,6 +213,17 @@ describe('grid footer - the summary of the selected cells beside the filter row'
         expect(summaryWidth(element)).toEqual(`${992 - 560 - 12}px`);
     });
 
+    it('expect the chips collapsed to one box when they are under it - also when they start right of its start', async () => {
+        const { element, gridInterface, datasource } = await mountGrid();
+        datasource.filter(where('age', 'GREATER_THAN', 10));
+        // with the settings button the footer keeps room on both sides: the summary can start left of the chips
+        rects = { 'footer-filter-chips': [520, 600], 'footer-summary': [500, 960] };
+
+        gridInterface.setRanges([range]);
+
+        expect(element.querySelector('.footer-filter-toomany')).not.toBeNull();
+    });
+
     it('expect it as the css makes it when they are apart, also after it was cut', async () => {
         const { element, gridInterface } = await mountGrid();
         rects = { 'footer-filter': [450, 560], 'footer-summary': [500, 992] };

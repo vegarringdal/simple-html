@@ -10,7 +10,15 @@ import { Emitter, type EventHandler } from '../emitter';
 import { assertTexts } from '../texts';
 import type { CellRange } from './cellRange';
 import { getCellRenderer } from './cellRendererRegistry';
-import { assertColumnFormat, type ColumnFormat, displayFormatter, formatTexts, hasDisplayFormat } from './columnFormat';
+import { cellFieldText, type FieldText, fieldTextOf, type LinkResult, linkOf, templateFormatter } from './cellTemplate';
+import {
+    assertColumnFormat,
+    type ColumnFormat,
+    displayFormatter,
+    formatTexts,
+    hasDisplayFormat,
+    hasValueFormat
+} from './columnFormat';
 import type { CsvOptions } from './csv';
 import type { FindResult } from './findResult';
 import type { Grid } from './grid';
@@ -31,6 +39,7 @@ import { assertRanges, layoutKey, type RangeState, rangeState, sameRanges } from
 import { headerOperators, isHeaderOperator } from './gridFunctions/columnFilterOptions';
 import { renderColumnNumbers } from './gridFunctions/columnNumbers';
 import { type ColumnSelection, clickColumn, NO_COLUMNS, numberedColumns } from './gridFunctions/columnSelection';
+import { openColumnSettings } from './gridFunctions/columnSettings';
 import { fillDown } from './gridFunctions/fillDown';
 import { columnConditions, sameConditions } from './gridFunctions/filterCallback';
 import { closeFind, findDataChanged, findStep, getFindResult, openFind } from './gridFunctions/findBar';
@@ -971,6 +980,38 @@ export class GridInterface<T> {
     public openFilterEditor() {
         if (this.grid) {
             openFilterEditor(this.grid);
+        }
+    }
+
+    /**
+     * Opens the column settings dialog: the columns of the layout on the left, the settings of the one
+     * picked on the right - a date or number column's display format (as Format › in the header menu), a
+     * text column's template and link, with a preview of the current row. The user opens it with the gear
+     * at the right end of the footer (`GridConfig.settingsButton`) or *Column settings…* in the header
+     * menu; call this from a button of your own.
+     *
+     * Its Apply sets the formats of the state (`setState({ formats })`, {@link GridState}): `getState()`
+     * has them, to save. Reset column / Reset all go back to the formats the grid starts with -
+     * `ColumnConfig.format`, or `initialState.formats`.
+     *
+     * A modal `<dialog>`, as the filter editor: the focus moves into it, Esc closes it (a menu open in it
+     * first), the focus goes back to where it was; the user drags it by its title bar and resizes it from
+     * every edge and corner.
+     *
+     * Does nothing while the grid is not on the page.
+     *
+     * @param field the column it shows first. Left out: the column of the cell with the focus, else the
+     * first column of the layout
+     *
+     * @sample full-grid
+     * @example
+     * ```ts
+     * document.getElementById('settings')!.onclick = () => gridInterface.openColumnSettings('company');
+     * ```
+     */
+    public openColumnSettings(field?: string) {
+        if (this.grid) {
+            openColumnSettings(this.grid, field);
         }
     }
 
@@ -1950,17 +1991,85 @@ export class GridInterface<T> {
      * the language of the text `format.locale`, a week and a quarter written as `format.weekIso`,
      * `format.weekUs` and `format.quarter` say.
      *
+     * The template of a text column (`ColumnFormat.text`) needs the row - its placeholders are fields of
+     * the row - so it is only there with `row` (the cells, cellTextOf): `format(value)` is the template
+     * filled in, `{value}` the value it is given (templateFormatter, cellTemplate.ts).
+     *
      * Not for a lookup column (its lookup's formatter shows a label), nor for a cell whose type is not
-     * the field's (`dynamicCellTypeColumn` on a text field: a text field has no format)
+     * the field's (`dynamicCellTypeColumn` on a text field: its other types have no format)
      * @param type the cell's type, see getCellType. Left out, the field's
+     * @param row the cell's row: for the template of a text column. Left out, the template is not used
+     * @param format the format to show it with: the column's when left out. The column settings dialog
+     * gives the one it edits, for its preview
      */
-    public __getCellFormatter(field: string, type?: FieldType): Formatter {
+    public __getCellFormatter(
+        field: string,
+        type?: FieldType,
+        row?: Entity,
+        format: ColumnFormat | undefined = this.gridConfig.columns[field]?.format
+    ): Formatter {
         const formatter = this.dataSource.getFormatter(field, type);
-        const format = this.gridConfig.columns[field]?.format;
-        if (!hasDisplayFormat(format) || (type !== undefined && type !== this.dataSource.getField(field).type)) {
+        if (type !== undefined && type !== this.dataSource.getField(field).type) {
             return formatter;
         }
-        return displayFormatter(formatter, format, formatTexts(this.gridConfig.texts));
+        if (format && hasValueFormat(format)) {
+            return displayFormatter(formatter, format, formatTexts(this.gridConfig.texts));
+        }
+        if (format?.text !== undefined && row) {
+            return templateFormatter(formatter, field, format.text, this.__fieldTextOf(row));
+        }
+        return formatter;
+    }
+
+    /**
+     * @internal
+     * The link of a cell: its address and whether it opens in a new tab - for a column with a link
+     * (`ColumnFormat.link`), when the row's address is one the grid links to (linkOf, cellTemplate.ts).
+     * null for a column without a link, a group row, and a row whose address is empty or not allowed: the
+     * cell shows its text then
+     */
+    public __getCellLink(field: string, row: Entity): { href: string; newTab: boolean } | null {
+        const link = this.gridConfig.columns[field]?.format?.link;
+        const result = this.__getLinkResult(field, row);
+        return link && result && 'href' in result ? { href: result.href, newTab: link.newTab === true } : null;
+    }
+
+    /**
+     * @internal
+     * The address of a cell's link, or why the row has none (linkOf, cellTemplate.ts): `{value}` is the
+     * cell's value, the other placeholders the row's fields. null for a format without a link and a group
+     * row
+     * @param format the format: the column's when left out. The column settings dialog gives the one it
+     * edits, for its preview
+     */
+    public __getLinkResult(
+        field: string,
+        row: Entity,
+        format: ColumnFormat | undefined = this.gridConfig.columns[field]?.format
+    ): LinkResult | null {
+        if (!format?.link || isGroupRow(row)) {
+            return null;
+        }
+        const formatter = this.dataSource.getFormatter(field);
+        return linkOf(format.link.url, cellFieldText(field, row[field], formatter, this.__fieldTextOf(row)));
+    }
+
+    /**
+     * @internal
+     * The text of the fields of a row for a template's placeholders: each through its field's formatter,
+     * see fieldTextOf (cellTemplate.ts)
+     */
+    public __fieldTextOf(row: Entity): FieldText {
+        return fieldTextOf(row, (name) => this.dataSource.getFormatter(name));
+    }
+
+    /**
+     * @internal
+     * The display formats the grid starts with, by field - the config's columns, or `initialState.formats`:
+     * what resetState() goes back to, and the column settings dialog's "Reset". A copy
+     */
+    public __getStartFormats(): Record<string, ColumnFormat> {
+        return structuredClone(this.initialState.formats ?? this.configFormats);
     }
 
     /**
@@ -2212,6 +2321,7 @@ function withDefaults(options: GridOptions): ParsedGridOptions {
         mergeHighlight: options.mergeHighlight ?? true,
         copyHeaders: options.copyHeaders ?? true,
         filterOperatorIndicator: options.filterOperatorIndicator ?? true,
+        settingsButton: options.settingsButton ?? true,
         placeholderRowCurrentEntityOnly: options.placeholderRowCurrentEntityOnly ?? true,
         groupAggregates: options.groupAggregates ?? true,
         totalsRow: options.totalsRow ?? false

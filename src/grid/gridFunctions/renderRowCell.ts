@@ -21,6 +21,7 @@ import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { isRepeatedValue } from './isRepeatedValue';
 import { jumpKeydown } from './jumpKeys';
+import { LINK_RENDERER_ID } from './linkCell';
 import { writeCellValue } from './lookupColumn';
 import { isLookupEditorOpen, openLookupEditor } from './lookupEditor';
 import { firstLine, hasLineBreak, isMultilineCell, textLines } from './multilineText';
@@ -112,9 +113,10 @@ export function renderRowCell(
         // a lookup column (ColumnConfig.editor) shows the label of the value: its formatter is the
         // lookup's, for the cell, the marker of an edited cell and its tooltip. Else the field's, with
         // the column's display format (ColumnConfig.format): its format() is what the cell shows, its
-        // formatForEdit() and parse() are the field's - an edited cell shows the value, not 2026-W47
+        // formatForEdit() and parse() are the field's - an edited cell shows the value, not 2026-W47.
+        // A text column's template is filled in for this row: the formatter is the row's
         const lookupColumn = ctx.gridInterface.__getLookupColumn(attribute);
-        const formatter = lookupColumn?.formatter ?? ctx.gridInterface.__getCellFormatter(attribute, cellConfigType);
+        const formatter = lookupColumn?.formatter ?? ctx.gridInterface.__getCellFormatter(attribute, cellConfigType, entity);
 
         // after an edit: the field was validated, show its errors and the row's, and whether it is
         // edited now. Not by rendering the cell again, that would put the formatted value back into
@@ -202,8 +204,13 @@ export function renderRowCell(
         const repeated = isRepeatedValue(ctx, row, attribute);
         const repeatedClass = repeated ? ' simple-html-grid-repeated-value' : '';
 
-        if (cellConfig.renderer) {
-            // a renderer of your own draws the cell (ColumnConfig.renderer, customCell.ts)
+        // a text column with a link (ColumnFormat.link): the grid's own custom cell, an <a> (linkCell.ts).
+        // Not a cell of another type (dynamicCellTypeColumn), nor where a renderer of your own draws it
+        const linkCell =
+            !lookupColumn && cellConfigType === 'text' && fieldType === 'text' && cellConfig.format?.link !== undefined;
+
+        if (cellConfig.renderer || linkCell) {
+            // a renderer of your own draws the cell (ColumnConfig.renderer, customCell.ts), or the link's
             renderCustomCell(ctx, {
                 cell,
                 row,
@@ -213,7 +220,7 @@ export function renderRowCell(
                 cellType,
                 field: attribute,
                 entity,
-                renderer: cellConfig.renderer,
+                renderer: cellConfig.renderer || LINK_RENDERER_ID,
                 type: cellConfigType,
                 text: value,
                 formatter,

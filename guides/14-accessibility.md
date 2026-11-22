@@ -93,7 +93,19 @@ grid "Grid"  aria-rowcount=503  aria-colcount=10
   changes - after a filter, an expand or a collapse.
 - **The footer's buttons**: "✕ Clear" and the filter chips (a button, its tooltip "Edit filter")
   while the rows are filtered, else "No filter" - its tooltip "Open the filter editor" is its
-  description. Clear and "No filter" are one `<button>` whose name changes with the filter.
+  description. Clear and "No filter" are one `<button>` whose name changes with the filter. The gear
+  at the right end (`settingsButton`) is a `<button>` named "Column settings" (the text
+  `footer.settings`), `aria-haspopup="dialog"`.
+- **A link cell** (a text column with `ColumnFormat.link`): the cell is the `gridcell`, its host the
+  focus target, the `<a>` in it a link named by its text - in browse mode a screen reader follows it.
+  A row without an address the grid links to has no link, only the text. The host has
+  `aria-keyshortcuts="Alt+Enter"`: Alt+Enter opens the link. See
+  [Templates and links](08-formatting.md#a-link-cell).
+- **The column settings dialog**: a modal dialog named by its title, the list of the columns a
+  `listbox` (its picked column `aria-selected`, `aria-activedescendant` on the list), each setting an
+  input or a checkbox with its `<label>`, the hint and the problems of a template its description
+  (`aria-describedby`), `aria-invalid` while it has a problem; the problems and the preview's are live
+  regions (`aria-live="polite"`): read out as they come while typing.
 - **The panel**: the x of a group chip is a button, "Remove the grouping on Country".
 - **The find bar** (Ctrl+F, see [Find](19-find.md#what-a-screen-reader-gets)): a search region named
   "Find in the grid" before the grid, with an input named "Find", the count of the matches as a status
@@ -150,7 +162,8 @@ Ctrl is Cmd on a Mac, Alt is Option.
 | Space | in a cell with a `focusButton`: sends `cell-focus-button-click`, as a click on the button does. In a lookup cell that can be edited: opens its list. In a checkbox: checks it |
 | Alt+ArrowDown, F4, F2 | in a lookup cell (`ColumnConfig.editor`) that can be edited: opens its list - not the cell below. See [below](#the-list-of-a-lookup-column) |
 | a character | in a lookup cell that can be edited: opens its list, the character as its search. The cell is not typed in |
-| Enter, F2, a character | in a custom cell that can be edited: opens the grid's editor of one line over it (the renderer's own `edit()` when it has one) - Enter saves it, Esc cancels. See [Custom cells](21-custom-cells.md#editing) |
+| Enter, F2, a character | in a custom cell that can be edited: opens the grid's editor of one line over it (the renderer's own `edit()` when it has one) - Enter saves it, Esc cancels. See [Custom cells](21-custom-cells.md#editing). A link cell too: the editor has the value, not the text of the template |
+| Alt+Enter | in a link cell (`ColumnFormat.link`): opens the link, as a click on its text - in a new tab with `newTab`. A row without an address: nothing. See [Templates and links](08-formatting.md#a-link-cell) |
 | ArrowUp / ArrowDown / ArrowLeft / ArrowRight | on a custom cell itself: as with Alt. On a control the renderer put in the cell, the control's |
 | Shift+F10, the menu key | the row menu (the browser sends `contextmenu`), the focus on its first item |
 | Alt+Shift+arrows | a range of cells: from this cell, the end one cell further each time - a row up or down, a field left or right (the fields of a column of two are two). The focus stays in the cell. See [Selection and clipboard](17-selection-and-clipboard.md#the-keyboard) |
@@ -268,7 +281,8 @@ of Tab: a click puts it there, and selects columns (Ctrl+click, Shift+click, see
 | the button of a group row | Tab / Shift+Tab | the next / previous stop: the first cell of the row after it (the button of a group row after it), the last cell of the row before it (the last header filter before the first row). Out of the grid at its ends, see [Focus](#focus) |
 | the button of a group row | Ctrl+Home / Ctrl+End | the first cell of the first row / the last cell of the last row |
 | the x of a group chip in the panel | Enter / Space | removes the grouping. It is in the tab order, before the grid |
-| the footer: Clear and the filter chips, or "No filter" | Tab / Shift+Tab | the stops after the last row: Clear and the chips while the rows are filtered, else "No filter". Tab from the last cell of the last row gets there, Tab from the last of them leaves the grid. Shift+Tab from the first goes back to the last row. None in a footer of no height (`footerHeight: 0`) |
+| the footer: Clear and the filter chips, or "No filter", the settings button | Tab / Shift+Tab | the stops after the last row: Clear and the chips while the rows are filtered, else "No filter", then the gear (`settingsButton`). Tab from the last cell of the last row gets there, Tab from the last of them leaves the grid. Shift+Tab from the first goes back to the last row. None in a footer of no height (`footerHeight: 0`) |
+| the settings button in the footer | Enter / Space | opens the column settings dialog |
 | the filter chips in the footer, "No filter" | Enter / Space | opens the filter editor |
 | Clear in the footer | Enter / Space | removes the filter. The focus stays on the button, now "No filter" |
 | a menu | ArrowDown / ArrowUp, Home / End, a letter | the next / previous / first / last item, the next one starting with the letter. A menu opened with the mouse leaves the focus on the cell: ArrowDown / ArrowUp get into it |
@@ -279,6 +293,8 @@ of Tab: a click puts it there, and selects columns (Ctrl+click, Shift+click, see
 | the list of a lookup column | the arrows, Enter, Tab, Esc | see [below](#the-list-of-a-lookup-column) |
 | the filter editor | Tab, Enter / Space, Esc | every control is a button or an input, in the order shown: the `✕`, each group's AND / OR, + Condition, + Group, wrap and delete, each condition's field, operator, value, switch and delete, then Undo, Redo, Cancel, Apply, Apply & close. A picker opens its menu, see [Filtering](06-filtering.md#the-filter-editor). Esc closes the menu open in it, else the editor without filtering (a modal dialog) |
 | the filter editor | Ctrl+Z (Cmd+Z), Ctrl+Y / Ctrl+Shift+Z (Cmd+Y, Cmd+Shift+Z) | undoes / redoes an edit of the editor, the focus on the control it was made with (the dialog when it is gone). In a value input typed in since it got the focus, the input's own undo of the typing - Ctrl+Z until it is back where it started. Undo and Redo, the icons in the footer, are `aria-disabled` with nothing to undo / redo and keep the focus. See [Filtering](06-filtering.md#undo-and-redo-in-the-filter-editor) |
+| the column settings dialog | Tab, Enter / Space, Esc | the `✕`, the list of the columns (one stop), the settings of the column picked - a format picker, or the text, its `{ }` field button, Show as link, the address and its `{ }`, Open in a new tab - the link of the preview, then Reset column, Reset all, Cancel, Apply, Apply & close. The focus is on the dialog when it opens, Esc closes the menu open in it, else the dialog without applying (a modal dialog); the focus goes back to where it was |
+| the list of the columns in the column settings | ArrowDown / ArrowUp, Home / End, PageDown / PageUp, a letter | picks the next / previous / first / last column, ten further, the next one whose label starts with the letter |
 | the find bar | Enter, F3, Esc | the next match, closes it: see [below](#the-find-bar) |
 
 ### The list of a lookup column
@@ -342,7 +358,7 @@ A readonly editor (a readonly grid or cell) shows the text, nothing can be typed
 What can have the focus: the cell inputs and checkboxes, the host of a custom cell (and what its renderer
 makes focusable), the header filters, the column headers, the
 buttons of the group rows, the x of the group chips, the buttons of the footer (Clear and the filter
-chips, or "No filter"), the input and
+chips, or "No filter", and the gear), the input and
 buttons of the find bar, and the items of a menu (see [Menus](10-menus.md#the-keyboard): the WAI-ARIA
 menu pattern). Each gets a
 visible focus ring from the theme (`:focus-visible`, see [Theming](13-theming.md#the-keyboard-focus)).
@@ -354,8 +370,8 @@ the one stop of the WAI-ARIA grid pattern (see [Known limits](#known-limits)):
 2. the header filters, left to right
 3. the rows, top to bottom: the cells of a data row left to right, across the pinned sections; a group
    row is one stop, its button
-4. the footer's Clear and filter chips while the rows are filtered, else its "No filter" (none in a
-   footer of no height)
+4. the footer's Clear and filter chips while the rows are filtered, else its "No filter", then the
+   settings button (none in a footer of no height)
 5. out of the grid
 
 Shift+Tab goes the same way back. The column headers are no stops (Alt+ArrowUp from a filter gets

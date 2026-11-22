@@ -1,4 +1,4 @@
-import { html, render } from 'lit-html';
+import { html, nothing, render } from 'lit-html';
 import type { Entity } from '../../datasource/entity';
 import type { FieldType } from '../../datasource/field';
 import type { Formatter } from '../../datasource/formatter';
@@ -11,6 +11,7 @@ import { contextmenuRow } from './contextmenuRow';
 import { fillDownKey } from './fillDown';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { jumpKeydown } from './jumpKeys';
+import { isCellLinkTarget, LINK_RENDERER_ID, linkRenderer, openCellLink } from './linkCell';
 import { rangeDeleteKey } from './rangeClipboard';
 import { rangeCellFocused, rangeKeydown } from './rangeSelection';
 import { isTypedCharacter } from './renderRowCell';
@@ -35,6 +36,10 @@ import { undoRedoKey } from './undoRedoKey';
  * text editor over the cell - one line, Enter saves; a text of several lines gets the multiline editor -
  * and a click on a date cell the date picker, as the default cell. A renderer with an `edit()` of its own
  * gets those instead. A boolean has no editor: it is the renderer's.
+ *
+ * The cells of a text column with a link (`ColumnFormat.link`) are custom cells too, of the grid's own
+ * renderer (linkCell.ts, `renderer` LINK_RENDERER_ID): a double click on the link's text is the link's,
+ * Alt+Enter opens the link.
  */
 
 /** the class of the host, the element the renderer renders into */
@@ -59,7 +64,7 @@ export interface CustomCell {
     field: string;
     /** the data row */
     entity: Entity;
-    /** the id of the renderer, `ColumnConfig.renderer` */
+    /** the id of the renderer, `ColumnConfig.renderer` - LINK_RENDERER_ID for the link of a text column */
     renderer: string;
     /** the type of the cell, see getCellType */
     type: FieldType;
@@ -97,6 +102,8 @@ export function renderCustomCell(ctx: Grid, custom: CustomCell) {
     let skipFocus = false;
     // the event data of the grid events
     const cellData = { cell, row, column, celno, colType, cellType, attribute: field, rowData: entity };
+    // the link of a text column (linkCell.ts): Alt+Enter opens it
+    const isLink = custom.renderer === LINK_RENDERER_ID;
 
     render(
         html`<div style="width:100%;height:100%;">
@@ -105,6 +112,7 @@ export function renderCustomCell(ctx: Grid, custom: CustomCell) {
                 class=${`${CUSTOM_CELL_CLASS} cellpos-${colType}-${row}-${column}-${celno} ${custom.hostClass}`}
                 tabindex="0"
                 style=${custom.hostStyle}
+                aria-keyshortcuts=${isLink ? 'Alt+Enter' : nothing}
                 data-attribute=${field}
                 data-repeated-value=${custom.repeated ? 'true' : 'false'}
                 @contextmenu=${(e: MouseEvent) => {
@@ -137,9 +145,9 @@ export function renderCustomCell(ctx: Grid, custom: CustomCell) {
                         ctx.gridInterface.__callSubscribers('cell-click', { ...cellData, originalEvent: e });
                     });
                 }}
-                @dblclick=${() => {
-                    // a date cell: its click opened the date picker
-                    if (!isDate || ownEdit()) {
+                @dblclick=${(e: MouseEvent) => {
+                    // a date cell: its click opened the date picker. The text of a link: its click opened it
+                    if ((!isDate || ownEdit()) && !isCellLinkTarget(e.target)) {
                         editCustomCell(ctx, custom);
                     }
                 }}
@@ -191,8 +199,13 @@ function mountRenderer(cell: HTMLCellElement, host: HTMLElement, custom: CustomC
         return mounted.instance;
     }
     releaseRenderer(cell);
-    // checked when the grid was made and by updateConfig(), so it is there
-    const instance = getCellRenderer(custom.renderer, `GridConfig: columns.${custom.field}.renderer`)(host);
+    // the grid's own for a link, else a registered one - checked when the grid was made and by
+    // updateConfig(), so it is there
+    const renderer =
+        custom.renderer === LINK_RENDERER_ID
+            ? linkRenderer
+            : getCellRenderer(custom.renderer, `GridConfig: columns.${custom.field}.renderer`);
+    const instance = renderer(host);
     // plain js can return anything: say so now, not on the next render
     if (typeof instance?.update !== 'function') {
         throw new TypeError(`registerCellRenderer: the renderer '${custom.renderer}' returned no { update(context) {} }`);
@@ -234,7 +247,8 @@ export function releaseAllRenderers(ctx: Grid) {
  * The keys of a custom cell: those of the default cell - the ranges, Delete, fill down, undo / redo, Tab
  * and Alt+arrows - and on the host itself (not on what the renderer put in it, those keys are the
  * renderer's): the keys that jump (Ctrl+Home, PageDown ..., jumpKeys.ts), the plain arrows move to the
- * next cell, the host has no caret; Enter, F2 and a character typed edit the cell
+ * next cell, the host has no caret; Enter, F2 and a character typed edit the cell; Alt+Enter opens the
+ * link of a link cell
  */
 function customCellKeydown(ctx: Grid, custom: CustomCell, e: KeyboardEvent) {
     const { cell, row, column, celno, colType, field, entity } = custom;
@@ -249,6 +263,13 @@ function customCellKeydown(ctx: Grid, custom: CustomCell, e: KeyboardEvent) {
     if (e.target === e.currentTarget && !e.isComposing) {
         // the keys that jump (jumpKeys.ts): on the host only, a control in the cell has its own PageDown
         if (jumpKeydown(ctx, e, row, { colType, column, celno })) {
+            return;
+        }
+        // Alt+Enter on a link cell opens the link (linkCell.ts)
+        const altEnter = e.key === 'Enter' && e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey;
+        if (altEnter && custom.renderer === LINK_RENDERER_ID) {
+            e.preventDefault();
+            openCellLink(e.currentTarget as HTMLElement);
             return;
         }
         const modifier = e.altKey || e.ctrlKey || e.metaKey;

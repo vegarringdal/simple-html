@@ -143,6 +143,7 @@ const DEFAULTS = {
     'header.format.decimalMark.dot': 'Dot',
     'header.format.decimalMark.comma': 'Comma',
     'header.format.percent': 'Percent',
+    'header.settings': 'Column settings…',
     'header.grouping': 'Grouping',
     'header.grouping.expandAll': 'Expand all',
     'header.grouping.collapseAll': 'Collapse all',
@@ -276,6 +277,60 @@ const DEFAULTS = {
     'filterEditor.operator.IS_BLANK': 'Is Blank',
     'filterEditor.operator.IS_NOT_BLANK': 'Is Not Blank',
 
+    // the column settings dialog (the gear in the footer, Column settings… in the header menu): its title
+    // bar, the list of the columns - their types and what they have set
+    'columnSettings.title': 'Column settings',
+    'columnSettings.title.tooltip': 'Drag to move the dialog',
+    'columnSettings.close.tooltip': 'Close without applying',
+    'columnSettings.columns': 'Columns',
+    'columnSettings.type.text': 'Text',
+    'columnSettings.type.number': 'Number',
+    'columnSettings.type.boolean': 'Checkbox',
+    'columnSettings.type.date': 'Date',
+    'columnSettings.type.datetime': 'Date and time',
+    'columnSettings.type.lookup': 'Lookup',
+    'columnSettings.badge.format': 'Format',
+    'columnSettings.badge.text': 'Text',
+    'columnSettings.badge.link': 'Link',
+    'columnSettings.badge.problem': 'Error',
+    // a date, datetime or number column: the picker of its format, the entries of Format ›
+    'columnSettings.format': 'Format',
+    'columnSettings.format.tooltip': 'How the cells show the value',
+    // a text column: the text it shows and its link. The placeholders and hints show a template as it is
+    // written, their {names} are not filled in
+    'columnSettings.text': 'Text shown',
+    'columnSettings.text.placeholder': '{firstname} {lastname}',
+    'columnSettings.text.hint': "Empty: the cell's own text. {value} is the cell's value, {field} the value of another field",
+    'columnSettings.link': 'Show as link',
+    'columnSettings.url': 'Address',
+    'columnSettings.url.placeholder': 'https://example.com/customer/{id}',
+    'columnSettings.url.hint': 'Starts with https://, http://, mailto: or tel: - or is one {field} that holds the whole address',
+    'columnSettings.newTab': 'Open in a new tab',
+    'columnSettings.insertField': 'Insert a field',
+    'columnSettings.none.boolean': 'A checkbox column has no settings',
+    'columnSettings.none.lookup': 'A lookup column shows the label of its value: it has no settings',
+    // the preview: the row it shows, and what is wrong with a template - {field} is the field as written
+    // in braces, or the label of the column that is empty
+    'columnSettings.preview.current': 'Preview, the current row',
+    'columnSettings.preview.first': 'Preview, the first row',
+    'columnSettings.preview.none': 'No rows to preview',
+    'columnSettings.problem.urlEmpty': 'Write the address',
+    'columnSettings.problem.urlStart': 'Start the address with https://, http://, mailto: or tel: - or give one field alone',
+    'columnSettings.problem.protocol': 'Not a link the grid opens: only https:, http:, mailto: and tel:',
+    'columnSettings.problem.internal': "{field} is the grid's own, not a field",
+    'columnSettings.problem.unknownField': 'No field {field} in this row',
+    'columnSettings.problem.blank': '{field} is empty in this row: no link, the text only',
+    'columnSettings.problem.invalid': 'No valid address in this row: no link, the text only',
+    // the buttons
+    'columnSettings.resetColumn': 'Reset column',
+    'columnSettings.resetColumn.tooltip': 'The settings the column starts with',
+    'columnSettings.resetAll': 'Reset all',
+    'columnSettings.resetAll.tooltip': 'The settings every column starts with',
+    'columnSettings.cancel': 'Cancel',
+    'columnSettings.apply': 'Apply',
+    'columnSettings.apply.tooltip': 'Apply to the grid, the dialog stays open',
+    'columnSettings.applyAndClose': 'Apply & close',
+
     // the footer: the row count and the filter as chips
     'footer.rowCount': '{shown}/{total}',
     'footer.clear': '✕ Clear',
@@ -303,6 +358,8 @@ const DEFAULTS = {
     'footer.summary.avg': 'Average: {avg}',
     'footer.summary.min': 'Min: {min}',
     'footer.summary.max': 'Max: {max}',
+    // the gear at the footer's right end: its name and tooltip, it opens the column settings dialog
+    'footer.settings': 'Column settings',
     'footer.operator.EQUAL': '=',
     'footer.operator.LESS_THAN_OR_EQUAL_TO': '≤',
     'footer.operator.GREATER_THAN_OR_EQUAL_TO': '≥',

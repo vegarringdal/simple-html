@@ -163,6 +163,18 @@ export type GridConfig = {
      */
     filterOperatorIndicator?: boolean;
     /**
+     * shows the settings button, a gear at the right end of the footer, default `true`: it opens the
+     * column settings dialog - each column's display format, a text column's template and link, applied
+     * to the state (`GridState.formats`), so `getState()` keeps what the user set. Its name and tooltip
+     * are the text `footer.settings`. Not in a footer of no height (`footerHeight: 0`); a lookup's
+     * dropdown grid has it `false`.
+     *
+     * `false` hides the button only: the header menu still has *Column settings…* (`header.settings`,
+     * take it out with the `menus` hook), and `gridInterface.openColumnSettings()` opens the dialog from
+     * a button of your own. See the formatting guide, "The column settings dialog"
+     */
+    settingsButton?: boolean;
+    /**
      * the whole grid is readonly, default `true`: no cell can be edited, and the row menu has no paste
      * or clear. Set `false` to edit; the column's `readonly` and the `isReadonly` hook
      * ({@link GridHooks}) can still make cells readonly
@@ -644,18 +656,21 @@ export type ColumnConfig = {
      * how the column's cells show the value - a display format, see {@link ColumnFormat}: an object with
      * `date` for a `date` or `datetime` field, a {@link DateFormat} (`{ date: 'norwegian' }` 22.11.2026,
      * `{ date: 'weekIso' }` 2026-W47, `{ date: 'daysUntil' }` ...), `number` for a `number` field, a
-     * {@link NumberFormat} (`{ number: { decimals: 2, thousands: ' ', decimal: ',' } }` 1 234 567,89).
-     * Left out: the field's formatter.
+     * {@link NumberFormat} (`{ number: { decimals: 2, thousands: ' ', decimal: ',' } }` 1 234 567,89),
+     * `text` and `link` for a `text` field - a template of the text shown (`{ text: '{name} ({id})' }`)
+     * and a link, see {@link LinkFormat} (`{ link: { url: 'mailto:{email}' } }`). Left out: the field's
+     * formatter.
      *
      * Only the text shown changes: the cells, the aggregates of the column, the summary of the selected
      * cells, Find. The value is not changed, and editing, the header filter, sorting, grouping, copy and
      * the CSV export keep to the field's formatter - a cell shown as `2026-W47` is edited as
-     * `2026-11-22`. The Excel export writes the value with an Excel number format like it, where Excel
-     * has one.
+     * `2026-11-22`, a link's cell as its value. The Excel export writes the value with an Excel number
+     * format like it, where Excel has one.
      *
      * This is where the grid starts: the user picks another one in the header menu (right click a column
-     * label, "Format"), and it is part of the grid's state (`GridState.formats`) - `resetState()` goes
-     * back to this one. A format that does not fit the field's type, and a format on a lookup column
+     * label, "Format") or the column settings dialog (the gear in the footer), and it is part of the
+     * grid's state (`GridState.formats`) - `resetState()` goes back to this one, and so does the dialog's
+     * "Reset column". A format that does not fit the field's type, and a format on a lookup column
      * (`editor`), throw a `TypeError` when the grid is made or `updateConfig()` is given the column.
      *
      * @sample full-grid
@@ -667,9 +682,17 @@ export type ColumnConfig = {
      *     columns: {
      *         born: { format: { date: 'norwegian' } }, // 22.11.2026
      *         due: { format: { date: 'daysUntil' } }, // 3: due in 3 days
-     *         balance: { format: { number: { decimals: 2, thousands: ' ', decimal: ',' } } } // 1 234 567,89
+     *         balance: { format: { number: { decimals: 2, thousands: ' ', decimal: ',' } } }, // 1 234 567,89
+     *         email: { format: { link: { url: 'mailto:{email}' } } } // a link that writes an email
      *     },
-     *     layout: { center: [{ fields: ['born'], width: 100 }, { fields: ['due'], width: 80 }, { fields: ['balance'], width: 120 }] }
+     *     layout: {
+     *         center: [
+     *             { fields: ['born'], width: 100 },
+     *             { fields: ['due'], width: 80 },
+     *             { fields: ['balance'], width: 120 },
+     *             { fields: ['email'], width: 180 }
+     *         ]
+     *     }
      * };
      * ```
      */
@@ -796,9 +819,10 @@ export interface GridState {
     totalsRow: boolean;
     /**
      * the display formats of the columns, keyed by field - what `ColumnConfig.format` starts with and
-     * the header menu (Format ›) changes: `{ born: { date: 'weekIso' }, balance: { number: { decimals: 2 } } }`.
+     * the header menu (Format ›) and the column settings dialog change:
+     * `{ born: { date: 'weekIso' }, balance: { number: { decimals: 2 } }, email: { link: { url: 'mailto:{email}' } } }`.
      * Only the fields that have one are listed; a field left out shows its field's formatter. See
-     * {@link ColumnFormat}
+     * {@link ColumnFormat}. Its templates are text, not code: a state from storage runs nothing
      */
     formats: Record<string, ColumnFormat>;
 }
@@ -863,6 +887,7 @@ export type ParsedGridOptions = GridOptions &
             | 'mergeHighlight'
             | 'copyHeaders'
             | 'filterOperatorIndicator'
+            | 'settingsButton'
             | 'placeholderRowCurrentEntityOnly'
             | 'groupAggregates'
             | 'totalsRow'

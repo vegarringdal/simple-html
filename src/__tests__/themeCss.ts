@@ -293,7 +293,15 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
     ...on('grid-accent-font-color', 4.5, ['grid-accent-color']),
     ...on('grid-totals-font-color', 4.5, ['grid-totals-bg-color']),
     ...on('grid-aggregate-label-color', 4.5, ['grid-totals-bg-color', 'grid-main-bg-color']),
-    ...on('grid-danger-font-color', 4.5, ['grid-sec-bg-color']),
+    // a problem in the column settings dialog: on the dialog and on its preview
+    ...on('grid-danger-font-color', 4.5, ['grid-sec-bg-color', 'grid-main-bg-color']),
+    // a link: in the cells - the rows, the selected rows, under the tints of an error, a range and Find -
+    // and in the column settings' preview
+    ...on('grid-link-color', 4.5, [...ROWS_AND_SELECTED, 'grid-sec-bg-color', 'grid-main-bg-color']),
+    ...on('grid-link-color', 4.5, under('grid-error-bg-color', ROWS_AND_SELECTED)),
+    ...on('grid-link-color', 4.5, under('grid-range-bg-color', ROWS_AND_SELECTED)),
+    ...on('grid-link-color', 4.5, under('grid-find-match-color', ROWS_AND_SELECTED)),
+    ...on('grid-link-color', 4.5, under('grid-find-current-color', ROWS_AND_SELECTED)),
     ...on('grid-tooltip-font-color', 4.5, ['grid-tooltip-bg-color']),
     // lines and marks: the focus outline, the filled controls and the frames of the controls
     ...on('grid-focus-color', 3, ['grid-main-bg-color', 'grid-sec-bg-color', ...ROWS_AND_SELECTED]),

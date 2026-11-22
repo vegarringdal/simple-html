@@ -25,6 +25,9 @@ import { gridText } from './gridText';
  * A pick changes the grid's state (GridState.formats), so getState() keeps it and resetState() goes back
  * to the config's (ColumnConfig.format). Every hint is an example: the format applied to today (a date
  * column) or to 1234567.891 (a number column, 0.256 with Percent) - made when the menu opens, not texts.
+ *
+ * The column settings dialog (columnSettings.ts) opens the same entries from its format picker, with a
+ * FormatTarget of its draft: one list of the formats, in one order.
  */
 
 /** the number the hints of a number column show */
@@ -63,10 +66,42 @@ const DECIMAL_MARKS = [
 const DECIMALS = [undefined, 0, 1, 2, 3, 4] as const;
 
 /**
+ * Where the entries of Format › read the format in use and write the one picked: the grid's state for
+ * the header menu, the draft of the column settings dialog (columnSettings.ts) for its format picker
+ */
+export interface FormatTarget {
+    /** the column's format now: read when the menu opens and when an entry is clicked */
+    current: () => ColumnFormat | undefined;
+    /** sets the column's format, undefined: none (Default) */
+    set: (format: ColumnFormat | undefined) => void;
+}
+
+/**
+ * The format in the grid's state, for the header menu: GridState.formats
+ */
+function stateTarget(ctx: Grid, attribute: string): FormatTarget {
+    const gridInterface = ctx.gridInterface;
+    return {
+        current: () => gridInterface.__getGridConfig().columns[attribute]?.format,
+        set: (format) => {
+            const formats = gridInterface.getState().formats;
+            if (format) {
+                formats[attribute] = format;
+            } else {
+                delete formats[attribute];
+            }
+            gridInterface.setState({ formats });
+        }
+    };
+}
+
+/**
  * The Format submenu of a column. Its entries are always there, as every default entry: the ones that
  * are not for the column's type are hidden by `visible`, and so is the submenu when none is
+ * @param target where the format is read and written: the grid's state (the header menu) when left
+ * out, the column settings dialog's draft for its picker
  */
-export function formatSubmenu(ctx: Grid, attribute: string): MenuSubmenu {
+export function formatSubmenu(ctx: Grid, attribute: string, target: FormatTarget = stateTarget(ctx, attribute)): MenuSubmenu {
     const gridInterface = ctx.gridInterface;
     const datasource = gridInterface.getDatasource();
     const type = datasource.getField(attribute).type;
@@ -81,7 +116,7 @@ export function formatSubmenu(ctx: Grid, attribute: string): MenuSubmenu {
     const now = new Date();
 
     /** the column's format now, read when the menu opens and when an entry is clicked */
-    const current = (): ColumnFormat | undefined => gridInterface.__getGridConfig().columns[attribute]?.format;
+    const current = target.current;
     /** the number format in use, undefined with Default */
     const numberNow = (): NumberFormat | undefined => current()?.number;
     /**
@@ -93,16 +128,8 @@ export function formatSubmenu(ctx: Grid, attribute: string): MenuSubmenu {
     /** the example of a number format: 1234567.891, 0.256 with Percent */
     const numberExample = (format: NumberFormat) => formatNumberAs(format.percent ? PERCENT_SAMPLE : NUMBER_SAMPLE, format);
 
-    /** sets the column's format in the state, undefined: none (Default) */
-    const set = (format: ColumnFormat | undefined) => {
-        const formats = gridInterface.getState().formats;
-        if (format) {
-            formats[attribute] = format;
-        } else {
-            delete formats[attribute];
-        }
-        gridInterface.setState({ formats });
-    };
+    /** sets the column's format, undefined: none (Default) */
+    const set = target.set;
     const pickNumber = (change: NumberFormat) => set({ number: changed(change) });
 
     const dateItem = (format: DateFormat, visible: boolean): MenuItem => ({

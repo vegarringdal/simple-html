@@ -1,6 +1,7 @@
 import type { FieldType } from '../datasource/field';
 import type { Formatter } from '../datasource/formatter';
 import { fillText, getText, type Texts } from '../texts';
+import { LINK_PROTOCOLS, templateProblem, urlTemplateProblem } from './cellTemplate';
 
 /**
  * The display formats of a column: how its cells show the value, picked by the user in the header
@@ -9,8 +10,10 @@ import { fillText, getText, type Texts } from '../texts';
  * export stay with the field's formatter. See the formatting guide, "Display formats".
  *
  * A column's format is one plain object (JSON) with a part per kind of value: `{ date: 'weekIso' }`,
- * `{ number: { decimals: 2 } }`. A rule of another kind is another key of it later. The grid shows a
- * value through one place: GridInterface.__getCellFormatter, a Formatter made by displayFormatter().
+ * `{ number: { decimals: 2 } }`, `{ text: '{name} ({id})', link: { url: 'https://x/{id}' } }`. The grid
+ * shows a value through one place: GridInterface.__getCellFormatter, a Formatter made by
+ * displayFormatter() - and for a text template, which needs the row, templateFormatter() of
+ * cellTemplate.ts. The address of a link is GridInterface.__getCellLink.
  */
 
 /**
@@ -155,10 +158,50 @@ export interface NumberFormat {
 }
 
 /**
+ * The link of a text column, `ColumnFormat.link`: its cells are links, the text they show (the cell's
+ * own, or `ColumnFormat.text`) is the link's text. The address is a template: text with `{field}`
+ * placeholders, each the value of a field of the row - encoded, so a value can not change where the
+ * link goes. Templates, not code: nothing in it is run.
+ *
+ * | `url` | links to |
+ * | --- | --- |
+ * | `'https://crm.example.com/customer/{id}'` | `https://crm.example.com/customer/12` |
+ * | `'https://duckduckgo.com/?q={company}'` | `https://duckduckgo.com/?q=Acme%20Corp` |
+ * | `'mailto:{email}'` | `mailto:ann@example.com` |
+ * | `'tel:{phone}'` | `tel:+47%2012345678` |
+ * | `'{website}'` | the address the field holds, as it is: one placeholder alone is a whole address |
+ *
+ * The address starts with `https://`, `http://`, `mailto:` or `tel:`, or is one placeholder - else the
+ * format throws a `TypeError` (`javascript:`, `data:`, a relative `/customer/{id}`). A row whose address
+ * is no absolute address of those four schemes - a field's `javascript:alert(1)`, an empty `{id}` - shows
+ * its text, no link. See the formatting guide, "Links".
+ *
+ * @example
+ * ```ts
+ * import type { GridConfig, LinkFormat } from '@simple-html/grid';
+ *
+ * const customer: LinkFormat = { url: 'https://crm.example.com/customer/{id}', newTab: true };
+ * const columns: GridConfig['columns'] = {
+ *     company: { format: { link: customer } },
+ *     email: { format: { link: { url: 'mailto:{email}' } } }
+ * };
+ * ```
+ */
+export interface LinkFormat {
+    /**
+     * the address: `https://`, `http://`, `mailto:` or `tel:` and `{field}` placeholders - their values
+     * encoded - or one placeholder alone, a field that holds the whole address (`'{website}'`)
+     */
+    url: string;
+    /** opens the link in a new tab (`target="_blank"`, `rel="noopener noreferrer"`). Left out: `false` */
+    newTab?: boolean;
+}
+
+/**
  * The display format of a column, `ColumnConfig.format` and `GridState.formats`: one plain object (JSON)
  * with a part for the kind of value the column holds - `date` for a `date` or `datetime` field, `number`
- * for a `number` field. A part for another type throws a `TypeError`. `{}` is no format: the field's
- * formatter.
+ * for a `number` field, `text` and `link` for a `text` field. A part for another type throws a
+ * `TypeError`. `{}` is no format: the field's formatter.
  *
  * Only what the cells show changes - and what follows the cells: the aggregates of a number column, the
  * summary of the selected cells in the footer, Find, the fitted width and the dimmed repeated values.
@@ -167,6 +210,10 @@ export interface NumberFormat {
  * grouping use the value, the group rows' names, copy and the CSV export the field's formatter. The
  * Excel export writes the value, with an Excel number format like the display format where Excel has
  * one.
+ *
+ * The templates of a text column - `text` and `link.url` - are text with `{field}` placeholders, not
+ * code: a saved state can come from anywhere, nothing in a format is run. See the formatting guide,
+ * "Templates" and "Links".
  *
  * @example
  * ```ts
@@ -177,9 +224,19 @@ export interface NumberFormat {
  *     columns: {
  *         born: { format: { date: 'norwegian' } }, // 22.11.2026
  *         due: { format: week }, // 2026-W47
- *         balance: { format: { number: { decimals: 2, thousands: ' ', decimal: ',' } } } // 1 234 567,89
+ *         balance: { format: { number: { decimals: 2, thousands: ' ', decimal: ',' } } }, // 1 234 567,89
+ *         name: { format: { text: '{name} ({id})' } }, // Ann (12)
+ *         company: { format: { link: { url: 'https://duckduckgo.com/?q={company}', newTab: true } } }
  *     },
- *     layout: { center: [{ fields: ['born'], width: 100 }, { fields: ['due'], width: 100 }, { fields: ['balance'], width: 120 }] }
+ *     layout: {
+ *         center: [
+ *             { fields: ['born'], width: 100 },
+ *             { fields: ['due'], width: 100 },
+ *             { fields: ['balance'], width: 120 },
+ *             { fields: ['name'], width: 120 },
+ *             { fields: ['company'], width: 150 }
+ *         ]
+ *     }
  * };
  * ```
  */
@@ -188,6 +245,15 @@ export interface ColumnFormat {
     date?: DateFormat;
     /** how a `number` column shows its numbers, see {@link NumberFormat} */
     number?: NumberFormat;
+    /**
+     * what the cells of a `text` column show: a template, text with `{field}` placeholders - each the
+     * value of a field of the row as its formatter writes it, `{value}` the cell's own. `'{firstname}
+     * {lastname}'`, `'{value} kg'`, `'{company}'`. Left out: the cell's own text. The text of the link
+     * too, with `link`. Not `''`
+     */
+    text?: string;
+    /** the cells of a `text` column are links, see {@link LinkFormat} */
+    link?: LinkFormat;
 }
 
 /**
@@ -230,6 +296,14 @@ const DAY = 86_400_000;
  * true when a column's format changes what its cells show: it has a part. `{}` does not
  */
 export function hasDisplayFormat(format: ColumnFormat | undefined): format is ColumnFormat {
+    return format?.date !== undefined || format?.number !== undefined || format?.text !== undefined || format?.link !== undefined;
+}
+
+/**
+ * true when a column's format shows its values in a date or number format - the formats of a value,
+ * not of a row (the templates of a text column need the row)
+ */
+export function hasValueFormat(format: ColumnFormat | undefined): boolean {
     return format?.date !== undefined || format?.number !== undefined;
 }
 
@@ -470,7 +544,12 @@ export function displayFormatter(fieldFormatter: Formatter, format: ColumnFormat
 /**
  * the parts of a column's format, for the check of one from plain JavaScript or JSON
  */
-const FORMAT_KEYS: readonly (keyof ColumnFormat)[] = ['date', 'number'];
+const FORMAT_KEYS: readonly (keyof ColumnFormat)[] = ['date', 'number', 'text', 'link'];
+
+/**
+ * the keys a link has
+ */
+const LINK_FORMAT_KEYS: readonly (keyof LinkFormat)[] = ['url', 'newTab'];
 
 /**
  * the keys a number format has
@@ -489,6 +568,9 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
  * - `date` for a `date` field: one of DATE_FORMATS; a `datetime` field DATETIME_FORMATS too
  * - `number` for a `number` field: a {@link NumberFormat}, its parts of the values they take, not the
  *   same character for both separators
+ * - `text` and `link` for a `text` field: a template that is text, not `''`, without a placeholder of
+ *   the grid's own (`{__...}`); a {@link LinkFormat} whose `url` starts with `https://`, `http://`,
+ *   `mailto:` or `tel:` or is one placeholder (cellTemplate.ts, urlTemplateProblem)
  * - not on a lookup column (`editor`: its cells show a label)
  * @param name how the message names it: `GridConfig: columns.born.format`, `setState: formats.born`
  * @throws a `TypeError` naming it, what it has and what it takes
@@ -500,7 +582,7 @@ export function assertColumnFormat(format: unknown, field: string, type: FieldTy
     const got = JSON.stringify(format);
     if (!isObject(format)) {
         throw new TypeError(
-            `${name} is ${got}, it is an object: { date: 'norwegian' } for a date field, { number: { decimals: 2 } } for a number field`
+            `${name} is ${got}, it is an object: { date: 'norwegian' } for a date field, { number: { decimals: 2 } } for a number field, { text: '{name} ({id})' } or { link: { url: 'https://example.com/{id}' } } for a text field`
         );
     }
     for (const key of Object.keys(format)) {
@@ -508,9 +590,18 @@ export function assertColumnFormat(format: unknown, field: string, type: FieldTy
             throw new TypeError(`${name} has '${key}', a format has ${FORMAT_KEYS.join(', ')}`);
         }
     }
-    const { date, number } = format;
-    if (lookup && (date !== undefined || number !== undefined)) {
+    const { date, number, text, link } = format;
+    if (lookup && (date !== undefined || number !== undefined || text !== undefined || link !== undefined)) {
         throw new TypeError(`${name} is ${got}: a lookup column (editor) shows the label of its value, it has no format`);
+    }
+    if ((text !== undefined || link !== undefined) && type !== 'text') {
+        throw new TypeError(`${name}.${text !== undefined ? 'text' : 'link'} is for a text field, '${field}' is ${type}`);
+    }
+    if (text !== undefined) {
+        assertTextTemplate(text, `${name}.text`);
+    }
+    if (link !== undefined) {
+        assertLinkFormat(link, `${name}.link`);
     }
     const list = (formats: readonly string[]) => formats.map((id) => `'${id}'`).join(', ');
     if (date !== undefined) {
@@ -571,6 +662,63 @@ function assertNumberFormat(format: unknown, name: string): void {
         throw new TypeError(
             `${name} has '${String(thousands)}' as the thousands separator and the decimal mark${leftOut}: give them different characters`
         );
+    }
+}
+
+/**
+ * see assertColumnFormat: a template of the text a cell shows
+ * @throws a `TypeError` naming the part and what it takes
+ */
+function assertTextTemplate(template: unknown, name: string): void {
+    if (typeof template !== 'string' || template === '') {
+        throw new TypeError(
+            `${name} is ${JSON.stringify(template)}, it is a template - text with {field} placeholders, '{firstname} {lastname}' - left out, the cell's own text`
+        );
+    }
+    const problem = templateProblem(template);
+    if (problem) {
+        throw new TypeError(`${name} has {${problem.field}}: a name that starts with __ is the grid's own, not a field`);
+    }
+}
+
+/**
+ * see assertColumnFormat: a link, its address a template of an allowed scheme
+ * @throws a `TypeError` naming the part and what it takes
+ */
+function assertLinkFormat(link: unknown, name: string): void {
+    if (!isObject(link)) {
+        throw new TypeError(
+            `${name} is ${JSON.stringify(link)}, it is an object: { url: 'https://example.com/customer/{id}', newTab?: boolean }`
+        );
+    }
+    for (const key of Object.keys(link)) {
+        if (!LINK_FORMAT_KEYS.some((known) => known === key)) {
+            throw new TypeError(`${name} has '${key}', a link has ${LINK_FORMAT_KEYS.join(', ')}`);
+        }
+    }
+    const { url, newTab } = link;
+    if (typeof url !== 'string') {
+        throw new TypeError(`${name}.url is ${JSON.stringify(url)}, it is the address: 'https://example.com/customer/{id}'`);
+    }
+    const problem = urlTemplateProblem(url);
+    if (problem?.problem === 'empty') {
+        throw new TypeError(`${name}.url is ${JSON.stringify(url)}, it is the address: 'https://example.com/customer/{id}'`);
+    }
+    if (problem?.problem === 'internal') {
+        throw new TypeError(`${name}.url has {${problem.field}}: a name that starts with __ is the grid's own, not a field`);
+    }
+    if (problem?.problem === 'protocol') {
+        throw new TypeError(
+            `${name}.url is ${JSON.stringify(url)}: a link to ${problem.protocol} is not allowed, only ${LINK_PROTOCOLS.join(', ')}`
+        );
+    }
+    if (problem?.problem === 'start') {
+        throw new TypeError(
+            `${name}.url is ${JSON.stringify(url)}: it starts with https://, http://, mailto: or tel:, or is one {field} that holds the whole address`
+        );
+    }
+    if (newTab !== undefined && typeof newTab !== 'boolean') {
+        throw new TypeError(`${name}.newTab is ${JSON.stringify(newTab)}, it is true or false`);
     }
 }
 

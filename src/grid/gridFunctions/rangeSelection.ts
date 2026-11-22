@@ -10,6 +10,7 @@ import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGHT_PINNED_COLTYPE } from
 import { getElementByClassName } from './getElementByClassName';
 import { getLayoutFields } from './getLayoutFields';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { isCellLinkTarget } from './linkCell';
 import { pinnedSection } from './pinnedSection';
 import { nextDataRow } from './rowSteps';
 import { triggerScrollEvent } from './triggerScrollEvent';
@@ -244,6 +245,10 @@ export function cellPointAt(ctx: Grid, x: number, y: number): CellPoint | null {
  */
 function rangePointerDown(ctx: Grid, down: PointerEvent) {
     if (!isPrimaryPress(down) || down.pointerType === 'touch') {
+        return;
+    }
+    // Ctrl/Cmd+click on the text of a link cell opens the link in a new tab (linkCell.ts): no range
+    if ((down.ctrlKey || down.metaKey) && isCellLinkTarget(down.target)) {
         return;
     }
     const pressed = bodyCellOf(ctx, down.target);

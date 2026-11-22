@@ -201,6 +201,10 @@ problem: text is written as text (an inline string), and a formula would be an e
 which the grid never writes. A value a user typed, `=HYPERLINK("http://evil.example", "Click me")`,
 shows in Excel as exactly that text. Nothing is escaped, nothing is added.
 
+A link column ([Templates and links](08-formatting.md#templates-and-links)) is written as its value, as
+copy and the CSV export write it: no `HYPERLINK` formula, no hyperlink, not the text of its template -
+`Acme Corp`, not `Acme Corp (12)`.
+
 ### The Excel options
 
 `ExcelOptions`, every option optional. It is plain JSON: it can be stored, or come from a menu of
@@ -323,7 +327,8 @@ formatter (see [Formatting](08-formatting.md)) - not a column's display format (
 | `true` | `boolean` | `true` |
 | `null` | any | nothing |
 
-A column's `numberOverride` and `dynamicCellTypeColumn` are followed, as in the cells.
+A column's `numberOverride` and `dynamicCellTypeColumn` are followed, as in the cells. The template
+and the link of a text column are not: its value is written.
 
 `formatted: false` writes the values as they are stored: for a file a program reads.
 

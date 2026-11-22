@@ -13,17 +13,21 @@ import { focusMenu } from './showMenu';
  * The search box hides the fields whose label (or field name) does not have its text. Opened from the
  * keyboard the focus is in it: type, then ArrowDown to the fields, or Enter for the first one shown.
  * The fields are items of the menu: the arrows, a letter, Enter as in the other menus
+ * The column settings dialog opens it too, to put a field in a template (columnSettings.ts): with the
+ * fields of its row as well.
  * @param button the picker, the menu opens under it
  * @param current the field picked, undefined (or '') for none
  * @param callback gets the picked field, after the menu has closed
+ * @param list the fields to list. Left out: the fields of the grid's columns
  */
 export function contextMenuAttributes(
     ctx: Grid,
     button: HTMLElement,
     current: string | undefined,
-    callback: (attribute: string) => void
+    callback: (attribute: string) => void,
+    list: string[] = Object.keys(ctx.gridInterface.__getGridConfig().columns)
 ) {
-    const fields = Object.keys(ctx.gridInterface.__getGridConfig().columns)
+    const fields = list
         .map((field) => ({ field, label: getColumnLabel(ctx, field) }))
         .sort((a, b) => a.label.localeCompare(b.label));
 

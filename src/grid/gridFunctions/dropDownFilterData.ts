@@ -15,7 +15,8 @@ export const DROPDOWN_FILTER_MAX_ROWS = 100;
  */
 export interface ValueListEntry {
     /**
-     * the text as the column's cells show it (cellTextOf): the formatter's text, a lookup's label. Values
+     * the text as the column's cells show it (cellTextOf): the formatter's text, a lookup's label - not the
+     * template of a text column (`ColumnFormat.text`), the value's own text. Values
      * shown with texts that differ in case only are one entry - `IN` compares ignoring case, it can not
      * filter them apart - with the text of the first row; not when the header filter matches case.
      * `''` for the blank entry
@@ -94,7 +95,9 @@ export function dropDownFilterData(
     // rows the column's own conditions let through, null when it has none (all checked)
     const passingOwn = own.length ? new Set(filter.filter(data, and(...own), datasource)) : null;
 
-    const textOf = cellTextOf(ctx, attribute);
+    // the value's own text, not a template's (ColumnFormat.text): the list is of values, and a template
+    // with other fields in it shows one value two ways in two rows
+    const textOf = cellTextOf(ctx, attribute, { template: false });
     const formatter = datasource.getFormatter(attribute);
     // the IN of a text field matches case then, and so do the texts of the entries
     const caseSensitive = isHeaderFilterCaseSensitive(ctx, attribute);

@@ -1,13 +1,15 @@
-import { html, render } from 'lit-html';
+import { html, render, svg } from 'lit-html';
 import type { FilterGroupNode, FilterNode } from '../../datasource/dataSource';
 import { findText } from '../../texts';
 import type { Grid } from '../grid';
 import { renderTotalsRow } from './aggregates';
 import { clearAllColumnFilters } from './clearAllColumnFilters';
+import { openColumnSettings } from './columnSettings';
 import { findFilterRowsText } from './findBar';
 import { getColumnLabel } from './getColumnLabel';
 import { getElementByClassName } from './getElementByClassName';
 import { gridText } from './gridText';
+import { activeCellOfMenu } from './lastPress';
 import { openFilterEditor } from './openFilterEditor';
 import { selectionSummary } from './selectionSummary';
 
@@ -17,6 +19,15 @@ import { selectionSummary } from './selectionSummary';
  * an empty sub group) can reach us without operator/attribute, it is shown as "?".
  */
 const UNKNOWN = '?';
+
+/**
+ * the settings button's icon: a gear of eight square teeth around a hole, the text colour - drawn at
+ * 16px in a 24px box, as the icons of the filter editor
+ */
+const GEAR_ICON = svg`<svg class="footer-settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="miter" aria-hidden="true" focusable="false">
+    <path d="M9.7 4.8 10.2 2h3.6l.5 2.8 1.2.4 2.4-1.6 2.5 2.5-1.6 2.4.4 1.2 2.8.5v3.6l-2.8.5-.4 1.2 1.6 2.4-2.5 2.5-2.4-1.6-1.2.4-.5 2.8h-3.6l-.5-2.8-1.2-.4-2.4 1.6-2.5-2.5 1.6-2.4-.4-1.2-2.8-.5v-3.6l2.8-.5.4-1.2-1.6-2.4 2.5-2.5 2.4 1.6z" />
+    <circle cx="12" cy="12" r="3.2" />
+</svg>`;
 
 /**
  * The short name of an operator on a chip, the text `footer.operator.<operator>`: symbols for the
@@ -140,7 +151,9 @@ function chipsUnderSummary(footer: HTMLElement): boolean {
     }
     const chipsRect = chips.getBoundingClientRect();
     const summaryRect = summary.getBoundingClientRect();
-    return chipsRect.left < summaryRect.left && chipsRect.right > summaryRect.left;
+    // overlapping: the chips reach into the summary from its left, or are under it (the footer keeps room for
+    // the settings button on both sides, the summary starts further left)
+    return chipsRect.right > summaryRect.left && chipsRect.left < summaryRect.right;
 }
 
 // the space in px between the filter's row and the summary of the selected cells, as between the summary's items
@@ -183,7 +196,13 @@ export function rebuildFooter(ctx: Grid) {
  * opens the filter editor - as a click on the chips and the filter menu's "Advanced Filter…" do. The same
  * layout with and without a filter: nothing moves when a filter comes or goes. A footer of no height
  * (`footerHeight: 0`, the dropdown grid of a lookup column) has no "No filter": nothing would show it,
- * and Tab skips its buttons (tabExit.ts). Its count is alone then, in the middle
+ * and Tab skips its buttons (tabExit.ts). Its count is alone then, in the middle.
+ *
+ * The settings button (`GridConfig.settingsButton`), a gear, is at the right end on the line of the
+ * filter's row - the last stop of Tab in the footer. It opens the column settings dialog
+ * (columnSettings.ts) on the column of the cell that had the focus. With it the footer keeps its room on
+ * both sides (`has-settings`): the filter's row stays in the middle and never reaches under it, the
+ * summary of the selected cells ends left of it
  */
 export function renderFooter(ctx: Grid) {
     const footer = getElementByClassName(ctx.element, 'simple-html-grid-footer');
@@ -207,6 +226,26 @@ export function renderFooter(ctx: Grid) {
     // the filter's row: Clear and the chips, or the button "No filter"
     const hasRow = filtered || config.footerHeight > 0;
     const and = html`<span class="footer-filter-connector">${gridText(ctx, 'footer.and')}</span>`;
+
+    // the gear at the right end, in a footer that shows the filter's row
+    const settings = config.settingsButton && config.footerHeight > 0;
+    const settingsButton = settings
+        ? html`<button
+              type="button"
+              class="footer-settings"
+              style="top:${scrollbarHeight}px"
+              aria-label=${gridText(ctx, 'footer.settings')}
+              aria-haspopup="dialog"
+              title=${gridText(ctx, 'footer.settings')}
+              @click=${(e: MouseEvent) => {
+                  e.stopPropagation();
+                  // the column of the cell that had the focus when it was pressed (or now, from a key)
+                  openColumnSettings(ctx, activeCellOfMenu(ctx)?.field);
+              }}
+          >
+              ${GEAR_ICON}
+          </button>`
+        : null;
 
     const conditionCount = filterTree ? countConditions(filterTree) : 0;
     const summary = summaryTemplate(ctx, hasRow ? scrollbarHeight : 0);
@@ -290,7 +329,7 @@ export function renderFooter(ctx: Grid) {
         render(
             html`
                 <div
-                    class="footer-inner ${filtered ? 'has-filter' : ''} ${hasRow && !filtered ? 'no-filter' : ''}"
+                    class="footer-inner ${filtered ? 'has-filter' : ''} ${hasRow && !filtered ? 'no-filter' : ''} ${settings ? 'has-settings' : ''}"
                     style=${hasRow ? `padding-top:${scrollbarHeight}px;` : ''}
                 >
                     <span
@@ -299,7 +338,7 @@ export function renderFooter(ctx: Grid) {
                         style=${hasRow ? `height:${scrollbarHeight}px;line-height:${scrollbarHeight}px;` : ''}
                         >${gridText(ctx, 'footer.rowCount', { shown: filteredRows, total: totalRows })}</span
                     >
-                    ${filterRow} ${summary}
+                    ${filterRow} ${summary} ${settingsButton}
                 </div>
             `,
             footer

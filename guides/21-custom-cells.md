@@ -9,6 +9,10 @@ does - the keys, the focus, copy and paste, ranges, Find, errors and the edited 
 ```sample custom-cells
 ```
 
+A link needs no renderer: `format: { link: { url: 'https://crm.example.com/customer/{id}' } }` on a text
+column draws its cells as links - a custom cell of the grid's own, with these keys and the focus, its
+address checked. See [Templates and links](08-formatting.md#templates-and-links).
+
 ## A renderer
 
 `registerCellRenderer(id, renderer)` when the page loads, before the grid that names it is made. A

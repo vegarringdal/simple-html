@@ -138,6 +138,11 @@ A click on a cell does not select its row - it never did: the row number does th
 not make the row clicked the current row (the active cell stays where it was), Ctrl+click and
 Shift+click do not open the date picker of a date cell and do not check a checkbox.
 
+On the text of a link cell ([Templates and links](08-formatting.md#a-link-cell)) a plain click and
+Ctrl/Cmd+click open the link - Ctrl/Cmd+click there makes no range. Shift+click makes the range and does
+not open it; a press beside the text is the cell's, as anywhere. Copy, paste and fill down are the value,
+not the text of the template.
+
 **A pen** works as the mouse, where the browser does not take its drag for scrolling. **A finger**
 does not drag a range - a swipe scrolls the grid - it makes ranges with the row menu's *Select ›*,
 see [With a finger](#with-a-finger).
