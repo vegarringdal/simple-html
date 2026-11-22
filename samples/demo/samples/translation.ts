@@ -514,6 +514,8 @@ const norwegian: Record<TextId, string> = {
     'cell.multiline.hint': 'Ctrl+Enter lagrer, Esc avbryter',
     'cell.multiline.hint.mac': '⌘Enter lagrer, Esc avbryter',
     'cell.multiline.hintReadonly': 'Esc lukker',
+    'cell.multiline.close': 'Lagre og lukk',
+    'cell.multiline.closeReadonly': 'Lukk',
     'lookup.open': 'Åpne listen',
     'lookup.search': 'Søk',
     'lookup.noMatch': 'Ingen treff',

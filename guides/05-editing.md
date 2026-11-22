@@ -204,6 +204,7 @@ gridInterface.fitRows();
 | Esc | closes without saving, the focus back in the cell |
 | Tab / Shift+Tab | saves and closes, and goes on to the next / previous cell |
 | a click outside it | saves and closes, the focus goes where the click put it |
+| the ✕ at the right of the hint under it | saves and closes, the focus back in the cell - for a mouse and a finger, which has no Ctrl+Enter. In a readonly editor it closes |
 | scrolling the grid (the wheel, a swipe, the scrollbars) | saves and closes |
 
 Opening a menu or another editor saves and closes it too - one is open at a time - and so does

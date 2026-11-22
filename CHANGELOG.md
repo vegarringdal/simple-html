@@ -1332,6 +1332,13 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### The multiline editor: a ✕ that saves and closes (user request)
+
+##### Added
+- A **✕ at the right of the multiline editor's hint**: it saves and closes, the focus back in the cell - a
+  finger has no Ctrl+Enter. In a readonly editor it closes. Texts `cell.multiline.close` ("Save and close")
+  and `cell.multiline.closeReadonly` ("Close").
+
 #### Docs site: the full grid sample about 30 rows high (user request)
 
 ##### Docs

@@ -4125,6 +4125,20 @@ rebuildHeaderColumns for the middle section too (scrollHandlers.test.ts has it).
 * browser: the shared sidebar-toggle-check.js expects about 30 rows (28 to 31) where it expected more than 30
   (backup `.before-full-30`): 15/15; full-grid 11/11, sample-height 5/5, detail-form 91/91, color-rules 90/90
 
+### The multiline editor: a ✕ (user request)
+
+* the user, a phone screenshot of the editor with "Ctrl+Enter to save, Esc to cancel" under it: "multiline box,
+  add also a close x bottom right in footer panel, useful for mouse/touch" - a finger has neither key
+* textEditor.ts: the hint is in a footer row with a ✕ button at its right (`.simple-html-grid-text-editor-close`,
+  20px, the touch row height on a finger): it saves and closes as a click beside the editor does, the focus
+  back in the cell - its mousedown is prevented so the focus stays in the text (Safari does not focus a
+  clicked button, and a phone's keyboard does not flicker). A readonly editor's ✕ is "Close". The editor
+  attaches the tooltips (the ✕'s), hides one on close. Texts `cell.multiline.close`, `.closeReadonly`
+* multiline.test.ts +2; guide 05 (the editor's table), 12
+* browser: new `text-editor-close-check.js` 10/10 (a phone: tap to open, the 28px ✕ at the bottom right, a
+  tap saves and closes; wide dark with the mouse: saved, the focus back in the cell); multiline-lines,
+  keyboard, custom-cells as before
+
 ## Considered, not done
 
 ## Candidates / not started
