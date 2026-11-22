@@ -173,6 +173,8 @@ function article(main: HTMLElement, title: string) {
  */
 export function renderGuidePage(main: HTMLElement, guide: Guide) {
     const doc = article(main, guide.title);
+    // the css of one guide: the tables of the feature overview, .doc[data-guide='features']
+    doc.dataset.guide = guide.id;
     doc.insertAdjacentHTML('beforeend', guide.html);
     highlightCodeBlocks(doc);
     doc.querySelectorAll<HTMLElement>('.doc-sample').forEach(renderSampleBlock);
