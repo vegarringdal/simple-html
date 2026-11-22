@@ -230,12 +230,18 @@ describe('text', () => {
         );
     });
 
-    it('expect * and % to be wildcards, every other character of LIKE and GLOB literal', () => {
+    it('expect * and % to be wildcards, _ one character, every other character of LIKE and GLOB literal', () => {
         const value = 'a*b%c_d!e[f]g?h\\i';
-        expect(sql(where('name', 'EQUAL', value), 'postgres').params).toEqual(['a%b%c!_d!!e[f]g?h\\i']);
-        expect(sql(where('name', 'EQUAL', value), 'oracle').params).toEqual(['a%b%c!_d!!e[f]g?h\\i']);
-        expect(sql(where('name', 'EQUAL', value), 'mssql').params).toEqual(['a%b%c[_]d!e[[]f]g?h\\i']);
-        expect(sql(where('name', 'EQUAL', value), 'sqlite').params).toEqual(['a*b*c_d!e[[]f]g[?]h\\i']);
+        expect(sql(where('name', 'EQUAL', value), 'postgres').params).toEqual(['a%b%c_d!!e[f]g?h\\i']);
+        expect(sql(where('name', 'EQUAL', value), 'oracle').params).toEqual(['a%b%c_d!!e[f]g?h\\i']);
+        expect(sql(where('name', 'EQUAL', value), 'mssql').params).toEqual(['a%b%c_d!e[[]f]g?h\\i']);
+        expect(sql(where('name', 'EQUAL', value), 'sqlite').params).toEqual(['a*b*c?d!e[[]f]g[?]h\\i']);
+    });
+
+    it('expect _ next to the other wildcards and at the ends of CONTAINS to be one character', () => {
+        expect(sql(where('name', 'CONTAINS', '_*_'), 'postgres').params).toEqual(['%_%_%']);
+        expect(sql(where('name', 'BEGIN_WITH', '__'), 'sqlite').params).toEqual(['??*']);
+        expect(sql(where('name', 'END_WITH', '%_'), 'mssql').params).toEqual(['%%_']);
     });
 
     it('expect the pattern of each operator', () => {

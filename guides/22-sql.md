@@ -169,7 +169,8 @@ made. `NOT (sql)` of any WHERE selects exactly the other rows.
   and `I` are not a pair: there use `caseSensitive`, or fold the column yourself.
   `caseSensitive: true` compares as they are.
 - **`*` and `%` are wildcards**, any text: they become the wildcard of `LIKE` (`%`), or of `GLOB` on
-  SQLite (`*`). Every other character is literal: `_` and the escape are escaped in the parameter.
+  SQLite (`*`). **`_` is one character**: `_` of `LIKE`, `?` of `GLOB`. Every other character is
+  literal: the escape, and a `[` or `?` of `GLOB`, are escaped in the parameter.
   `EQUAL` is the whole text, `CONTAINS` `%v%`, `BEGIN_WITH` `v%`, `END_WITH` `%v`; `NOT_EQUAL_TO` and
   `DOES_NOT_CONTAIN` their `NOT`.
 - **A blank row** - null, and `''` - is the text `''`: it matches a pattern of wildcards only, and
@@ -183,7 +184,8 @@ made. `NOT (sql)` of any WHERE selects exactly the other rows.
 | | PostgreSQL | Oracle | SQLite | SQL Server |
 | --- | --- | --- | --- | --- |
 | match | `LIKE $1 ESCAPE '!'` | `LIKE :1 ESCAPE '!'` | `GLOB ?` | `COLLATE Latin1_General_100_BIN2 LIKE @p1` |
-| literal `_` | `!_` | `!_` | `_` | `[_]` |
+| one character (`_`) | `_` | `_` | `?` | `_` |
+| literal `!` | `!!` | `!!` | `!` | `!` |
 | literal `[`, `?` | as is | as is | `[[]`, `[?]` | `[[]` |
 | blank | `col IS NULL OR col = ''` | `col IS NULL` | `col IS NULL OR col = ''` | `col IS NULL OR DATALENGTH(col) = 0` |
 | order | `COLLATE "C"` | binary | `COLLATE BINARY` | `COLLATE Latin1_General_100_BIN2` |
@@ -356,7 +358,7 @@ database decides:
 | `IN` on a date | the text the formatter shows; a `Date` in the list never matches | the day or second of each value, a `Date` too |
 | a `datetime` stored as an instant, the hour the clocks go back | the wall clock, which shows that hour twice: both 02:30 match | the instant: the first 02:30 (`'local'` storage is the wall clock, the same as the grid) |
 | `datetime` with a `valueField` | to the second | the columns as they are: milliseconds count |
-| a text `valueField` | `*` and `%` in the other column are wildcards | no wildcards |
+| a text `valueField` | `*`, `%` and `_` in the other column are wildcards | no wildcards |
 | SQL Server, a text `valueField` | trailing spaces count | `=` ignores them |
 | comparisons of text (`LESS_THAN` ...) | UTF-16 code units | code points: differs only for letters past U+FFFF against U+E000-U+FFFF |
 | what is no filter | an unknown operator is `EQUAL` (text) or `GREATER_THAN_OR_EQUAL_TO`, `'or'` is AND, `'abc'` on a number is 0, a malformed `BETWEEN` is left out | a `TypeError` |

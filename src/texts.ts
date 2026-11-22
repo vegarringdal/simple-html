@@ -308,7 +308,11 @@ const DEFAULTS = {
     'columnSettings.newTab': 'Open in a new tab',
     'columnSettings.insertField': 'Insert a field',
     'columnSettings.none.boolean': 'A checkbox column has no settings',
-    'columnSettings.none.lookup': 'A lookup column shows the label of its value: it has no settings',
+    'columnSettings.none.lookup': 'A lookup column shows the label of its value: it has no format',
+    // every column but a checkbox: the operator of its header filter, {operator} the column's default
+    'columnSettings.operator': 'Filter operator',
+    'columnSettings.operator.tooltip': 'The operator the header filter of the column uses',
+    'columnSettings.operator.hint': 'Default: {operator}',
     // the preview: the row it shows, and what is wrong with a template - {field} is the field as written
     // in braces, or the label of the column that is empty
     'columnSettings.preview.current': 'Preview, the current row',

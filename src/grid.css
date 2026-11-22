@@ -3287,7 +3287,9 @@
     flex: 1 1 auto;
 }
 
-.simple-html-grid.filter-editor-content .column-settings-input-row > .column-settings-format {
+/* the pickers of the format and of the filter operator: as wide as each other */
+.simple-html-grid.filter-editor-content .column-settings-input-row > .column-settings-format,
+.simple-html-grid.filter-editor-content .column-settings-input-row > .column-settings-operator {
     max-width: 320px;
 }
 

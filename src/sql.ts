@@ -28,10 +28,10 @@ import { buildWhere } from './sql/buildWhere';
  * `WHERE tenant_id = $1 AND ${sql}`, with `firstParam: 2`.
  *
  * The rules are the grid's, see the filtering guide "Operators": a text ignores case unless the
- * condition is `caseSensitive` (`*` and `%` are wildcards), a blank number is 0, a blank boolean false, a
- * blank date is no date, a date is its day in the user's `timeZone`. A condition the grid ignores (no
- * field, no operator, no value) is left out. Where SQL does not do exactly what the grid does, the SQL
- * guide says so.
+ * condition is `caseSensitive` (`*` and `%` are wildcards, `_` one character), a blank number is 0, a
+ * blank boolean false, a blank date is no date, a date is its day in the user's `timeZone`. A condition
+ * the grid ignores (no field, no operator, no value) is left out. Where SQL does not do exactly what the
+ * grid does, the SQL guide says so.
  *
  * @param filter the filter as it came, e.g. `JSON.parse(body).filter`: a `FilterExpression`, or null /
  * undefined for no filter
@@ -93,7 +93,8 @@ export type SqlDialect = 'postgres' | 'oracle' | 'sqlite' | 'mssql';
  * The type of a column for {@link toSqlWhere}: how a condition on it compares, as the grid compares a
  * field of that type - the same names as the grid's `FieldType`.
  *
- * - `'text'` - texts, ignoring case unless the condition is `caseSensitive`, `*` and `%` are wildcards
+ * - `'text'` - texts, ignoring case unless the condition is `caseSensitive`, `*` and `%` are wildcards,
+ *   `_` one character
  * - `'number'` - numbers, a blank (null) is 0
  * - `'boolean'` - true and false, a blank is false
  * - `'date'` - the day, in the user's time zone (`SqlOptions.timeZone`)

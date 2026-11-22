@@ -3237,6 +3237,48 @@ in the console. All passed. Found and fixed:
   `.claude/browser-checks/scripts/` (the shared folder could not be written from this worktree): the shared
   footer-no-filter-check.js and keyboard-check.js want the gear's Tab step
 
+### Text filters: `_` is one character (user request)
+
+* the user: "in text search it could be useful to be able to search with _ where that is random part, like
+  one do in sql normally". `*` and `%` were the only wildcards, `_` was literal (and escaped in the SQL)
+* objectFilter.ts `matchesText`: `_` becomes `.` in the regular expression, with the `u` flag so a letter
+  past U+FFFF (an emoji) is one character, as in SQL. `s` was there already: a line break is a character
+  too. No escape, as for `*` and `%`
+* sql: `Dialect.oneChar` (`_` for LIKE, `?` for GLOB); buildWhere splits the value on `*`, `%` and `_`,
+  keeping them, and makes each the dialect's wildcard. `patternLiteral` escapes only what can still be
+  literal: `!` (postgres, oracle), `[` (mssql), `[` and `?` (sqlite). `IN` values (mssql `LIKE`) keep
+  `[%]`, `[_]`, `[[]`
+* lookup columns filter their labels with objectFilter: they take `_` too. The value list's search and
+  `IN` do not
+* tests: filterOperatorsByType +1 (one character, not none or two, an emoji, a line break, a `_` in the row,
+  caseSensitive, a blank row); toSqlWhere +1 and the wildcard test changed, snapshots: only the parameter
+  values changed (`!_` / `[_]` to `_`, sqlite `_` to `?`). The SQLite comparison with the grid (3000 random
+  filters and every operator) got the patterns `_nn`, `AN_`, `___`, `*_b`, `a_\nb` and the row `a🙂b`;
+  its second text column had `a_b`, a pattern now as a `valueField`: `a-b`. The injection test skips the
+  values with `_`, as those with `*` and `%` - they find more than their own row
+* guides: filtering (the header filter, the backend rules), SQL (text, the dialect table, the
+  differences table); JSDoc of `FilterOperator`, `toSqlWhere`, `SqlColumnType`
+
+### Column settings: the filter operator (user request)
+
+* the user, with a screenshot of the dialog: "in column settings, we want to also be able to see default
+  operator"
+* columnSettings.ts: `ColumnSettings.operators`, the operator in use of every column but a checkbox one
+  (getHeaderFilterOperator) when the dialog opens. *Filter operator*: a picker (`.column-settings-operator`)
+  that opens the items of Operator › for the column (headerOperators - its `filterOperators`, a lookup
+  column's text ones), the one picked checked; a column with one operator shows its name. Under it
+  *Default: …* - the column's `operator`, else the type's (defaultHeaderOperator). Apply calls
+  setHeaderFilterOperator for each column whose operator changed - one code with Operator › and the
+  indicator. Reset column / Reset all set the default
+* the operator picker as wide as the format picker (320px at most)
+* columnSettings.test.ts +6 (a number column, the menu's operators and the ✓, nothing applied before
+  Apply; the config's `operator` as the default, a text and a lookup column; none for a checkbox, the name
+  for one operator; Apply: the state, the rows, the event once; Cancel; the state's operator, Reset column /
+  Reset all); the translation sample has the three texts in Norwegian
+* browser: new `column-settings-operator-check.js` 13/13 (light and dark: the picker, the default, the menu
+  in the dialog, Less than picked, Apply → the header's indicator shows `<`, no operator on a checkbox
+  column); column-settings-check 144/144
+
 ## Considered, not done
 
 ## Candidates / not started

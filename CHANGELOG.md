@@ -1332,6 +1332,27 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Column settings: the filter operator of each column (user request)
+
+##### Added
+- **Filter operator** in the column settings dialog, for every column but a checkbox: a picker of the
+  operators the column's header filter offers (Operator ›'s), the one in use shown, *Default:* and the
+  operator the column starts with under it. Apply switches the header filters whose operator changed, as
+  Operator › does (the filter again, `headerFilters[field].operator` in the state, `filter-operator-change`);
+  Reset column / Reset all go back to the default. Texts `columnSettings.operator`, `.tooltip`, `.hint`.
+
+##### Changed
+- `columnSettings.none.lookup` says a lookup column has no format (it has an operator now).
+
+#### Text filters: `_` is one character, as in SQL `LIKE` (user request)
+
+##### ⚠️ Breaking changes
+- **`_` in a text filter is a wildcard now**: one character, any (`p_mp` finds `pump`, `pump-__` finds
+  `pump-01` but not `pump-1`), next to `*` and `%` for any text. There is no escape: a `_` in the value
+  also matches a `_`, but no longer only that. `toSqlWhere()` sends it as `_` of `LIKE` (`?` of `GLOB` on
+  SQLite) - it escaped it before. A letter past U+FFFF (an emoji) is one character, in the grid as in the
+  SQL. The value list's search and `IN` / `NOT_IN` take `_` as it is, as before.
+
 #### Column settings: formats, text templates and links in a dialog (user request)
 
 ##### Added

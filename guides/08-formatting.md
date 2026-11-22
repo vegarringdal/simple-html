@@ -534,6 +534,10 @@ hides the gear ([Grid config](02-grid-config.md#grid-options)).
   *Address* and *Open in a new tab*. The `{ }` button beside a template opens a menu of the fields -
   the columns' and those of the row, by their labels, with a search - and puts the one picked in at the
   caret: no need to know the names of the fields.
+- **Filter operator**, for every column but a checkbox: the operator of the column's header filter, a
+  picker of the operators it offers - the same as Filter › Operator › - with *Default:* and the operator
+  the column starts with under it (its `operator`, else the type's: `≥` for a number or date, `=` for a
+  text). A column with one operator (`filterOperators`) shows it, there is nothing to pick.
 - **The preview** shows what the cell shows in the current row (else the first row shown): the text,
   the link - a click opens it in a new tab - and its address, and why the row has no link (a field
   that is empty in it, an address that is not allowed, a field that does not exist).
@@ -541,9 +545,12 @@ hides the gear ([Grid config](02-grid-config.md#grid-options)).
   scheme, `javascript:` and the other schemes that are not allowed, a field of the grid's own. The
   column is marked *Error*, and Apply does nothing until it is fixed.
 - **Apply** sets the formats of the state, `setState({ formats })`: `getState()` has them - to save
-  them, see [Saving it](03-state.md#saving-it). *Apply & close* applies and closes, *Cancel* (and the ✕,
-  Esc) closes without applying. *Reset column* and *Reset all* go back to the formats the grid starts
-  with - `ColumnConfig.format`, or `initialState.formats` - in the dialog, until Apply.
+  them, see [Saving it](03-state.md#saving-it). A filter operator that changed is switched as Operator ›
+  does it: the header filter's value is filtered on again with it, the state has it
+  (`headerFilters[field].operator`) and the grid sends `filter-operator-change`. *Apply & close* applies
+  and closes, *Cancel* (and the ✕, Esc) closes without applying. *Reset column* and *Reset all* go back
+  to the formats the grid starts with - `ColumnConfig.format`, or `initialState.formats` - and to the
+  column's default operator, in the dialog, until Apply.
 
 It is a modal dialog of the filter editor's kind: the focus goes into it when it opens and back to
 where it was when it closes, it is moved by its title bar and resized from every edge and corner. The

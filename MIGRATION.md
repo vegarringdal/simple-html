@@ -798,6 +798,10 @@ The rules per type, for a backend that filters the same way, are in the filterin
 * **A multi-line text is one text**: `BEGIN_WITH`, `END_WITH` and a wildcard `EQUAL` match the whole
   value, not one of its lines, and `*` / `%` span line breaks.
 * **Text `<` / `>`** compare the texts without wildcards (a `*` turned them into `EQUAL`).
+* **`_` is a wildcard in a text filter**: one character, any, as in SQL `LIKE` - `p_mp` finds `pump`.
+  It was literal. There is no escape: a filter for `pump_01` also finds `pump-01`. Use `IN` (the value
+  list) for an exact text with a `_` in it. A backend that filtered with `LIKE` and escaped the `_`
+  should no longer escape it (`toSqlWhere()` does that for you).
 * **`getFilterTree()`**: every condition node has `caseSensitive` (a boolean), a `BETWEEN` node
   `valueTo`.
 * **Menu hooks**: the header menu's Filter › has new entries (Match case, more operators) - see

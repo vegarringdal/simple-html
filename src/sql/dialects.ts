@@ -17,7 +17,12 @@ export interface Dialect {
 
     /** the wildcard of a pattern, "any text": `%` for LIKE, `*` for GLOB */
     anyText: string;
-    /** text for a pattern, with the characters the pattern takes as wildcards or escapes escaped */
+    /** the wildcard of a pattern, "one character": `_` for LIKE, `?` for GLOB */
+    oneChar: string;
+    /**
+     * text for a pattern, with the characters the pattern takes as wildcards or escapes escaped. The
+     * grid's wildcards (`*`, `%`, `_`) are never in it: buildWhere makes them the dialect's own
+     */
     patternLiteral(text: string): string;
     /**
      * `column` matches the pattern parameter `pattern`. The column in lower case, or as it is; `pattern` is
@@ -78,9 +83,9 @@ function dateValue(milliseconds: number, storage: SqlDateStorage, separator: ' '
     }
 }
 
-// LIKE with ESCAPE '!': `!` escapes `%`, `_` and itself. Oracle allows nothing else after it (ORA-01424),
-// so nothing else is escaped. `%` is never literal: it is a wildcard of the grid too
-const escapeWithBang = (text: string) => text.replace(/[!_]/g, '!$&');
+// LIKE with ESCAPE '!': `!` escapes `%`, `_` and itself. Oracle allows nothing else after it (ORA-01424).
+// `%` and `_` are never literal - they are wildcards of the grid too - so only `!` is escaped
+const escapeWithBang = (text: string) => text.replace(/!/g, '!!');
 
 /**
  * PostgreSQL. LIKE is case-sensitive, `LOWER()` of the column and a folded value ignore case. `COLLATE "C"` compares bytes,
@@ -90,6 +95,7 @@ const postgres: Dialect = {
     placeholder: (n) => `$${n}`,
     quote: (name) => `"${name}"`,
     anyText: '%',
+    oneChar: '_',
     patternLiteral: escapeWithBang,
     match: (column, pattern, caseSensitive) => `${fold(column, caseSensitive)} LIKE ${pattern} ESCAPE '!'`,
     binary: (expression) => `${expression} COLLATE "C"`,
@@ -121,6 +127,7 @@ const oracle: Dialect = {
     placeholder: (n) => `:${n}`,
     quote: (name) => `"${name}"`,
     anyText: '%',
+    oneChar: '_',
     patternLiteral: escapeWithBang,
     match: (column, pattern, caseSensitive) => `${fold(column, caseSensitive)} LIKE ${pattern} ESCAPE '!'`,
     binary: (expression) => expression,
@@ -160,6 +167,7 @@ const sqlite: Dialect = {
     placeholder: () => '?',
     quote: (name) => `"${name}"`,
     anyText: '*',
+    oneChar: '?',
     // GLOB has no escape: a special character is literal in brackets
     patternLiteral: (text) => text.replace(/[?[]/g, '[$&]'),
     match: (column, pattern, caseSensitive) => `${fold(column, caseSensitive)} GLOB ${pattern}`,
@@ -181,13 +189,15 @@ const sqlite: Dialect = {
 /**
  * SQL Server. Case and `=` follow the column's collation, and `=` ignores trailing spaces: texts are
  * matched with LIKE (trailing spaces count for nvarchar, the type a JS string is sent as) in a binary
- * collation. LIKE's wildcards are literal in brackets: `[%]`, `[_]`, `[[]`
+ * collation. LIKE's wildcards are literal in brackets: `[%]`, `[_]`, `[[]` (an IN value)
  */
 const mssql: Dialect = {
     placeholder: (n) => `@p${n}`,
     quote: (name) => `[${name}]`,
     anyText: '%',
-    patternLiteral: (text) => text.replace(/[_[]/g, '[$&]'),
+    oneChar: '_',
+    // `%` and `_` are never literal, they are wildcards of the grid too
+    patternLiteral: (text) => text.replace(/\[/g, '[[]'),
     match: (column, pattern, caseSensitive) => `${mssql.binary(fold(column, caseSensitive))} LIKE ${pattern}`,
     binary: (expression) => `${expression} COLLATE Latin1_General_100_BIN2`,
     inList: (column, placeholders, caseSensitive) => {

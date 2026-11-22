@@ -1,6 +1,7 @@
 import { html, nothing, render, type TemplateResult } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import { type Entity, isGroupRow } from '../../datasource/entity';
+import type { FilterOperator } from '../../datasource/filterExpression';
 import type { TextId } from '../../texts';
 import {
     isInternalField,
@@ -13,12 +14,15 @@ import {
 import { type ColumnFormat, formatNumberAs, hasDisplayFormat, hasValueFormat } from '../columnFormat';
 import type { Grid } from '../grid';
 import type { MenuItem } from '../gridMenus';
+import { defaultHeaderOperator, headerFilterType, headerOperators } from './columnFilterOptions';
 import { contextMenuAttributes } from './contextMenuAttributes';
 import { moveDialog, resizeHandles, showDialog } from './dialogFrame';
 import { formatSubmenu, NUMBER_SAMPLE, PERCENT_SAMPLE } from './formatSubmenu';
 import { getColumnLabel } from './getColumnLabel';
+import { getHeaderFilterOperator } from './getHeaderFilterOperator';
 import { getLayoutFields } from './getLayoutFields';
 import { gridText } from './gridText';
+import { HEADER_OPERATOR_TEXTS, setHeaderFilterOperator } from './headerOperatorMenu';
 import { removeContextMenu } from './removeContextMenu';
 import { closeFilterEditor } from './renderFilterEditor';
 import { isTypedCharacter } from './renderRowCell';
@@ -42,15 +46,19 @@ import { attachTooltips, hideTooltip, tooltipsEnabled } from './tooltip';
  *   the entries of Format › (formatSubmenu.ts - one list of the formats); a text column the text it shows
  *   (a template, `ColumnFormat.text`), Show as link, the address (`ColumnFormat.link.url`) and Open in a
  *   new tab; a checkbox and a lookup column have none. A template's ⟨{ }⟩ button puts a field in it at the
- *   caret, from a menu of the fields of the columns and the row. Under it the preview: what the cell
- *   shows in the current row (else the first), the link and its address, and why a row has no link.
+ *   caret, from a menu of the fields of the columns and the row. Then the operator of the column's header
+ *   filter - a picker of the operators it offers, the column's default said under it - for every column
+ *   but a checkbox. Under it the preview: what the cell shows in the current row (else the first), the
+ *   link and its address, and why a row has no link.
  * - **The footer**: Reset column and Reset all go back to the formats the grid starts with (the config's
- *   `ColumnConfig.format`, or `initialState.formats`), Cancel closes, Apply sets the formats of the state
- *   (`setState({ formats })`, so `getState()` has them, to save) and Apply & close. A template that is not
+ *   `ColumnConfig.format`, or `initialState.formats`) and the column's default operator, Cancel closes,
+ *   Apply sets the formats of the state (`setState({ formats })`, so `getState()` has them, to save) and
+ *   switches the header filters whose operator changed, as Operator › does - and Apply & close. A template that is not
  *   valid - an address of a scheme that is not allowed, one that does not start with its scheme - has its
  *   problem under it at once, the column is marked Error and Apply does nothing until it is fixed.
  *
- * What it edits is a copy of the state's formats (ColumnSettings.formats): the grid changes on Apply only.
+ * What it edits is a copy of the state's formats and the operators in use (ColumnSettings): the grid
+ * changes on Apply only.
  */
 
 /**
@@ -59,6 +67,11 @@ import { attachTooltips, hideTooltip, tooltipsEnabled } from './tooltip';
 interface ColumnSettings {
     /** the formats by field: a copy of the state's when it opened. A column without one is left out */
     formats: Record<string, ColumnFormat>;
+    /**
+     * the operator of each column's header filter: the one in use when it opened (getHeaderFilterOperator).
+     * A checkbox column is left out, its header filter is a checkbox
+     */
+    operators: Record<string, FilterOperator>;
     /** the column shown on the right */
     field: string;
 }
@@ -100,6 +113,9 @@ export function openColumnSettings(ctx: Grid, field?: string) {
     }
     renderColumnSettings(ctx, {
         formats: ctx.gridInterface.getState().formats,
+        operators: Object.fromEntries(
+            fields.filter((name) => hasOperator(ctx, name)).map((name) => [name, getHeaderFilterOperator(ctx, name)])
+        ),
         field: field !== undefined && fields.includes(field) ? field : fields[0]
     });
 }
@@ -120,6 +136,22 @@ export function closeColumnSettings(ctx: Grid) {
     // close() before remove(): closing a modal dialog gives the focus back to the element that had it
     dialog.close();
     dialog.remove();
+}
+
+/**
+ * true when a column's header filter has an operator: every column but a checkbox one (a lookup column
+ * filters on its labels, with the operators of a text)
+ */
+function hasOperator(ctx: Grid, field: string): boolean {
+    return headerFilterType(ctx.gridInterface, field) !== 'boolean';
+}
+
+/**
+ * The operator a column's header filter starts with, what Reset goes back to: the column's `operator`
+ * (config), else the default of its type
+ */
+function startOperator(ctx: Grid, field: string): FilterOperator {
+    return defaultHeaderOperator(ctx.gridInterface.__getGridConfig().columns[field], headerFilterType(ctx.gridInterface, field));
 }
 
 /**
@@ -287,6 +319,13 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         }
         removeContextMenu(ctx);
         gridInterface.setState({ formats: structuredClone(settings.formats) });
+        // a header filter whose operator changed: as if it was picked in Operator › - the filter runs again
+        // with the value the cell has, the header shows it, filter-operator-change is sent
+        for (const [name, operator] of Object.entries(settings.operators)) {
+            if (operator !== getHeaderFilterOperator(ctx, name)) {
+                setHeaderFilterOperator(ctx, name, operator);
+            }
+        }
         return true;
     };
 
@@ -501,6 +540,67 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         </div>`;
     };
 
+    /**
+     * The operator of the column's header filter: a picker of the operators the column offers (Operator ›),
+     * the one picked checked; just its name when the column offers one. The column's default under it
+     */
+    const operatorSettings = () => {
+        const operator = settings.operators[field];
+        if (!operator) {
+            return nothing;
+        }
+        const name = (each: FilterOperator) => {
+            const id = HEADER_OPERATOR_TEXTS[each];
+            return id ? text(id) : each;
+        };
+        const offered = headerOperators(
+            ctx.gridInterface.__getGridConfig().columns[field],
+            headerFilterType(gridInterface, field)
+        );
+        const label = text('columnSettings.operator');
+        const hintId = idOf(ctx, 'operator-hint');
+        const hint = html`<div class="column-settings-hint" id=${hintId}>
+            ${text('columnSettings.operator.hint', { operator: name(startOperator(ctx, field)) })}
+        </div>`;
+        if (offered.length < 2) {
+            return html`<div class="column-settings-field">
+                <span class="column-settings-label">${label}</span>
+                <div class="column-settings-input-row">${name(operator)}</div>
+                ${hint}
+            </div>`;
+        }
+        return html`<div class="column-settings-field">
+            <span class="column-settings-label">${label}</span>
+            <div class="column-settings-input-row">
+                <button
+                    type="button"
+                    class="filter-editor-pick column-settings-operator"
+                    aria-haspopup="menu"
+                    aria-label=${`${label}: ${name(operator)}`}
+                    aria-describedby=${hintId}
+                    data-tooltip=${text('columnSettings.operator.tooltip')}
+                    @click=${(event: MouseEvent) => {
+                        // the items of Operator ›, on what the dialog edits
+                        const items = offered.flatMap((each): MenuItem[] => {
+                            const id = HEADER_OPERATOR_TEXTS[each];
+                            const pick = () => {
+                                settings.operators[field] = each;
+                                update();
+                            };
+                            return id
+                                ? [{ id, label: text(id), selected: () => settings.operators[field] === each, action: pick }]
+                                : [];
+                        });
+                        gridInterface.openMenu(event.currentTarget as HTMLElement, items);
+                    }}
+                >
+                    <span class="filter-editor-pick-text">${name(operator)}</span>
+                </button>
+            </div>
+            ${hint}
+        </div>`;
+    };
+
     /** what the cell shows in the row of the preview, its link and why it has none */
     const preview = () => {
         if (kind === 'boolean' || kind === 'lookup') {
@@ -608,7 +708,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                         <span class="column-settings-heading-label">${getColumnLabel(ctx, field)}</span>
                         <span class="column-settings-option-type">${typeName(field)}</span>
                     </div>
-                    ${settingsOf()} ${preview()}
+                    ${settingsOf()} ${operatorSettings()} ${preview()}
                 </div>
             </div>
             <div class="filter-editor-footer">
@@ -617,7 +717,12 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                         type="button"
                         class="simple-html-grid-button"
                         data-tooltip=${text('columnSettings.resetColumn.tooltip')}
-                        @click=${() => setFormat(field, structuredClone(start[field]))}
+                        @click=${() => {
+                            if (settings.operators[field]) {
+                                settings.operators[field] = startOperator(ctx, field);
+                            }
+                            setFormat(field, structuredClone(start[field]));
+                        }}
                     >
                         ${text('columnSettings.resetColumn')}
                     </button>
@@ -627,6 +732,9 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                         data-tooltip=${text('columnSettings.resetAll.tooltip')}
                         @click=${() => {
                             settings.formats = structuredClone(start);
+                            for (const name of Object.keys(settings.operators)) {
+                                settings.operators[name] = startOperator(ctx, name);
+                            }
                             update();
                         }}
                     >
