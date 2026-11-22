@@ -834,6 +834,8 @@ opens over it, see [Editing](05-editing.md#multiline-text).
 | `cell.multiline.hint` | `Ctrl+Enter to save, Esc to cancel` | under the textarea of the editor. Cmd+Enter saves too |
 | `cell.multiline.hint.mac` | `⌘Enter to save, Esc to cancel` | the same on a Mac |
 | `cell.multiline.hintReadonly` | `Esc to close` | under the textarea of the editor of a readonly cell |
+| `cell.multiline.close` | `Save and close` | the ✕ at the right of the editor's hint: its name and tooltip - it saves and closes, as a click beside the editor |
+| `cell.multiline.closeReadonly` | `Close` | the same ✕ in the editor of a readonly cell |
 
 ### Lookup columns
 

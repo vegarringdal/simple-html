@@ -1332,6 +1332,23 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Docs: a Features overview (user request)
+
+##### Docs
+- **Feature overview** (`guides/00-features.md`, `#guide/features`): what the grid can do in 19 tables - data,
+  columns, display and formatting, filtering, sorting and grouping, selection, editing, find, the detail form,
+  the grid config dialog, menus, export, state, live data, theming, texts, accessibility, touch, SQL - each
+  feature with a line what it does and links to its guide section and sample; the keys at the end. A section
+  of its own in the sidebar, and the site's start page. The README has a Features list.
+- The wide tables of the guides scroll in their own box on a phone, not the whole page.
+
+#### The multiline editor: a ✕ that saves and closes (user request)
+
+##### Added
+- A **✕ at the right of the multiline editor's hint**: it saves and closes, the focus back in the cell - a
+  finger has no Ctrl+Enter. In a readonly editor it closes. Texts `cell.multiline.close` ("Save and close")
+  and `cell.multiline.closeReadonly` ("Close").
+
 #### Docs site: the full grid sample about 30 rows high (user request)
 
 ##### Docs

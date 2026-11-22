@@ -12,6 +12,7 @@ import { keyText } from './keyText';
 import { normalizeLineBreaks } from './multilineText';
 import { removeContextMenu } from './removeContextMenu';
 import { moveMenu, popoverParent } from './showMenu';
+import { attachTooltips, hideTooltipIn, tooltipsEnabled } from './tooltip';
 import { triggerScrollEvent } from './triggerScrollEvent';
 
 /**
@@ -79,6 +80,8 @@ export interface TextEditorCell {
  * - Tab saves and closes, and goes on to the next cell as Tab in the cell does (Shift+Tab back)
  * - a click outside it saves and closes it, and so does scrolling the grid (the wheel, a swipe, the
  *   scrollbars) or opening a menu
+ * - the ✕ at the right of its hint saves and closes it too, the focus back in the cell: a finger has no
+ *   Ctrl+Enter (the user: "add also a close x bottom right in footer panel, useful for mouse/touch")
  * - after Esc, Ctrl+Enter and Tab the focus is back in the cell
  *
  * Saving writes the row once, with the text's line breaks as LF, when the text changed: one step of
@@ -127,13 +130,31 @@ export function openTextEditor(ctx: Grid, target: TextEditorCell, typed = '') {
         : singleLine
           ? gridText(ctx, 'cell.editor.hint')
           : keyText(ctx, 'cell.multiline.hint');
+    // the ✕: saves and closes, as a click beside it does - a readonly text only closes
+    const closeLabel = gridText(ctx, readonly ? 'cell.multiline.closeReadonly' : 'cell.multiline.close');
     render(
         html`${textInput}
-            <div class="simple-html-grid-text-editor-hint" id=${hintId}>
-                ${hint}
+            <div class="simple-html-grid-text-editor-footer">
+                <span class="simple-html-grid-text-editor-hint" id=${hintId}>${hint}</span>
+                <button
+                    type="button"
+                    class="simple-html-grid-text-editor-close"
+                    aria-label=${closeLabel}
+                    data-tooltip=${closeLabel}
+                    @mousedown=${(event: MouseEvent) => {
+                        // the focus stays in the text (a finger: the keyboard does not flicker), so it goes
+                        // back to the cell after - Safari does not focus a clicked button
+                        event.preventDefault();
+                    }}
+                    @click=${() => ctx.textEditor?.close(true, true)}
+                >
+                    ✕
+                </button>
             </div>`,
         element
     );
+    // the tooltip of the ✕, as the grid's own
+    attachTooltips(element, () => tooltipsEnabled(ctx));
     // the textarea, or the input of one line: what is done with it here is the same for both
     const textarea = element.querySelector('.simple-html-grid-text-editor-input') as HTMLTextAreaElement | HTMLInputElement;
     // the formatter's formatForEdit, when it has one and the text can be edited: the plain value
@@ -172,6 +193,8 @@ export function openTextEditor(ctx: Grid, target: TextEditorCell, typed = '') {
 
             const text = textarea.value;
             const hadFocus = element.contains(document.activeElement);
+            // the tooltip of its ✕ goes with it
+            hideTooltipIn(element);
             element.remove();
 
             if (save && !readonly && text !== original) {
