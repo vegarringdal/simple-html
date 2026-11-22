@@ -1332,6 +1332,28 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Header filters: filter as the cells show it, filter as you type (user request)
+
+##### Added
+- **Filter as shown**: a column with a date or number display format takes the header filter's text as its
+  cells show it - `2026-W47` with weeks shown is the week (BETWEEN its Monday and Sunday), `≥ 2026-11` from
+  November 1, a quarter, a year, a Norwegian / US / UK / written out date, a minute or a second of a
+  datetime, `5` with *days until* (today + 5), `1 234,5` and `50%` with a number format. The filter stays
+  plain date / number conditions - `toSqlWhere()` needs nothing new, a week is `col >= Monday AND col <
+  next Monday`. `≠` is an OR of before, after and blank. The cell shows what was typed in the format again;
+  the state keeps the start of the period. The placeholder is an example in the format; the filter menu's
+  range block and the date pickers read and write the format. A format change runs the column's header
+  filter again in the new format. `ColumnFormat.filterAsShown: false` (*Filter as shown* in the grid config
+  dialog) types as the field's formatter reads; `weekday` and the times of day are never filtered as shown.
+- **Filter as you type**: the header filter filters 300ms after the typing stops, no Enter needed - a
+  number or date only when the text reads. On and off per column in the operator choice (its last item),
+  Filter › and the grid config dialog; `HeaderFilter.filterOnType` in the state, defaults
+  `ColumnConfig.filterOnType` and `GridConfig.filterOnType`. Not for a checkbox column.
+
+##### Fixed
+- A header rebuilt while the grid was scrolled sideways (an operator picked, a filter of the filter menu)
+  showed the headers of the first middle columns over the visible ones.
+
 #### Detail form: collapse, resize, softer fields; the column chooser: search, handles, rename (user request)
 
 ##### Added
