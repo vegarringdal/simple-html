@@ -2473,6 +2473,16 @@ in the console. All passed. Found and fixed:
   Submenu 40/40, menus regression 25/25, keyboard 52/52, find 68/68, fill 12/12, full grid 11/11,
   column menu 81/81
 
+### CI: a test timeout of 30s
+
+* the checks workflow failed on GitHub (run 45007887955, 3aa7a70): `customCell.test.ts` "one mount per cell
+  element: 1000 rows scrolled" timed out at vitest's default 5s. Here the slowest tests take 2-3.3s with two
+  workers (texts.test.ts' every-text tests, the docs site's every-guide test, the 1000 rows scrolled); GitHub's
+  runners are slower. `testTimeout: 30_000` in vitest.config.ts: room on the runners, a test that hangs still
+  stops. All 2922 tests pass with `npx vitest run` as the workflow runs it
+* seen too, not changed: the run warns that actions/checkout@v4 and actions/setup-node@v4 target Node 20,
+  which GitHub forces onto Node 24 now (v7 of both is out)
+
 ## Considered, not done
 
 ## Candidates / not started
