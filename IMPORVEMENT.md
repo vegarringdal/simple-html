@@ -3313,6 +3313,21 @@ in the console. All passed. Found and fixed:
   filter-submenu-close 17/17, menus-regression 25/25
 * guides: filtering (the value list), texts
 
+### Aggregates: less room around the lines, the values not bold (user request)
+
+* the user, screenshots of group rows with Avg / Sum / Avg: "think padding is a bit much when multiple
+  aggregates", "maybe using bold is a bit much too?". Every aggregate line was a whole `cellHeight` (22px),
+  a group row with two was 66px; the values took the group row's header bold
+* aggregates.ts: `aggregateRowHeights` uses cellHeightOf (rowHeights.ts) - the first line `cellHeight`, each
+  line more `multilineLineHeight`; new `aggregateLineBox` places a line as a taller cell's lines are placed
+  (linesUnderTop): a group row's aggregates from 19px, 15px apart; the totals row's first line as before,
+  the others under it. grid.css: `.simple-html-grid-group-aggregates .simple-html-grid-aggregate` in
+  `--simple-html-grid-font-weight`; the name keeps the header's bold, the totals row its bold
+* aggregates.test.ts: the heights and tops (37 / 52px, 19 / 34px); guide 18 (the group rows), JSDoc of
+  `multilineLineHeight`
+* browser: new `aggregate-lines-check.js` 11/11 (light and dark: 22 + 15 per line, the lines 15px apart, the
+  name 700 and the values 500, every text inside its row); full-grid 11/11, footer-summary 11/11
+
 ## Considered, not done
 
 ## Candidates / not started

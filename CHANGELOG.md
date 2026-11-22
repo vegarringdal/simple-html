@@ -1332,6 +1332,15 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Aggregates: lines of text, the values not bold (user request)
+
+##### Changed
+- **The lines of aggregates are lines of text**: under a group row's name, and after the first line of the
+  totals row, each aggregate line is `multilineLineHeight` high (15px by default), not a whole `cellHeight` -
+  as the lines of a multiline cell. A group row with sum and avg is 52px, not 66px.
+- **The values of a group row are in the weight of the cells**: only the group's name is bold. The totals
+  row keeps its bold.
+
 #### The value list: filter on the text searched (user request)
 
 ##### Added

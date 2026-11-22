@@ -1805,6 +1805,12 @@
     flex: 0 1 auto;
 }
 
+/* the values of a group row in the weight of the cells: only the group's name is bold - every line
+ * bold was a lot (the user). The totals row keeps its bold, as the totals of a spreadsheet */
+.simple-html-grid-group-aggregates .simple-html-grid-aggregate {
+    font-weight: var(--simple-html-grid-font-weight);
+}
+
 /* "Sum" in front of the value */
 .simple-html-grid-aggregate-label {
     font-size: 0.9em;
