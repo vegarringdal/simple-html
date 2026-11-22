@@ -354,8 +354,14 @@ body.sidebar-hidden .main {
     padding-left: 44px;
 }
 
-/* a phone or a narrow window: the sidebar opens over the page (sidebarToggle.ts NARROW) */
+/* a phone or a narrow window: the sidebar opens over the page (sidebarToggle.ts NARROW), and the show
+   button is above the page, not beside it - the page keeps the whole width */
 @media (max-width: 760px) {
+    body.sidebar-hidden .main {
+        padding-left: 0;
+        padding-top: 44px;
+    }
+
     .sidebar {
         position: fixed;
         top: 0;
