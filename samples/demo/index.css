@@ -592,11 +592,12 @@ body.sidebar-hidden .main {
     border-radius: 5px;
 }
 
-/* a full page sample (fullPage): the grid fills the height the page leaves under its description and
-   buttons (the stage and the host grow, flex: 1), 15 rows at least - the page scrolls in a low window. Not
-   100vh less a guess of what is above it: a longer description cut the grid's footer off */
+/* a full page sample (fullPage): about 30 rows high, as the other samples at most (the user: "full grid
+   sample, show height of grid to around 30 rows") - not the window's height, which was 60 rows in a tall
+   window. The page scrolls in a low window */
 .stage-full .demo-grid-host {
-    max-height: none;
+    flex: none;
+    height: var(--demo-grid-max-height);
 }
 
 /* cell background classes for the cellClass sample -

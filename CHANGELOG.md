@@ -1332,6 +1332,12 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Docs site: the full grid sample about 30 rows high (user request)
+
+##### Docs
+- The full grid sample is about 30 rows high, as the other samples at most - it filled the window, 60 rows in
+  a tall one.
+
 #### Edit permissions: add, change, delete (user request)
 
 ##### Added

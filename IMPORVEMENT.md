@@ -4116,6 +4116,15 @@ rebuildHeaderColumns for the middle section too (scrollHandlers.test.ts has it).
   a permission per column (`change` for some fields only - the isReadonly hook does it in code);
   `updateConfig({ readonly: true })` closing the open editors the same way
 
+### Docs site: the full grid sample about 30 rows (user request)
+
+* the user: "full grid sample, show height of grid to around 30 rows". It filled the height the page left
+  (`flex: 1`, no max) - 60 rows in a tall window
+* index.css: `.stage-full .demo-grid-host` is `--demo-grid-max-height` high (30 rows with the default heights;
+  30.6 measured), not flex; the page scrolls in a low window
+* browser: the shared sidebar-toggle-check.js expects about 30 rows (28 to 31) where it expected more than 30
+  (backup `.before-full-30`): 15/15; full-grid 11/11, sample-height 5/5, detail-form 91/91, color-rules 90/90
+
 ## Considered, not done
 
 ## Candidates / not started
