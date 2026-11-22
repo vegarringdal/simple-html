@@ -1332,6 +1332,20 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### The filter menu: a range block for numbers and dates (user request)
+
+##### Added
+- Number, date and datetime columns get a **range block** in their filter menu, under `Filter ›` (where a
+  text column has its value list): the column's operators as a row of buttons (`=` `≠` `<` `≤` `>` `≥`
+  `Between`), an input (From and To for Between, either end may be empty), Cancel and Apply. It opens
+  with the column's header filter filled in; Apply (or Enter) does exactly what picking the operator and
+  typing in the header filter does - the header cell, the state, the footer chip, `getFilterString()`.
+  The operators follow `filterOperators`. Id `filter.range` (`MENU_IDS.filter`), texts `filter.range.value`,
+  `.from`, `.to`, `.run`, `.cancel`. Dates are typed in the field's format.
+
+##### Fixed
+- A tooltip still shown when a menu closed kept that menu in memory until the next tooltip.
+
 #### The footer: "No filter" opens the filter editor (user request)
 
 ##### Added
