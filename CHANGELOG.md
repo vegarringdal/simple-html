@@ -1332,6 +1332,38 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Header filters: the operator in the cell (user request)
+
+##### Added
+- Each header filter shows its operator as a symbol in its cell - `=` `≠` `<` `≤` `>` `≥` `a..b` (Between),
+  `*a*` (Contains), `!*a*` (Does not contain), `a*` (Begins with), `*a` (Ends with) - on the right of
+  text and lookup filters, on the left of number and date filters (none on booleans). A click, a tap or
+  **F4** in the filter opens the operator choice under it: the same as Filter › Operator ›, one code path.
+  A column offering one operator shows it without a choice; under 60px wide there is no symbol.
+- `GridConfig.filterOperatorIndicator` (default `true`; `false` in the lookup dropdown grid). Texts
+  `filter.indicator`, `filter.indicator.tooltip`, `filter.indicator.<FilterOperator>`. The input is
+  described by its operator for a screen reader.
+
+##### Fixed
+- Picking a header filter operator (Operator › too) lost the focus to the page: it stays in the filter.
+
+#### Undo row edits on new rows (user request)
+
+##### Changed
+- `datasource.resetRows()` - the row menu's "Undo row edits" - marks a **new row for deletion** (with the
+  values it was added with): a revert takes a row to what the server has, and a new row is not there.
+  It is struck through and out of `getChanges()`, and removed with the other marked rows on save. One undo
+  step: Ctrl+Z brings it back. It used to stay as a new row.
+
+##### Fixed
+- "Undo row edits" and "Undo row edits (selected rows)" were greyed out for new rows not edited.
+
+#### Docs site: "Guides - DEV" and a User guide (user request)
+
+##### Changed
+- The docs site's guides are "Guides - DEV" (for developers); a "User guide" section follows it, a TODO
+  until every feature is in place.
+
 #### The filter menu: a range block for numbers and dates (user request)
 
 ##### Added

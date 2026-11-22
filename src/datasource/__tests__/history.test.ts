@@ -685,23 +685,44 @@ describe('history - resetRows()', () => {
         expect(states(ds)).toEqual(['M', 'D', 'M']);
     });
 
-    it('expect a new row to stay, new, with the values it was added with - and undo to bring the edits back', async () => {
+    it('expect a new row to be marked for deletion, with the values it was added with: it is not on the server - and undo to bring it back', async () => {
         const ds = people();
         ds.addNewEmpty({ name: 'New' });
         const added = ds.getAllData()[3];
         added.name = 'Typed';
         added.age = 5;
-        ds.markForDeletion(added);
         await nextTask();
 
         ds.resetRows(added);
+        // still in the data, struck through, no change any more
         expect(ds.getAllData()).toHaveLength(4);
-        expect([added.name, added.age, added.__rowState]).toEqual(['New', undefined, 'N']);
-        expect(ds.getChanges().newEntities).toEqual([{ id: added.id, name: 'New', age: undefined }]);
+        expect([added.name, added.age, added.__rowState]).toEqual(['New', undefined, 'D']);
+        expect(ds.getChanges()).toEqual({ newEntities: [], modifiedEntities: [], deletedEntities: [] });
+        expect(ds.hasChanges()).toBe(false);
         await nextTask();
 
         ds.undo();
-        expect([added.name, added.age, added.__rowState]).toEqual(['Typed', 5, 'D']);
+        expect([added.name, added.age, added.__rowState]).toEqual(['Typed', 5, 'N']);
+        expect(ds.getChanges().newEntities).toHaveLength(1);
+    });
+
+    it('expect a new row not edited to be marked too, and one marked already to stay marked', async () => {
+        const ds = people();
+        ds.addNewEmpty({ name: 'New' });
+        ds.addNewEmpty({ name: 'Other' });
+        const [added, other] = ds.getAllData().slice(3);
+        ds.markForDeletion(other);
+        other.name = 'Typed';
+        await nextTask();
+
+        ds.resetRows([added, other]);
+        expect([added.name, added.__rowState]).toEqual(['New', 'D']);
+        expect([other.name, other.__rowState]).toEqual(['Other', 'D']);
+        await nextTask();
+
+        ds.undo();
+        expect([added.name, added.__rowState]).toEqual(['New', 'N']);
+        expect([other.name, other.__rowState]).toEqual(['Typed', 'D']);
     });
 
     it('expect a row without changes, and one that is not in the data, to make no step', () => {

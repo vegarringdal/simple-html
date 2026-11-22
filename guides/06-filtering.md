@@ -29,6 +29,8 @@ Enter, or leaves the cell, and the grid filters on it:
 - The `operator` option of a column sets the operator its header filter starts with, see
   [below](#a-contains-search); `filterOperators` the ones it offers, see
   [The operators a column offers](#the-operators-a-column-offers).
+- The cell shows the operator it uses as a small symbol beside the input, a click on it changes it, see
+  [The operator in the cell](#the-operator-in-the-cell).
 - Emptying the cell removes the column's condition.
 
 ### A contains search
@@ -136,6 +138,56 @@ What each header cell shows is part of the [state](03-state.md#header-filters-in
 ```sample filtering
 ```
 
+### The operator in the cell
+
+Each header filter shows the operator it uses, as a small symbol in its cell: on the right of a text
+filter (and of a [lookup column](20-lookups.md)'s, it filters as text), clear of its text; on the left
+of a number or date filter, where it reads as the condition does: `≥ 2026-01-01`. The input's padding
+keeps the text typed clear of it. A boolean column has none, its filter is a checkbox.
+
+| symbol | operator | | symbol | operator |
+| --- | --- | --- | --- | --- |
+| `=` | Equal | | `*a*` | Contains |
+| `≠` | Not Equal | | `!*a*` | Does not contain |
+| `<` `≤` | Less than (or equal) | | `a*` | Begins with |
+| `>` `≥` | Greater than (or equal) | | `*a` | Ends with |
+| `a..b` | Between | | | |
+
+The text symbols are the wildcards a text filter takes: `*a*` is what `*ann*` typed with Equal finds.
+The tooltip names the operator (`Operator: Contains (F4)`), and so does the input's description for a
+screen reader.
+
+- **A click** on it - a tap on a phone - opens the **operator choice** right under it: the operators of
+  [Filter › Operator ›](#the-header-filter-menu) (the column's `filterOperators`, else its type's), the
+  one in use with a ✓. Picking one does exactly what Operator › does: the operator is state
+  (`headerFilters[field].operator`), the filter runs again with the value in the cell, the grid sends
+  `filter-operator-change`. A text typed and not filtered yet is filtered first, as a right click does.
+- **F4** in the header filter opens the choice from the keyboard, the focus on its first item: the
+  [menu keys](10-menus.md#the-keyboard) move in it, Enter picks - the focus goes back to the filter -
+  and Esc closes it. The symbol is no stop of Tab: Tab goes from filter to filter as before.
+- A right click or a long press on it opens the filter menu, as on the input.
+- **A column with one operator** (`filterOperators: ['CONTAINS', 'IN']`) shows its symbol, but it can
+  not be clicked: there is nothing to choose.
+- **A narrow column** - under 60px - shows none: the input keeps its room. F4 opens the choice there
+  too, under the cell.
+- **`filterOperatorIndicator: false`** in the config shows none at all, and F4 opens nothing: the
+  operator is picked in the filter menu only. The dropdown grid of a [lookup](20-lookups.md) has it
+  off, a picker has no menus.
+
+The symbols, the name and the tooltip are texts: `filter.indicator.<FilterOperator>`, `filter.indicator`
+and `filter.indicator.tooltip`, see [Texts](12-texts.md#header-filters). The choice is made of
+Operator ›'s items: the `menus.filter` hook changes the filter menu, not the choice - offer fewer
+operators with `filterOperators`, it is what both show.
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    filterOperatorIndicator: false, // plain inputs, the operator in the filter menu only
+    layout: { center: [{ fields: ['name'], width: 150 }] }
+};
+```
+
 ### The header filter menu
 
 Right click a header filter for its menu: the submenu **Filter ›**, then the main tool, in the menu
@@ -148,7 +200,8 @@ filter is a checkbox. In Filter ›:
   Not Equal, Less than, Less than or equal, Greater than, Greater than or equal and Between - or the
   ones of the column's `filterOperators`. A boolean column has none. The filter runs again with it, and
   the grid sends a `filter-operator-change` event. The operator picked is state
-  (`headerFilters[field].operator`).
+  (`headerFilters[field].operator`). The symbol in the cell opens the same choice, see
+  [The operator in the cell](#the-operator-in-the-cell).
 - **Match case** (text columns) turns matching case on and off, see [Match case](#match-case)
 - **Blank ›** **Is blank** / **Is not blank** replace the column's conditions with `IS_BLANK` /
   `IS_NOT_BLANK`

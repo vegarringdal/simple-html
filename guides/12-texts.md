@@ -583,6 +583,28 @@ filter shows its formatter's format (`YYYY-MM-DD`), a boolean filter is a checkb
 | `filter.placeholder.number` | `Number` | an empty header filter of a number field |
 | `filter.placeholder.between` | `from..to` | an empty header filter whose operator is `BETWEEN`, any type |
 
+The operator indicator in a header filter cell (`filterOperatorIndicator`, see
+[Filtering](06-filtering.md#the-operator-in-the-cell)): the symbol of the operator the filter uses,
+its name for a screen reader and its tooltip. `{operator}` is the operator as Filter › Operator ›
+names it (`filter.operator.*`). A symbol is short: the indicator is about two characters wide, a
+longer one is cut off.
+
+| id | English | shown |
+| --- | --- | --- |
+| `filter.indicator` | `Operator: {operator}` | the indicator's name for a screen reader, and the description of the header filter's input; the tooltip of one that can not be clicked (a column with one operator) |
+| `filter.indicator.tooltip` | `Operator: {operator} (F4)` | the tooltip of the indicator: a click, or F4 in the filter, opens the operator choice |
+| `filter.indicator.EQUAL` | `=` | Equal |
+| `filter.indicator.NOT_EQUAL_TO` | `≠` | Not Equal |
+| `filter.indicator.LESS_THAN` | `<` | Less than, a number or date field |
+| `filter.indicator.LESS_THAN_OR_EQUAL_TO` | `≤` | Less than or equal, a number or date field |
+| `filter.indicator.GREATER_THAN` | `>` | Greater than, a number or date field |
+| `filter.indicator.GREATER_THAN_OR_EQUAL_TO` | `≥` | Greater than or equal, a number or date field - the operator a number or date filter starts with |
+| `filter.indicator.BETWEEN` | `a..b` | Between, a number or date field - typed as `from..to` |
+| `filter.indicator.CONTAINS` | `*a*` | Contains, a text field - as the wildcards a text filter takes |
+| `filter.indicator.DOES_NOT_CONTAIN` | `!*a*` | Does not contain, a text field |
+| `filter.indicator.BEGIN_WITH` | `a*` | Begins with, a text field |
+| `filter.indicator.END_WITH` | `*a` | Ends with, a text field |
+
 ### Find
 
 The find bar of Ctrl+F in the grid, see [Find](19-find.md).

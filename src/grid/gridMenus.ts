@@ -421,8 +421,8 @@ export interface GridMenus {
  * | `row.edit.undo` | Undo last change (Ctrl+Z) - `datasource.undo()`, the last edit, paste, clear, delete or revert. Greyed out when there is nothing to undo | the grid is editable |
  * | `row.edit.redo` | Redo (Ctrl+Y) - `datasource.redo()`. Greyed out when there is nothing to redo | the grid is editable |
  * | `row.edit.revertCell` | Undo cell edit - the cell's original value (`datasource.resetField()`). Greyed out when the cell is not edited | the grid is editable |
- * | `row.edit.revertRow` | Undo row edits - the row right clicked back to its original values, unmarked for deletion (`datasource.resetRows(row)`), no selection needed. Greyed out when the row is not edited or marked | the grid is editable |
- * | `row.edit.revertRows` | Undo row edits (selected rows) - the selected rows back, unmarked for deletion (`datasource.resetRows()`). Greyed out when no selected row is edited or marked | the grid is editable |
+ * | `row.edit.revertRow` | Undo row edits - the row right clicked back to its original values, unmarked for deletion (`datasource.resetRows(row)`), no selection needed; a new row is marked for deletion (it is not on the server). Greyed out when the row is not edited, not marked and not new | the grid is editable |
+ * | `row.edit.revertRows` | Undo row edits (selected rows) - the selected rows back, unmarked for deletion (`datasource.resetRows()`); the new ones marked for deletion. Greyed out when no selected row is edited, marked or new | the grid is editable |
  * | `row.select` | Select › - a submenu: what Shift and Ctrl do with the mouse, for a finger (and every input) | |
  * | `row.select.row` | This row - the row in or out of the selection, as Ctrl+click on its number; a ✓ while it is selected. In `'single'` mode it replaces the row selected | the selection mode is not `'none'` |
  * | `row.select.rowsTo` | Rows from N to here - from the anchor (N, the row selected last without Shift) to this row, as Shift+click on its number. Greyed out without an anchor (N is this row then), when the anchor is this row, and in `'single'` mode | the selection mode is not `'none'` |
@@ -540,6 +540,9 @@ export interface GridMenus {
  * | `filter.filter.advanced` | Advanced Filter… - the filter editor | |
  * | `filter.values` | the value list: search box, "Select all" and a checkbox per value, "Cancel" and "Apply" - a {@link MenuBlock}, its texts are `filter.values.*` | a text field, a lookup column - with `IN` |
  * | `filter.range` | the range block: the operators of Operator › as a row of buttons (=, ≠, <, ≤, >, ≥, Between), an input - From and To for Between - "Cancel" and "Apply": as the operator picked in Operator › and the value typed in the header filter. A {@link MenuBlock}, its texts are `filter.range.*` | a number, date or datetime field, not a lookup column |
+ *
+ * The items of Operator › are the operator choice of the header filter's operator indicator too
+ * (`GridConfig.filterOperatorIndicator`), a menu of its own: `GridMenus.filter` is not called for it.
  *
  * Column menu (`GridMenus.column`), right click on a column number - the row of numbers under the
  * header filters - or Shift+F10 on one with the focus. Select ›, then the copies, flat: a Copy › around

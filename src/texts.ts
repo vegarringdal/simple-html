@@ -343,6 +343,22 @@ const DEFAULTS = {
     'filter.placeholder.number': 'Number',
     // a header filter with BETWEEN: the two ends are typed with .. between them
     'filter.placeholder.between': 'from..to',
+    // the operator indicator of a header filter (GridConfig.filterOperatorIndicator): its name for a
+    // screen reader, its tooltip - {operator} is the operator as Operator › names it - and the symbol of
+    // each operator
+    'filter.indicator': 'Operator: {operator}',
+    'filter.indicator.tooltip': 'Operator: {operator} (F4)',
+    'filter.indicator.EQUAL': '=',
+    'filter.indicator.NOT_EQUAL_TO': '≠',
+    'filter.indicator.LESS_THAN': '<',
+    'filter.indicator.LESS_THAN_OR_EQUAL_TO': '≤',
+    'filter.indicator.GREATER_THAN': '>',
+    'filter.indicator.GREATER_THAN_OR_EQUAL_TO': '≥',
+    'filter.indicator.BETWEEN': 'a..b',
+    'filter.indicator.CONTAINS': '*a*',
+    'filter.indicator.DOES_NOT_CONTAIN': '!*a*',
+    'filter.indicator.BEGIN_WITH': 'a*',
+    'filter.indicator.END_WITH': '*a',
 
     // labels for screen readers (aria-label)
     'grid.label': 'Grid',

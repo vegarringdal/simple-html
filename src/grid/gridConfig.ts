@@ -146,6 +146,23 @@ export type GridConfig = {
     /** hides the row of header filters, default false */
     hideFilter?: boolean;
     /**
+     * shows the operator of each header filter in its cell, default `true`: a small symbol beside the
+     * input - on the right of a text filter (and a lookup column's), on the left of a number or date
+     * filter - `=`, `≠`, `<`, `≤`, `>`, `≥`, `a..b` (between), `*a*` (contains), `!*a*` (does not
+     * contain), `a*` (begins with), `*a` (ends with). Its tooltip names the operator. A click (a tap, F4
+     * in the filter) opens the operator choice under it: the operators of the filter menu's
+     * Filter › Operator ›, picking one does what Operator › does. A column that offers one operator only
+     * shows it, it can not be clicked. Not on a boolean column (a checkbox), nor on a column narrower
+     * than 60px: the input keeps its room.
+     *
+     * The symbols are texts (`filter.indicator.<FilterOperator>`), the tooltip `filter.indicator.tooltip`.
+     * `false` shows the plain inputs, and F4 opens nothing: the operator is picked in the filter menu
+     * only. A lookup's dropdown grid has it `false`. See the filtering guide, "Header filters"
+     *
+     * @sample filtering
+     */
+    filterOperatorIndicator?: boolean;
+    /**
      * the whole grid is readonly, default `true`: no cell can be edited, and the row menu has no paste
      * or clear. Set `false` to edit; the column's `readonly` and the `isReadonly` hook
      * ({@link GridHooks}) can still make cells readonly
@@ -845,6 +862,7 @@ export type ParsedGridOptions = GridOptions &
             | 'editedMarker'
             | 'mergeHighlight'
             | 'copyHeaders'
+            | 'filterOperatorIndicator'
             | 'placeholderRowCurrentEntityOnly'
             | 'groupAggregates'
             | 'totalsRow'

@@ -288,6 +288,29 @@ describe('accessibility - rows and cells', () => {
         ]);
     });
 
+    it('expect a filter cell to hold the operator indicator: a button out of the tab order, opening a menu, the input described by it', async () => {
+        const { element } = await mountGrid(pinnedConfig(), people(), fields);
+        const [, filters] = ariaRows(element);
+
+        for (const cell of filters.cells) {
+            const input = cell.element.querySelector('input') as HTMLInputElement;
+            const button = cell.element.querySelector('button') as HTMLButtonElement;
+            expect(button.getAttribute('tabindex')).toEqual('-1');
+            expect(button.getAttribute('aria-haspopup')).toEqual('menu');
+            expect(button.getAttribute('aria-label')).toMatch(/^Operator: /);
+            expect(input.getAttribute('aria-describedby')).toEqual(button.id);
+            expect(element.querySelectorAll(`[id="${button.id}"]`)).toHaveLength(1);
+        }
+        // the name of the operator: the text of Operator ›
+        expect(filters.cells.map((cell) => cell.element.querySelector('button')?.getAttribute('aria-label'))).toEqual([
+            'Operator: Equal',
+            'Operator: Equal',
+            'Operator: Equal',
+            'Operator: Greater than or equal',
+            'Operator: Greater than or equal'
+        ]);
+    });
+
     it('expect a body row to have its cells of every section together: row number, left, middle, right', async () => {
         const { element } = await mountGrid(pinnedConfig(), people(), fields);
         const rows = bodyRows(element);

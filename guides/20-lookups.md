@@ -195,7 +195,8 @@ interface, shown as it is.
 
 - **The config**: without one, a column of the label, or of the value and the label when they differ.
   What the config leaves out is set for a picker: no grouping panel (`panelHeight: 0`), no footer
-  (`footerHeight: 0`), no column numbers (`selectSizeHeight: 0`), no row state (`rowStatus: false`),
+  (`footerHeight: 0`), no column numbers (`selectSizeHeight: 0`), no row state (`rowStatus: false`), no
+  [operator indicators](06-filtering.md#the-operator-in-the-cell) in its filters (`filterOperatorIndicator: false`),
   and a text column without an `operator` searches anywhere in the text (`CONTAINS`) - a number column
   keeps `GREATER_THAN_OR_EQUAL_TO`, it has no `CONTAINS`. It is readonly, as every grid by default.
 - **Its size** follows its columns, and it is nine rows high (fewer when the lookup has fewer rows, at

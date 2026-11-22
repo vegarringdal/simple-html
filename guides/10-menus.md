@@ -295,8 +295,8 @@ the selection work. A group row's number has no menu.
 | `row.edit.undo` | Undo last change (Ctrl+Z, ⌘Z on a Mac): `datasource.undo()`, and the focus goes to the cell it changed, see [Undo and redo](05-editing.md#undo-and-redo). Greyed out when there is nothing to undo | the grid is editable |
 | `row.edit.redo` | Redo (Ctrl+Y, ⇧⌘Z on a Mac): `datasource.redo()`, the focus to the cell it changed. Greyed out when there is nothing to redo | the grid is editable |
 | `row.edit.revertCell` | Undo cell edit: the cell's original value, see [Reverting a cell or a row](05-editing.md#reverting-a-cell-or-a-row). Greyed out when the cell is not edited | the grid is editable |
-| `row.edit.revertRow` | Undo row edits: the row right clicked back to its original values, its deletion mark taken off - no selection needed. Greyed out when the row is not edited or marked | the grid is editable |
-| `row.edit.revertRows` | Undo row edits (selected rows): the selected rows back, deletion marks taken off. Greyed out when no selected row is edited or marked | the grid is editable |
+| `row.edit.revertRow` | Undo row edits: the row right clicked back to its original values, its deletion mark taken off - no selection needed. A new row is marked for deletion: it is not on the server. Greyed out when the row is not edited, not marked and not new | the grid is editable |
+| `row.edit.revertRows` | Undo row edits (selected rows): the selected rows back, deletion marks taken off, the new ones marked for deletion. Greyed out when no selected row is edited, marked or new | the grid is editable |
 | `row.select` | Select › - a submenu: what Shift and Ctrl do with the mouse, for a finger and every input, see [With a finger](17-selection-and-clipboard.md#with-a-finger) | |
 | `row.select.row` | This row: the row in or out of the selection, as Ctrl+click on its number, a ✓ while it is selected. In `'single'` mode it replaces the row selected | the selection mode is not `'none'` |
 | `row.select.rowsTo` | Rows from N to here: from the anchor (N, the row selected last without Shift) to this row, as Shift+click on its number. Greyed out without an anchor (N is this row then), when the anchor is this row, and in `'single'` mode | the selection mode is not `'none'` |
@@ -450,6 +450,12 @@ the selection work. A group row's number has no menu.
 | `filter.range` | the range block: the operators of Operator › as a row of buttons (=, ≠, <, ≤, >, ≥, Between), an input - From and To for Between - "Cancel" and "Apply": as the operator picked in Operator › and the value typed in the header filter. One `MenuBlock`, its texts are `filter.range.*` | a number, date or datetime field, not a lookup column |
 
 See [Filtering](06-filtering.md#the-header-filter-menu) for what the filter menu's entries do.
+
+The operator indicator in a header filter cell opens a menu of its own, the operator choice: the
+items of Operator › (`filter.operator.*`), with the context of the filter menu (`menu: 'filter'`). The
+`filter` function of the `menus` hook is not called for it: it changes the filter menu only. Offer
+fewer operators with the column's `filterOperators`, both show those; turn the indicator off with
+`filterOperatorIndicator: false`. See [Filtering](06-filtering.md#the-operator-in-the-cell).
 
 ### Column menu (`MENU_IDS.column`)
 

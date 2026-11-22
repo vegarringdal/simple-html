@@ -2807,6 +2807,99 @@ in the console. All passed. Found and fixed:
   now. The new and the changed script are in this worktree's `.claude/browser-checks/scripts/` (the shared
   folder could not be written), with `range-block-touch-shot.js` (the 36px targets)
 
+### Undo row edits on new rows (user request)
+
+* the user, on the row menu with new rows selected (`+`, `N`) and "Undo row edits (selected rows)" greyed:
+  "undo on selected rows does not understand there are new rows". `resetRows()` left a new row as it was
+  added (only its edits back) and the menu entries were greyed for a row neither edited nor marked - a new
+  row added with its values had "nothing" to undo
+* now a revert takes a row to what the server has: a new row is not there, so `resetRows()` marks it for
+  deletion (with the values it was added with) - struck through, out of `getChanges()` / `hasChanges()`,
+  removed with the other marked rows on save; not removed at once, so it is one undo step and Ctrl+Z
+  brings it back with its edits (`resetDataSelectionOnly()` still removes new rows, not undoable).
+  `__resetRows(rows, discardNew)`: only `datasource.resetRows()` marks, `resetDataSelection` removes as
+  before. The menu's `row.edit.revertRow` / `row.edit.revertRows` are enabled for a new row not marked yet
+  (`canRevert`, contextmenuRow.ts)
+* tests: history.test.ts (the new row test changed on purpose, +1: a new row not edited marked, one marked
+  already stays), undoRedo.test.ts +2 (the selected new rows: enabled, marked, out of the changes, greyed
+  once marked, Ctrl+Z brings them back; the row right clicked). Guides 05 and 10, MENU_IDS docs
+
+### Docs site: "Guides - DEV", and a User guide to come (user request)
+
+* the user: "Guides should be called Guides - DEV and we should have a user guide later... but under here
+  we just say todo... all features need to be in place first". The sidebar: Status, Guides - DEV, User
+  guide (one page, TODO: written when the features are in place), Samples, API. site.test.ts and
+  full-grid-check.js follow the new title
+
+### Header filters: the operator in the cell, a click changes it (user request)
+
+* the user, on the filter row: "in filters we should maybe have an operator symbol, right side on text and
+  left on numbers/date, then users can also click there to change operator type". Each header filter shows
+  the operator it uses (getHeaderFilterOperator: the state's, else the column's `operator`, else the type's
+  default) as a small symbol in its cell: on the right of a text filter and of a lookup column's (it filters
+  as text), on the left of a number, date and datetime filter. None on a boolean column (a checkbox)
+* the symbols, texts `filter.indicator.<FilterOperator>`: `=` `≠` `<` `≤` `>` `≥`, `a..b` Between (the
+  `from..to` typed), and the wildcards of a text filter: `*a*` Contains, `!*a*` Does not contain, `a*` Begins
+  with, `*a` Ends with. Measured at the 11px font in Chromium: 6 - 18.4px (`a…b` was 23px, `≠*a*` 21px).
+  The indicator is 1.8em wide, inside the input's 2px focus outline; the input's padding on that side is
+  1.8em + 5px, so the text typed (and the placeholder) stops before it. Placeholder colour
+  (`--simple-html-grid-sec-font-color`), the text colour and the lookup button's background under the
+  pointer and on focus; square, no new colours. z-index 1002: over the resize handle (1001) of the column's
+  edge - the column is resized from its label or column number there
+* **a click** (a tap) opens the **operator choice** under it: a menu of the grid with Operator ›'s items -
+  one code for both: `headerOperatorItems()` and `setHeaderFilterOperator()` moved from contextmenuFilter.ts
+  to headerOperatorMenu.ts (the state, the filter run again with the cell's value, the header rebuilt, the
+  `filter-operator-change` event). The text typed and not filtered yet is filtered first, as a right click
+  does. A mouse click puts the focus in the input first (the lookup button's way), a tap does not (the phone
+  keyboard); a mousedown takes no focus. A right click / long press on it opens the filter menu
+* **the keyboard**: the indicator is a button with `tabindex="-1"`, no Tab stop - Tab through the filter row
+  is unchanged (cellFilterKeyNavigationCellRowHandler moves the focus between the inputs itself, a stop in
+  between would change every path). **F4** in the filter opens the choice (F4 opens the list of a lookup
+  cell too; Alt+ArrowDown is taken, it moves down): the focus on its first item, the menu keys, Enter picks,
+  Esc closes - the focus back in the input. Under the cell when it has no indicator
+* **the focus after a pick**: rebuilding the header made the input anew, the focus was lost to the body -
+  also with Operator › before. setHeaderFilterOperator puts it in the new input when the old one had it
+* a column with **one operator** (`filterOperators`): the symbol as a span (its name as its tooltip), no
+  click, F4 does nothing. A column **under 60px** (`INDICATOR_MIN_COLUMN_WIDTH`): none, the input keeps
+  its room, F4 opens the choice under the cell. **`GridConfig.filterOperatorIndicator`** (default `true`, in
+  the JSON config test): `false` shows none and F4 opens nothing - the plain inputs of before, Operator ›
+  only. A lookup's dropdown grid has it `false` (dropdownConfig, lookupEditor.ts: a picker has no menus,
+  its contextmenu is swallowed), its own `config` can turn it on. The `menus.filter` hook is not called for
+  the choice: `filterOperators` limits both
+* a screen reader: the button `aria-haspopup="menu"`, named `Operator: Contains` (`filter.indicator`, the
+  operator's Operator › text), tooltip `Operator: Contains (F4)` (`filter.indicator.tooltip`); the input is
+  `aria-describedby` it - Chrome's tree: "Filter Company", description "Operator: Contains", also for the
+  span of a one-operator column (aria-hidden, referenced)
+* one path with the range block (merged while this was made): `operatorPicked` (the event) and the
+  operator texts (`HEADER_OPERATOR_TEXTS`) moved to headerOperatorMenu.ts with `setHeaderFilterOperator`,
+  the range block imports them
+* tests: filterOperatorIndicator.test.ts 30 (the sides per type, none on a boolean, every symbol, config
+  `operator` / state / setState / Operator ›, name and tooltip and description, translated texts; the
+  choice: the operators, `filterOperators`, a pick = Operator › (state, filter, event, symbol, compared with
+  a grid picking in the menu), the text typed first, BETWEEN, the focus, a tap, the right click, the menu
+  context; the keyboard: no Tab stop, F4 / Esc / End + Enter and the focus, F4 filters the text typed, F4 with
+  a modifier, Enter; one operator; the option off (no F4), F4 on a narrow column, updateConfig, a narrow
+  column, stacked fields); accessibility.test.ts +1; lookups.test.ts +1 (none in a picker, F4 opens
+  nothing); texts.test.ts shows every symbol; configJson's full config has the option. 3159 -> 3191 tests
+* browser (Chromium 1148): new `.claude/browser-checks/scripts/operator-indicator-check.js` (in this
+  worktree, the shared folder is outside it) 77/77 - light and dark: the sides, the text typed clear of it, a
+  click hits it (not the resize handle), the accessibility tree, click → the choice under it → Begins with
+  (symbol, state, event, rows), the focus back; Tab past it, F4, Esc, End + Enter → Between, a range typed;
+  setState; one operator, a 50px column, the option off; a phone: a tap opens, a tap picks, the long press
+  on the input still opens the filter menu; screenshots 1300x1400 and the header zoomed with the choice
+  open. On the range block's base too: filter ui 117/117, filter case 73/73, keyboard 52/52, touch 61/61,
+  submenu 40/40, filter submenu close 17/17; menus-regression 25/25 with its right edge point moved 15px → 30px in from the input's edge (its copy in
+  this worktree): it right clicked 15px in, now on the indicator - which opens the filter menu too, but the
+  script wants the input under the point and so took the boolean column, which has no Operator ›
+* docs: 06-filtering.md (The operator in the cell), 02-grid-config.md (the option), 12-texts.md (the
+  texts), 14-accessibility.md (F4, the button, Tab), 10-menus.md (the choice and the hook), JSDoc of
+  `filterOperatorIndicator`, `filter-operator-change`, MENU_IDS; the Norwegian sample, the
+  filter-operator-header sample's text
+* open: on a phone the indicator is a small target (1.8em x the row height), the grid has no coarse pointer
+  size for it; `menus.filter` does not reach the choice (documented); the right-click menu and F4 are the
+  only ways on a column narrower than 60px; the range block draws its own symbols (`OPERATOR_SYMBOLS`, not
+  texts) - the same glyphs as `filter.indicator.*`, it could take those texts
+
 ### Display formats: Format › in the header menu (user request)
 
 * the user: "in right menu users should maybe be able to set formatting with menu. for dates we might
