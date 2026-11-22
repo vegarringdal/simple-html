@@ -1332,6 +1332,29 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### SQL from a filter: `toSqlWhere()` for Postgres, Oracle, SQLite and SQL Server (user request)
+
+##### Added
+- **`@simple-html/grid/sql`**, a separate entry point for a backend (ESM and CommonJS, no DOM, plain
+  Node): `toSqlWhere(filter, { dialect, columns, timeZone?, dateStorage?, firstParam?, limits? })` gives
+  `{ sql, params }` - the `WHERE` condition of a grid filter and its parameters. `sql` is `1=1` when
+  nothing filters, always one term (`AND ${sql}` is safe).
+- **Made for a filter sent by the browser**: it is checked as untrusted JSON. Every value is a bound
+  parameter (`$1`, `:1`, `?`, `@p1`), never SQL text. The only columns are those of `columns`, the
+  caller's whitelist - a field not in it throws, it is never dropped. Column names are checked (letters,
+  digits, `_`, up to `schema.table.column`) and quoted. Limits (depth 10, 100 conditions and groups,
+  lists of 1000, texts of 1000, 2000 parameters) throw a `RangeError`, a wrong shape a `TypeError`.
+- **The rows the grid's own filter selects**: the blank rules (0, `''`, null are blank; a blank number
+  is 0, a blank boolean false), match case, `*` / `%` wildcards with the rest literal, `BETWEEN` with
+  open ends, `IN` / `NOT_IN` with `'NULL'`, the legacy operators, `valueField`. Every condition is true or
+  false, never NULL, so `NOT (sql)` is exactly the other rows. Dates are ranges of a day (or second) in
+  the user's `timeZone`, for the column's storage (`local`, `utc`, `zoned`, `epochSeconds`,
+  `epochMillis`) - index friendly. Booleans `true`/`false` or `1`/`0` per dialect, `booleanValues` for
+  `'Y'` / `'N'` columns.
+- Guide 22 "SQL from a filter" (the security model, each dialect's driver, time zones, the differences
+  from the grid), the sample "SQL from the filter" (the four dialects, live as you filter), the API pages
+  of the new entry point.
+
 #### Touch: swipes with momentum, the long press, menus for a finger (user request)
 
 ##### Added
