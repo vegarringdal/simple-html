@@ -2640,6 +2640,36 @@ in the console. All passed. Found and fixed:
   keeps no `kept` as the column numbers do (in the candidates); a Cmd+click on a row number still does not
   toggle (`highlightRow` reads `ctrlKey`)
 
+### SQL: a value folded before it is bound (user request)
+
+* the user, on `UPPER("country") IN (UPPER(:1), UPPER(:2), ...)`: "running so many UPPER is prob not
+  perfect ... maybe it should do a uppercase in js, before sending to params". A value of ASCII characters
+  only is folded in JavaScript now (`foldedParam`, buildWhere.ts): `UPPER("country") IN (:1, :2)` with the
+  params `['FINLAND', 'FRANCE']`, `LOWER("name") LIKE $1` with `'%an%'`. The dialects fold the column only
+* not every value: JavaScript and the database fold some letters differently - `'Straße'.toUpperCase()` is
+  `STRASSE`, PostgreSQL's and SQL Server's `UPPER('ß')` is `ß`, SQLite's `UPPER()` folds ASCII letters only
+  (`'Ærø'` stays `ÆRø`). Folded in JavaScript, a text would no longer match the same text. So a value with
+  a letter that is not ASCII is folded by the database, as its column: `UPPER(:3)`. A to Z fold the same
+  everywhere, except in a Turkish collation (`i` / `I` are no pair there) - in guide 22
+* the results are the same: the SQLite comparison (13 526 filters, and NOT of each) passes unchanged; a new
+  SQLite test with `Ærø`, `ærø`, `Straße`, `STRASSE`: the same text matches, an ASCII value every case of it,
+  and SQLite's own limit (`Ø` is no `ø` there) stated. toSqlWhere.test.ts: the expectations and the four
+  snapshots (only the `LOWER()` / `UPPER()` around parameters gone), a test of the non-ASCII values. 3092 tests
+
+### Docs site: every sample grid shows 15 rows (user request)
+
+* the user: "sql sample grid need to have a min height, so we can see some rows" (in the SQL guide the grid
+  was its header only) and "all samples should show at least 15 rows of height". In a guide a sample's stage
+  was 460px high for everything in it: a sample with a log or the SQL under its grid squeezed the grid
+* `.demo-grid-host` is at least 15 rows of 22px high with the grid's default heights around them
+  (`--demo-grid-height`), the full page sample the larger of that and the window. A guide's stage is as high
+  as its parts, its grid host has that height of its own (the grid fills its host: a host without a definite
+  height gave it none). A sample with more around its rows (stacked labels, a totals row) is topped up once
+  rendered: `fitSampleGrids` in pages.ts, from the height of the grid's rows
+* browser: new `.claude/browser-checks/scripts/sample-height-check.js` 5/5 - every grid of the 55 sample and
+  guide pages (65 grids) shows 15 rows or more, at 1400x900 and 1000x600; before: 4 grids 13 rows, and the
+  guides' with a log or SQL fewer
+
 ## Considered, not done
 
 ## Candidates / not started

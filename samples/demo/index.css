@@ -441,10 +441,23 @@ body {
     border-radius: 5px;
 }
 
+/*
+ * the grid of a sample shows at least 15 rows: with the grid's default heights the panel (25px), labels
+ * (22px), filters (22px) and column numbers (18px), 15 rows of 22px, the footer (45px) and a horizontal
+ * scrollbar (16px). A sample with more around its rows (stacked labels, a totals row) gets the rest from
+ * fitSampleGrids (pages.ts)
+ */
 .demo-grid-host {
+    --demo-grid-height: calc(25px + 22px + 22px + 18px + 15 * 22px + 45px + 16px);
     flex: 1;
     position: relative;
-    min-height: 140px;
+    min-height: var(--demo-grid-height);
+}
+
+/* in a guide the stage is as high as its parts: the grid fills its host, which needs a height of its own */
+.doc-sample .demo-grid-host {
+    flex: none;
+    height: var(--demo-grid-height);
 }
 
 /* the SQL sample: the WHERE of each dialect under the grid */
@@ -472,9 +485,10 @@ body {
     border-radius: 5px;
 }
 
-/* a full page sample (fullPage): the grid is most of the window high, also when the page scrolls */
+/* a full page sample (fullPage): the grid is most of the window high, also when the page scrolls - and
+   15 rows at least, in a low window too */
 .stage-full .demo-grid-host {
-    min-height: calc(100vh - 190px);
+    min-height: max(var(--demo-grid-height), calc(100vh - 190px));
 }
 
 /* cell background classes for the cellClass sample -
@@ -645,8 +659,9 @@ body {
     margin: 8px 12px 0;
 }
 
+/* as high as its parts: the buttons, a log, the grid (15 rows at least, .demo-grid-host) and what a
+   sample shows under it - a fixed height squeezed the grid of a sample with a log or more */
 .doc-sample .stage {
     flex: none;
-    height: 460px;
     margin: 12px;
 }

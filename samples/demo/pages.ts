@@ -73,6 +73,29 @@ function runSample(sample: Sample, parent: HTMLElement) {
     stage.className = sample.fullPage ? 'stage stage-full' : 'stage';
     parent.appendChild(stage);
     sample.run(stage);
+    // once the grid is rendered
+    requestAnimationFrame(() => fitSampleGrids(stage));
+}
+
+/** px of rows a sample's grid shows at least: 15 rows of the grid's default 22px */
+const SAMPLE_ROWS_HEIGHT = 15 * 22;
+
+/**
+ * Makes each grid of a stage tall enough for 15 rows. The css's min-height of `.demo-grid-host` counts
+ * the grid's default heights around the rows; a sample with more there (labels of stacked fields, a
+ * totals row) gets the rest here
+ */
+function fitSampleGrids(stage: HTMLElement) {
+    for (const host of stage.querySelectorAll<HTMLElement>('.demo-grid-host')) {
+        const body = host.querySelector<HTMLElement>('.simple-html-grid-body-scroller');
+        const missing = body ? SAMPLE_ROWS_HEIGHT - body.clientHeight : 0;
+        if (missing > 0) {
+            // both: a guide's host has a height of its own, a sample page's grows with the window (flex)
+            const height = `${host.offsetHeight + missing}px`;
+            host.style.minHeight = height;
+            host.style.height = height;
+        }
+    }
 }
 
 /**

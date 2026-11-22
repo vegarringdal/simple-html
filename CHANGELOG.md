@@ -1332,6 +1332,20 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### SQL: values folded before they are bound (user request)
+
+##### Changed
+- `toSqlWhere()`: a text value of ASCII characters only is folded in JavaScript before it is bound -
+  `UPPER("country") IN ($1, $2)` with `['FINLAND', 'FRANCE']`, not `IN (UPPER($1), UPPER($2))`. A value with
+  another letter is still folded by the database (`UPPER($3)`), as its column, so a text always matches the
+  same text (`ß`, and SQLite's ASCII-only `UPPER()`). The rows selected are the same.
+
+#### Docs site: every sample grid shows at least 15 rows (user request)
+
+##### Fixed
+- A sample in a guide had 460px for its buttons, log, grid and what it shows under the grid: the grid of the
+  SQL sample was its header only. Every sample grid shows at least 15 rows now, in a guide and on its page.
+
 #### A finger multi-selects: taps toggle, Select › in the menus (user request)
 
 ##### Added
