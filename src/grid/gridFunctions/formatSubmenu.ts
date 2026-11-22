@@ -29,7 +29,7 @@ import { gridText } from './gridText';
  * to the config's (ColumnConfig.format). Every hint is an example: the format applied to today (a date
  * column) or to 1234567.891 (a number column, 0.256 with Percent) - made when the menu opens, not texts.
  *
- * The column settings dialog (columnSettings.ts) opens the same entries from its format picker, with a
+ * The grid config dialog (columnSettings.ts) opens the same entries from its format picker, with a
  * FormatTarget of its draft: one list of the formats, in one order.
  */
 
@@ -70,7 +70,7 @@ const DECIMALS = [undefined, 0, 1, 2, 3, 4] as const;
 
 /**
  * Where the entries of Format › read the format in use and write the one picked: the grid's state for
- * the header menu, the draft of the column settings dialog (columnSettings.ts) for its format picker
+ * the header menu, the draft of the grid config dialog (columnSettings.ts) for its format picker
  */
 export interface FormatTarget {
     /** the column's format now: read when the menu opens and when an entry is clicked */
@@ -102,7 +102,7 @@ function stateTarget(ctx: Grid, attribute: string): FormatTarget {
  * The Format submenu of a column. Its entries are always there, as every default entry: the ones that
  * are not for the column's type are hidden by `visible`, and so is the submenu when none is
  * @param target where the format is read and written: the grid's state (the header menu) when left
- * out, the column settings dialog's draft for its picker
+ * out, the grid config dialog's draft for its picker
  */
 export function formatSubmenu(ctx: Grid, attribute: string, target: FormatTarget = stateTarget(ctx, attribute)): MenuSubmenu {
     const gridInterface = ctx.gridInterface;

@@ -6,9 +6,9 @@ import type { Grid } from '../grid';
 import { ariaColIndex, setAria } from './ariaGrid';
 import { cellFilterKeyNavigationCellRowHandler } from './cellFilterKeyNavigationCellRowHandler';
 import type { ColType } from './colType';
-import { contextmenuDate } from './contextmenuDate';
+import { contextmenuDate, contextmenuDateRange, rangeFilterText } from './contextmenuDate';
 import { contextmenuFilter } from './contextmenuFilter';
-import { filterCallback, headerFilterText } from './filterCallback';
+import { filterCallback, headerFilterText, parseRangeText } from './filterCallback';
 import { canChooseOperator, openOperatorChoice, operatorIndicator } from './filterOperatorIndicator';
 import { getColumnLabel } from './getColumnLabel';
 import { getHeaderFilterOperator } from './getHeaderFilterOperator';
@@ -166,25 +166,34 @@ export function renderHeaderFilter(
                         }}
                         @click=${(e: any) => {
                             if (type === 'date' || type === 'datetime') {
-                                setTimeout(() => {
-                                    contextmenuDate(
-                                        ctx,
-                                        e,
-                                        cell,
-                                        // on the date in the input: typed since the cell was rendered too
-                                        parseFilterText(formatter, (e.target as HTMLInputElement).value),
-                                        (value: Date | null) => {
-                                            // as if the date was typed: filterCallback parses the text and
-                                            // stores the Date it filters on as the header filter's value
-                                            // (it stored the text over it here, a typed date was a Date)
-                                            const filterValue = formatter.format(value);
-                                            if (lastFilter !== filterValue) {
-                                                lastFilter = filterValue;
-                                                filterCallback(ctx, filterValue, attribute);
-                                            }
+                                /**
+                                 * as if the text was typed: filterCallback parses it and stores the Date it
+                                 * filters on as the header filter's value (it stored the text over it here,
+                                 * a typed date was a Date) - a BETWEEN's [from, to]
+                                 */
+                                const usePicked = (filterValue: string) => {
+                                    if (lastFilter !== filterValue) {
+                                        lastFilter = filterValue;
+                                        filterCallback(ctx, filterValue, attribute);
+                                    }
 
-                                            renderHeaderFilter(ctx, cell, row, column, celno, colType, cellType, attribute);
-                                        }
+                                    renderHeaderFilter(ctx, cell, row, column, celno, colType, cellType, attribute);
+                                };
+
+                                setTimeout(() => {
+                                    // on the date in the input: typed since the cell was rendered too
+                                    const typed = (e.target as HTMLInputElement).value;
+                                    if (getHeaderFilterOperator(ctx, attribute) === 'BETWEEN') {
+                                        // from..to: the range picker, on the two ends - an open end is not
+                                        // picked. Use gives from..to, Clear no filter
+                                        const range = parseRangeText(formatter, typed) ?? [null, null];
+                                        contextmenuDateRange(ctx, cell, range, (picked) =>
+                                            usePicked(rangeFilterText(formatter, type, picked))
+                                        );
+                                        return;
+                                    }
+                                    contextmenuDate(ctx, e, cell, parseFilterText(formatter, typed), (value: Date | null) =>
+                                        usePicked(formatter.format(value))
                                     );
                                 }, 2);
                             }

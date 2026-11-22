@@ -264,14 +264,43 @@ describe('select with a finger - the row menu of a row number', () => {
         return { ...mounted, seen };
     }
 
-    it('expect a right click on a row number to open the row menu: every entry, the context without a field', async () => {
+    /**
+     * not on a row number (the user: "row number context menu have too many options that does not belong
+     * there"): what needs a cell, and what is not about rows
+     */
+    const notOnRowNumber = (id: string) =>
+        ['row.paste', 'row.clear', 'row.filter', 'row.view', 'row.export'].some(
+            (part) => id === part || id.startsWith(`${part}.`)
+        ) ||
+        [
+            'row.edit.revertCell',
+            'row.select.cellsSeparator',
+            'row.select.rangeTo',
+            'row.select.addCell',
+            'row.copy.cell',
+            'row.copy.column',
+            'row.copy.range',
+            'row.size.fitColumn'
+        ].includes(id);
+
+    it('expect a right click on a row number to open the row menu: the entries of rows, the context without a field', async () => {
         const { element, datasource, seen } = await mountCapturing();
 
         const event = rowNumberMenu(element, 2);
 
         expect(event.defaultPrevented).toBe(true);
         expect(openMenus()).toHaveLength(1);
-        expect(menuTreeIds()).toEqual(MENU_IDS.row);
+        expect(menuTreeIds()).toEqual(MENU_IDS.row.filter((id) => !notOnRowNumber(id)));
+        // Undo / Redo, Select, Copy, Delete, Size
+        expect(menuTreeIds().filter((id) => !id.slice(4).includes('.'))).toEqual([
+            'row.edit',
+            'row.select',
+            'row.copy',
+            'row.delete',
+            'row.size'
+        ]);
+        // the menus hook gets every entry: hidden ones by `visible`, it can find them by id
+        expect(seen[0].defaults.map((entry) => entry.id)).toContain('row.filter');
         const { context } = seen[0];
         expect(context.menu).toEqual('row');
         expect(context.field).toEqual('');
@@ -280,7 +309,7 @@ describe('select with a finger - the row menu of a row number', () => {
         expect(context.cell).toBe(selectorRowOf(element, 2));
     });
 
-    it('expect the entries that need a cell greyed out, the ones of the row and of the selection usable', async () => {
+    it('expect the entries that need a cell left out, the ones of the row and of the selection usable', async () => {
         const { element, datasource } = await mount();
         datasource.getSelection().selectRowRange(1, 2);
         // an edit of the row: its revert works, the cell's has no cell
@@ -303,7 +332,7 @@ describe('select with a finger - the row menu of a row number', () => {
             'row.size.fitColumn'
         ];
         for (const id of needCell) {
-            expect(disabled(id), id).toBe(true);
+            expect(menuEntry(id), id).toBeFalsy();
         }
         const usable = [
             'row.edit.revertRow',
@@ -317,8 +346,7 @@ describe('select with a finger - the row menu of a row number', () => {
             'row.delete.row',
             'row.delete.rows',
             'row.size.fitRow',
-            'row.size.fitRows',
-            'row.export.excelSelected'
+            'row.size.fitRows'
         ];
         for (const id of usable) {
             expect(disabled(id), id).toBe(false);

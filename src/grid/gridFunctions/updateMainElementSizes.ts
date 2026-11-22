@@ -1,6 +1,7 @@
 import type { Grid } from '../grid';
 import { TOTALS_CLASS } from './aggregates';
 import { asPx } from './asPx';
+import { detailFormSpace, placeDetailForm } from './detailForm';
 import { LEFT_PINNED_COLTYPE } from './GROUP_COLTYPE';
 import { getElementByClassName } from './getElementByClassName';
 import { getGroupingWidth } from './getGroupingWidth';
@@ -36,26 +37,33 @@ export function updateMainElementSizes(ctx: Grid) {
 
     header.style.height = asPx(headerHeight + config.selectSizeHeight);
 
+    // the detail form (GridConfig.detailForm, detailForm.ts) takes its room at the right of the header,
+    // the rows, their scrollbars and the totals row - or under the totals row, over the footer, in a
+    // narrow grid. The grouping panel and the footer stay as wide as the grid
+    const form = detailFormSpace(ctx);
+    header.style.right = asPx(form.right);
+
     // the totals row (GridConfig.totalsRow) is over the footer, the rows end above it. The horizontal
     // scrollbar is at the bottom of the rows: the totals row's top is the band it is painted over, as
     // the footer's top is without a totals row
     const totalsHeight = config.__totalsRowHeight ? config.__totalsRowHeight + config.__scrollbarSize : 0;
-    const bottom = config.footerHeight + totalsHeight;
+    const bottom = config.footerHeight + form.below + totalsHeight;
 
     const body = getElementByClassName(ctx.element, 'simple-html-grid-body');
     body.style.top = asPx(config.panelHeight + headerHeight + config.selectSizeHeight);
     body.style.bottom = asPx(bottom);
-    body.style.right = asPx(config.__scrollbarSize);
+    body.style.right = asPx(config.__scrollbarSize + form.right);
 
     const scrollerBody = getElementByClassName(ctx.element, 'simple-html-grid-body-scroller');
     scrollerBody.style.top = asPx(config.panelHeight + headerHeight + config.selectSizeHeight);
     scrollerBody.style.bottom = asPx(bottom);
+    scrollerBody.style.right = asPx(form.right);
 
     const scrollerMiddle = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
     scrollerMiddle.style.top = asPx(config.panelHeight + headerHeight + config.selectSizeHeight);
     scrollerMiddle.style.bottom = asPx(bottom - config.__scrollbarSize);
     scrollerMiddle.style.left = asPx(config.__selectSizeWidth + leftWidth);
-    scrollerMiddle.style.right = asPx(config.__rightWidth + config.__scrollbarSize);
+    scrollerMiddle.style.right = asPx(config.__rightWidth + config.__scrollbarSize + form.right);
 
     const footer = getElementByClassName(ctx.element, 'simple-html-grid-footer');
     footer.style.height = asPx(config.footerHeight);
@@ -64,10 +72,12 @@ export function updateMainElementSizes(ctx: Grid) {
     const totals = getElementByClassName(ctx.element, TOTALS_CLASS);
     if (totals) {
         totals.style.display = totalsHeight ? 'block' : 'none';
-        totals.style.bottom = asPx(config.footerHeight);
+        totals.style.bottom = asPx(config.footerHeight + form.below);
         totals.style.height = asPx(totalsHeight);
-        totals.style.right = asPx(config.__scrollbarSize);
+        totals.style.right = asPx(config.__scrollbarSize + form.right);
     }
+
+    placeDetailForm(ctx, form);
 
     /**
      * header viewports

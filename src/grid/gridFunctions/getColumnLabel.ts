@@ -17,7 +17,7 @@ export function getColumnLabel(ctx: Pick<Grid, 'gridInterface'>, attribute: stri
 
 /**
  * The label of a column without a label of the user's (`ColumnFormat.label`) - what an empty label in
- * the column settings dialog goes back to: the column's own `label`, else the label of the datasource
+ * the grid config dialog goes back to: the column's own `label`, else the label of the datasource
  * field (`FieldConfig.label`), else the field name prettified (`first_name` -> `First Name`).
  * @param ctx the grid, or an object with the grid's interface
  */

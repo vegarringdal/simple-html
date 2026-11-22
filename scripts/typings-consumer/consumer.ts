@@ -789,6 +789,21 @@ dateInterface.setSelected([new Date(2026, 10, 20, 14, 30)]);
 const selectedDays: number[] = dateInterface.getSelected();
 console.log(selectedDays.map((time) => new Date(time)));
 
+// a range picker: From and To, an end can be open (null). range-select sends them, null for Clear
+const rangeInterface = new DateInterface({
+    ...dateInterface.config,
+    rangepicker: true,
+    datepickerRange: [new Date(2026, 10, 22), null]
+});
+const onRange: EventHandler<DateEvents['range-select']> = (range) => {
+    const ends: [Date | null, Date | null] | null = range;
+    console.log(ends?.[0]?.getTime(), ends?.[1]?.getTime());
+};
+rangeInterface.on('range-select', onRange);
+// @ts-expect-error a range is two ends: From and To
+const oneEnd: IDateConfig['datepickerRange'] = [new Date()];
+console.log(oneEnd);
+
 // the element, placed by hand
 const element = document.createElement('simple-html-grid') as GridElement;
 element.connectInterface(gridInterface);

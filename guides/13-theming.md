@@ -114,7 +114,8 @@ differ from the widgets for that, or because the grid has one colour where the w
   library's checked box and picked day - its primary Button is blue-950 in a blue-400 frame, a fill
   under 3:1 to the dialog
 - the date picker's selected day is blue-950 in a blue-400 frame (the library's range fill): its
-  picked day (blue-400) has slate-950 text, the date picker's text is slate-200
+  picked day (blue-400) has slate-950 text, the date picker's text is slate-200. The days between From
+  and To of a range picker are blue-950 too, the library's span: From and To have the frame
 - the line of the current match of Find is amber-200: amber-400 is under 3:1 to the match's tint on a
   selected row
 - the links are blue-800 in light and blue-100 in dark, not the accent blue-400: a link's text keeps
@@ -380,7 +381,7 @@ On `.simple-html-grid`, in `grid.css`.
 
 | variable | colours | light | dark |
 | --- | --- | --- | --- |
-| `--simple-html-grid-main-bg-color` | the labels, the panel, the footer, the row selector, group rows, the menus, the filter editor and the column settings dialog | `#f5f5f5` | `#374151` |
+| `--simple-html-grid-main-bg-color` | the labels, the panel, the footer, the row selector, group rows, the menus, the filter editor and the grid config dialog | `#f5f5f5` | `#374151` |
 | `--simple-html-grid-sec-bg-color` | the filter row, the inputs, pickers and buttons of the filter editor and the value list, the value list's box, the filter chips, the list of the columns and the preview of the column settings, the tooltips (through `--simple-html-grid-tooltip-bg-color`) | `#ffffff` | `#4b5563` |
 | `--simple-html-grid-alt-bg-color` | scrollbar tracks, the search input of the column chooser, the focus button of a cell | `#ffffff` | `#4b5563` |
 | `--simple-html-grid-main-bg-even` | the even rows | `#ffffff` | `#4b5563` |
@@ -420,20 +421,20 @@ On `.simple-html-grid`, in `grid.css`.
 | `--simple-html-grid-aggregate-label-color` | the label in front of an aggregate (`Sum`) in a group row and the totals row. At least 4.5:1 to both | `#57606a` | `#c9d1d9` |
 | `--simple-html-grid-group-line-color` | the grouping columns: the line of each level down its group's rows, the frame of a group row's `+` / `-` box. At least 3:1 to the group rows | `#8c8c8c` | `#9ca3af` |
 | `--simple-html-grid-warning-font-color` | the "only the first 100 values" warning of the filter menu's value list | `red` | `#fca5a5` |
-| `--simple-html-grid-danger-font-color` | the footer's Clear filter button under the pointer: its text. A problem of a template in the column settings dialog, at least 4.5:1 to the dialog and the inputs | `#c0392b` | `#fecaca` |
+| `--simple-html-grid-danger-font-color` | the footer's Clear filter button under the pointer: its text. A problem of a template in the grid config dialog, at least 4.5:1 to the dialog and the inputs | `#c0392b` | `#fecaca` |
 | `--simple-html-grid-danger-border` | the footer's Clear filter button under the pointer: its border | `#d98282` | `#f87171` |
 | `--simple-html-grid-readonly-stripe-color` | the red stripes of a readonly cell in an editable grid (`.simple-html-readonly`) | `rgb(255, 0, 0)` | `rgb(255, 0, 0)` |
 | `--simple-html-grid-required-stripe-color` | the blue stripes of an empty required cell (`.simple-html-mandatory`) | `rgb(0, 8, 255)` | `rgb(120, 140, 255)` |
 | `--simple-html-grid-stripe-bg-color` | between the stripes | `rgb(255, 255, 255)` | `transparent` |
 | `--simple-html-grid-menu-shadow-color` | the drop shadow of the menus and the other popovers (column chooser, date picker, dropdowns) | `rgba(0, 0, 0, 0.28)` | `rgba(0, 0, 0, 0.6)` |
-| `--simple-html-grid-dialog-shadow-color` | the shadow of the filter editor and the column settings dialog | `rgba(0, 0, 0, 0.32)` | `rgba(0, 0, 0, 0.6)` |
+| `--simple-html-grid-dialog-shadow-color` | the shadow of the filter editor and the grid config dialog | `rgba(0, 0, 0, 0.32)` | `rgba(0, 0, 0, 0.6)` |
 | `--simple-html-grid-tooltip-shadow-color` | the shadow of the tooltips | `rgba(0, 0, 0, 0.28)` | `rgba(0, 0, 0, 0.5)` |
 | `--simple-html-grid-tooltip-bg-color` | the background of the tooltips | `--simple-html-grid-sec-bg-color` | |
 | `--simple-html-grid-tooltip-font-color` | the text of the tooltips | `--simple-html-grid-main-font-color` | |
 | `--simple-html-grid-tooltip-border-color` | the frame of the tooltips | `--simple-html-grid-pinned-border` | |
 | `--simple-html-grid-scrollbar-thumb-color` | the scrollbar thumbs (the tracks are `--simple-html-grid-alt-bg-color`) | `--simple-html-grid-main-bg-selected-odd` | |
 | `--simple-html-grid-scrollbar-shadow-color` | the shadow in a scrollbar thumb (Safari, the other browsers use `scrollbar-color`) | `rgb(0 0 0 / 30%)` | `rgb(0 0 0 / 30%)` |
-| `--simple-html-grid-backdrop-color` | the layer over the page behind the filter editor and the column settings dialog | `rgba(129, 127, 127, 0.2)` | `rgba(0, 0, 0, 0.4)` |
+| `--simple-html-grid-backdrop-color` | the layer over the page behind the filter editor and the grid config dialog | `rgba(129, 127, 127, 0.2)` | `rgba(0, 0, 0, 0.4)` |
 
 `--simple-html-grid-grouping-border` and `--simple-html-grid-main-hr-border` are still set, but
 nothing in `grid.css` uses them. The four that name another variable are that one's colour, light
@@ -466,6 +467,14 @@ bold with a bar under it, the selected day has a frame and a fill. At the bottom
 minutes, each a number between a step down and a step up (the arrow keys step it too), and Clear,
 Now and Use in a bar of buttons of the same width - Use in the colours of the selected day.
 
+A range picker (`rangepicker: true`, the grid's date header filter with Between) has two months side
+by side with « ‹ before the first and › » after the last (`.simple-html-date-nav-space` holds their
+place in the other header). From and To have the frame and fill of the selected day
+(`.simple-html-date-day-selected`), the days between them a fill of their own
+(`.simple-html-date-day-in-range`). Under the months, as wide as both, the line of From and To
+(`.simple-html-date-range-ends`: a label over the day picked) and Clear and Use - no hours, minutes
+or Now. The bottom is `.simple-html-date-range`.
+
 | variable | colours | light | dark |
 | --- | --- | --- | --- |
 | `--simple-html-date-main-bg-color` | the background, the buttons, the hour and minute inputs | `white` | `#374151` |
@@ -476,15 +485,16 @@ Now and Use in a bar of buttons of the same width - Use in the colours of the se
 | `--simple-html-date-button-border` | the frame of the buttons and of the hour and minute inputs | `#d1d0d0` | `#6b7280` |
 | `--simple-html-date-hover-bg-color` | a day or a button under the pointer | `#e5ebf1` | `#4b5563` |
 | `--simple-html-date-main-bg-selected` | the selected day, the Use button | `#bdd4e7` | `#234882` |
+| `--simple-html-date-in-range-bg-color` | a range picker: the days between From and To - midway between the background and the selected day | `#dee9f3` | `#2d4469` |
 | `--simple-html-date-selected-border` | the frame of the selected day and of the Use button | `#3f73a8` | `#7fb0ff` |
 | `--simple-html-date-today-color` | the bar under today | `#005fcc` | `#93c5fd` |
 | `--simple-html-date-focus-color` | the outline of the element with the keyboard focus (in the grid: the grid's) | `#005fcc` | `#b3d7ff` |
 | `--simple-html-date-font-size` | the text | `11px` | |
 | `--simple-html-date-font-family` | the text | `'Roboto', 'Helvetica', 'Arial', 'sans-serif'` | |
 
-The text has a contrast of at least 4.5:1 to its background, in light and in dark; the frame of the
-selected day and the bar under today at least 3:1 to the background and the selected day's fill
-(WCAG 1.4.3 and 1.4.11). Keep that when you change them. The dimmed days and the week numbers had
+The text has a contrast of at least 4.5:1 to its background, in light and in dark - the fill of the
+days of a range too; the frame of the selected day and the bar under today at least 3:1 to the
+background, the selected day's fill and the fill of a range (WCAG 1.4.3 and 1.4.11). Keep that when you change them. The dimmed days and the week numbers had
 lighter colours before v6 (`#dfdfdf`, `#8b8b8b`): too light to read.
 
 `--simple-html-date-header-bg-border` is still set, but nothing in `date.css` uses it.

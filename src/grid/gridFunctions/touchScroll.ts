@@ -1,4 +1,5 @@
 import type { Grid } from '../grid';
+import { isInDetailForm } from './detailForm';
 import { findBarHasFocus } from './findBar';
 import { TOUCH_SLOP } from './longPress';
 
@@ -208,8 +209,8 @@ export function addTouchScroll(ctx: Grid, bodyScroller: HTMLElement, middleScrol
         'touchstart',
         (event) => {
             const stoppedMomentum = stopMomentum();
-            if (event.touches.length !== 1) {
-                // a second finger: the browser's
+            // a second finger: the browser's. A finger on the detail form scrolls the form, the browser's too
+            if (event.touches.length !== 1 || isInDetailForm(ctx, event.target)) {
                 gesture = null;
                 return;
             }

@@ -28,11 +28,19 @@ import type { MenuItem } from '../gridMenus';
 import { numberOverrideOf, overrideNumberText, zeroText } from './cellText';
 import { defaultHeaderOperator, headerFilterType, headerOperators } from './columnFilterOptions';
 import { contextMenuAttributes } from './contextMenuAttributes';
+import {
+    applyDetailForm,
+    type DetailFormDraft,
+    detailFormDraft,
+    detailFormResetButton,
+    detailFormTabPanel
+} from './detailFormSettings';
 import { moveDialog, resizeHandles, showDialog } from './dialogFrame';
 import { formatSubmenu, NUMBER_SAMPLE, PERCENT_SAMPLE } from './formatSubmenu';
 import { getColumnLabel, getConfigColumnLabel } from './getColumnLabel';
 import { getHeaderFilterOperator } from './getHeaderFilterOperator';
 import { getLayoutFields } from './getLayoutFields';
+import { configTabs, type GridConfigTab, tabId, tabPanelId } from './gridConfigTabs';
 import { gridText } from './gridText';
 import { defaultFilterPlaceholder, headerFilterPlaceholder } from './headerFilterPlaceholder';
 import { HEADER_OPERATOR_TEXTS, setHeaderFilterOperator } from './headerOperatorMenu';
@@ -43,14 +51,19 @@ import { closeTextEditor } from './textEditor';
 import { attachTooltips, hideTooltip, tooltipsEnabled } from './tooltip';
 
 /**
- * The column settings dialog: how each column of the layout shows its values, set by the user. A modal
- * `<dialog class="simple-html-grid filter-editor-content column-settings">` on the body, of the filter
- * editor's kind (dialogFrame.ts): its title bar, body and footer have the filter editor's classes and
- * look; moved by the title bar, resized from every edge and corner, Esc closes it, the focus goes back
- * to where it was.
+ * The grid config dialog - the column settings: how each column of the layout shows its values, set by
+ * the user. A modal `<dialog class="simple-html-grid filter-editor-content column-settings">` on the
+ * body, of the filter editor's kind (dialogFrame.ts): its title bar, body and footer have the filter
+ * editor's classes and look; moved by the title bar, resized from every edge and corner, Esc closes it,
+ * the focus goes back to where it was.
  *
  * Opened by the gear at the right end of the footer (`GridConfig.settingsButton`, rebuildFooter.ts),
- * *Column settings…* in the header menu (`header.settings`) and `gridInterface.openColumnSettings()`.
+ * *Column settings…* in the header menu (`header.settings`) and `gridInterface.openColumnSettings()` -
+ * on the Columns tab - and `gridInterface.openDetailFormSettings()` on the Detail form tab.
+ *
+ * Two tabs under the title bar (gridConfigTabs.ts): **Columns**, the settings of the columns below, and
+ * **Detail form** (detailFormSettings.ts), the fields of the detail form (detailForm.ts). The footer is
+ * the dialog's: Apply applies both tabs, Cancel drops both; its left end has the resets of the tab shown.
  *
  * - **Left**: the columns of the layout, in their order - a listbox, one stop of Tab, the arrows, Home,
  *   End, PageUp / PageDown and a letter pick one. Each has its label, its type and what it has set:
@@ -93,6 +106,10 @@ interface ColumnSettings {
     operators: Record<string, FilterOperator>;
     /** the column shown on the right */
     field: string;
+    /** the tab shown: the columns' settings, or the detail form's */
+    tab: GridConfigTab;
+    /** what the Detail form tab edits, see detailFormSettings.ts */
+    detailForm: DetailFormDraft;
 }
 
 /** a problem of a template, a text of the grid and its values */
@@ -120,8 +137,9 @@ export function columnSettingsEntry(ctx: Grid, attribute: string): MenuItem {
  * Opens the dialog on a column, with the formats of the state. Open already, it starts again from them.
  * Nothing happens for a layout without columns
  * @param field the column it shows first: a field of the layout. Else the first one
+ * @param tab the tab it shows, default the Columns tab
  */
-export function openColumnSettings(ctx: Grid, field?: string) {
+export function openColumnSettings(ctx: Grid, field?: string, tab: GridConfigTab = 'columns') {
     // a modal dialog: the editor of a multiline cell would be inert under it, saved as a click outside it does
     closeTextEditor(ctx);
     removeContextMenu(ctx);
@@ -135,7 +153,9 @@ export function openColumnSettings(ctx: Grid, field?: string) {
         operators: Object.fromEntries(
             fields.filter((name) => hasOperator(ctx, name)).map((name) => [name, getHeaderFilterOperator(ctx, name)])
         ),
-        field: field !== undefined && fields.includes(field) ? field : fields[0]
+        field: field !== undefined && fields.includes(field) ? field : fields[0],
+        tab,
+        detailForm: detailFormDraft(ctx, ctx.gridInterface.getState().detailForm)
     });
 }
 
@@ -379,6 +399,8 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                 setHeaderFilterOperator(ctx, name, operator);
             }
         }
+        // the Detail form tab's
+        applyDetailForm(ctx, settings.detailForm);
         return true;
     };
 
@@ -929,7 +951,22 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                     ✕
                 </button>
             </div>
-            <div class="filter-editor-body column-settings-body simple-html-dialog-scroller">
+            ${configTabs(
+                ctx,
+                settings.tab,
+                (tab) => {
+                    settings.tab = tab;
+                    update();
+                },
+                idOf(ctx, 'title')
+            )}
+            <div
+                class="filter-editor-body column-settings-body simple-html-dialog-scroller"
+                role="tabpanel"
+                id=${tabPanelId(ctx, 'columns')}
+                aria-labelledby=${tabId(ctx, 'columns')}
+                ?hidden=${settings.tab !== 'columns'}
+            >
                 <div
                     class="column-settings-list simple-html-dialog-scroller"
                     role="listbox"
@@ -974,8 +1011,10 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                     ${labelSettings()} ${settingsOf()} ${placeholderSettings()} ${operatorSettings()} ${preview()}
                 </div>
             </div>
+            ${detailFormTabPanel(ctx, dialog, settings.detailForm, settings.tab, update)}
             <div class="filter-editor-footer">
-                <span class="column-settings-resets">
+                ${settings.tab === 'detailForm' ? detailFormResetButton(ctx, settings.detailForm, update) : nothing}
+                <span class="column-settings-resets" ?hidden=${settings.tab !== 'columns'}>
                     <button
                         type="button"
                         class="simple-html-grid-button"

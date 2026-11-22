@@ -103,7 +103,8 @@ export function dragEvent(
                 column: cell.$column,
                 isChip: cell.classList.contains('simple-html-grid-panel-label')
             };
-            const gridRect = ctx.element.getBoundingClientRect();
+            // the rows' left and right: the grid's, or the detail form's at its right (detailForm.ts)
+            const gridRect = ctx.body.getBoundingClientRect();
             const isTouch = down.pointerType === 'touch';
 
             // the element that follows the pointer, set while it is a drag
@@ -307,7 +308,7 @@ function createGhost(ctx: Grid, cell: HTMLElement, attribute: string, x: number,
 }
 
 /**
- * dragged left or right of the grid: scroll the center columns that way
+ * dragged left or right of the rows: scroll the center columns that way
  */
 function autoScroll(ctx: Grid, gridRect: DOMRect, x: number) {
     if (x < gridRect.left) {

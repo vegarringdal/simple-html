@@ -199,7 +199,7 @@ export function rebuildFooter(ctx: Grid) {
  * and Tab skips its buttons (tabExit.ts). Its count is alone then, in the middle.
  *
  * The settings button (`GridConfig.settingsButton`), a gear, is at the right end on the line of the
- * filter's row - the last stop of Tab in the footer. It opens the column settings dialog
+ * filter's row - the last stop of Tab in the footer. It opens the grid config dialog
  * (columnSettings.ts) on the column of the cell that had the focus. With it the footer keeps its room on
  * both sides (`has-settings`): the filter's row stays in the middle and never reaches under it, the
  * summary of the selected cells ends left of it

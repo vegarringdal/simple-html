@@ -30,6 +30,8 @@
     --simple-html-date-hover-bg-color: light-dark(#e5ebf1, #4b5563);
     /* the selected day, the Use button */
     --simple-html-date-main-bg-selected: light-dark(#bdd4e7, #234882);
+    /* a range picker: the days between From and To - midway between the background and the selected day */
+    --simple-html-date-in-range-bg-color: light-dark(#dee9f3, #2d4469);
     /* the frame of the selected day and of the Use button: 3:1 to the background */
     --simple-html-date-selected-border: light-dark(#3f73a8, #7fb0ff);
     /* the bar under today: 3:1 to the background and to the selected day */
@@ -116,6 +118,12 @@
     height: 12px;
 }
 
+/* a range picker: where a month has no « ‹ or › » (they are once, around its months), as wide as the two
+   buttons and the gap between them - the name of the month stays in the middle */
+.simple-html-date .simple-html-date-nav-space {
+    flex: 0 0 52px;
+}
+
 /* the names of the days, with the line under them. The height is rowHeight */
 .simple-html-date .simple-html-date-header-row {
     display: flex;
@@ -193,6 +201,48 @@
 .simple-html-date .simple-html-date-day-selected {
     background-color: var(--simple-html-date-main-bg-selected);
     border-color: var(--simple-html-date-selected-border);
+}
+
+/* a range picker: the days between From and To (selected, they have the frame) - a fill, no frame */
+.simple-html-date .simple-html-date-day-in-range {
+    background-color: var(--simple-html-date-in-range-bg-color);
+}
+
+/* the bottom of a range picker, under its months and as wide: From and To, then Clear / Use */
+.simple-html-date .simple-html-date-range {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--simple-html-date-main-bg-border);
+}
+
+/* From and To side by side, each its label over the day */
+.simple-html-date .simple-html-date-range-ends {
+    display: flex;
+    gap: 8px;
+}
+
+.simple-html-date .simple-html-date-range-end {
+    flex: 1 1 0%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.simple-html-date .simple-html-date-range-label {
+    color: var(--simple-html-date-week-color);
+    font-weight: 600;
+}
+
+.simple-html-date .simple-html-date-range-day {
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-weight: 700;
 }
 
 /* the bottom of a date picker: the time, and the Clear / Now / Use buttons */

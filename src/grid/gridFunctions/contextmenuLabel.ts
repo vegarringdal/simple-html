@@ -47,7 +47,7 @@ export function contextmenuLabel(
 
 /**
  * The header menu's default entries, new objects every call: pin (a submenu), hide, remove sorting,
- * the column chooser, then the submenus size, format (formatSubmenu.ts), the column settings dialog
+ * the column chooser, then the submenus size, format (formatSubmenu.ts), the grid config dialog
  * (columnSettings.ts), the submenus aggregate and grouping. The ids are documented in MENU_IDS.header
  */
 function headerMenuEntries(

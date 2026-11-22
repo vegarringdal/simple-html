@@ -314,15 +314,15 @@ function rangePointerDown(ctx: Grid, down: PointerEvent) {
         }
     };
 
-    // past the top or bottom of the rows, or the left or right of the grid: scroll that way, a row (or
-    // AUTO_SCROLL_X px) at a time while the pointer stays out there. The rows and columns are rendered on
-    // the scroll events, the cell at the edge is read after
+    // past the top or bottom of the rows, or their left or right - the grid's, or the detail form's at
+    // its right (detailForm.ts): scroll that way, a row (or AUTO_SCROLL_X px) at a time while the pointer
+    // stays out there. The rows and columns are rendered on the scroll events, the cell at the edge is
+    // read after
     const autoScroll = () => {
         scrollTimer = undefined;
         const body = ctx.body.getBoundingClientRect();
-        const grid = ctx.element.getBoundingClientRect();
         const dy = at.y < body.top ? -1 : at.y > body.bottom ? 1 : 0;
-        const dx = at.x < grid.left ? -1 : at.x > grid.right ? 1 : 0;
+        const dx = at.x < body.left ? -1 : at.x > body.right ? 1 : 0;
         if (!dx && !dy) {
             return;
         }

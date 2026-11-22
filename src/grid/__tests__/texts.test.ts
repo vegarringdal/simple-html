@@ -19,6 +19,7 @@ import { registerLookup } from '../lookup';
 import { type MountedGrid, mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
 import {
     headerFilterInput,
+    menuEntry,
     menuTreeEntries,
     openColumnMenu,
     openFilterMenu,
@@ -157,7 +158,9 @@ const config = (texts?: Texts): GridConfig => ({
         updated: { label: '«Updated»', placeholderFilter: '«updated»' },
         active: { label: '«Active»' },
         notes: { label: '«Notes»' },
-        code: { label: '«Code»', editor: { type: 'select', lookup: 'texts-codes' } }
+        code: { label: '«Code»', editor: { type: 'select', lookup: 'texts-codes' } },
+        // a column that is not in the layout: the detail form can show it
+        extra: { label: '«Extra»' }
     },
     // a filter on age hides a row: the value list of the other columns has "Filter Available"
     initialState: { filter: and(where('age', 'GREATER_THAN', 10)) },
@@ -343,6 +346,36 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
 }
 
 /**
+ * The detail form - with a row, without one, without fields - and the Detail form tab of the grid config
+ * dialog: a field of several lines and one that is not in the layout in its list, on a Mac too
+ */
+function showDetailForm({ datasource, gridInterface }: MountedGrid, check: () => void) {
+    const before = gridInterface.getState().detailForm;
+    gridInterface.setState({ detailForm: { show: true, fields: ['name', 'notes', 'extra'] } });
+    datasource.setRowAsCurrentEntity(0);
+    check();
+
+    gridInterface.openDetailFormSettings();
+    check();
+    const platform = vi.spyOn(navigator, 'platform', 'get').mockReturnValue('MacIntel');
+    try {
+        gridInterface.openDetailFormSettings();
+        check();
+    } finally {
+        platform.mockRestore();
+    }
+    (document.querySelector('dialog.column-settings .filter-editor-close') as HTMLElement).click();
+
+    datasource.currentEntity = null;
+    gridInterface.refresh();
+    check();
+    gridInterface.setState({ detailForm: { show: true, fields: [] } });
+    datasource.setRowAsCurrentEntity(0);
+    check();
+    gridInterface.setState({ detailForm: before });
+}
+
+/**
  * Opens every part of the grid that shows a text, and checks each
  */
 async function showEverything({ element, datasource, gridInterface }: MountedGrid, check: (more?: string[]) => void) {
@@ -455,6 +488,13 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
         openFilterMenu(element, field);
         checkMenu();
     }
+    // a search typed in the value list: its option to filter on the text. A digit: the check takes every
+    // letter left for a text of the grid's own
+    openFilterMenu(element, 'name');
+    const valueSearch = document.querySelector('.simple-html-grid-value-search') as HTMLInputElement;
+    valueSearch.value = '1';
+    valueSearch.dispatchEvent(new Event('input'));
+    checkMenu();
 
     // a header filter with BETWEEN: its placeholder, and From and To of the range block of its menu
     gridInterface.setState({ headerFilters: { age: { value: null, operator: 'BETWEEN' } } });
@@ -514,6 +554,8 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
 
     // the column settings dialog, see showColumnSettings
     showColumnSettings({ element, datasource, gridInterface }, check);
+    // the detail form and its tab of the dialog, see showDetailForm
+    showDetailForm({ element, datasource, gridInterface }, check);
 
     // the footer: a chip for each operator, five at a time, an OR group in the first
     datasource.filter(and(...conditions(OPERATORS.slice(0, 3)), or(...conditions(OPERATORS.slice(3, 5)))));
@@ -545,6 +587,18 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
         check();
     }
     gridInterface.closeMenu();
+
+    // the range picker of a date header filter with Between: From and To not picked, then From picked
+    openFilterMenu(element, 'born');
+    menuEntry('filter.operator.between').click();
+    headerFilterInput(element, 'born').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await sleep(20);
+    check();
+    (document.querySelector('simple-html-date .simple-html-date-day:not(.simple-html-date-day-dimmed)') as HTMLElement).click();
+    check();
+    gridInterface.closeMenu();
+    openFilterMenu(element, 'born');
+    menuEntry('filter.operator.greaterThanOrEqualTo').click();
 
     // the validation messages: on the cell and the row number
     datasource.filter(null);

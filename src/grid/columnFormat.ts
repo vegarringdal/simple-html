@@ -15,7 +15,7 @@ import { LINK_PROTOCOLS, templateProblem, urlTemplateProblem } from './cellTempl
  * displayFormatter() - and for a text template, which needs the row, templateFormatter() of
  * cellTemplate.ts. The address of a link is GridInterface.__getCellLink.
  *
- * The format has the rest of what the user sets for a column in the column settings dialog too: the
+ * The format has the rest of what the user sets for a column in the grid config dialog too: the
  * column's label (`label`, read by getColumnLabel), the placeholder of its header filter (`placeholder`,
  * `placeholderLabel` - headerFilterPlaceholder.ts), a number column's blank / 0 (`numberOverride`,
  * numberOverrideOf in cellText.ts) and the checkboxes of a text or number column (`checkbox`).
@@ -260,7 +260,7 @@ export interface CheckboxFormat {
  * code: a saved state can come from anywhere, nothing in a format is run. See the formatting guide,
  * "Templates" and "Links".
  *
- * The rest of what the user sets in the column settings dialog is in the format too, so the state
+ * The rest of what the user sets in the grid config dialog is in the format too, so the state
  * keeps it with the rest: the column's `label` and the `placeholder` of its header filter (any column),
  * a number column's `numberOverride` (blank as 0, 0 as blank), and `checkbox` - the cells of a text or
  * number column as checkboxes. Each wins over the column's own option (`ColumnConfig.label`,
@@ -877,7 +877,7 @@ function isNumberText(text: string): boolean {
 
 /**
  * What is wrong with the values of a column's checkboxes (with the defaults), null when nothing - for
- * assertColumnFormat and the column settings dialog:
+ * assertColumnFormat and the grid config dialog:
  * - `'checkedEmpty'`: the checked value is `''` - a blank cell would be checked
  * - `'checkedNumber'`, `'uncheckedNumber'`: a value of a number field is no number (`''` empties the
  *   cell, an unchecked value can be it)

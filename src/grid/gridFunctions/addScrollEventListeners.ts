@@ -1,4 +1,5 @@
 import type { Grid } from '../grid';
+import { isInDetailForm } from './detailForm';
 import { findBarHasFocus } from './findBar';
 import { getElementByClassName } from './getElementByClassName';
 import { horizontalScrollHandler } from './horizontalScrollHandler';
@@ -105,12 +106,13 @@ export function addScrollEventListeners(ctx: Grid) {
      *   scrolls the columns too, as it did
      * - Ctrl+wheel without Shift is the browser's zoom (and a trackpad's pinch): left alone
      * - the focus leaves the cell: the cell would scroll away under it. Not the find bar (findBar.ts)
+     * - not over the detail form (detailForm.ts): it scrolls on its own, the browser's wheel
      * The standard `deltaX` / `deltaY` (Firefox has no `wheelDeltaY`), lines and pages turned into px
      */
     ctx.element.addEventListener(
         'wheel',
         (event: WheelEvent) => {
-            if (event.ctrlKey && !event.shiftKey) {
+            if ((event.ctrlKey && !event.shiftKey) || isInDetailForm(ctx, event.target)) {
                 return;
             }
             event.preventDefault();

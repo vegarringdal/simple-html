@@ -323,7 +323,7 @@ Right click on a header label.
 | `header.format.decimalMark.dot` | `Dot` | `1.5` |
 | `header.format.decimalMark.comma` | `Comma` | `1,5` |
 | `header.format.percent` | `Percent` | turns percent on or off: 0.256 is `25.6 %` |
-| `header.settings` | `Column settings…` | opens the column settings dialog on the column, see [Column settings](#column-settings) |
+| `header.settings` | `Column settings…` | opens the grid config dialog on the column, see [Grid config dialog](#grid-config-dialog) |
 | `header.aggregate` | `Aggregate` | the aggregate submenu |
 | `header.aggregate.sum` | `Sum` | turns the column's sum on or off |
 | `header.aggregate.avg` | `Average` | turns its average on or off |
@@ -374,6 +374,7 @@ and a lookup column.
 | `filter.values.search` | `Search values` | the name of the search box, for a screen reader |
 | `filter.values.searchPlaceholder` | `Search values` | the placeholder of the search box |
 | `filter.values.availableOnly` | `Only values in filtered rows` | the checkbox that lists only the values the other filters let through |
+| `filter.values.textSearch` | `Filter on the text: contains "{text}"` | the checkbox under the search box that filters on the text typed (`CONTAINS`), not the values found; `{text}` is the text |
 | `filter.values.rowsFound` | `{count} values` | under the search box, `{count}`: the number of values listed |
 | `filter.values.rowsFound.one` | `{count} value` | the same, when one value is listed |
 | `filter.values.truncated` | `Only the first {max} values are shown` | instead, `{max}`: the most values listed (100), when there are more |
@@ -523,7 +524,7 @@ The names of the operators, in the operator menu and on a condition:
 | `footer.summary.avg` | `Average: {avg}` | their average |
 | `footer.summary.min` | `Min: {min}` | the smallest |
 | `footer.summary.max` | `Max: {max}` | the largest |
-| `footer.settings` | `Column settings` | the name and tooltip (`title`) of the gear at the footer's right end (`GridConfig.settingsButton`): it opens the column settings dialog |
+| `footer.settings` | `Grid config` | the name and tooltip (`title`) of the gear at the footer's right end (`GridConfig.settingsButton`): it opens the grid config dialog |
 
 The short names of the operators, on a chip:
 
@@ -574,10 +575,12 @@ not take (`'nb_NO'`) shows English. The others write a week and a quarter: `{wee
 | `format.weekUs` | `{year}-W{week}` | a week, US: `2026-W48` |
 | `format.quarter` | `{year} Q{quarter}` | a quarter: `2026 Q4`. Norwegian, say: `{quarter}. kvartal {year}` |
 
-### Column settings
+### Grid config dialog
 
-The column settings dialog: the gear in the footer, *Column settings…* in the header menu,
-`gridInterface.openColumnSettings()` - see [The column settings dialog](08-formatting.md#the-column-settings-dialog).
+The grid config dialog: the gear in the footer, *Column settings…* in the header menu,
+`gridInterface.openColumnSettings()` and `openDetailFormSettings()` - see
+[The grid config dialog](08-formatting.md#the-grid-config-dialog). Its Columns tab, then its Detail form
+tab.
 Its format picker shows the texts of Format › (`header.format.*`). The placeholders and the hints of
 the templates show a template as it is written: their `{value}`, `{field}`, `{id}` are not filled in,
 keep the braces - `{value}` is the cell's own value in a template, keep it as it is. In the problems
@@ -585,7 +588,7 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 
 | id | English | shown |
 | --- | --- | --- |
-| `columnSettings.title` | `Column settings` | the title of the dialog, its name for a screen reader |
+| `columnSettings.title` | `Grid config` | the title of the dialog, its name for a screen reader, and the name of its tabs |
 | `columnSettings.title.tooltip` | `Drag to move the dialog` | the title's tooltip |
 | `columnSettings.close.tooltip` | `Close without applying` | the ✕: its name and tooltip |
 | `columnSettings.columns` | `Columns` | the name of the list of the columns, for a screen reader |
@@ -649,6 +652,33 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.apply` | `Apply` | sets the formats of the grid's state, the dialog stays open |
 | `columnSettings.apply.tooltip` | `Apply to the grid, the dialog stays open` | its tooltip |
 | `columnSettings.applyAndClose` | `Apply & close` | applies and closes |
+| `columnSettings.tab.columns` | `Columns` | the tab of the columns' settings |
+| `columnSettings.tab.detailForm` | `Detail form` | the tab of the detail form |
+| `columnSettings.detailForm.show` | `Show the detail form` | the checkbox that shows it |
+| `columnSettings.detailForm.width` | `Width (px)` | the label of its width |
+| `columnSettings.detailForm.width.hint` | `Where the rows would get too little room beside it, the form is under them` | under it |
+| `columnSettings.detailForm.fields` | `Fields of the form` | the name of the list of the fields |
+| `columnSettings.detailForm.fields.hint` | `Space puts a field in the form or takes it out, Alt+↑ and Alt+↓ move it` | under the list: its keys |
+| `columnSettings.detailForm.fields.hint.mac` | `Space puts a field in the form or takes it out, ⌥↑ and ⌥↓ move it` | the same on a Mac |
+| `columnSettings.detailForm.multiline` | `Several lines` | in the list: a field of several lines (`FieldConfig.multiline`) |
+| `columnSettings.detailForm.hidden` | `Hidden` | in the list: a column that is not in the layout |
+| `columnSettings.detailForm.moveUp` | `Move up` | the button: the field picked one up, in the form too |
+| `columnSettings.detailForm.moveDown` | `Move down` | one down |
+| `columnSettings.detailForm.reset` | `Reset form` | the button at the footer's left on the Detail form tab: the detail form the grid starts with |
+| `columnSettings.detailForm.reset.tooltip` | `The detail form the grid starts with` | its tooltip |
+
+### Detail form
+
+The detail form at the right of the rows (`GridConfig.detailForm`), see
+[The detail form](02-grid-config.md#the-detail-form). `{row}` is the number of the row it shows, as the
+row numbers show it.
+
+| id | English | shown |
+| --- | --- | --- |
+| `detailForm.title` | `Details` | its title, its name for a screen reader |
+| `detailForm.row` | `Row {row}` | after the title: the row it shows |
+| `detailForm.noRow` | `No row` | without a current row, or one the filter hides |
+| `detailForm.noFields` | `No fields: pick them with the gear in the footer, tab Detail form` | shown without fields |
 
 ### Header filters
 
@@ -772,7 +802,9 @@ A cell drawn by a renderer of your own (`ColumnConfig.renderer`), see [Custom ce
 
 ### Date picker
 
-Of a date cell and a date header filter, and a `DateInterface` of your own.
+Of a date cell, a date header filter and the filter menu's range block, and a `DateInterface` of your
+own. The range picker shows its From and To as the day, the month's name and the year: `22 November
+2026`.
 
 | id | English | shown |
 | --- | --- | --- |
@@ -781,7 +813,10 @@ Of a date cell and a date header filter, and a `DateInterface` of your own.
 | `datePicker.week` | `W` | header of the week numbers |
 | `datePicker.clear` | `Clear` | button, empties the date |
 | `datePicker.now` | `Now` | button, goes to now |
-| `datePicker.use` | `Use` | button, picks the date |
+| `datePicker.use` | `Use` | button, picks the date (the range of a range picker) |
+| `datePicker.from` | `From` | a range picker (a date header filter with Between, From and To of the filter menu): the label over the first day picked |
+| `datePicker.to` | `To` | a range picker: the label over the last day picked |
+| `datePicker.rangeOpen` | `–` | a range picker: under From or To while that day is not picked, an open end |
 | `datePicker.previousYear` | `Previous year` | the « button left of the month: its name for a screen reader and its tooltip |
 | `datePicker.previousMonth` | `Previous month` | the ‹ button left of the month |
 | `datePicker.nextMonth` | `Next month` | the › button right of the month |

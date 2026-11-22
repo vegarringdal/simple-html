@@ -62,6 +62,7 @@ export type { FindResult } from './grid/findResult';
 export type {
     ColumnConfig,
     ColumnEditor,
+    DetailForm,
     GridConfig,
     GridLayout,
     GridState,

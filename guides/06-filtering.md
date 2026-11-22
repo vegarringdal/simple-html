@@ -13,7 +13,7 @@ Enter, or leaves the cell, and the grid filters on it:
 | --- | --- | --- |
 | text | an input | `EQUAL`: the whole text, ignoring case |
 | number | an input | `GREATER_THAN_OR_EQUAL_TO` |
-| date, datetime | an input, and a date picker on click | `GREATER_THAN_OR_EQUAL_TO` |
+| date, datetime | an input, and a date picker on click - a range picker with Between | `GREATER_THAN_OR_EQUAL_TO` |
 | boolean | a checkbox: no filter, then checked (`true`), then unchecked (`false`), then no filter again | `EQUAL` |
 
 - **A text filter matches the whole text** (`EQUAL`, ignoring case): `ann` finds `Ann` and `ANN`, but
@@ -26,13 +26,35 @@ Enter, or leaves the cell, and the grid filters on it:
   [range block](#the-range-block)) takes both ends in the one input, with `..` between them: `10..20` is 10 to 20, both included; `10..` is 10 or more, `..20` 20
   or less; `10` alone is 10 to 10 (a date: that day). Each end is parsed with the formatter, as a
   single value is: `2026-01-01..2026-03-31`. The placeholder says `from..to`, and the cell shows the
-  value that way (`10..20`). The date picker of a date cell picks one day: from and to that day.
+  value that way (`10..20`). See [The range picker](#the-range-picker) for a date column.
 - The `operator` option of a column sets the operator its header filter starts with, see
   [below](#a-contains-search); `filterOperators` the ones it offers, see
   [The operators a column offers](#the-operators-a-column-offers).
 - The cell shows the operator it uses as a small symbol beside the input, a click on it changes it, see
   [The operator in the cell](#the-operator-in-the-cell).
 - Emptying the cell removes the column's condition.
+
+### The range picker
+
+A click in the header filter of a date or datetime column opens the grid's date picker under it, on the
+date the cell has: Use filters on the date picked, Clear removes the filter. With **Between** it opens
+the **range picker** instead, on the `from..to` the cell has:
+
+- Two months side by side - one on a screen too narrow for two (a phone) - with « ‹ › » once, around
+  them: they move both months.
+- The first day clicked is **From**, the next one **To** - swapped when it is before From - and a
+  third click starts again with a new From. From and To are framed as the selected day, the days
+  between them have a fill. The line under the months shows the From and To picked (`22 November
+  2026`, `–` for an end not picked).
+- **Use** filters on the range, as if `from..to` was typed: `2026-11-22..2026-11-28`, both days
+  included. One day picked is an open end: `2026-11-22..` is that day or later. **Clear** removes the
+  filter, the operator stays Between. Esc or a click outside closes it, the filter stays as it was.
+- The range is whole days: a datetime column gets From at 00:00:00 and To at 23:59:59 -
+  `2026-11-22T00:00:00..2026-11-28T23:59:59`. Change the times in the cell to filter on hours.
+
+The range block of the filter menu opens the same pickers from its inputs, see
+[The range block](#the-range-block). The range picker is a `DateInterface` with `rangepicker: true`:
+use it on your own page too, see [Events](09-events.md#the-date-picker).
 
 ### A contains search
 
@@ -60,7 +82,7 @@ const config: GridConfig = {
 
 The user can also pick the operator of a column in the header filter's menu (Filter › Operator ›,
 below), with the [operator in the cell](#the-operator-in-the-cell), or in the
-[column settings dialog](08-formatting.md#the-column-settings-dialog) - it shows the column's default
+[grid config dialog](08-formatting.md#the-grid-config-dialog) - it shows the column's default
 too - and type `*ann*` in any text header filter.
 
 A header filter only replaces the conditions on its own column, at the top of the filter. The rest
@@ -239,6 +261,11 @@ checkbox per value, as in a spreadsheet:
   every row.
 - The search box narrows the list to the texts with the search text in them, ignoring case (`*` and
   `%` are left out); Blank, which has no text, is not listed then.
+- **Filter on the text: contains "…"**, under the search box when it has text: checked, Apply filters
+  on the **text**, not the values - the header filter gets the operator `CONTAINS` (*Contains*, the `*a*`
+  in the cell) and the text, as if picked in Operator › and typed in the cell, and so rows added later
+  with the text are found too. `*`, `%` and `_` are wildcards there. The list stays as a preview of the
+  values with the text, greyed out. Not for a column whose `filterOperators` have no `CONTAINS`.
 - **Select all**, the header of the list, is checked when every value is, mixed when some are: a
   click checks every value, or none when every value is checked.
 - **Apply** filters the column on the **values** behind the checked texts - a filter as any other:
@@ -271,8 +298,14 @@ Operator › first and then typing in the header filter.
   a screen reader by its text in Operator › ("Greater than"), which is its tooltip too.
 - **One input**, two for **Between**: **From** and **To**. Either can be left empty, an open end: From
   10 alone is 10 or more, To 20 alone 20 or less. A value is typed as in the header filter, parsed with
-  the field's formatter; the placeholder says how (`YYYY-MM-DD`, `Number`). A date column has no date
-  picker in the block: the date is typed - a click on the header filter itself still opens the picker.
+  the field's formatter; the placeholder says how (`YYYY-MM-DD`, `Number`).
+- **A date or datetime column** has the date picker too: a click in the input opens it under the
+  input, on the date the input holds - Use puts the date picked in the input, Clear empties it. A click
+  in From or To of Between opens the [range picker](#the-range-picker) under them, on the two dates
+  they hold: Use puts From and To in them (a datetime's To at 23:59:59). The menu stays open: what is
+  picked is a draft as what is typed, Apply filters. Esc closes the picker only - a second Esc the
+  menu - and so does a click in the menu outside it, another operator say. The focus stays in the
+  input, Enter still applies; a date can still be typed.
 - It opens with what the header filter has: its operator, its value - a `BETWEEN`'s ends in From and
   To. Picking Between takes the value as From; another operator after Between the first end as the
   value.

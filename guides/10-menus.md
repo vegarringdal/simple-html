@@ -3,8 +3,8 @@
 The grid has four right click menus:
 
 - the **row menu**, on a cell or a row number: the submenus undo and redo, select, copy, paste,
-  clear, delete, filter on the value, view, sizes, export. On a row number it has no cell: the
-  entries of a cell are greyed out. The summary of selected cells is in the footer, see
+  clear, delete, filter on the value, view, sizes, export. On a row number it is about rows: undo and
+  redo, select, copy, delete and sizes, without the entries of a cell. The summary of selected cells is in the footer, see
   [Selection and clipboard](17-selection-and-clipboard.md#the-summary-in-the-footer)
 - the **header menu**, on a header label: pin, hide, remove sorting, the column chooser, then the
   submenus sizes, format (how a date or number column shows its values), aggregates, grouping
@@ -30,7 +30,9 @@ the browser shows it in the top layer, over everything on the page. A container 
 `overflow: hidden` does not cut it off, and no z-index puts something over it. It is on
 `document.body`, or inside the `<dialog>` (the filter editor, or one of yours) or the popover of yours
 that the element it opens from is in: everything outside a modal dialog is inert, a menu there could
-not be clicked. A menu has the classes `simple-html-grid simple-html-grid-popover`.
+not be clicked. A menu has the classes `simple-html-grid simple-html-grid-popover`. A submenu, and the
+date picker opened from an input of the filter menu's range block, are popovers put in the menu's
+popover: the menu stays open while they are, and they close with it.
 
 - There is one menu at a time: opening one closes the one before.
 - It closes on a click outside it, a finger touching the page outside it, on Esc, when another menu
@@ -284,10 +286,11 @@ Day of week ... Days until        ----
 ### Row menu (`MENU_IDS.row`)
 
 Right click on a cell, or on a row number. On a row number the menu has no cell: `context.field` is
-`''` and `context.cell` is the row number's cell. The entries of a cell and its column are greyed out
-there - *Undo cell edit*, *Copy › Cell Value* and *Column*, *Paste cell* and *Clear cell* (both),
-*Filter ›*, *Fit column to this cell*, the cell entries of *Select ›* - the entries of the row and of
-the selection work. A group row's number has no menu.
+`''` and `context.cell` is the row number's cell. It is about rows - *Undo / Redo ›*, *Select ›*,
+*Copy ›*, *Delete ›* and *Size ›* - and what needs a cell or is not about rows is not in it: *Paste ›*,
+*Clear ›*, *Filter ›*, *View ›*, *Export ›*, *Undo cell edit*, *Copy › Cell Value*, *Column* and
+*Range*, the cell entries of *Select ›*, *Fit column to this cell*. They are left out with `visible`:
+the `menus.row` hook still gets them, by their ids. A group row's number has no menu.
 
 | id | shown as | shown when |
 | --- | --- | --- |
@@ -302,8 +305,8 @@ the selection work. A group row's number has no menu.
 | `row.select.rowsTo` | Rows from N to here: from the anchor (N, the row selected last without Shift) to this row, as Shift+click on its number. Greyed out without an anchor (N is this row then), when the anchor is this row, and in `'single'` mode | the selection mode is not `'none'` |
 | `row.select.allRows` | All rows: `datasource.selectAll()`. Greyed out when every row is selected, and in `'single'` mode | the selection mode is not `'none'` |
 | `row.select.cellsSeparator` | a line | the selection mode is not `'none'` |
-| `row.select.rangeTo` | Range from the active cell to here: as Shift+click on the cell - from where the last range starts, or from the cell with the focus, to this cell. Greyed out when there is neither, when it would start at this cell, and on a row number | |
-| `row.select.addCell` | Add this cell to the ranges: as Ctrl+click on the cell - the active cell kept as a range when there is none yet. Greyed out when the cell is in a range, and on a row number | |
+| `row.select.rangeTo` | Range from the active cell to here: as Shift+click on the cell - from where the last range starts, or from the cell with the focus, to this cell. Greyed out when there is neither, or when it would start at this cell. Not on a row number | |
+| `row.select.addCell` | Add this cell to the ranges: as Ctrl+click on the cell - the active cell kept as a range when there is none yet. Greyed out when the cell is in a range. Not on a row number | |
 | `row.select.clearSeparator` | a line | |
 | `row.select.clear` | Clear selection: no row selected, no range of cells. Greyed out when there is neither | |
 | `row.copy` | Copy › - a submenu | |
@@ -408,7 +411,7 @@ the selection work. A group row's number has no menu.
 | `header.format.decimalMark.dot` | Dot. Greyed out while the thousands separator is that character | a number field |
 | `header.format.decimalMark.comma` | Comma | a number field |
 | `header.format.percent` | Percent, a toggle: the number times 100 with ` %` | a number field |
-| `header.settings` | Column settings… - opens the column settings dialog on this column (`gridInterface.openColumnSettings(field)`): its display format, a text column's template and link, see [The column settings dialog](08-formatting.md#the-column-settings-dialog) | |
+| `header.settings` | Column settings… - opens the grid config dialog on this column (`gridInterface.openColumnSettings(field)`): its display format, a text column's template and link, see [The grid config dialog](08-formatting.md#the-grid-config-dialog) | |
 | `header.aggregate` | Aggregate › - a submenu | |
 | `header.aggregate.sum` | Sum - a toggle with a ✓ when on: the column's sum in the group rows and the totals row, see [Aggregates](18-aggregates.md) | a number field |
 | `header.aggregate.avg` | Average, a toggle | a number field |

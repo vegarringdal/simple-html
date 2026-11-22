@@ -13,7 +13,7 @@ import { focusMenu } from './showMenu';
  * The search box hides the fields whose label (or field name) does not have its text. Opened from the
  * keyboard the focus is in it: type, then ArrowDown to the fields, or Enter for the first one shown.
  * The fields are items of the menu: the arrows, a letter, Enter as in the other menus
- * The column settings dialog opens it too, to put a field in a template (columnSettings.ts): with the
+ * The grid config dialog opens it too, to put a field in a template (columnSettings.ts): with the
  * fields of its row as well.
  * @param button the picker, the menu opens under it
  * @param current the field picked, undefined (or '') for none

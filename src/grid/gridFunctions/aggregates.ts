@@ -10,6 +10,7 @@ import { getColumnLabel } from './getColumnLabel';
 import { getElementByClassName } from './getElementByClassName';
 import { getGroupingWidth } from './getGroupingWidth';
 import { gridText } from './gridText';
+import { cellHeightOf, linesUnderTop } from './rowHeights';
 
 /**
  * Aggregates in the grid: the aggregate of a column (`ColumnConfig.aggregate`) in the group rows
@@ -130,14 +131,35 @@ export function aggregateLines(config: ParsedGridConfig): number {
  * The height of a group row and of the totals row, for GridInterface.__parseConfig - in one place, as
  * the row heights are built from it. A group row with aggregates is its name's line and the lines of
  * the aggregates under it; without, one line. The totals row has the aggregates' lines, at least one;
- * 0 when it is not shown
+ * 0 when it is not shown.
+ *
+ * Lines of text, as a taller cell has them (cellHeightOf): the first `cellHeight` px, each line under it
+ * `multilineLineHeight` px - the user: "padding is a bit much when multiple aggregates". A whole
+ * `cellHeight` per aggregate put the lines far apart, a group row with two was three rows high
  */
 export function aggregateRowHeights(config: ParsedGridConfig): { group: number; totals: number } {
     const lines = aggregateLines(config);
     return {
-        group: config.cellHeight * (config.groupAggregates && lines ? 1 + lines : 1),
-        totals: config.totalsRow ? config.cellHeight * Math.max(1, lines) : 0
+        group: config.groupAggregates && lines ? cellHeightOf(config, 1 + lines) : config.cellHeight,
+        totals: config.totalsRow ? cellHeightOf(config, Math.max(1, lines)) : 0
     };
+}
+
+/**
+ * Where a line of text of a group row or the totals row is, in px from the top of the row: the first line
+ * (a group row's name, the first aggregate of the totals row) is `cellHeight` high, the text in its
+ * middle; each line under it is `multilineLineHeight` high, a text line apart - as the lines of a
+ * taller cell (linesUnderTop)
+ * @param line the line, 0 the first
+ */
+export function aggregateLineBox(
+    config: Pick<ParsedGridConfig, 'cellHeight' | 'multilineLineHeight'>,
+    line: number
+): { top: number; height: number } {
+    if (line === 0) {
+        return { top: 0, height: config.cellHeight };
+    }
+    return { top: linesUnderTop(config) + (line - 1) * config.multilineLineHeight, height: config.multilineLineHeight };
 }
 
 /**
@@ -192,6 +214,7 @@ function aggregateCell(
     const config = ctx.gridInterface.__getGridConfig();
     const text = formatAggregate(ctx, aggregated.field, aggregated.fn, value);
     const cell = aggregated.first && !hidden;
+    const box = aggregateLineBox(config, offset + aggregated.line);
     return html`<div
         role=${cell ? 'gridcell' : 'none'}
         aria-colindex=${cell ? aggregated.colIndex : nothing}
@@ -199,7 +222,7 @@ function aggregateCell(
         aria-hidden=${cell ? nothing : 'true'}
         class="simple-html-grid-aggregate"
         data-aggregate=${`${aggregated.fn}:${aggregated.field}`}
-        style="left:${asPx(aggregated.left)};width:${asPx(aggregated.width)};top:${asPx((offset + aggregated.line) * config.cellHeight)};height:${asPx(config.cellHeight)};line-height:${asPx(config.cellHeight)}"
+        style="left:${asPx(aggregated.left)};width:${asPx(aggregated.width)};top:${asPx(box.top)};height:${asPx(box.height)};line-height:${asPx(box.height)}"
     >
         ${
             text

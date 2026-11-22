@@ -18,8 +18,8 @@ export of the selected rows work on these rows. A finger's tap adds or removes a
 menu's *Select ›* does what Shift and Ctrl do, see [With a finger](#with-a-finger).
 
 A right click on a row number - Shift+F10 or the menu key on one with the focus, a long press - opens
-the row menu of the row, without a cell: the entries of a cell and its column are greyed out, see
-[Row menu](10-menus.md#row-menu-menu_idsrow).
+the row menu of the row, without a cell: what is about rows - undo and redo, select, copy, delete and
+sizes - see [Row menu](10-menus.md#row-menu-menu_idsrow).
 
 A range of cells selects no rows, and selecting rows changes no range: they are two things.
 

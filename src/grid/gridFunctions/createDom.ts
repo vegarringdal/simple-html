@@ -5,6 +5,7 @@ import { TOTALS_CLASS } from './aggregates';
 import { ariaId, createAriaGrid } from './ariaGrid';
 import { createElement } from './createElement';
 import { DIV } from './DIV';
+import { createDetailForm, renderDetailForm } from './detailForm';
 import { findKeydown } from './findBar';
 import { horizontalScrollHandler } from './horizontalScrollHandler';
 import { trackPresses } from './lastPress';
@@ -68,6 +69,9 @@ export function createDom(ctx: Grid) {
     ctx.element.appendChild(totals);
     ctx.element.appendChild(bodyScroller);
     ctx.element.appendChild(middleScroller);
+    // the detail form (GridConfig.detailForm): at the right of the rows, see detailForm.ts. Moved to the
+    // end below
+    ctx.element.appendChild(createDetailForm(ctx));
 
     const headerViewSelector = createElement(DIV, 'simple-html-grid-header-view-selector');
     const headerViewPinnedLeft = createElement(DIV, 'simple-html-grid-header-view-pinned-left');
@@ -153,6 +157,12 @@ export function createDom(ctx: Grid) {
     horizontalScrollHandler(ctx, 0);
     verticalScrollHandler(ctx, 0, true);
     ctx.element.appendChild(body);
+    // the detail form after the cells: the browser's Tab goes from its last field out of the grid, see
+    // tabExit.ts
+    if (ctx.detailForm) {
+        ctx.element.appendChild(ctx.detailForm);
+    }
+    renderDetailForm(ctx);
     // and Tab from the last cell from here, after the cells in the dom
     ctx.element.appendChild(ctx.tabExitEnd);
 

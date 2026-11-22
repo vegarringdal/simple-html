@@ -102,7 +102,8 @@ export type GridConfig = {
      * (`gridInterface.fitRows()`) the lines of a cell's text after its first are this far apart - the
      * first line is in the cell's input, `cellHeight` high. So the text reads as a paragraph, and a row
      * of a note of three lines is `cellHeight + 2 * multilineLineHeight` high (52px by default). The
-     * editor of a multiline cell has the same line height.
+     * editor of a multiline cell has the same line height, and so do the lines of aggregates under a
+     * group row's name and after the first of the totals row (`ColumnConfig.aggregate`).
      *
      * 15 is about 1.35 times the default font size (11px). With a larger font
      * (`--simple-html-grid-font-size`) make it larger too, as `cellHeight`: the grid needs it in px to
@@ -164,14 +165,14 @@ export type GridConfig = {
     filterOperatorIndicator?: boolean;
     /**
      * shows the settings button, a gear at the right end of the footer, default `true`: it opens the
-     * column settings dialog - each column's display format, a text column's template and link, applied
+     * grid config dialog - each column's display format, a text column's template and link, applied
      * to the state (`GridState.formats`), so `getState()` keeps what the user set. Its name and tooltip
      * are the text `footer.settings`. Not in a footer of no height (`footerHeight: 0`); a lookup's
      * dropdown grid has it `false`.
      *
      * `false` hides the button only: the header menu still has *Column settings…* (`header.settings`,
      * take it out with the `menus` hook), and `gridInterface.openColumnSettings()` opens the dialog from
-     * a button of your own. See the formatting guide, "The column settings dialog"
+     * a button of your own. See the formatting guide, "The grid config dialog"
      */
     settingsButton?: boolean;
     /**
@@ -371,7 +372,73 @@ export type GridConfig = {
      * @sample aggregates
      */
     totalsRow?: boolean;
+
+    /**
+     * The detail form the grid starts with, default none (`{ show: false, fields: [] }`): a panel at the
+     * right of the rows with the current row as a form - a label and a value for each field of `fields`,
+     * in that order. A text of several lines (`FieldConfig.multiline`) gets a field tall enough to read
+     * it all. The cells' values can be edited there too, see {@link DetailForm}.
+     *
+     * Part of the grid's state (`GridState.detailForm`): the user turns it on, picks the fields and
+     * their order in the grid config dialog (the gear in the footer, tab *Detail form*), and
+     * `getState()` has what they picked, to save. `resetState()` goes back to this one (unless
+     * `initialState.detailForm` is given).
+     *
+     * @sample detail-form
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     layout: { center: [{ fields: ['name'], width: 150 }, { fields: ['city'], width: 120 }] },
+     *     // the notes are not in the layout: the form shows them, all their lines
+     *     detailForm: { show: true, fields: ['name', 'notes', 'city'], width: 320 }
+     * };
+     * ```
+     */
+    detailForm?: DetailForm;
 };
+
+/**
+ * The detail form: a panel inside the grid, at the right of the rows, with the current row
+ * (`datasource.currentEntity`) as a form - a label and a value for each field of `fields`, in that
+ * order. `GridConfig.detailForm` is the one the grid starts with, `GridState.detailForm` the one it
+ * shows: the user changes it in the grid config dialog (the gear in the footer, tab *Detail form*).
+ *
+ * - **The values** are what the cells show: the display format, a template, a lookup's label. A text of
+ *   several lines (`FieldConfig.multiline`, or a value with a line break) has a tall field with all of
+ *   it. A row with a link (`ColumnFormat.link`) has the link beside the value.
+ * - **Editing**: in an editable grid a field is edited as its cell is - the same readonly rules
+ *   (`readonly`, `ColumnConfig.readonly`, the `isReadonly` hook, `allowPasteClearOnly`), the value
+ *   parsed by the field's formatter and validated, the errors under the field, and what is typed in a
+ *   field is one step of the undo history. A lookup column (`ColumnConfig.editor`) is shown, not edited:
+ *   its cell picks the value.
+ * - **It follows the grid**: another current row, a value changed (an edit, undo, `upsert()`, code), a
+ *   filter or a sort. Without a current row - or one that is filtered out - it says so.
+ * - **A narrow grid** - where the rows would get less room than the form beside it, or the scrolling
+ *   columns less than 150px (a phone, wide pinned columns) - has the form under the rows instead, 40 % of
+ *   the grid's height.
+ *
+ * Plain JSON, part of the state: `getState()` gives it, `setState({ detailForm })` sets it.
+ *
+ * @sample detail-form
+ * @example
+ * ```ts
+ * import type { DetailForm } from '@simple-html/grid';
+ *
+ * const detailForm: DetailForm = { show: true, fields: ['company', 'notes', 'orderDate'], width: 300 };
+ * gridInterface.setState({ detailForm });
+ * gridInterface.getState().detailForm; // { show: true, fields: ['company', 'notes', 'orderDate'], width: 300 }
+ * ```
+ */
+export interface DetailForm {
+    /** shows the form */
+    show: boolean;
+    /** the fields it shows, in this order: fields of the columns, or any field of the rows */
+    fields: string[];
+    /** its width in px, default 300 - at least 150 */
+    width?: number;
+}
 
 /**
  * Where the columns go. Each list is a list of columns from left to right; a column shows one field,
@@ -457,7 +524,7 @@ export type ColumnConfig = {
      * the column's header text. Left out, the label of the datasource field (`FieldConfig.label`) is
      * used, and without that the field name prettified (`first_name` is `First Name`). The grid shows
      * the same label everywhere: header, column chooser, group chip, filter editor, footer filter, the
-     * headers of the exports. The label the user gives the column in the column settings dialog
+     * headers of the exports. The label the user gives the column in the grid config dialog
      * (`format.label`, {@link ColumnFormat}) wins
      */
     label?: string;
@@ -469,7 +536,7 @@ export type ColumnConfig = {
     placeholderRow?: string;
     /**
      * shown in the empty header filter. Default: the formatter's placeholder (date fields), else the field's type: `Text` or `Number` (texts `filter.placeholder.*`).
-     * The user's from the column settings dialog (`format.placeholder`, `format.placeholderLabel`) wins
+     * The user's from the grid config dialog (`format.placeholder`, `format.placeholderLabel`) wins
      *
      * @sample required-placeholders
      */
@@ -559,7 +626,7 @@ export type ColumnConfig = {
     /**
      * for a number field, what a cell shows - the value is not changed: `'ZERO_TO_BLANK'` shows 0 as an
      * empty cell, `'BLANK_TO_ZERO'` shows an empty value as `0`. Default: the value as the formatter
-     * shows it. The user's from the column settings dialog (`format.numberOverride`, Show blank as 0,
+     * shows it. The user's from the grid config dialog (`format.numberOverride`, Show blank as 0,
      * Show 0 as blank) wins - its `'NONE'` turns this off
      *
      * @sample misc-options
@@ -665,7 +732,7 @@ export type ColumnConfig = {
      * and a link, see {@link LinkFormat} (`{ link: { url: 'mailto:{email}' } }`). Left out: the field's
      * formatter.
      *
-     * The rest of what the column settings dialog sets is here too: `label`, the header filter's
+     * The rest of what the grid config dialog sets is here too: `label`, the header filter's
      * `placeholder` / `placeholderLabel`, a number column's `numberOverride`, and `checkbox` - the cells
      * of a text or number column as checkboxes, see {@link CheckboxFormat}
      * (`{ checkbox: { checked: '1', unchecked: '0' } }`).
@@ -677,7 +744,7 @@ export type ColumnConfig = {
      * format like it, where Excel has one.
      *
      * This is where the grid starts: the user picks another one in the header menu (right click a column
-     * label, "Format") or the column settings dialog (the gear in the footer), and it is part of the
+     * label, "Format") or the grid config dialog (the gear in the footer), and it is part of the
      * grid's state (`GridState.formats`) - `resetState()` goes back to this one, and so does the dialog's
      * "Reset column". A format that does not fit the field's type, and a format on a lookup column
      * (`editor`), throw a `TypeError` when the grid is made or `updateConfig()` is given the column.
@@ -830,7 +897,7 @@ export interface GridState {
     totalsRow: boolean;
     /**
      * the display formats of the columns, keyed by field - what `ColumnConfig.format` starts with and
-     * the header menu (Format ›) and the column settings dialog change:
+     * the header menu (Format ›) and the grid config dialog change:
      * `{ born: { date: 'weekIso' }, balance: { number: { decimals: 2 } }, email: { link: { url: 'mailto:{email}' } } }`.
      * Only the fields that have one are listed; a field left out shows its field's formatter. With the
      * rest of the column settings: the label, the placeholder, blank / 0, the checkboxes
@@ -838,6 +905,12 @@ export interface GridState {
      * templates are text, not code: a state from storage runs nothing
      */
     formats: Record<string, ColumnFormat>;
+    /**
+     * the detail form - whether it is shown, its fields in their order and its width - what
+     * `GridConfig.detailForm` starts with and the grid config dialog (tab *Detail form*) changes. See
+     * {@link DetailForm}
+     */
+    detailForm: DetailForm;
 }
 
 /**
@@ -904,6 +977,7 @@ export type ParsedGridOptions = GridOptions &
             | 'placeholderRowCurrentEntityOnly'
             | 'groupAggregates'
             | 'totalsRow'
+            | 'detailForm'
         >
     >;
 

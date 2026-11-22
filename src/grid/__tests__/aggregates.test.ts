@@ -163,22 +163,25 @@ describe('aggregates - group rows', () => {
         datasource.group([{ attribute: 'country', title: 'Country' }]);
         datasource.expandGroup();
 
-        // every column has one function: the name's line and one line of aggregates, as high as the
-        // data rows (city+age stacks two fields)
+        // every column has one function: the name's line (cellHeight, 22) and one line of aggregates - a
+        // line of text (multilineLineHeight, 15) as in a taller cell, starting at linesUnderTop (19)
         const norway = groupRow(element, 'Country: Norway');
         const name = norway.querySelector('.simple-html-grid-group-name') as HTMLElement;
         expect(name.style.height).toEqual('22px');
-        expect(aggregateCell(norway, 'avg:age').style.top).toEqual('22px');
-        expect(aggregateCell(norway, 'sum:balance').style.top).toEqual('22px');
-        expect(gridInterface.__getScrollState().scrollHeights).toEqual([44, 44, 44, 44, 44, 44]);
-        expect(norway.style.height).toEqual('44px');
+        expect(aggregateCell(norway, 'avg:age').style.top).toEqual('19px');
+        expect(aggregateCell(norway, 'avg:age').style.height).toEqual('15px');
+        expect(aggregateCell(norway, 'sum:balance').style.top).toEqual('19px');
+        // group rows 22 + 15, the data rows 44 (city+age stacks two fields)
+        expect(gridInterface.__getScrollState().scrollHeights).toEqual([37, 44, 44, 37, 44, 44]);
+        expect(norway.style.height).toEqual('37px');
 
-        // sum and avg of balance: three lines, the functions one under the other
+        // sum and avg of balance: three lines, the functions one under the other, a text line apart
         gridInterface.updateConfig({ columns: { ...config().columns, balance: { aggregate: ['avg', 'sum'] } } });
         const again = groupRow(element, 'Country: Norway');
-        expect(aggregateCell(again, 'sum:balance').style.top).toEqual('22px');
-        expect(aggregateCell(again, 'avg:balance').style.top).toEqual('44px');
-        expect(gridInterface.__getScrollState().scrollHeights).toEqual([66, 44, 44, 66, 44, 44]);
+        expect(aggregateCell(again, 'sum:balance').style.top).toEqual('19px');
+        expect(aggregateCell(again, 'avg:balance').style.top).toEqual('34px');
+        expect(again.style.height).toEqual('52px');
+        expect(gridInterface.__getScrollState().scrollHeights).toEqual([52, 44, 44, 52, 44, 44]);
 
         // without aggregates one line again
         gridInterface.updateConfig({ columns: {} });
@@ -509,7 +512,7 @@ describe('aggregates - the config', () => {
 
         expect([parsed.groupAggregates, parsed.totalsRow]).toEqual([true, false]);
         expect(parsed.__totalsRowHeight).toBe(0);
-        expect(parsed.__groupRowHeight).toBe(44);
+        expect(parsed.__groupRowHeight).toBe(37);
     });
 });
 
@@ -532,7 +535,8 @@ describe('aggregates - the state', () => {
         const norway = groupRow(element, 'Country: Norway');
         expect(aggregateCell(norway, 'min:balance')).not.toBeNull();
         expect(aggregateCell(norway, 'avg:age')).toBeNull();
-        expect(gridInterface.__getGridConfig().__totalsRowHeight).toEqual(44);
+        // two lines: 22 + 15
+        expect(gridInterface.__getGridConfig().__totalsRowHeight).toEqual(37);
         expect(gridInterface.getState().aggregates).toEqual({ balance: ['sum', 'min'] });
     });
 
@@ -608,7 +612,7 @@ describe('aggregates - the header menu', () => {
         openLabelMenu(element, 'balance');
         entry('header.aggregate.avg')?.click();
         expect(gridInterface.getState().aggregates.balance).toEqual(['sum', 'avg']);
-        expect(gridInterface.__getGridConfig().__groupRowHeight).toEqual(66);
+        expect(gridInterface.__getGridConfig().__groupRowHeight).toEqual(52);
         expect(aggregateCell(groupRow(element, 'Country: Norway'), 'avg:balance')).not.toBeNull();
 
         openLabelMenu(element, 'balance');
