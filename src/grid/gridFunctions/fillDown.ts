@@ -21,8 +21,9 @@ import { AUTO_SCROLL_MS, cellPointAt } from './rangeSelection';
  *   range's rows, repeated from its top. Down only
  *
  * The values are copied as they are (a date as a new Date of the same time), not as text. Cells that
- * can not be edited are skipped, group rows have no cells, nothing happens in a readonly grid, and it is
- * one run of code: one step of the undo history.
+ * can not be edited are skipped (also the rows the edit permissions lock, `GridConfig.edit`), group rows
+ * have no cells, nothing happens in a readonly grid - nor where no value can be changed, `change` and
+ * `add` both false - and it is one run of code: one step of the undo history.
  */
 
 /** a value for another row: a date is copied, two rows must not share one Date */
@@ -57,7 +58,7 @@ function dataRowAbove(gridInterface: GridInterface<any>, row: number): Entity | 
  * @param active the cell with the focus, filled when there is no range. null for none
  */
 export function fillDown(gridInterface: GridInterface<any>, active: CellPoint | null) {
-    if (gridInterface.__getGridConfig().readonly) {
+    if (!gridInterface.__canChangeValues()) {
         return;
     }
     // the cell being typed in is written too: it is rendered again, not left as it is
@@ -86,8 +87,8 @@ export function fillDown(gridInterface: GridInterface<any>, active: CellPoint | 
 }
 
 /**
- * Ctrl+D (Cmd+D) in a cell: fill down, and not the browser's bookmark. Not in a readonly grid, the key
- * is the browser's there
+ * Ctrl+D (Cmd+D) in a cell: fill down, and not the browser's bookmark. Not in a readonly grid, nor where
+ * no value can be changed (GridInterface.__canChangeValues): the key is the browser's there
  * @returns true when it used the key
  */
 export function fillDownKey(ctx: Grid, event: KeyboardEvent, row: number, field: string): boolean {
@@ -97,7 +98,7 @@ export function fillDownKey(ctx: Grid, event: KeyboardEvent, row: number, field:
         !(event.ctrlKey || event.metaKey) ||
         event.shiftKey ||
         event.altKey ||
-        gridInterface.__getGridConfig().readonly
+        !gridInterface.__canChangeValues()
     ) {
         return false;
     }
@@ -133,7 +134,7 @@ function fieldOf(cell: HTMLCellElement): string | undefined {
 function isFillCorner(ctx: Grid, cell: HTMLCellElement): boolean {
     const state = ctx.gridInterface.__getRangeState();
     const last = state?.rects.at(-1);
-    if (!state || !last || ctx.gridInterface.__getGridConfig().readonly || cell.$row !== last.bottom) {
+    if (!state || !last || !ctx.gridInterface.__canChangeValues() || cell.$row !== last.bottom) {
         return false;
     }
     const field = fieldOf(cell);
@@ -251,7 +252,7 @@ function fillHandlePointerDown(ctx: Grid, down: PointerEvent) {
  * @param to the last
  */
 export function fillRows(gridInterface: GridInterface<any>, range: CellRange, from: number, to: number) {
-    if (gridInterface.__getGridConfig().readonly) {
+    if (!gridInterface.__canChangeValues()) {
         return;
     }
     gridInterface.getDatasource().getDataContainer().__history.endTyping();

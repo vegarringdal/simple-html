@@ -4015,6 +4015,92 @@ rebuildHeaderColumns for the middle section too (scrollHandlers.test.ts has it).
   `rowClass` hook does it in code); `fitColumns()` measures the normal weight - a bold cell can be a few px
   wider; a date picker for a rule's date value
 
+### Edit permissions: add, change, delete (user request)
+
+* the user: "also nice if we can set edit only allows new, only delete or only change. or some of them...
+  good way to control outcome, stopping someone"
+* **the option**: `GridConfig.edit?: EditPermissions` - `{ add?, change?, delete? }`, each `true` when it is
+  left out (new exported type `EditPermissions`). Named `edit` because it is the other half of
+  `readonly: false`: readonly turns editing on, `edit` says which of it; `add` / `change` / `delete` are the
+  user's words (new, change, delete) and `add` is `addNewEmpty()`'s. An object, not three flat booleans: the
+  three are one rule set, read and documented together, and `updateConfig({ edit })` replaces it as a whole
+  (one left out is allowed again - said in the JSDoc and guide 02), as `detailForm` and `texts` are
+* **a permission, not state**: not in `GridState` (setState can not take it - a type error in the typings
+  consumer), not in a menu or the grid config dialog. The column's `readonly` is different - the user's
+  *Read only* (`format.readonly`) of the column settings wins over it - so it is documented as a default the
+  user can change, and `edit` as what they can not; the isReadonly hook can not unlock a row it locks either
+* **checked** (`assertEditPermissions`, `TypeError`, the constructor and `updateConfig()` before anything
+  changes): an object, only `add` / `change` / `delete`, each boolean or undefined - a misspelt `chnage:
+  false` or `'false'` would leave the user allowed without a word
+* **one place for the rules** (new editPermissions.ts: `editPermissionsOf`, `mayChangeRow`,
+  `mayChangeValues`, `mayDeleteRow`, `isNewRow`), asked through the GridInterface: `__isCellReadonly(row,
+  field)` is `true` for every cell of a row the permissions lock (before the hook, so every per cell path
+  follows without a change of its own: typing, the text editor, the date picker, lookups, checkboxes, custom
+  cells, paste, clear, fill, the row menu's Paste / Clear entries, the detail form); `__canChangeRow(row)`
+  (readonly grid or a locked row: what renderRowCell and the detail form used `config.readonly` for - the
+  look, no stripes); `__canChangeValues()` (some value can change: the gates of paste, Delete on ranges,
+  Ctrl+D, `fillDown()`, the fill handle, the row menu's Paste › / Clear › - all `config.readonly` before);
+  `__canDeleteRow(row)` (deleteRows.ts `canMarkRow`: the row menu's Delete › Row / Rows and Delete on a row
+  number). Without `edit` every one of them is what `readonly` alone was: no behaviour changed (the 3785
+  tests before passed unchanged)
+* **the rules**: `change: false` locks the rows that were there; **a new row** (`__isNew`) can be changed
+  while `change` or `add` allows it - who may add a row may fill it in; after `acceptChanges()` it is a row
+  that was there. `delete: false` stops marking rows that were there; **a new row can always be taken out**
+  (Delete ›, Delete on its number, Undo row edits) - not on the server, nothing is deleted, the undo of an
+  add. `add: false`: the grid has no add of its own (checked: no menu entry, no key, paste adds no rows) - it
+  is for the app's add button and for new rows the app adds, which can not be filled in with `change: false`
+  too. With `change` and `add` both false nothing can change: no Paste › / Clear ›, no fill handle, Ctrl+V,
+  Delete and Ctrl+D are the browser's, as in a readonly grid
+* **what still works**: undo / redo (the history has only what was allowed and the app's code edits), the
+  reverts (Undo cell edit, Undo row edits, the edited marker's click), taking a deletion mark off - they put
+  back what was. A permission taken away at runtime leaves the history: the docs say to call
+  `clearHistory()` with it when a redo must not bring back what was done before. The app's own code
+  (`addNewEmpty()`, `markForDeletion()`, a value set) is not stopped; `gridInterface.fillDown()` goes through
+  the grid and follows them
+* **the menus**: the cell menu keeps its shape - Paste cell / Clear cell greyed out on a locked row (they
+  were greyed for a readonly cell already), Delete › Row / Rows greyed out on rows that were there; the
+  submenus Paste › and Clear › hidden only where no value can change (as in a readonly grid); Delete › and
+  Undo / Redo › stay in an editable grid. The row number's menu is the same function: Delete › greyed the
+  same way
+* the sample: new *Edit permissions* (`samples/demo/samples/editPermissions.ts`, after Editing & row state):
+  starts as add only, a button per permission as a developer would set them (`updateConfig({ edit })`),
+  *Add new row* disabled when add is off, *Save* (acceptChanges) shows a new row become locked, the detail
+  form beside the rows
+* docs: guide 05 (new *Edit permissions: add, change, delete* - the option, a table of what each stops and
+  what stays, the menus, what still works, the app's code, the hook; *Deleting rows*), 02 (options table,
+  hooks, updateConfig, detail form), 10 (the row menu table, the `visible` note), 17 (paste, fill), 20
+  (lookups), 21 (custom cell `readonly`); JSDoc of `GridConfig.edit`, `EditPermissions` (with examples),
+  `readonly`, `ColumnConfig.readonly`, `DetailForm`, the isReadonly hook, `CellRenderContext.readonly`,
+  `updateConfig()` and the constructor's `@throws`, MENU_IDS.row's table; typings consumer. No new texts
+* tests: new editPermissions.test.ts (64: the rules of all 8 combinations; defaults, the TypeErrors,
+  updateConfig before anything changes and as a whole, not state, the config not changed; `change: false`:
+  inputs, typing, no stripes, checkbox, date picker, multiline editor, lookup button / F4 / Delete, a custom
+  cell's `readonly`, the hook and the user's Read only not unlocking, acceptChanges, updateConfig at runtime
+  (an open editor closed unsaved, an open menu closed; another option leaves them);
+  a pasted block, one value, Delete on ranges, Ctrl+D / `fillDown()`, the fill handle, all the browser's
+  where nothing can change; the row menu's entries, Clear / Paste (selected rows); the detail form and
+  updateConfig; undo / redo of a new row, the reverts of a code edit; `delete: false`: Delete › on cell and
+  row number menus, Rows (selected), Undo (selected), Delete on a row number, Undo row edits on a new row;
+  delete only; add false; every combination in a mounted grid; a readonly grid stays readonly). 3849 tests,
+  164 files (was 3785, 163)
+* browser (Chromium 1148, port 8094): new `edit-permissions-check.js` 57/57, light and dark - a row that was
+  there: real typing, Ctrl+V of a block, Ctrl+D, the detail form write nothing, Paste cell / Clear cell /
+  Delete › Row greyed out, Delete on its number marks nothing; *Add new row*: typed into, Ctrl+D from the
+  row above, Ctrl+V, the detail form, its menu entries usable, Delete on its number takes it out and Ctrl+Z
+  brings it back; the buttons: change on -> typing writes, delete on -> Delete › Row usable, add and change
+  off -> the new row readonly, no Paste › / Clear ›, the add button disabled; Save -> the new row locked.
+  The screenshots looked at: the menu with the greyed Delete entries, the new row typed in, the locked rows
+  as in a readonly grid (no stripes), light and dark. Shared checks: keyboard 53/53, fill 12/12, row-delete
+  6/6, row-number-menu 7/7, detail-form 91/91, custom-cells 39/39, lookup 55/55, full-grid 11/11, touch
+  61/61. The new script is in this worktree's `.claude/browser-checks/scripts/`
+* **`updateConfig({ edit })` closes what is open**: a menu (its entries were worked out under the old
+  permissions - Delete › Row marks without asking again), the date picker, a lookup's list and the editor of
+  a multiline cell (not saved: its row may be locked now). The rebuild does not close them (only a
+  disconnect does). Only for `edit`: `updateConfig({ readonly })` leaves them as before
+* not done, candidates: an add row entry of the grid's own (a row menu entry, a key) - `add` would hide it;
+  a permission per column (`change` for some fields only - the isReadonly hook does it in code);
+  `updateConfig({ readonly: true })` closing the open editors the same way
+
 ## Considered, not done
 
 ## Candidates / not started

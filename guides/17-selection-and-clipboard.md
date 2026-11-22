@@ -379,8 +379,10 @@ grid, also in a number field.
 
 What is skipped:
 
-- **readonly cells**: the grid's `readonly`, the column's `readonly`, the `isReadonly` hook. A
-  readonly grid pastes nothing
+- **readonly cells**: the grid's `readonly`, the column's `readonly`, the `isReadonly` hook, and the
+  rows the [edit permissions](05-editing.md#edit-permissions-add-change-delete) lock (`change: false`:
+  the rows that are not new). A readonly grid pastes nothing, nor does one where no
+  value can change (`change` and `add` both `false`) - Ctrl+V is the browser's there
 - **group rows**: the next row of the block goes to the next data row
 - **rows past the last displayed row**: a paste adds no rows. Paste fewer, or add rows first
   (`addNewEmpty()`)
@@ -415,7 +417,8 @@ is let go the rows it grew by get the values of the range's rows, repeated from 
 
 The values are copied as they are, a date as a date of its own; the cells that can not be edited are
 skipped, group rows have no cells, and it is one step of the undo history (Ctrl+Z). In a readonly grid
-there is no handle, and Ctrl+D is the browser's. From code:
+there is no handle, and Ctrl+D is the browser's - and so where the edit permissions let no value change
+(`change` and `add` both `false`). With `change: false` only the new rows are filled. From code:
 
 ```ts
 gridInterface.setRanges([{ fromRow: 0, fromField: 'status', toRow: 4, toField: 'status' }]);

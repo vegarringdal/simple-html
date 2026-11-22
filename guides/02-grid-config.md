@@ -193,6 +193,7 @@ Every option is optional.
 | option | default | what it does |
 | --- | --- | --- |
 | `readonly` | `true` | the whole grid is readonly. Set `false` to edit, see [Editing](05-editing.md) |
+| `edit` | all allowed | what the user may do in an editable grid: `{ add, change, delete }`, each `true` or `false` - `{ add: true, change: false, delete: false }` lets them add rows and fill them in, and leaves the rows that are there as they are. A permission of yours: not state, no menu or dialog changes it. A `TypeError` for anything else. See [Edit permissions](05-editing.md#edit-permissions-add-change-delete) |
 | `cellHeight` | `22` | height of a cell in px |
 | `multilineLineHeight` | `15` | the height in px of a line of text after the first in a multiline cell of a row made taller (`fitRows()`), and in its editor. A whole number of 1 or more, see [Column widths and row heights](#column-widths-and-row-heights) |
 | `cellHeaderLabelHeight` | `cellHeight` | height of a header label cell, make it taller for labels that wrap |
@@ -272,7 +273,7 @@ const config: GridConfig = {
   lines. A boolean is a checkbox. A row with a link has the link under the value. A value has the
   colours of its column's [colour rule](08-formatting.md#colour-rules), as its cell has them.
 - **Editing**: in an editable grid a field is edited as its cell is - the same readonly rules
-  (`readonly`, `ColumnConfig.readonly`, the `isReadonly` hook, `allowPasteClearOnly`), the value
+  (`readonly`, `edit`, `ColumnConfig.readonly`, the `isReadonly` hook, `allowPasteClearOnly`), the value
   parsed by the field's formatter (a field with the focus shows its `formatForEdit`), validated, its
   errors under it. What is typed in a field is one step of the undo history; Ctrl+Z in a field undoes
   the last step. A lookup column is shown, not edited in the form: its cell picks the value.
@@ -339,7 +340,9 @@ and field. Keep them fast.
 
 - `isReadonly(row, field, readonlyByConfig)` returns `true` (readonly) or `false` (editable).
   `null` or `undefined` leaves it to the column's `readonly` option, which is passed in as
-  `readonlyByConfig`. A readonly grid (`readonly: true`) stays readonly, whatever it returns.
+  `readonlyByConfig`. A readonly grid (`readonly: true`) stays readonly, whatever it returns - and so
+  does a row the [edit permissions](05-editing.md#edit-permissions-add-change-delete) lock
+  (`change: false`, a row that is not new).
 - `cellClass(row, field)` returns `{ input, background }`: classes for the cell's `<input>` (the
   text) and for the element behind it (the background). Both are optional, `null` adds nothing.
 
@@ -437,6 +440,9 @@ gridInterface.updateConfig({ tooltips: undefined }); // back to the default
 - `layout` is shown at once and replaces the column order, pinning and widths the user made. It is
   also the layout `resetState()` goes back to from then on. `layout: undefined` is ignored.
 - `initialState` changes nothing now, it is what the next `resetState()` goes back to.
+- `edit` replaces the permissions as a whole: `updateConfig({ edit: { delete: false } })` allows adding
+  and changing again. An open menu or editor is closed, what was typed in the editor not saved. See
+  [Edit permissions](05-editing.md#edit-permissions-add-change-delete).
 - The sorting, grouping, filter and header filters stay as they are, and so do the handlers you
   subscribed with `on()` and the hooks. Change a hook with [`updateHooks()`](#changing-the-hooks-updatehooks).
 

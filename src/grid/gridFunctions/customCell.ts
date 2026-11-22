@@ -72,7 +72,7 @@ export interface CustomCell {
     text: string;
     /** the formatter of the cell, for the editor */
     formatter: Formatter;
-    /** the grid or the cell is readonly: what the renderer is told */
+    /** the grid, the row (the edit permissions) or the cell is readonly: what the renderer is told */
     readonly: boolean;
     /** the cell can be edited in the grid's editor: not readonly, not `allowPasteClearOnly` */
     editable: boolean;

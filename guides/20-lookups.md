@@ -127,8 +127,9 @@ editor has its own button, the column one type.
   its search - the way a multiline cell opens its editor.
 - **The button** at its right opens the list: a small triangle, shown while the pointer is over the
   cell and while the cell has the focus. A click on it again closes the list.
-- **In a readonly grid or cell** (`readonly`, the column's `readonly`, the `isReadonly` hook) it shows
-  the label only: no button, no list, the keys are those of any cell.
+- **In a readonly grid or cell** (`readonly`, the column's `readonly`, the `isReadonly` hook, a row the
+  [edit permissions](05-editing.md#edit-permissions-add-change-delete) lock) it shows the label only: no
+  button, no list, the keys are those of any cell.
 
 ## The keys
 

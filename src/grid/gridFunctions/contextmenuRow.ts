@@ -6,7 +6,7 @@ import type { MenuContext, MenuEntry, MenuSubmenu } from '../gridMenus';
 import { type CellPoint, ctrlRanges, inRanges, samePoint, shiftRangeStart, shiftRanges } from './cellRanges';
 import type { ColType } from './colType';
 import { isAlwaysCaseSensitive } from './columnFilterOptions';
-import { isLockedByHook, rowsToMark, rowsToUnmark } from './deleteRows';
+import { canMarkRow, rowsToMark, rowsToUnmark } from './deleteRows';
 import { SELECTOR_COLTYPE } from './GROUP_COLTYPE';
 import { getLayoutFields } from './getLayoutFields';
 import { cellText } from './gridCsv';
@@ -106,11 +106,13 @@ function rowMenuEntries(
     // what the cell events send
     const eventData: RowMenuEventData = { cell, row, column, celno, colType, cellType, attribute, rowData };
 
-    // paste and clear: in an editable grid. The entries that work on a selection - the selected rows, the
-    // ranges of cells - are always listed and greyed out while there is none, so the menu does not change
-    // its shape; the clicked cell's greyed out when it is readonly. The selected rows and the cells of the
-    // ranges are checked one by one when pasting / clearing
-    const editable = () => !gridInterface.__getGridConfig().readonly;
+    // paste and clear: in an editable grid where some values can be changed - not with the edit
+    // permissions change and add both false (GridConfig.edit). The entries that work on a selection - the
+    // selected rows, the ranges of cells - are always listed and greyed out while there is none, so the
+    // menu does not change its shape; the clicked cell's greyed out when it is readonly (also when the
+    // permissions lock its row). The selected rows and the cells of the ranges are checked one by one when
+    // pasting / clearing
+    const editable = () => gridInterface.__canChangeValues();
     const cellReadonly = () => gridInterface.__isCellReadonly(rowData, attribute);
     const noSelectedRows = () => gridInterface.getDatasource().getSelectedRows().length === 0;
     const noRanges = () => gridInterface.getRanges().length === 0;
@@ -550,9 +552,12 @@ function canRevert(row: Entity): boolean {
  * accepted. Only in an editable grid. Every entry is listed, greyed out when there is nothing to do
  * (nothing selected, the row marked already): the menu keeps its shape.
  *
- * Delete skips a row the isReadonly hook locks (see isLockedByHook). Undo works on every selected
- * row that is marked: a hook that makes the deleted rows readonly must not stop the undo. The row
- * right clicked is unmarked by the Undo / Redo submenu's "Undo row edits" too
+ * Delete marks the rows canMarkRow lets through: not a row that was there when the edit permissions
+ * say `delete: false` (a new row can always be taken out), nor a row the isReadonly hook locks (see
+ * isLockedByHook) - with `delete: false` the entries are greyed out on the rows that were there, they
+ * stay listed for the new ones. Undo works on every selected row that is marked: a hook that makes the
+ * deleted rows readonly must not stop the undo, nor does a permission - taking a mark off deletes
+ * nothing. The row right clicked is unmarked by the Undo / Redo submenu's "Undo row edits" too
  */
 function deleteSubmenu(ctx: Grid, rowData: Entity): MenuSubmenu {
     const gridInterface = ctx.gridInterface;
@@ -572,7 +577,7 @@ function deleteSubmenu(ctx: Grid, rowData: Entity): MenuSubmenu {
                 id: 'row.delete.row',
                 label: gridText(ctx, 'row.delete.row'),
                 visible: editable,
-                disabled: () => rowData.__rowState === 'D' || isLockedByHook(gridInterface, rowData),
+                disabled: () => !canMarkRow(gridInterface, rowData),
                 action: () => datasource.markForDeletion(rowData)
             },
             {
@@ -580,7 +585,7 @@ function deleteSubmenu(ctx: Grid, rowData: Entity): MenuSubmenu {
                 label: gridText(ctx, 'row.delete.rows'),
                 hint: gridText(ctx, 'row.delete.rows.hint'),
                 visible: editable,
-                // nothing selected, or every selected row marked or locked
+                // nothing selected, or every selected row marked, not allowed or locked
                 disabled: () => toMark().length === 0,
                 action: () => datasource.markForDeletion(toMark())
             },
@@ -708,7 +713,7 @@ function copyRows(ctx: Grid, fields: string[]) {
  * its own: a cell can be readonly in one row and not in another
  */
 function clearRows(ctx: Grid, attribute: string, rows: Entity[]) {
-    if (ctx.gridInterface.__getGridConfig().readonly) {
+    if (!ctx.gridInterface.__canChangeValues()) {
         return;
     }
 
@@ -730,7 +735,7 @@ function pasteIntoCells(ctx: Grid, attribute: string, data: string, eventData: R
     // a lookup column (ColumnConfig.editor) takes a label, copied from it, as the value of its row
     const formatter = ctx.gridInterface.__getLookupColumn(attribute)?.formatter ?? datasource.getFormatter(attribute);
 
-    if (ctx.gridInterface.__getGridConfig().readonly) {
+    if (!ctx.gridInterface.__canChangeValues()) {
         return;
     }
 

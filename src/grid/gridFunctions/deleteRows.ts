@@ -7,7 +7,8 @@ import { undoRedoAction, undoRedoInGrid } from './undoRedoKey';
 /**
  * Marking rows for deletion from the grid: the row menu's Delete › (contextmenuRow.ts) and Delete or
  * Backspace on a row number - a click on a row number selects the row and gives the number the focus,
- * as a spreadsheet's row header. See guides/05-editing.md "Deleting rows".
+ * as a spreadsheet's row header. See guides/05-editing.md "Deleting rows". Both mark the rows canMarkRow
+ * lets through: the edit permissions (`GridConfig.edit.delete`) and the isReadonly hook decide.
  */
 
 /**
@@ -26,12 +27,21 @@ export function isLockedByHook(gridInterface: Grid['gridInterface'], row: Entity
     );
 }
 
-/** the selected rows a delete marks: not marked yet, not locked by the isReadonly hook */
+/**
+ * true when a delete marks the row: it is not marked yet, the edit permissions let the user delete it
+ * (`edit.delete`, or it is a new row - see GridInterface.__canDeleteRow) and the isReadonly hook does not
+ * lock it
+ */
+export function canMarkRow(gridInterface: Grid['gridInterface'], row: Entity): boolean {
+    return row.__rowState !== 'D' && gridInterface.__canDeleteRow(row) && !isLockedByHook(gridInterface, row);
+}
+
+/** the selected rows a delete marks, see canMarkRow */
 export function rowsToMark(gridInterface: Grid['gridInterface']): Entity[] {
     return gridInterface
         .getDatasource()
         .getSelectedRows()
-        .filter((row) => row.__rowState !== 'D' && !isLockedByHook(gridInterface, row));
+        .filter((row) => canMarkRow(gridInterface, row));
 }
 
 /** the selected rows marked for deletion, for its undo */
@@ -45,8 +55,8 @@ export function rowsToUnmark(gridInterface: Grid['gridInterface']): Entity[] {
 /**
  * A key on a row number (renderRowSelector): Delete or Backspace marks rows for deletion - the
  * selected rows when the number's row is one of them, else the number's row alone - one step of the
- * undo history; Ctrl+Z / Ctrl+Y undo and redo it there. Only in an editable grid, a row locked by the
- * isReadonly hook is left out
+ * undo history; Ctrl+Z / Ctrl+Y undo and redo it there. Only in an editable grid, a row canMarkRow
+ * does not let through (`edit.delete: false`, locked by the isReadonly hook) is left out
  * @param row the index of the number's row in the displayed rows
  */
 export function rowNumberKeydown(ctx: Grid, event: KeyboardEvent, row: number) {
@@ -74,7 +84,7 @@ export function rowNumberKeydown(ctx: Grid, event: KeyboardEvent, row: number) {
     event.preventDefault();
     const rows = datasource.getSelection().isSelected(row)
         ? rowsToMark(gridInterface)
-        : [entity].filter((one) => one.__rowState !== 'D' && !isLockedByHook(gridInterface, one));
+        : [entity].filter((one) => canMarkRow(gridInterface, one));
     if (rows.length) {
         datasource.markForDeletion(rows);
         focusRowNumber(ctx, row);
