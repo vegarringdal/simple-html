@@ -7,7 +7,7 @@ The grid has four right click menus:
   entries of a cell are greyed out. The summary of selected cells is in the footer, see
   [Selection and clipboard](17-selection-and-clipboard.md#the-summary-in-the-footer)
 - the **header menu**, on a header label: pin, hide, remove sorting, the column chooser, then the
-  submenus sizes, aggregates, grouping
+  submenus sizes, format (how a date or number column shows its values), aggregates, grouping
 - the **filter menu**, on a header filter: the submenu filter (the operator, is blank, clear, the
   filter editor), then the value list of a text column or the range block of a number or date column
 - the **column menu**, on a column number (the row of numbers under the header filters): the
@@ -251,9 +251,9 @@ Copy ›                            Remove sorting
 Paste ›                           ----                            in Filter ›:
 Clear ›                           Column chooser…                 Operator ›
 Delete ›                          Size ›                          Match case
-Filter ›                          Aggregate ›                     Blank ›
-View ›                            Grouping ›                      Clear Filter
-Size ›                                                            Clear All Filters
+Filter ›                          Format ›                        Blank ›
+View ›                            Aggregate ›                     Clear Filter
+Size ›                            Grouping ›                      Clear All Filters
 Export ›                                                          ----
                                                                   Advanced Filter…
 
@@ -266,6 +266,19 @@ Copy selected columns (all rows)  ----                            Clear column s
 Copy header names                 Add this cell to the ranges
 Copy header name                  ----
 Copy selected header names        Clear selection
+
+in Format › of a date column:     in Format › of a number column:
+Default                           Default
+----                              ----
+ISO ... Day and month name        Norwegian
+----  (a datetime column)         English
+ISO with time ... Time            Swiss
+----                              Plain
+Day of week ... Days until        ----
+                                  Decimals ›
+                                  Thousands separator ›
+                                  Decimal mark ›
+                                  Percent
 ```
 
 ### Row menu (`MENU_IDS.row`)
@@ -347,6 +360,54 @@ the selection work. A group row's number has no menu.
 | `header.size.all` | Fit all columns: `fitColumns()` | |
 | `header.size.resetColumn` | Reset column width: the width of the config, `resetColumnWidths([field])` | |
 | `header.size.resetAll` | Reset all column widths: `resetColumnWidths()` | |
+| `header.format` | Format › - a submenu: how the column's cells show the value, the display format in use with a ✓ (`GridState.formats`), see [Display formats](08-formatting.md#display-formats). Each hint is an example: today, or 1234567.891 | a date, datetime or number field, not a lookup column |
+| `header.format.default` | Default: no display format, the field's formatter | |
+| `header.format.defaultSeparator` | a line | |
+| `header.format.date.iso` | ISO (2026-11-22) - `{ date: 'iso' }`, a choice with a ✓ | a date or datetime field |
+| `header.format.date.norwegian` | Norwegian (22.11.2026) | a date or datetime field |
+| `header.format.date.norwegianShort` | Norwegian, short year (22.11.26) | a date or datetime field |
+| `header.format.date.us` | US (11/22/2026) | a date or datetime field |
+| `header.format.date.uk` | UK (22/11/2026) | a date or datetime field |
+| `header.format.date.medium` | Short month name (Nov 22, 2026), in the language of the text `format.locale` | a date or datetime field |
+| `header.format.date.long` | Month name (November 22, 2026) | a date or datetime field |
+| `header.format.date.full` | Day and month name (Sunday, November 22, 2026) | a date or datetime field |
+| `header.format.timeSeparator` | a line | a datetime field |
+| `header.format.date.isoTime` | ISO with time (2026-11-22 13:45) | a datetime field |
+| `header.format.date.isoSeconds` | ISO with seconds (2026-11-22 13:45:12) | a datetime field |
+| `header.format.date.norwegianTime` | Norwegian with time (22.11.2026 13:45) | a datetime field |
+| `header.format.date.norwegianSeconds` | Norwegian with seconds (22.11.2026 13:45:12) | a datetime field |
+| `header.format.date.time` | Time (13:45) | a datetime field |
+| `header.format.date.timeSeconds` | Time with seconds (13:45:12) | a datetime field |
+| `header.format.partSeparator` | a line | a date or datetime field |
+| `header.format.date.weekday` | Day of week (Sunday) | a date or datetime field |
+| `header.format.date.weekIso` | Week, ISO (2026-W47) | a date or datetime field |
+| `header.format.date.weekUs` | Week, US (2026-W48) | a date or datetime field |
+| `header.format.date.month` | Month (2026-11) | a date or datetime field |
+| `header.format.date.quarter` | Quarter (2026 Q4) | a date or datetime field |
+| `header.format.date.year` | Year (2026) | a date or datetime field |
+| `header.format.date.daysUntil` | Days until: the whole days from today, no hint | a date or datetime field |
+| `header.format.number.norwegian` | Norwegian (1 234 567,891): a space between the thousands, a decimal comma - the decimals and percent kept | a number field |
+| `header.format.number.english` | English (1,234,567.891) | a number field |
+| `header.format.number.swiss` | Swiss (1'234'567.891) | a number field |
+| `header.format.number.plain` | Plain (1234567.891): no thousands separator, a decimal dot | a number field |
+| `header.format.settingsSeparator` | a line | a number field |
+| `header.format.decimals` | Decimals › - a submenu | a number field |
+| `header.format.decimals.asIs` | As is: the decimals the number has | a number field |
+| `header.format.decimals.0` | 0: no decimals, rounded half away from zero | a number field |
+| `header.format.decimals.1` | 1 | a number field |
+| `header.format.decimals.2` | 2 | a number field |
+| `header.format.decimals.3` | 3 | a number field |
+| `header.format.decimals.4` | 4 | a number field |
+| `header.format.thousands` | Thousands separator › - a submenu | a number field |
+| `header.format.thousands.none` | None | a number field |
+| `header.format.thousands.space` | Space. Greyed out while the decimal mark is that character - for every separator | a number field |
+| `header.format.thousands.comma` | Comma | a number field |
+| `header.format.thousands.dot` | Dot | a number field |
+| `header.format.thousands.apostrophe` | Apostrophe | a number field |
+| `header.format.decimalMark` | Decimal mark › - a submenu | a number field |
+| `header.format.decimalMark.dot` | Dot. Greyed out while the thousands separator is that character | a number field |
+| `header.format.decimalMark.comma` | Comma | a number field |
+| `header.format.percent` | Percent, a toggle: the number times 100 with ` %` | a number field |
 | `header.aggregate` | Aggregate › - a submenu | |
 | `header.aggregate.sum` | Sum - a toggle with a ✓ when on: the column's sum in the group rows and the totals row, see [Aggregates](18-aggregates.md) | a number field |
 | `header.aggregate.avg` | Average, a toggle | a number field |

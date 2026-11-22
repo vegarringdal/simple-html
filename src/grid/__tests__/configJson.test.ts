@@ -68,9 +68,10 @@ const fullConfig = (): GridConfig => ({
             readonly: true,
             numberOverride: 'ZERO_TO_BLANK',
             aggregate: 'avg',
-            filterOperators: ['GREATER_THAN_OR_EQUAL_TO', 'BETWEEN', 'IS_BLANK']
+            filterOperators: ['GREATER_THAN_OR_EQUAL_TO', 'BETWEEN', 'IS_BLANK'],
+            format: { number: { decimals: 1, decimal: ',' } }
         },
-        born: { placeholderFilter: 'from' },
+        born: { placeholderFilter: 'from', format: { date: 'norwegian' } },
         value: { dynamicCellTypeColumn: 'valueType', allowPasteClearOnly: true },
         country: { label: 'Country', aggregate: 'count' },
         // not in the layout: the column chooser can add it
@@ -156,10 +157,11 @@ describe('config as JSON - GridConfig', () => {
         // a sanity check of what is compared: grouped, sorted, filtered and the right pinned column
         expect(shown(fromJson).rows).toEqual(['Norway', 'Bob', 'Ann', 'Sweden']);
         expect(fromJson.gridInterface.getLayoutFields()).toEqual(['name', 'age', 'born', 'valueType', 'value', 'country']);
-        // and the aggregates: in the totals row, over Ann, Bob and Cid, and in the group rows
+        // and the aggregates: in the totals row, over Ann, Bob and Cid - in age's display format - and in
+        // the group rows
         const aggregate = (selector: string) =>
             fromJson.element.querySelector(selector)?.textContent?.replace(/\s+/g, ' ').trim();
-        expect(aggregate('.simple-html-grid-totals [data-aggregate="avg:age"]')).toEqual('Avg Age 35');
+        expect(aggregate('.simple-html-grid-totals [data-aggregate="avg:age"]')).toEqual('Avg Age 35,0');
         expect(aggregate('.simple-html-grid-body-row-container-group [data-aggregate="count:country"]')).toEqual('Count 2');
     });
 

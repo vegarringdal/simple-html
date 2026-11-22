@@ -18,6 +18,7 @@ import {
     type Changes,
     type ColumnConfig,
     type ColumnEditor,
+    type ColumnFormat,
     type CreateGridOptions,
     type CsvOptions,
     type CsvSeparator,
@@ -27,6 +28,7 @@ import {
     type DatasourceEvents,
     type DatasourceOptions,
     type DateEvents,
+    type DateFormat,
     DateFormatterYYYYMMDD,
     DateInterface,
     type Entity,
@@ -69,6 +71,7 @@ import {
     type MenuSeparator,
     type MenuSubmenu,
     type ModifiedEntity,
+    type NumberFormat,
     NumberFormatterComma,
     NumberFormatterDot,
     or,
@@ -916,6 +919,25 @@ registerCellRenderer('nothing', () => ({}));
 // @ts-expect-error the column names the renderer by its id
 const rendererObject: ColumnConfig = { renderer: badgeRenderer };
 console.log(rendererColumns, rendererObject);
+
+// display formats: how a column shows its values, one object per column with a part per kind - plain JSON
+const week: DateFormat = 'weekIso';
+const norwegianMoney: NumberFormat = { decimals: 2, thousands: ' ', decimal: ',' };
+const formatColumns: Record<string, ColumnConfig> = {
+    due: { format: { date: week } },
+    balance: { format: { number: norwegianMoney } }
+};
+const stateFormats: Record<string, ColumnFormat> = gridInterface.getState().formats;
+gridInterface.setState({ formats: { ...stateFormats, due: { date: 'daysUntil' } } });
+// @ts-expect-error a format is an object with a part per kind, not a bare id
+const bareFormat: ColumnConfig = { format: 'weekIso' };
+// @ts-expect-error no such date format
+const unknownDate: ColumnFormat = { date: 'week' };
+// @ts-expect-error 0 to 4 decimals
+const tooManyDecimals: NumberFormat = { decimals: 5 };
+// @ts-expect-error a thousands separator is one of ' ', ',', '.', "'"
+const underscore: NumberFormat = { thousands: '_' };
+console.log(formatColumns, bareFormat, unknownDate, tooManyDecimals, underscore);
 
 // the sql entry, through the package's "exports" (bundler resolution here, node16 in tsconfig.sql.json):
 // a filter of the grid is a filter toSqlWhere takes

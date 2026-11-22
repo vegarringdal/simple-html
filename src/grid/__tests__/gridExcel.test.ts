@@ -489,6 +489,123 @@ describe('getExcel - typed values', () => {
     });
 });
 
+describe('getExcel - the display formats of the columns', () => {
+    const fields: DatasourceOptions = { fields: { born: 'date', seen: 'datetime', price: 'number', share: 'number' } };
+    const rows = () => [
+        { born: new Date(2026, 10, 22), seen: new Date(2026, 10, 22, 13, 45, 12), price: 1234567.891, share: 0.256 },
+        { born: null, seen: null, price: 0, share: null }
+    ];
+
+    /** the Excel number format of each column of the first row, with these formats */
+    async function formatsOf(columnsConfig: GridConfig['columns'], data = rows()) {
+        const config: GridConfig = { ...columns('born', 'seen', 'price', 'share'), columns: columnsConfig };
+        const { gridInterface } = await mountGrid(config, data, fields);
+        const sheet = await readSheet(await gridInterface.getExcel());
+        return { sheet, formats: ['A2', 'B2', 'C2', 'D2'].map((reference) => sheet.formatOf(reference)) };
+    }
+
+    it('expect the values, with an Excel number format like the display format', async () => {
+        const { sheet, formats } = await formatsOf({
+            born: { format: { date: 'norwegian' } },
+            seen: { format: { date: 'isoTime' } },
+            price: { format: { number: { decimals: 2, thousands: ' ', decimal: ',' } } },
+            share: { format: { number: { decimals: 1, percent: true } } }
+        });
+        // the values, as without a format
+        expect(sheet.rows[1]).toEqual([46348, 46348 + (13 * 3600 + 45 * 60 + 12) / 86400, 1234567.891, 0.256]);
+        // Excel shows the separators of its own language: , and . in a format are its separators
+        expect(formats).toEqual(['dd\\.mm\\.yyyy', 'yyyy-mm-dd hh:mm', '#,##0.00', '0.0%']);
+    });
+
+    it('expect every date format Excel can show, the others the date in the field formatter order', async () => {
+        const date = (format: string) => ({ format: { date: format } }) as never;
+        const shown: Record<string, string | null | undefined> = {};
+        for (const format of [
+            'iso',
+            'norwegian',
+            'norwegianShort',
+            'us',
+            'uk',
+            'weekday',
+            'month',
+            'year',
+            'medium',
+            'long',
+            'full',
+            'weekIso',
+            'weekUs',
+            'quarter',
+            'daysUntil'
+        ]) {
+            shown[format] = (await formatsOf({ born: date(format) })).formats[0];
+            document.body.innerHTML = '';
+        }
+        for (const format of ['isoTime', 'isoSeconds', 'norwegianTime', 'norwegianSeconds', 'time', 'timeSeconds']) {
+            shown[format] = (await formatsOf({ seen: date(format) })).formats[1];
+            document.body.innerHTML = '';
+        }
+        expect(shown).toEqual({
+            iso: 'yyyy-mm-dd',
+            norwegian: 'dd\\.mm\\.yyyy',
+            norwegianShort: 'dd\\.mm\\.yy',
+            us: 'mm\\/dd\\/yyyy',
+            uk: 'dd\\/mm\\/yyyy',
+            weekday: 'dddd',
+            month: 'yyyy-mm',
+            year: 'yyyy',
+            // Excel has no week, quarter or days until; the names of Intl are not Excel's
+            medium: 'yyyy-mm-dd',
+            long: 'yyyy-mm-dd',
+            full: 'yyyy-mm-dd',
+            weekIso: 'yyyy-mm-dd',
+            weekUs: 'yyyy-mm-dd',
+            quarter: 'yyyy-mm-dd',
+            daysUntil: 'yyyy-mm-dd',
+            isoTime: 'yyyy-mm-dd hh:mm',
+            isoSeconds: 'yyyy-mm-dd hh:mm:ss',
+            norwegianTime: 'dd\\.mm\\.yyyy hh:mm',
+            norwegianSeconds: 'dd\\.mm\\.yyyy hh:mm:ss',
+            time: 'hh:mm',
+            timeSeconds: 'hh:mm:ss'
+        });
+    });
+
+    it('expect the number formats: decimals, the thousands, percent - General with the decimals as is', async () => {
+        const number = (format: object) => ({ format: { number: format } }) as never;
+        const cases: [object, string][] = [
+            [{ decimals: 0 }, '0'],
+            [{ decimals: 3 }, '0.000'],
+            [{ decimals: 2, thousands: "'" }, '#,##0.00'],
+            [{ decimals: 0, thousands: '.', decimal: ',' }, '#,##0'],
+            [{ decimals: 2, percent: true }, '0.00%'],
+            [{ thousands: ' ' }, 'General'],
+            [{ percent: true }, 'General'],
+            [{}, 'General']
+        ];
+        for (const [format, code] of cases) {
+            expect((await formatsOf({ price: number(format) })).formats[2], JSON.stringify(format)).toBe(code);
+            document.body.innerHTML = '';
+        }
+    });
+
+    it('expect numberOverride to keep to the format: BLANK_TO_ZERO a formatted 0, ZERO_TO_BLANK no cell', async () => {
+        const blankToZero = await formatsOf({ share: { numberOverride: 'BLANK_TO_ZERO', format: { number: { decimals: 2 } } } });
+        expect(blankToZero.sheet.rows[2][3]).toBe(0);
+        expect(blankToZero.sheet.formatOf('D3')).toBe('0.00');
+        document.body.innerHTML = '';
+
+        const zeroToBlank = await formatsOf({ price: { numberOverride: 'ZERO_TO_BLANK', format: { number: { decimals: 2 } } } });
+        expect(zeroToBlank.sheet.rows[2][2]).toBeNull();
+    });
+
+    it('expect a format the user picked in the state to be used too', async () => {
+        const { gridInterface } = await mountGrid(columns('born', 'seen', 'price', 'share'), rows(), fields);
+        gridInterface.setState({ formats: { price: { number: { decimals: 1 } } } });
+        const sheet = await readSheet(await gridInterface.getExcel());
+        expect(sheet.formatOf('C2')).toBe('0.0');
+    });
+});
+
 describe('getExcel - live values and without a connected grid', () => {
     it('expect the values when it is called: an edit before is in the file, one after is not', async () => {
         const { gridInterface, datasource } = await mountGrid(

@@ -6,7 +6,7 @@ import type { Grid } from '../grid';
 import { ariaColIndex, setAria } from './ariaGrid';
 import { asPx } from './asPx';
 import { cellRowKeyNavigationCellRowHandler } from './cellRowKeyNavigationCellRowHandler';
-import { overrideNumberText } from './cellText';
+import { overrideNumberText, zeroText } from './cellText';
 import type { ColType } from './colType';
 import { contextmenuDate } from './contextmenuDate';
 import { contextmenuRow } from './contextmenuRow';
@@ -110,9 +110,11 @@ export function renderRowCell(
         const fieldType = field.type;
         const cellConfigType = getCellType(ctx, attribute, entity);
         // a lookup column (ColumnConfig.editor) shows the label of the value: its formatter is the
-        // lookup's, for the cell, the marker of an edited cell and its tooltip
+        // lookup's, for the cell, the marker of an edited cell and its tooltip. Else the field's, with
+        // the column's display format (ColumnConfig.format): its format() is what the cell shows, its
+        // formatForEdit() and parse() are the field's - an edited cell shows the value, not 2026-W47
         const lookupColumn = ctx.gridInterface.__getLookupColumn(attribute);
-        const formatter = lookupColumn?.formatter ?? datasource.getFormatter(attribute, cellConfigType);
+        const formatter = lookupColumn?.formatter ?? ctx.gridInterface.__getCellFormatter(attribute, cellConfigType);
 
         // after an edit: the field was validated, show its errors and the row's, and whether it is
         // edited now. Not by rendering the cell again, that would put the formatted value back into
@@ -154,12 +156,14 @@ export function renderRowCell(
             dimmed = 'simple-html-mandatory';
         }
 
-        // a checkbox shows the raw value, every other cell the text from the field's formatter
+        // a checkbox shows the raw value, every other cell the text from the formatter
         const checked = Boolean(entity?.[attribute]);
         const formatted = formatter.format(entity?.[attribute]);
-        // not for a lookup column, it shows a label
+        // not for a lookup column, it shows a label. 0 as the display format shows it: 0,00
         const value =
-            fieldType === 'number' && !lookupColumn ? overrideNumberText(formatted, cellConfig.numberOverride) : formatted;
+            fieldType === 'number' && !lookupColumn
+                ? overrideNumberText(formatted, cellConfig.numberOverride, zeroText(cellConfig, formatter))
+                : formatted;
 
         // the name of the input for a screen reader: the column's label, as in the header
         const label = getColumnLabel(ctx, attribute);

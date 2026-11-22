@@ -90,6 +90,10 @@ function config(readonly: boolean): GridConfig {
             status: { renderer: 'full-grid-status' },
             age: { aggregate: 'avg' },
             balance: { aggregate: ['sum', 'avg'] },
+            // display formats: what the cells show, the value stays - right click a column label, Format ›
+            credit: { format: { number: { decimals: 2, thousands: ' ', decimal: ',' } } },
+            dueDate: { format: { date: 'weekIso' } },
+            updated: { format: { date: 'norwegianTime' } },
             total: { readonly: true, aggregate: 'sum' },
             notes: { label: 'Notes' }
         },
@@ -187,7 +191,7 @@ export const fullGrid: DemoSample = {
     group: 'Getting started',
     fullPage: true,
     description:
-        '50 columns of every kind - text, numbers (money edited as the plain number), dates, a date and time, checkboxes, a lookup, a badge, notes of several lines, monthly sales with aggregates - pinned left and right. Add 5 000 rows at a time, turn editing on and off, group, filter, sort, select ranges, export to Excel (gridInterface.downloadExcel), Ctrl+F, Ctrl+D, Ctrl+Z, right click for the menus.',
+        '50 columns of every kind - text, numbers (money edited as the plain number), dates, a date and time, checkboxes, a lookup, a badge, notes of several lines, monthly sales with aggregates - pinned left and right. Credit, Due Date and Updated have display formats (Format › in the header menu: weeks, days until, Norwegian separators...). Add 5 000 rows at a time, turn editing on and off, group, filter, sort, select ranges, export to Excel (gridInterface.downloadExcel), Ctrl+F, Ctrl+D, Ctrl+Z, right click for the menus.',
     run(stage) {
         const style = document.createElement('style');
         style.textContent = STYLE;
@@ -234,6 +238,21 @@ export const fullGrid: DemoSample = {
         });
         ui.button('Totals row', () => {
             gridInterface.updateConfig({ totalsRow: !gridInterface.getState().totalsRow });
+        });
+        // the display formats are state: a view setting of the user, kept by getState()
+        ui.button('Formats: Norwegian', () => {
+            gridInterface.setState({
+                formats: {
+                    ...gridInterface.getState().formats,
+                    orderDate: { date: 'norwegian' },
+                    dueDate: { date: 'daysUntil' },
+                    balance: { number: { decimals: 2, thousands: ' ', decimal: ',' } },
+                    kpi1: { number: { decimals: 1, decimal: ',' } }
+                }
+            });
+        });
+        ui.button('Formats: reset', () => {
+            gridInterface.setState({ formats: {} });
         });
         ui.button('Undo', () => datasource.undo());
         ui.button('Redo', () => datasource.redo());

@@ -525,7 +525,13 @@ describe('menus - the menus hook', () => {
 
         gridInterface.updateHooks({ menus: undefined });
         openLabelMenu(element, 'age');
-        expect(menuTreeIds()).toEqual(MENU_IDS.header.filter((id) => id !== 'header.column.unpin'));
+        // a number column: Format › has the number formats, not the date formats and their lines
+        const dateOnly = ['header.format.timeSeparator', 'header.format.partSeparator'];
+        expect(menuTreeIds()).toEqual(
+            MENU_IDS.header.filter(
+                (id) => id !== 'header.column.unpin' && !id.startsWith('header.format.date.') && !dateOnly.includes(id)
+            )
+        );
     });
 
     it('expect an action that opens a menu to leave that menu open', async () => {
@@ -1167,6 +1173,7 @@ describe('menus - the default menus, short', () => {
             'header.column.chooserSeparator',
             'header.column.chooser',
             'header.size',
+            'header.format',
             'header.aggregate',
             'header.grouping'
         ]);

@@ -2900,6 +2900,94 @@ in the console. All passed. Found and fixed:
   only ways on a column narrower than 60px; the range block draws its own symbols (`OPERATOR_SYMBOLS`, not
   texts) - the same glyphs as `filter.indicator.*`, it could take those texts
 
+### Display formats: Format › in the header menu (user request)
+
+* the user: "in right menu users should maybe be able to set formatting with menu. for dates we might
+  want to show WEEK US, WEEK ISO, DAYS UNTIL, YEAR, DAY OF WEEK, and misc date formats, important to
+  include norwegian typical etc. For numbers, its decimal separator, 1000 separator etc". A view
+  setting of the user, like a column's width: only the text shown changes
+* **the shape**: one object per column with a part per kind of value, so later rules (a `link` for text
+  columns, a settings dialog) are another key and no breaking change - `ColumnConfig.format` (where the
+  grid starts) and `GridState.formats` (keyed by field, `getState()` / `setState()` / `resetState()` /
+  `initialState.formats`, kept in `columns[field].format` as the aggregates are). `{ date: DateFormat }`
+  for a date or datetime field, `{ number: NumberFormat }` for a number field, `{}` is none. Types
+  `ColumnFormat`, `DateFormat`, `NumberFormat` exported. Checked (`TypeError`, before anything changes)
+  in the constructor, `updateConfig()` and `setState()`: an unknown part or id, a part for another type,
+  a time format on a `date` field, a number part out of range, the same character for both separators,
+  a format on a lookup column (`editor`). Text and boolean columns have none: nothing obvious to pick
+  (upper case, a link ... are the later rules)
+* **the mechanism**: one place turns a value into a cell's text - `GridInterface.__getCellFormatter(field,
+  type?)`: the field's formatter, or with a format a Formatter made by `displayFormatter()`
+  (columnFormat.ts): its `format` is the display format (a value it can not show - a blank, no date, no
+  finite number - goes to the field's formatter), `formatForEdit` is the field's (its `format` without
+  one), `parse` / `parseFilter` / `placeholder` the field's. Used by renderRowCell (cells, custom cells,
+  the edited marker, the text editor), cellTextOf (Find, fitColumns, dimmed repeated values), the
+  aggregates and the footer's summary. Everything that reads or writes the value keeps
+  `datasource.getFormatter()`: the header filter (you type a date, not a week), the filter chips and
+  editor, the group rows' names (made by the datasource), copy and the CSV (a paste reads them back:
+  `2026-W47` and `1 234 567,89` it could not), sorting and grouping
+* **the dates** (2026-11-22 13:45:12): `iso` 2026-11-22, `norwegian` 22.11.2026, `norwegianShort`
+  22.11.26, `us` 11/22/2026, `uk` 22/11/2026, `medium` / `long` / `full` (Intl `dateStyle`: Nov 22, 2026 /
+  November 22, 2026 / Sunday, November 22, 2026 - nb-NO 22. nov. 2026 / 22. november 2026 / søndag 22.
+  november 2026), `weekday` Sunday / søndag, `weekIso` 2026-W47 (ISO 8601, the week's year: 2027-01-01 is
+  2026-W53), `weekUs` 2026-W48 (Excel's WEEKNUM: week 1 has Jan 1, weeks from Sunday, split at New Year,
+  2000-12-31 is week 54), `month` 2026-11, `quarter` 2026 Q4, `year` 2026, `daysUntil` 0 (whole local
+  days from today, summer time does not count; today is when the cell renders - no timer, `refresh()`
+  shows the next day). A datetime field also: `isoTime` 2026-11-22 13:45, `isoSeconds`, `norwegianTime`
+  22.11.2026 13:45, `norwegianSeconds`, `time` 13:45, `timeSeconds` 13:45:12. The weeks are counted on
+  day numbers of the local date (`setUTCFullYear`, not `Date.UTC`, which reads the years 0-99 as 19xx), so
+  no time of day, summer time or time zone moves them - tested in four time zones
+* **the language of the names**: the text `format.locale` (`'en-US'`), a BCP 47 tag for
+  `Intl.DateTimeFormat` - set with the other texts (`setTexts`, `GridConfig.texts`), so an app's
+  Norwegian texts give Norwegian dates; not `navigator.language` (an English grid with Norwegian days),
+  not a config option (every grid would need it). A tag Intl throws on (`nb_NO`, `''`) shows English.
+  The week and the quarter are texts too: `format.weekIso` / `format.weekUs` `'{year}-W{week}'`,
+  `format.quarter` `'{year} Q{quarter}'` - the Norwegian sample has `uke {week} {year}`, `{quarter}.
+  kvartal {year}`. Checked in Node 24 and Chromium 131: the same nb-NO and en-US names; nb-NO short
+  month `nov.` but `mai`
+* **the numbers** (1234567.891): `decimals` 0-4 (left out: as is), `thousands` `' '` `','` `'.'` `"'"`,
+  `decimal` `'.'` `','`, `percent` (×100, ` %`). Menu presets Norwegian `1 234 567,891`, English
+  `1,234,567.891`, Swiss `1'234'567.891`, Plain `1234567.891`; Decimals ›, Thousands separator ›,
+  Decimal mark › (a separator the other one has is greyed out), Percent. The digits come from
+  `Intl.NumberFormat('en-US', { useGrouping: false, signDisplay: 'negative' })`, the separators are put
+  in after: rounded half away from zero of the number as written (1.005 → 1.01, toFixed gives 1.00), no
+  exponent (1e21), no minus on a rounded 0 (-0.001 → 0.00), at most 20 decimals as is; percent drops the
+  ×100 tail with `toPrecision(15)` (0.07 → 7 %). Plain ASCII: a space U+0020 (nb-NO's Intl writes U+00A0;
+  Find finds a typed space), `-` (nb-NO's Intl writes U+2212), `'` (Chromium's de-CH writes U+2019, Node's
+  `'`). The first pick from Default keeps the field formatter's decimal mark (numberComma → `,`)
+* **numberOverride**: compared with the format's text of 0 (`0,00`) when the column has a format, `'0'` as
+  before without one
+* **Excel**: the value, with an Excel number format where Excel has one - iso / norwegian / us / uk /
+  month / year / the time ones / weekday (`dddd`), `.` and `/` escaped; a number with `decimals`:
+  `0.00`, `#,##0.00`, `0.0%` (Excel shows its own separators); the names formats, the weeks, the quarter
+  and days until keep the field's date format, a number without decimals General. `XlsxNumber` and
+  `XlsxDate.format` in xlsx.ts
+* the footer's summary: the first number field's formatter with its format, the format's decimals (as
+  is: two at most, as before). Hints of Format ›: examples made when the menu opens (today, 1234567.891),
+  not texts; the texts test gives `format.locale` a Cyrillic locale (`ru-RU`), so an English name in a
+  hint would show
+* tests: columnFormat.test.ts 53 (every format, weeks around New Year in four time zones and five years
+  day by day, leap day, summer time, days until across midnight with fake timers, rounding, separators,
+  percent, the check of a format, the formatter of the cells), columnFormatGrid.test.ts 37 (cells,
+  texts, days until, numberOverride, renderer, Find, fitColumns, editing a week / a number / readonly,
+  the edited marker, the header filter, the menu per type, ✓, Default, hints, presets, greyed
+  separators, the comma field, the menus hook, the state, JSON, initialState, updateConfig, the checks,
+  totals / group rows / summary, copy, CSV), gridExcel.test.ts +5, xlsx.test.ts +1, configJson (a format
+  in the full config), texts / gridMenus / gridState updated. Browser: new
+  `.claude/browser-checks/scripts/display-format-check.js` 39/39 (light and dark at 1300x1400: the config's
+  formats, Format › Norwegian / Week ISO / Day of week, Norwegian separators and Decimals › 2, the totals
+  row, editing a number and a week, getState/setState through JSON, no rounded corners, the Norwegian
+  sample in Intl nb-NO); full grid 11/11, submenu 40/40, menus regression 25/25, format for edit 8/8,
+  footer summary 11/11
+* docs: 08-formatting.md (Display formats: the formats, the rules, what changes and what not, the
+  state), 03-state.md, 02-grid-config.md, 10-menus.md, 12-texts.md, 15-export.md (Excel formats, CSV),
+  17-selection-and-clipboard.md (copy, the summary), 18-aggregates.md; JSDoc of `ColumnFormat`,
+  `ColumnConfig.format`, `GridState.formats`, MENU_IDS, the interface; samples: the full grid (formats in
+  the config, two buttons) and the translation sample (a date with Norwegian names)
+* later, a `link` rule: a key of the same object (`{ link: { url, label } }`) checked by
+  assertColumnFormat for text (and number) fields, its label through `__getCellFormatter` - which takes the
+  row then - and renderRowCell drawing an `<a>` for such a column, as it draws a custom cell for `renderer`
+
 ### A second theme: TreDeSpace, light and dark (user request)
 
 * the user: "Later we might want to be able to use our grid with this widget library. So we should have a
@@ -3038,6 +3126,17 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
 
 ### Features
 
+* **Display formats, more** (see *Display formats* above): grouping by the format - a group per week,
+  month, quarter or year (needs a group value function in the datasource; the group names are the field
+  formatter's now); a header filter typed in the format (`2026-W47`, a week number) and a value list of
+  weeks for a date column; copy and CSV of the text shown as an option; Days until kept up to date over
+  midnight (a timer); more formats - US with time on a 12-hour clock, `november 2026`, a week without
+  its year, short day names, a currency, negatives in parentheses or red, more than 4 decimals; the
+  names formats in Excel with its locale codes (`[$-414]`, its names and order differ from Intl's)
+* **The date picker's week numbers** (`src/date/utils/getWeekNumber.ts`): `getWeekNumbers(2027-01-01,
+  true)` is 0 (ISO: 53 of 2026), and so is 2021-01-03; its US mode is not WEEKNUM (2026-11-22 is 47, Excel
+  48). Which days the picker calls it with decides whether it shows: `isoWeek()` / `usWeek()` of
+  columnFormat.ts could replace it
 * **Touch, smaller things**: a finger makes ranges of cells with the row menu's Select › (Range from the
   active cell to here, Add this cell) but drags none (a hold and a drag could be one); the fill handle
   (7px) is small for a finger; the editor

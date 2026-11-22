@@ -1,0 +1,604 @@
+import type { FieldType } from '../datasource/field';
+import type { Formatter } from '../datasource/formatter';
+import { fillText, getText, type Texts } from '../texts';
+
+/**
+ * The display formats of a column: how its cells show the value, picked by the user in the header
+ * menu (Format ›) or set in the config (`ColumnConfig.format`) and the state (`GridState.formats`).
+ * Only the text shown changes - the value, editing, filtering, sorting, grouping, copy and the CSV
+ * export stay with the field's formatter. See the formatting guide, "Display formats".
+ *
+ * A column's format is one plain object (JSON) with a part per kind of value: `{ date: 'weekIso' }`,
+ * `{ number: { decimals: 2 } }`. A rule of another kind is another key of it later. The grid shows a
+ * value through one place: GridInterface.__getCellFormatter, a Formatter made by displayFormatter().
+ */
+
+/**
+ * How a `date` or `datetime` column shows its dates: `ColumnFormat.date`. What 2026-11-22 13:45:12 (a
+ * Sunday) is shown as:
+ *
+ * | format | shows | |
+ * | --- | --- | --- |
+ * | `'iso'` | `2026-11-22` | |
+ * | `'norwegian'` | `22.11.2026` | |
+ * | `'norwegianShort'` | `22.11.26` | |
+ * | `'us'` | `11/22/2026` | |
+ * | `'uk'` | `22/11/2026` | |
+ * | `'medium'` | `Nov 22, 2026` - `22. nov. 2026` in `nb-NO` | the names in the language of the text `format.locale` |
+ * | `'long'` | `November 22, 2026` - `22. november 2026` | |
+ * | `'full'` | `Sunday, November 22, 2026` - `søndag 22. november 2026` | |
+ * | `'weekday'` | `Sunday` - `søndag` | |
+ * | `'weekIso'` | `2026-W47` | ISO 8601: weeks start on Monday, week 1 has the year's first Thursday. The year is the week's: 2027-01-01 is `2026-W53`. Written as the text `format.weekIso` says, `'{year}-W{week}'` |
+ * | `'weekUs'` | `2026-W48` | weeks start on Sunday, week 1 has January 1 (Excel's `WEEKNUM`): 2026-12-31 is `2026-W53`, 2027-01-01 `2027-W01`. The text `format.weekUs` |
+ * | `'month'` | `2026-11` | |
+ * | `'quarter'` | `2026 Q4` | the text `format.quarter`, `'{year} Q{quarter}'` |
+ * | `'year'` | `2026` | |
+ * | `'daysUntil'` | `0` | whole days from today: `1` tomorrow, `-1` yesterday. Today is the day the cell is rendered |
+ * | `'isoTime'` | `2026-11-22 13:45` | a `datetime` column only |
+ * | `'isoSeconds'` | `2026-11-22 13:45:12` | a `datetime` column only |
+ * | `'norwegianTime'` | `22.11.2026 13:45` | a `datetime` column only |
+ * | `'norwegianSeconds'` | `22.11.2026 13:45:12` | a `datetime` column only |
+ * | `'time'` | `13:45` | a `datetime` column only |
+ * | `'timeSeconds'` | `13:45:12` | a `datetime` column only |
+ *
+ * The date's local day and time are shown, as the field's formatter shows them.
+ *
+ * @example
+ * ```ts
+ * import type { DateFormat, GridConfig } from '@simple-html/grid';
+ *
+ * const week: DateFormat = 'weekIso'; // 2026-W47
+ * const columns: GridConfig['columns'] = { due: { format: { date: week } } };
+ * ```
+ */
+export type DateFormat =
+    | 'iso'
+    | 'norwegian'
+    | 'norwegianShort'
+    | 'us'
+    | 'uk'
+    | 'medium'
+    | 'long'
+    | 'full'
+    | 'weekday'
+    | 'weekIso'
+    | 'weekUs'
+    | 'month'
+    | 'quarter'
+    | 'year'
+    | 'daysUntil'
+    | 'isoTime'
+    | 'isoSeconds'
+    | 'norwegianTime'
+    | 'norwegianSeconds'
+    | 'time'
+    | 'timeSeconds';
+
+/**
+ * @internal
+ * the display formats of a date and a datetime column, in the order of the menu: the date written out,
+ * then a part of it. Every DateFormat is in this list or in DATETIME_FORMATS (columnFormat.test.ts)
+ */
+export const DATE_FORMATS: readonly DateFormat[] = [
+    'iso',
+    'norwegian',
+    'norwegianShort',
+    'us',
+    'uk',
+    'medium',
+    'long',
+    'full',
+    'weekday',
+    'weekIso',
+    'weekUs',
+    'month',
+    'quarter',
+    'year',
+    'daysUntil'
+];
+
+/**
+ * @internal
+ * the display formats of a datetime column only: they show the time of day
+ */
+export const DATETIME_FORMATS: readonly DateFormat[] = [
+    'isoTime',
+    'isoSeconds',
+    'norwegianTime',
+    'norwegianSeconds',
+    'time',
+    'timeSeconds'
+];
+
+/**
+ * How a `number` column shows its numbers: `ColumnFormat.number` - the decimals, the thousands
+ * separator and the decimal mark. Every part is optional, `{}` is `1234567.891`. What 1234567.891 is
+ * shown as:
+ *
+ * | format | shows |
+ * | --- | --- |
+ * | `{ thousands: ' ', decimal: ',' }` | `1 234 567,891` - Norwegian |
+ * | `{ thousands: ',' }` | `1,234,567.891` - English |
+ * | `{ thousands: "'" }` | `1'234'567.891` - Swiss |
+ * | `{ decimals: 2, thousands: ' ', decimal: ',' }` | `1 234 567,89` |
+ * | `{ decimals: 0 }` | `1234568` |
+ * | `{ decimals: 1, percent: true }` on 0.256 | `25.6 %` |
+ *
+ * The same character can not be both separators: `{ thousands: '.' }` (the decimal mark is `.` too)
+ * throws a `TypeError`, give it `decimal: ','`.
+ *
+ * @example
+ * ```ts
+ * import type { GridConfig, NumberFormat } from '@simple-html/grid';
+ *
+ * const norwegian: NumberFormat = { decimals: 2, thousands: ' ', decimal: ',' }; // 1 234 567,89
+ * const columns: GridConfig['columns'] = { balance: { format: { number: norwegian } } };
+ * ```
+ */
+export interface NumberFormat {
+    /**
+     * the decimals shown, 0 to 4: rounded half away from zero, of the number as it is written
+     * (`1.005` is `1.01`) - the decimals a number has are padded with 0. Left out: the decimals the
+     * number has, as the field's formatter shows them (at most 20)
+     */
+    decimals?: 0 | 1 | 2 | 3 | 4;
+    /**
+     * between the thousands: `' '` a space, `','` a comma, `'.'` a dot or `"'"` an apostrophe. Left
+     * out: none. The space is a plain space (U+0020), not the no-break space `Intl.NumberFormat('nb-NO')`
+     * writes: a cell is one line, and Find finds a space typed
+     */
+    thousands?: ' ' | ',' | '.' | "'";
+    /** the decimal mark, `'.'` or `','`. Left out: `'.'` */
+    decimal?: '.' | ',';
+    /** `true`: the number times 100, with ` %` after it - 0.256 is `25.6 %` */
+    percent?: boolean;
+}
+
+/**
+ * The display format of a column, `ColumnConfig.format` and `GridState.formats`: one plain object (JSON)
+ * with a part for the kind of value the column holds - `date` for a `date` or `datetime` field, `number`
+ * for a `number` field. A part for another type throws a `TypeError`. `{}` is no format: the field's
+ * formatter.
+ *
+ * Only what the cells show changes - and what follows the cells: the aggregates of a number column, the
+ * summary of the selected cells in the footer, Find, the fitted width and the dimmed repeated values.
+ * The value stays as it was: a cell that is edited shows the value as the field's formatter writes it
+ * (its `formatForEdit`), a header filter is typed as the field's formatter reads it, sorting and
+ * grouping use the value, the group rows' names, copy and the CSV export the field's formatter. The
+ * Excel export writes the value, with an Excel number format like the display format where Excel has
+ * one.
+ *
+ * @example
+ * ```ts
+ * import type { ColumnFormat, GridConfig } from '@simple-html/grid';
+ *
+ * const week: ColumnFormat = { date: 'weekIso' };
+ * const config: GridConfig = {
+ *     columns: {
+ *         born: { format: { date: 'norwegian' } }, // 22.11.2026
+ *         due: { format: week }, // 2026-W47
+ *         balance: { format: { number: { decimals: 2, thousands: ' ', decimal: ',' } } } // 1 234 567,89
+ *     },
+ *     layout: { center: [{ fields: ['born'], width: 100 }, { fields: ['due'], width: 100 }, { fields: ['balance'], width: 120 }] }
+ * };
+ * ```
+ */
+export interface ColumnFormat {
+    /** how a `date` or `datetime` column shows its dates, see {@link DateFormat} */
+    date?: DateFormat;
+    /** how a `number` column shows its numbers, see {@link NumberFormat} */
+    number?: NumberFormat;
+}
+
+/**
+ * the language of the names when the text `format.locale` is not a language Intl takes
+ */
+export const FALLBACK_LOCALE = 'en-US';
+
+/**
+ * The texts the date formats are written with, from the grid's texts: the language of the names, and
+ * how a week and a quarter are written - `{year}`, `{week}` (two digits) and `{quarter}` are filled in
+ */
+export interface FormatTexts {
+    /** `format.locale`: a BCP 47 language tag, `'en-US'` */
+    locale: string;
+    /** `format.weekIso`: `'{year}-W{week}'` */
+    weekIso: string;
+    /** `format.weekUs`: `'{year}-W{week}'` */
+    weekUs: string;
+    /** `format.quarter`: `'{year} Q{quarter}'` */
+    quarter: string;
+}
+
+/**
+ * The texts of the date formats: a grid's (`GridConfig.texts`), else the page's (`setTexts()`), else
+ * the English defaults
+ */
+export function formatTexts(overrides?: Texts): FormatTexts {
+    return {
+        locale: getText('format.locale', overrides),
+        weekIso: getText('format.weekIso', overrides),
+        weekUs: getText('format.weekUs', overrides),
+        quarter: getText('format.quarter', overrides)
+    };
+}
+
+/** a day in ms */
+const DAY = 86_400_000;
+
+/**
+ * true when a column's format changes what its cells show: it has a part. `{}` does not
+ */
+export function hasDisplayFormat(format: ColumnFormat | undefined): format is ColumnFormat {
+    return format?.date !== undefined || format?.number !== undefined;
+}
+
+/** two digits, `5` -> `'05'` */
+function pad(value: number): string {
+    return String(value).padStart(2, '0');
+}
+
+/**
+ * The local day of a date as a number of days, 0 is 1970-01-01: the same day number for every time of
+ * the day and across summer time, so days can be counted by subtracting. setUTCFullYear, not Date.UTC:
+ * Date.UTC reads the years 0 to 99 as 1900 to 1999
+ */
+function dayNumber(year: number, month: number, day: number): number {
+    const utc = new Date(0);
+    utc.setUTCFullYear(year, month, day);
+    return utc.getTime() / DAY;
+}
+
+/** the local day of a Date, see dayNumber */
+function dayOf(date: Date): number {
+    return dayNumber(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+/** the day of the week of a day number: 0 Sunday ... 6 Saturday. Day 0, 1970-01-01, was a Thursday */
+function weekdayOf(day: number): number {
+    return (((day + 4) % 7) + 7) % 7;
+}
+
+/**
+ * The ISO 8601 week of a date's local day, and the year it belongs to: weeks start on Monday, week 1
+ * is the week with the year's first Thursday. The Thursday of a date's week decides the year: the
+ * first days of January can be the last week of the year before (2027-01-01 is 2026-W53), the last
+ * days of December week 1 of the next (2024-12-30 is 2025-W01)
+ */
+export function isoWeek(date: Date): { year: number; week: number } {
+    const day = dayOf(date);
+    // Monday 0 ... Sunday 6
+    const fromMonday = (weekdayOf(day) + 6) % 7;
+    const thursday = day - fromMonday + 3;
+    const year = new Date(thursday * DAY).getUTCFullYear();
+    return { year, week: Math.floor((thursday - dayNumber(year, 0, 1)) / 7) + 1 };
+}
+
+/**
+ * The US week number of a date's local day, as Excel's `WEEKNUM(date)`: weeks start on Sunday, week 1
+ * is the week of January 1, and a week belongs to the year of the date - the days of a week across
+ * New Year are the last week of the one year and week 1 of the next. 1 to 53, 54 in a leap year that
+ * starts on a Saturday (2000-12-31)
+ */
+export function usWeek(date: Date): number {
+    const day = dayOf(date);
+    const newYear = dayNumber(date.getFullYear(), 0, 1);
+    return Math.floor((day - newYear + weekdayOf(newYear)) / 7) + 1;
+}
+
+/**
+ * The whole days from today to the date's day, local days: 1 tomorrow, 0 today, -1 yesterday. The
+ * time of day does not count, nor does summer time
+ * @param today now, `new Date()` - a parameter for the tests
+ */
+export function daysUntil(date: Date, today: Date): number {
+    return dayOf(date) - dayOf(today);
+}
+
+/**
+ * the Intl formatters of the names, by locale and options: made once each
+ */
+const dateTimeFormats = new Map<string, Intl.DateTimeFormat>();
+
+/**
+ * The names of a date in a language, with Intl: `new Intl.DateTimeFormat(locale, options)`. A locale
+ * Intl does not take (`'nb_NO'`, `''`) throws a RangeError there: English (FALLBACK_LOCALE) then
+ */
+function intlDate(date: Date, locale: string, options: Intl.DateTimeFormatOptions): string {
+    const key = `${locale}|${JSON.stringify(options)}`;
+    let format = dateTimeFormats.get(key);
+    if (!format) {
+        try {
+            format = new Intl.DateTimeFormat(locale, options);
+        } catch (error) {
+            if (!(error instanceof RangeError)) {
+                throw error;
+            }
+            format = new Intl.DateTimeFormat(FALLBACK_LOCALE, options);
+        }
+        dateTimeFormats.set(key, format);
+    }
+    return format.format(date);
+}
+
+/**
+ * A date as text in a date format, see {@link DateFormat}: its local day and time.
+ * @param texts the language of the names (`medium`, `long`, `full`, `weekday`), how a week and a
+ * quarter are written: formatTexts()
+ * @param today now, for `daysUntil`
+ */
+export function formatDateAs(date: Date, format: DateFormat, texts: FormatTexts, today: Date): string {
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+    const iso = `${year}-${month}-${day}`;
+    const norwegian = `${day}.${month}.${year}`;
+    const minutes = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    const seconds = `${minutes}:${pad(date.getSeconds())}`;
+
+    switch (format) {
+        case 'iso':
+            return iso;
+        case 'norwegian':
+            return norwegian;
+        case 'norwegianShort':
+            return `${day}.${month}.${pad(((year % 100) + 100) % 100)}`;
+        case 'us':
+            return `${month}/${day}/${year}`;
+        case 'uk':
+            return `${day}/${month}/${year}`;
+        case 'medium':
+        case 'long':
+        case 'full':
+            return intlDate(date, texts.locale, { dateStyle: format });
+        case 'weekday':
+            return intlDate(date, texts.locale, { weekday: 'long' });
+        case 'weekIso': {
+            const week = isoWeek(date);
+            return fillText(texts.weekIso, { year: week.year, week: pad(week.week) });
+        }
+        case 'weekUs':
+            return fillText(texts.weekUs, { year, week: pad(usWeek(date)) });
+        case 'month':
+            return `${year}-${month}`;
+        case 'quarter':
+            return fillText(texts.quarter, { year, quarter: Math.floor(date.getMonth() / 3) + 1 });
+        case 'year':
+            return String(year);
+        case 'daysUntil':
+            return String(daysUntil(date, today));
+        case 'isoTime':
+            return `${iso} ${minutes}`;
+        case 'isoSeconds':
+            return `${iso} ${seconds}`;
+        case 'norwegianTime':
+            return `${norwegian} ${minutes}`;
+        case 'norwegianSeconds':
+            return `${norwegian} ${seconds}`;
+        case 'time':
+            return minutes;
+        case 'timeSeconds':
+            return seconds;
+    }
+}
+
+/**
+ * the Intl formatters of the digits, by the decimals (undefined: as the number has them)
+ */
+const digitFormats = new Map<number | undefined, Intl.NumberFormat>();
+
+/**
+ * A number as plain digits: `-1234567.89`. `en-US` gives ASCII digits, `.` and `-`, without a thousands
+ * separator. Intl rounds the number as it is written (the shortest text that reads back as it), so
+ * `1.005` is `1.01` - `toFixed(2)` gives `1.00`, of the binary value 1.00499... It writes no exponent
+ * (`1e21` is 1 and 21 zeros), and no sign for a number rounded to 0 (`-0.001` is `0.00`)
+ */
+function digits(value: number, decimals: number | undefined): string {
+    let format = digitFormats.get(decimals);
+    if (!format) {
+        format = new Intl.NumberFormat('en-US', {
+            useGrouping: false,
+            signDisplay: 'negative',
+            minimumFractionDigits: decimals ?? 0,
+            maximumFractionDigits: decimals ?? 20
+        });
+        digitFormats.set(decimals, format);
+    }
+    return format.format(value);
+}
+
+/**
+ * A finite number as text in a number format, see {@link NumberFormat}: `1 234 567,89`
+ */
+export function formatNumberAs(value: number, format: NumberFormat): string {
+    // times 100 can add a binary tail: 0.07 * 100 is 7.000000000000001. 15 digits drop it
+    const scaled = format.percent ? Number((value * 100).toPrecision(15)) : value;
+    const [whole, fraction] = digits(scaled, format.decimals).split('.');
+    const sign = whole.startsWith('-') ? '-' : '';
+    const integer = sign ? whole.slice(1) : whole;
+    const grouped = format.thousands ? integer.replace(/\B(?=(\d{3})+$)/g, format.thousands) : integer;
+    const text = `${sign}${grouped}${fraction === undefined ? '' : `${format.decimal ?? '.'}${fraction}`}`;
+    return format.percent ? `${text} %` : text;
+}
+
+/**
+ * The value of a date column as a Date, as the built-in date formatters read it: a Date, or a text or
+ * a timestamp `new Date()` reads. null for a blank and for what is no valid date
+ */
+function asDate(value: unknown): Date | null {
+    if (value === '' || !(value instanceof Date || typeof value === 'string' || typeof value === 'number')) {
+        return null;
+    }
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/**
+ * A value as text in a display format. null when the format can not show it - a blank, a date column
+ * value that is no date, a number column value that is no finite number: the field's formatter shows
+ * those (a blank as `''`)
+ */
+export function formatValueAs(value: unknown, format: ColumnFormat, texts: FormatTexts): string | null {
+    if (format.number) {
+        return typeof value === 'number' && Number.isFinite(value) ? formatNumberAs(value, format.number) : null;
+    }
+    if (format.date) {
+        const date = asDate(value);
+        return date ? formatDateAs(date, format.date, texts, new Date()) : null;
+    }
+    return null;
+}
+
+/**
+ * The formatter the cells of a column with a display format are shown with: the field's formatter, its
+ * `format` replaced by the display format. A value the format can not show (a blank, no date) is shown
+ * by the field's formatter. Editing keeps to the field's formatter: `formatForEdit` is the field's
+ * (its `format` when it has none) - an edited cell shows the value as the field writes it, not
+ * `2026-W47` - and so are `parse`, `parseFilter` and `placeholder`.
+ * @param texts the language of the names, how a week and a quarter are written: formatTexts()
+ */
+export function displayFormatter(fieldFormatter: Formatter, format: ColumnFormat, texts: FormatTexts): Formatter {
+    return {
+        ...fieldFormatter,
+        format: (value) => formatValueAs(value, format, texts) ?? fieldFormatter.format(value),
+        // called on the formatter, so one that uses `this` works
+        formatForEdit: (value) =>
+            fieldFormatter.formatForEdit ? fieldFormatter.formatForEdit(value) : fieldFormatter.format(value)
+    };
+}
+
+/**
+ * the parts of a column's format, for the check of one from plain JavaScript or JSON
+ */
+const FORMAT_KEYS: readonly (keyof ColumnFormat)[] = ['date', 'number'];
+
+/**
+ * the keys a number format has
+ */
+const NUMBER_FORMAT_KEYS: readonly (keyof NumberFormat)[] = ['decimals', 'thousands', 'decimal', 'percent'];
+
+/** a plain object, not null or an array */
+const isObject = (value: unknown): value is Record<string, unknown> =>
+    typeof value === 'object' && value !== null && !Array.isArray(value);
+
+/**
+ * Throws when a column's format does not fit its field: TypeScript catches neither a typo nor a part of
+ * another type in a config from plain JavaScript or JSON - the cells would show the field's formatter
+ * without a word. undefined is no format
+ * - an object with the parts `date` and `number`, nothing else
+ * - `date` for a `date` field: one of DATE_FORMATS; a `datetime` field DATETIME_FORMATS too
+ * - `number` for a `number` field: a {@link NumberFormat}, its parts of the values they take, not the
+ *   same character for both separators
+ * - not on a lookup column (`editor`: its cells show a label)
+ * @param name how the message names it: `GridConfig: columns.born.format`, `setState: formats.born`
+ * @throws a `TypeError` naming it, what it has and what it takes
+ */
+export function assertColumnFormat(format: unknown, field: string, type: FieldType, lookup: boolean, name: string): void {
+    if (format === undefined) {
+        return;
+    }
+    const got = JSON.stringify(format);
+    if (!isObject(format)) {
+        throw new TypeError(
+            `${name} is ${got}, it is an object: { date: 'norwegian' } for a date field, { number: { decimals: 2 } } for a number field`
+        );
+    }
+    for (const key of Object.keys(format)) {
+        if (!FORMAT_KEYS.some((known) => known === key)) {
+            throw new TypeError(`${name} has '${key}', a format has ${FORMAT_KEYS.join(', ')}`);
+        }
+    }
+    const { date, number } = format;
+    if (lookup && (date !== undefined || number !== undefined)) {
+        throw new TypeError(`${name} is ${got}: a lookup column (editor) shows the label of its value, it has no format`);
+    }
+    const list = (formats: readonly string[]) => formats.map((id) => `'${id}'`).join(', ');
+    if (date !== undefined) {
+        if (type !== 'date' && type !== 'datetime') {
+            throw new TypeError(`${name}.date is for a date or datetime field, '${field}' is ${type}`);
+        }
+        const isTime = DATETIME_FORMATS.some((id) => id === date);
+        if (isTime && type === 'date') {
+            throw new TypeError(
+                `${name}.date is ${JSON.stringify(date)}, it shows the time of day: for a datetime field, '${field}' is date. A date field takes ${list(DATE_FORMATS)}`
+            );
+        }
+        if (!isTime && !DATE_FORMATS.some((id) => id === date)) {
+            const formats = type === 'date' ? DATE_FORMATS : [...DATE_FORMATS, ...DATETIME_FORMATS];
+            throw new TypeError(`${name}.date is ${JSON.stringify(date)}, a ${type} field takes ${list(formats)}`);
+        }
+    }
+    if (number !== undefined) {
+        if (type !== 'number') {
+            throw new TypeError(`${name}.number is for a number field, '${field}' is ${type}`);
+        }
+        assertNumberFormat(number, `${name}.number`);
+    }
+}
+
+/**
+ * see assertColumnFormat
+ * @throws a `TypeError` naming the part and what it takes
+ */
+function assertNumberFormat(format: unknown, name: string): void {
+    if (!isObject(format)) {
+        throw new TypeError(
+            `${name} is ${JSON.stringify(format)}, it is an object: { decimals?: 0-4, thousands?: ' ' | ',' | '.' | "'", decimal?: '.' | ',', percent?: boolean }`
+        );
+    }
+    for (const key of Object.keys(format)) {
+        if (!NUMBER_FORMAT_KEYS.some((known) => known === key)) {
+            throw new TypeError(`${name} has '${key}', a number format has ${NUMBER_FORMAT_KEYS.join(', ')}`);
+        }
+    }
+    const { decimals, thousands, decimal, percent } = format;
+    if (decimals !== undefined && ![0, 1, 2, 3, 4].includes(decimals as number)) {
+        throw new TypeError(
+            `${name}.decimals is ${JSON.stringify(decimals)}, it is 0, 1, 2, 3 or 4 - left out, the decimals the number has`
+        );
+    }
+    if (thousands !== undefined && ![' ', ',', '.', "'"].includes(thousands as string)) {
+        throw new TypeError(`${name}.thousands is ${JSON.stringify(thousands)}, it is ' ', ',', '.' or "'" - left out, none`);
+    }
+    if (decimal !== undefined && decimal !== '.' && decimal !== ',') {
+        throw new TypeError(`${name}.decimal is ${JSON.stringify(decimal)}, it is '.' or ','`);
+    }
+    if (percent !== undefined && typeof percent !== 'boolean') {
+        throw new TypeError(`${name}.percent is ${JSON.stringify(percent)}, it is true or false`);
+    }
+    if (thousands !== undefined && thousands === (decimal ?? '.')) {
+        const leftOut = decimal === undefined ? " (left out, the decimal mark is '.')" : '';
+        throw new TypeError(
+            `${name} has '${String(thousands)}' as the thousands separator and the decimal mark${leftOut}: give them different characters`
+        );
+    }
+}
+
+/**
+ * The decimal mark a formatter shows: `','` when it writes 1.5 with a comma (`NumberFormatterComma`),
+ * else `'.'`. For the header menu: a number format picked there starts with the field's own mark
+ */
+export function decimalMarkOf(formatter: Formatter): '.' | ',' {
+    return String(formatter.format(1.5)).includes(',') ? ',' : '.';
+}
+
+/**
+ * A number format with the parts that are the default left out - `decimal: '.'`, `percent: false` and
+ * undefined - so the state holds what was picked: `{ decimals: 2 }`
+ */
+export function compactNumberFormat(format: NumberFormat): NumberFormat {
+    const compact: NumberFormat = {};
+    if (format.decimals !== undefined) {
+        compact.decimals = format.decimals;
+    }
+    if (format.thousands !== undefined) {
+        compact.thousands = format.thousands;
+    }
+    if (format.decimal === ',') {
+        compact.decimal = ',';
+    }
+    if (format.percent) {
+        compact.percent = true;
+    }
+    return compact;
+}

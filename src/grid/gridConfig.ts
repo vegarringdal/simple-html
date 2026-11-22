@@ -4,6 +4,7 @@ import type { GroupArgument } from '../datasource/groupArgument';
 import type { SortArgument } from '../datasource/sortArgument';
 import type { IDateConfig } from '../date/interfaces';
 import type { Texts } from '../texts';
+import type { ColumnFormat } from './columnFormat';
 
 /**
  * The grid's config: the options of each column (`columns`), where the columns go (`layout`), sizes
@@ -617,7 +618,8 @@ export type ColumnConfig = {
      * - `sum`, `avg`, `min` and `max` are for a `number` field (the datasource's `fields`), anything
      *   else throws a `TypeError` when the grid is made or `updateConfig()` is given the column. They
      *   take the numbers, blanks and what is no number are left out. The value is shown with the
-     *   field's formatter, not rounded: give the field a formatter with the decimals you want.
+     *   field's formatter, not rounded: give the field a formatter with the decimals you want, or the
+     *   column a display format with them (`format: { number: { decimals: 2 } }`).
      * - `count` counts the values that are not blank, in a field of any type. Shown as a whole number.
      *
      * @sample aggregates
@@ -637,6 +639,41 @@ export type ColumnConfig = {
      * ```
      */
     aggregate?: AggregateFunction | AggregateFunction[];
+
+    /**
+     * how the column's cells show the value - a display format, see {@link ColumnFormat}: an object with
+     * `date` for a `date` or `datetime` field, a {@link DateFormat} (`{ date: 'norwegian' }` 22.11.2026,
+     * `{ date: 'weekIso' }` 2026-W47, `{ date: 'daysUntil' }` ...), `number` for a `number` field, a
+     * {@link NumberFormat} (`{ number: { decimals: 2, thousands: ' ', decimal: ',' } }` 1 234 567,89).
+     * Left out: the field's formatter.
+     *
+     * Only the text shown changes: the cells, the aggregates of the column, the summary of the selected
+     * cells, Find. The value is not changed, and editing, the header filter, sorting, grouping, copy and
+     * the CSV export keep to the field's formatter - a cell shown as `2026-W47` is edited as
+     * `2026-11-22`. The Excel export writes the value with an Excel number format like it, where Excel
+     * has one.
+     *
+     * This is where the grid starts: the user picks another one in the header menu (right click a column
+     * label, "Format"), and it is part of the grid's state (`GridState.formats`) - `resetState()` goes
+     * back to this one. A format that does not fit the field's type, and a format on a lookup column
+     * (`editor`), throw a `TypeError` when the grid is made or `updateConfig()` is given the column.
+     *
+     * @sample full-grid
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     columns: {
+     *         born: { format: { date: 'norwegian' } }, // 22.11.2026
+     *         due: { format: { date: 'daysUntil' } }, // 3: due in 3 days
+     *         balance: { format: { number: { decimals: 2, thousands: ' ', decimal: ',' } } } // 1 234 567,89
+     *     },
+     *     layout: { center: [{ fields: ['born'], width: 100 }, { fields: ['due'], width: 80 }, { fields: ['balance'], width: 120 }] }
+     * };
+     * ```
+     */
+    format?: ColumnFormat;
 
     /**
      * draws the column's cells with a renderer of your own - a badge, a progress bar, a link, a select:
@@ -757,6 +794,13 @@ export interface GridState {
     aggregates: Record<string, AggregateFunction[]>;
     /** whether the totals row is shown, `GridConfig.totalsRow` */
     totalsRow: boolean;
+    /**
+     * the display formats of the columns, keyed by field - what `ColumnConfig.format` starts with and
+     * the header menu (Format ›) changes: `{ born: { date: 'weekIso' }, balance: { number: { decimals: 2 } } }`.
+     * Only the fields that have one are listed; a field left out shows its field's formatter. See
+     * {@link ColumnFormat}
+     */
+    formats: Record<string, ColumnFormat>;
 }
 
 /**

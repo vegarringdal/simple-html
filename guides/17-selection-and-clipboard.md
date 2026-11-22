@@ -192,7 +192,7 @@ of a spreadsheet: `Count: 20   Sum: 201   Average: 40.2   Min: 26   Max: 53`.
   digits is no number. Without numbers only the count shows.
 - Every cell once: ranges that overlap count their common cells once; group rows have no cells.
 - The numbers are shown with the formatter of the number field furthest left in the ranges, two decimals
-  at most.
+  at most - with its display format when it has one (`1 234,50`), and that format's decimals.
 - It follows the ranges and the values in them: an edit, a paste, an upsert. One cell, or no range,
   shows none.
 
@@ -304,7 +304,10 @@ Ctrl+C (Cmd+C) in a cell, with no text selected in it:
   text - **a header line of the column labels first**, then a line per data row, each ended with CRLF,
   a tab between the fields, as Excel puts cells on the clipboard. A value with a tab, a line break or a
   double quote is put in double quotes, a quote in it doubled. Every value is the text the cell shows,
-  through the field's formatter: `12,5` with a decimal comma, a date as its formatter writes it.
+  through the field's formatter: `12,5` with a decimal comma, a date as its formatter writes it. Not a
+  column's display format (`2026-W47`, `1 234 567,89`, see
+  [Display formats](08-formatting.md#display-formats)): the value as the field writes it, which a paste
+  reads back.
 - **else**: the value of the cell with the focus, as the cell shows it, without a line end - as the
   row menu's *Copy › Cell Value*. Before v6 this copied nothing.
 

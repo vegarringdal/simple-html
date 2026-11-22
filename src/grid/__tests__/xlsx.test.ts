@@ -197,6 +197,26 @@ describe('xlsx - the cells', () => {
         expect(styleOf('C2').format).toBe('dd\\.mm\\.yyyy hh:mm:ss');
     });
 
+    it('expect a number with a number format, and a date with a format of its own (a display format)', async () => {
+        const { cellValue, styleOf } = await workbook({
+            rows: [
+                [
+                    { number: 1234.5, format: '#,##0.00' },
+                    { number: 0.256, format: '0.0%' },
+                    { date: new Date(2026, 10, 22, 13, 45), time: true, order: 'YMD', format: 'dddd' },
+                    { number: -2, format: '#,##0.00' }
+                ]
+            ]
+        });
+        expect(cellValue('A2')).toEqual({ type: 'n', v: '1234.5' });
+        expect(styleOf('A2').format).toBe('#,##0.00');
+        expect(styleOf('B2').format).toBe('0.0%');
+        expect(Number(cellValue('C2').v)).toBe(46348 + (13 * 60 + 45) / 1440);
+        expect(styleOf('C2').format).toBe('dddd');
+        // the same format is one numFmt
+        expect(styleOf('D2')).toEqual(styleOf('A2'));
+    });
+
     it('expect a text cell: an inline string, escaped, spaces kept', async () => {
         const { cellValue, parts, cell } = await workbook({
             rows: [['  Tom & "Jerry" <b>x</b>  ', 'Ærøskøbing 😀', '=HYPERLINK("x")']]

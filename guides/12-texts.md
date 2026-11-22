@@ -180,6 +180,8 @@ gridInterface.rebuild(); // every grid of the page
 - The placeholders of the date formatters, `YYYY-MM-DD` and `DD.MM.YYYY` in an empty date header
   filter: give the column a `placeholderFilter`, or use a formatter of your own with another
   `placeholder` (see [Formatting](08-formatting.md#a-formatter-of-your-own)).
+- The hints of Format › in the header menu: examples of each format, made from today's date and from
+  1234567.891 - in the language of `format.locale`.
 - Symbols and numbers: `✕` closes the filter editor and the find bar, `↑` and `↓` of the find bar,
   `✓` marks a menu item that is on (an aggregate, the dimmed values, the operator in use), `›` an item
   that opens a submenu, `?` a footer chip without a field or operator, `(12)` the count of a value in
@@ -277,6 +279,50 @@ Right click on a header label.
 | `header.size.all` | `Fit all columns` | fits every column |
 | `header.size.resetColumn` | `Reset column width` | the column back to the width of the config |
 | `header.size.resetAll` | `Reset all column widths` | every column back to the width of the config |
+| `header.format` | `Format` | the format submenu: how the column's cells show the value, see [Display formats](08-formatting.md#display-formats) |
+| `header.format.default` | `Default` | no display format: the field's formatter |
+| `header.format.date.iso` | `ISO` | a date column: `2026-11-22` |
+| `header.format.date.norwegian` | `Norwegian` | `22.11.2026` |
+| `header.format.date.norwegianShort` | `Norwegian, short year` | `22.11.26` |
+| `header.format.date.us` | `US` | `11/22/2026` |
+| `header.format.date.uk` | `UK` | `22/11/2026` |
+| `header.format.date.medium` | `Short month name` | `Nov 22, 2026`, in the language of `format.locale` |
+| `header.format.date.long` | `Month name` | `November 22, 2026` |
+| `header.format.date.full` | `Day and month name` | `Sunday, November 22, 2026` |
+| `header.format.date.isoTime` | `ISO with time` | a datetime column: `2026-11-22 13:45` |
+| `header.format.date.isoSeconds` | `ISO with seconds` | `2026-11-22 13:45:12` |
+| `header.format.date.norwegianTime` | `Norwegian with time` | `22.11.2026 13:45` |
+| `header.format.date.norwegianSeconds` | `Norwegian with seconds` | `22.11.2026 13:45:12` |
+| `header.format.date.time` | `Time` | `13:45` |
+| `header.format.date.timeSeconds` | `Time with seconds` | `13:45:12` |
+| `header.format.date.weekday` | `Day of week` | `Sunday` |
+| `header.format.date.weekIso` | `Week, ISO` | `2026-W47`, written as `format.weekIso` says |
+| `header.format.date.weekUs` | `Week, US` | `2026-W48` |
+| `header.format.date.month` | `Month` | `2026-11` |
+| `header.format.date.quarter` | `Quarter` | `2026 Q4` |
+| `header.format.date.year` | `Year` | `2026` |
+| `header.format.date.daysUntil` | `Days until` | the days from today: `3`, `-1` |
+| `header.format.number.norwegian` | `Norwegian` | a number column: `1 234 567,891` |
+| `header.format.number.english` | `English` | `1,234,567.891` |
+| `header.format.number.swiss` | `Swiss` | `1'234'567.891` |
+| `header.format.number.plain` | `Plain` | `1234567.891` |
+| `header.format.decimals` | `Decimals` | the decimals submenu |
+| `header.format.decimals.asIs` | `As is` | the decimals the number has |
+| `header.format.decimals.0` | `0` | no decimals |
+| `header.format.decimals.1` | `1` | one decimal |
+| `header.format.decimals.2` | `2` | two decimals |
+| `header.format.decimals.3` | `3` | three decimals |
+| `header.format.decimals.4` | `4` | four decimals |
+| `header.format.thousands` | `Thousands separator` | the thousands separator submenu |
+| `header.format.thousands.none` | `None` | no thousands separator |
+| `header.format.thousands.space` | `Space` | `1 234` |
+| `header.format.thousands.comma` | `Comma` | `1,234` |
+| `header.format.thousands.dot` | `Dot` | `1.234` |
+| `header.format.thousands.apostrophe` | `Apostrophe` | `1'234` |
+| `header.format.decimalMark` | `Decimal mark` | the decimal mark submenu |
+| `header.format.decimalMark.dot` | `Dot` | `1.5` |
+| `header.format.decimalMark.comma` | `Comma` | `1,5` |
+| `header.format.percent` | `Percent` | turns percent on or off: 0.256 is `25.6 %` |
 | `header.aggregate` | `Aggregate` | the aggregate submenu |
 | `header.aggregate.sum` | `Sum` | turns the column's sum on or off |
 | `header.aggregate.avg` | `Average` | turns its average on or off |
@@ -510,6 +556,21 @@ screen reader reads the label with the value, the column's header with them.
 | `aggregate.max` | `Max` | in front of the largest value |
 | `aggregate.count` | `Count` | in front of a count |
 | `aggregate.total` | `Total` | the label of the totals row, at its left under the row numbers |
+
+### Display formats
+
+The display formats of the columns (`ColumnConfig.format`, Format › in the header menu), see
+[Display formats](08-formatting.md#display-formats). `format.locale` is not shown: it is the language
+of the names in a date - the months and the days of `medium`, `long`, `full` and `weekday` - a BCP 47
+language tag for `Intl.DateTimeFormat`. `'nb-NO'` shows `søndag 22. november 2026`. A tag Intl does
+not take (`'nb_NO'`) shows English. The others write a week and a quarter: `{week}` has two digits.
+
+| id | English | shown |
+| --- | --- | --- |
+| `format.locale` | `en-US` | not shown: the language of the names, `nb-NO` for Norwegian |
+| `format.weekIso` | `{year}-W{week}` | a week, ISO: `2026-W47`. Norwegian, say: `uke {week} {year}` |
+| `format.weekUs` | `{year}-W{week}` | a week, US: `2026-W48` |
+| `format.quarter` | `{year} Q{quarter}` | a quarter: `2026 Q4`. Norwegian, say: `{quarter}. kvartal {year}` |
 
 ### Header filters
 

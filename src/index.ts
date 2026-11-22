@@ -55,6 +55,7 @@ export {
     type CellRendererInstance,
     registerCellRenderer
 } from './grid/cellRendererRegistry';
+export type { ColumnFormat, DateFormat, NumberFormat } from './grid/columnFormat';
 export { type CreateGridOptions, createGrid } from './grid/createGrid';
 export type { CsvOptions, CsvSeparator } from './grid/csv';
 export type { FindResult } from './grid/findResult';
