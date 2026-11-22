@@ -2,6 +2,7 @@ import { type Entity, isGroupRow } from '../../datasource/entity';
 import type { Grid } from '../grid';
 import { renderTotalsRow, showsGroupAggregates } from './aggregates';
 import type { ColType, RowCache } from './colType';
+import { renderDetailForm } from './detailForm';
 import {
     GROUP_COLTYPE,
     LEFT_PINNED_COLTYPE,
@@ -94,7 +95,7 @@ function renderInFrame(ctx: Grid) {
 /**
  * Renders the row elements on screen whose row is in `ctx.changedRows`: the row selector (the row's
  * state, its errors) and the cells of the pinned sections - every cell but the one being typed in
- * (renderRowColumns leaves it). With `dimRepeatedValues` also the row after a changed row: whether its
+ * (renderRowColumns leaves it) - and the detail form when it shows one of them. With `dimRepeatedValues` also the row after a changed row: whether its
  * value is dimmed depends on the row above it.
  *
  * An edit does not group the rows again, a group row stays as it is - but the aggregates it shows
@@ -159,6 +160,11 @@ export function renderChangedRows(ctx: Grid) {
         renderTotalsRow(ctx);
     }
     renderSummary(ctx);
+    // the detail form, when its row is one of them: the field the user types in keeps its text
+    const shown = ctx.gridInterface.getDatasource().currentEntity;
+    if (shown && changed.has(shown as Entity)) {
+        renderDetailForm(ctx);
+    }
 }
 
 /**

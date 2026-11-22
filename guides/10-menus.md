@@ -408,7 +408,7 @@ the selection work. A group row's number has no menu.
 | `header.format.decimalMark.dot` | Dot. Greyed out while the thousands separator is that character | a number field |
 | `header.format.decimalMark.comma` | Comma | a number field |
 | `header.format.percent` | Percent, a toggle: the number times 100 with ` %` | a number field |
-| `header.settings` | Column settings… - opens the column settings dialog on this column (`gridInterface.openColumnSettings(field)`): its display format, a text column's template and link, see [The column settings dialog](08-formatting.md#the-column-settings-dialog) | |
+| `header.settings` | Column settings… - opens the grid config dialog on this column (`gridInterface.openColumnSettings(field)`): its display format, a text column's template and link, see [The grid config dialog](08-formatting.md#the-grid-config-dialog) | |
 | `header.aggregate` | Aggregate › - a submenu | |
 | `header.aggregate.sum` | Sum - a toggle with a ✓ when on: the column's sum in the group rows and the totals row, see [Aggregates](18-aggregates.md) | a number field |
 | `header.aggregate.avg` | Average, a toggle | a number field |

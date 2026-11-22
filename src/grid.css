@@ -3386,6 +3386,270 @@
     cursor: default;
 }
 
+/* the panel of the tab not shown, the resets of the other tab: hidden - over their own display */
+.simple-html-grid.filter-editor-content.column-settings [hidden] {
+    display: none;
+}
+
+/**
+ * The tabs of the grid config dialog (gridConfigTabs.ts): Columns and Detail form under the title bar,
+ * compact and square. The tab shown has the body's background and a line in the accent colour under
+ * its text - it is said by aria-selected too, not by its colour only
+ */
+.simple-html-grid.filter-editor-content .column-settings-tabs {
+    flex: none;
+    display: flex;
+    gap: 2px;
+    padding: 4px 12px 0;
+    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-tab {
+    box-sizing: border-box;
+    height: 24px;
+    margin: 0 0 -1px;
+    padding: 0 10px;
+    border: 1px solid transparent;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background-color: transparent;
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-tab:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-tab[aria-selected='true'] {
+    border-color: var(--simple-html-grid-main-bg-border);
+    border-bottom-color: var(--simple-html-grid-accent-color);
+    background-color: var(--simple-html-grid-sec-bg-color);
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-tab:focus-visible {
+    position: relative;
+    z-index: 1;
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: -2px;
+}
+
+/* the Detail form tab (detailFormSettings.ts): its settings under each other, the list of the fields as
+ * the list of the columns */
+.simple-html-grid.filter-editor-content .detail-form-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.simple-html-grid.filter-editor-content .detail-form-settings-width {
+    max-width: 120px;
+}
+
+.simple-html-grid.filter-editor-content .detail-form-settings-list {
+    max-width: 480px;
+    max-height: 300px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    background-color: var(--simple-html-grid-sec-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .detail-form-settings-list:focus-visible {
+    outline: none;
+}
+
+.simple-html-grid.filter-editor-content .detail-form-settings-list:focus-visible .column-settings-option[aria-selected='true'] {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: -2px;
+}
+
+.simple-html-grid.filter-editor-content .detail-form-settings-option {
+    align-items: center;
+}
+
+/* the box of a field in the form: a square checkbox, ✓ when the field is in the form */
+.simple-html-grid.filter-editor-content .detail-form-settings-box {
+    flex: none;
+    box-sizing: border-box;
+    width: 13px;
+    height: 13px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-size: 10px;
+    font-weight: var(--simple-html-grid-font-weight-header);
+    line-height: 11px;
+    text-align: center;
+}
+
+.simple-html-grid.filter-editor-content .detail-form-settings-option[aria-checked='true'] .detail-form-settings-box {
+    border-color: var(--simple-html-grid-accent-color);
+    background-color: var(--simple-html-grid-accent-color);
+    color: var(--simple-html-grid-accent-font-color);
+}
+
+.simple-html-grid.filter-editor-content .detail-form-settings-moves {
+    display: flex;
+    gap: 6px;
+}
+
+/**
+ * The detail form (detailForm.ts): a panel in the grid at the right of the rows - under them in a narrow
+ * grid - with the current row as a form. updateMainElementSizes places it, its look is here: the
+ * grid's colours, compact, square. A label over each value, the values framed as the inputs of the
+ * filter editor; a readonly one without its frame's colour. It scrolls on its own, the page does not
+ * scroll with it
+ */
+.simple-html-grid .simple-html-grid-detail-form {
+    position: absolute;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    isolation: isolate;
+    border-left: 2px solid var(--simple-html-grid-pinned-border);
+    background-color: var(--simple-html-grid-main-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    pointer-events: all;
+}
+
+.simple-html-grid .simple-html-grid-detail-form[hidden] {
+    display: none;
+}
+
+.simple-html-grid .simple-html-grid-detail-form.simple-html-grid-detail-form-below {
+    border-left: 0;
+    border-top: 2px solid var(--simple-html-grid-pinned-border);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-titlebar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 22px;
+    padding: 0 6px;
+    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
+    box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-row {
+    flex: none;
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 4px 6px 6px;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 22px;
+    margin: 0;
+    padding: 0 4px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+/* text of several lines: as tall as its lines, all of it can be read - it grows with the text where the
+ * browser has field-sizing, else it has a row per line (rows) and can be made taller */
+.simple-html-grid .simple-html-grid-detail-form-input.simple-html-grid-detail-form-text {
+    height: auto;
+    min-height: 48px;
+    padding: 2px 4px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    resize: vertical;
+    field-sizing: content;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-input[readonly] {
+    border-color: var(--simple-html-grid-main-bg-border);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-input:focus-visible,
+.simple-html-grid .simple-html-grid-detail-form-check:focus-visible,
+.simple-html-grid .simple-html-grid-detail-form-link:focus-visible {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: -2px;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-input[aria-invalid='true'] {
+    border-color: var(--simple-html-grid-error-color);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-check {
+    width: 13px;
+    height: 13px;
+    margin: 2px 0;
+    accent-color: var(--simple-html-grid-accent-color);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-link {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--simple-html-grid-link-color);
+    text-decoration: underline;
+}
+
+/* the errors of a value: the danger colour, with a line in the error colour in front - said in words */
+.simple-html-grid .simple-html-grid-detail-form-errors {
+    padding-left: 6px;
+    border-left: 2px solid var(--simple-html-grid-error-color);
+    color: var(--simple-html-grid-danger-font-color);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-empty {
+    color: var(--simple-html-grid-sec-font-color);
+    font-style: italic;
+}
+
 /**
  * Built in tooltip.
  *

@@ -96,6 +96,8 @@ export class Grid {
     public filterEditor?: HTMLDialogElement | null;
     // the column settings dialog, modal too: see columnSettings.ts. Null when it is closed
     public columnSettings?: HTMLDialogElement | null;
+    // the detail form, a panel at the right of the rows: see detailForm.ts. Made by createDom
+    public detailForm: HTMLElement | null = null;
     // the column chooser, a popover that stays open while columns are dragged from it
     public columnChooserMenu?: HTMLElement | null;
     // the editor of a multiline cell, a popover over the cell: see openTextEditor. Null when it is closed

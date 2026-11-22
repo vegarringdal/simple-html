@@ -3279,6 +3279,80 @@ in the console. All passed. Found and fixed:
   in the dialog, Less than picked, Apply → the header's indicator shows `<`, no operator on a checkbox
   column); column-settings-check 144/144
 
+### Grid config: tabs, and a detail form at the right of the rows (user request)
+
+* the user: "Want us to be able to also define detail form for the right side. So enable, then select
+  the columns/order we want them in. Can be useful for if anyone have multiline text. So title should be
+  grid config, and tabs on the top, where you select between column config and detail form."
+* **The dialog is *Grid config*** (`columnSettings.title`, and the gear's `footer.settings`): two tabs
+  under the title bar, *Columns* (all the column settings, as they were) and *Detail form*. New
+  gridConfigTabs.ts: the WAI-ARIA tabs pattern - a `tablist` named by the title, `tab` buttons with
+  `aria-selected` / `aria-controls`, `tabpanel`s named by their tab, one stop of Tab, ArrowLeft /
+  ArrowRight (round), Home / End, automatic activation. The footer is the dialog's: Apply applies both
+  tabs, Cancel drops both; its left end has the resets of the tab shown (*Reset column* / *Reset all*, or
+  *Reset form*). columnSettings.ts changed as little as it could: `ColumnSettings` got `tab` and
+  `detailForm`, `openColumnSettings(ctx, field, tab = 'columns')`, the Columns body got the tabpanel
+  attributes (`hidden` on the other tab), `apply` calls applyDetailForm. The inner functions of the column
+  panel are as they were
+* **The Detail form tab** (new detailFormSettings.ts): *Show the detail form*, *Width (px)* (at least
+  150), a listbox of the fields - the form's in their order, then the layout's, then the other columns of
+  the config - each option with a box (`aria-checked`), its label, type and the badges *Several lines* /
+  *Hidden* (not in the layout). Space checks, Alt+ArrowUp / Alt+ArrowDown move (⌥ on a Mac, the hint has
+  a `.mac` text), Move up / Move down buttons. A draft until Apply; Apply sets `detailForm` only when it
+  changed
+* **The detail form** (new detailForm.ts): a region (*Details*, *Row n*) in the grid element, after the
+  rows. updateMainElementSizes gives the header, the body, the two scrollers and the totals row `width` px
+  less at the right; the grouping panel and the footer stay full width. Where the rows would get less room
+  than the form beside it, or the scrolling columns less than 150px (a phone, wide pinned columns), it is
+  under the rows over the footer, 40 % of the grid's height - the resize observer lays it out again. It
+  shows the current row (`currentEntity`, a data row that is displayed - else *No row*): the values through
+  cellTextOf (display format, template, lookup label, numberOverride), a textarea as tall as the text for a
+  multiline value (`field-sizing: content`, `rows` as the fallback), a checkbox for a boolean, the link of a
+  link column under its value, the errors under the field (`aria-invalid`, `aria-describedby`)
+* **Editing in the form** goes the cells' way: the same readonly rules (grid `readonly`, `__isCellReadonly`
+  - the column and the `isReadonly` hook - `allowPasteClearOnly`), each keystroke `row[field] =
+  formatter.parse(text)` inside `History.typing()` (one undo step per field, `endTyping` on blur),
+  `formatForEdit` while a field has the focus, line breaks as LF, Ctrl+Z / Ctrl+Y as in a cell (the focus
+  stays). A lookup column is read-only in the form (its cell picks the value)
+* **It follows the grid**: rendered at the end of triggerScrollEvent (current row, selection, validate,
+  undo, filter, sort, rebuild, refresh) and by renderChangedRows when its row changed (edits, upsert, code).
+  The field being typed in keeps its text (as editedInput does for cells). A render is not re-entered: a
+  field with the focus removed by a render gets a blur in Chrome, its blur renders the form - lit-html
+  threw `NotFoundError` there (found by the browser check, a test with a stubbed `remove` covers it)
+* **The grid around it**: the wheel and a swipe over the form are the browser's (addScrollEventListeners,
+  touchScroll); range and column drags auto scroll at the rows' edge, not the grid's (rangeSelection,
+  dragEvent); Tab: the footer's last stop goes into the form (tabPastRows too without a footer), the form
+  is the last element before the end Tab leaves the grid from, Shift+Tab from its first field goes back
+  to the footer (tabBackFromDetailForm)
+* **State**: `GridState.detailForm: DetailForm` (`{ show, fields, width? }`), the developer default
+  `GridConfig.detailForm` (and `initialState.detailForm`) - as `totalsRow`: `updateConfig()` keeps the
+  user's unless it is given. getState / setState / resetState / JSON round trip; checked
+  (assertDetailForm) before anything changes, `fields` once each. New public API: `DetailForm`,
+  `GridConfig.detailForm`, `GridState.detailForm`, `gridInterface.openDetailFormSettings()`
+* css: the tabs, the Detail form tab, the form - existing variables only (no new colour, so nothing for
+  theme-tredespace.css), square, 22px fields also on touch
+* texts: `columnSettings.title` / `footer.settings` *Grid config*, `columnSettings.tab.*`,
+  `columnSettings.detailForm.*` (14), `detailForm.*` (4); guide 12 tables, Norwegian in the translation
+  sample, texts.test's "every text shown" walks the form and the tab (a config column `extra` not in the
+  layout for *Hidden*)
+* tests: detailForm.test.ts (31: state, layout right / under / pinned columns, what it shows, it follows the
+  grid, editing and readonly, undo, keys, wheel, the re-entered render), detailFormSettings.test.ts (10: the
+  title and tabs, the keys, the tab's list, moves, width, Cancel / Reset form / Apply of both tabs);
+  changed for the title only: columnSettings.test.ts (the gear's name and the title, 2 lines),
+  gridState.test.ts (the state has `detailForm`, 2 objects)
+* docs: guide 02 (option, section *The detail form*), 03 (*The detail form in the state*), 08 (*The grid
+  config dialog*, was *The column settings dialog* - its links in 02, 03, 06, 10, 12 follow), 12, 14; the
+  sample *Detail form* (`#sample/detail-form`, Editing); the full grid's description says where it is (a
+  button of its own made the grid 32px lower, under the full-grid check's 60 % - left out)
+* browser: new `detail-form-check.js` 91/91 (the four looks: the gear and the title, the tabs by click and
+  keys, three fields picked with Alt+ArrowUp, Apply & close -> the form at the right with the current row,
+  Alt+ArrowDown follows, three lines of notes all shown, the rows scroll sideways, pinned right and the
+  scrollbars end at the form, footer full width, the wheel over the form, typing edits the row and Ctrl+Z
+  undoes, the state round trip, a narrower window -> under the rows and back, a phone at 390px -> under
+  the rows, no rounded corners). Shared checks: column-settings-check 144/144 with a copy in the worktree
+  (the gear is named Grid config, the Columns tab is a stop of Tab before the list - 12 checks were about
+  that), column-settings-operator 13/13, full-grid 11/11, footer-no-filter 53/53, keyboard 53/53
+
 ## Considered, not done
 
 ## Candidates / not started

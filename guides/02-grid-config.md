@@ -165,7 +165,7 @@ Every option of a `ColumnConfig` is optional.
 | `filterOperators` | the operators the column offers in the header filter's menu and the filter editor, e.g. `['CONTAINS', 'BEGIN_WITH', 'IS_BLANK']`: some of its type's (`operatorsFor(type)`), with one the header filter takes. Default: all of its type's. A `TypeError` for an operator of another type. See [Filtering](06-filtering.md#the-operators-a-column-offers) |
 | `filterCaseSensitive` | `true`: the grid's conditions on the column match case - the header filter, its value list, the row menu's filter and the filter editor. Its Match case is on and can not be turned off. Text columns only, else a `TypeError`. See [Filtering](06-filtering.md#match-case) |
 | `numberOverride` | number fields only: `'ZERO_TO_BLANK'` shows 0 as an empty cell, `'BLANK_TO_ZERO'` shows an empty cell as 0. The value is not changed |
-| `format` | how the cells show the value, a display format: `{ date: 'norwegian' }` (22.11.2026), `{ date: 'weekIso' }` (2026-W47) for a date or datetime field, `{ number: { decimals: 2, thousands: ' ', decimal: ',' } }` (1 234 567,89) for a number field; for a text field a template of its text and a link, `{ text: '{name} ({id})', link: { url: 'https://crm.example.com/customer/{id}', newTab: true } }`. Only the text shown: editing, filtering, sorting and copy keep to the field's formatter. Where the grid starts - the user picks another in the header menu (Format ›) or the column settings dialog, it is state (`GridState.formats`). A `TypeError` for a format that does not fit the field, and for a link of another scheme than https, http, mailto, tel. See [Display formats](08-formatting.md#display-formats) and [Templates and links](08-formatting.md#templates-and-links) |
+| `format` | how the cells show the value, a display format: `{ date: 'norwegian' }` (22.11.2026), `{ date: 'weekIso' }` (2026-W47) for a date or datetime field, `{ number: { decimals: 2, thousands: ' ', decimal: ',' } }` (1 234 567,89) for a number field; for a text field a template of its text and a link, `{ text: '{name} ({id})', link: { url: 'https://crm.example.com/customer/{id}', newTab: true } }`. Only the text shown: editing, filtering, sorting and copy keep to the field's formatter. Where the grid starts - the user picks another in the header menu (Format ›) or the grid config dialog, it is state (`GridState.formats`). A `TypeError` for a format that does not fit the field, and for a link of another scheme than https, http, mailto, tel. See [Display formats](08-formatting.md#display-formats) and [Templates and links](08-formatting.md#templates-and-links) |
 | `allowPasteClearOnly` | typing in the cell does nothing, paste and clear from the row menu work. For a field you set from a dropdown of your own |
 | `editor` | the value is picked from a list: `{ type: 'select' \| 'grid', lookup: '<id>', set? }`, a select or a dropdown grid of a lookup registered with `registerLookup()`. The cell shows the label. See [Lookups](20-lookups.md) |
 | `focusButton` | shows a `...` button in the focused cell, see [Events](09-events.md#cell-events). Not with `editor`, it has its own button |
@@ -194,7 +194,7 @@ Every option is optional.
 | `hideLabels` | `false` | hides the row of header labels |
 | `hideFilter` | `false` | hides the row of header filters |
 | `filterOperatorIndicator` | `true` | shows the operator of each header filter as a small symbol in its cell (`=`, `≥`, `*a*` ...): on the right of a text filter, on the left of a number or date filter. A click (F4 in the filter) opens the operator choice. Not on a boolean column nor on a column under 60px. See [Filtering](06-filtering.md#the-operator-in-the-cell) |
-| `settingsButton` | `true` | a gear at the right end of the footer, the last stop of Tab there: it opens the column settings dialog - the display formats, a text column's template and link, saved in the state. `false` hides the gear only: *Column settings…* stays in the header menu (`header.settings`, the `menus` hook takes it out) and `openColumnSettings()` opens the dialog. Not in a footer of no height. See [The column settings dialog](08-formatting.md#the-column-settings-dialog) |
+| `settingsButton` | `true` | a gear at the right end of the footer, the last stop of Tab there: it opens the grid config dialog - the display formats, a text column's template and link, the detail form, saved in the state. `false` hides the gear only: *Column settings…* stays in the header menu (`header.settings`, the `menus` hook takes it out) and `openColumnSettings()` opens the dialog. Not in a footer of no height. See [The grid config dialog](08-formatting.md#the-grid-config-dialog) |
 | `dimRepeatedValues` | `false` | dims a cell that has the same value as the row above. The row menu can toggle it |
 | `rowStatus` | `true` | shows the state of each row on its row number: new, edited, marked for deletion, an error. The row numbers are 14px wider for the icon. See [Showing the row state](05-editing.md#showing-the-row-state) |
 | `copyHeaders` | `true` | a copy of more than one cell starts with a line of the column labels (Word and Excel show the headers); pasted into the grid that line is skipped. See [Selection and clipboard](17-selection-and-clipboard.md) |
@@ -209,6 +209,7 @@ Every option is optional.
 | `initialState` | | the sorting, grouping and filter the grid starts with, see [State](03-state.md#the-state-the-grid-starts-in) |
 | `groupAggregates` | `true` | the group rows show the columns' `aggregate`s. `false`: the name of the group only. See [Aggregates](18-aggregates.md) |
 | `totalsRow` | `false` | a row under the rows with the columns' `aggregate`s over the rows the filter lets through. See [Aggregates](18-aggregates.md#the-totals-row) |
+| `detailForm` | none | the current row as a form at the right of the rows: `{ show: true, fields: ['name', 'notes'], width: 300 }`. It is state, the user changes it in the grid config dialog. See [The detail form](#the-detail-form) |
 
 How rows are selected is not a grid option: the datasource has the selection mode, see
 [Datasource](04-datasource.md#the-selection-mode). Readonly cells and css classes from the row, and
@@ -218,6 +219,55 @@ changes to the menus, are not options either: they are functions, see [Hooks](#h
 ```
 
 ```sample tooltips
+```
+
+## The detail form
+
+The detail form is a panel inside the grid, at the right of the rows, with the current row as a form: a
+label and a value for each field picked, in their order. A text of several lines gets a field tall
+enough to read all of it - a column of notes can be narrow in the grid, or not in it at all.
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    readonly: false,
+    layout: { center: [{ fields: ['name'], width: 150 }, { fields: ['city'], width: 120 }] },
+    // notes is no column of the layout: the form shows it, all its lines
+    detailForm: { show: true, fields: ['name', 'notes', 'city'], width: 320 }
+};
+```
+
+- **The user sets it** in the grid config dialog (the gear in the footer), tab *Detail form*: *Show the
+  detail form*, its width, and a list of the fields - the columns of the layout and the other columns
+  of the config - each with a checkbox, in the order of the form. *Move up* / *Move down* (Alt+↑ /
+  Alt+↓ in the list, Space checks a field) change the order. `gridInterface.openDetailFormSettings()`
+  opens the dialog on that tab. See [The grid config dialog](08-formatting.md#the-grid-config-dialog).
+- **It is state**: `GridConfig.detailForm` is the one the grid starts with, `getState().detailForm`
+  the one it shows - save it with the rest, see [State](03-state.md#the-detail-form-in-the-state).
+- **The row** is the current row (`datasource.currentEntity`): a click on a row, the arrows, code. The
+  form follows it, and a value that changes - an edit in a cell, undo, `upsert()`, code - a filter and
+  a sort. Without a current row, or with one the filter hides, it says *No row*. Its title has the
+  row's number, as the row numbers show it.
+- **The values** are what the cells show: the display format, a template, a lookup's label. A text of
+  several lines (`FieldConfig.multiline`, or a value with a line break) is a textarea as tall as its
+  lines. A boolean is a checkbox. A row with a link has the link under the value.
+- **Editing**: in an editable grid a field is edited as its cell is - the same readonly rules
+  (`readonly`, `ColumnConfig.readonly`, the `isReadonly` hook, `allowPasteClearOnly`), the value
+  parsed by the field's formatter (a field with the focus shows its `formatForEdit`), validated, its
+  errors under it. What is typed in a field is one step of the undo history; Ctrl+Z in a field undoes
+  the last step. A lookup column is shown, not edited in the form: its cell picks the value.
+- **Its width** is `width` px, 300 by default, at least 150. The header, the rows, their scrollbars
+  and the totals row end where it starts; the grouping panel and the footer stay as wide as the grid.
+- **A narrow grid** - where the rows would get less room than the form beside it, or the scrolling
+  columns less than 150px (a phone, wide pinned columns) - has the form under the rows instead, over the
+  footer, 40 % of the grid's height. It is laid out again when the grid gets wider or narrower.
+- **Keys and screen readers**: the form is a region named by its title (*Details*), each value's label
+  tied to it. Tab comes to it after the footer, Shift+Tab from its first field goes back to the footer.
+  The wheel and a finger over it scroll the form, not the rows. Its texts are `detailForm.*`, see
+  [Texts](12-texts.md#detail-form).
+
+```sample detail-form
 ```
 
 ## Hooks

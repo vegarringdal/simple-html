@@ -60,7 +60,7 @@ const config: GridConfig = {
 
 The user can also pick the operator of a column in the header filter's menu (Filter › Operator ›,
 below), with the [operator in the cell](#the-operator-in-the-cell), or in the
-[column settings dialog](08-formatting.md#the-column-settings-dialog) - it shows the column's default
+[grid config dialog](08-formatting.md#the-grid-config-dialog) - it shows the column's default
 too - and type `*ann*` in any text header filter.
 
 A header filter only replaces the conditions on its own column, at the top of the filter. The rest

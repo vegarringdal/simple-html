@@ -101,11 +101,18 @@ grid "Grid"  aria-rowcount=503  aria-colcount=10
   A row without an address the grid links to has no link, only the text. The host has
   `aria-keyshortcuts="Alt+Enter"`: Alt+Enter opens the link. See
   [Templates and links](08-formatting.md#a-link-cell).
-- **The column settings dialog**: a modal dialog named by its title, the list of the columns a
+- **The grid config dialog**: a modal dialog named by its title. Its tabs are the WAI-ARIA tabs
+  pattern: a `tablist` named by the title, a `tab` each (`aria-selected`, `aria-controls` its
+  `tabpanel`). The Detail form tab's list of the fields is a `listbox`, each field an `option` with
+  `aria-checked` (in the form or not) and `aria-selected` (picked). The Columns tab: the list of the columns a
   `listbox` (its picked column `aria-selected`, `aria-activedescendant` on the list), each setting an
   input or a checkbox with its `<label>`, the hint and the problems of a template its description
   (`aria-describedby`), `aria-invalid` while it has a problem; the problems and the preview's are live
   regions (`aria-live="polite"`): read out as they come while typing.
+- **The detail form** (see [The detail form](02-grid-config.md#the-detail-form)): a `region` named by
+  its title, *Details*; each value an input, a textarea or a checkbox with its `<label>`, `aria-readonly`
+  / `readonly` where it can not be edited, `aria-required`, its errors its description
+  (`aria-describedby`) with `aria-invalid`.
 - **The panel**: the x of a group chip is a button, "Remove the grouping on Country".
 - **The find bar** (Ctrl+F, see [Find](19-find.md#what-a-screen-reader-gets)): a search region named
   "Find in the grid" before the grid, with an input named "Find", the count of the matches as a status
@@ -282,7 +289,8 @@ of Tab: a click puts it there, and selects columns (Ctrl+click, Shift+click, see
 | the button of a group row | Ctrl+Home / Ctrl+End | the first cell of the first row / the last cell of the last row |
 | the x of a group chip in the panel | Enter / Space | removes the grouping. It is in the tab order, before the grid |
 | the footer: Clear and the filter chips, or "No filter", the settings button | Tab / Shift+Tab | the stops after the last row: Clear and the chips while the rows are filtered, else "No filter", then the gear (`settingsButton`). Tab from the last cell of the last row gets there, Tab from the last of them leaves the grid. Shift+Tab from the first goes back to the last row. None in a footer of no height (`footerHeight: 0`) |
-| the settings button in the footer | Enter / Space | opens the column settings dialog |
+| the settings button in the footer | Enter / Space | opens the grid config dialog |
+| the detail form | Tab / Shift+Tab, Ctrl+Z (Cmd+Z) | after the footer in the order of Tab: Tab from the footer's last stop goes into the form, from its last field out of the grid. Shift+Tab from its first field goes back to the footer. Ctrl+Z / Ctrl+Y undo and redo as in a cell, the focus stays |
 | the filter chips in the footer, "No filter" | Enter / Space | opens the filter editor |
 | Clear in the footer | Enter / Space | removes the filter. The focus stays on the button, now "No filter" |
 | a menu | ArrowDown / ArrowUp, Home / End, a letter | the next / previous / first / last item, the next one starting with the letter. A menu opened with the mouse leaves the focus on the cell: ArrowDown / ArrowUp get into it |
@@ -293,7 +301,9 @@ of Tab: a click puts it there, and selects columns (Ctrl+click, Shift+click, see
 | the list of a lookup column | the arrows, Enter, Tab, Esc | see [below](#the-list-of-a-lookup-column) |
 | the filter editor | Tab, Enter / Space, Esc | every control is a button or an input, in the order shown: the `✕`, each group's AND / OR, + Condition, + Group, wrap and delete, each condition's field, operator, value, switch and delete, then Undo, Redo, Cancel, Apply, Apply & close. A picker opens its menu, see [Filtering](06-filtering.md#the-filter-editor). Esc closes the menu open in it, else the editor without filtering (a modal dialog) |
 | the filter editor | Ctrl+Z (Cmd+Z), Ctrl+Y / Ctrl+Shift+Z (Cmd+Y, Cmd+Shift+Z) | undoes / redoes an edit of the editor, the focus on the control it was made with (the dialog when it is gone). In a value input typed in since it got the focus, the input's own undo of the typing - Ctrl+Z until it is back where it started. Undo and Redo, the icons in the footer, are `aria-disabled` with nothing to undo / redo and keep the focus. See [Filtering](06-filtering.md#undo-and-redo-in-the-filter-editor) |
-| the column settings dialog | Tab, Enter / Space, Esc | the `✕`, the list of the columns (one stop), the settings of the column picked - a format picker, or the text, its `{ }` field button, Show as link, the address and its `{ }`, Open in a new tab - the link of the preview, then Reset column, Reset all, Cancel, Apply, Apply & close. The focus is on the dialog when it opens, Esc closes the menu open in it, else the dialog without applying (a modal dialog); the focus goes back to where it was |
+| the tabs of the grid config dialog | ArrowLeft / ArrowRight, Home / End | shows the tab before / after (round), the first / last; the focus on it. One stop of Tab: the tab shown |
+| the list of the fields on the Detail form tab | ArrowDown / ArrowUp, Home / End, PageDown / PageUp, Space, Alt+ArrowUp / Alt+ArrowDown | picks a field, puts it in the form or takes it out, moves it up / down - Move up / Move down are buttons too |
+| the column settings dialog | Tab, Enter / Space, Esc | the `✕`, the tabs (one stop), the list of the columns (one stop), the settings of the column picked - a format picker, or the text, its `{ }` field button, Show as link, the address and its `{ }`, Open in a new tab - the link of the preview, then Reset column, Reset all, Cancel, Apply, Apply & close. The focus is on the dialog when it opens, Esc closes the menu open in it, else the dialog without applying (a modal dialog); the focus goes back to where it was |
 | the list of the columns in the column settings | ArrowDown / ArrowUp, Home / End, PageDown / PageUp, a letter | picks the next / previous / first / last column, ten further, the next one whose label starts with the letter |
 | the find bar | Enter, F3, Esc | the next match, closes it: see [below](#the-find-bar) |
 

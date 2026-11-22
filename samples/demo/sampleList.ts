@@ -13,6 +13,8 @@ import { customCells } from './samples/customCells';
 import customCellsSource from './samples/customCells.ts?raw';
 import { customFormatter } from './samples/customFormatter';
 import customFormatterSource from './samples/customFormatter.ts?raw';
+import { detailForm } from './samples/detailForm';
+import detailFormSource from './samples/detailForm.ts?raw';
 import { dropdownGrid } from './samples/dropdownGrid';
 import dropdownGridSource from './samples/dropdownGrid.ts?raw';
 import { dynamicCellTypes } from './samples/dynamicCellTypes';
@@ -95,6 +97,7 @@ export const SAMPLES: Sample[] = [
     { ...saving, source: savingSource },
     { ...validation, source: validationSource },
     { ...multiline, source: multilineSource },
+    { ...detailForm, source: detailFormSource },
     { ...ranges, source: rangesSource },
     { ...contextMenu, source: contextMenuSource },
     { ...lookups, source: lookupsSource },

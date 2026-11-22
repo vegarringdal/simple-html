@@ -15,7 +15,7 @@ How a column *shows* its values - a date as `22.11.2026` or as the week `2026-W4
 [Display formats](#display-formats). A text column can show a template of the row's fields,
 `{firstname} {lastname}`, and be a link, `https://crm.example.com/customer/{id}` or `mailto:{email}`:
 see [Templates and links](#templates-and-links). The user sets all of them in the
-[column settings dialog](#the-column-settings-dialog), the gear in the footer.
+[grid config dialog](#the-grid-config-dialog), the gear in the footer.
 
 ## What a formatter does
 
@@ -519,11 +519,24 @@ A template and a link are for a `text` field, and not for a lookup column (`edit
 them on another type throws a `TypeError`. A cell of another type in a `dynamicCellTypeColumn` is
 shown as its type, without them.
 
-## The column settings dialog
+## The grid config dialog
 
 The gear at the right end of the footer opens it - and *Column settings…* in the header menu, on that
 column, and `gridInterface.openColumnSettings(field)` from a button of your own. `settingsButton: false`
 hides the gear ([Grid config](02-grid-config.md#grid-options)).
+
+Its title is *Grid config*. Under the title bar are two tabs:
+
+- **Columns**, below: the settings of each column. `openColumnSettings()` opens the dialog on it.
+- **Detail form**: the detail form at the right of the rows - *Show the detail form*, its width, and the
+  fields it shows in their order. `openDetailFormSettings()` opens the dialog on it. See
+  [The detail form](02-grid-config.md#the-detail-form).
+
+The tabs are a tab list: Tab comes to the tab shown, ArrowLeft / ArrowRight (Home / End) show another.
+The footer is the dialog's: *Apply* applies both tabs, *Cancel* drops what was changed on both. Its
+left end has the resets of the tab shown.
+
+The Columns tab:
 
 - **The columns** of the layout are at the left, in their order, each with its type and what it has
   set - *Format*, *Text*, *Link*, or *Error*. The arrows, Home, End, PageUp / PageDown and a letter pick
@@ -554,7 +567,7 @@ hides the gear ([Grid config](02-grid-config.md#grid-options)).
 
 It is a modal dialog of the filter editor's kind: the focus goes into it when it opens and back to
 where it was when it closes, it is moved by its title bar and resized from every edge and corner. The
-texts are `columnSettings.*`, see [Texts](12-texts.md#column-settings).
+texts are `columnSettings.*`, see [Texts](12-texts.md#grid-config-dialog).
 
 A developer sets the formats the grid starts with in `ColumnConfig.format`; what the user sets in the
 dialog is the state. To keep the user's settings, save `getState()` (or its `formats`) and give it back

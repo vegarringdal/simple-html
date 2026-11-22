@@ -24,6 +24,7 @@ import type { FindResult } from './findResult';
 import type { Grid } from './grid';
 import type {
     ColumnConfig,
+    DetailForm,
     GridConfig,
     GridLayout,
     GridOptions,
@@ -40,6 +41,7 @@ import { headerOperators, isHeaderOperator } from './gridFunctions/columnFilterO
 import { renderColumnNumbers } from './gridFunctions/columnNumbers';
 import { type ColumnSelection, clickColumn, NO_COLUMNS, numberedColumns } from './gridFunctions/columnSelection';
 import { openColumnSettings } from './gridFunctions/columnSettings';
+import { assertDetailForm, copyDetailForm, noDetailForm } from './gridFunctions/detailForm';
 import { fillDown } from './gridFunctions/fillDown';
 import { columnConditions, sameConditions } from './gridFunctions/filterCallback';
 import { closeFind, findDataChanged, findStep, getFindResult, openFind } from './gridFunctions/findBar';
@@ -196,7 +198,8 @@ export class GridInterface<T> {
      * `format` does not fit its field (see {@link ColumnFormat}), a column's `editor` is wrong - its
      * lookup not registered, see {@link ColumnEditor} - a column's `renderer` is not the id of a
      * registered cell renderer, or is given with an `editor`, or a column's `filterOperators`,
-     * `operator` or `filterCaseSensitive` does not fit its type, see {@link ColumnConfig}
+     * `operator` or `filterCaseSensitive` does not fit its type, see {@link ColumnConfig} - and when
+     * `detailForm` is not a {@link DetailForm}
      *
      * @example
      * ```ts
@@ -221,6 +224,7 @@ export class GridInterface<T> {
         assertFormats(gridConfig, datasource);
         assertRenderers(gridConfig);
         assertFilterOptions(gridConfig, datasource);
+        assertConfigDetailForm(gridConfig);
         this.lookupColumns = lookupColumnsOf(gridConfig.columns, datasource);
         this.dataSource = datasource;
         this.hooks = { ...hooks };
@@ -247,7 +251,7 @@ export class GridInterface<T> {
     /**
      * The state of the grid now: what the user changed - column order, pinning and widths, sorting,
      * grouping, expanded groups, the filter and what the header filters show, the aggregates, the
-     * totals row and the display formats of the columns. See {@link GridState}.
+     * totals row, the display formats of the columns and the detail form. See {@link GridState}.
      *
      * It is a copy: changing it changes nothing in the grid, and what the user does later does not
      * change it. Give it to {@link setState} to go back to it.
@@ -277,14 +281,15 @@ export class GridInterface<T> {
             headerFilters: structuredClone(this.headerFilters),
             aggregates: aggregatesOfColumns(this.gridConfig.columns),
             totalsRow: this.gridConfig.totalsRow,
-            formats: formatsOfColumns(this.gridConfig.columns)
+            formats: formatsOfColumns(this.gridConfig.columns),
+            detailForm: copyDetailForm(this.gridConfig.detailForm)
         };
     }
 
     /**
      * Sets the state: column order, pinning and widths, sorting, grouping, expanded groups, the filter
-     * and what the header filters show, the aggregates, the totals row and the display formats of the
-     * columns. See {@link GridState}.
+     * and what the header filters show, the aggregates, the totals row, the display formats of the
+     * columns and the detail form. See {@link GridState}.
      *
      * **Applies what is given and keeps the rest**: `setState({ sorting })` changes the sort and
      * nothing else. To set everything, pass a whole state, e.g. one from {@link getState}. Within a
@@ -300,7 +305,8 @@ export class GridInterface<T> {
      *
      * @param state the parts to set
      * @throws a `TypeError` for aggregates or display formats (`formats`) that do not fit their fields,
-     * see {@link ColumnConfig} `aggregate` and {@link ColumnFormat} - before anything changes
+     * see {@link ColumnConfig} `aggregate` and {@link ColumnFormat}, and a `detailForm` that is no
+     * {@link DetailForm} - before anything changes
      *
      * @sample grid-state
      * @example
@@ -365,7 +371,9 @@ export class GridInterface<T> {
             headerFilters: initialState.headerFilters ?? {},
             aggregates: initialState.aggregates ?? structuredClone(this.configAggregates),
             totalsRow: initialState.totalsRow ?? this.options.totalsRow ?? false,
-            formats: initialState.formats ?? structuredClone(this.configFormats)
+            formats: initialState.formats ?? structuredClone(this.configFormats),
+            // applyState checks it and keeps a copy
+            detailForm: initialState.detailForm ?? this.options.detailForm ?? noDetailForm()
         };
     }
 
@@ -399,7 +407,8 @@ export class GridInterface<T> {
      * not fit its field (see {@link ColumnFormat}), a column's `editor` is wrong - its lookup not
      * registered, see {@link ColumnEditor} - a column's `renderer` is not the id of a registered cell
      * renderer, or is given with an `editor`, or a column's `filterOperators`, `operator` or
-     * `filterCaseSensitive` does not fit its type, see {@link ColumnConfig}
+     * `filterCaseSensitive` does not fit its type, see {@link ColumnConfig} - and when `detailForm` is
+     * not a {@link DetailForm}
      *
      * @sample misc-options
      * @example
@@ -422,6 +431,7 @@ export class GridInterface<T> {
         assertFormats(config, this.dataSource);
         assertRenderers(config);
         assertFilterOptions(config, this.dataSource);
+        assertConfigDetailForm(config);
         // checked before anything changes, like the rest
         const lookupColumns = 'columns' in config ? lookupColumnsOf(config.columns, this.dataSource) : null;
         const { columns, layout, initialState, ...options } = config;
@@ -430,8 +440,10 @@ export class GridInterface<T> {
         // the totals row is state too (the header menu turns it on and off): only a totalsRow given
         // here changes it
         const totalsRow = 'totalsRow' in config ? withDefaults(this.options).totalsRow : this.gridConfig.totalsRow;
+        // and so is the detail form (the grid config dialog changes it)
+        const detailForm = 'detailForm' in config ? withDefaults(this.options).detailForm : this.gridConfig.detailForm;
         // in place, so code that got the parsed config before reads the new options too
-        Object.assign(this.gridConfig, withDefaults(this.options), { totalsRow });
+        Object.assign(this.gridConfig, withDefaults(this.options), { totalsRow, detailForm });
 
         // `in`, so that `columns: undefined` gives every column the defaults, as it does for an option.
         // Their aggregates are the ones resetState() goes back to from now on
@@ -510,6 +522,9 @@ export class GridInterface<T> {
         if (state.formats) {
             this.assertStateFormats(state.formats);
         }
+        if (state.detailForm !== undefined) {
+            assertDetailForm(state.detailForm, 'setState: detailForm');
+        }
         this.suppressEvents = true;
 
         if (state.layout) {
@@ -530,6 +545,9 @@ export class GridInterface<T> {
         }
         if (state.totalsRow !== undefined) {
             this.gridConfig.totalsRow = state.totalsRow === true;
+        }
+        if (state.detailForm) {
+            this.gridConfig.detailForm = copyDetailForm(state.detailForm);
         }
 
         // every column gets the format listed for it, the others none
@@ -984,11 +1002,12 @@ export class GridInterface<T> {
     }
 
     /**
-     * Opens the column settings dialog: the columns of the layout on the left, the settings of the one
-     * picked on the right - a date or number column's display format (as Format › in the header menu), a
-     * text column's template and link, with a preview of the current row. The user opens it with the gear
-     * at the right end of the footer (`GridConfig.settingsButton`) or *Column settings…* in the header
-     * menu; call this from a button of your own.
+     * Opens the grid config dialog on its *Columns* tab: the columns of the layout on the left, the
+     * settings of the one picked on the right - a date or number column's display format (as Format › in
+     * the header menu), a text column's template and link, with a preview of the current row. The user
+     * opens it with the gear at the right end of the footer (`GridConfig.settingsButton`) or *Column
+     * settings…* in the header menu; call this from a button of your own. Its other tab is the detail
+     * form, see {@link openDetailFormSettings}.
      *
      * Its Apply sets the formats of the state (`setState({ formats })`, {@link GridState}): `getState()`
      * has them, to save. Reset column / Reset all go back to the formats the grid starts with -
@@ -1012,6 +1031,31 @@ export class GridInterface<T> {
     public openColumnSettings(field?: string) {
         if (this.grid) {
             openColumnSettings(this.grid, field);
+        }
+    }
+
+    /**
+     * Opens the grid config dialog on its *Detail form* tab: *Show the detail form*, its width, and the
+     * fields it shows - the columns of the layout and the other columns of the config - each with a
+     * checkbox, in the order of the form: Move up / Move down (Alt+↑ / Alt+↓) change it. See
+     * {@link DetailForm}.
+     *
+     * Its Apply sets the detail form of the state (`setState({ detailForm })`, {@link GridState}):
+     * `getState()` has it, to save. *Reset form* goes back to the one the grid starts with -
+     * `GridConfig.detailForm`, or `initialState.detailForm`. The dialog's other tab, *Columns*, is
+     * {@link openColumnSettings}; Apply applies both.
+     *
+     * Does nothing while the grid is not on the page.
+     *
+     * @sample detail-form
+     * @example
+     * ```ts
+     * document.getElementById('detail-form')!.onclick = () => gridInterface.openDetailFormSettings();
+     * ```
+     */
+    public openDetailFormSettings() {
+        if (this.grid) {
+            openColumnSettings(this.grid, undefined, 'detailForm');
         }
     }
 
@@ -2073,6 +2117,15 @@ export class GridInterface<T> {
     }
 
     /**
+     * @internal
+     * The detail form the grid starts with - `initialState.detailForm`, else the config's `detailForm`:
+     * what resetState() goes back to, and the grid config dialog's "Reset form". A copy
+     */
+    public __getStartDetailForm(): DetailForm {
+        return copyDetailForm(this.initialState.detailForm ?? this.options.detailForm ?? noDetailForm());
+    }
+
+    /**
      * The display formats of a state given to setState() fit their fields, see assertColumnFormat
      * @throws a `TypeError` naming the field, before anything changes
      */
@@ -2324,7 +2377,8 @@ function withDefaults(options: GridOptions): ParsedGridOptions {
         settingsButton: options.settingsButton ?? true,
         placeholderRowCurrentEntityOnly: options.placeholderRowCurrentEntityOnly ?? true,
         groupAggregates: options.groupAggregates ?? true,
-        totalsRow: options.totalsRow ?? false
+        totalsRow: options.totalsRow ?? false,
+        detailForm: options.detailForm ? copyDetailForm(options.detailForm) : noDetailForm()
     };
 }
 
@@ -2439,6 +2493,17 @@ function assertLineHeight(config: Partial<GridConfig>) {
         throw new TypeError(
             `GridConfig: multilineLineHeight is ${JSON.stringify(height)}, it is a whole number of px, 1 or more`
         );
+    }
+}
+
+/**
+ * `detailForm` is a {@link DetailForm}: TypeScript does not catch a config from plain JavaScript or
+ * JSON - `fields` that is no list would break the form. Left out or undefined is none
+ * @throws a `TypeError` that says what is wrong, see assertDetailForm
+ */
+function assertConfigDetailForm(config: Partial<GridConfig>) {
+    if (config.detailForm !== undefined) {
+        assertDetailForm(config.detailForm, 'GridConfig: detailForm');
     }
 }
 

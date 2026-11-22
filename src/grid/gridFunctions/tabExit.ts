@@ -105,8 +105,9 @@ export function tabLeavesFilters(ctx: Grid, column: number, celno: number, colTy
  * has one stop, the button that expands and collapses it (renderRowGroup.ts): Tab from the last cell of
  * the row before it, Shift+Tab from the first cell of the row after it - Alt+arrows, Enter and the jump
  * keys (jumpKeys.ts) skip it, they move between cells. After the last row the footer's buttons (Clear and
- * the filter chips, or "No filter" without a filter) are stops, then Tab leaves the grid; Shift+Tab from
- * the first of them goes back to the last row.
+ * the filter chips, or "No filter" without a filter) are stops, then the fields of the detail form
+ * (detailForm.ts) while it is shown, then Tab leaves the grid; Shift+Tab from the first of them goes back
+ * to the last row.
  */
 
 /**
@@ -157,10 +158,11 @@ export function groupRowTab(ctx: Grid, row: number, event: KeyboardEvent) {
 
 /**
  * Tab past the last cell of the last row (or the last header filter, with no rows): into the footer,
- * on its first button - else out of the grid, the browser's Tab goes on from the end of the grid
+ * on its first button - else into the detail form, else out of the grid, the browser's Tab goes on from
+ * the end of the grid
  */
 export function tabPastRows(ctx: Grid, event: KeyboardEvent) {
-    const first = footerStops(ctx)[0];
+    const first = footerStops(ctx)[0] ?? detailFormStops(ctx)[0];
     if (first) {
         event.preventDefault();
         first.focus({ preventScroll: true });
@@ -183,9 +185,22 @@ function footerStops(ctx: Grid): HTMLElement[] {
 }
 
 /**
+ * The stops of Tab in the detail form (detailForm.ts), in their order: its fields and links. None while
+ * it is not shown. It is the last element of the grid before the end Tab leaves it from: the browser's
+ * Tab goes from its last stop out of the grid
+ */
+function detailFormStops(ctx: Grid): HTMLElement[] {
+    const form = ctx.detailForm;
+    if (!form || form.hidden) {
+        return [];
+    }
+    return Array.from(form.querySelectorAll<HTMLElement>('input, textarea, a[href]'));
+}
+
+/**
  * The keys of the footer, on the footer element for createDom (its content is rendered again and again):
- * Tab on its last stop leaves the grid - the scrollbars and the cells come after it in the dom -
- * and Shift+Tab on its first goes back to the last row: the button of a group row, or the last cell of
+ * Tab on its last stop goes into the detail form while it is shown, else leaves the grid - the
+ * scrollbars and the cells come after it in the dom - and Shift+Tab on its first goes back to the last row: the button of a group row, or the last cell of
  * a data row (the last header filter when there are no rows). Between its stops Tab is the browser's
  */
 export function addFooterKeys(ctx: Grid, footer: HTMLElement) {
@@ -197,7 +212,13 @@ export function addFooterKeys(ctx: Grid, footer: HTMLElement) {
             }
             const stops = footerStops(ctx);
             if (!event.shiftKey && event.target === stops[stops.length - 1]) {
-                leaveGrid(ctx, true);
+                const form = detailFormStops(ctx)[0];
+                if (form) {
+                    event.preventDefault();
+                    form.focus({ preventScroll: true });
+                } else {
+                    leaveGrid(ctx, true);
+                }
             } else if (event.shiftKey && event.target === stops[0]) {
                 if (focusLastRowStop(ctx)) {
                     event.preventDefault();
@@ -208,6 +229,24 @@ export function addFooterKeys(ctx: Grid, footer: HTMLElement) {
         },
         { signal: ctx.scrollListenersAbort?.signal }
     );
+}
+
+/**
+ * Shift+Tab on the first stop of the detail form (detailForm.ts). Tab comes to the form from the footer's
+ * last stop, and leaves the grid from its last one: it is the last element of the grid before the end
+ * Tab leaves it from. Back, it goes to the footer's last stop - without a footer the last stop of the
+ * rows, else out of the grid at its start
+ */
+export function tabBackFromDetailForm(ctx: Grid, event: KeyboardEvent) {
+    const last = footerStops(ctx).at(-1);
+    if (last) {
+        event.preventDefault();
+        last.focus({ preventScroll: true });
+    } else if (focusLastRowStop(ctx)) {
+        event.preventDefault();
+    } else {
+        leaveGrid(ctx, false);
+    }
 }
 
 /**

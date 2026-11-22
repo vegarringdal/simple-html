@@ -371,7 +371,73 @@ export type GridConfig = {
      * @sample aggregates
      */
     totalsRow?: boolean;
+
+    /**
+     * The detail form the grid starts with, default none (`{ show: false, fields: [] }`): a panel at the
+     * right of the rows with the current row as a form - a label and a value for each field of `fields`,
+     * in that order. A text of several lines (`FieldConfig.multiline`) gets a field tall enough to read
+     * it all. The cells' values can be edited there too, see {@link DetailForm}.
+     *
+     * Part of the grid's state (`GridState.detailForm`): the user turns it on, picks the fields and
+     * their order in the grid config dialog (the gear in the footer, tab *Detail form*), and
+     * `getState()` has what they picked, to save. `resetState()` goes back to this one (unless
+     * `initialState.detailForm` is given).
+     *
+     * @sample detail-form
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     layout: { center: [{ fields: ['name'], width: 150 }, { fields: ['city'], width: 120 }] },
+     *     // the notes are not in the layout: the form shows them, all their lines
+     *     detailForm: { show: true, fields: ['name', 'notes', 'city'], width: 320 }
+     * };
+     * ```
+     */
+    detailForm?: DetailForm;
 };
+
+/**
+ * The detail form: a panel inside the grid, at the right of the rows, with the current row
+ * (`datasource.currentEntity`) as a form - a label and a value for each field of `fields`, in that
+ * order. `GridConfig.detailForm` is the one the grid starts with, `GridState.detailForm` the one it
+ * shows: the user changes it in the grid config dialog (the gear in the footer, tab *Detail form*).
+ *
+ * - **The values** are what the cells show: the display format, a template, a lookup's label. A text of
+ *   several lines (`FieldConfig.multiline`, or a value with a line break) has a tall field with all of
+ *   it. A row with a link (`ColumnFormat.link`) has the link beside the value.
+ * - **Editing**: in an editable grid a field is edited as its cell is - the same readonly rules
+ *   (`readonly`, `ColumnConfig.readonly`, the `isReadonly` hook, `allowPasteClearOnly`), the value
+ *   parsed by the field's formatter and validated, the errors under the field, and what is typed in a
+ *   field is one step of the undo history. A lookup column (`ColumnConfig.editor`) is shown, not edited:
+ *   its cell picks the value.
+ * - **It follows the grid**: another current row, a value changed (an edit, undo, `upsert()`, code), a
+ *   filter or a sort. Without a current row - or one that is filtered out - it says so.
+ * - **A narrow grid** - where the rows would get less room than the form beside it, or the scrolling
+ *   columns less than 150px (a phone, wide pinned columns) - has the form under the rows instead, 40 % of
+ *   the grid's height.
+ *
+ * Plain JSON, part of the state: `getState()` gives it, `setState({ detailForm })` sets it.
+ *
+ * @sample detail-form
+ * @example
+ * ```ts
+ * import type { DetailForm } from '@simple-html/grid';
+ *
+ * const detailForm: DetailForm = { show: true, fields: ['company', 'notes', 'orderDate'], width: 300 };
+ * gridInterface.setState({ detailForm });
+ * gridInterface.getState().detailForm; // { show: true, fields: ['company', 'notes', 'orderDate'], width: 300 }
+ * ```
+ */
+export interface DetailForm {
+    /** shows the form */
+    show: boolean;
+    /** the fields it shows, in this order: fields of the columns, or any field of the rows */
+    fields: string[];
+    /** its width in px, default 300 - at least 150 */
+    width?: number;
+}
 
 /**
  * Where the columns go. Each list is a list of columns from left to right; a column shows one field,
@@ -825,6 +891,12 @@ export interface GridState {
      * {@link ColumnFormat}. Its templates are text, not code: a state from storage runs nothing
      */
     formats: Record<string, ColumnFormat>;
+    /**
+     * the detail form - whether it is shown, its fields in their order and its width - what
+     * `GridConfig.detailForm` starts with and the grid config dialog (tab *Detail form*) changes. See
+     * {@link DetailForm}
+     */
+    detailForm: DetailForm;
 }
 
 /**
@@ -891,6 +963,7 @@ export type ParsedGridOptions = GridOptions &
             | 'placeholderRowCurrentEntityOnly'
             | 'groupAggregates'
             | 'totalsRow'
+            | 'detailForm'
         >
     >;
 

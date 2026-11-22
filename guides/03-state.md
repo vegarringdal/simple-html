@@ -17,7 +17,8 @@ it with `getState()`, give it back with `setState()`, and go back to the start w
 | `headerFilters` | what each header filter cell shows: the value, the operator picked in its menu and its Match case |
 | `aggregates` | the aggregate functions of the columns, keyed by field (`{ balance: ['sum', 'avg'] }`): what `ColumnConfig.aggregate` starts with and the header menu changes, see [Aggregates](18-aggregates.md#from-the-header-menu) |
 | `totalsRow` | whether the totals row is shown: `GridConfig.totalsRow`, turned on and off in the header menu |
-| `formats` | the display formats of the columns, keyed by field (`{ born: { date: 'weekIso' } }`, `{ email: { link: { url: 'mailto:{email}' } } }`): what `ColumnConfig.format` starts with and the header menu's Format › and the column settings dialog change, see [Display formats](08-formatting.md#display-formats) and [Templates and links](08-formatting.md#templates-and-links) |
+| `formats` | the display formats of the columns, keyed by field (`{ born: { date: 'weekIso' } }`, `{ email: { link: { url: 'mailto:{email}' } } }`): what `ColumnConfig.format` starts with and the header menu's Format › and the grid config dialog change, see [Display formats](08-formatting.md#display-formats) and [Templates and links](08-formatting.md#templates-and-links) |
+| `detailForm` | the detail form: whether it is shown, its fields in their order and its width (`{ show: true, fields: ['name', 'notes'], width: 300 }`) - what `GridConfig.detailForm` starts with and the grid config dialog changes, see [The detail form](02-grid-config.md#the-detail-form) |
 
 ```ts
 const state = gridInterface.getState();
@@ -160,9 +161,9 @@ gridInterface.setState({ formats });
 - It starts as the columns' `format` in the config (or `initialState.formats`), and `resetState()`
   goes back to it. `updateConfig({ columns })` gives the columns new options: their formats are the
   new config's from then on.
-- The user changes it in the header menu (Format ›) and the column settings dialog (the gear in the
+- The user changes it in the header menu (Format ›) and the grid config dialog (the gear in the
   footer): its Apply is a `setState({ formats })`. Save `getState()` to keep what the user set, see
-  [The column settings dialog](08-formatting.md#the-column-settings-dialog).
+  [The grid config dialog](08-formatting.md#the-grid-config-dialog).
 - **A saved state runs nothing**: the templates of a text column (`text`, `link.url`) are text with
   `{field}` placeholders, not code. A state from storage or another user can have a link to
   `javascript:` in it - `setState()` throws a `TypeError` for it - or a field that holds one, which is
@@ -170,6 +171,26 @@ gridInterface.setState({ formats });
 - `setState({ formats })` replaces every column's format - start from `getState().formats` to change
   one. A format that does not fit its field throws a `TypeError`, and nothing of the state changes.
 - It is plain JSON: a state saved with `JSON.stringify` gives the same formats back.
+
+## The detail form in the state
+
+`detailForm` is the detail form at the right of the rows: whether it is shown, the fields it shows in
+their order, and its width - a view setting of the user, like the columns.
+
+```ts
+gridInterface.setState({ detailForm: { show: true, fields: ['company', 'notes', 'orderDate'], width: 300 } });
+gridInterface.getState().detailForm; // { show: true, fields: ['company', 'notes', 'orderDate'], width: 300 }
+```
+
+- It starts as `GridConfig.detailForm` (or `initialState.detailForm`), none by default
+  (`{ show: false, fields: [] }`), and `resetState()` goes back to it. `updateConfig({ detailForm })`
+  sets it, `updateConfig()` without it keeps the user's.
+- The user changes it in the grid config dialog, tab *Detail form*: its Apply is a
+  `setState({ detailForm })`. Save `getState()` to keep it.
+- A field is listed once; a field that is no column is shown too, labelled as the column chooser
+  labels it. `show` that is not a boolean, `fields` that is not a list of names or a `width` that is no
+  number of px throws a `TypeError`, and nothing of the state changes.
+- It is plain JSON.
 
 ## Header filters in the state
 

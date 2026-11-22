@@ -277,9 +277,9 @@ const DEFAULTS = {
     'filterEditor.operator.IS_BLANK': 'Is Blank',
     'filterEditor.operator.IS_NOT_BLANK': 'Is Not Blank',
 
-    // the column settings dialog (the gear in the footer, Column settings… in the header menu): its title
+    // the grid config dialog (the gear in the footer, Column settings… in the header menu): its title
     // bar, the list of the columns - their types and what they have set
-    'columnSettings.title': 'Column settings',
+    'columnSettings.title': 'Grid config',
     'columnSettings.title.tooltip': 'Drag to move the dialog',
     'columnSettings.close.tooltip': 'Close without applying',
     'columnSettings.columns': 'Columns',
@@ -334,6 +334,28 @@ const DEFAULTS = {
     'columnSettings.apply': 'Apply',
     'columnSettings.apply.tooltip': 'Apply to the grid, the dialog stays open',
     'columnSettings.applyAndClose': 'Apply & close',
+    // the tabs of the dialog, and its Detail form tab: what the detail form (GridState.detailForm) shows
+    'columnSettings.tab.columns': 'Columns',
+    'columnSettings.tab.detailForm': 'Detail form',
+    'columnSettings.detailForm.show': 'Show the detail form',
+    'columnSettings.detailForm.width': 'Width (px)',
+    'columnSettings.detailForm.width.hint': 'Where the rows would get too little room beside it, the form is under them',
+    'columnSettings.detailForm.fields': 'Fields of the form',
+    'columnSettings.detailForm.fields.hint': 'Space puts a field in the form or takes it out, Alt+↑ and Alt+↓ move it',
+    'columnSettings.detailForm.fields.hint.mac': 'Space puts a field in the form or takes it out, ⌥↑ and ⌥↓ move it',
+    'columnSettings.detailForm.multiline': 'Several lines',
+    'columnSettings.detailForm.hidden': 'Hidden',
+    'columnSettings.detailForm.moveUp': 'Move up',
+    'columnSettings.detailForm.moveDown': 'Move down',
+    'columnSettings.detailForm.reset': 'Reset form',
+    'columnSettings.detailForm.reset.tooltip': 'The detail form the grid starts with',
+
+    // the detail form (GridConfig.detailForm): its title, the row it shows - {row} its number, as the row
+    // numbers show it - and what it says without a row or without fields
+    'detailForm.title': 'Details',
+    'detailForm.row': 'Row {row}',
+    'detailForm.noRow': 'No row',
+    'detailForm.noFields': 'No fields: pick them with the gear in the footer, tab Detail form',
 
     // the footer: the row count and the filter as chips
     'footer.rowCount': '{shown}/{total}',
@@ -362,8 +384,8 @@ const DEFAULTS = {
     'footer.summary.avg': 'Average: {avg}',
     'footer.summary.min': 'Min: {min}',
     'footer.summary.max': 'Max: {max}',
-    // the gear at the footer's right end: its name and tooltip, it opens the column settings dialog
-    'footer.settings': 'Column settings',
+    // the gear at the footer's right end: its name and tooltip, it opens the grid config dialog
+    'footer.settings': 'Grid config',
     'footer.operator.EQUAL': '=',
     'footer.operator.LESS_THAN_OR_EQUAL_TO': '≤',
     'footer.operator.GREATER_THAN_OR_EQUAL_TO': '≥',

@@ -207,7 +207,7 @@ export const fullGrid: DemoSample = {
     group: 'Getting started',
     fullPage: true,
     description:
-        '50 columns of every kind - text, numbers (money edited as the plain number), dates, a date and time, checkboxes, a lookup, a badge, notes of several lines, monthly sales with aggregates - pinned left and right. Credit, Due Date and Updated have display formats (Format › in the header menu: weeks, days until, Norwegian separators...). City shows a template with the country code of another column; Fruit, Email and Phone are links (a search, mailto:, tel:): change them with the gear at the right end of the footer, the column settings - Save formats keeps them. Add 5 000 rows at a time, turn editing on and off, group, filter, sort, select ranges, export to Excel (gridInterface.downloadExcel), Ctrl+F, Ctrl+D, Ctrl+Z, right click for the menus.',
+        '50 columns of every kind - text, numbers (money edited as the plain number), dates, a date and time, checkboxes, a lookup, a badge, notes of several lines, monthly sales with aggregates - pinned left and right. Credit, Due Date and Updated have display formats (Format › in the header menu: weeks, days until, Norwegian separators...). City shows a template with the country code of another column; Fruit, Email and Phone are links (a search, mailto:, tel:): change them with the gear at the right end of the footer, the grid config - Save formats keeps them; its tab Detail form shows the current row as a form. Add 5 000 rows at a time, turn editing on and off, group, filter, sort, select ranges, export to Excel (gridInterface.downloadExcel), Ctrl+F, Ctrl+D, Ctrl+Z, right click for the menus.',
     run(stage) {
         const style = document.createElement('style');
         style.textContent = STYLE;
@@ -270,7 +270,8 @@ export const fullGrid: DemoSample = {
         ui.button('Formats: reset', () => {
             gridInterface.setState({ formats: {} });
         });
-        // the gear at the footer's right opens it too: the formats, templates and links of the columns
+        // the gear at the footer's right opens it too: the formats, templates and links of the columns, and
+        // on its tab Detail form the current row as a form at the right (openDetailFormSettings())
         ui.button('Column settings', () => gridInterface.openColumnSettings());
         // what the user set in the dialog is state: saved and given back as JSON (storage can be blocked)
         ui.button('Save formats', () => {

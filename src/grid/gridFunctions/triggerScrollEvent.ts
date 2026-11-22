@@ -1,4 +1,5 @@
 import type { Grid } from '../grid';
+import { renderDetailForm } from './detailForm';
 import { getElementByClassName } from './getElementByClassName';
 import { horizontalScrollHandler } from './horizontalScrollHandler';
 import { verticalScrollHandler } from './verticalScrollHandler';
@@ -6,7 +7,7 @@ import { verticalScrollHandler } from './verticalScrollHandler';
 /**
  * Renders every row and column on screen again, with what the rows show now: `gridInterface.refresh()`,
  * and after the selection, the current row or the displayed rows changed. The cell the user is typing
- * in is left as it is, see renderRowColumns
+ * in is left as it is, see renderRowColumns. And the detail form: it shows the current row
  */
 export function triggerScrollEvent(ctx: Grid) {
     // connectInterface can come before the element is in the dom, nothing to render yet
@@ -36,4 +37,5 @@ export function triggerScrollEvent(ctx: Grid) {
     // every row on screen: what it shows can have changed without its row changing (the selection,
     // the hooks, what the user did not type)
     verticalScrollHandler(ctx, elMiddle.scrollTop, true);
+    renderDetailForm(ctx);
 }

@@ -157,7 +157,9 @@ const config = (texts?: Texts): GridConfig => ({
         updated: { label: '«Updated»', placeholderFilter: '«updated»' },
         active: { label: '«Active»' },
         notes: { label: '«Notes»' },
-        code: { label: '«Code»', editor: { type: 'select', lookup: 'texts-codes' } }
+        code: { label: '«Code»', editor: { type: 'select', lookup: 'texts-codes' } },
+        // a column that is not in the layout: the detail form can show it
+        extra: { label: '«Extra»' }
     },
     // a filter on age hides a row: the value list of the other columns has "Filter Available"
     initialState: { filter: and(where('age', 'GREATER_THAN', 10)) },
@@ -321,6 +323,36 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
     check();
     datasource.filter(null);
     (dialog().querySelector('.filter-editor-close') as HTMLElement).click();
+}
+
+/**
+ * The detail form - with a row, without one, without fields - and the Detail form tab of the grid config
+ * dialog: a field of several lines and one that is not in the layout in its list, on a Mac too
+ */
+function showDetailForm({ datasource, gridInterface }: MountedGrid, check: () => void) {
+    const before = gridInterface.getState().detailForm;
+    gridInterface.setState({ detailForm: { show: true, fields: ['name', 'notes', 'extra'] } });
+    datasource.setRowAsCurrentEntity(0);
+    check();
+
+    gridInterface.openDetailFormSettings();
+    check();
+    const platform = vi.spyOn(navigator, 'platform', 'get').mockReturnValue('MacIntel');
+    try {
+        gridInterface.openDetailFormSettings();
+        check();
+    } finally {
+        platform.mockRestore();
+    }
+    (document.querySelector('dialog.column-settings .filter-editor-close') as HTMLElement).click();
+
+    datasource.currentEntity = null;
+    gridInterface.refresh();
+    check();
+    gridInterface.setState({ detailForm: { show: true, fields: [] } });
+    datasource.setRowAsCurrentEntity(0);
+    check();
+    gridInterface.setState({ detailForm: before });
 }
 
 /**
@@ -495,6 +527,8 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
 
     // the column settings dialog, see showColumnSettings
     showColumnSettings({ element, datasource, gridInterface }, check);
+    // the detail form and its tab of the dialog, see showDetailForm
+    showDetailForm({ element, datasource, gridInterface }, check);
 
     // the footer: a chip for each operator, five at a time, an OR group in the first
     datasource.filter(and(...conditions(OPERATORS.slice(0, 3)), or(...conditions(OPERATORS.slice(3, 5)))));

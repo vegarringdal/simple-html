@@ -122,8 +122,8 @@ describe('column settings - the gear in the footer', () => {
 
         expect(settings.tagName).toEqual('BUTTON');
         expect(settings.type).toEqual('button');
-        expect(settings.getAttribute('aria-label')).toEqual('Column settings');
-        expect(settings.getAttribute('title')).toEqual('Column settings');
+        expect(settings.getAttribute('aria-label')).toEqual('Grid config');
+        expect(settings.getAttribute('title')).toEqual('Grid config');
         expect(settings.getAttribute('aria-haspopup')).toEqual('dialog');
         // the icon is decoration
         expect(settings.querySelector('svg')?.getAttribute('aria-hidden')).toEqual('true');
@@ -206,7 +206,7 @@ describe('column settings - opening and closing', () => {
         expect(dialog().hasAttribute('autofocus')).toBe(true);
         expect(document.activeElement).toBe(dialog());
         const title = document.getElementById(dialog().getAttribute('aria-labelledby') as string);
-        expect(title?.textContent?.trim()).toEqual('Column settings');
+        expect(title?.textContent?.trim()).toEqual('Grid config');
         expect(dialog().querySelectorAll('.simple-html-resize-handle')).toHaveLength(8);
         showModal.mockRestore();
     });
