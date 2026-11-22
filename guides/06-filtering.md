@@ -209,7 +209,7 @@ condition matches case.
 
 The filter editor is a dialog where the user builds any filter: conditions and AND/OR groups,
 nested. It opens from the header filter menu (Filter › Advanced Filter…), from a click on the filter
-in the footer, and from code:
+in the footer - or on **No filter** there while the rows are not filtered - and from code:
 
 ```ts
 document.getElementById('advanced-filter')!.addEventListener('click', () => gridInterface.openFilterEditor());
@@ -299,6 +299,19 @@ the filter editor shows the values (`NO`), they are what it edits.
 While only the changed rows are shown (below), a chip *Changed rows only* comes first, ANDed with the
 filter's chips. "✕ Clear" turns it off too. While Find's *Filter rows* hides rows (below), a chip
 *Find: denma* with its text comes next; "✕ Clear" turns it off and leaves the find bar open.
+
+Without any of them the footer has a button **No filter** in Clear's place: a click (Enter, Space)
+opens the filter editor, so a filter can be built without going through the menus - also with the
+header filters hidden (`hideFilter`), where the filter menu can not be opened. The count is at the
+top of the footer either way, the button or Clear and the chips on the line under it: nothing moves
+when a filter comes or goes. It is one button that changes: the focus stays on it, and goes back to it
+when the editor it opened closes. A footer of no height (`footerHeight: 0`) has none. Its texts are
+`footer.noFilter` and `footer.noFilter.tooltip`.
+
+The summary of the selected cells is at the footer's right, on the line of the filter (see
+[Selection and clipboard](17-selection-and-clipboard.md#the-summary-in-the-footer)). On a narrow
+grid the chips collapse to one box when they would reach under it, and the summary is cut where the
+filter's line ends, its tooltip has all of it.
 
 ## Find: Filter rows
 

@@ -188,7 +188,7 @@ Every option is optional.
 | `multilineLineHeight` | `15` | the height in px of a line of text after the first in a multiline cell of a row made taller (`fitRows()`), and in its editor. A whole number of 1 or more, see [Column widths and row heights](#column-widths-and-row-heights) |
 | `cellHeaderLabelHeight` | `cellHeight` | height of a header label cell, make it taller for labels that wrap |
 | `panelHeight` | `25` | height of the grouping panel above the header |
-| `footerHeight` | `45` | height of the footer: the row count and the filter |
+| `footerHeight` | `45` | height of the footer: the row count and the filter, or the button "No filter" without one, see [Filtering](06-filtering.md#the-footer). `0`: no footer, nothing in it for Tab |
 | `selectSizeHeight` | `18` | height of the row of column numbers under the header filters (click one to select a column). `0` hides the row |
 | `hideLabels` | `false` | hides the row of header labels |
 | `hideFilter` | `false` | hides the row of header filters |

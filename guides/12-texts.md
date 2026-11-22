@@ -441,6 +441,8 @@ The names of the operators, in the operator menu and on a condition:
 | `footer.rowCount` | `{shown}/{total}` | `{shown}`: the rows shown, `{total}`: the rows there are |
 | `footer.clear` | `✕ Clear` | the button that removes the filter |
 | `footer.clear.tooltip` | `Clear filter` | its tooltip (`title`) |
+| `footer.noFilter` | `No filter` | the button in Clear's place while the rows are not filtered: a click opens the filter editor |
+| `footer.noFilter.tooltip` | `Open the filter editor` | its tooltip (`title`) |
 | `footer.filter.tooltip` | `Edit filter` | tooltip (`title`) of the chips, a click opens the filter editor |
 | `footer.collapsed.one` | `{count} filter — click to edit` | `{count}`: the chips do not fit, one condition |
 | `footer.collapsed.other` | `{count} filters — click to edit` | `{count}`: the chips do not fit, or there are more than 5 conditions |

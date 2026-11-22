@@ -130,7 +130,10 @@ export type GridConfig = {
      * labels that wrap. `fitColumns()` measures the label on one line
      */
     cellHeaderLabelHeight?: number;
-    /** height of the footer in px, default 45 */
+    /**
+     * height of the footer in px, default 45: the row count, under it the filter (Clear and the chips) or
+     * the button "No filter" that opens the filter editor. `0` hides it: no "No filter", no stop of Tab
+     */
     footerHeight?: number;
     /**
      * height of the column selector row under the header filters in px, default 18; 0 hides it. Its

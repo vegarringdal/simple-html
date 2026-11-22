@@ -131,10 +131,7 @@ const DATE_LIGHT: Record<string, string> = {
 };
 
 // the variables that are one plain colour, the same in light and dark
-const SAME_IN_DARK = [
-    '--simple-html-grid-scrollbar-shadow-color',
-    '--simple-html-grid-readonly-stripe-color'
-];
+const SAME_IN_DARK = ['--simple-html-grid-scrollbar-shadow-color', '--simple-html-grid-readonly-stripe-color'];
 
 describe('theme - every colour a variable', () => {
     it('expect grid.css to write no colour out outside the variables of .simple-html-grid', () => {

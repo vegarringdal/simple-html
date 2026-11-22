@@ -104,9 +104,9 @@ export function tabLeavesFilters(ctx: Grid, column: number, celno: number, colTy
  * Tab goes through the grid in the order it is shown: the header filters, then the rows. A group row
  * has one stop, the button that expands and collapses it (renderRowGroup.ts): Tab from the last cell of
  * the row before it, Shift+Tab from the first cell of the row after it - Alt+arrows, Enter and the jump
- * keys (jumpKeys.ts) skip it, they move between cells. After the last row the footer's buttons (Clear,
- * the filter chips) are stops, then Tab leaves the grid; Shift+Tab from the first of them goes back to
- * the last row.
+ * keys (jumpKeys.ts) skip it, they move between cells. After the last row the footer's buttons (Clear and
+ * the filter chips, or "No filter" without a filter) are stops, then Tab leaves the grid; Shift+Tab from
+ * the first of them goes back to the last row.
  */
 
 /**
@@ -171,7 +171,8 @@ export function tabPastRows(ctx: Grid, event: KeyboardEvent) {
 
 /**
  * The stops of Tab in the footer, in their order: the Clear button and the filter chips (a button of
- * their own) while the rows are filtered. None in a footer of no height (`footerHeight: 0`)
+ * their own) while the rows are filtered, else the button "No filter" (rebuildFooter.ts). None in a
+ * footer of no height (`footerHeight: 0`)
  */
 function footerStops(ctx: Grid): HTMLElement[] {
     const footer = ctx.element.querySelector('.simple-html-grid-footer');

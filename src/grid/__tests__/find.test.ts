@@ -1251,7 +1251,8 @@ describe('find - filter rows: the footer', () => {
         (element.querySelector('.footer-filter-clear') as HTMLButtonElement).click();
         expect(datasource.isChangedOnly()).toBe(false);
         expect(shownIds(mounted)).toHaveLength(60);
-        expect(element.querySelector('.footer-filter')).toBeNull();
+        // no chip left: the button "No filter" in Clear's place
+        expect(footerParts(element)).toEqual(['No filter']);
     });
 });
 

@@ -91,6 +91,9 @@ grid "Grid"  aria-rowcount=503  aria-colcount=10
   `aria-rowcount` counts it, its `aria-rowindex` is the last.
 - **The row count** in the footer is a status (`role="status"`): a screen reader reads it out when it
   changes - after a filter, an expand or a collapse.
+- **The footer's buttons**: "✕ Clear" and the filter chips (a button, its tooltip "Edit filter")
+  while the rows are filtered, else "No filter" - its tooltip "Open the filter editor" is its
+  description. Clear and "No filter" are one `<button>` whose name changes with the filter.
 - **The panel**: the x of a group chip is a button, "Remove the grouping on Country".
 - **The find bar** (Ctrl+F, see [Find](19-find.md#what-a-screen-reader-gets)): a search region named
   "Find in the grid" before the grid, with an input named "Find", the count of the matches as a status
@@ -131,7 +134,7 @@ Ctrl is Cmd on a Mac, Alt is Option.
 
 | key | does |
 | --- | --- |
-| Tab / Shift+Tab | the next / previous cell, across the sections, then the next / previous row. A group row between them is a stop of its own, its button. Shift+Tab in the first row goes up to the header filters. Tab on the last cell of the last row goes on to the footer's buttons while the rows are filtered, else it leaves the grid; Shift+Tab on the first cell with the filters hidden leaves it. See [Focus](#focus) |
+| Tab / Shift+Tab | the next / previous cell, across the sections, then the next / previous row. A group row between them is a stop of its own, its button. Shift+Tab in the first row goes up to the header filters. Tab on the last cell of the last row goes on to the footer's buttons - Clear and the filter chips while the rows are filtered, else "No filter" - and leaves the grid in a footer of no height; Shift+Tab on the first cell with the filters hidden leaves it. See [Focus](#focus) |
 | Alt+ArrowLeft / Alt+ArrowRight | the cell to the left / right, across the sections. Past the end of a row: the next row |
 | Ctrl+Home / Ctrl+End | the first cell of the first row / the last cell of the last row, scrolled to - in the order of Tab: the left pinned columns first, the right pinned ones last. The middle columns scroll to their start / end |
 | Alt+Home / Alt+End | the first / last cell of the row |
@@ -213,7 +216,7 @@ The keys of a spreadsheet that go further than the next cell, in the table above
 | key | does |
 | --- | --- |
 | Enter | filters |
-| Tab / Shift+Tab | the next / previous filter. Tab on the last one goes to the first row (the button of its group row, when the rows are grouped; the footer's buttons when the filter left no rows), Shift+Tab on the first one leaves the grid |
+| Tab / Shift+Tab | the next / previous filter. Tab on the last one goes to the first row (the button of its group row, when the rows are grouped; the footer's buttons when there are no rows), Shift+Tab on the first one leaves the grid |
 | Alt+ArrowLeft / Alt+ArrowRight | the filter to the left / right |
 | Alt+ArrowUp | the filter above in a column of two fields, else the column header (label) above it |
 | Alt+ArrowDown | the filter below in a column of two fields, else the first row |
@@ -259,8 +262,9 @@ of Tab: a click puts it there, and selects columns (Ctrl+click, Shift+click, see
 | the button of a group row | Tab / Shift+Tab | the next / previous stop: the first cell of the row after it (the button of a group row after it), the last cell of the row before it (the last header filter before the first row). Out of the grid at its ends, see [Focus](#focus) |
 | the button of a group row | Ctrl+Home / Ctrl+End | the first cell of the first row / the last cell of the last row |
 | the x of a group chip in the panel | Enter / Space | removes the grouping. It is in the tab order, before the grid |
-| the footer: Clear, the filter chips | Tab / Shift+Tab | the stops after the last row while the rows are filtered: Tab from the last cell of the last row gets there, Tab from the last of them leaves the grid. Shift+Tab from the first goes back to the last row |
-| the filter chips in the footer | Enter / Space | opens the filter editor |
+| the footer: Clear and the filter chips, or "No filter" | Tab / Shift+Tab | the stops after the last row: Clear and the chips while the rows are filtered, else "No filter". Tab from the last cell of the last row gets there, Tab from the last of them leaves the grid. Shift+Tab from the first goes back to the last row. None in a footer of no height (`footerHeight: 0`) |
+| the filter chips in the footer, "No filter" | Enter / Space | opens the filter editor |
+| Clear in the footer | Enter / Space | removes the filter. The focus stays on the button, now "No filter" |
 | a menu | ArrowDown / ArrowUp, Home / End, a letter | the next / previous / first / last item, the next one starting with the letter. A menu opened with the mouse leaves the focus on the cell: ArrowDown / ArrowUp get into it |
 | a menu | Enter, Space | uses the item: the menu closes, the focus goes back where it was. On an item with a submenu (`›`): opens it, as ArrowRight does |
 | a submenu | ArrowLeft, Esc | closes it, the focus back on its item |
@@ -331,7 +335,8 @@ A readonly editor (a readonly grid or cell) shows the text, nothing can be typed
 
 What can have the focus: the cell inputs and checkboxes, the host of a custom cell (and what its renderer
 makes focusable), the header filters, the column headers, the
-buttons of the group rows, the x of the group chips, the filter chips in the footer, the input and
+buttons of the group rows, the x of the group chips, the buttons of the footer (Clear and the filter
+chips, or "No filter"), the input and
 buttons of the find bar, and the items of a menu (see [Menus](10-menus.md#the-keyboard): the WAI-ARIA
 menu pattern). Each gets a
 visible focus ring from the theme (`:focus-visible`, see [Theming](13-theming.md#the-keyboard-focus)).
@@ -343,7 +348,8 @@ the one stop of the WAI-ARIA grid pattern (see [Known limits](#known-limits)):
 2. the header filters, left to right
 3. the rows, top to bottom: the cells of a data row left to right, across the pinned sections; a group
    row is one stop, its button
-4. the footer's Clear and filter chips, while the rows are filtered
+4. the footer's Clear and filter chips while the rows are filtered, else its "No filter" (none in a
+   footer of no height)
 5. out of the grid
 
 Shift+Tab goes the same way back. The column headers are no stops (Alt+ArrowUp from a filter gets

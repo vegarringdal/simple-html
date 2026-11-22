@@ -2702,6 +2702,55 @@ in the console. All passed. Found and fixed:
 * checked in Chromium (light and dark, a menu with its Copy › submenu; the computed shadow of both
   popovers); submenu 40/40, menus regression 25/25
 
+### The footer: "No filter" opens the filter editor (user request)
+
+* the user, of the footer without a filter (only `500/500`): "in bottom it should probably be button like
+  clear, but says no filter when there is no filter, so its easy to click on to enter advanced without
+  going through menus". Without a filter (no filter tree, not "changed rows only", no Find "Filter rows")
+  the footer has a button **No filter** in Clear's place: a click, Enter or Space opens the filter editor
+  (`openFilterEditor`, as the chips and the menu's Advanced Filter… do). Texts `footer.noFilter` (`No
+  filter`), `footer.noFilter.tooltip` (`Open the filter editor`), Norwegian in the translation sample
+* the layout: the one of a filter, always - the count in the horizontal scrollbar's band at the top, the
+  button on the line under it, where Clear and the chips are. Nothing moves when a filter comes or goes
+  (the count was in the middle without a filter, at the top with one). The look of Clear (square, the same
+  border and colours); under the pointer the hover of the grid's buttons
+  (`--simple-html-grid-main-bg-selected-even`), not Clear's red. `.footer-inner` has `no-filter` (with a
+  filter `has-filter`, as before), the button `.footer-filter-none`
+* **one button**: Clear and "No filter" are the same `<button>` (lit keeps it, its class, text, title and
+  click change), so the focus stays on it when the filter comes or goes: Enter on Clear leaves the focus
+  on "No filter", and the filter editor opened with "No filter" gives the focus back to it when it closes -
+  after Apply & close that is Clear. Two buttons lost the focus to the body (the button that had it was
+  removed). It got `type="button"` (Clear had none: a submit button in a form)
+* when it is not shown: only a footer of no height (`footerHeight: 0`, the dropdown grid of a lookup
+  column): nothing would show it, and Tab skips the footer there (tabExit.ts). Not tied to `readonly`
+  (filtering is not editing) nor `hideFilter`: with the header filters hidden the filter menu can not be
+  opened, the button is then the way into the editor. No option: the grid can always open the editor (the
+  chips do); an option to hide it can be added if an app asks
+* the summary of the selected cells (it is on the filter's line): on a narrow grid it was painted over the
+  collapsed chips, and over the count without a filter (380px). Now it is cut where the filter's line
+  ends (`fitSummary` in rebuildFooter.ts, 12px apart; its tooltip has all of it), after the chips collapse
+  as before; its width from the css again before each paint (lit keeps the element, the inline max-width
+  would stay)
+* Tab: the button is a stop of the footer as Clear is (`footerStops` takes every button): Tab from the last
+  cell of the last row (or the last header filter with no rows, or the last group row) gets to it, Tab on
+  it leaves the grid, Shift+Tab goes back to the last row. Before, Tab there left the grid at once
+* tests: gridFooter.test.ts +11 (the button, a click opens the editor, gone with a filter / changed rows
+  only / Find's filter rows and back after Clear, one element keeping the focus, the count's band with and
+  without a filter, with `hideFilter`, none with `footerHeight: 0`, the config's texts, the summary cut /
+  given back); accessibility.test.ts +2 (Tab to it and out, its name) and 5 changed on purpose (Tab from the
+  last cell / last group row / last header filter with no rows now stops at "No filter" before leaving; no
+  stop in a footer of no height with and without a filter); find.test.ts and rowStatus.test.ts 1 each (the
+  footer after Clear has "No filter"). texts.test.ts sees both ids. Browser: new
+  `.claude/browser-checks/scripts/footer-no-filter-check.js` 52/52 (light and dark: under the count, a
+  button named "No filter", 4.5:1, click / Enter / Space open the editor and Cancel / Esc give the focus
+  back, a filter built in the editor and applied: Clear and the chip, the focus on Clear, the count not
+  moved; Enter on Clear: "No filter" with the focus; Tab in and out; `footerHeight: 0`; the summary apart
+  at 1300px and 380px with and without a filter; the full grid; the Norwegian texts); footer summary
+  11/11, filter ui 117/117, find 68/68, keyboard 52/52, full grid 11/11
+* docs: 06-filtering.md (the footer, the editor opens from it), 14-accessibility.md (Tab order, keys, what
+  a screen reader gets), 12-texts.md, 17-selection-and-clipboard.md (the summary is cut), 02-grid-config.md
+  (`footerHeight`), JSDoc of `footerHeight`, `openFilterEditor()`, tabExit.ts, rebuildFooter.ts
+
 ## Considered, not done
 
 ## Candidates / not started
