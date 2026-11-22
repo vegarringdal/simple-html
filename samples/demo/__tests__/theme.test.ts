@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { applyTheme, initTheme } from '../theme';
+import { applyGridTheme, applyTheme, currentGridTheme, GRID_THEMES, initTheme } from '../theme';
 
 /**
  * The dark theme of the docs site: the dark class on the body, index.css sets color-scheme: dark for
@@ -69,6 +69,70 @@ describe('the theme at start', () => {
         applyTheme(true);
         initTheme();
         expect(document.body.classList.contains('dark')).toBe(true);
+    });
+});
+
+describe('the grid theme', () => {
+    beforeEach(() => {
+        localStorage.clear();
+        applyGridTheme('default');
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
+    it('expect the default and the TreDeSpace theme to be the choices', () => {
+        expect(GRID_THEMES.map((theme) => theme.id)).toEqual(['default', 'tredespace']);
+    });
+
+    it('expect TreDeSpace to be the attribute theme-tredespace.css looks for, on the body: the menus are there too', () => {
+        applyGridTheme('tredespace');
+        expect(document.body.getAttribute('data-grid-theme')).toBe('tredespace');
+        expect(currentGridTheme()).toBe('tredespace');
+
+        applyGridTheme('default');
+        expect(document.body.hasAttribute('data-grid-theme')).toBe(false);
+        expect(currentGridTheme()).toBe('default');
+    });
+
+    it('expect the grid theme and light/dark to be two choices: four looks', () => {
+        applyGridTheme('tredespace');
+        applyTheme(true);
+        expect([document.body.dataset.gridTheme, document.body.classList.contains('dark')]).toEqual(['tredespace', true]);
+
+        applyTheme(false);
+        expect([document.body.dataset.gridTheme, document.body.classList.contains('dark')]).toEqual(['tredespace', false]);
+    });
+
+    it('expect the chosen grid theme to be kept for the next visit', () => {
+        applyGridTheme('tredespace');
+        delete document.body.dataset.gridTheme;
+        initTheme();
+        expect(currentGridTheme()).toBe('tredespace');
+
+        applyGridTheme('default');
+        document.body.dataset.gridTheme = 'tredespace';
+        initTheme();
+        expect(currentGridTheme()).toBe('default');
+    });
+
+    it('expect an unknown stored grid theme to give the default', () => {
+        localStorage.setItem('simple-html-demo-grid-theme', 'pink');
+        initTheme();
+        expect(document.body.hasAttribute('data-grid-theme')).toBe(false);
+    });
+
+    it('expect blocked site data not to stop the themes: they last for the page', () => {
+        const blocked = () => {
+            throw new Error('blocked');
+        };
+        vi.stubGlobal('localStorage', { getItem: blocked, setItem: blocked });
+
+        expect(() => applyGridTheme('tredespace')).not.toThrow();
+        expect(currentGridTheme()).toBe('tredespace');
+        expect(() => initTheme()).not.toThrow();
+        expect(currentGridTheme()).toBe('default');
     });
 });
 

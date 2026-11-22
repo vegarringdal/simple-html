@@ -12,7 +12,8 @@ import { month } from './templates/month';
  * header filters; make one yourself for a date picker or calendar outside a grid. See {@link IDateConfig}
  * for the two modes.
  *
- * Import `@simple-html/grid/date.css` for its styles.
+ * Import `@simple-html/grid/date.css` for its styles. `@simple-html/grid/theme-tredespace.css` gives it
+ * the TreDeSpace theme too, under `data-grid-theme="tredespace"` (see the theming guide).
  *
  * @example
  * ```ts

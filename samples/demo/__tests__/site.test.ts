@@ -46,6 +46,9 @@ function text(selector: string) {
 // the site is built once and every guide is rendered with its live grids: seconds, more than the 5s vitest
 // gives a test when the machine is busy (other test runs, builds)
 describe('docs site', { timeout: 30_000 }, () => {
+    // the css of the site as built: index.css, the grid's css files in it
+    let siteCss = '';
+
     beforeAll(() => {
         stubCanvas();
         stubElementSizes();
@@ -54,6 +57,7 @@ describe('docs site', { timeout: 30_000 }, () => {
         try {
             execFileSync('node', ['scripts/buildDemo.js', outDir], { cwd: ROOT, stdio: 'pipe' });
             const bundle = fs.readFileSync(path.join(outDir, 'index.js'), 'utf8');
+            siteCss = fs.readFileSync(path.join(outDir, 'index.css'), 'utf8');
             new Function(bundle)();
         } finally {
             fs.rmSync(outDir, { recursive: true, force: true });
@@ -85,6 +89,22 @@ describe('docs site', { timeout: 30_000 }, () => {
         const commit = execFileSync('git', ['rev-parse', '--short=7', 'HEAD'], { cwd: ROOT }).toString().trim();
         expect(line?.textContent).toContain(`${branch} @ ${commit}`);
         expect(line?.querySelector('a')?.getAttribute('href')).toMatch(/^https:\/\/[^@]+\/commit\/[0-9a-f]{40}$/);
+    });
+
+    it("picks the grids' theme in the sidebar: the default or TreDeSpace, its css in the site", () => {
+        const select = document.querySelector<HTMLSelectElement>('.sidebar-footer .grid-theme-select');
+        expect([...(select?.options ?? [])].map((option) => option.textContent)).toEqual(['Default', 'TreDeSpace']);
+        expect(document.querySelector('.sidebar-footer .theme-btn')?.textContent).toBe('Toggle dark/light');
+        expect(siteCss).toContain('[data-grid-theme=tredespace] .simple-html-grid{');
+
+        if (select) {
+            select.value = 'tredespace';
+            select.dispatchEvent(new Event('change'));
+            expect(document.body.dataset.gridTheme).toBe('tredespace');
+            select.value = 'default';
+            select.dispatchEvent(new Event('change'));
+        }
+        expect(document.body.dataset.gridTheme).toBeUndefined();
     });
 
     it('renders the work in progress page: the open items of the plan and the known issues', async () => {

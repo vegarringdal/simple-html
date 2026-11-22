@@ -261,8 +261,32 @@ body {
 }
 
 .sidebar-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     padding: 10px 16px;
     border-top: 1px solid var(--demo-side-border);
+}
+
+/* the theme of the grids: a label and its select on one line */
+.grid-theme {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--demo-side-muted);
+}
+
+.grid-theme-select {
+    flex: 1;
+    min-width: 0;
+    padding: 4px 6px;
+    font-size: 12px;
+    font-family: inherit;
+    color: var(--demo-side-text);
+    background: var(--demo-side-button);
+    border: 1px solid var(--demo-side-button-border);
+    border-radius: 5px;
 }
 
 .theme-btn {

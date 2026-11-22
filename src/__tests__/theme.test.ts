@@ -1,69 +1,14 @@
-// reads the css files (TS 6 includes no @types by default)
-/// <reference types="node" />
-
-import fs from 'node:fs';
-import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { declarations, lightAndDark, readCss, takeRule, variables } from './themeCss';
 
 /**
  * The theme of grid.css and date.css, read as text: every colour is a variable, each variable is
  * light-dark(<light>, <dark>) so the grid follows the color-scheme of the page, and the light colours
  * are the ones the grid had before.
  * How it looks - the colours, the contrast, the focus outline, the stacking - is checked in a browser,
- * happy-dom does no css.
+ * happy-dom does no css. The contrast of the default theme and of the TreDeSpace theme is computed in
+ * themeTredespace.test.ts.
  */
-
-function readCss(file: string) {
-    // without the comments: they name colours and selectors too
-    return fs.readFileSync(path.resolve(__dirname, '..', file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-}
-
-/**
- * the first rule with exactly this selector: its body, and the css without it
- */
-function takeRule(css: string, selector: string) {
-    const start = css.indexOf(`${selector} {`);
-    const end = css.indexOf('}', start);
-    if (start === -1 || end === -1) {
-        throw new Error(`no rule ${selector}`);
-    }
-    return { body: css.slice(start + selector.length + 2, end), rest: css.slice(0, start) + css.slice(end + 1) };
-}
-
-/**
- * the declarations of a block of css: [property, value]. A selector never matches, the value would
- * have a { in it
- */
-function declarations(css: string) {
-    return [...css.matchAll(/([\w-]+)\s*:\s*([^;{}]+);/g)].map((match) => [match[1], match[2].trim()] as const);
-}
-
-/**
- * the custom properties set in a rule body, by name
- */
-function variables(body: string) {
-    return new Map(declarations(body).filter(([name]) => name.startsWith('--')));
-}
-
-/**
- * light-dark(a, b) as [a, b], a plain value as [value, value]. The two are split at the comma
- * that is not inside the brackets of rgba(...) and the like
- */
-function lightAndDark(value: string): [string, string] {
-    if (!value.startsWith('light-dark(')) {
-        return [value, value];
-    }
-    const inner = value.slice('light-dark('.length, -1);
-    let depth = 0;
-    for (let i = 0; i < inner.length; i++) {
-        if (inner[i] === '(') depth++;
-        if (inner[i] === ')') depth--;
-        if (inner[i] === ',' && depth === 0) {
-            return [inner.slice(0, i).trim(), inner.slice(i + 1).trim()];
-        }
-    }
-    throw new Error(`light-dark() with one colour: ${value}`);
-}
 
 // a colour written out: #hex, rgb(), hsl() ... or a named colour. var(...) is taken out first
 const LITERAL_COLOUR =
@@ -166,7 +111,10 @@ describe('theme - light and dark', () => {
     });
 
     it('expect a colour variable to be light-dark(<light>, <dark>), or one plain colour for both', () => {
-        const colours = [...gridVariables, ...dateVariables].filter(([name]) => !/-font-(size|weight|family)/.test(name));
+        // the ones that are another variable (the scrollbar thumbs, the tooltips) take its light and dark
+        const colours = [...gridVariables, ...dateVariables].filter(
+            ([name, value]) => !/-font-(size|weight|family)/.test(name) && !value.startsWith('var(')
+        );
 
         for (const [name, value] of colours) {
             const [light, dark] = lightAndDark(value);

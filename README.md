@@ -57,6 +57,8 @@ Or run `npm run build:tgz` in a clone and copy the tgz from `build/` to your pro
 import { createGrid, Datasource, type GridConfig } from '@simple-html/grid';
 import '@simple-html/grid/grid.css';
 import '@simple-html/grid/date.css'; // the date picker of date cells
+// a second theme, the TreDeSpace UI colours: on with <html data-grid-theme="tredespace">
+// import '@simple-html/grid/theme-tredespace.css';
 
 // the fields that are not text, with their type
 const datasource = new Datasource({

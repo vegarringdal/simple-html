@@ -2,13 +2,124 @@
 
 Every colour of the grid is a css variable: the grid itself, its menus, the column chooser, the
 tooltips, the filter editor and the date picker. Each variable has a light and a dark colour, and the
-grid follows the `color-scheme` of the page: dark mode is one line of css.
+grid follows the `color-scheme` of the page: dark mode is one line of css. Two themes come with the
+grid, the default and [TreDeSpace](#themes).
 
 ```sample theming
 ```
 
 The variables of the grid are set on `.simple-html-grid` in `grid.css`, the ones of the date picker
 on `.simple-html-date` in `date.css`. The tables at the end list them all.
+
+## Themes
+
+The grid comes with two themes, each light and dark - four looks:
+
+- **Default** - `grid.css` and `date.css`, the colours of the tables below
+- **TreDeSpace** - `theme-tredespace.css` on top of them: the colours of the TreDeSpace UI widget
+  library (`@treDeSpaceUI`), for a page built with it. Its panels, menus, dialogs and fields, its
+  selection and focus blue, its reds, ambers and greens
+
+Both are flat and square: no rounded corners, in light and in dark - the widgets have none either.
+The sizes are the grid's in both (11px text, the row heights of the grid options).
+
+The docs site has all four: the sidebar's *Grid theme* (Default, TreDeSpace) and *Toggle dark/light*.
+
+### Turning TreDeSpace on
+
+Load the file after the grid's, and put the attribute `data-grid-theme="tredespace"` on the root of
+the page:
+
+```ts
+import '@simple-html/grid/grid.css';
+import '@simple-html/grid/date.css';
+import '@simple-html/grid/theme-tredespace.css';
+```
+
+```html
+<html data-grid-theme="tredespace">
+```
+
+- Every grid and date picker under the attribute takes it. Put it on `<html>` or `<body>`, as
+  [`color-scheme`](#dark-mode): the menus, the column chooser, the tooltips and the filter editor
+  are put on the body (or in the dialog or popover the grid is in). On the grid's container only, the
+  grid would have the theme and its menus the default
+- Without the attribute the grid has the default theme. So both can be loaded, and the attribute
+  switches: `document.documentElement.dataset.gridTheme = 'tredespace'`, and
+  `delete document.documentElement.dataset.gridTheme` for the default
+- Light or dark follows `color-scheme`, as in the default theme. The widget library sets it itself
+  (dark is its default, `data-theme="light"` on the root makes it light), so the grid switches with it:
+
+```html
+<!-- dark, the library's default -->
+<html data-grid-theme="tredespace">
+
+<!-- light -->
+<html data-theme="light" data-grid-theme="tredespace">
+```
+
+On a page without the library, set `color-scheme` as for the default theme.
+
+To change a colour of the TreDeSpace theme, use its selector - it is stronger than
+`.simple-html-grid`, so a rule on `.simple-html-grid` does not reach a TreDeSpace grid:
+
+```css
+[data-grid-theme='tredespace'] .simple-html-grid {
+    --simple-html-grid-focus-color: light-dark(#b45309, #fbbf24);
+}
+```
+
+### The colours of TreDeSpace
+
+The colours are the library's tokens: its `styles.css` (its light theme, and its dark surfaces lifted
+half a step) over the Tailwind palette it is built on. Where the grid has a part the widgets do not,
+the colour is made from the library's scale. The light colour is the token in the library's light
+theme, the dark one in its dark theme. A Tailwind colour the library does not change is written as
+Tailwind's own `oklch()` in the file, so it is the same colour as in the widgets; the table has it as
+a screen shows it.
+
+| the grid's | token (as in the library) | light | dark |
+| --- | --- | --- | --- |
+| bars - labels, panel, footer, row numbers - menus, filter editor, date picker | slate-900 (its Menu, dialogs, side bars) | `#f8fafc` | `#172033` |
+| rows, the filter row, the inputs, the filter chips | slate-950 (the ground, the search field of its Select) | `#f1f5f9` | `#080f21` |
+| every other row | midway slate-950 - slate-900 | `#f5f7fb` | `#0f182a` |
+| lines between cells and rows, menu frames | slate-800 (`--dock-line`) | `#e2e8f0` | `#283548` |
+| stronger lines: pinned columns, under the header, the filter editor's frame | slate-700 (`--dock-line-hi`) | `#cbd5e1` | `#314158` |
+| text | slate-200 (`--dock-text`) | `#1e293b` | `#e2e8f0` |
+| placeholders, quiet text, row state "deleted", aggregate labels | slate-400 (`--dock-text-dim`) | `#475569` | `#90a1b9` |
+| selected rows, menu item under the pointer, the active option | blue-950 (its selected TreeView row, Select) | `#dbeafe` | `#162556` |
+| the other selected rows | midway blue-950 - blue-900 | `#cde2fe` | `#192f72` |
+| focus outline, the line of a range, Apply, the value list's checkboxes | blue-400 (`--dock-accent`) | `#2563eb` | `#51a2ff` |
+| text on Apply | slate-950 (its picked day) | `#f1f5f9` | `#080f21` |
+| frames of the controls of the value list and the filter editor | slate-500 | `#64748b` | `#62748e` |
+| a range's tint | blue-500 at 15% (its info chip) | | |
+| errors | red-400, red-500 at 15% (its danger chip) | `#dc2626` | `#ff6467` |
+| row state: edited, new, conflict | amber-400, green-400, violet-400 (light: violet-600) | `#b45309` `#15803d` `#7c3aed` | `#ffb900` `#05df72` `#a684ff` |
+| Find | amber-500 at 25% and 45%, a line in amber-200 | | |
+| totals row | slate-800, text slate-100 | `#e2e8f0` | `#283548` |
+| scrollbar thumbs | blue-400 45% into slate-800 (its scrollbars) | `#8dacee` | `#3a669d` |
+| tooltips | its Tooltip, dark in both | `#242933` | `#242933` |
+| shadows, the layer behind the filter editor | black at 50%, 45% (tooltips), 40% | | |
+| font | `ui-sans-serif, system-ui, sans-serif` (its panels) | | |
+
+`theme-tredespace.css` names the token of every variable. The contrasts are the default theme's:
+text 4.5:1 or more to its background, lines and marks 3:1, light and dark (WCAG AA). Five colours
+differ from the widgets for that, or because the grid has one colour where the widgets have two:
+
+- placeholders and quiet text are slate-400: the library's placeholder slate-500 is under 4.5:1
+- the frames of the value list's and the filter editor's controls are slate-500: the library's field
+  frames (slate-700) are under 3:1 to a menu
+- the filled controls (Apply, the AND / OR in use) are blue-400 with slate-950 text, as the
+  library's checked box and picked day - its primary Button is blue-950 in a blue-400 frame, a fill
+  under 3:1 to the dialog
+- the date picker's selected day is blue-950 in a blue-400 frame (the library's range fill): its
+  picked day (blue-400) has slate-950 text, the date picker's text is slate-200
+- the line of the current match of Find is amber-200: amber-400 is under 3:1 to the match's tint on a
+  selected row
+
+And: a menu's frame is the grid's line (slate-800, the library's Menu has slate-700), a menu item
+under the pointer is the selected blue (the library's Menu has slate-800, its Select blue-950), the
+checkboxes in the cells are the browser's (in both themes), and the text is 11px (the widgets' 12px).
 
 ## A theme of your own
 
@@ -267,14 +378,14 @@ On `.simple-html-grid`, in `grid.css`.
 | variable | colours | light | dark |
 | --- | --- | --- | --- |
 | `--simple-html-grid-main-bg-color` | the labels, the panel, the footer, the row selector, group rows, the menus, the filter editor | `#f5f5f5` | `#374151` |
-| `--simple-html-grid-sec-bg-color` | the filter row, the inputs, pickers and buttons of the filter editor and the value list, the value list's box, the filter chips, the tooltips | `#ffffff` | `#4b5563` |
+| `--simple-html-grid-sec-bg-color` | the filter row, the inputs, pickers and buttons of the filter editor and the value list, the value list's box, the filter chips, the tooltips (through `--simple-html-grid-tooltip-bg-color`) | `#ffffff` | `#4b5563` |
 | `--simple-html-grid-alt-bg-color` | scrollbar tracks, the search input of the column chooser, the focus button of a cell | `#ffffff` | `#4b5563` |
 | `--simple-html-grid-main-bg-even` | the even rows | `#ffffff` | `#4b5563` |
 | `--simple-html-grid-main-bg-odd` | the odd rows | `#f7f7f7` | `#5a6370` |
-| `--simple-html-grid-main-bg-selected-odd` | selected rows (odd), the number of a selected column, scrollbar thumbs | `#bdd4e7` | `#234882` |
+| `--simple-html-grid-main-bg-selected-odd` | selected rows (odd), the number of a selected column, scrollbar thumbs (through `--simple-html-grid-scrollbar-thumb-color`) | `#bdd4e7` | `#234882` |
 | `--simple-html-grid-main-bg-selected-even` | selected rows (even), menu items and buttons under the pointer, the menu item the keyboard is on and the one whose submenu is open | `#afc7db` | `#274e8f` |
 | `--simple-html-grid-main-bg-border` | the lines between cells, rows and menu sections, the frame of the grid and the menus | `#e6e5e5` | `#1f2937` |
-| `--simple-html-grid-pinned-border` | the lines at the pinned columns and under the header, the frame of the filter editor, the tooltips and the column chooser's button, the line of a group (the bracket) in the filter editor | `#d1d0d0` | `#1f2937` |
+| `--simple-html-grid-pinned-border` | the lines at the pinned columns and under the header, the frame of the filter editor, the tooltips (through `--simple-html-grid-tooltip-border-color`) and the column chooser's button, the line of a group (the bracket) in the filter editor | `#d1d0d0` | `#1f2937` |
 | `--simple-html-grid-sec-bg-border` | the line right of the grouping columns | `#e6e5e5` | `#1f2937` |
 | `--simple-html-grid-main-font-color` | the text | `#2e2d2d` | `#f9f7f7` |
 | `--simple-html-grid-sec-font-color` | placeholders - the filter row, the search boxes, a picker of the filter editor with nothing picked - the AND/OR between the filter chips, the "too many conditions" box | `#6b6b6b` | `#c8c8c8` |
@@ -313,11 +424,17 @@ On `.simple-html-grid`, in `grid.css`.
 | `--simple-html-grid-menu-shadow-color` | the drop shadow of the menus and the other popovers (column chooser, date picker, dropdowns) | `rgba(0, 0, 0, 0.28)` | `rgba(0, 0, 0, 0.6)` |
 | `--simple-html-grid-dialog-shadow-color` | the shadow of the filter editor | `rgba(0, 0, 0, 0.32)` | `rgba(0, 0, 0, 0.6)` |
 | `--simple-html-grid-tooltip-shadow-color` | the shadow of the tooltips | `rgba(0, 0, 0, 0.28)` | `rgba(0, 0, 0, 0.5)` |
+| `--simple-html-grid-tooltip-bg-color` | the background of the tooltips | `--simple-html-grid-sec-bg-color` | |
+| `--simple-html-grid-tooltip-font-color` | the text of the tooltips | `--simple-html-grid-main-font-color` | |
+| `--simple-html-grid-tooltip-border-color` | the frame of the tooltips | `--simple-html-grid-pinned-border` | |
+| `--simple-html-grid-scrollbar-thumb-color` | the scrollbar thumbs (the tracks are `--simple-html-grid-alt-bg-color`) | `--simple-html-grid-main-bg-selected-odd` | |
 | `--simple-html-grid-scrollbar-shadow-color` | the shadow in a scrollbar thumb (Safari, the other browsers use `scrollbar-color`) | `rgb(0 0 0 / 30%)` | `rgb(0 0 0 / 30%)` |
 | `--simple-html-grid-backdrop-color` | the layer over the page behind the filter editor | `rgba(129, 127, 127, 0.2)` | `rgba(0, 0, 0, 0.4)` |
 
 `--simple-html-grid-grouping-border` and `--simple-html-grid-main-hr-border` are still set, but
-nothing in `grid.css` uses them.
+nothing in `grid.css` uses them. The four that name another variable are that one's colour, light
+and dark: a theme can give the tooltips and the scrollbar thumbs colours of their own (TreDeSpace
+does), and an override of the other one still changes them.
 
 The stripes are a pattern drawn at 20% opacity over the cell, so their colours show much lighter
 than they are.

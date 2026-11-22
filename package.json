@@ -22,6 +22,7 @@
         },
         "./grid.css": "./dist/grid.css",
         "./date.css": "./dist/date.css",
+        "./theme-tredespace.css": "./dist/theme-tredespace.css",
         "./package.json": "./package.json"
     },
     "files": [

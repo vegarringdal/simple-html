@@ -2900,6 +2900,86 @@ in the console. All passed. Found and fixed:
   only ways on a column narrower than 60px; the range block draws its own symbols (`OPERATOR_SYMBOLS`, not
   texts) - the same glyphs as `filter.indicator.*`, it could take those texts
 
+### A second theme: TreDeSpace, light and dark (user request)
+
+* the user: "Later we might want to be able to use our grid with this widget library. So we should have a
+  style that also matches its dark/light mode, including our default dark/light (at least for now). So in
+  theory 4 styles, 2 dark and 2 light" - the library is the user's TreDeSpace UI (`@treDeSpaceUI`), and the
+  colours "must match the widget library - take them exactly from its source tokens"
+* `src/theme-tredespace.css`, exported as `@simple-html/grid/theme-tredespace.css` (the build copies
+  `src/**/*.css`): two rules of variables and nothing else, `[data-grid-theme='tredespace'] .simple-html-grid`
+  and `... .simple-html-date` - every colour variable of grid.css and date.css as `light-dark(<light>,
+  <dark>)`, and the library's font (`ui-sans-serif, system-ui, sans-serif`); the sizes stay the grid's. On
+  with `data-grid-theme="tredespace"` on `<html>` or `<body>` (the menus, tooltips and filter editor are on
+  the body, as for `color-scheme`); without it the default. Light / dark by `color-scheme`, which the library
+  sets itself (dark by default, `data-theme="light"`). The selector is stronger than `.simple-html-grid`: the
+  load order does not matter, an override uses the same selector
+* the colours come from the library's source (github vegarringdal/TreDeSpaceSource, src/treDeSpaceUI):
+  `styles.css` (its light theme and its dark surfaces slate-950/900/800 lifted half a step),
+  `dockable/dockable.css` (`--dock-*`: ground, panel, lines, text, dim text, accent), and the Tailwind
+  classes of its widgets (Menu, DialogFrame/Modal, fieldChrome, TreeView/TreeRow, SelectList, CalendarGrid,
+  Tooltip.ts, tone.ts, buttonStyles.ts); the colours it does not remap from tailwindcss@4.3.3 theme.css,
+  written as Tailwind's `oklch()` - Chromium draws blue-400 `#51a2ff`, the hex fallback of Tailwind's build is
+  `#54a2ff`, so a hex would be 3 off. Not from the docs page around the widgets (its rounded frames, `--bg`,
+  `--surface` ...)
+* the mapping (light / dark as drawn): bars, menus, filter editor, date picker slate-900 `#f8fafc` /
+  `#172033`; rows, filter row, inputs, chips slate-950 `#f1f5f9` / `#080f21`, every other row midway to
+  slate-900 (as the library lifts its surfaces); lines slate-800, stronger lines and frames slate-700; text
+  slate-200; quiet text slate-400; selected rows, menu hover, the active option blue-950 (its TreeView and
+  Select), the other selected rows midway to blue-900; focus, range line, Apply, the value list's checkboxes
+  blue-400 with slate-950 text (its checked box and picked day); errors red-400 and a red-500 tint (its danger
+  chip); edited / new / deleted / conflict amber-400 / green-400 / slate-400 / violet-400 (no light violet in
+  the library: Tailwind's violet-600, as it darkens blue and red); Find amber-500 tints, amber-200 line;
+  range a blue-500 tint; totals slate-800 with slate-100; scrollbar thumbs its `color-mix(blue-400 45%,
+  slate-800)`; tooltips its Tooltip (`#242933` / `#c9cfd8` / `#3a4250`, dark in both); shadows black 50% /
+  45%, backdrop black 40%. Square, as the widgets (they have no rounded corners)
+* four variables in grid.css, so the tooltips and the scrollbar thumbs can have the library's own:
+  `--simple-html-grid-scrollbar-thumb-color` (= `main-bg-selected-odd`), `--simple-html-grid-tooltip-bg-color`
+  (= `sec-bg-color`), `-tooltip-font-color` (= `main-font-color`), `-tooltip-border-color` (=
+  `pinned-border`). The default theme is pixel for pixel the same (checked in Chromium, below); an override of
+  the variable they name still changes them. No breaking change
+* contrast: the pairs the theming guide promises are one list now (`src/__tests__/themeCss.ts`
+  `CONTRAST_PAIRS`, 119: text 4.5:1 on the bars, inputs, rows, selected rows, under the error / range / Find
+  tints, the row numbers at 80%; lines and marks 3:1 - focus, accent, control frames, range and Find lines,
+  the row state under an error's tint, multiline, lookup, group lines, the date picker), computed for the
+  default and the TreDeSpace theme in light and dark (the oklch() converted as Chromium draws it - checked
+  against its pixels). TreDeSpace: all pass, lowest text 4.72:1, lowest line 3.12:1; also the value list's
+  warning and the text under a merge's flash (the default's are under 4.5). Five colours differ from the
+  widgets for it, or because the grid has one colour where the widgets have two: placeholders slate-400 (the
+  library's slate-500 is 4.3:1 / 4.0:1 on the rows), control frames slate-500 (its slate-700 is 1.4:1 / 1.6:1 to a menu), Apply blue-400
+  filled (its primary Button is blue-950 in a blue-400 frame), the date picker's selected day blue-950 in a
+  blue-400 frame (its picked day blue-400 has dark text, ours slate-200), the current Find match's line
+  amber-200 (amber-400 is 2.95:1 to the tint on a selected row)
+* not like the widgets yet: a menu's frame is the grid's line slate-800 (its Menu slate-700) and a menu item
+  under the pointer is the selected blue (its Menu slate-800; its Select blue-950) - one variable each for
+  more than the menus; the checkboxes in the cells are the browser's (both themes); 11px text (its 12px)
+  and the grid's weights (500 / 700)
+* the docs site: *Grid theme* (Default / TreDeSpace) above *Toggle dark/light* in the sidebar - four looks,
+  kept in localStorage (`simple-html-demo-grid-theme`, try/catch); `data-grid-theme` on the body, only the
+  grids and their popovers change. The theming sample has a TreDeSpace button (and its teal theme turns the
+  attribute off: the TreDeSpace rule is stronger); the select follows the attribute (MutationObserver)
+* docs: guide 13 "Themes" (the two, turning TreDeSpace on, light / dark with `data-theme`, a table of the
+  colours, what differs from the widgets and why), the four variables in its table; guide 01 (Css), README;
+  JSDoc of createGrid and DateInterface; the headers of grid.css and date.css
+* tests: new themeTredespace.test.ts (32): only variables, no border-radius in grid.css / date.css, every
+  colour variable of both files has a TreDeSpace colour (a variable added without one fails), no unknown
+  one, light-dark() or one colour where meant, 16 colours against the library's tokens as Chromium draws
+  them, the 119 pairs for both themes in light and dark, package.json exports the file and the build copies
+  it; theme.test.ts uses the shared helpers (themeCss.ts), a variable naming another is allowed; the demo's
+  theme.test.ts +6 (the attribute, four looks, kept, an unknown one, blocked storage), site.test.ts +1 (the
+  select, the css in the site). 3233 tests
+* browser (Chromium 1148, 1300x1400): new `theme-tredespace-check.js` 141/141 - the four looks on the full
+  grid and filtering samples: cells, header, filter row, selected rows, a range, the focus, a menu with a
+  submenu, the date picker, a tooltip, the footer chips, the filter editor, Apply and the scrollbar against
+  the library's tokens read from its own widgets page (dark and `data-theme="light"`, checked against its
+  source), and against grid.css's colours for the default; no default-palette colour in a TreDeSpace grid or
+  its popovers (the browser's checkboxes and the hidden focus input left out); the library's Menu, selected
+  TreeView row and DatePicker next to the grid's; screenshots, and the library's widgets beside the grid in
+  each mode (`compare-tredespace-dark.png` / `-light.png`). New `default-theme-pixels-check.js` 6/6: the
+  default theme before and after, light and dark, with menus, a range, the filter editor and a tooltip - 0
+  pixels differ. submenu-check 40/40, menus-regression 25/25, sample-height 5/5, full-grid 11/11. The new scripts
+  are in this worktree's `.claude/browser-checks/scripts/` (the shared folder could not be written)
+
 ## Considered, not done
 
 ## Candidates / not started

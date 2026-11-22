@@ -6,6 +6,9 @@
  *
  * The look follows the grid: flat, square corners, thin lines, the grid's font. The text has a
  * contrast of at least 4.5:1, the marks of the selected day and of today at least 3:1 (WCAG AA).
+ *
+ * theme-tredespace.css sets these variables to the TreDeSpace UI colours too, under
+ * data-grid-theme="tredespace": a variable added here needs a TreDeSpace colour there.
  */
 .simple-html-date {
     text-align: initial;

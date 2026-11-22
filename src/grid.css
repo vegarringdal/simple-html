@@ -8,6 +8,11 @@
  * `color-scheme: light dark` the one of the OS setting. color-scheme is inherited, set it on :root or
  * body: the menus, the tooltips and the filter editor are put on the body (or in the dialog or
  * popover the grid is in), not in the grid's container.
+ *
+ * A second theme comes with the grid: theme-tredespace.css sets every one of these variables to the
+ * colours of the TreDeSpace UI widget library, for the grids under data-grid-theme="tredespace" (on
+ * the html or body element). A variable added here needs a TreDeSpace colour there too
+ * (src/__tests__/themeTredespace.test.ts fails without it).
  */
 .simple-html-grid {
     text-align: initial;
@@ -25,7 +30,7 @@
     --simple-html-grid-pinned-border: light-dark(#d1d0d0, #1f2937);
     /* the line right of the grouping columns */
     --simple-html-grid-sec-bg-border: light-dark(#e6e5e5, #1f2937);
-    /* selected rows (odd), a selected column's number, scrollbar thumbs */
+    /* selected rows (odd), a selected column's number */
     --simple-html-grid-main-bg-selected-odd: light-dark(#bdd4e7, #234882);
     /* selected rows (even), hover and the keyboard's item in the menus, hover on the buttons */
     --simple-html-grid-main-bg-selected-even: light-dark(#afc7db, #274e8f);
@@ -114,6 +119,14 @@
     --simple-html-grid-dialog-shadow-color: light-dark(rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.6));
     --simple-html-grid-tooltip-shadow-color: light-dark(rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.5));
     --simple-html-grid-scrollbar-shadow-color: rgb(0 0 0 / 30%);
+    /* the thumbs of the scrollbars (their tracks are --simple-html-grid-alt-bg-color): the colour of
+       the selected rows, as they always had - a theme can give them one of their own */
+    --simple-html-grid-scrollbar-thumb-color: var(--simple-html-grid-main-bg-selected-odd);
+    /* the tooltips: their background, text and frame - the filter row's background, the text and the
+       pinned line, as they always had. A theme can give them colours of their own */
+    --simple-html-grid-tooltip-bg-color: var(--simple-html-grid-sec-bg-color);
+    --simple-html-grid-tooltip-font-color: var(--simple-html-grid-main-font-color);
+    --simple-html-grid-tooltip-border-color: var(--simple-html-grid-pinned-border);
     /* the layer over the page behind the filter editor */
     --simple-html-grid-backdrop-color: light-dark(rgba(129, 127, 127, 0.2), rgba(0, 0, 0, 0.4));
 
@@ -464,7 +477,7 @@
 
 .simple-html-grid-middle-scroller::-webkit-scrollbar-thumb {
     box-sizing: border-box;
-    background-color: var(--simple-html-grid-main-bg-selected-odd);
+    background-color: var(--simple-html-grid-scrollbar-thumb-color);
     box-shadow: inset 0 0 6px var(--simple-html-grid-scrollbar-shadow-color);
     outline: 1px solid var(--simple-html-grid-main-bg-border);
     z-index: 10;
@@ -476,7 +489,7 @@
 }
 
 .simple-html-grid-middle-scroller {
-    scrollbar-color: var(--simple-html-grid-main-bg-selected-odd) var(--simple-html-grid-alt-bg-color);
+    scrollbar-color: var(--simple-html-grid-scrollbar-thumb-color) var(--simple-html-grid-alt-bg-color);
     scrollbar-width: thin;
 }
 
@@ -489,13 +502,13 @@
 }
 
 .simple-html-grid-body-scroller {
-    scrollbar-color: var(--simple-html-grid-main-bg-selected-odd) var(--simple-html-grid-alt-bg-color);
+    scrollbar-color: var(--simple-html-grid-scrollbar-thumb-color) var(--simple-html-grid-alt-bg-color);
     scrollbar-width: thin;
 }
 
 .simple-html-grid-body-scroller::-webkit-scrollbar-thumb {
     box-sizing: border-box;
-    background-color: var(--simple-html-grid-main-bg-selected-odd);
+    background-color: var(--simple-html-grid-scrollbar-thumb-color);
     box-shadow: inset 0 0 6px var(--simple-html-grid-scrollbar-shadow-color);
     outline: 1px solid var(--simple-html-grid-main-bg-border);
 }
@@ -513,13 +526,13 @@
 }
 
 .simple-html-grid-header {
-    scrollbar-color: var(--simple-html-grid-main-bg-selected-odd) var(--simple-html-grid-alt-bg-color);
+    scrollbar-color: var(--simple-html-grid-scrollbar-thumb-color) var(--simple-html-grid-alt-bg-color);
     scrollbar-width: thin;
 }
 
 .simple-html-grid-header::-webkit-scrollbar-thumb {
     box-sizing: border-box;
-    background-color: var(--simple-html-grid-main-bg-selected-odd);
+    background-color: var(--simple-html-grid-scrollbar-thumb-color);
     box-shadow: inset 0 0 6px var(--simple-html-grid-scrollbar-shadow-color);
     outline: 1px solid var(--simple-html-grid-main-bg-border);
 }
@@ -530,18 +543,18 @@
 
 .simple-html-dialog-scroller::-webkit-scrollbar {
     width: 10px;
-    scrollbar-color: var(--simple-html-grid-main-bg-selected-odd) var(--simple-html-grid-alt-bg-color);
+    scrollbar-color: var(--simple-html-grid-scrollbar-thumb-color) var(--simple-html-grid-alt-bg-color);
     scrollbar-width: thin;
 }
 
 .simple-html-dialog-scroller {
-    scrollbar-color: var(--simple-html-grid-main-bg-selected-odd) var(--simple-html-grid-alt-bg-color);
+    scrollbar-color: var(--simple-html-grid-scrollbar-thumb-color) var(--simple-html-grid-alt-bg-color);
     scrollbar-width: thin;
 }
 
 .simple-html-dialog-scroller::-webkit-scrollbar-thumb {
     box-sizing: border-box;
-    background-color: var(--simple-html-grid-main-bg-selected-odd);
+    background-color: var(--simple-html-grid-scrollbar-thumb-color);
     box-shadow: inset 0 0 6px var(--simple-html-grid-scrollbar-shadow-color);
     outline: 1px solid var(--simple-html-grid-main-bg-border);
 }
@@ -3100,8 +3113,9 @@
     height: auto;
     padding: 3px 6px;
     border-radius: 0;
-    border: 1px solid var(--simple-html-grid-pinned-border);
-    background-color: var(--simple-html-grid-sec-bg-color);
+    border: 1px solid var(--simple-html-grid-tooltip-border-color);
+    background-color: var(--simple-html-grid-tooltip-bg-color);
+    color: var(--simple-html-grid-tooltip-font-color);
     text-align: left;
     /* a line per message: the validation tooltips join them with a newline */
     white-space: pre-line;

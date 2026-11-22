@@ -1,6 +1,8 @@
 import './index.css';
 import '../../src/grid.css';
 import '../../src/date.css';
+// the second theme of the grid, on with data-grid-theme="tredespace" on the body (theme.ts)
+import '../../src/theme-tredespace.css';
 import api from 'docs:api';
 import guides from 'docs:guides';
 import status from 'docs:status';
@@ -14,7 +16,7 @@ import {
     scrollToPlace
 } from './pages';
 import { SAMPLES } from './sampleList';
-import { initTheme, toggleTheme } from './theme';
+import { applyGridTheme, currentGridTheme, GRID_THEMES, type GridTheme, initTheme, toggleTheme } from './theme';
 
 initTheme();
 
@@ -53,6 +55,29 @@ sidebar.appendChild(nav);
 const sidebarFooter = document.createElement('div');
 sidebarFooter.className = 'sidebar-footer';
 sidebar.appendChild(sidebarFooter);
+
+// the theme of the grids (default or TreDeSpace) and light/dark: four looks
+const gridThemeLabel = document.createElement('label');
+gridThemeLabel.className = 'grid-theme';
+gridThemeLabel.textContent = 'Grid theme';
+const gridThemeSelect = document.createElement('select');
+gridThemeSelect.className = 'grid-theme-select';
+for (const theme of GRID_THEMES) {
+    const option = document.createElement('option');
+    option.value = theme.id;
+    option.textContent = theme.label;
+    gridThemeSelect.appendChild(option);
+}
+gridThemeSelect.value = currentGridTheme();
+gridThemeSelect.onchange = () => {
+    applyGridTheme(gridThemeSelect.value as GridTheme);
+};
+// the theming sample's buttons set the attribute too: the select shows the theme in use
+new MutationObserver(() => {
+    gridThemeSelect.value = currentGridTheme();
+}).observe(document.body, { attributes: true, attributeFilter: ['data-grid-theme'] });
+gridThemeLabel.appendChild(gridThemeSelect);
+sidebarFooter.appendChild(gridThemeLabel);
 
 const themeBtn = document.createElement('button');
 themeBtn.className = 'theme-btn';

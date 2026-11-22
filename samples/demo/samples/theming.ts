@@ -36,7 +36,7 @@ export const theming: DemoSample = {
     title: 'Theming & dark mode',
     group: 'Config',
     description:
-        'Every colour of the grid is a css variable, an override on .simple-html-grid changes it for the grid and its menus, column chooser, tooltips and filter editor. Each one is light-dark(<light>, <dark>), so the grid follows the color-scheme of the page: dark with color-scheme: dark on :root or the body. This site has body.dark { color-scheme: dark } - the sidebar\'s "Toggle dark/light" and the Dark/Light buttons here set that class. Tab into the grid, or use the arrow keys, to see the focus outline (--simple-html-grid-focus-color).',
+        'Every colour of the grid is a css variable, an override on .simple-html-grid changes it for the grid and its menus, column chooser, tooltips and filter editor. Each one is light-dark(<light>, <dark>), so the grid follows the color-scheme of the page: dark with color-scheme: dark on :root or the body. This site has body.dark { color-scheme: dark } - the sidebar\'s "Toggle dark/light" and the Dark/Light buttons here set that class. A second theme comes with the grid: theme-tredespace.css, the colours of the TreDeSpace UI widget library, on with data-grid-theme="tredespace" on the body or :root - the sidebar\'s "Grid theme" and the TreDeSpace button here set it. Tab into the grid, or use the arrow keys, to see the focus outline (--simple-html-grid-focus-color).',
     run(stage) {
         const ui = createStage(stage);
         const { gridInterface } = mountGrid(ui.gridHost, baseGridConfig());
@@ -45,11 +45,20 @@ export const theming: DemoSample = {
         const theme = document.createElement('style');
         theme.textContent = TEAL_THEME;
 
+        // the teal theme is a rule on .simple-html-grid: the TreDeSpace theme's is stronger, it is
+        // turned off for this one
         ui.button('Teal theme', () => {
+            delete document.body.dataset.gridTheme;
             stage.appendChild(theme);
         });
         ui.button('Default theme', () => {
+            delete document.body.dataset.gridTheme;
             theme.remove();
+        });
+        // theme-tredespace.css is loaded by the site, the attribute turns it on
+        ui.button('TreDeSpace theme', () => {
+            theme.remove();
+            document.body.dataset.gridTheme = 'tredespace';
         });
         // color-scheme is inherited: set it on the body or :root, not on the grid's container - the
         // menus, the tooltips and the filter editor are on the body, they would stay light

@@ -37,6 +37,11 @@ import '@simple-html/grid/date.css'; // the date picker
 A bundler such as esbuild or Vite handles the css import. Without one, link the files from
 `node_modules/@simple-html/grid/dist/` in your html.
 
+The grid is light, or dark with `color-scheme: dark` on the page. A second theme comes with it, the
+colours of the TreDeSpace UI widget library: `import '@simple-html/grid/theme-tredespace.css'` after
+the two, and `data-grid-theme="tredespace"` on the `<html>` element, see
+[Themes](13-theming.md#themes).
+
 ## A first grid
 
 A grid needs two things:

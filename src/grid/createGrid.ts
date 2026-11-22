@@ -40,6 +40,11 @@ export interface CreateGridOptions<T> {
  *
  * The container needs a size: the grid fills it, it does not grow with its rows.
  *
+ * Its look is `@simple-html/grid/grid.css` (and `date.css` for the date picker of date cells), light
+ * or dark by the page's `color-scheme`. `@simple-html/grid/theme-tredespace.css` is a second theme,
+ * the colours of the TreDeSpace UI widget library, on with `data-grid-theme="tredespace"` on the
+ * root of the page - see the theming guide.
+ *
  * `gridInterface.destroy()` takes the grid off the page again. To place and size the element yourself,
  * see {@link GridElement}.
  *
