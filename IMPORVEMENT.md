@@ -2178,6 +2178,50 @@ in the console. All passed. Found and fixed:
   without one, usable with one), rangeClipboard.test.ts, rowMenuDelete.test.ts (+1 Row), rowHeights.test.ts.
   Browser: menus-regression 25/25, submenu 40/40, row-delete 6/6, a screenshot of Clear ›
 
+### Filter editor: undo and redo (user request)
+
+* the user: "undo/redo in filter editor would be nice". The editor renders again from its draft on every
+  edit; `FilterEditorHistory` (filterEditorHistory.ts) keeps copies of the draft (structuredClone), one
+  before each edit, up to 100. Its own small history, not the datasource's. A new one each time the
+  editor opens (also `openFilterEditor()` while it is open); Apply leaves it as it is
+* a step: an edit (`edit()` in renderFilterEditor: added, deleted, wrapped, AND / OR, a field, operator or
+  column picked, value / column switched, clear all, a date picked) unless it changed nothing (compared
+  with `sameDraft`: a date by its time, undefined as missing); what is typed in one value input from the
+  first key that changes the draft until blur or change (Enter) - typed back to the start, the step is
+  dropped. The IN textarea writes the draft on input now too, as the value input does
+* the keys (`undoRedoKeydown` on the dialog, `undoRedoAction` of undoRedoKey.ts exported): the editor's
+  everywhere in the dialog, also with nothing to undo - Chrome's own undo is the page's, not the input's:
+  checked in Chromium 131, Ctrl+Z on a button or in another input undoes the typing of an input and moves
+  the focus there. The input's own in a value input typed in since it got the focus (Ctrl+Z until it is
+  back where it started, then the editor's; Ctrl+Y stays Chrome's redo), and in the field menu's search
+  box while it has text. An open menu closes on undo (its pick would write into the old draft). The grid
+  behind is not reached: its undo is in its cells' keydown, the dialog is outside it and modal
+* the buttons: ↶ ↷ icons at the left end of the footer (not the title bar: it is the drag handle, and
+  they would read as window controls), named Undo / Redo, tooltips with the key - `keyText()`, `⌘Z` /
+  `⇧⌘Z` on a Mac - `aria-keyshortcuts`. Greyed out with `aria-disabled`, not `disabled`: Enter on Undo
+  until nothing is left keeps the focus there instead of dropping it to the body. Updated by hand after a
+  key typed (the editor is not rendered while typing: it would reformat the text)
+* the focus: a step keeps the place of its control among the editor's controls; undone the draft is
+  rendered as it was, so Ctrl+Z / Ctrl+Y focus the control at that place - the picker, the input, the
+  trash can of the condition deleted - or the dialog when there is none. The buttons keep the focus
+* texts `filterEditor.undo`, `.undo.tooltip`, `.undo.tooltip.mac`, `.redo`, `.redo.tooltip`,
+  `.redo.tooltip.mac` (texts.ts, keyText's MAC_TEXTS, the Norwegian sample, guide 12); guides 06 (a
+  section "Undo and redo in the filter editor"), 14 (the keyboard table), 05 (the filter editor has its
+  own history)
+* tests: filterEditor.test.ts +58 (every kind of step with the buttons and with the keys, a typed value as
+  one step, the input's own Ctrl+Z / Ctrl+Y and the editor's after it, the keys canceled with nothing to
+  undo, every key (Cmd, Shift, a Russian layout, not AltGr), the search box, a menu closed, the cap, redo
+  emptied, aria-disabled, the focus, a new open, the grid's `datasource.undo` never called, the Mac
+  tooltips; three tests of the footer and the Tab order updated), filterEditorHistory.test.ts 17 (the
+  class, sameDraft), filterEditorApply.test.ts +2 (Apply keeps the history, undo changes the draft only),
+  texts.test.ts (the editor opened on a Mac)
+* browser: .claude/browser-checks/scripts/filter-editor-undo-check.js 72/72 (light and dark: seven edits
+  with real clicks and keys, Ctrl+Z back through them with the focus on each control, Ctrl+Y / Ctrl+Shift+Z
+  / Cmd forward, the buttons, Chrome's own undo and redo in a value input, nothing to undo canceled with no
+  input event, the search box, the grid's history untouched, Apply, a new open, the accessibility tree,
+  the look, ⌘Z on a Mac); filter-ui-check.js 117/117 (its Tab order with Undo and Redo), value-list-check.js
+  51/51
+
 ## Considered, not done
 
 ## Candidates / not started

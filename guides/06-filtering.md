@@ -145,12 +145,13 @@ it is applied. Applying it empties the header filter cells of the columns whose 
 changed; a header filter whose conditions are as they were keeps its text.
 
 Every control is a button or an input, Tab goes through them in the order they are shown: the `✕`,
-then each group's header and its conditions, then Cancel, Apply, Apply & close. A picker opened from
-the keyboard has the focus in its menu - the field picker in its search box: type, then ArrowDown to
-the fields or Enter for the first one - and gives it back to the picker when it closes. The icons and
-the pickers have names for a screen reader: `Field: Country`, `Delete this condition`. The dialog is
-as high as what is in it, up to the window, then the groups scroll; a nested group is indented, its
-rows as wide as what is left, and a row wraps when the dialog is narrow.
+then each group's header and its conditions, then Undo, Redo, Cancel, Apply, Apply & close. A
+picker opened from the keyboard has the focus in its menu - the field picker in its search box: type,
+then ArrowDown to the fields or Enter for the first one - and gives it back to the picker when it
+closes. The icons and the pickers have names for a screen reader: `Field: Country`, `Delete this
+condition`. The dialog is as high as what is in it, up to the window, then the groups scroll; a
+nested group is indented, its rows as wide as what is left, and a row wraps when the dialog is
+narrow.
 
 It is a modal `<dialog>`, over everything on the page: the grid behind it can not be used while it is
 open. The focus moves to the dialog when it opens, and goes back to where it was when it closes. Esc
@@ -161,6 +162,33 @@ its place and size while it is open, and opens in the middle of the window again
 
 Its texts - the buttons, the labels, the names of the operators, the tooltips - are `filterEditor.*`,
 those of the header filter menu and its value list `filter.*`: see [Texts](12-texts.md#filter-editor).
+
+### Undo and redo in the filter editor
+
+The editor keeps an undo history of what is done in it: **↶ Undo** and **↷ Redo**, the icons at the
+left end of the footer, and the keys **Ctrl+Z** (Cmd+Z) to undo, **Ctrl+Y** and **Ctrl+Shift+Z**
+(Cmd+Y, Cmd+Shift+Z) to redo, with the focus anywhere in the dialog. The icons are greyed out
+(`aria-disabled`) while there is nothing to undo or redo; their tooltips say the keys, `⌘Z` and `⇧⌘Z`
+on a Mac.
+
+- **A step** is one edit: a condition or a group added, deleted or wrapped, AND / OR, a field, an
+  operator or a column picked, value / column switched, clear all, a date picked - and **what is typed
+  in one value**, from the first key since the input got the focus until the focus leaves it (or Enter).
+  An edit that changes nothing (a click on the AND in use) is no step, nor is a value typed back to what
+  it was. A new step empties redo; up to 100 steps are kept.
+- **While the user types in a value, Ctrl+Z is the input's own**: the browser undoes the typing. Once it
+  is undone back to where it started, Ctrl+Z undoes the editor's edit before it; Ctrl+Y stays the
+  input's until the focus leaves it, the browser redoes the typing. Everywhere else in the dialog the keys
+  are the editor's - also with nothing to undo: the browser's own undo is the page's, Ctrl+Z on a button
+  would undo the typing in a value input. In the field menu's search box the keys are its own while it
+  has text; elsewhere in a picker's menu they undo the editor's edit and close the menu.
+- **The focus**: after Ctrl+Z or Ctrl+Y it goes to the control the edit was made with - the picker, the
+  input, the trash can of the condition deleted - or to the dialog when that is not there any more (a
+  condition deleted again by a redo). A click on Undo or Redo keeps the focus on the button.
+- **Apply keeps the history**: the dialog stays open, an edit applied can be undone and applied again.
+  Undo changes what the editor shows, not the filter of the grid, until Apply. Each time the editor
+  opens it starts with an empty history. It is the editor's own: the grid's undo (`datasource.undo()`,
+  Ctrl+Z in a cell) does not see it, and the editor's keys do not reach the grid behind it.
 
 ## The footer
 

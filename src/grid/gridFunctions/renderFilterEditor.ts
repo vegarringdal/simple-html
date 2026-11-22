@@ -17,13 +17,16 @@ import { asPx } from './asPx';
 import { contextMenuAttributes } from './contextMenuAttributes';
 import { contextMenuOperator } from './contextMenuOperator';
 import { contextmenuDate } from './contextmenuDate';
+import type { FilterEditorHistory } from './filterEditorHistory';
 import { followPointer, isPrimaryPress } from './followPointer';
 import { getColumnLabel } from './getColumnLabel';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { keyText } from './keyText';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
 import { removeContextMenu } from './removeContextMenu';
 import { attachTooltips, hideTooltip, tooltipsEnabled } from './tooltip';
+import { undoRedoAction } from './undoRedoKey';
 
 /**
  * A condition while the filter editor builds it, one pick at a time: any part can still be missing.
@@ -82,25 +85,57 @@ export function draftToFilter(draft: GroupDraft, datasource: Datasource): Filter
  * Every edit renders it again from the start, in the same dialog: lit keeps the elements, so the
  * dialog stays where the user put it and as big as they made it, and the focus stays where it is.
  *
- * What it shows, top to bottom: the title bar (drag it, ✕ closes), the root group, then Cancel, Apply
- * and Apply & close. A group is a line down its left side (a bracket) with its header on top - AND / OR
- * as two buttons, the one in use filled, "+ Condition", "+ Group", then wrap and delete as icons - and
- * its conditions, then its sub groups, indented. A condition is one row: the field and the operator
- * pickers, the value (or the column it is compared with), switch value / column, delete. The row
- * wraps when the dialog is narrow. Every control is a button or an input: Tab goes through them in
- * that order, Enter and Space use them, each has a name for a screen reader.
+ * What it shows, top to bottom: the title bar (drag it, ✕ closes), the root group, then Undo and Redo,
+ * Cancel, Apply and Apply & close. A group is a line down its left side (a bracket) with its header on
+ * top - AND / OR as two buttons, the one in use filled, "+ Condition", "+ Group", then wrap and delete
+ * as icons - and its conditions, then its sub groups, indented. A condition is one row: the field and
+ * the operator pickers, the value (or the column it is compared with), switch value / column, delete.
+ * The row wraps when the dialog is narrow. Every control is a button or an input: Tab goes through
+ * them in that order, Enter and Space use them, each has a name for a screen reader.
+ *
+ * Every edit of the draft is a step of the editor's undo history, see FilterEditorHistory: the Undo
+ * and Redo buttons and the keys (undoRedoKeydown) take it back and do it again.
  *
  * @param filterArg the root group, the editor's own copy: it is changed in place while editing
+ * @param history the editor's undo history: a new one when it opens (openFilterEditor), the same one
+ * for every render after
  */
-export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
+export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft, history: FilterEditorHistory) {
     hideTooltip();
 
     const opening = !ctx.filterEditor;
     const dialog = ctx.filterEditor ?? createFilterEditorDialog(ctx);
+    // what the keys of the dialog undo, see undoRedoKeydown
+    editors.set(dialog, { draft: filterArg, history });
 
     const text = (id: TextId) => gridText(ctx, id);
     /** renders the editor again, after an edit of the model */
-    const update = () => renderFilterEditor(ctx, structuredClone(filterArg));
+    const update = () => renderFilterEditor(ctx, structuredClone(filterArg), history);
+
+    /**
+     * An edit of the draft: `change` changes it, the editor renders again. A step of the undo history,
+     * unless it changed nothing
+     * @param control the button the edit was made with - a picker for what was picked in its menu, the
+     * value input for a date picked: the focus goes back there after an undo from the keyboard
+     */
+    const edit = (control: Element, change: () => void) => {
+        const before = structuredClone(filterArg);
+        change();
+        history.record(before, filterArg, editorControls(dialog).indexOf(control as HTMLElement));
+        update();
+    };
+
+    /**
+     * A key typed in a value input: `write` puts its text in the draft. The editor is not rendered again
+     * - that would put the formatted value into what is being typed - so Undo and Redo are updated here.
+     * What is typed in it from when it got the focus is one step, see FilterEditorHistory.typed
+     */
+    const typed = (input: HTMLInputElement | HTMLTextAreaElement, write: () => void) => {
+        const before = structuredClone(filterArg);
+        write();
+        history.typed(input, before, filterArg, editorControls(dialog).indexOf(input));
+        showUndoRedo(dialog, history);
+    };
 
     /**
      * the name of an operator. An operator of plain js that is not one is shown as it is
@@ -114,15 +149,38 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
         if (index !== -1) {
             children.splice(index, 1);
         }
-        update();
     };
 
     /**
-     * A button with an icon only: its tooltip is its name for a screen reader too
+     * A button with an icon only that edits the draft: its tooltip is its name for a screen reader too
      */
-    const iconButton = (icon: TemplateResult, label: string, onClick: () => void) =>
-        html`<button type="button" class="filter-editor-icon" aria-label=${label} data-tooltip=${label} @click=${onClick}>
+    const iconButton = (icon: TemplateResult, label: string, change: () => void) =>
+        html`<button
+            type="button"
+            class="filter-editor-icon"
+            aria-label=${label}
+            data-tooltip=${label}
+            @click=${(event: MouseEvent) => edit(event.currentTarget as HTMLElement, change)}
+        >
             ${icon}
+        </button>`;
+
+    /**
+     * Undo or Redo, at the left end of the footer: an icon, its name and its tooltip with the key (⌘Z on
+     * a Mac, keyText). Greyed out with `aria-disabled` when there is nothing to undo / redo
+     * (showUndoRedo), not `disabled`: a disabled button loses the focus - to the body - when the last
+     * step is undone with it, and has no tooltip. The focus stays on it
+     */
+    const undoRedoButton = (action: 'undo' | 'redo') =>
+        html`<button
+            type="button"
+            class=${`filter-editor-icon filter-editor-${action}`}
+            aria-label=${text(action === 'undo' ? 'filterEditor.undo' : 'filterEditor.redo')}
+            aria-keyshortcuts=${action === 'undo' ? 'Control+Z Meta+Z' : 'Control+Y Control+Shift+Z Meta+Y Meta+Shift+Z'}
+            data-tooltip=${keyText(ctx, action === 'undo' ? 'filterEditor.undo.tooltip' : 'filterEditor.redo.tooltip')}
+            @click=${() => undoRedo(ctx, action, false)}
+        >
+            ${action === 'undo' ? UNDO_ICON : REDO_ICON}
         </button>`;
 
     /**
@@ -167,11 +225,23 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
         const openDatePicker = (event: MouseEvent | KeyboardEvent) => {
             const input = event.target as HTMLCellElement & HTMLInputElement;
             setTimeout(() => {
-                contextmenuDate(ctx, event as MouseEvent, input, parseFilterText(formatter, input.value), (value) => {
-                    arg.value = value;
-                    update();
-                });
+                contextmenuDate(ctx, event as MouseEvent, input, parseFilterText(formatter, input.value), (value) =>
+                    edit(input, () => {
+                        arg.value = value;
+                    })
+                );
             }, 2);
+        };
+
+        /**
+         * the text of the input in the draft: on every key (one step of the undo history from when it
+         * got the focus) and on change. Losing the focus or the change event ends the step
+         */
+        const typedValue = (event: Event) => {
+            const input = event.target as HTMLInputElement;
+            typed(input, () => {
+                arg.value = parseFilterText(formatter, input.value);
+            });
         };
 
         // live(): the elements are kept between renders, what the user typed is in the input, not in lit
@@ -186,8 +256,12 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
                     openDatePicker(event);
                 }
             }}
-            @input=${(event: Event) => (arg.value = parseFilterText(formatter, (event.target as HTMLInputElement).value))}
-            @change=${(event: Event) => (arg.value = parseFilterText(formatter, (event.target as HTMLInputElement).value))}
+            @input=${typedValue}
+            @change=${(event: Event) => {
+                typedValue(event);
+                history.endTyping(event.target as HTMLInputElement);
+            }}
+            @blur=${(event: FocusEvent) => history.endTyping(event.target as HTMLInputElement)}
             @click=${(event: MouseEvent) => {
                 if (isDate) {
                     openDatePicker(event);
@@ -202,6 +276,13 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
                 : arg.value === null || arg.value === undefined
                   ? ''
                   : String(arg.value);
+            /** the lines in the draft, as typedValue */
+            const typedLines = (event: Event) => {
+                const textarea = event.target as HTMLTextAreaElement;
+                typed(textarea, () => {
+                    arg.value = textarea.value.split('\n').filter((line) => line !== '');
+                });
+            };
 
             value = html`<textarea
                 class="filter-editor-value"
@@ -209,8 +290,12 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
                 aria-label=${valueLabel}
                 placeholder=${valueLabel}
                 .value=${live(lines)}
-                @change=${(event: Event) =>
-                    (arg.value = (event.target as HTMLTextAreaElement).value.split('\n').filter((line) => line !== ''))}
+                @input=${typedLines}
+                @change=${(event: Event) => {
+                    typedLines(event);
+                    history.endTyping(event.target as HTMLTextAreaElement);
+                }}
+                @blur=${(event: FocusEvent) => history.endTyping(event.target as HTMLTextAreaElement)}
             ></textarea>`;
         } else if (arg.operator === 'IS_BLANK' || arg.operator === 'IS_NOT_BLANK') {
             // they take no value: nothing to type
@@ -226,10 +311,11 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
                 text('filterEditor.pickValueAttribute'),
                 text('filterEditor.pickValueAttribute.tooltip'),
                 (button) =>
-                    contextMenuAttributes(ctx, button, arg.valueField, (attribute) => {
-                        arg.valueField = attribute;
-                        update();
-                    })
+                    contextMenuAttributes(ctx, button, arg.valueField, (attribute) =>
+                        edit(button, () => {
+                            arg.valueField = attribute;
+                        })
+                    )
             );
         }
 
@@ -241,11 +327,12 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
                 text('filterEditor.pickAttribute'),
                 text('filterEditor.pickAttribute.tooltip'),
                 (button) =>
-                    contextMenuAttributes(ctx, button, arg.field, (attribute) => {
-                        // the type comes from the datasource's fields, the condition has none
-                        arg.field = attribute;
-                        update();
-                    })
+                    contextMenuAttributes(ctx, button, arg.field, (attribute) =>
+                        edit(button, () => {
+                            // the type comes from the datasource's fields, the condition has none
+                            arg.field = attribute;
+                        })
+                    )
             )}
             ${picker(
                 'filter-editor-pick-operator',
@@ -254,10 +341,11 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
                 text('filterEditor.pickOperator'),
                 text('filterEditor.pickOperator.tooltip'),
                 (button) =>
-                    contextMenuOperator(ctx, button, arg.operator, (operator) => {
-                        arg.operator = operator;
-                        update();
-                    })
+                    contextMenuOperator(ctx, button, arg.operator, (operator) =>
+                        edit(button, () => {
+                            arg.operator = operator;
+                        })
+                    )
             )}
             <div class="filter-editor-value-slot">${value}</div>
             ${iconButton(
@@ -266,7 +354,6 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
                 () => {
                     // '' is "compare with a field" before the field is picked, undefined is a value
                     arg.valueField = arg.valueField === undefined ? '' : undefined;
-                    update();
                 }
             )}
             ${iconButton(TRASH_ICON, text('filterEditor.deleteCondition.tooltip'), () => removeFrom(children, arg))}
@@ -299,10 +386,10 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
                 class="filter-editor-segment-button"
                 aria-pressed=${String(and !== isOr)}
                 data-tooltip=${text(and ? 'filterEditor.operatorAnd.tooltip' : 'filterEditor.operatorOr.tooltip')}
-                @click=${() => {
-                    arg.group = value;
-                    update();
-                }}
+                @click=${(event: MouseEvent) =>
+                    edit(event.currentTarget as HTMLElement, () => {
+                        arg.group = value;
+                    })}
             >
                 ${text(and ? 'filterEditor.operatorAnd' : 'filterEditor.operatorOr')}
             </button>`;
@@ -315,11 +402,11 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
                     type="button"
                     class="simple-html-grid-button filter-editor-add"
                     data-tooltip=${text('filterEditor.addCondition.tooltip')}
-                    @click=${() => {
-                        // a draft, filled in one pick at a time
-                        arg.children.push({});
-                        update();
-                    }}
+                    @click=${(event: MouseEvent) =>
+                        edit(event.currentTarget as HTMLElement, () => {
+                            // a draft, filled in one pick at a time
+                            arg.children.push({});
+                        })}
                 >
                     ${text('filterEditor.addCondition')}
                 </button>
@@ -327,17 +414,16 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
                     type="button"
                     class="simple-html-grid-button filter-editor-add"
                     data-tooltip=${text('filterEditor.addSubGroup.tooltip')}
-                    @click=${() => {
-                        arg.children.push({ group: 'AND', children: [] });
-                        update();
-                    }}
+                    @click=${(event: MouseEvent) =>
+                        edit(event.currentTarget as HTMLElement, () => {
+                            arg.children.push({ group: 'AND', children: [] });
+                        })}
                 >
                     ${text('filterEditor.addSubGroup')}
                 </button>
                 <span class="filter-editor-group-tools">
                     ${iconButton(WRAP_ICON, text('filterEditor.wrapGroup.tooltip'), () => {
                         arg.children = [{ group: 'AND', children: arg.children }];
-                        update();
                     })}
                     ${iconButton(
                         TRASH_ICON,
@@ -347,7 +433,6 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
                                 removeFrom(children, arg);
                             } else {
                                 arg.children = [];
-                                update();
                             }
                         }
                     )}
@@ -413,6 +498,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
             </div>
             <div class="filter-editor-body simple-html-dialog-scroller">${group(filterArg, null)}</div>
             <div class="filter-editor-footer">
+                <span class="filter-editor-undo-redo">${undoRedoButton('undo')}${undoRedoButton('redo')}</span>
                 <button
                     type="button"
                     class="simple-html-grid-button"
@@ -444,6 +530,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft) {
             ${resizeHandles()}`,
         dialog
     );
+    showUndoRedo(dialog, history);
 
     if (opening) {
         // rendered before it is shown: showModal() moves the focus into what is there
@@ -482,6 +569,100 @@ function titleId(ctx: Grid) {
 }
 
 /**
+ * What an open editor's dialog edits: the draft of its last render and its undo history. Its key
+ * listener, added once when the dialog is made, finds them here (undoRedoKeydown). Gone with the dialog
+ */
+const editors = new WeakMap<HTMLDialogElement, { draft: GroupDraft; history: FilterEditorHistory }>();
+
+/**
+ * The controls of the editor's groups and conditions, in the order they are shown: an edit is made
+ * with one of them. A step of the undo history keeps the place of its control in this list, see
+ * FilterEditorStep. Not the menus of the pickers: they are in the dialog, not in its body
+ */
+function editorControls(dialog: HTMLDialogElement): HTMLElement[] {
+    return Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+            '.filter-editor-body button, .filter-editor-body input, .filter-editor-body textarea'
+        )
+    );
+}
+
+/**
+ * Undo and Redo greyed out - `aria-disabled="true"` - while there is nothing to undo / redo. After
+ * every render, and after a key typed in a value input (the editor is not rendered again then)
+ */
+function showUndoRedo(dialog: HTMLDialogElement, history: FilterEditorHistory) {
+    const show = (selector: string, can: boolean) => {
+        const button = dialog.querySelector(selector);
+        if (can) {
+            button?.removeAttribute('aria-disabled');
+        } else {
+            button?.setAttribute('aria-disabled', 'true');
+        }
+    };
+    show('.filter-editor-undo', history.canUndo());
+    show('.filter-editor-redo', history.canRedo());
+}
+
+/**
+ * Undo or redo in the open filter editor: the draft of the step is rendered. A menu open in it closes
+ * first - a pick in it would write into the draft it was opened for.
+ *
+ * The focus: from the keyboard it goes to the control the edit was made with - the draft is rendered
+ * as it was then, the control is at its place again - or the dialog when it is not there any more (a
+ * condition deleted again by a redo). A button keeps it: Undo again is the next Enter.
+ * @param focusControl true for the keys: the focus goes to the control of the step
+ */
+function undoRedo(ctx: Grid, action: 'undo' | 'redo', focusControl: boolean) {
+    const dialog = ctx.filterEditor;
+    const editor = dialog && editors.get(dialog);
+    if (!dialog || !editor) {
+        return;
+    }
+    const step = action === 'undo' ? editor.history.undo(editor.draft) : editor.history.redo(editor.draft);
+    if (!step) {
+        return;
+    }
+    removeContextMenu(ctx);
+    renderFilterEditor(ctx, step.draft, editor.history);
+    if (focusControl) {
+        (editorControls(dialog)[step.control] ?? dialog).focus();
+    }
+}
+
+/**
+ * The undo and redo keys in the editor's dialog - Ctrl+Z / Cmd+Z, Ctrl+Y / Ctrl+Shift+Z / Cmd+Shift+Z
+ * (undoRedoAction): the editor's undo and redo, wherever the focus is in it, an open menu of a picker
+ * too (it closes). Canceled also when there is nothing to undo: the browser's own undo is the page's,
+ * not the input's - Ctrl+Z on a button of the dialog undoes the typing in a value input and moves the
+ * focus there (Chrome 131).
+ *
+ * The keys are the input's own (the browser's undo of the typing):
+ * - in a value input the user typed in since it got the focus - Ctrl+Z until the typing is undone
+ *   back to where it started, then it is the editor's (see FilterEditorHistory.ownKey)
+ * - in a text box of an open menu while it has text: the field menu's search box
+ *
+ * The grid behind the dialog does not get them: its undo is in the keydown of its cells, the dialog is
+ * not in the grid's element, and the page behind a modal dialog is inert
+ */
+function undoRedoKeydown(ctx: Grid, dialog: HTMLDialogElement, event: KeyboardEvent) {
+    const action = undoRedoAction(event);
+    const editor = editors.get(dialog);
+    if (!action || !editor || event.defaultPrevented) {
+        return;
+    }
+    const target = event.target;
+    if (editor.history.ownKey(target, action)) {
+        return;
+    }
+    if (target instanceof HTMLInputElement && target.value !== '' && ctx.contextMenu?.contains(target)) {
+        return;
+    }
+    event.preventDefault();
+    undoRedo(ctx, action, true);
+}
+
+/**
  * The icons of the editor's buttons, square lines in the text colour (24 x 24, drawn at 15px). The
  * button around one has its name
  */
@@ -505,6 +686,10 @@ const TRASH_ICON = icon('M4 7h16M10 4h4M6 7l1 13h10l1-13M10 11v6M14 11v6');
 const SWAP_ICON = icon('M4 8h15M15 4l4 4-4 4M20 16H5M9 12l-4 4 4 4');
 /** square brackets: wrap the group in a new group */
 const WRAP_ICON = icon('M9 4H5v16h4M15 4h4v16h-4');
+/** an arrow back to the left, round: undo */
+const UNDO_ICON = icon('M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11');
+/** an arrow on to the right, round: redo */
+const REDO_ICON = icon('M15 14l5-5-5-5M20 9H9.5a5.5 5.5 0 0 0 0 11H13');
 
 /**
  * Makes the filter editor's dialog and puts it on the body, closed: renderFilterEditor renders it and
@@ -532,6 +717,8 @@ function createFilterEditorDialog(ctx: Grid): HTMLDialogElement {
             closeFilterEditor(ctx);
         }
     });
+    // Ctrl+Z, Ctrl+Y ...: the editor's undo and redo
+    dialog.addEventListener('keydown', (event) => undoRedoKeydown(ctx, dialog, event));
     document.body.appendChild(dialog);
     ctx.filterEditor = dialog;
     return dialog;

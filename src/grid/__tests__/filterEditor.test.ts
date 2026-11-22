@@ -4,6 +4,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { isPopoverShown } from '../../__tests__/popoverStub';
 // the date picker element registers itself on import, the package entry does this for users
 import '../../date/dateElement';
+import { MAX_FILTER_EDITOR_STEPS } from '../gridFunctions/filterEditorHistory';
 import { attachTooltips } from '../gridFunctions/tooltip';
 import { mountGrid, simpleConfig, stubCanvas, stubElementSizes } from './gridTestHelpers';
 import { gridOf, menuItem } from './interactionTestHelpers';
@@ -97,14 +98,22 @@ describe('filter editor - opening', () => {
         expect(content.querySelectorAll('.simple-html-resize-handle')).toHaveLength(8);
     });
 
-    it('expect the footer buttons: Cancel, Apply, Apply & close - buttons, the last the primary one', async () => {
+    it('expect the footer buttons: Undo, Redo, Cancel, Apply, Apply & close - buttons, the last the primary one', async () => {
         await openEditor();
         const buttons = Array.from(container().querySelectorAll<HTMLButtonElement>('.filter-editor-footer button'));
 
-        // in the order they are shown: Tab goes through them in that order
-        expect(buttons.map((button) => button.textContent?.trim())).toEqual(['Cancel', 'Apply', 'Apply & close']);
-        expect(buttons.map((button) => button.type)).toEqual(['button', 'button', 'button']);
+        // in the order they are shown: Tab goes through them in that order. Undo and Redo are icons
+        expect(buttons.map((button) => button.getAttribute('aria-label') ?? button.textContent?.trim())).toEqual([
+            'Undo',
+            'Redo',
+            'Cancel',
+            'Apply',
+            'Apply & close'
+        ]);
+        expect(buttons.map((button) => button.type)).toEqual(['button', 'button', 'button', 'button', 'button']);
         expect(buttons.map((button) => button.classList.contains('simple-html-grid-button-primary'))).toEqual([
+            false,
+            false,
             false,
             false,
             true
@@ -124,7 +133,7 @@ describe('filter editor - tooltips', () => {
     it('expect every footer button to carry a data-tooltip', async () => {
         await openEditor();
         const buttons = Array.from(container().querySelectorAll('.filter-editor-footer button'));
-        expect(buttons.length).toEqual(3);
+        expect(buttons.length).toEqual(5);
         buttons.forEach((button) => {
             expect(button.getAttribute('data-tooltip')).toBeTruthy();
         });
@@ -728,6 +737,8 @@ describe('filter editor - the keyboard', () => {
             'Value',
             'Compare against another column instead of a typed in value',
             'Delete this condition',
+            'Undo',
+            'Redo',
             'Cancel',
             'Apply',
             'Apply & close'
@@ -1022,5 +1033,613 @@ describe('filter editor - resized from every edge and corner, pointer events', (
         addCondition();
 
         expect([container().style.width, container().style.height]).toEqual(['690px', '630px']);
+    });
+});
+
+/**
+ * What the editor shows, as text, to compare before and after an edit: each group its AND / OR in use
+ * and what is in it - the conditions first, then the sub groups, as shown - each condition its field,
+ * its operator and its value: "the text" of an input, [the column] of a column picker, - for none
+ */
+function shown(group: Element = container().querySelector('.filter-editor-group') as Element): string {
+    const [header, body] = Array.from(group.children);
+    const pressed = header.querySelector('[aria-pressed="true"]')?.textContent?.trim();
+    const parts = Array.from(body.children)
+        .filter((child) => !child.classList.contains('filter-editor-empty'))
+        .map((child) => {
+            if (child.classList.contains('filter-editor-group')) {
+                return shown(child);
+            }
+            const [field, operator] = Array.from(child.querySelectorAll('.filter-editor-pick'), (pick) =>
+                pick.textContent?.trim()
+            );
+            const value = child.querySelector('.filter-editor-value-slot > *');
+            if (value instanceof HTMLInputElement || value instanceof HTMLTextAreaElement) {
+                return `${field} ${operator} "${value.value}"`;
+            }
+            return `${field} ${operator} ${value ? `[${value.textContent?.trim()}]` : '-'}`;
+        });
+    return `${pressed}(${parts.join(', ')})`;
+}
+
+/** an undo / redo key as the browser sends it: Ctrl and Z by default, on the element with the focus */
+function key(init: KeyboardEventInit = {}, target: Element = document.activeElement as Element) {
+    const event = new KeyboardEvent('keydown', {
+        key: 'z',
+        code: 'KeyZ',
+        ctrlKey: true,
+        bubbles: true,
+        cancelable: true,
+        ...init
+    });
+    target.dispatchEvent(event);
+    return event;
+}
+const undoKey = (target?: Element) => key({}, target);
+const redoKey = (target?: Element) => key({ key: 'y', code: 'KeyY' }, target);
+
+const undoButton = () => container().querySelector('.filter-editor-undo') as HTMLButtonElement;
+const redoButton = () => container().querySelector('.filter-editor-redo') as HTMLButtonElement;
+/** aria-disabled of Undo and Redo: 'true' when greyed out, null when not */
+const greyedOut = () => [undoButton().getAttribute('aria-disabled'), redoButton().getAttribute('aria-disabled')];
+/** the value inputs, in the order they are shown */
+const valueInputs = () => Array.from(container().querySelectorAll<HTMLInputElement>('.filter-editor-value'));
+
+/**
+ * types `text` at the end of a value input as the browser does: the focus in it, an input event per
+ * key. happy-dom sends no change event, a browser sends it when the focus leaves the input
+ */
+function type(input: HTMLInputElement | HTMLTextAreaElement, text: string) {
+    input.focus();
+    for (const char of text) {
+        input.value += char;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+}
+
+/** the browser's own undo (or redo) of the typing in an input: its text, an input event */
+function browserUndo(input: HTMLInputElement, text: string) {
+    input.value = text;
+    input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'historyUndo' }));
+}
+
+/** a condition on firstname and an OR group with one on age */
+const NESTED = {
+    group: 'AND',
+    children: [
+        { field: 'firstname', operator: 'EQUAL', value: 'a' },
+        { group: 'OR', children: [{ field: 'age', operator: 'GREATER_THAN', value: 10 }] }
+    ]
+};
+
+/** what NESTED is shown as */
+const NESTED_SHOWN = 'AND(Firstname Equal "a", OR(Age Greater Than "10"))';
+
+/** the editor with this filter */
+async function openWith(filter: object = NESTED) {
+    const mounted = await mountGrid();
+    mounted.datasource.filter(structuredClone(filter) as any);
+    mounted.gridInterface.openFilterEditor();
+    return mounted;
+}
+
+describe('filter editor - undo and redo, the buttons', () => {
+    it('expect Undo and Redo at the start of the footer: icons, named, the tooltips with the keys', async () => {
+        await openEditor();
+        const [undo, redo] = Array.from(container().querySelectorAll<HTMLButtonElement>('.filter-editor-footer button'));
+
+        expect([undo, redo]).toEqual([undoButton(), redoButton()]);
+        expect([undo.type, undo.getAttribute('aria-label'), undo.getAttribute('data-tooltip')]).toEqual([
+            'button',
+            'Undo',
+            'Undo (Ctrl+Z)'
+        ]);
+        expect([redo.type, redo.getAttribute('aria-label'), redo.getAttribute('data-tooltip')]).toEqual([
+            'button',
+            'Redo',
+            'Redo (Ctrl+Y)'
+        ]);
+        // the keys for a screen reader, the ones undoRedoAction takes
+        expect(undo.getAttribute('aria-keyshortcuts')).toEqual('Control+Z Meta+Z');
+        expect(redo.getAttribute('aria-keyshortcuts')).toEqual('Control+Y Control+Shift+Z Meta+Y Meta+Shift+Z');
+        // the icon is decoration, the button has the name
+        expect(undo.querySelector('svg')?.getAttribute('aria-hidden')).toEqual('true');
+        // in a box of their own, before Cancel
+        expect(undo.parentElement?.className).toEqual('filter-editor-undo-redo');
+        expect(undo.parentElement?.nextElementSibling?.textContent?.trim()).toEqual('Cancel');
+    });
+
+    it('expect them greyed out with aria-disabled while there is nothing to undo or redo - not disabled', async () => {
+        await openEditor();
+        expect(greyedOut()).toEqual(['true', 'true']);
+        // they keep the focus: a disabled button would lose it
+        expect([undoButton().disabled, redoButton().disabled]).toEqual([false, false]);
+
+        addCondition();
+        expect(greyedOut()).toEqual([null, 'true']);
+
+        undoButton().click();
+        expect(greyedOut()).toEqual(['true', null]);
+
+        redoButton().click();
+        expect(greyedOut()).toEqual([null, 'true']);
+    });
+
+    it('expect a click on a greyed out one to do nothing', async () => {
+        await openWith();
+
+        undoButton().click();
+        redoButton().click();
+
+        expect(shown()).toEqual(NESTED_SHOWN);
+        expect(greyedOut()).toEqual(['true', 'true']);
+    });
+
+    it('expect a click on Undo to keep the focus on it, also when nothing is left to undo', async () => {
+        await openEditor();
+        addCondition();
+        addCondition();
+        undoButton().focus();
+
+        undoButton().click();
+        expect(document.activeElement).toBe(undoButton());
+        undoButton().click();
+
+        expect(container().querySelectorAll('.filter-editor-condition')).toHaveLength(0);
+        expect(document.activeElement).toBe(undoButton());
+        expect(greyedOut()).toEqual(['true', null]);
+    });
+
+    it('expect the tooltips to say ⌘Z and ⇧⌘Z on a Mac, the `.mac` texts - translated by the texts of the grid', async () => {
+        // the platform the browser says it runs on, see isMacPlatform. Restored after each test
+        vi.spyOn(navigator, 'platform', 'get').mockReturnValue('MacIntel');
+        const tooltips = () => [undoButton().getAttribute('data-tooltip'), redoButton().getAttribute('data-tooltip')];
+        await openEditor();
+        expect(tooltips()).toEqual(['Undo (⌘Z)', 'Redo (⇧⌘Z)']);
+        menuItem('Cancel').click();
+
+        const config = simpleConfig();
+        config.texts = { 'filterEditor.undo.tooltip.mac': 'Angre (⌘Z)', 'filterEditor.redo.tooltip.mac': 'Gjør om (⇧⌘Z)' };
+        await openEditor(config);
+
+        expect(tooltips()).toEqual(['Angre (⌘Z)', 'Gjør om (⇧⌘Z)']);
+        // the name is the same on every platform
+        expect(undoButton().getAttribute('aria-label')).toEqual('Undo');
+    });
+});
+
+describe('filter editor - undo and redo, a step', () => {
+    /** [what, the edit]: each is one step */
+    const edits: [string, () => void][] = [
+        ['a condition added', () => addCondition()],
+        ['a sub group added', () => clickIcon('Add a sub group inside this group')],
+        ['a condition deleted', () => clickIcon('Delete this condition')],
+        ['a sub group deleted', () => clickIcon('Delete this group and everything in it')],
+        ['the group wrapped', () => clickIcon('Wrap everything in this group inside a new parent group')],
+        ['AND / OR', () => container().querySelectorAll<HTMLElement>('.filter-editor-segment-button')[1].click()],
+        [
+            'a field picked',
+            () => {
+                (container().querySelector('.filter-editor-pick-field') as HTMLElement).click();
+                menuItem('Lastname').click();
+            }
+        ],
+        [
+            'an operator picked',
+            () => {
+                (container().querySelector('.filter-editor-pick-operator') as HTMLElement).click();
+                menuItem('Contains').click();
+            }
+        ],
+        ['value / column switched', () => clickIcon('Compare against another column instead of a typed in value')],
+        ['clear all', () => clickIcon('Clear all conditions')]
+    ];
+
+    it.each(edits)('expect %s to be undone and redone, with the buttons', async (_, edit) => {
+        await openWith();
+        edit();
+        const after = shown();
+        expect(after).not.toEqual(NESTED_SHOWN);
+
+        undoButton().click();
+        expect(shown()).toEqual(NESTED_SHOWN);
+        expect(greyedOut()).toEqual(['true', null]);
+
+        redoButton().click();
+        expect(shown()).toEqual(after);
+        expect(greyedOut()).toEqual([null, 'true']);
+    });
+
+    it.each(edits)('expect %s to be undone and redone, with Ctrl+Z and Ctrl+Y', async (_, edit) => {
+        await openWith();
+        edit();
+        const after = shown();
+
+        expect(undoKey(container()).defaultPrevented).toBe(true);
+        expect(shown()).toEqual(NESTED_SHOWN);
+
+        expect(redoKey(container()).defaultPrevented).toBe(true);
+        expect(shown()).toEqual(after);
+    });
+
+    it('expect a column picked to be a step', async () => {
+        await openWith({ group: 'AND', children: [{ field: 'firstname', operator: 'EQUAL', valueField: '' }] });
+        expect(shown()).toEqual('AND(Firstname Equal [Column])');
+
+        (container().querySelector('.filter-editor-pick-column') as HTMLElement).click();
+        menuItem('Lastname').click();
+        expect(shown()).toEqual('AND(Firstname Equal [Lastname])');
+
+        undoButton().click();
+        expect(shown()).toEqual('AND(Firstname Equal [Column])');
+        redoButton().click();
+        expect(shown()).toEqual('AND(Firstname Equal [Lastname])');
+    });
+
+    it('expect steps to be undone last first, and redone in the order they were made', async () => {
+        await openEditor();
+        const states = [shown()];
+        addCondition();
+        states.push(shown());
+        (container().querySelector('.filter-editor-pick-field') as HTMLElement).click();
+        menuItem('Age').click();
+        states.push(shown());
+        clickIcon('Add a sub group inside this group');
+        states.push(shown());
+        expect(states).toEqual(['AND()', 'AND(Field Operator "")', 'AND(Age Operator "")', 'AND(Age Operator "", AND())']);
+
+        for (const state of states.slice(0, -1).reverse()) {
+            undoButton().click();
+            expect(shown()).toEqual(state);
+        }
+        for (const state of states.slice(1)) {
+            redoButton().click();
+            expect(shown()).toEqual(state);
+        }
+    });
+
+    it('expect an edit that changes nothing to be no step: the AND in use, the field that is picked', async () => {
+        await openWith();
+
+        (container().querySelector('.filter-editor-segment-button') as HTMLElement).click();
+        (container().querySelector('.filter-editor-pick-field') as HTMLElement).click();
+        menuItem('Firstname').click();
+
+        expect(greyedOut()).toEqual(['true', 'true']);
+    });
+
+    it('expect a new edit to empty redo', async () => {
+        await openWith();
+        addCondition();
+        undoButton().click();
+        expect(greyedOut()).toEqual(['true', null]);
+
+        clickIcon('Add a sub group inside this group');
+
+        expect(greyedOut()).toEqual([null, 'true']);
+        const after = shown();
+        expect(redoKey(container()).defaultPrevented).toBe(true);
+        expect(shown()).toEqual(after);
+    });
+
+    it(`expect the history to keep the last ${MAX_FILTER_EDITOR_STEPS} steps`, async () => {
+        await openEditor();
+        const segment = (index: number) => container().querySelectorAll<HTMLElement>('.filter-editor-segment-button')[index];
+        // OR, AND, OR ...: a step each, one more than it keeps
+        for (let i = 0; i <= MAX_FILTER_EDITOR_STEPS; i++) {
+            segment(i % 2 === 0 ? 1 : 0).click();
+        }
+        expect(shown()).toEqual('OR()');
+
+        for (let i = 0; i < MAX_FILTER_EDITOR_STEPS; i++) {
+            undoButton().click();
+        }
+
+        // the first step is gone: the group is OR, as after it
+        expect(greyedOut()).toEqual(['true', null]);
+        expect(shown()).toEqual('OR()');
+    });
+});
+
+describe('filter editor - undo and redo, a typed value', () => {
+    it('expect what is typed in a value input to be one step, until the focus leaves it', async () => {
+        await openWith();
+        const input = valueInputs()[0];
+
+        type(input, 'bcd');
+        // the editor is not rendered again while typing: Undo is updated by hand
+        expect(greyedOut()).toEqual([null, 'true']);
+        container().focus();
+
+        undoButton().click();
+        expect(valueInputs()[0].value).toEqual('a');
+        expect(greyedOut()).toEqual(['true', null]);
+
+        redoButton().click();
+        expect(valueInputs()[0].value).toEqual('abcd');
+    });
+
+    it('expect typing again after the focus left the input to be a step of its own', async () => {
+        await openWith();
+        const input = valueInputs()[0];
+        type(input, 'b');
+        container().focus();
+        type(input, 'c');
+        container().focus();
+
+        undoButton().click();
+        expect(valueInputs()[0].value).toEqual('ab');
+        undoButton().click();
+        expect(valueInputs()[0].value).toEqual('a');
+    });
+
+    it('expect the change event (Enter) to end the step: what is typed after it is a step of its own', async () => {
+        await openWith();
+        const input = valueInputs()[0];
+        type(input, 'b');
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        type(input, 'c');
+
+        undoButton().click();
+        expect(valueInputs()[0].value).toEqual('ab');
+        undoButton().click();
+        expect(valueInputs()[0].value).toEqual('a');
+    });
+
+    it('expect an edit while the focus is still in the input (Safari: a click does not move it) to end the step', async () => {
+        await openWith();
+        const input = valueInputs()[0];
+        type(input, 'b');
+        addCondition();
+        type(input, 'c');
+
+        undoButton().click();
+        expect(shown()).toEqual('AND(Firstname Equal "ab", Field Operator "", OR(Age Greater Than "10"))');
+        undoButton().click();
+        undoButton().click();
+        expect(shown()).toEqual(NESTED_SHOWN);
+    });
+
+    it('expect typed back to where it started to be no step', async () => {
+        await openWith();
+        const input = valueInputs()[0];
+        type(input, 'b');
+        expect(greyedOut()).toEqual([null, 'true']);
+
+        input.value = 'a';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+
+        expect(greyedOut()).toEqual(['true', 'true']);
+    });
+
+    it('expect the text of IN, a value per line, to be one step too', async () => {
+        await openWith({ group: 'AND', children: [{ field: 'firstname', operator: 'IN', value: ['first1'] }] });
+        const textarea = container().querySelector('textarea') as HTMLTextAreaElement;
+
+        type(textarea, '\nfirst2');
+        container().focus();
+        undoButton().click();
+
+        expect(shown()).toEqual('AND(Firstname In "first1")');
+        redoButton().click();
+        expect(shown()).toEqual('AND(Firstname In "first1\nfirst2")');
+    });
+});
+
+describe('filter editor - undo and redo, the keys', () => {
+    it.each([
+        ['Ctrl+Z', 'undo', { key: 'z' }],
+        ['Cmd+Z', 'undo', { key: 'z', ctrlKey: false, metaKey: true }],
+        ['Ctrl+Z on a layout without latin letters (by where the key is)', 'undo', { key: 'я' }],
+        ['Ctrl+Y', 'redo', { key: 'y', code: 'KeyY' }],
+        ['Ctrl+Shift+Z', 'redo', { key: 'Z', shiftKey: true }],
+        ['Cmd+Shift+Z', 'redo', { key: 'Z', shiftKey: true, ctrlKey: false, metaKey: true }],
+        ['Cmd+Y', 'redo', { key: 'y', code: 'KeyY', ctrlKey: false, metaKey: true }]
+    ])('expect %s to %s', async (_, action, init) => {
+        await openEditor();
+        addCondition();
+        const added = shown();
+        if (action === 'redo') {
+            undoButton().click();
+        }
+
+        expect(key(init, container()).defaultPrevented).toBe(true);
+
+        expect(shown()).toEqual(action === 'undo' ? 'AND()' : added);
+    });
+
+    it('expect Ctrl+Alt+Z (AltGr on Windows types characters) and Z alone to be left alone', async () => {
+        await openEditor();
+        addCondition();
+
+        expect(key({ altKey: true }, container()).defaultPrevented).toBe(false);
+        expect(key({ ctrlKey: false }, container()).defaultPrevented).toBe(false);
+
+        expect(shown()).toEqual('AND(Field Operator "")');
+    });
+
+    it("expect the keys to be canceled also when there is nothing to undo: the browser's own undo is the page's", async () => {
+        await openWith();
+        (container().querySelector('.filter-editor-add') as HTMLElement).focus();
+
+        expect(undoKey().defaultPrevented).toBe(true);
+        expect(redoKey().defaultPrevented).toBe(true);
+        expect(undoKey(container()).defaultPrevented).toBe(true);
+    });
+
+    it("expect Ctrl+Z in a value input typed in to be the input's own, the editor's once it is undone back", async () => {
+        await openWith();
+        addCondition();
+        const input = valueInputs()[0];
+        type(input, 'b');
+
+        // the browser undoes the typing in the input, the editor leaves it
+        expect(undoKey(input).defaultPrevented).toBe(false);
+        expect(shown()).toEqual('AND(Firstname Equal "ab", Field Operator "", OR(Age Greater Than "10"))');
+        browserUndo(input, 'a');
+
+        // back where it started: the editor's, it takes the condition added back
+        expect(undoKey(input).defaultPrevented).toBe(true);
+        expect(shown()).toEqual(NESTED_SHOWN);
+    });
+
+    it("expect Ctrl+Y in a value input typed in to be the input's own: the browser redoes the typing it undid", async () => {
+        await openWith();
+        const input = valueInputs()[0];
+        type(input, 'b');
+        expect(redoKey(input).defaultPrevented).toBe(false);
+
+        browserUndo(input, 'a');
+        expect(greyedOut()).toEqual(['true', 'true']);
+        expect(redoKey(input).defaultPrevented).toBe(false);
+
+        // the browser's redo: the typing is a step again
+        browserUndo(input, 'ab');
+        expect(greyedOut()).toEqual([null, 'true']);
+    });
+
+    it("expect Ctrl+Z in a value input that was not typed in since it got the focus to be the editor's", async () => {
+        await openWith();
+        type(valueInputs()[0], 'b');
+        container().focus();
+        valueInputs()[0].focus();
+
+        expect(undoKey(valueInputs()[0]).defaultPrevented).toBe(true);
+
+        expect(valueInputs()[0].value).toEqual('a');
+    });
+
+    it('expect undo to close a menu open in the editor', async () => {
+        await openWith();
+        addCondition();
+        (container().querySelector('.filter-editor-pick-operator') as HTMLElement).click();
+        const menu = document.querySelector('.simple-html-grid-menu') as HTMLElement;
+
+        expect(undoKey(menu.querySelector('[role^="menuitem"]') as HTMLElement).defaultPrevented).toBe(true);
+
+        expect(menu.isConnected).toBe(false);
+        expect(shown()).toEqual(NESTED_SHOWN);
+    });
+
+    it("expect Ctrl+Z in the field menu's search box to be its own while it has text", async () => {
+        await openWith();
+        addCondition();
+        (container().querySelector('.filter-editor-pick-field') as HTMLElement).click();
+        const search = container().querySelector('.simple-html-grid-menu-search') as HTMLInputElement;
+        search.value = 'age';
+
+        expect(undoKey(search).defaultPrevented).toBe(false);
+        expect(search.isConnected).toBe(true);
+
+        // empty: the editor's
+        search.value = '';
+        expect(undoKey(search).defaultPrevented).toBe(true);
+        expect(search.isConnected).toBe(false);
+        expect(shown()).toEqual(NESTED_SHOWN);
+    });
+
+    it("expect the keys in the editor never to reach the grid's undo", async () => {
+        const { datasource, gridInterface } = await mountGrid({ ...simpleConfig(), readonly: false });
+        // a step of the grid's history: an edit of a row
+        datasource.getAllData()[0].firstname = 'changed';
+        expect(datasource.canUndo()).toBe(true);
+        const undo = vi.spyOn(datasource, 'undo');
+        const redo = vi.spyOn(datasource, 'redo');
+        datasource.filter({ group: 'AND', children: [{ field: 'firstname', operator: 'EQUAL', value: 'a' }] });
+        gridInterface.openFilterEditor();
+
+        // nothing to undo in the editor; in a value input typed in, and not typed in; something to undo
+        undoKey(container());
+        redoKey(container());
+        type(valueInputs()[0], 'b');
+        undoKey(valueInputs()[0]);
+        container().focus();
+        undoKey(valueInputs()[0]);
+        undoKey(container());
+
+        expect(undo).not.toHaveBeenCalled();
+        expect(redo).not.toHaveBeenCalled();
+        expect(datasource.getAllData()[0].firstname).toEqual('changed');
+        expect(datasource.canUndo()).toBe(true);
+    });
+});
+
+describe('filter editor - undo and redo, the focus', () => {
+    it('expect Ctrl+Z to put the focus on the control the edit was made with, as Ctrl+Y does', async () => {
+        await openWith();
+        const operator = () => container().querySelectorAll<HTMLElement>('.filter-editor-pick-operator')[1];
+        operator().click();
+        menuItem('Contains').click();
+        container().focus();
+
+        undoKey(container());
+        expect(document.activeElement).toBe(operator());
+        expect(operator().textContent?.trim()).toEqual('Greater Than');
+
+        container().focus();
+        redoKey(container());
+        expect(document.activeElement).toBe(operator());
+        expect(operator().textContent?.trim()).toEqual('Contains');
+    });
+
+    it('expect a condition deleted and undone to get the focus on its delete again', async () => {
+        await openWith();
+        const trash = () => container().querySelectorAll<HTMLElement>('[aria-label="Delete this condition"]')[0];
+        trash().focus();
+        trash().click();
+        expect(shown()).toEqual('AND(OR(Age Greater Than "10"))');
+
+        undoKey();
+
+        expect(shown()).toEqual(NESTED_SHOWN);
+        expect(document.activeElement).toBe(trash());
+    });
+
+    it('expect the focus on the dialog when the control is not there any more: the last condition deleted again', async () => {
+        await openWith({ group: 'AND', children: [{ field: 'firstname', operator: 'EQUAL', value: 'a' }] });
+        clickIcon('Delete this condition');
+        undoKey(container());
+
+        redoKey(container());
+
+        expect(container().querySelectorAll('.filter-editor-condition')).toHaveLength(0);
+        // not on the body: Tab goes on from the start of the dialog
+        expect(document.activeElement).toBe(container());
+    });
+
+    it('expect a typed value undone from the keyboard to get the focus in its input', async () => {
+        await openWith();
+        type(valueInputs()[1], '0');
+        container().focus();
+
+        undoKey(container());
+
+        expect(document.activeElement).toBe(valueInputs()[1]);
+        expect(valueInputs()[1].value).toEqual('10');
+    });
+});
+
+describe('filter editor - undo and redo, a new history each time it opens', () => {
+    it('expect the editor opened again to start with nothing to undo', async () => {
+        const { gridInterface } = await openEditor();
+        addCondition();
+        menuItem('Cancel').click();
+
+        gridInterface.openFilterEditor();
+
+        expect(greyedOut()).toEqual(['true', 'true']);
+        expect(undoKey(container()).defaultPrevented).toBe(true);
+        expect(shown()).toEqual('AND()');
+    });
+
+    it('expect openFilterEditor() while it is open to start a new history too', async () => {
+        const { gridInterface } = await openEditor();
+        addCondition();
+
+        gridInterface.openFilterEditor();
+
+        expect(greyedOut()).toEqual(['true', 'true']);
+        undoKey(container());
+        expect(shown()).toEqual('AND()');
     });
 });

@@ -390,8 +390,9 @@ The datasource keeps a history of the edits: `undo()` takes the last step back, 
 again. In the grid the user has them too:
 
 - **Ctrl+Z** (Cmd+Z on a Mac) undoes, **Ctrl+Y** and **Ctrl+Shift+Z** (Cmd+Y, Cmd+Shift+Z) redo - with
-  the focus in a cell of an editable grid. Not in the header filters and the filter editor: the keys
-  are the input's own there.
+  the focus in a cell of an editable grid. Not in the header filters: the keys are the input's own
+  there. The filter editor has an undo history of its own, see
+  [Filtering](06-filtering.md#undo-and-redo-in-the-filter-editor).
 - **The focus goes to what changed**, as in a spreadsheet: after Ctrl+Z, Ctrl+Y and the row menu's
   *Undo last change* / *Redo* the grid scrolls to the first cell of the step - the first change made
   (the top left cell of a paste) whose row is displayed - puts it in the middle of the view when it was

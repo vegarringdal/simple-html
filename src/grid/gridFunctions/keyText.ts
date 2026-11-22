@@ -11,7 +11,9 @@ const MAC_TEXTS = {
     'row.edit.undo.hint': 'row.edit.undo.hint.mac',
     'row.edit.redo.hint': 'row.edit.redo.hint.mac',
     'find.previous.tooltip': 'find.previous.tooltip.mac',
-    'cell.multiline.hint': 'cell.multiline.hint.mac'
+    'cell.multiline.hint': 'cell.multiline.hint.mac',
+    'filterEditor.undo.tooltip': 'filterEditor.undo.tooltip.mac',
+    'filterEditor.redo.tooltip': 'filterEditor.redo.tooltip.mac'
 } as const satisfies Partial<Record<TextId, TextId>>;
 
 /** a text that names a key, see MAC_TEXTS */

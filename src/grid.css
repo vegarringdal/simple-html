@@ -2710,6 +2710,25 @@
     background-color: var(--simple-html-grid-main-bg-selected-even);
 }
 
+/* Undo and Redo, at the left end of the footer: the buttons that apply at the right */
+.simple-html-grid.filter-editor-content .filter-editor-undo-redo {
+    display: flex;
+    gap: 2px;
+    margin-right: auto;
+}
+
+/* nothing to undo / redo: greyed out as a disabled menu item, no frame under the pointer. It is
+ * aria-disabled, not disabled: it keeps the focus and its tooltip */
+.simple-html-grid.filter-editor-content .filter-editor-icon[aria-disabled='true'] {
+    filter: opacity(0.5);
+    cursor: default;
+}
+
+.simple-html-grid.filter-editor-content .filter-editor-icon[aria-disabled='true']:hover {
+    border-color: transparent;
+    background-color: transparent;
+}
+
 /* the outline outside the buttons of the editor: they have room around them, and an inset one would
  * hide in a filled one. Over the button next to it. Not the buttons of the menus and the date picker
  * put in the dialog (see popoverParent): they keep their own */

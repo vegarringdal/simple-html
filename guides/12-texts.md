@@ -106,7 +106,8 @@ The ids are grouped by area, the area first. Within an area:
   from the platform the browser gives (`navigator.userAgentData.platform`, else `navigator.platform`).
   The grid takes both keys everywhere (Ctrl+Z and Cmd+Z), the texts say what a user there presses.
   Translate both: a `.mac` text left out shows its English default on a Mac. They are
-  `row.edit.undo.hint`, `row.edit.redo.hint`, `find.previous.tooltip` and `cell.multiline.hint`.
+  `row.edit.undo.hint`, `row.edit.redo.hint`, `find.previous.tooltip`, `cell.multiline.hint`,
+  `filterEditor.undo.tooltip` and `filterEditor.redo.tooltip`.
 
 ### The names of the months and days
 
@@ -358,6 +359,12 @@ and a lookup column.
 | `filterEditor.deleteCondition.tooltip` | `Delete this condition` | tooltip and name of the trash icon of a condition |
 | `filterEditor.useValue.tooltip` | `Compare against a typed in value instead of another column` | tooltip and name of the icon that switches to a value |
 | `filterEditor.useAttribute.tooltip` | `Compare against another column instead of a typed in value` | tooltip and name of the icon that switches to another field |
+| `filterEditor.undo` | `Undo` | the name of the undo icon in the footer: takes the last edit back |
+| `filterEditor.undo.tooltip` | `Undo (Ctrl+Z)` | its tooltip, with the key |
+| `filterEditor.undo.tooltip.mac` | `Undo (⌘Z)` | its tooltip on a Mac |
+| `filterEditor.redo` | `Redo` | the name of the redo icon: does the edit undone again |
+| `filterEditor.redo.tooltip` | `Redo (Ctrl+Y)` | its tooltip, with the key. Ctrl+Shift+Z redoes too |
+| `filterEditor.redo.tooltip.mac` | `Redo (⇧⌘Z)` | its tooltip on a Mac. ⌘Y redoes too |
 | `filterEditor.filterAndClose` | `Apply & close` | button, the primary one |
 | `filterEditor.filterAndClose.tooltip` | `Apply this filter to the grid and close the dialog` | its tooltip |
 | `filterEditor.filterOnly` | `Apply` | button |

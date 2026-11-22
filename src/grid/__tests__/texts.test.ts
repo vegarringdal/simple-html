@@ -264,7 +264,7 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     gridInterface.clearRanges();
 
     // on a Mac: the texts that name a key, `<id>.mac` - the hints of undo and redo, the find bar's
-    // previous, the hint of the editor of the notes
+    // previous, the hint of the editor of the notes, the tooltips of the filter editor's undo and redo
     const platform = vi.spyOn(navigator, 'platform', 'get').mockReturnValue('MacIntel');
     try {
         openRowMenu(element, 'age', 0);
@@ -276,6 +276,9 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
         pressKey(element.querySelector('input[data-attribute="notes"]') as HTMLElement, 'Enter');
         check();
         pressKey(document.querySelector('.simple-html-grid-text-editor textarea') as HTMLElement, 'Escape');
+        gridInterface.openFilterEditor();
+        check();
+        clickIcon('«filterEditor.closeButton.tooltip»');
     } finally {
         platform.mockRestore();
     }

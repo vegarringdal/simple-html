@@ -192,6 +192,50 @@ describe('filter editor - drafts', () => {
     });
 });
 
+describe('filter editor - Apply and the undo history', () => {
+    const undoButton = () => document.querySelector('.filter-editor-content .filter-editor-undo') as HTMLElement;
+    const redoButton = () => document.querySelector('.filter-editor-content .filter-editor-redo') as HTMLElement;
+
+    it('expect Apply to keep the history: an edit applied can be undone and applied again', async () => {
+        const { datasource, gridInterface } = await mountGrid();
+        datasource.filter(and(where('age', 'GREATER_THAN', 15)));
+        gridInterface.openFilterEditor();
+        clickIcon('Delete this condition');
+        menuItem('Apply').click();
+        expect(datasource.getFilter()).toBeNull();
+
+        // the dialog is still open, its history too
+        expect(undoButton().hasAttribute('aria-disabled')).toBe(false);
+        undoButton().click();
+        menuItem('Apply').click();
+        expect(datasource.getFilter()).toEqual(and(where('age', 'GREATER_THAN', 15)));
+        expect(datasource.getDataRows()).toHaveLength(4);
+
+        redoButton().click();
+        menuItem('Apply').click();
+        expect(datasource.getFilter()).toBeNull();
+    });
+
+    it('expect undo to change the draft only: the filter applied stays until Apply', async () => {
+        const { datasource, gridInterface } = await mountGrid();
+        datasource.filter(and(where('age', 'GREATER_THAN', 15)));
+        gridInterface.openFilterEditor();
+        const input = document.querySelector('.filter-editor-content .filter-editor-value') as HTMLInputElement;
+        input.focus();
+        input.value = '35';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        menuItem('Apply').click();
+        expect(datasource.getDataRows()).toHaveLength(2);
+
+        undoButton().click();
+
+        expect((document.querySelector('.filter-editor-content .filter-editor-value') as HTMLInputElement).value).toEqual('15');
+        expect(datasource.getFilter()).toEqual(and(where('age', 'GREATER_THAN', 35)));
+        menuItem('Apply').click();
+        expect(datasource.getFilter()).toEqual(and(where('age', 'GREATER_THAN', 15)));
+    });
+});
+
 describe('filter editor - draftToFilter', () => {
     const datasource = new Datasource({ fields: { born: 'date' } });
 
