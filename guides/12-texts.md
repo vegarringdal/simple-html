@@ -320,6 +320,20 @@ and a lookup column.
 | `filter.values.run` | `Apply` | the button that filters on the checked values |
 | `filter.values.cancel` | `Cancel` | the button that closes the menu without filtering |
 
+### Column menu
+
+Right click on a column number, the row of numbers under the header filters.
+
+| id | English | shown |
+| --- | --- | --- |
+| `column.copy.column` | `Copy column` | copies the column right clicked, every displayed row |
+| `column.copy.column.hint` | `all rows` | its hint |
+| `column.copy.selectedColumns` | `Copy selected columns` | copies the selected columns, every displayed row |
+| `column.copy.selectedColumns.hint` | `all rows` | its hint |
+| `column.copy.headers` | `Copy header names` | copies the label of every column |
+| `column.copy.header` | `Copy header name` | copies the label of the column right clicked |
+| `column.copy.selectedHeaders` | `Copy selected header names` | copies the labels of the selected columns |
+
 ### Column chooser
 
 | id | English | shown |

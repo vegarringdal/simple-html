@@ -25,6 +25,8 @@ import type {
 import type { GridEvents } from './gridEvents';
 import { aggregateRowHeights, normalizeAggregates } from './gridFunctions/aggregates';
 import { assertRanges, layoutKey, type RangeState, rangeState, sameRanges } from './gridFunctions/cellRanges';
+import { renderColumnNumbers } from './gridFunctions/columnNumbers';
+import { type ColumnSelection, clickColumn, NO_COLUMNS, numberedColumns } from './gridFunctions/columnSelection';
 import { fillDown } from './gridFunctions/fillDown';
 import { columnConditions, sameConditions } from './gridFunctions/filterCallback';
 import { closeFind, findDataChanged, findStep, getFindResult, openFind } from './gridFunctions/findBar';
@@ -40,7 +42,6 @@ import { TOOLTIP_LINES } from './gridFunctions/multilineText';
 import { openFilterEditor } from './gridFunctions/openFilterEditor';
 import { focusedCell, pointOf, renderRangeClasses } from './gridFunctions/rangeSelection';
 import { rebuildFooter, renderFooter } from './gridFunctions/rebuildFooter';
-import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
 import { requestRowsRender } from './gridFunctions/renderChangedRows';
 import { fitRowLinesOf, layoutColumns, MULTILINE_LINE_HEIGHT, rowHeightOf } from './gridFunctions/rowHeights';
@@ -100,7 +101,10 @@ export class GridInterface<T> {
     // the functions: isReadonly, cellClass, menus. A copy, updateHooks() changes it
     private hooks: GridHooks<T>;
     private dataSource: Datasource<T>;
-    private columnsSelected: Set<number>;
+    // the columns selected with the column numbers under the header filters, see columnSelection.ts
+    private columnSelection: ColumnSelection = NO_COLUMNS;
+    // the layout they were selected in (layoutKey): their numbers are other columns in another one
+    private columnSelectionKey = '';
 
     // for variable scroll, set by __dataSourceUpdated, called from the constructor
     private scrollTops!: number[];
@@ -199,7 +203,6 @@ export class GridInterface<T> {
         assertAggregates(gridConfig, datasource);
         assertRenderers(gridConfig);
         this.lookupColumns = lookupColumnsOf(gridConfig.columns, datasource);
-        this.columnsSelected = new Set();
         this.dataSource = datasource;
         this.hooks = { ...hooks };
 
@@ -939,7 +942,8 @@ export class GridInterface<T> {
      * left to right, and top to bottom within a column of stacked fields.
      *
      * With `selectedOnly`, only the fields of the columns the user selected - by clicking the column
-     * numbers under the header filters, ctrl+click for more. None selected gives `[]`.
+     * numbers under the header filters, Ctrl/Cmd+click for more, Shift+click for the ones between, see
+     * {@link getSelectedColumns}. None selected gives `[]`.
      *
      * Was `getAttributeColumns(filterSelectedColumns)` in v5, which gave the selected columns by default
      * and every column when none was selected.
@@ -959,6 +963,60 @@ export class GridInterface<T> {
     public getLayoutFields(options: { selectedOnly?: boolean } = {}): string[] {
         assertOptions('getLayoutFields', options, 'getLayoutFields({ selectedOnly: true })');
         return getLayoutFields(this, options);
+    }
+
+    /**
+     * The columns the user selected, by their numbers: the row of numbers under the header filters,
+     * 1 based, counted across the pinned left, the center and the pinned right columns - a column of
+     * stacked fields is one number. A click on a number selects that column, Ctrl/Cmd+click adds or
+     * removes one, Shift+click selects the columns from the one clicked before, as on the row numbers.
+     * Ascending, `[]` when none is selected. {@link getLayoutFields} with `selectedOnly` gives their
+     * fields.
+     *
+     * The numbers are good for the layout they were selected in: the selection is cleared when the
+     * fields of the layout change - a column moved, pinned, hidden or added - and
+     * `column-selection-change` is sent. A column resized keeps it. It is not part of the state.
+     *
+     * @sample ranges
+     * @example
+     * ```ts
+     * gridInterface.getSelectedColumns(); // [2, 3, 4]
+     * gridInterface.getLayoutFields({ selectedOnly: true }); // ['city', 'age', 'born', 'active']
+     * ```
+     */
+    public getSelectedColumns(): number[] {
+        return [...this.columnSelection.selected];
+    }
+
+    /**
+     * Selects columns by their numbers (see {@link getSelectedColumns}), replacing the ones selected:
+     * the numbers show it, `column-selection-change` is sent when it changed. `[]` selects none. A
+     * Shift+click after it selects from the last number given.
+     *
+     * @param columns the numbers, 1 based as the header shows them
+     * @throws a `TypeError` for a number that is no column: not a whole number from 1 to the number of
+     * columns of the layout
+     *
+     * @sample ranges
+     * @example
+     * ```ts
+     * gridInterface.selectColumns([1, 2]); // the first two columns
+     * gridInterface.selectColumns([]); // none
+     *
+     * gridInterface.on('column-selection-change', ({ columns, fields }) => {
+     *     console.log(columns.length ? `columns ${columns.join(', ')}: ${fields.join(', ')}` : 'no column selected');
+     * });
+     * ```
+     */
+    public selectColumns(columns: number[]) {
+        const count = numberedColumns(this.gridConfig).length;
+        if (!Array.isArray(columns) || columns.some((n) => !Number.isInteger(n) || n < 1 || n > count)) {
+            throw new TypeError(
+                `selectColumns() takes column numbers from 1 to ${count}, the columns of the layout - got ${JSON.stringify(columns)}`
+            );
+        }
+        const selected = Array.from(new Set(columns)).sort((a, b) => a - b);
+        this.setColumnSelection({ selected, anchor: columns.at(-1) ?? null, kept: [] }, true);
     }
 
     /**
@@ -1685,35 +1743,38 @@ export class GridInterface<T> {
      * @internal
      * @private
      */
-    public __setSelectedColumn(number: number, add = false) {
-        if (!add) {
-            this.columnsSelected.clear();
-        }
-        if (this.__isColumnSelected(number)) {
-            this.columnsSelected.delete(number);
-        } else {
-            this.columnsSelected.add(number);
-        }
-        if (this.grid) {
-            rebuildHeaderColumns(this.grid);
-            triggerScrollEvent(this.grid);
-        }
+    public __clickColumn(number: number, keys: { toggle: boolean; range: boolean }) {
+        this.setColumnSelection(clickColumn(this.columnSelection, number, keys), true);
     }
 
     /**
      * @internal
      * @private
+     * true when the column with this number (1 based, as the header shows it) is selected
      */
     public __isColumnSelected(number: number) {
-        return this.columnsSelected.has(number);
+        return this.columnSelection.selected.includes(number);
     }
 
     /**
-     * @internal
-     * @private
+     * The column selection changes: the numbers on screen show it (`render`, not while the layout is
+     * being rebuilt - the rebuild renders them), and `column-selection-change` is sent when the
+     * selected columns changed
      */
-    public __selectedColumns() {
-        return this.columnsSelected.size;
+    private setColumnSelection(selection: ColumnSelection, render: boolean) {
+        const before = this.columnSelection.selected;
+        this.columnSelection = selection;
+        this.columnSelectionKey = layoutKey(this.gridConfig);
+        if (render && this.grid) {
+            renderColumnNumbers(this.grid);
+        }
+        const changed = before.length !== selection.selected.length || before.some((n, i) => n !== selection.selected[i]);
+        if (changed) {
+            this.__callSubscribers('column-selection-change', {
+                columns: this.getSelectedColumns(),
+                fields: getLayoutFields(this, { selectedOnly: true })
+            });
+        }
     }
 
     /**
@@ -1735,6 +1796,11 @@ export class GridInterface<T> {
         // or applyState() without a grid)
         if (this.rangeState && this.rangeState.key !== layoutKey(this.gridConfig)) {
             this.clearRanges();
+        }
+        // the selected columns too: their numbers are other columns now. The rebuild renders the numbers
+        const columns = this.columnSelection;
+        if ((columns.selected.length || columns.anchor !== null) && this.columnSelectionKey !== layoutKey(this.gridConfig)) {
+            this.setColumnSelection(NO_COLUMNS, false);
         }
         this.scrollTops = [];
         this.scrollHeights = [];

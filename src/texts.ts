@@ -119,6 +119,15 @@ const DEFAULTS = {
     'filter.values.run': 'Apply',
     'filter.values.cancel': 'Cancel',
 
+    // the column menu, right click on a column number (under the header filters): MENU_IDS.column
+    'column.copy.column': 'Copy column',
+    'column.copy.column.hint': 'all rows',
+    'column.copy.selectedColumns': 'Copy selected columns',
+    'column.copy.selectedColumns.hint': 'all rows',
+    'column.copy.headers': 'Copy header names',
+    'column.copy.header': 'Copy header name',
+    'column.copy.selectedHeaders': 'Copy selected header names',
+
     // the column chooser, from the header menu
     'columnChooser.title': 'All Fields:',
     'columnChooser.search': 'search',

@@ -108,7 +108,7 @@ describe('menus - the built-in ids', () => {
     });
 
     it('expect every id to be unique', () => {
-        const all = [...MENU_IDS.row, ...MENU_IDS.header, ...MENU_IDS.filter];
+        const all = [...MENU_IDS.row, ...MENU_IDS.header, ...MENU_IDS.filter, ...MENU_IDS.column];
         expect(new Set(all).size).toEqual(all.length);
     });
 

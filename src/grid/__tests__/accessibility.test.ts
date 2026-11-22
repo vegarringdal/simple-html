@@ -224,24 +224,32 @@ describe('accessibility - the grid', () => {
         const grid = gridElement(element);
 
         expect(grid.getAttribute('aria-colcount')).toEqual('6');
-        // labels and filters
-        expect(grid.getAttribute('aria-rowcount')).toEqual('7');
+        // labels, filters and the column numbers
+        expect(grid.getAttribute('aria-rowcount')).toEqual('8');
     });
 
     it('expect the header rows to count only when shown', async () => {
         const { element, gridInterface } = await mountGrid(pinnedConfig(), people(), fields);
 
         gridInterface.updateConfig({ hideFilter: true });
-        expect(gridElement(element).getAttribute('aria-rowcount')).toEqual('6');
+        expect(gridElement(element).getAttribute('aria-rowcount')).toEqual('7');
+        // the column numbers right under the labels
         expect(ariaRows(element)[1].rowindex).toBe(2);
+        expect(texts(ariaRows(element)[1])).toEqual(['1', '2', '3', '4']);
 
         gridInterface.updateConfig({ hideLabels: true, hideFilter: true });
+        expect(gridElement(element).getAttribute('aria-rowcount')).toEqual('6');
+        // the column numbers are the first header row, the corner is in it
+        expect(ariaRows(element)[0].rowindex).toBe(1);
+        expect(texts(ariaRows(element)[0])).toEqual(['row selector', '1', '2', '3', '4']);
+
+        gridInterface.updateConfig({ hideLabels: true, hideFilter: true, selectSizeHeight: 0 });
         expect(gridElement(element).getAttribute('aria-rowcount')).toEqual('5');
         expect(ariaRows(element)[0].rowindex).toBe(1);
         // the corner heads the row numbers in the first header row: with none, it is hidden
         expect(element.querySelector('[aria-label="row selector"]')?.getAttribute('aria-hidden')).toEqual('true');
 
-        gridInterface.updateConfig({ hideLabels: true, hideFilter: false });
+        gridInterface.updateConfig({ hideLabels: true, hideFilter: false, selectSizeHeight: 0 });
         // the filter row is the first one, the corner is in it
         expect(ariaRows(element)[0].cells[0].text).toEqual('row selector');
     });
@@ -285,7 +293,8 @@ describe('accessibility - rows and cells', () => {
         const rows = bodyRows(element);
 
         expect(rows.length).toBe(5);
-        expect(rows[0].rowindex).toBe(3);
+        // under the labels, the filters and the column numbers
+        expect(rows[0].rowindex).toBe(4);
         expect(texts(rows[0])).toEqual(['1', 'first1', 'last1', 'Bergen', '20', '1']);
         expect(rows[0].cells.map((cell) => cell.colindex)).toEqual([1, 2, 3, 4, 5, 6]);
         expectInOrder(element, ariaRows(element));
@@ -315,24 +324,53 @@ describe('accessibility - rows and cells', () => {
 
     it('expect the empty cells under a column with fewer fields to be no cells', async () => {
         const { element } = await mountGrid(pinnedConfig(), people(), fields);
-        const [labels, filters, first] = ariaRows(element);
+        const [labels, filters, numbers, first] = ariaRows(element);
 
         // the tallest column has two fields: the others have an empty cell under theirs
         expect(labels.cells.length).toBe(6);
         expect(filters.cells.length).toBe(5);
+        // a number per column
+        expect(numbers.cells.length).toBe(4);
         expect(first.cells.length).toBe(6);
         const empty = element.querySelectorAll('.simple-html-grid-body-row-container-pinned-left [type="row-cell"]')[1];
         expect(empty.getAttribute('role')).toEqual('none');
     });
 
-    it('expect the column numbers under the filters and the resize handles hidden from a screen reader', async () => {
+    it('expect the column numbers under the filters as a header row of cells, aria-selected, a cell per column', async () => {
+        const { element, gridInterface } = await mountGrid(pinnedConfig(), people(), fields);
+        const numbers = () => ariaRows(element)[2];
+
+        expect(numbers().rowindex).toBe(3);
+        expect(numbers().cells.map((cell) => [cell.role, cell.colindex, cell.text])).toEqual([
+            ['gridcell', 2, '1'],
+            ['gridcell', 3, '2'],
+            ['gridcell', 5, '3'],
+            ['gridcell', 6, '4']
+        ]);
+        // the column of two fields: its number spans them
+        expect(numbers().cells.map((cell) => cell.element.getAttribute('aria-colspan'))).toEqual([null, '2', null, null]);
+        expect(numbers().cells.map((cell) => cell.element.getAttribute('aria-selected'))).toEqual([
+            'false',
+            'false',
+            'false',
+            'false'
+        ]);
+        // focusable, not a stop of Tab: a click puts the focus there
+        expect(numbers().cells.map((cell) => cell.element.getAttribute('tabindex'))).toEqual(['-1', '-1', '-1', '-1']);
+
+        gridInterface.selectColumns([2, 4]);
+        expect(numbers().cells.map((cell) => cell.element.getAttribute('aria-selected'))).toEqual([
+            'false',
+            'true',
+            'false',
+            'true'
+        ]);
+        expectInOrder(element, ariaRows(element));
+    });
+
+    it('expect the resize handles hidden from a screen reader', async () => {
         const { element } = await mountGrid(pinnedConfig(), people(), fields);
 
-        const selectors = element.querySelectorAll('.simple-html-grid-header [type="selector"]');
-        expect(selectors.length).toBe(4);
-        for (const selector of selectors) {
-            expect(selector.getAttribute('aria-hidden')).toEqual('true');
-        }
         for (const handle of element.querySelectorAll('.simple-html-grid-col-resize, .simple-html-grid-col-resize-right')) {
             expect(handle.getAttribute('aria-hidden')).toEqual('true');
         }
@@ -363,7 +401,7 @@ describe('accessibility - scrolling', () => {
         const rows = bodyRows(element);
         // 44px rows (a column has two fields of 22px): row 50 (0 based) is at the top, the one above
         // it is rendered too
-        expect(rows[0].rowindex).toBe(2 + 49 + 1);
+        expect(rows[0].rowindex).toBe(3 + 49 + 1);
         expect(texts(rows[0])[0]).toEqual('50');
         expect(rows.map((row) => row.rowindex)).toEqual(rows.map((_, i) => rows[0].rowindex + i));
         expectInOrder(element, ariaRows(element));
@@ -386,11 +424,12 @@ describe('accessibility - scrolling', () => {
 
         scroll(element, 'simple-html-grid-middle-scroller', { left: 1000 });
 
-        const [labels, filters, first] = ariaRows(element);
+        const [labels, filters, numbers, first] = ariaRows(element);
         // columns 10 and on are shown (and the one before): f9 is colindex 11
         expect(first.cells[1]).toMatchObject({ colindex: 11, text: 'r0c9' });
         expect(labels.cells[1]).toMatchObject({ colindex: 11, text: 'F9' });
         expect(filters.cells[0].colindex).toBe(11);
+        expect(numbers.cells[0]).toMatchObject({ colindex: 11, text: '10' });
         // each cell shows the field of its colindex
         for (const cell of first.cells.slice(1)) {
             expect(cell.text).toEqual(`r0c${cell.colindex - 2}`);
@@ -411,22 +450,23 @@ describe('accessibility - the counts follow filter, group and collapse', () => {
     it('expect aria-rowcount after filter(), group(), a collapse and an expand', async () => {
         const { element, datasource } = await mountGrid(pinnedConfig(), people(10), fields);
         const rowcount = () => Number(gridElement(element).getAttribute('aria-rowcount'));
-        expect(rowcount()).toBe(12);
+        // the labels, the filters and the column numbers, and the rows
+        expect(rowcount()).toBe(13);
 
         datasource.filter(where('age', 'GREATER_THAN', 25));
-        expect(rowcount()).toBe(2 + 4);
+        expect(rowcount()).toBe(3 + 4);
 
         datasource.filter(null);
         datasource.group([{ attribute: 'city', title: 'City' }]);
         // two group rows, collapsed
-        expect(rowcount()).toBe(2 + 2);
+        expect(rowcount()).toBe(3 + 2);
 
         datasource.expandGroup();
-        expect(rowcount()).toBe(2 + 2 + 10);
+        expect(rowcount()).toBe(3 + 2 + 10);
         expect(bodyRows(element).length).toBe(12);
 
         datasource.collapseGroup('Bergen');
-        expect(rowcount()).toBe(2 + 2 + 5);
+        expect(rowcount()).toBe(3 + 2 + 5);
         expectInOrder(element, ariaRows(element));
     });
 });
@@ -1009,9 +1049,9 @@ describe('accessibility - aggregates', () => {
             ['gridcell', 5, 'Sum 86'],
             ['gridcell', 6, 'Count 4']
         ]);
-        // 2 header rows, 2 group rows, the totals row
-        expect(gridElement(element).getAttribute('aria-rowcount')).toEqual('5');
-        expect(totals.rowindex).toBe(5);
+        // 3 header rows, 2 group rows, the totals row
+        expect(gridElement(element).getAttribute('aria-rowcount')).toEqual('6');
+        expect(totals.rowindex).toBe(6);
         expectInOrder(element, rows);
     });
 
@@ -1020,13 +1060,13 @@ describe('accessibility - aggregates', () => {
 
         datasource.expandGroup();
         let rows = ariaRows(element);
-        expect(gridElement(element).getAttribute('aria-rowcount')).toEqual('9');
-        expect(rows[rows.length - 1].rowindex).toBe(9);
+        expect(gridElement(element).getAttribute('aria-rowcount')).toEqual('10');
+        expect(rows[rows.length - 1].rowindex).toBe(10);
         expectInOrder(element, rows);
 
         datasource.filter(where('city', 'EQUAL', 'Oslo'));
         rows = ariaRows(element);
-        expect(gridElement(element).getAttribute('aria-rowcount')).toEqual('6');
+        expect(gridElement(element).getAttribute('aria-rowcount')).toEqual('7');
         expect(cellsOf(rows[rows.length - 1])).toEqual([
             ['rowheader', 1, 'Total'],
             ['gridcell', 5, 'Sum 44']
@@ -1037,7 +1077,7 @@ describe('accessibility - aggregates', () => {
     it('expect no totals row in the grid when it is off', async () => {
         const { element } = await withAggregates({ age: { aggregate: 'sum' } });
 
-        expect(gridElement(element).getAttribute('aria-rowcount')).toEqual('4');
+        expect(gridElement(element).getAttribute('aria-rowcount')).toEqual('5');
         expect(ariaRows(element).some((row) => row.cells[0]?.role === 'rowheader')).toBe(false);
     });
 });

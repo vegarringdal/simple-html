@@ -1,6 +1,6 @@
 # Menus
 
-The grid has three right click menus:
+The grid has four right click menus:
 
 - the **row menu**, on a cell: undo and redo, then the submenus copy, paste, clear, delete, filter
   on the value, view, sizes, export. The summary of selected cells is in the footer, see
@@ -9,6 +9,9 @@ The grid has three right click menus:
   submenus sizes, aggregates, grouping
 - the **filter menu**, on a header filter: the submenu filter (the operator, is blank, clear, the
   filter editor), then the value list
+- the **column menu**, on a column number (the row of numbers under the header filters): copy the
+  column, the selected columns, the header names - see
+  [Selection and clipboard](17-selection-and-clipboard.md#the-column-menu)
 
 Each is a tree of entries with ids: most entries are in submenus, so a menu is short and opens
 beside it what you point at. The `menus` hook changes them: hide entries, reorder them, change their
@@ -16,7 +19,7 @@ labels, add your own. `openMenu()` opens a menu of your own, in the same style, 
 
 ## How a menu opens and closes
 
-Every menu of the grid - the three right click menus, `openMenu()`, the column chooser, the field
+Every menu of the grid - the four right click menus, `openMenu()`, the column chooser, the field
 and operator pickers of the filter editor and the date picker - is a popover (`popover="manual"`):
 the browser shows it in the top layer, over everything on the page. A container with
 `overflow: hidden` does not cut it off, and no z-index puts something over it. It is on
@@ -61,7 +64,7 @@ The menus follow the WAI-ARIA [menu pattern](https://www.w3.org/WAI/ARIA/apg/pat
 
 | key | does |
 | --- | --- |
-| Shift+F10, the menu key | opens the menu of the cell, header label or header filter with the focus, the focus on its first item |
+| Shift+F10, the menu key | opens the menu of the cell, header label, header filter or column number with the focus, the focus on its first item |
 | ArrowDown / ArrowUp | the next / previous item, round. Lines and section headers are passed by; a disabled item gets the focus too, it can not be used. In a menu opened with the mouse, the first ArrowDown (ArrowUp) gets into it: the first (last) item |
 | Home / End | the first / last item |
 | a letter | the next item whose label starts with it |
@@ -80,7 +83,7 @@ box and the checkboxes, Enter in them applies, see [The value list](06-filtering
 
 ## Changing the grid's menus
 
-The `menus` hook has a function per menu: `row`, `header` and `filter`. It gets the grid's own
+The `menus` hook has a function per menu: `row`, `header`, `filter` and `column`. It gets the grid's own
 entries (`defaults`) and what the menu was opened on (`context`), and returns the entries to show.
 It is called every time the menu opens. Like the other [hooks](02-grid-config.md#hooks) it is given
 next to the config, not in it: the config stays plain JSON.
@@ -179,10 +182,10 @@ Every callback gets a `MenuContext`:
 
 | field | what it is |
 | --- | --- |
-| `menu` | `'row'`, `'header'`, `'filter'` or `'custom'` (opened with `openMenu()`) |
-| `field` | the field of the cell the menu was opened on. `''` for `openMenu()` |
-| `row` | row menu: the cell's row. Header and filter menus: the first displayed row (a group row when grouped, `undefined` without rows). `openMenu()`: `undefined` |
-| `rowIndex` | the index of `row` in the displayed rows: 0 in the header and filter menus, -1 for `openMenu()` |
+| `menu` | `'row'`, `'header'`, `'filter'`, `'column'` or `'custom'` (opened with `openMenu()`) |
+| `field` | the field of the cell the menu was opened on. The column menu: the column's first field, a column of stacked fields has more. `''` for `openMenu()` |
+| `row` | row menu: the cell's row. Header, filter and column menus: the first displayed row (a group row when grouped, `undefined` without rows). `openMenu()`: `undefined` |
+| `rowIndex` | the index of `row` in the displayed rows: 0 in the header, filter and column menus, -1 for `openMenu()` |
 | `cell` | the cell the menu was opened on, `undefined` for `openMenu()` |
 | `gridInterface` | the grid |
 | `datasource` | the grid's datasource |
@@ -215,6 +218,13 @@ View ›                            Aggregate ›                     Clear Filt
 Size ›                            Grouping ›                      Clear All Filters
 Export ›                                                          ----
                                                                   Advanced Filter…
+column menu
+Copy column (all rows)
+Copy selected columns (all rows)
+----
+Copy header names
+Copy header name
+Copy selected header names
 ```
 
 ### Row menu (`MENU_IDS.row`)
@@ -315,6 +325,37 @@ Export ›                                                          ----
 | `filter.values` | the value list: a search box, "Select all" and a checkbox per value, "Cancel" and "Apply". One `MenuBlock`, its texts are `filter.values.*` | a text field, a lookup column |
 
 See [Filtering](06-filtering.md#the-header-filter-menu) for what the filter menu's entries do.
+
+### Column menu (`MENU_IDS.column`)
+
+Right click on a column number, the row of numbers under the header filters, or Shift+F10 on one with
+the focus. Flat, without a submenu: every entry is a copy, a *Copy ›* around them would only add a
+step. The columns are copied as the row menu copies rows - tab separated text and an html table, a
+header line of the labels with `copyHeaders` - every displayed data row; the names as one line of
+text, a tab between them. See [Selection and clipboard](17-selection-and-clipboard.md#the-column-menu).
+
+| id | shown as | shown when |
+| --- | --- | --- |
+| `column.copy.column` | Copy column (all rows): the column right clicked. A column of stacked fields: each of its fields | |
+| `column.copy.selectedColumns` | Copy selected columns (all rows): the selected columns, `getSelectedColumns()`. Greyed out with no column selected | |
+| `column.copy.namesSeparator` | a line | |
+| `column.copy.headers` | Copy header names: the label of every field of the layout | |
+| `column.copy.header` | Copy header name: the label of the column right clicked, each of its fields | |
+| `column.copy.selectedHeaders` | Copy selected header names: the labels of the selected columns. Greyed out with no column selected | |
+
+```ts
+import type { GridHooks } from '@simple-html/grid';
+
+// the column menu without the copies of the selected columns, and an entry of your own
+const columnHooks: GridHooks = {
+    menus: {
+        column: (defaults, context) => [
+            ...defaults.filter((entry) => !entry.id.startsWith('column.copy.selected')),
+            { id: 'my.fit', label: 'Fit column width', action: () => context.gridInterface.fitColumns([context.field]) }
+        ]
+    }
+};
+```
 
 ```ts
 import { type GridHooks, MENU_IDS } from '@simple-html/grid';

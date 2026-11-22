@@ -266,3 +266,22 @@ export function openLabelMenu(element: GridElement, attribute: string) {
     const label = element.querySelector(`[data-attribute-header="${attribute}"]`) as HTMLElement;
     label.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 100 }));
 }
+
+/**
+ * the cell of a column number - the row of numbers under the header filters - by the number it shows,
+ * in a column element that is shown (the middle section hides the ones it does not need)
+ */
+export function columnNumberCell(element: GridElement, number: number): HTMLElement {
+    return Array.from(element.querySelectorAll<HTMLElement>('.simple-html-grid-header [type="selector"]')).find(
+        (cell) => cell.textContent?.trim() === String(number) && (cell.parentElement as HTMLElement).style.display !== 'none'
+    ) as HTMLElement;
+}
+
+/**
+ * opens the right click menu on a column number, the column menu
+ */
+export function openColumnMenu(element: GridElement, number: number) {
+    columnNumberCell(element, number).dispatchEvent(
+        new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 100 })
+    );
+}

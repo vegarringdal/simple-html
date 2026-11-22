@@ -132,7 +132,10 @@ export type GridConfig = {
     cellHeaderLabelHeight?: number;
     /** height of the footer in px, default 45 */
     footerHeight?: number;
-    /** height of the column selector row under the header filters in px, default 18 */
+    /**
+     * height of the column selector row under the header filters in px, default 18; 0 hides it. Its
+     * numbers select columns (`gridInterface.getSelectedColumns()`), a right click opens the column menu
+     */
     selectSizeHeight?: number;
     /** hides the row of header labels (the column names, click to sort), default false */
     hideLabels?: boolean;

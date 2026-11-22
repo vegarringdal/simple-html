@@ -13,12 +13,14 @@ column of two fields), scrolled down and to the right: columns 3 and 4 are scrol
 numbers in parentheses are the `aria-colindex`es.
 
 ```text
-grid "Grid"  aria-rowcount=502  aria-colcount=10
+grid "Grid"  aria-rowcount=503  aria-colcount=10
   row  aria-rowindex=1
-    columnheader "row selector" (1), "Company" (2), "Phone" (5), "date" (6), "Age" (7) ... "Balance" (10)
+    columnheader "row selector" (1), "Company" (2), "Phone" (5), "date" (6) ... "Balance" (10)
   row  aria-rowindex=2
     gridcell (2) > textbox "Filter Company", gridcell (5) > textbox "Filter Phone" ...
-  row  aria-rowindex=71  selected=false
+  row  aria-rowindex=3
+    gridcell "1" (2) selected=false, gridcell "4" (5, colspan 2) selected=false ... gridcell "8" (10) selected=false
+  row  aria-rowindex=72  selected=false
     gridcell "69" (1), gridcell (2) > textbox "Company": MASSIVE DYNAMIC,
     gridcell (5) > textbox "Phone": +47 45911795 ... gridcell (10) > textbox "Balance": 2178.34
 ```
@@ -29,13 +31,19 @@ grid "Grid"  aria-rowcount=502  aria-colcount=10
   the row numbers plus every field of the layout. `aria-multiselectable="true"` with the selection
   mode `'multiple'`.
 - **The header rows**: the labels are `columnheader`s, the header filters are `gridcell`s with the
-  filter input in them. The top left corner is the column header of the row numbers. The column
-  numbers under the filters (a click selects a column) are hidden from a screen reader: they are for
-  the mouse. A hidden row of labels or filters (`hideLabels`, `hideFilter`) is not counted.
+  filter input in them. The top left corner is the column header of the row numbers. A hidden row of
+  labels or filters (`hideLabels`, `hideFilter`) is not counted.
+- **The column numbers** under the filters (a click selects a column, see
+  [Selecting columns](17-selection-and-clipboard.md#selecting-columns)) are the last header row: a
+  `gridcell` per column of the layout, at the `aria-colindex` of its first field - a column of two
+  stacked fields is one number, `aria-colspan="2"` - with `aria-selected` `true` or `false`. Cells
+  and not column headers, as the row numbers are cells: the label stays the one header of a column.
+  A number can have the focus, see [A column number](#a-column-number). `selectSizeHeight: 0` hides
+  the row, it is not counted then.
 - **The column header of the sorted column** has `aria-sort="ascending"` or `"descending"`. Sorted on
   more columns, only the first one has it: a grid has one sorted column for a screen reader.
 - **A row** has `aria-rowindex`: where it is in the whole grid, the header rows included - the first
-  data row is 3 under a header of labels and filters. With a selection mode it has `aria-selected`,
+  data row is 4 under a header of labels, filters and column numbers. With a selection mode it has `aria-selected`,
   `true` or `false`; with `'none'` it has none. A group row can not be selected.
 - **A cell** is a `gridcell` with `aria-colindex`; the input (or checkbox) in it is named with the
   column's label, the same as the header shows. The row number is the first cell of a row. A column of
@@ -230,6 +238,18 @@ A column header can have the focus, but is not a stop of Tab: Alt+ArrowUp from i
 | Ctrl+Home / Ctrl+End | the first cell of the first row / the last cell of the last row |
 | Shift+F10, the menu key | the header menu, the focus on its first item |
 
+### A column number
+
+A column number - the row of numbers under the header filters - can have the focus, but is not a stop
+of Tab: a click puts it there, and selects columns (Ctrl+click, Shift+click, see
+[Selecting columns](17-selection-and-clipboard.md#selecting-columns)).
+
+| key | does |
+| --- | --- |
+| Shift+F10, the menu key | the column menu, the focus on its first item. When it closes the focus is back on the number |
+| Ctrl+C, Cmd+C | copies the selected columns - the number's own when none is selected - as tab separated text and an html table |
+| Esc | no column selected. With a menu open, Esc closes the menu first |
+
 ### The rest
 
 | where | key | does |
@@ -382,6 +402,10 @@ setTexts({
 
 ## Known limits
 
+- **The column numbers by keyboard**: no key gets to them from a cell, a filter or a column header:
+  a click does. Their menu's copies of a whole column have no other key; a range of cells copies
+  the cells of a column too (Ctrl+C). `aria-multiselectable` on the grid follows the row selection
+  (the selection mode `'multiple'`), while more than one column can be selected in every mode.
 - **Checked in Chrome only**: its accessibility tree (through the DevTools protocol) has the
   structure above, after scrolling both ways, sorted, grouped, expanded and collapsed. Firefox,
   Safari and real screen readers (NVDA, JAWS, VoiceOver) have not been tried. The structure depends on

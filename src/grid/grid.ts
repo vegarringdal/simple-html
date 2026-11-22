@@ -121,6 +121,7 @@ export class Grid {
     public ariaGrid!: HTMLElement;
     public ariaLabelRow!: HTMLElement;
     public ariaFilterRow!: HTMLElement;
+    public ariaSelectorRow!: HTMLElement;
     /**
      * the start of the ids of the elements aria-owns points to: an id is unique in the page, and a
      * page can have several grids

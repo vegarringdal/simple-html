@@ -241,23 +241,27 @@ export interface MenuBlock {
 export interface MenuContext {
     /**
      * which menu: `'row'` (right click on a cell), `'header'` (on a header label), `'filter'` (on a
-     * header filter) or `'custom'` (opened with `gridInterface.openMenu()`)
+     * header filter), `'column'` (on a column number, under the header filters) or `'custom'` (opened
+     * with `gridInterface.openMenu()`)
      */
-    menu: 'row' | 'header' | 'filter' | 'custom';
-    /** the field of the cell the menu was opened on. `''` in a menu opened with `openMenu()` */
+    menu: 'row' | 'header' | 'filter' | 'column' | 'custom';
+    /**
+     * the field of the cell the menu was opened on: in the column menu the column's first field (a
+     * column of stacked fields has more). `''` in a menu opened with `openMenu()`
+     */
     field: string;
     /**
      * - row menu: the row of the cell, always a data row (a group row has no cells)
-     * - header and filter menus: the first displayed row, a {@link GroupRow} when the datasource is
-     *   grouped and `undefined` when no rows are shown - as `cell-header-focus` sends it
+     * - header, filter and column menus: the first displayed row, a {@link GroupRow} when the
+     *   datasource is grouped and `undefined` when no rows are shown - as `cell-header-focus` sends it
      * - `openMenu()`: `undefined`
      *
      * Check with `isGroupRow()` before reading it as a data row.
      */
     row: Entity | GroupRow | undefined;
     /**
-     * the index of `row` in the displayed rows (`datasource.getRows()`): 0 in the header and filter
-     * menus, -1 in a menu opened with `openMenu()`
+     * the index of `row` in the displayed rows (`datasource.getRows()`): 0 in the header, filter and
+     * column menus, -1 in a menu opened with `openMenu()`
      */
     rowIndex: number;
     /** the cell the menu was opened on, `undefined` in a menu opened with `openMenu()` */
@@ -303,6 +307,8 @@ export interface MenuPosition {
  *   submenus size, aggregate, grouping
  * - `filter`: right click on a header filter - clear, the submenus blank and operator, the filter
  *   editor, the value list
+ * - `column`: right click on a column number (the row of numbers under the header filters) - the
+ *   copies of the column, of the selected columns and of their header names
  *
  * `defaults` is a tree: most entries are in a submenu ({@link MenuSubmenu}), whose id is the start of
  * theirs - `row.copy.cell` is in `row.copy`. A filter on `defaults` sees the top of the menu: hiding
@@ -353,6 +359,8 @@ export interface GridMenus {
     header?: (defaults: MenuEntry[], context: MenuContext) => MenuEntry[];
     /** the menu of a header filter */
     filter?: (defaults: MenuEntry[], context: MenuContext) => MenuEntry[];
+    /** the menu of a column number, under the header filters */
+    column?: (defaults: MenuEntry[], context: MenuContext) => MenuEntry[];
 }
 
 /**
@@ -383,6 +391,13 @@ export interface GridMenus {
  * Size ›                            Grouping ›                      Clear All Filters
  * Export ›                                                          ----
  *                                                                   Advanced Filter…
+ * column menu
+ * Copy column (all rows)
+ * Copy selected columns (all rows)
+ * ----
+ * Copy header names
+ * Copy header name
+ * Copy selected header names
  * ```
  *
  * Row menu (`GridMenus.row`), right click on a cell:
@@ -481,6 +496,20 @@ export interface GridMenus {
  * | `filter.filter.advancedSeparator` | a line | |
  * | `filter.filter.advanced` | Advanced Filter… - the filter editor | |
  * | `filter.values` | the value list: search box, "Select all" and a checkbox per value, "Cancel" and "Apply" - a {@link MenuBlock}, its texts are `filter.values.*` | a text field, a lookup column |
+ *
+ * Column menu (`GridMenus.column`), right click on a column number - the row of numbers under the
+ * header filters - or Shift+F10 on one with the focus. Flat, no submenu: every entry is a copy. The
+ * columns are copied as the row menu copies rows - tab separated text and an html table, a header line
+ * of the labels with `copyHeaders` - the names as one line of text, a tab between them:
+ *
+ * | id | shown as | shown when |
+ * | --- | --- | --- |
+ * | `column.copy.column` | Copy column (all rows) - the column right clicked, every displayed data row. A column of stacked fields: each of them | |
+ * | `column.copy.selectedColumns` | Copy selected columns (all rows) - the selected columns (`getSelectedColumns()`), every displayed data row. Greyed out with no column selected | |
+ * | `column.copy.namesSeparator` | a line | |
+ * | `column.copy.headers` | Copy header names - the label of every field of the layout | |
+ * | `column.copy.header` | Copy header name - the label of the column right clicked, of each of its fields | |
+ * | `column.copy.selectedHeaders` | Copy selected header names - the labels of the selected columns. Greyed out with no column selected | |
  *
  * @sample context-menu
  * @example
@@ -586,5 +615,14 @@ export const MENU_IDS = {
         'filter.filter.advancedSeparator',
         'filter.filter.advanced',
         'filter.values'
+    ],
+    /** the column menu's ids, right click on a column number */
+    column: [
+        'column.copy.column',
+        'column.copy.selectedColumns',
+        'column.copy.namesSeparator',
+        'column.copy.headers',
+        'column.copy.header',
+        'column.copy.selectedHeaders'
     ]
 } as const;

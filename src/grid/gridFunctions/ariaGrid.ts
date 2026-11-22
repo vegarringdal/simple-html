@@ -21,8 +21,9 @@ import { gridText } from './gridText';
  *
  * - the grid is an element of its own, made by {@link createAriaGrid}. Its children are the header
  *   rows, it owns the body rows in the order of the rows
- * - a header row is an element of its own too: it owns the label cells (columnheader) or the filter
- *   cells (gridcell), in the order of the columns
+ * - a header row is an element of its own too: it owns the label cells (columnheader), the filter
+ *   cells (gridcell) or the column numbers under the filters (gridcell, one per column of the layout,
+ *   spanning its fields), in the order of the columns
  * - a body row is the row element of the row selector section, its own cell is the row number. It
  *   owns the group row's cell and the column elements of the left, middle and right sections, in the
  *   order of the columns
@@ -91,11 +92,29 @@ function sectionCache(ctx: Grid, colType: ColType): ColumnCache[] {
 }
 
 /**
- * The number of header rows a screen reader gets: the labels and the filters, when shown. The
- * column selector (the column numbers under the filters) is hidden from it, see rebuildHeaderColumns
+ * The header rows a screen reader gets, top to bottom: the labels, the filters and the column numbers
+ * under them (`selectSizeHeight`), those shown
+ */
+function shownHeaderRows(config: ParsedGridConfig): ('label' | 'filter' | 'selector')[] {
+    const rows: ('label' | 'filter' | 'selector')[] = [];
+    if (!config.hideLabels) {
+        rows.push('label');
+    }
+    if (!config.hideFilter) {
+        rows.push('filter');
+    }
+    if (config.selectSizeHeight) {
+        rows.push('selector');
+    }
+    return rows;
+}
+
+/**
+ * The number of header rows a screen reader gets: the labels, the filters and the column numbers,
+ * when shown
  */
 export function headerRowCount(config: ParsedGridConfig) {
-    return (config.hideLabels ? 0 : 1) + (config.hideFilter ? 0 : 1);
+    return shownHeaderRows(config).length;
 }
 
 /**
@@ -147,7 +166,7 @@ export function ariaId(ctx: Grid, name: string) {
  * The id of a header cell, see rebuildHeaderColumns
  * @param slot the column element in its section, not the column it shows
  */
-export function headerCellId(ctx: Grid, colType: ColType, slot: number, type: 'label' | 'filter', celno: number) {
+export function headerCellId(ctx: Grid, colType: ColType, slot: number, type: 'label' | 'filter' | 'selector', celno: number) {
     return ariaId(ctx, `${colType}${slot}-${type}${celno}`);
 }
 
@@ -165,26 +184,33 @@ export function createAriaGrid(ctx: Grid) {
     labels.setAttribute('role', 'row');
     const filters = document.createElement('div');
     filters.setAttribute('role', 'row');
+    const numbers = document.createElement('div');
+    numbers.setAttribute('role', 'row');
     grid.appendChild(labels);
     grid.appendChild(filters);
+    grid.appendChild(numbers);
 
     ctx.ariaGrid = grid;
     ctx.ariaLabelRow = labels;
     ctx.ariaFilterRow = filters;
+    ctx.ariaSelectorRow = numbers;
     return grid;
 }
 
 /**
  * The ids of the cells of a header row, in the order of the columns: the corner first (the header
- * of the row numbers) when this is the first header row
+ * of the row numbers) when this is the first header row. A label and a filter per field, a column
+ * number per column
  */
-function headerRowOwns(ctx: Grid, type: 'label' | 'filter', withCorner: boolean) {
+function headerRowOwns(ctx: Grid, type: 'label' | 'filter' | 'selector', withCorner: boolean) {
     const config = ctx.gridInterface.__getGridConfig();
     const ids: string[] = withCorner ? [ariaId(ctx, 'corner')] : [];
     for (const section of SECTIONS) {
         const columns = sectionColumns(config, section);
         for (const { slot, column } of slotsInOrder(sectionCache(ctx, section))) {
-            for (let celno = 0; celno < (columns[column]?.fields.length ?? 0); celno++) {
+            const cells =
+                type === 'selector' ? Math.min(1, columns[column]?.fields.length ?? 0) : (columns[column]?.fields.length ?? 0);
+            for (let celno = 0; celno < cells; celno++) {
                 ids.push(headerCellId(ctx, section, slot, type, celno));
             }
         }
@@ -227,15 +253,17 @@ export function updateAriaGrid(ctx: Grid) {
     setAria(grid, 'aria-colcount', String(ariaColCount(config)));
     setAria(grid, 'aria-multiselectable', datasource.getSelectionMode() === 'multiple' ? 'true' : null);
 
-    // the header rows: the first one also has the corner, the header of the row numbers
-    const labels = ctx.ariaLabelRow;
-    const filters = ctx.ariaFilterRow;
-    labels.hidden = !!config.hideLabels;
-    filters.hidden = !!config.hideFilter;
-    setAria(labels, 'aria-rowindex', config.hideLabels ? null : '1');
-    setAria(filters, 'aria-rowindex', config.hideFilter ? null : String(headerRows));
-    setAria(labels, 'aria-owns', config.hideLabels ? null : headerRowOwns(ctx, 'label', true));
-    setAria(filters, 'aria-owns', config.hideFilter ? null : headerRowOwns(ctx, 'filter', !!config.hideLabels));
+    // the header rows that are shown, each where it is: the first one also has the corner, the header
+    // of the row numbers
+    const shownRows = shownHeaderRows(config);
+    const rowElements = { label: ctx.ariaLabelRow, filter: ctx.ariaFilterRow, selector: ctx.ariaSelectorRow };
+    for (const type of ['label', 'filter', 'selector'] as const) {
+        const index = shownRows.indexOf(type);
+        const element = rowElements[type];
+        element.hidden = index === -1;
+        setAria(element, 'aria-rowindex', index === -1 ? null : String(index + 1));
+        setAria(element, 'aria-owns', index === -1 ? null : headerRowOwns(ctx, type, index === 0));
+    }
 
     // the cells of a body row: the group row's cell, then the column elements of the sections. The
     // column caches are the same for every row, the order is worked out once

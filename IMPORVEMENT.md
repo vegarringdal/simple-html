@@ -2280,6 +2280,55 @@ in the console. All passed. Found and fixed:
 * worth knowing: the editor's textarea (six lines) is 96px high now, 105px with the css's 1.5 line height
   before; a row fitted before keeps its lines, it is shorter now with the same text shown
 
+### The column numbers: Shift / Ctrl selection and a column menu (user request)
+
+* the user: "column under filter should have context menu, support shift/ctrl like rows. context menu is
+  copy column, copy selected columns, copy headers (all header names), copy column header names, copy
+  selected header names"
+* **the selection** (columnSelection.ts, a pure `clickColumn`): a number is a column of the layout - 1
+  based across pinned left, center, pinned right, a column of stacked fields one number (as before, and
+  as `getLayoutFields({ selectedOnly })` reads it). A click: that column only; Ctrl/Cmd+click toggles one
+  (it was Ctrl only, no Cmd); Shift+click (new) the columns from the anchor - the last click without
+  Shift - to it, added to what the anchor's Ctrl+click kept: Shift+click again moves the range, a range
+  after Ctrl+clicks adds to them (the row selection drops those on a second Shift+click, and does not take
+  Cmd - left as it is, see Candidates)
+* **the API**: `getSelectedColumns()`, `selectColumns(numbers)` (a `TypeError` for a number that is no
+  column) and the event `column-selection-change` `{ columns, fields }`, sent only on a change. The
+  numbers are positions: the selection is cleared when the fields of the layout change (`layoutKey`, as
+  the ranges) - it used to stay on the number, another column after a move. Kept on a resize, filter,
+  sort, grouping, rebuild. Not state
+* **rendering**: a selection change renders the numbers in place (`renderColumnNumbers`) instead of
+  rebuilding the header and every row: the number with the focus keeps it
+* **the focus and keys** (columnNumbers.ts): the number's cell has `tabindex="-1"`, a click focuses it
+  (as the row numbers). Shift+F10 / the menu key: the column menu (the browser's `contextmenu`); Ctrl+C:
+  the selected columns (the number's own with none), Esc: none selected (a menu open closes first)
+* **the menu** (contextmenuColumn.ts, `MENU_IDS.column`, the hook `menus.column`, `MenuContext.menu`
+  `'column'`): `column.copy.column`, `.selectedColumns`, `.namesSeparator`, `.headers`, `.header`,
+  `.selectedHeaders` - flat, every entry is a copy. The selected entries are greyed out with none, as the
+  row menu's. Columns are copied as the row menu copies rows (`columnsClipboard` -> `rowsClipboard`: tab
+  separated text and an html table, the header line with `copyHeaders`), every displayed data row; the
+  names are one line, tab separated, no line end and no html (`labelsClipboard`). Texts `column.copy.*`
+* **for a screen reader** the numbers were `aria-hidden` ("for the mouse"); with the focus they can not
+  be (a focusable element must not be hidden): they are a third header row, a `gridcell` per column at
+  its first field's `aria-colindex`, `aria-colspan` over stacked fields, `aria-selected` true / false.
+  Cells, not column headers, as the row numbers. `headerRowCount` counts it: every `aria-rowindex` under
+  it is one more (the first data row is 4), the totals row too
+* docs: guides 17 (Selecting columns, the column menu, the API), 10 (the menu, ids, hook), 12 (texts),
+  14 (the header row, the keys, known limits - the tree example taken again from Chrome), 09 (the event);
+  the ranges and selection samples; the Norwegian texts
+* tests: columnSelection.test.ts (32: clickColumn, real clicks across the sections with Ctrl / Cmd /
+  Shift, the look and the focus kept, the API and its TypeError, the event, cleared on a layout change and
+  kept on the rest, Ctrl+C / Cmd+C / Esc / Shift+F10, the menu's ids, context, greyed out entries and hook,
+  each copy's text and html with and without copyHeaders, a quoted label, stacked columns, group rows and
+  a collapsed group). Changed on purpose: accessibility.test.ts (the third header row: every rowindex and
+  rowcount +1, the "hidden numbers" test is now the row's test), gridMenus.test.ts (unique ids), texts
+  tests (the column menu shown)
+* browser (Chromium 1148, 1300x1400): new `.claude/browser-checks/scripts/column-menu-check.js` 81/81
+  (light and dark: the clicks, the colour, header and rows lined up, Chrome's accessibility tree of the
+  numbers, the menu by mouse, Shift+F10 and the menu key, each copy read back with the clipboard API,
+  Ctrl+C, Esc, a layout change); menus regression 25/25, submenu 40/40, keyboard 52/52, full grid 11/11,
+  row delete 6/6
+
 ## Considered, not done
 
 ## Candidates / not started
@@ -2288,6 +2337,9 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
 
 ### Bugs
 
+* **The row numbers and Cmd**: Ctrl+click toggles a row, Cmd+click does not (`highlightRow` reads
+  `ctrlKey`); a second Shift+click after Ctrl+clicks drops the rows the Ctrl+clicks selected. The column
+  numbers do both
 * **The column chooser and a finger or a drag**: its items have `touch-action: none` (for the drag), so a
   finger can not scroll a long chooser by them; the ghost of a dragged column is on the body, under the
   chooser (top layer)
@@ -2296,6 +2348,9 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
 
 ### Accessibility
 
+* **The column numbers by keyboard**: only a click gets to a number (then Shift+F10, Ctrl+C, Esc work
+  there); Alt+ArrowDown from a header filter goes to the first row. And `aria-multiselectable` follows the
+  row selection mode, while several columns can be selected in every mode
 * **Keyboard**: the days of the date picker and the column chooser are for the mouse (the picker's
   buttons and hour / minute fields can be reached, a date can be typed); the picker opened from a cell is
   put at the end of the body, no key opens it and it does not take the focus - worth doing together with

@@ -116,6 +116,15 @@ const norwegian: Record<TextId, string> = {
     'filter.values.run': 'Bruk',
     'filter.values.cancel': 'Avbryt',
 
+    // the column menu, on a column number
+    'column.copy.column': 'Kopier kolonne',
+    'column.copy.column.hint': 'alle rader',
+    'column.copy.selectedColumns': 'Kopier valgte kolonner',
+    'column.copy.selectedColumns.hint': 'alle rader',
+    'column.copy.headers': 'Kopier kolonnenavnene',
+    'column.copy.header': 'Kopier kolonnenavnet',
+    'column.copy.selectedHeaders': 'Kopier navnene på valgte kolonner',
+
     // the column chooser
     'columnChooser.title': 'Alle felt:',
     'columnChooser.search': 'søk',

@@ -202,6 +202,30 @@ export interface GridEvents {
     };
 
     /**
+     * The selected columns changed: the user clicked a column number (the row of numbers under the
+     * header filters), pressed Esc on one, or `selectColumns()` was called. Also when the grid cleared
+     * them because the fields of the layout changed - a column moved, pinned, hidden or added. Not sent
+     * when nothing changed.
+     *
+     * `columns` is what `gridInterface.getSelectedColumns()` gives now - the numbers, 1 based, `[]` when
+     * none is selected - and `fields` their fields, `getLayoutFields({ selectedOnly: true })`.
+     *
+     * @sample ranges
+     * @example
+     * ```ts
+     * gridInterface.on('column-selection-change', ({ columns, fields }) => {
+     *     console.log(columns.length ? `columns ${columns.join(', ')}: ${fields.join(', ')}` : 'no column selected');
+     * });
+     * ```
+     */
+    'column-selection-change': {
+        /** the selected column numbers, ascending */
+        columns: number[];
+        /** the fields of the selected columns, in the layout's order */
+        fields: string[];
+    };
+
+    /**
      * What Find (Ctrl+F in the grid) has found changed: the find bar opened or closed, the text was
      * typed (sent when the typing stops), the current match moved (Enter, F3, `findNext()` ...), or the
      * matches were found again after the data changed. Not sent when nothing changed.

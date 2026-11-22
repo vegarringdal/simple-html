@@ -1,8 +1,9 @@
 # Selection and clipboard
 
-The grid has two kinds of selection. **Rows** are selected in the datasource: a click on the row
-number, the rows a delete or an export works on. **Ranges of cells** are selected in the grid, as in
-a spreadsheet: drag over the cells, then copy them (they paste into Excel or Google Sheets), paste
+The grid has three kinds of selection. **Rows** are selected in the datasource: a click on the row
+number, the rows a delete or an export works on. **Columns** are selected with the column numbers
+under the header filters, and copied from their menu. **Ranges of cells** are selected in the grid, as
+in a spreadsheet: drag over the cells, then copy them (they paste into Excel or Google Sheets), paste
 cells copied there into the grid, or empty them with Delete.
 
 ```sample ranges
@@ -16,6 +17,88 @@ between - the datasource's selection, `datasource.getSelectedRows()`. See
 export of the selected rows work on these rows.
 
 A range of cells selects no rows, and selecting rows changes no range: they are two things.
+
+## Selecting columns
+
+The row of numbers under the header filters numbers the columns 1, 2, 3 ... across the pinned left,
+the center and the pinned right columns, in the order of `getLayoutFields()`. A column of stacked
+fields (`fields: ['phone', 'age']`) is one number. A click on a number selects columns as a click on
+the row numbers selects rows:
+
+| | does |
+| --- | --- |
+| a click | that column only. Clicked again it stays selected |
+| Ctrl+click, Cmd+click | that column in or out, the others stay |
+| Shift+click | the columns from the one clicked last without Shift to this one, either way, across the pinned sections. Shift+click again changes the range, from the same column; after Ctrl+clicks the range is added to the columns they selected |
+
+The selected numbers have the colour of a selected row, `--simple-html-grid-main-bg-selected-odd`. A
+click puts the focus on the number - not a stop of Tab - and it has keys of its own there:
+
+| key | does |
+| --- | --- |
+| Shift+F10, the menu key | the column menu, the focus on its first item |
+| Ctrl+C, Cmd+C | copies the selected columns, as *Copy selected columns* below - the number's own column when none is selected |
+| Esc | no column selected. With a menu open, Esc closes the menu first |
+
+The columns are selected by their numbers, so the selection is cleared when the fields of the layout
+change - a column moved, pinned, unpinned, hidden or added, `setState({ layout })`,
+`updateConfig({ layout })` - and `column-selection-change` is sent. It is kept when a column is
+resized, on a filter, a sort, grouping and `refresh()`. It selects no rows and no cells, and it is not
+part of `getState()`. `selectSizeHeight: 0` hides the numbers.
+
+The row menu's *Copy › Row (selected rows/col)* copies the selected rows in the selected columns,
+every column when none is selected.
+
+### The column menu
+
+A right click on a column number - Shift+F10 or the menu key on one with the focus - opens the column
+menu, the copies of columns:
+
+| entry | copies |
+| --- | --- |
+| Copy column (all rows) | the column right clicked, every displayed row |
+| Copy selected columns (all rows) | the selected columns, in the order of the layout. Greyed out with none selected |
+| Copy header names | the label of every column |
+| Copy header name | the label of the column right clicked |
+| Copy selected header names | the labels of the selected columns. Greyed out with none selected |
+
+- **The columns** are copied as the row menu copies rows: tab separated text with a header line of
+  the labels (unless `copyHeaders` is false), a line per row ended with CRLF, and an html table of the
+  same cells - see [Copy](#copy). Every displayed data row: the rows the filter lets through, no group
+  rows, and not the rows of a collapsed group (the CSV export has those, `getCsv()`). A column of
+  stacked fields gives a column of text per field, the top one first.
+- **The names** are one line of text, a tab between them and no line end: pasted into a spreadsheet
+  they are a row of cells, into a text a line. A label with a tab, a line break or a double quote is
+  put in double quotes, as in the header line of a copy. No html, and `copyHeaders` does not change
+  them: they are what is copied.
+- A right click does not change the selection: the column right clicked is copied, selected or not.
+
+The menu is flat, without a submenu: every entry is a copy, a *Copy ›* around them would only add a
+step. Its ids are `column.copy.*` (`MENU_IDS.column`), the `menus` hook changes it with its `column`
+function - see [Menus](10-menus.md#the-built-in-ids) - and the texts are `column.copy.*`, see
+[Texts](12-texts.md#column-menu).
+
+### The API of the columns
+
+```ts
+gridInterface.selectColumns([2, 3]);
+gridInterface.getSelectedColumns(); // [2, 3]
+// their fields, a column of two stacked fields gives both
+gridInterface.getLayoutFields({ selectedOnly: true }); // ['country', 'phone', 'age']
+gridInterface.selectColumns([]); // none
+
+gridInterface.on('column-selection-change', ({ columns, fields }) => {
+    console.log(columns.length ? `columns ${columns.join(', ')}: ${fields.join(', ')}` : 'no column selected');
+});
+```
+
+- **`getSelectedColumns()`** gives the numbers, ascending, as a copy. `[]` when none is selected.
+- **`selectColumns(columns)`** replaces the selection, as if the user had clicked; a Shift+click after
+  it selects from the last number given. A number that is no column - not a whole number from 1 to
+  the number of columns - throws a `TypeError`.
+- **`column-selection-change`** is sent each time the selected columns change: a click, Esc,
+  `selectColumns()`, the layout changed. `{ columns, fields }`: the numbers and their fields. Not
+  when nothing changed.
 
 ## Ranges of cells
 
@@ -174,8 +257,9 @@ and thin borders - Word, Google Docs and Excel paste the html, so the table has 
 line break in a cell is a `<br>` with the style Excel reads as a line break in the cell
 (`mso-data-placement:same-cell`).
 
-**The header line** is there for every copy of more than one cell: Ctrl+C on ranges and the row
-menu's *Copy › Column*, *Row*, *Row (selected rows/col)* and *Range*. Not for one cell (Ctrl+C on a
+**The header line** is there for every copy of more than one cell: Ctrl+C on ranges, the row
+menu's *Copy › Column*, *Row*, *Row (selected rows/col)* and *Range*, and the column menu's *Copy
+column* and *Copy selected columns* (Ctrl+C on a column number). Not for one cell (Ctrl+C on a
 cell, *Copy › Cell Value*): that is a value. `copyHeaders: false` in the config copies the values only:
 
 ```ts
@@ -293,7 +377,9 @@ the cell of the current match, which clears the ranges as moving to another cell
 
 ## What a screen reader gets
 
-The cells of a range have `aria-selected="true"`; the other cells have none. The keys are in the
+The cells of a range have `aria-selected="true"`; the other cells have none. The column numbers are a
+header row of their own, a cell per column with `aria-selected` `true` or `false`, see
+[Keyboard and accessibility](14-accessibility.md#what-a-screen-reader-gets). The keys are in the
 table of [Keyboard and accessibility](14-accessibility.md#a-cell), the limits in its
 [Known limits](14-accessibility.md#known-limits): a range made with Alt+Shift+arrows is not read out
 while it grows, the focus stays in the active cell.

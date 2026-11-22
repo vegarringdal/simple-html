@@ -2,7 +2,8 @@
 
 The datasource and the grid interface both send events. The datasource's are about the rows: they
 changed, were sorted, filtered or grouped, the selection or the current row changed. The grid's are
-about the cells: clicks, focus, the ranges of cells selected, copy and paste from the row menu.
+about the cells: clicks, focus, the ranges of cells and the columns selected, copy and paste from the
+row menu.
 
 ## Subscribing: `on()`
 
@@ -208,6 +209,21 @@ they were cleared. See [Selection and clipboard](17-selection-and-clipboard.md#t
 gridInterface.on('range-change', ({ ranges }) => {
     const last = ranges[ranges.length - 1];
     console.log(last ? `rows ${last.fromRow}-${last.toRow}, ${last.fromField} to ${last.toField}` : 'no cells selected');
+});
+```
+
+### `column-selection-change`
+
+`column-selection-change` is sent when the selected columns change: the user clicked a column number
+(the row of numbers under the header filters, Ctrl/Cmd+click and Shift+click too) or pressed Esc on
+one, or `selectColumns()` was called. Also when the grid cleared them because the fields of the
+layout changed - a column moved, pinned, hidden or added. Not when nothing changed. The payload is
+`{ columns, fields }`: the numbers, what `getSelectedColumns()` gives, and their fields. See
+[Selection and clipboard](17-selection-and-clipboard.md#the-api-of-the-columns).
+
+```ts
+gridInterface.on('column-selection-change', ({ columns, fields }) => {
+    console.log(columns.length ? `columns ${columns.join(', ')}: ${fields.join(', ')}` : 'no column selected');
 });
 ```
 

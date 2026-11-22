@@ -154,6 +154,28 @@ export function rowsClipboard(ctx: Grid, rows: Entity[], fields: string[]): { te
 }
 
 /**
+ * Columns for the clipboard, the column menu's Copy column / Copy selected columns: every displayed
+ * data row (`datasource.getRows()` without the group rows - the rows of a collapsed group are not
+ * displayed) in these fields, as the row menu's copies: a table, with the header line (`copyHeaders`)
+ */
+export function columnsClipboard(ctx: Grid, fields: string[]): { text: string; html: string } {
+    const rows = ctx.gridInterface
+        .getDatasource()
+        .getRows()
+        .filter((row): row is Entity => !isGroupRow(row));
+    return rowsClipboard(ctx, rows, fields);
+}
+
+/**
+ * The labels of fields for the clipboard, the column menu's header name copies: one line, a tab
+ * between them, no line end - a label with a tab, a line break or a quote in quotes, as in the header
+ * line of a copy. Text only: names, not a table
+ */
+export function labelsClipboard(ctx: Grid, fields: string[]): string {
+    return fields.map((field) => csvField(getColumnLabel(ctx, field), '\t')).join('\t');
+}
+
+/**
  * The ranges for the clipboard, as one table: the data rows of every range, in the order of the
  * displayed rows, and the fields of every range, in the layout's order. A cell that is in none of the
  * ranges is empty - so two ranges side by side are one wide table, two ranges one above the other one

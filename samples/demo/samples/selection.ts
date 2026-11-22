@@ -6,7 +6,7 @@ export const selection: DemoSample = {
     title: 'Selection',
     group: 'Datasource',
     description:
-        'Click rows to select (ctrl/shift-click for multi select in multiple mode). The selection mode belongs to the datasource: set it in its options or with setSelectionMode(), the grid uses it. The datasource exposes the same operations from code, plus getSelectedRows() to read the current selection.',
+        'Click rows to select (ctrl/shift-click for multi select in multiple mode). The selection mode belongs to the datasource: set it in its options or with setSelectionMode(), the grid uses it. The datasource exposes the same operations from code, plus getSelectedRows() to read the current selection. Columns are selected in the grid, with the numbers under the header filters (click, Ctrl+click, Shift+click): gridInterface.getSelectedColumns(), see the Ranges & clipboard sample.',
     run(stage) {
         const ui = createStage(stage);
         // the datasource owns the selection mode, the grid has no option for it

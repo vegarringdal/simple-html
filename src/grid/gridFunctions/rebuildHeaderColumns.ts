@@ -3,6 +3,7 @@ import type { LayoutColumn } from '../gridConfig';
 import { headerCellId, headerRowCount } from './ariaGrid';
 import { asPx } from './asPx';
 import type { ColType, ColumnCache } from './colType';
+import { addColumnNumberListeners } from './columnNumbers';
 import { createElement } from './createElement';
 import { DIV } from './DIV';
 import { dragEvent } from './dragEvent';
@@ -155,9 +156,12 @@ export function rebuildHeaderColumns(ctx: Grid) {
                     cell.style.height = asPx(config.cellHeight);
                     cell.setAttribute('type', SELECTOR_COLTYPE);
                     cell.setAttribute('cellNo', '0');
-                    // the column numbers are for the mouse (a click selects the column), a keyboard can
-                    // not reach them: a screen reader would only hear a row of numbers
-                    cell.setAttribute('aria-hidden', 'true');
+                    // a cell of the header row of numbers for a screen reader (ariaGrid.ts), it can have
+                    // the focus (a click puts it there): its keys and the column menu, see columnNumbers.ts
+                    cell.id = headerCellId(ctx, coltype, i, SELECTOR_COLTYPE, 0);
+                    cell.setAttribute('role', 'gridcell');
+                    cell.setAttribute('tabindex', '-1');
+                    addColumnNumberListeners(ctx, cell as HTMLCellElement);
 
                     columnElement.appendChild(cell);
                     renderCell(ctx, cell, 0, i, 0, coltype);
@@ -321,8 +325,8 @@ export function rebuildHeaderColumns(ctx: Grid) {
      */
     const selectorTopLeft = getElementByClassName(ctx.element, 'simple-html-grid-header-row-container-selector');
     // the column header of the row numbers, see createDom. A text, it can have changed. In the first
-    // header row (ariaGrid.ts): with the labels and the filters hidden there is none, and a column
-    // header outside a row is not allowed
+    // header row (ariaGrid.ts): with the labels, the filters and the column numbers hidden there is
+    // none, and a column header outside a row is not allowed
     selectorTopLeft.setAttribute('aria-label', gridText(ctx, 'grid.rowSelector'));
     if (headerRowCount(config)) {
         selectorTopLeft.removeAttribute('aria-hidden');

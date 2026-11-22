@@ -368,6 +368,18 @@ const ranges: CellRange[] = created.getRanges();
 created.clearRanges();
 const offRanges: () => void = created.on('range-change', (data) => console.log(data.ranges.length));
 offRanges();
+// the columns selected with the column numbers: 1 based, across the pinned sections
+created.selectColumns([1, 2]);
+const selectedColumns: number[] = created.getSelectedColumns();
+const offColumns: () => void = created.on('column-selection-change', (data) => {
+    const columns: number[] = data.columns;
+    const columnFields: string[] = data.fields;
+    console.log(columns, columnFields);
+});
+offColumns();
+// @ts-expect-error the columns are numbers, not fields: getLayoutFields({ selectedOnly: true }) gives those
+created.selectColumns(['name']);
+console.log(selectedColumns);
 // @ts-expect-error a range has its rows and fields, not cells
 created.setRanges([{ from: 0, to: 2 }]);
 console.log(rangeCsv, ranges);
@@ -413,7 +425,7 @@ const logRow: MenuItem = {
     label: 'Log row',
     hint: 'console',
     action: (context: MenuContext) => {
-        const menu: 'row' | 'header' | 'filter' | 'custom' = context.menu;
+        const menu: 'row' | 'header' | 'filter' | 'column' | 'custom' = context.menu;
         const field: string = context.field;
         const index: number = context.rowIndex;
         const cell: HTMLElement | undefined = context.cell;
@@ -454,13 +466,15 @@ const menus: GridMenus = {
     ],
     header: (defaults) =>
         defaults.map((entry) => (entry.id === 'header.column.hide' ? { ...entry, label: 'Hide column' } : entry)),
-    filter: (defaults) => [...defaults.filter((entry) => entry.id === 'filter.values'), ...defaults]
+    filter: (defaults) => [...defaults.filter((entry) => entry.id === 'filter.values'), ...defaults],
+    // the menu of a column number: without the copies of the selected columns
+    column: (defaults) => defaults.filter((entry) => !entry.id.startsWith('column.copy.selected'))
 };
 const withMenus: GridHooks = { menus };
 gridInterface.updateHooks({ menus: { row: (defaults) => defaults.slice(1) } });
 gridInterface.updateHooks({ menus: undefined });
 const builtInRowIds: readonly string[] = MENU_IDS.row;
-console.log(withMenus, builtInRowIds, MENU_IDS.header[0], MENU_IDS.filter.includes('filter.values'));
+console.log(withMenus, builtInRowIds, MENU_IDS.header[0], MENU_IDS.filter.includes('filter.values'), MENU_IDS.column[0]);
 const pickEntries: MenuEntry[] = [mySection, { id: 'pick.a', label: 'A', action: () => {} }, mySeparator, myBlock, mySubmenu];
 const position: MenuPosition = { x: 10, y: 20 };
 gridInterface.openMenu(new MouseEvent('click'), pickEntries);

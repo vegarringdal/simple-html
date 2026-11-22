@@ -15,7 +15,15 @@ import { MAX_OPTIONS } from '../gridFunctions/lookupEditor';
 import { GridInterface } from '../gridInterface';
 import { registerLookup } from '../lookup';
 import { type MountedGrid, mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { headerFilterInput, menuTreeEntries, openFilterMenu, openLabelMenu, openRowMenu, sleep } from './interactionTestHelpers';
+import {
+    headerFilterInput,
+    menuTreeEntries,
+    openColumnMenu,
+    openFilterMenu,
+    openLabelMenu,
+    openRowMenu,
+    sleep
+} from './interactionTestHelpers';
 
 /**
  * Every text the grid shows comes from the texts. With every text replaced by its id in «» - the
@@ -293,6 +301,13 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     checkMenu();
     (document.querySelector('[data-menu-id="header.column.chooser"]') as HTMLElement).click();
     check();
+
+    // the column menu, on a column number: with a column selected, so every entry is usable
+    gridInterface.selectColumns([1]);
+    openColumnMenu(element, 1);
+    checkMenu();
+    gridInterface.closeMenu();
+    gridInterface.selectColumns([]);
 
     // the filter menus: a number (the range operators), text with its value list, a value list that
     // is cut off, and one with one value (every row has the same notes)

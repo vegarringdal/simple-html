@@ -149,8 +149,8 @@ export interface GridHooks<T = unknown> {
     /**
      * Changes the grid's right click menus: hide entries, reorder them, change their labels, add your
      * own. One function per menu - `row` (a cell), `header` (a header label), `filter` (a header
-     * filter) - that gets the grid's own entries and what the menu was opened on, and returns the
-     * entries to show. Called every time the menu opens. A menu without a function shows its defaults.
+     * filter), `column` (a column number, under the header filters) - that gets the grid's own entries
+     * and what the menu was opened on, and returns the entries to show. Called every time the menu opens. A menu without a function shows its defaults.
      *
      * The ids of the grid's own entries are listed in `MENU_IDS`, see {@link GridMenus} and
      * {@link MenuEntry}. Set or remove the functions later with `gridInterface.updateHooks({ menus })`.
