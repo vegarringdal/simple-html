@@ -199,8 +199,12 @@ const norwegian: Record<TextId, string> = {
 
     // the column chooser
     'columnChooser.title': 'Alle felt:',
-    'columnChooser.search': 'søk',
+    'columnChooser.search': 'Søk',
     'columnChooser.close': 'Lukk',
+    'columnChooser.drag': 'Dra det inn i overskriften for å legge til kolonnen',
+    'columnChooser.rename': 'Gi nytt navn til {label}',
+    'columnChooser.label': 'Navnet til {label}',
+    'columnChooser.label.hint': 'Enter lagrer, Esc avbryter. Tomt: kolonnen får sitt eget navn',
 
     // the filter editor
     'filterEditor.title': 'Filterredigering',
@@ -335,11 +339,21 @@ const norwegian: Record<TextId, string> = {
     'columnSettings.tab.columns': 'Kolonner',
     'columnSettings.tab.detailForm': 'Detaljskjema',
     'columnSettings.detailForm.show': 'Vis detaljskjemaet',
+    'columnSettings.detailForm.expanded': 'Utvidet',
+    'columnSettings.detailForm.expanded.hint':
+        'Slått sammen er skjemaet en smal stripe: knappen i tittelen utvider det, og slår det sammen igjen',
     'columnSettings.detailForm.width': 'Bredde (px)',
-    'columnSettings.detailForm.width.hint': 'Der radene ville fått for lite plass ved siden av, er skjemaet under dem',
+    'columnSettings.detailForm.minWidth': 'Minste bredde (px)',
+    'columnSettings.detailForm.maxWidth': 'Største bredde (px)',
+    'columnSettings.detailForm.maxWidth.none': 'Ingen',
+    'columnSettings.detailForm.width.hint':
+        'Minst 150, mellom minste og største bredde - å dra i venstre kant av skjemaet endrer den også. Der radene ville fått for lite plass ved siden av, er skjemaet under dem',
     'columnSettings.detailForm.fields': 'Feltene i skjemaet',
-    'columnSettings.detailForm.fields.hint': 'Mellomrom tar et felt med i skjemaet eller ut av det, Alt+↑ og Alt+↓ flytter det',
-    'columnSettings.detailForm.fields.hint.mac': 'Mellomrom tar et felt med i skjemaet eller ut av det, ⌥↑ og ⌥↓ flytter det',
+    'columnSettings.detailForm.fields.hint':
+        'Mellomrom tar et felt med i skjemaet eller ut av det, Alt+↑ og Alt+↓ flytter det - eller dra det i håndtaket',
+    'columnSettings.detailForm.fields.hint.mac':
+        'Mellomrom tar et felt med i skjemaet eller ut av det, ⌥↑ og ⌥↓ flytter det - eller dra det i håndtaket',
+    'columnSettings.detailForm.drag': 'Dra for å flytte det',
     'columnSettings.detailForm.multiline': 'Flere linjer',
     'columnSettings.detailForm.hidden': 'Skjult',
     'columnSettings.detailForm.moveUp': 'Flytt opp',
@@ -350,6 +364,9 @@ const norwegian: Record<TextId, string> = {
     'detailForm.row': 'Rad {row}',
     'detailForm.noRow': 'Ingen rad',
     'detailForm.noFields': 'Ingen felt: velg dem med tannhjulet i bunnlinjen, fanen Detaljskjema',
+    'detailForm.collapse': 'Slå sammen detaljene',
+    'detailForm.expand': 'Utvid detaljene',
+    'detailForm.resize': 'Bredden på detaljene',
 
     // the footer
     'footer.rowCount': '{shown} av {total}',

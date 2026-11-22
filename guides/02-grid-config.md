@@ -52,7 +52,9 @@ const gridInterface = createGrid(host, { config, datasource });
 - A field in the layout without an entry in `columns` gets the default options. `company` and
   `born` above have none.
 - A field in `columns` that is not in the layout is not shown. The column chooser in the header
-  menu lists every field the grid knows, and the user can drag one from it into the header.
+  menu lists every field the grid knows - its search finds a field by its label or its name - and the
+  user can drag one from it into the header (each field has a drag handle at its left), and rename a
+  column with the ✎ of its field (see [The column chooser](10-menus.md#the-column-chooser)).
   `gridInterface.getHiddenFields()` returns these fields (`['phone']` above).
 
 The type of a column comes from the datasource's `fields`, not from the config, see
@@ -146,7 +148,8 @@ The [Multiline text](#sample/multiline) sample has buttons for each, and the men
 
 A column's header shows the first of:
 
-1. the label the user gave it in the grid config dialog: `format.label`, state (`GridState.formats`)
+1. the label the user gave it in the grid config dialog or with the ✎ of the column chooser: `format.label`,
+   state (`GridState.formats`)
 2. its `label` in `columns`
 3. the field's `label` in the datasource's `fields`
 4. the field name, with the first letter in upper case and `_` as a space: `first_name` shows as
@@ -213,7 +216,7 @@ Every option is optional.
 | `initialState` | | the sorting, grouping and filter the grid starts with, see [State](03-state.md#the-state-the-grid-starts-in) |
 | `groupAggregates` | `true` | the group rows show the columns' `aggregate`s. `false`: the name of the group only. See [Aggregates](18-aggregates.md) |
 | `totalsRow` | `false` | a row under the rows with the columns' `aggregate`s over the rows the filter lets through. See [Aggregates](18-aggregates.md#the-totals-row) |
-| `detailForm` | none | the current row as a form at the right of the rows: `{ show: true, fields: ['name', 'notes'], width: 300 }`. It is state, the user changes it in the grid config dialog. See [The detail form](#the-detail-form) |
+| `detailForm` | none | the current row as a form at the right of the rows: `{ show: true, fields: ['name', 'notes'], width: 300 }`, and `expanded`, `minWidth`, `maxWidth`. It is state, the user changes it in the grid config dialog, drags its width and collapses it. See [The detail form](#the-detail-form) |
 
 How rows are selected is not a grid option: the datasource has the selection mode, see
 [Datasource](04-datasource.md#the-selection-mode). Readonly cells and css classes from the row, and
@@ -237,18 +240,27 @@ import type { GridConfig } from '@simple-html/grid';
 const config: GridConfig = {
     readonly: false,
     layout: { center: [{ fields: ['name'], width: 150 }, { fields: ['city'], width: 120 }] },
-    // notes is no column of the layout: the form shows it, all its lines
-    detailForm: { show: true, fields: ['name', 'notes', 'city'], width: 320 }
+    // notes is no column of the layout: the form shows it, all its lines. The user drags it between
+    // 200 and 600px wide
+    detailForm: { show: true, fields: ['name', 'notes', 'city'], width: 320, minWidth: 200, maxWidth: 600 }
 };
 ```
 
 - **The user sets it** in the grid config dialog (the gear in the footer), tab *Detail form*: *Show the
-  detail form*, its width, and a list of the fields - the columns of the layout and the other columns
-  of the config - each with a checkbox, in the order of the form. *Move up* / *Move down* (Alt+↑ /
-  Alt+↓ in the list, Space checks a field) change the order. `gridInterface.openDetailFormSettings()`
-  opens the dialog on that tab. See [The grid config dialog](08-formatting.md#the-grid-config-dialog).
+  detail form*, *Expanded*, its width with its min and max, and a list of the fields - the columns of
+  the layout and the other columns of the config - each with a checkbox, in the order of the form. A
+  field is dragged to another place by the handle at its right (a line shows where it goes), and *Move
+  up* / *Move down* (Alt+↑ / Alt+↓ in the list, Space checks a field) move it too.
+  `gridInterface.openDetailFormSettings()` opens the dialog on that tab. See
+  [The grid config dialog](08-formatting.md#the-grid-config-dialog).
 - **It is state**: `GridConfig.detailForm` is the one the grid starts with, `getState().detailForm`
-  the one it shows - save it with the rest, see [State](03-state.md#the-detail-form-in-the-state).
+  the one it shows - what the user did with it too: the fields, the width dragged, collapsed or
+  expanded. Save it with the rest, see [State](03-state.md#the-detail-form-in-the-state).
+- **Collapsed** (`expanded: false`) the form is a strip of 24px at the right of the rows with its title
+  going down - under the rows a bar over the footer. Its title is a button with a chevron (`aria-expanded`):
+  it collapses the form, and expands it again. The button changes `expanded` in the state, as the
+  dialog's *Expanded* does: there is one setting, what the form is now, and the grid starts with the
+  config's (`true` when it is left out) or the state saved.
 - **The row** is the current row (`datasource.currentEntity`): a click on a row, the arrows, code. The
   form follows it, and a value that changes - an edit in a cell, undo, `upsert()`, code - a filter and
   a sort. Without a current row, or with one the filter hides, it says *No row*. Its title has the
@@ -261,14 +273,27 @@ const config: GridConfig = {
   parsed by the field's formatter (a field with the focus shows its `formatForEdit`), validated, its
   errors under it. What is typed in a field is one step of the undo history; Ctrl+Z in a field undoes
   the last step. A lookup column is shown, not edited in the form: its cell picks the value.
-- **Its width** is `width` px, 300 by default, at least 150. The header, the rows, their scrollbars
-  and the totals row end where it starts; the grouping panel and the footer stay as wide as the grid.
+- **The fields** are on the inputs' background in a quiet frame - the controls' frame under the
+  pointer, the focus outline with the focus, the error colour and the errors under it with an error.
+  The frame is `--simple-html-grid-detail-input-border-color`, see
+  [Theming](13-theming.md#the-variables-of-the-grid).
+- **Its width** is `width` px, 300 by default, between `minWidth` (150 by default, never less) and
+  `maxWidth` (none by default). The header, the rows, their scrollbars and the totals row end where it
+  starts; the grouping panel and the footer stay as wide as the grid.
+- **The user drags its left edge** - a mouse, a pen or a finger - to make it wider or narrower: the rows
+  follow as it moves, and the width let go is the state's `width`. It stops at `minWidth`, at `maxWidth`
+  and where the rows would get less room than the form (half the grid) or the scrolling columns less
+  than 150px: a drag does not put it under the rows. The edge is a splitter for the keyboard too: Tab
+  comes to it after the title, ArrowLeft makes the form 10px wider, ArrowRight narrower.
 - **A narrow grid** - where the rows would get less room than the form beside it, or the scrolling
   columns less than 150px (a phone, wide pinned columns) - has the form under the rows instead, over the
-  footer, 40 % of the grid's height. It is laid out again when the grid gets wider or narrower.
+  footer, 40 % of the grid's height. It is laid out again when the grid gets wider or narrower. Its edge
+  is not dragged there.
 - **Keys and screen readers**: the form is a region named by its title (*Details*), each value's label
-  tied to it. Tab comes to it after the footer, Shift+Tab from its first field goes back to the footer.
-  The wheel and a finger over it scroll the form, not the rows. Its texts are `detailForm.*`, see
+  tied to it. Tab comes to it after the footer - the button of its title first, then its edge (a
+  `separator` with its width as `aria-valuenow`, the least and most as `aria-valuemin` /
+  `aria-valuemax`), then its fields - and Shift+Tab from the button goes back to the footer. The wheel
+  and a finger over it scroll the form, not the rows. Its texts are `detailForm.*`, see
   [Texts](12-texts.md#detail-form).
 
 ```sample detail-form

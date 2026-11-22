@@ -207,10 +207,15 @@ const DEFAULTS = {
     'column.select.all': 'All columns',
     'column.select.clear': 'Clear column selection',
 
-    // the column chooser, from the header menu
+    // the column chooser, from the header menu: its search, the tooltip of a field's drag handle, the ✎ of a
+    // field and the input it opens - {label} the column's label, as the list shows it
     'columnChooser.title': 'All Fields:',
-    'columnChooser.search': 'search',
+    'columnChooser.search': 'Search',
     'columnChooser.close': 'Close',
+    'columnChooser.drag': 'Drag it into the header to add the column',
+    'columnChooser.rename': 'Rename {label}',
+    'columnChooser.label': 'Label of {label}',
+    'columnChooser.label.hint': 'Enter saves, Esc cancels. Empty: the column has its own label',
 
     // the filter editor
     'filterEditor.title': 'Filter Editor',
@@ -361,11 +366,21 @@ const DEFAULTS = {
     'columnSettings.tab.columns': 'Columns',
     'columnSettings.tab.detailForm': 'Detail form',
     'columnSettings.detailForm.show': 'Show the detail form',
+    'columnSettings.detailForm.expanded': 'Expanded',
+    'columnSettings.detailForm.expanded.hint':
+        'Collapsed, the form is a narrow strip: the button of its title expands it, and collapses it again',
     'columnSettings.detailForm.width': 'Width (px)',
-    'columnSettings.detailForm.width.hint': 'Where the rows would get too little room beside it, the form is under them',
+    'columnSettings.detailForm.minWidth': 'Min width (px)',
+    'columnSettings.detailForm.maxWidth': 'Max width (px)',
+    'columnSettings.detailForm.maxWidth.none': 'None',
+    'columnSettings.detailForm.width.hint':
+        'At least 150, between the min and the max width - a drag of the left edge of the form changes it too. Where the rows would get too little room beside it, the form is under them',
     'columnSettings.detailForm.fields': 'Fields of the form',
-    'columnSettings.detailForm.fields.hint': 'Space puts a field in the form or takes it out, Alt+↑ and Alt+↓ move it',
-    'columnSettings.detailForm.fields.hint.mac': 'Space puts a field in the form or takes it out, ⌥↑ and ⌥↓ move it',
+    'columnSettings.detailForm.fields.hint':
+        'Space puts a field in the form or takes it out, Alt+↑ and Alt+↓ move it - or drag it by its handle',
+    'columnSettings.detailForm.fields.hint.mac':
+        'Space puts a field in the form or takes it out, ⌥↑ and ⌥↓ move it - or drag it by its handle',
+    'columnSettings.detailForm.drag': 'Drag to move it',
     'columnSettings.detailForm.multiline': 'Several lines',
     'columnSettings.detailForm.hidden': 'Hidden',
     'columnSettings.detailForm.moveUp': 'Move up',
@@ -374,11 +389,15 @@ const DEFAULTS = {
     'columnSettings.detailForm.reset.tooltip': 'The detail form the grid starts with',
 
     // the detail form (GridConfig.detailForm): its title, the row it shows - {row} its number, as the row
-    // numbers show it - and what it says without a row or without fields
+    // numbers show it - and what it says without a row or without fields. The tooltips of the button of
+    // its title, the name of the splitter of its left edge
     'detailForm.title': 'Details',
     'detailForm.row': 'Row {row}',
     'detailForm.noRow': 'No row',
     'detailForm.noFields': 'No fields: pick them with the gear in the footer, tab Detail form',
+    'detailForm.collapse': 'Collapse the details',
+    'detailForm.expand': 'Expand the details',
+    'detailForm.resize': 'Width of the details',
 
     // the footer: the row count and the filter as chips
     'footer.rowCount': '{shown}/{total}',

@@ -346,13 +346,15 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
 }
 
 /**
- * The detail form - with a row, without one, without fields - and the Detail form tab of the grid config
- * dialog: a field of several lines and one that is not in the layout in its list, on a Mac too
+ * The detail form - with a row, without one, without fields, collapsed - and the Detail form tab of the
+ * grid config dialog: a field of several lines and one that is not in the layout in its list, on a Mac too
  */
 function showDetailForm({ datasource, gridInterface }: MountedGrid, check: () => void) {
     const before = gridInterface.getState().detailForm;
-    gridInterface.setState({ detailForm: { show: true, fields: ['name', 'notes', 'extra'] } });
+    gridInterface.setState({ detailForm: { show: true, fields: ['name', 'notes', 'extra'], expanded: false } });
     datasource.setRowAsCurrentEntity(0);
+    check();
+    gridInterface.setState({ detailForm: { show: true, fields: ['name', 'notes', 'extra'] } });
     check();
 
     gridInterface.openDetailFormSettings();
@@ -474,6 +476,12 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     checkMenu();
     (document.querySelector('[data-menu-id="header.column.chooser"]') as HTMLElement).click();
     check();
+    // the ✎ of a field: its label an input, then Esc
+    (document.querySelector('.simple-html-grid-chooser-rename') as HTMLElement).click();
+    check();
+    document
+        .querySelector('.simple-html-grid-chooser-label-input')
+        ?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
 
     // the column menu, on a column number: with a column selected, so every entry is usable
     gridInterface.selectColumns([1]);

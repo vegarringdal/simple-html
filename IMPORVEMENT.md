@@ -3594,6 +3594,114 @@ in the console. All passed. Found and fixed:
   column-settings-operator 13/13, display-format 39/39, full-grid 11/11, custom-cells 39/39. The new script
   is in this worktree's `.claude/browser-checks/scripts/`
 
+### Detail form: collapse, softer fields, min / max and a drag of its width, fields dragged; the column chooser (user request)
+
+* the user (screenshots of the form and the dialog's tab): "We should be able to hide/collapse. In detail
+  form, it should allow us to set expanded by default, else it's collapsed", "borders for an input
+  shouldn't be that strong, but more dimmed with background", "be able to set min/max would be nice, also
+  allow user to resize it could be also nice", "be able to drag/drop on reorder here be nice to have,
+  simple, can have a drag handle right side", "column chooser search isn't easy to see, and with also might
+  drag icon on the left side, so it shows better what to do?" and later "column chooser should also let us
+  override the label"
+* **state** (`DetailForm`, additive): `expanded?: boolean` (default `true`), `minWidth?` (default and at
+  least 150), `maxWidth?` (default none). copyDetailForm keeps each only when given; assertDetailForm
+  checks them (numbers of px, a boolean, `minWidth` not more than `maxWidth` - a TypeError, nothing
+  changes). `width` is laid out between them (detailFormLimits / detailFormWidth), the state keeps what it
+  was given (as `width` under 150 before). JSDoc of `DetailForm`, `GridConfig.detailForm`,
+  `GridState.detailForm` with examples; the typings consumer has them
+* **one `expanded`, not two**: the title's button and the dialog's *Expanded* change the same part of the
+  state - what the form is now (as *Width* shows the width dragged). The config's `expanded` is what the
+  grid starts with, a saved state gives back what the user made it. A second field (a default beside the
+  user's toggle) would only matter where no state is saved, the default is the config there already. So
+  the dialog says *Expanded* (not *Expanded by default*), its hint says the button changes it too.
+  Documented in guide 02 and 03
+* **collapsed** (detailForm.ts): the title bar is a button (chevron + *Details*, `aria-expanded`,
+  `aria-controls` the body, a tooltip *Collapse the details* / *Expand the details*) - toggleDetailForm,
+  `setState({ detailForm })`. Collapsed the form takes DETAIL_FORM_COLLAPSED (24px) where it is: a strip
+  at the right of the rows (the title going down, `writing-mode: vertical-rl`, the chevron pointing left),
+  a bar under them in a narrow grid (the chevron up). Where it is follows the expanded width, so it does
+  not jump sides when it is toggled. The same elements expanded and collapsed: the button keeps the
+  focus. The body is empty and hidden while collapsed (no stops of Tab in it)
+* **the fields** (grid.css): a quiet frame at rest - the new variable `--simple-html-grid-detail-input-
+  border-color` (`light-dark(#d4d4d4, #5f6b7a)`; TreDeSpace slate-300 / slate-700, the library's fields)
+  - on the inputs' background, the controls' frame (3:1) under the pointer and with the focus, the focus
+  outline as before; an error keeps the error colour under the pointer and with the focus, the red bar
+  and the message under the field unchanged. theme tests: the new variable has a TreDeSpace colour, and
+  a new contrast test - the frame 1.25:1 or more to the form and to the field, less than the controls'
+  frame, the focus outline 3:1 to the field - in both themes, light and dark
+* **its width dragged** (new detailFormResize.ts): the left edge is a splitter (`role="separator"`,
+  focusable, `aria-orientation`, `aria-valuenow` the width, `aria-valuemin` the min, `aria-valuemax` the
+  least of `maxWidth` and the room at the right - half the grid, the scrolling columns keep 150px: a drag
+  never puts the form under the rows). A pointer drag (followPointer, captured, `touch-action: none`)
+  lays out once a frame, pointercancel gives the width back, a press that does not move changes nothing.
+  ArrowLeft wider, ArrowRight narrower (10px). resizeDetailForm: the state's `width`, then
+  updateMainElementSizes and horizontalScrollHandler - no rebuild (`__dataSourceUpdated` walks every row),
+  but a rebuild when the scrolling columns get more room than they have column elements for
+  (getMiddleColumnsNeeded) - the columns area is right while it moves. Not shown collapsed (not rendered)
+  nor under the rows (css). 6px, 10px on touch, the column resize handle's colour under the pointer
+* **Tab** (tabExit.ts, additive): detailFormStops is exported and has the button and the splitter first:
+  Tab from the footer comes to the title's button, Shift+Tab from it goes back to the footer
+* **tooltips**: the grid attached its tooltips to the rows only - the form and the column chooser get
+  attachTooltips of their own (the `tooltips` option asked), so their `data-tooltip`s show
+* **the dialog's tab** (detailFormSettings.ts): *Expanded* with its hint; *Width*, *Min width*, *Max
+  width* side by side (empty min / max: none, placeholders `150` / *None*); setWidths keeps min <= width
+  <= max, each at least 150 - the one typed keeps its value, the others follow; what is no number leaves
+  them. Each field has a drag handle at its right (aria-hidden, tooltip *Drag to move it*): dragField -
+  the pointer captured, a 2px line in the accent colour where it goes (before an option, or under the
+  last), the dragged one quiet, the list scrolls near its edges, let go it moves there (moveField) and is
+  picked; on itself nothing. Mouse, pen, finger. Move up / Move down and Alt+↑ / Alt+↓ as before; the hint
+  says the handle. Apply sets `expanded` only when collapsed, the min / max only when set
+* **the drag handle** (new icons.ts): six dots (6x10, `currentColor`, the quiet text colour, a grab
+  cursor) - the same in the dialog's list (right) and in the column chooser (left). icons.ts has the pencil,
+  the magnifying glass and the chevron too
+* **the column chooser** (contextMenuColumnChooser.ts): the search is framed as the dialogs' inputs (a
+  `<label>` with the controls' frame, the inputs' background, a magnifying glass, the focus outline on the
+  frame), placeholder and name *Search* (`columnChooser.search` was `search`); it finds a column by its
+  label (getColumnLabel - a label of the user's too) or its field name - it found the names only - and
+  the list is in the order of the labels (it was the names'). columnChooserFields. Each field: the handle
+  at its left, the label, a ✎ at its right
+* **the ✎ of a field** (the user's later request): a button *Rename {label}*, shown under the pointer and
+  with the focus, always on a touch screen (24px there). It turns the label into an input with it, the
+  focus in it, all selected; Enter (or leaving it) saves, Esc cancels (not the chooser's Esc), empty is the
+  column's own label (the input's placeholder). renameColumn sets `ColumnFormat.label` in the state's
+  formats - the grid config dialog's *Label* - the other parts of the format kept, a format of only a label
+  taken out, nothing when it is the label it has. A press in the input or on the ✎ does not drag the
+  field. The focus goes back to the ✎ after Enter / Esc. Every render of the chooser makes its dragEvent
+  listeners again (an AbortController per render: before, only a search did)
+* touch: compact - the chooser's search 24px as the other searches (it was the 28px row height), its
+  rows 28px as before; the form's title bar 22px
+* texts: 13 new (`detailForm.collapse`, `.expand`, `.resize`; `columnSettings.detailForm.expanded`,
+  `.expanded.hint`, `.minWidth`, `.maxWidth`, `.maxWidth.none`, `.drag`; `columnChooser.drag`, `.rename`,
+  `.label`, `.label.hint`), 4 changed (`columnChooser.search` *Search*, `columnSettings.detailForm.
+  width.hint`, `.fields.hint` and its Mac one); guide 12, the Norwegian sample; the texts test walks the
+  form collapsed and the chooser's input
+* docs: guide 02 (*The detail form*: collapsed, the fields' look, min / max, the drag of the edge, the
+  keys; the column chooser's search, handle and ✎), 03 (the state's new parts, one `expanded`), 08 (the
+  dialog's tab, *Label* and the ✎), 10 (a section *The column chooser*, touch), 13 (the new variable; the
+  chooser's search on the inputs' background), 14 (the button and the splitter, the chooser's keys); the
+  sample *Detail form* (min 200 / max 600, a Collapse / expand button, the description)
+* tests: detailForm.test.ts 31 -> 46 (collapsed: the button, its tooltip, the strip, focus kept, under the rows a
+  24px bar, Tab; min / max laid out and their TypeErrors; the splitter's attributes, a drag live / at its
+  limits / pointercancel / a press, its keys, the rebuild when the column elements are too few; the Tab
+  tests: the button is the first stop), detailFormSettings.test.ts 10 -> 19 (Expanded, the widths and
+  setWidths, Reset / Cancel of them, the handles, a drag with its line, up / on itself / cancel, a click on
+  a handle), new columnChooser.test.ts 13 (the search framed, the tooltips, labels sorted, found by label / name / a
+  user's label, the handles, a press on the ✎ is no drag, rename: Enter / Esc / blur / empty keeps the
+  other parts, renameColumn), themeTredespace.test.ts +4, texts.test.ts (the walk). 3592 tests, 155 files
+* browser (Chromium 1148, port 8096): new `detail-form-more-check.js` 120/120 in the four looks (the
+  fields' frames and their contrast, hover, focus, an error in the full grid; collapse by a click, Enter,
+  Space - the strip, the rows to its edge; Tab: the button, the splitter, its keys; a mouse drag live,
+  stopped at min 200 / the room; the state round trip; the dialog: Expanded, Min over the width, a field
+  dragged by its handle with the line, Alt+↑, Apply; a phone: under the rows, collapsed to a 24px bar by a
+  tap, a field dragged by a finger) and `column-chooser-more-check.js` 76/76 (the search framed, its focus,
+  sorted, found by name / by a user's label, the handles, a field dragged into the header, the tooltips,
+  the ✎ under the pointer, rename / Esc / empty / keys, a phone: the ✎ 24px always, a tap and a label).
+  Both in this worktree's `.claude/browser-checks/scripts/`. The shared checks, unchanged, against this build: detail-form 91/91, column-settings 144/144,
+  full-grid 11/11, keyboard 53/53, touch 61/61, menus-regression 25/25
+* **open**: the chooser's drop on a label's center replaces that column (dragEvent's, as before); the
+  sticky hover of the title's button after a tap on a phone (as the other buttons); a double click on the
+  splitter to go back to the default width, Home / End on it - not made
+
 ## Considered, not done
 
 ## Candidates / not started
@@ -3659,7 +3767,7 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
   entry in the row menu; a `HYPERLINK` in the Excel export (a formula of data, Excel's 255 characters); the
   dialog's own undo (the filter editor has one); `placeholderRow` and `focusButton` on a link cell; more of
   the column in the dialog (its width, aggregates, readonly) - the whole of a column's view in one place;
-  the column chooser's search finds the field names, not the labels (a label of the user's included); the
+  the
   group chips keep the title they were grouped with when the label changes after (`GroupArgument.title`);
   a checkbox column's header filter as a checkbox (it is typed now: `1`)
 * **Display formats, more** (see *Display formats* above): grouping by the format - a group per week,

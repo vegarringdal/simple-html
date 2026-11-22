@@ -528,8 +528,10 @@ hides the gear ([Grid config](02-grid-config.md#grid-options)).
 Its title is *Grid config*. Under the title bar are two tabs:
 
 - **Columns**, below: the settings of each column. `openColumnSettings()` opens the dialog on it.
-- **Detail form**: the detail form at the right of the rows - *Show the detail form*, its width, and the
-  fields it shows in their order. `openDetailFormSettings()` opens the dialog on it. See
+- **Detail form**: the detail form at the right of the rows - *Show the detail form*, *Expanded*, its
+  width with its *Min width* and *Max width* (empty: none; the one typed keeps its value, the others
+  follow it), and the fields it shows in their order - each with a drag handle at its right that drags
+  it to another place, a line showing where. `openDetailFormSettings()` opens the dialog on it. See
   [The detail form](02-grid-config.md#the-detail-form).
 
 The tabs are a tab list: Tab comes to the tab shown, ArrowLeft / ArrowRight (Home / End) show another.
@@ -541,7 +543,8 @@ The Columns tab:
 - **The columns** of the layout are at the left, in their order, each with its label, its type and
   what it has set - *Format*, *Text*, *Link*, *Checkbox*, *Blank / 0*, *Label*, *Placeholder*, or
   *Error*. The arrows, Home, End, PageUp / PageDown and a letter pick one, a click too.
-- **Label**, every column: the column's label - empty is the column's own, which the input shows. It
+- **Label**, every column: the column's label - empty is the column's own, which the input shows. The ✎ of
+  the column chooser sets it too ([The column chooser](10-menus.md#the-column-chooser)). It
   is the label wherever the grid names the column, the exports' headers too.
 - **A date, datetime or number column** has its format: a picker that opens the entries of Format ›,
   the same list as the header menu. A number column has *Show blank as 0* and *Show 0 as blank* too,

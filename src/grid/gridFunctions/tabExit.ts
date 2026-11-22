@@ -105,8 +105,8 @@ export function tabLeavesFilters(ctx: Grid, column: number, celno: number, colTy
  * has one stop, the button that expands and collapses it (renderRowGroup.ts): Tab from the last cell of
  * the row before it, Shift+Tab from the first cell of the row after it - Alt+arrows, Enter and the jump
  * keys (jumpKeys.ts) skip it, they move between cells. After the last row the footer's buttons (Clear and
- * the filter chips, or "No filter" without a filter) are stops, then the fields of the detail form
- * (detailForm.ts) while it is shown, then Tab leaves the grid; Shift+Tab from the first of them goes back
+ * the filter chips, or "No filter" without a filter) are stops, then the detail form - the button of its
+ * title, its edge, its fields (detailForm.ts) - while it is shown, then Tab leaves the grid; Shift+Tab from the first of them goes back
  * to the last row.
  */
 
@@ -185,16 +185,17 @@ function footerStops(ctx: Grid): HTMLElement[] {
 }
 
 /**
- * The stops of Tab in the detail form (detailForm.ts), in their order: its fields and links. None while
- * it is not shown. It is the last element of the grid before the end Tab leaves it from: the browser's
- * Tab goes from its last stop out of the grid
+ * The stops of Tab in the detail form (detailForm.ts), in their order: the button of its title (it
+ * collapses and expands the form), the splitter of its edge (`tabindex="0"`), its fields and links.
+ * None while it is not shown. It is the last element of the grid before the end Tab leaves it from: the
+ * browser's Tab goes from its last stop out of the grid
  */
-function detailFormStops(ctx: Grid): HTMLElement[] {
+export function detailFormStops(ctx: Grid): HTMLElement[] {
     const form = ctx.detailForm;
     if (!form || form.hidden) {
         return [];
     }
-    return Array.from(form.querySelectorAll<HTMLElement>('input, textarea, a[href]'));
+    return Array.from(form.querySelectorAll<HTMLElement>('button, [tabindex="0"], input, textarea, a[href]'));
 }
 
 /**
