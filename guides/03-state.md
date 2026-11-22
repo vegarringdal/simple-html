@@ -17,8 +17,8 @@ it with `getState()`, give it back with `setState()`, and go back to the start w
 | `headerFilters` | what each header filter cell shows: the value, the operator picked in its menu and its Match case |
 | `aggregates` | the aggregate functions of the columns, keyed by field (`{ balance: ['sum', 'avg'] }`): what `ColumnConfig.aggregate` starts with and the header menu changes, see [Aggregates](18-aggregates.md#from-the-header-menu) |
 | `totalsRow` | whether the totals row is shown: `GridConfig.totalsRow`, turned on and off in the header menu |
-| `formats` | the display formats of the columns, keyed by field (`{ born: { date: 'weekIso' } }`, `{ email: { link: { url: 'mailto:{email}' } } }`): what `ColumnConfig.format` starts with and the header menu's Format › and the grid config dialog change, see [Display formats](08-formatting.md#display-formats) and [Templates and links](08-formatting.md#templates-and-links) |
-| `detailForm` | the detail form: whether it is shown, its fields in their order and its width (`{ show: true, fields: ['name', 'notes'], width: 300 }`) - what `GridConfig.detailForm` starts with and the grid config dialog changes, see [The detail form](02-grid-config.md#the-detail-form) |
+| `formats` | the display formats of the columns, keyed by field (`{ born: { date: 'weekIso' } }`, `{ email: { link: { url: 'mailto:{email}' } } }`): what `ColumnConfig.format` starts with and the header menu's Format ›, the grid config dialog and the column chooser's ✎ (a label) change, see [Display formats](08-formatting.md#display-formats) and [Templates and links](08-formatting.md#templates-and-links) |
+| `detailForm` | the detail form: whether it is shown, its fields in their order, its width (dragged too) and its least and most width, expanded or collapsed (`{ show: true, fields: ['name', 'notes'], width: 300 }`) - what `GridConfig.detailForm` starts with and the grid config dialog, the form's edge and its title change, see [The detail form](02-grid-config.md#the-detail-form) |
 
 ```ts
 const state = gridInterface.getState();
@@ -173,19 +173,25 @@ gridInterface.setState({ formats });
 - It is plain JSON: a state saved with `JSON.stringify` gives the same formats back.
 - The rest of what the user sets in the grid config dialog is in a column's format too - its
   `label`, the header filter's `placeholder` / `placeholderLabel`, a number column's `numberOverride`,
-  `checkbox`, the colour `rules` - so it is saved and given back with the formats, see
-  [Label, placeholder, blank / 0, checkboxes](08-formatting.md#label-placeholder-blank--0-checkboxes) and
+  `checkbox`, `multiline`, `readonly`, the colour `rules` - so it is saved and given back with the formats, see
+  [Label, placeholder, blank / 0, checkboxes, multiline, read only](08-formatting.md#label-placeholder-blank--0-checkboxes-multiline-read-only) and
   [Colour rules](08-formatting.md#colour-rules). A rule's value is text as it is typed in the header
   filter (`'2026-11-22'`), so a saved rule reads the same.
 
 ## The detail form in the state
 
 `detailForm` is the detail form at the right of the rows: whether it is shown, the fields it shows in
-their order, and its width - a view setting of the user, like the columns.
+their order, its width and its least and most width, and whether it is expanded or collapsed - a view
+setting of the user, like the columns.
 
 ```ts
 gridInterface.setState({ detailForm: { show: true, fields: ['company', 'notes', 'orderDate'], width: 300 } });
 gridInterface.getState().detailForm; // { show: true, fields: ['company', 'notes', 'orderDate'], width: 300 }
+
+// collapsed to a strip, dragged between 200 and 500px
+gridInterface.setState({
+    detailForm: { show: true, fields: ['company', 'notes'], width: 300, expanded: false, minWidth: 200, maxWidth: 500 }
+});
 ```
 
 - It starts as `GridConfig.detailForm` (or `initialState.detailForm`), none by default
@@ -193,15 +199,21 @@ gridInterface.getState().detailForm; // { show: true, fields: ['company', 'notes
   sets it, `updateConfig()` without it keeps the user's.
 - The user changes it in the grid config dialog, tab *Detail form*: its Apply is a
   `setState({ detailForm })`. Save `getState()` to keep it.
+- And on the form itself: the width dragged at its left edge (or its arrow keys) is `width`, the button
+  of its title sets `expanded` - `false` collapsed, `true` expanded; left out it is expanded. The
+  dialog's *Expanded* is the same `expanded`: one setting, what the form is now.
+- `width` is laid out between `minWidth` (at least 150) and `maxWidth`, the state keeps what it was
+  given. `minWidth` and `maxWidth` are left out when they are none, `expanded` when it was not set.
 - A field is listed once; a field that is no column is shown too, labelled as the column chooser
-  labels it. `show` that is not a boolean, `fields` that is not a list of names or a `width` that is no
-  number of px throws a `TypeError`, and nothing of the state changes.
+  labels it. `show` or `expanded` that is not a boolean, `fields` that is not a list of names, a
+  `width`, `minWidth` or `maxWidth` that is no number of px, or a `minWidth` more than the `maxWidth`
+  throws a `TypeError`, and nothing of the state changes.
 - It is plain JSON.
 
 ## Header filters in the state
 
 `headerFilters` is keyed by field. Only the columns whose header filter has a value, an operator
-picked in its menu or Match case on are listed:
+picked in its menu, Match case on or filter as you type turned on or off by the user are listed:
 
 ```ts
 import type { GridState } from '@simple-html/grid';
@@ -211,7 +223,9 @@ const headerFilters: GridState['headerFilters'] = {
     age: { value: 30, operator: 'LESS_THAN_OR_EQUAL_TO' }, // the operator picked in the menu
     city: { value: 'Oslo', caseSensitive: true }, // Match case on in its menu: OSLO is left out
     balance: { value: [1000, 5000], operator: 'BETWEEN' }, // typed as 1000..5000
-    active: { value: true } // a boolean column's checkbox
+    active: { value: true }, // a boolean column's checkbox
+    notes: { value: null, filterOnType: true }, // filter as you type turned on in its operator choice
+    due: { value: new Date(2026, 10, 16), operator: 'EQUAL' } // `2026-W47` typed, the column shown as weekIso
 };
 ```
 
@@ -221,6 +235,19 @@ column does not offer (its `filterOperators` changed since it was saved) is pass
 `operator` is used. Match case (`caseSensitive`) is state too, `true` or left out; a column with
 `filterCaseSensitive` always matches case, whatever the state has. A `BETWEEN`'s value is
 `[from, to]`, an open end `null`. See [Filtering](06-filtering.md#header-filters).
+
+Filter as you type (`filterOnType`) is the user's, `true` or `false`: listed only when it differs from
+the column's default (its `filterOnType`, else the grid's), so `resetState()` goes back to the config's.
+See [Filter as you type](06-filtering.md#filter-as-you-type).
+
+A column that filters as shown - a display format such as `weekIso`, see
+[Filter as shown](08-formatting.md#filter-as-shown) - stores its value as any date column does: a
+`Date`, the **start of the period typed**. `2026-W47` is Monday 2026-11-16 00:00, `2026-11` November 1,
+`2026-W40..2026-W47` the Mondays of both weeks (`[from, to]`). The cell shows it in the format again,
+`2026-W47`; through JSON the Date is its ISO text (`'2026-11-15T23:00:00.000Z'` in Oslo), which the cell
+reads the same. The conditions of the whole week are in `filter`: the state has both, as `getState()`
+gives them. A state of a week typed when the column was shown as weeks, set after its format changed,
+shows the date in the new format - the filter is what was saved until the header filter runs again.
 
 To set a filter from code that the header also shows, set both:
 

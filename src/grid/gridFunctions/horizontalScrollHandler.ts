@@ -65,25 +65,7 @@ export function horizontalScrollHandler(ctx: Grid, scrollLeft: number, type: Col
         cached.left = columnLefts[cached.column] + offset;
     });
 
-    // the header: one column element per column element of a row. Its cells show the column at its
-    // left, whatever the row: rendered when it is made (rebuildHeaderColumns), again when it moves
-    columnCache.forEach((cached, i) => {
-        const header = ctx.columnsHeaders.get(type + i.toString());
-        if (!header) {
-            return;
-        }
-        if (cached.column === -1) {
-            header.style.display = 'none';
-            return;
-        }
-        if (placeColumn(header, cached.left, columns[cached.column].width)) {
-            for (let c = 0; c < header.children.length; c++) {
-                // the resize handle has no cellNo, parseInt('') is NaN like parseInt(null)
-                const cellNo = parseInt(header.children[c].getAttribute('cellNo') ?? '', 10);
-                renderCell(ctx, header.children[c] as HTMLElement, 0, cached.column, cellNo, type);
-            }
-        }
-    });
+    placeHeaderColumns(ctx, type);
 
     // the rows on screen. A row element verticalScrollHandler has not shown - hidden, or new and not
     // rendered yet - is left: it renders all the columns of a row when it shows it
@@ -95,4 +77,40 @@ export function horizontalScrollHandler(ctx: Grid, scrollLeft: number, type: Col
 
     // the cells of the rows in the order of the columns, see ariaGrid.ts
     updateAriaGrid(ctx);
+}
+
+/**
+ * The header of a section: one column element per column element of a row (the section's
+ * columnCache). Its cells show the column at its left, whatever the row: rendered when it is made
+ * (rebuildHeaderColumns), again when it moves - placed where the column element of the rows is.
+ *
+ * horizontalScrollHandler calls it after a scroll. rebuildHeaderColumns calls it after it made the
+ * header anew: it makes the column elements at the start of the section, and a header rendered on its
+ * own - an operator picked in a header filter, a filter applied from its menu - while the middle section
+ * was scrolled sideways showed the first columns instead of the ones in view, until the next scroll
+ */
+export function placeHeaderColumns(ctx: Grid, type: ColType) {
+    const { columns, columnCache } = pinnedSection(ctx, type);
+    columnCache.forEach((cached, i) => {
+        const header = ctx.columnsHeaders.get(type + i.toString());
+        if (!header) {
+            return;
+        }
+        if (cached.column === -1) {
+            header.style.display = 'none';
+            return;
+        }
+        // a column of a layout that changed since the rows were rendered: their render places it
+        const column = columns[cached.column];
+        if (!column) {
+            return;
+        }
+        if (placeColumn(header, cached.left, column.width)) {
+            for (let c = 0; c < header.children.length; c++) {
+                // the resize handle has no cellNo, parseInt('') is NaN like parseInt(null)
+                const cellNo = parseInt(header.children[c].getAttribute('cellNo') ?? '', 10);
+                renderCell(ctx, header.children[c] as HTMLElement, 0, cached.column, cellNo, type);
+            }
+        }
+    });
 }

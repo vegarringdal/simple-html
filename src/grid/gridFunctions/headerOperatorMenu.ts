@@ -90,12 +90,14 @@ export function operatorPicked(ctx: Grid, attribute: string, operator: FilterOpe
 }
 
 /**
- * For a render of the header: the header filter input with the focus now - the document's, or the
- * shadow root's the grid is in - gets it back after, the input in its place (its `filter-cellpos-`
- * class) when it was made anew. Nothing when the focus is elsewhere, or stayed on its input
+ * For a render of the header, or of the rows after a filter: the header filter input with the focus now
+ * - the document's, or the shadow root's the grid is in - gets it back after, the input in its place
+ * (its `filter-cellpos-` class) when it was made anew, its caret (or the text selected) where it was when
+ * it has the same text - filter as you type renders the rows while the user types (filterOnType.ts).
+ * Nothing when the focus is elsewhere, or stayed on its input
  * @returns call it after the render
  */
-function keepHeaderFilterFocus(ctx: Grid): () => void {
+export function keepHeaderFilterFocus(ctx: Grid): () => void {
     const root = ctx.element.getRootNode() as Partial<DocumentOrShadowRoot>;
     const focused = root.activeElement;
     if (
@@ -106,10 +108,18 @@ function keepHeaderFilterFocus(ctx: Grid): () => void {
         return () => {};
     }
     const place = Array.from(focused.classList).find((name) => name.startsWith('filter-cellpos-'));
+    const { value, selectionStart, selectionEnd } = focused;
     return () => {
-        if (!focused.isConnected && place) {
-            // the cell is where it was, the grid must not scroll to it
-            (ctx.element.getElementsByClassName(place)[0] as HTMLElement | undefined)?.focus({ preventScroll: true });
+        if (focused.isConnected || !place) {
+            return;
+        }
+        // the cell is where it was, the grid must not scroll to it
+        const input = ctx.element.getElementsByClassName(place)[0];
+        if (input instanceof HTMLInputElement) {
+            input.focus({ preventScroll: true });
+            if (input.value === value && selectionStart !== null && selectionEnd !== null) {
+                input.setSelectionRange(selectionStart, selectionEnd);
+            }
         }
     };
 }

@@ -4,7 +4,9 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { isGroupRow } from '../../datasource/entity';
 import type { GridConfig } from '../gridConfig';
 import type { GridElement } from '../gridElement';
+import { rebuildHeaderColumns } from '../gridFunctions/rebuildHeaderColumns';
 import { type MountedGrid, mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
+import { gridOf } from './interactionTestHelpers';
 
 /**
  * The virtual rows and columns while scrolling: verticalScrollHandler and horizontalScrollHandler.
@@ -340,6 +342,16 @@ describe('scrolling - rows and columns on screen, not grouped', () => {
             top = step.top ?? top;
             left = step.left ?? left;
             expect(screen(mounted.element), JSON.stringify(step)).toEqual(expected(top, left));
+        }
+    });
+
+    it('expect the header rendered on its own while scrolled sideways to show the columns in view', () => {
+        // an operator picked in a header filter, a filter applied from its menu: the header is made
+        // anew without a scroll after it - its middle columns are made at the start of the section
+        for (const left of [1234, 2500, 30, 0]) {
+            scrollTo(mounted.element, { left });
+            rebuildHeaderColumns(gridOf(mounted.element));
+            expect(screen(mounted.element), `scrollLeft ${left}`).toEqual(expected(0, left));
         }
     });
 });

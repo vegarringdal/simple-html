@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Datasource } from '../../datasource/dataSource';
 import type { DatasourceOptions } from '../../datasource/datasourceOptions';
 import { where } from '../../datasource/filterExpression';
@@ -10,7 +10,7 @@ import { tabPastRows } from '../gridFunctions/tabExit';
 import { GridInterface } from '../gridInterface';
 import { registerLookup } from '../lookup';
 import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { gridOf, sleep } from './interactionTestHelpers';
+import { gridOf, pointerEvent, sleep } from './interactionTestHelpers';
 
 /**
  * The detail form (detailForm.ts): the state's part (`GridState.detailForm`, `GridConfig.detailForm`) -
@@ -18,8 +18,10 @@ import { gridOf, sleep } from './interactionTestHelpers';
  * of the rows, under them in a narrow grid), what it shows (the current row's values as the cells show
  * them, a textarea for text of several lines, a checkbox, a lookup's label, a link, the errors), when it
  * is rendered again (another current row, a value changed, a filter, a sort), editing in it (the cells'
- * readonly rules, the formatter, the undo history) and its keys (Shift+Tab, undo). happy-dom lays
- * nothing out: the sizes are stubbed (stubElementSizes, 1000 x 600), the browser check looks at it.
+ * readonly rules, the formatter, the undo history), its keys (Shift+Tab, undo), collapsed and expanded
+ * (`expanded`, the button of its title), its least and most width (`minWidth`, `maxWidth`) and the
+ * splitter of its edge (detailFormResize.ts: a drag, its keys). happy-dom lays nothing out: the sizes are
+ * stubbed (stubElementSizes, 1000 x 600), the browser check looks at it.
  */
 
 const originalTimeZone = process.env.TZ;
@@ -111,6 +113,10 @@ const control = (element: GridElement, field: string) =>
 /** the text of the form without a row or fields */
 const emptyText = (element: GridElement) =>
     form(element).querySelector('.simple-html-grid-detail-form-empty')?.textContent?.trim();
+/** the button of the form's title: it collapses and expands the form */
+const toggle = (element: GridElement) => form(element).querySelector('.simple-html-grid-detail-form-toggle') as HTMLButtonElement;
+/** the splitter of the form's left edge, null without one */
+const splitter = (element: GridElement) => form(element).querySelector('[role="separator"]') as HTMLElement;
 
 /** waits for the grid's animation frame: the rows-changed microtask asks for it first */
 const frame = async () => {
@@ -515,17 +521,20 @@ describe('detail form - editing', () => {
 });
 
 describe('detail form - the keys and the wheel', () => {
-    it('expect Tab from the last button of the footer to go into the form, from its last field out of the grid', async () => {
+    it('expect Tab from the last button of the footer to go into the form - its title button - from its last field out of the grid', async () => {
         const { element } = await mount();
         const gear = element.querySelector('.footer-settings') as HTMLElement;
         gear.focus();
         const event = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
         gear.dispatchEvent(event);
         expect(event.defaultPrevented).toBe(true);
-        expect(document.activeElement).toBe(control(element, 'name'));
+        expect(document.activeElement).toBe(toggle(element));
+        // the stops in their order: the title's button, the splitter, the fields
+        const stops = Array.from(form(element).querySelectorAll('button, [tabindex="0"], input, textarea, a[href]'));
+        expect(stops.slice(0, 3)).toEqual([toggle(element), splitter(element), control(element, 'name')]);
         // nothing focusable after its last stop in the grid: the browser's Tab leaves it
-        const stops = Array.from(element.querySelectorAll('input, textarea, a[href], button'));
-        expect(stops.at(-1)).toBe(form(element).querySelector('[data-field="site"] a'));
+        const all = Array.from(element.querySelectorAll('input, textarea, a[href], button'));
+        expect(all.at(-1)).toBe(form(element).querySelector('[data-field="site"] a'));
     });
 
     it('expect Tab past the last cell into the form when the footer has no height', async () => {
@@ -534,21 +543,20 @@ describe('detail form - the keys and the wheel', () => {
         const event = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
         tabPastRows(gridOf(element), event);
         expect(event.defaultPrevented).toBe(true);
-        expect(document.activeElement).toBe(control(element, 'name'));
+        expect(document.activeElement).toBe(toggle(element));
     });
 
-    it('expect Shift+Tab on its first field to go back to the last button of the footer', async () => {
+    it('expect Shift+Tab on its first stop to go back to the last button of the footer', async () => {
         const { element } = await mount();
-        const first = control(element, 'name');
-        first.focus();
+        toggle(element).focus();
         const event = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true });
-        first.dispatchEvent(event);
+        toggle(element).dispatchEvent(event);
         expect(event.defaultPrevented).toBe(true);
         expect(document.activeElement).toBe(element.querySelector('.footer-settings'));
 
-        // Shift+Tab on another field is the browser's
+        // Shift+Tab on a field is the browser's
         const second = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true });
-        control(element, 'notes').dispatchEvent(second);
+        control(element, 'name').dispatchEvent(second);
         expect(second.defaultPrevented).toBe(false);
     });
 
@@ -562,5 +570,248 @@ describe('detail form - the keys and the wheel', () => {
         const overRows = new WheelEvent('wheel', { deltaY: 100, bubbles: true, cancelable: true });
         element.querySelector('.simple-html-grid-body')?.dispatchEvent(overRows);
         expect(overRows.defaultPrevented).toBe(true);
+    });
+});
+
+describe('detail form - collapsed and expanded', () => {
+    it('expect it expanded by default; the button of its title to collapse it to a strip at the right, and to expand it again', async () => {
+        const { element, gridInterface } = await mount();
+        const parsed = gridInterface.__getGridConfig();
+        const body = form(element).querySelector('.simple-html-grid-detail-form-body') as HTMLElement;
+        expect(toggle(element).getAttribute('aria-expanded')).toEqual('true');
+        expect(toggle(element).getAttribute('aria-controls')).toEqual(body.id);
+        expect(toggle(element).getAttribute('data-tooltip')).toEqual('Collapse the details');
+        // the title is in the button: the region is named by it
+        expect(toggle(element).textContent?.trim()).toEqual('Details');
+
+        toggle(element).focus();
+        toggle(element).click();
+        expect(gridInterface.getState().detailForm.expanded).toBe(false);
+        expect(toggle(element).getAttribute('aria-expanded')).toEqual('false');
+        expect(toggle(element).getAttribute('data-tooltip')).toEqual('Expand the details');
+        // the same button: the focus stays on it
+        expect(document.activeElement).toBe(toggle(element));
+        expect(form(element).classList.contains('simple-html-grid-detail-form-collapsed')).toBe(true);
+        expect(form(element).style.width).toEqual('24px');
+        expect(byClass(element, 'body').style.right).toEqual(`${parsed.__scrollbarSize + 24}px`);
+        expect(byClass(element, 'header').style.right).toEqual('24px');
+        // the title bar only: no fields, no row number, no splitter
+        expect(body.hidden).toBe(true);
+        expect(formFields(element)).toEqual([]);
+        expect(byClass(element, 'detail-form-row')).toBeNull();
+        expect(splitter(element)).toBeNull();
+
+        toggle(element).click();
+        expect(gridInterface.getState().detailForm.expanded).toBe(true);
+        expect(form(element).style.width).toEqual('300px');
+        expect(formFields(element)[0].value).toEqual('Ann');
+        expect(form(element).classList.contains('simple-html-grid-detail-form-collapsed')).toBe(false);
+    });
+
+    it('expect expanded: false of the config to start it collapsed, resetState to go back, JSON to keep it', async () => {
+        const { element, gridInterface } = await mount({ detailForm: { ...FORM, expanded: false } });
+        expect(toggle(element).getAttribute('aria-expanded')).toEqual('false');
+        toggle(element).click();
+        expect(gridInterface.getState().detailForm.expanded).toBe(true);
+
+        const saved = JSON.parse(JSON.stringify(gridInterface.getState()));
+        gridInterface.resetState();
+        expect(gridInterface.getState().detailForm.expanded).toBe(false);
+        gridInterface.setState(saved);
+        expect(gridInterface.getState().detailForm.expanded).toBe(true);
+        expect(toggle(element).getAttribute('aria-expanded')).toEqual('true');
+    });
+
+    it('expect it collapsed under the rows as a bar of 24px over the footer, where it is expanded too', async () => {
+        // 1000px wide: a form of 600px does not fit at the right
+        const { element, gridInterface } = await mount({ detailForm: { ...FORM, width: 600, expanded: false } });
+        const parsed = gridInterface.__getGridConfig();
+        expect(form(element).classList.contains('simple-html-grid-detail-form-below')).toBe(true);
+        expect(form(element).style.height).toEqual('24px');
+        expect(byClass(element, 'body').style.bottom).toEqual(`${parsed.footerHeight + 24}px`);
+        expect(byClass(element, 'body').style.right).toEqual(`${parsed.__scrollbarSize}px`);
+    });
+
+    it('expect the tooltip of the button when the pointer rests on it - none with the tooltips option off', async () => {
+        const { element, gridInterface } = await mount();
+        toggle(element).dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+        const shown = document.querySelector('.simple-html-grid-tooltip') as HTMLElement;
+        expect(shown.style.display).toEqual('block');
+        expect(shown.textContent).toEqual('Collapse the details');
+        toggle(element).dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+        expect(shown.style.display).toEqual('none');
+
+        gridInterface.updateConfig({ tooltips: false });
+        toggle(element).dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+        expect(shown.style.display).toEqual('none');
+    });
+
+    it('expect the button its only stop of Tab while it is collapsed', async () => {
+        const { element } = await mount({ detailForm: { ...FORM, expanded: false } });
+        const gear = element.querySelector('.footer-settings') as HTMLElement;
+        gear.focus();
+        gear.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
+        expect(document.activeElement).toBe(toggle(element));
+        expect(Array.from(form(element).querySelectorAll('button, [tabindex="0"], input, textarea, a[href]'))).toEqual([
+            toggle(element)
+        ]);
+    });
+});
+
+describe('detail form - its least and most width', () => {
+    it('expect the width laid out between minWidth and maxWidth - at least 150 - the state keeping what it was given', async () => {
+        const { element, gridInterface } = await mount({ detailForm: { ...FORM, width: 100, minWidth: 200, maxWidth: 400 } });
+        expect(form(element).style.width).toEqual('200px');
+        gridInterface.setState({ detailForm: { ...FORM, width: 450, minWidth: 200, maxWidth: 400 } });
+        expect(form(element).style.width).toEqual('400px');
+        // a least width under 150: 150
+        gridInterface.setState({ detailForm: { ...FORM, width: 100, minWidth: 50 } });
+        expect(form(element).style.width).toEqual('150px');
+        expect(gridInterface.getState().detailForm).toEqual({ ...FORM, width: 100, minWidth: 50 });
+        // a most width under the least: the least
+        gridInterface.setState({ detailForm: { ...FORM, width: 300, maxWidth: 120 } });
+        expect(form(element).style.width).toEqual('150px');
+    });
+
+    it('expect a minWidth more than its maxWidth, a width that is no number of px, an expanded that is no boolean to throw a TypeError', async () => {
+        const { gridInterface } = await mount();
+        for (const wrong of [
+            { ...FORM, minWidth: 400, maxWidth: 300 },
+            { ...FORM, minWidth: 0 },
+            { ...FORM, maxWidth: '300' },
+            { ...FORM, expanded: 'no' }
+        ]) {
+            expect(() => gridInterface.setState({ detailForm: wrong as any })).toThrow(TypeError);
+        }
+        expect(() => gridInterface.setState({ detailForm: { ...FORM, minWidth: 400, maxWidth: 300 } })).toThrow(
+            /minWidth \(400\) is more than its maxWidth \(300\)/
+        );
+        expect(gridInterface.getState().detailForm).toEqual(FORM);
+    });
+});
+
+describe('detail form - the splitter of its edge', () => {
+    it('expect a splitter at its left edge: focusable, named, its value the width, its limits the min and the room the rows leave', async () => {
+        const { element, gridInterface } = await mount();
+        expect(splitter(element).tabIndex).toEqual(0);
+        expect(splitter(element).getAttribute('aria-orientation')).toEqual('vertical');
+        expect(splitter(element).getAttribute('aria-label')).toEqual('Width of the details');
+        expect(splitter(element).getAttribute('aria-controls')).toEqual(form(element).id);
+        expect(splitter(element).getAttribute('aria-valuenow')).toEqual('300');
+        expect(splitter(element).getAttribute('aria-valuemin')).toEqual('150');
+        // half the grid: the rows keep as much room as the form
+        expect(splitter(element).getAttribute('aria-valuemax')).toEqual('500');
+
+        gridInterface.setState({ detailForm: { ...FORM, minWidth: 200, maxWidth: 400 } });
+        expect(splitter(element).getAttribute('aria-valuemin')).toEqual('200');
+        expect(splitter(element).getAttribute('aria-valuemax')).toEqual('400');
+    });
+
+    it('expect a drag to the left to make it wider, to the right narrower - the rows following at once - the state to keep it', async () => {
+        const { element, gridInterface } = await mount({ totalsRow: true });
+        const scrollbar = gridInterface.__getGridConfig().__scrollbarSize;
+        splitter(element).dispatchEvent(pointerEvent('pointerdown', { clientX: 700 }));
+        expect(splitter(element).classList.contains('simple-html-grid-detail-form-resize-dragged')).toBe(true);
+        document.dispatchEvent(pointerEvent('pointermove', { clientX: 650 }));
+        // laid out in the next frame
+        await frame();
+        expect(form(element).style.width).toEqual('350px');
+        expect(byClass(element, 'body').style.right).toEqual(`${scrollbar + 350}px`);
+        expect(byClass(element, 'header').style.right).toEqual('350px');
+        expect(byClass(element, 'totals').style.right).toEqual(`${scrollbar + 350}px`);
+        expect(splitter(element).getAttribute('aria-valuenow')).toEqual('350');
+
+        document.dispatchEvent(pointerEvent('pointermove', { clientX: 760 }));
+        document.dispatchEvent(pointerEvent('pointerup', { clientX: 760 }));
+        expect(form(element).style.width).toEqual('240px');
+        expect(gridInterface.getState().detailForm.width).toEqual(240);
+        expect(splitter(element).classList.contains('simple-html-grid-detail-form-resize-dragged')).toBe(false);
+    });
+
+    it('expect a drag to stop at the least width and at the most - the room the rows leave, or maxWidth', async () => {
+        const { element, gridInterface } = await mount();
+        const drag = (from: number, to: number) => {
+            splitter(element).dispatchEvent(pointerEvent('pointerdown', { clientX: from }));
+            document.dispatchEvent(pointerEvent('pointermove', { clientX: to }));
+            document.dispatchEvent(pointerEvent('pointerup', { clientX: to }));
+        };
+        drag(700, 950);
+        expect(gridInterface.getState().detailForm.width).toEqual(150);
+        drag(850, 0);
+        // not under the rows: half the grid at most
+        expect(gridInterface.getState().detailForm.width).toEqual(500);
+        expect(form(element).classList.contains('simple-html-grid-detail-form-below')).toBe(false);
+
+        gridInterface.setState({ detailForm: { ...FORM, maxWidth: 320 } });
+        drag(700, 0);
+        expect(gridInterface.getState().detailForm.width).toEqual(320);
+    });
+
+    it('expect pointercancel to give it its width back, a press that does not move to change nothing', async () => {
+        const { element, gridInterface } = await mount();
+        splitter(element).dispatchEvent(pointerEvent('pointerdown', { clientX: 700 }));
+        document.dispatchEvent(pointerEvent('pointermove', { clientX: 600 }));
+        await frame();
+        expect(form(element).style.width).toEqual('400px');
+        document.dispatchEvent(pointerEvent('pointercancel'));
+        expect(form(element).style.width).toEqual('300px');
+        // the state has no width it was not given
+        expect(gridInterface.getState().detailForm).toEqual(FORM);
+
+        splitter(element).dispatchEvent(pointerEvent('pointerdown', { clientX: 700 }));
+        document.dispatchEvent(pointerEvent('pointerup', { clientX: 700 }));
+        expect(gridInterface.getState().detailForm).toEqual(FORM);
+        // not the main button
+        splitter(element).dispatchEvent(pointerEvent('pointerdown', { clientX: 700, button: 2 }));
+        document.dispatchEvent(pointerEvent('pointermove', { clientX: 600 }));
+        document.dispatchEvent(pointerEvent('pointerup', { clientX: 600 }));
+        expect(gridInterface.getState().detailForm).toEqual(FORM);
+    });
+
+    it('expect ArrowLeft to make it 10px wider, ArrowRight narrower, within its limits - the focus staying', async () => {
+        const { element, gridInterface } = await mount({ detailForm: { ...FORM, width: 160, maxWidth: 175 } });
+        const press = (key: string, more: KeyboardEventInit = {}) => {
+            const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...more });
+            splitter(element).dispatchEvent(event);
+            return event;
+        };
+        splitter(element).focus();
+        expect(press('ArrowLeft').defaultPrevented).toBe(true);
+        expect(gridInterface.getState().detailForm.width).toEqual(170);
+        expect(form(element).style.width).toEqual('170px');
+        expect(splitter(element).getAttribute('aria-valuenow')).toEqual('170');
+        expect(document.activeElement).toBe(splitter(element));
+        press('ArrowLeft');
+        expect(gridInterface.getState().detailForm.width).toEqual(175);
+        press('ArrowRight');
+        press('ArrowRight');
+        press('ArrowRight');
+        expect(gridInterface.getState().detailForm.width).toEqual(150);
+        // other keys are not the splitter's
+        expect(press('ArrowUp').defaultPrevented).toBe(false);
+        expect(press('ArrowLeft', { ctrlKey: true }).defaultPrevented).toBe(false);
+        expect(gridInterface.getState().detailForm.width).toEqual(150);
+    });
+
+    it('expect a rebuild when the scrolling columns get more room than they have elements for', async () => {
+        const { element } = await mount();
+        const grid = gridOf(element);
+        // fewer column elements than the room needs, as after a narrower window
+        grid.containerMiddleColumnCache.splice(2);
+        const rebuild = vi.spyOn(grid, 'rebuild');
+        splitter(element).dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+        expect(rebuild).toHaveBeenCalledTimes(1);
+        expect(grid.containerMiddleColumnCache).toHaveLength(6);
+        // enough of them: none
+        splitter(element).dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+        expect(rebuild).toHaveBeenCalledTimes(1);
+    });
+
+    it('expect none while it is collapsed, and the class that hides it under the rows', async () => {
+        const { element, gridInterface } = await mount({ detailForm: { ...FORM, expanded: false } });
+        expect(splitter(element)).toBeNull();
+        gridInterface.setState({ detailForm: { ...FORM, width: 600 } });
+        expect(form(element).classList.contains('simple-html-grid-detail-form-below')).toBe(true);
+        expect(splitter(element)).not.toBeNull();
     });
 });

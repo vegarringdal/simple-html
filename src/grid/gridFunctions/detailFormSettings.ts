@@ -3,27 +3,38 @@ import { live } from 'lit-html/directives/live.js';
 import type { TextId } from '../../texts';
 import type { Grid } from '../grid';
 import type { DetailForm } from '../gridConfig';
-import { copyDetailForm, DETAIL_FORM_MIN_WIDTH, detailFormWidth } from './detailForm';
+import { copyDetailForm, DETAIL_FORM_MIN_WIDTH, detailFormWidth, isDetailFormExpanded } from './detailForm';
+import { followPointer, isPrimaryPress } from './followPointer';
 import { getColumnLabel } from './getColumnLabel';
 import { getLayoutFields } from './getLayoutFields';
 import { type GridConfigTab, tabId, tabPanelId } from './gridConfigTabs';
 import { gridText } from './gridText';
+import { DRAG_HANDLE_ICON } from './icons';
 import { keyText } from './keyText';
+import { multilineOf } from './multilineText';
+import { hideTooltip } from './tooltip';
 
 /**
  * The *Detail form* tab of the grid config dialog (columnSettings.ts): what the detail form
  * (detailForm.ts, `GridState.detailForm`) shows.
  *
  * - *Show the detail form*: a checkbox
- * - *Width (px)*: a number, at least DETAIL_FORM_MIN_WIDTH - its hint says that the form is under the
- *   rows where they would get too little room beside it (detailFormSpace)
+ * - *Expanded*: a checkbox - collapsed, the form is a narrow strip (`expanded: false`). The button of
+ *   the form's title changes the same part of the state: the dialog shows what the form is now
+ * - *Width (px)*, *Min width (px)*, *Max width (px)*: numbers, each at least DETAIL_FORM_MIN_WIDTH; the
+ *   min and the max can be empty (none). The width is kept between them: the one typed keeps its value,
+ *   the others follow it (setWidths). The hint says that a drag of the form's edge changes the width,
+ *   and that the form is under the rows where they would get too little room beside it
+ *   (detailFormSpace)
  * - *Fields of the form*: a listbox of every field the form can show - the form's fields first, in
  *   their order, then the other fields of the layout, then the other columns of the config (not in the
  *   layout: the form can show what the grid does not). Each option has a box that is checked when the
- *   field is in the form (`aria-checked`), its label, its type and a badge: *Several lines* for a
- *   multiline field, *Hidden* for a column that is not in the layout. One stop of Tab; the arrows, Home,
- *   End, PageUp / PageDown pick one (`aria-activedescendant`), Space puts it in the form or takes it
- *   out, Alt+ArrowUp / Alt+ArrowDown move it. A click on its box checks it, on the rest picks it.
+ *   field is in the form (`aria-checked`), its label, its type, a badge - *Several lines* for a
+ *   multiline field, *Hidden* for a column that is not in the layout - and a drag handle at its right.
+ *   One stop of Tab; the arrows, Home, End, PageUp / PageDown pick one (`aria-activedescendant`), Space
+ *   puts it in the form or takes it out, Alt+ArrowUp / Alt+ArrowDown move it. A click on its box checks
+ *   it, on the rest picks it. The handle drags it to another place - a line shows where it goes
+ *   (dragField): a mouse, a pen or a finger
  * - *Move up* / *Move down*: the field picked, up or down the list - its place in the form
  *
  * What it edits is a draft (DetailFormDraft) in the dialog's draft: the grid changes on Apply only
@@ -36,8 +47,14 @@ import { keyText } from './keyText';
 export interface DetailFormDraft {
     /** shows the form */
     show: boolean;
+    /** expanded, else collapsed to a narrow strip */
+    expanded: boolean;
     /** its width in px */
     width: number;
+    /** its least width in px, undefined: none (150) */
+    minWidth: number | undefined;
+    /** its most width in px, undefined: none */
+    maxWidth: number | undefined;
     /** every field the form can show, in the order of the list: the form's fields are in their order */
     order: string[];
     /** the fields in the form */
@@ -49,6 +66,17 @@ export interface DetailFormDraft {
 /** what the arrows of the list move by, PageUp and PageDown */
 const PAGE = 10;
 
+/** the class of the option dragged by its handle */
+const DRAGGED_CLASS = 'detail-form-settings-dragged';
+
+/** the classes of the option the line of a drop is drawn on: over it, or under the last one */
+const DROP_BEFORE_CLASS = 'detail-form-settings-drop-before';
+const DROP_AFTER_CLASS = 'detail-form-settings-drop-after';
+
+/** a drag this close (px) to the top or bottom of the list scrolls it, this many px a move */
+const EDGE = 16;
+const EDGE_SCROLL = 8;
+
 /**
  * The draft of a detail form: its fields first in their order, then the other fields of the layout,
  * then the other columns of the config. The first one picked
@@ -58,7 +86,10 @@ export function detailFormDraft(ctx: Grid, form: DetailForm): DetailFormDraft {
     const order = [...new Set([...form.fields, ...getLayoutFields(ctx.gridInterface), ...columns])];
     return {
         show: form.show,
+        expanded: isDetailFormExpanded(form),
         width: detailFormWidth(form),
+        minWidth: form.minWidth,
+        maxWidth: form.maxWidth,
         order,
         included: new Set(form.fields),
         active: order[0] ?? ''
@@ -66,10 +97,25 @@ export function detailFormDraft(ctx: Grid, form: DetailForm): DetailFormDraft {
 }
 
 /**
- * The detail form a draft makes: the fields checked, in the order of the list
+ * The detail form a draft makes: the fields checked, in the order of the list. `expanded` only when it
+ * is collapsed, the min and max width only when they are set
  */
 export function detailFormOf(draft: DetailFormDraft): DetailForm {
-    return { show: draft.show, fields: draft.order.filter((field) => draft.included.has(field)), width: draft.width };
+    const form: DetailForm = {
+        show: draft.show,
+        fields: draft.order.filter((field) => draft.included.has(field)),
+        width: draft.width
+    };
+    if (!draft.expanded) {
+        form.expanded = false;
+    }
+    if (draft.minWidth !== undefined) {
+        form.minWidth = draft.minWidth;
+    }
+    if (draft.maxWidth !== undefined) {
+        form.maxWidth = draft.maxWidth;
+    }
+    return form;
 }
 
 /**
@@ -80,7 +126,10 @@ export function applyDetailForm(ctx: Grid, draft: DetailFormDraft) {
     const now = copyDetailForm(ctx.gridInterface.__getGridConfig().detailForm);
     const same =
         now.show === next.show &&
+        isDetailFormExpanded(now) === isDetailFormExpanded(next) &&
         detailFormWidth(now) === next.width &&
+        now.minWidth === next.minWidth &&
+        now.maxWidth === next.maxWidth &&
         now.fields.length === next.fields.length &&
         now.fields.every((field, index) => field === next.fields[index]);
     if (!same) {
@@ -95,6 +144,128 @@ export function applyDetailForm(ctx: Grid, draft: DetailFormDraft) {
 export function resetDetailFormDraft(ctx: Grid, draft: DetailFormDraft) {
     const start = detailFormDraft(ctx, ctx.gridInterface.__getStartDetailForm());
     Object.assign(draft, start, { active: start.order.includes(draft.active) ? draft.active : start.active });
+}
+
+/**
+ * A width typed in the tab: a number of px, rounded, at least DETAIL_FORM_MIN_WIDTH. null for anything
+ * else - empty too
+ */
+function typedWidth(value: string): number | null {
+    const width = Number(value);
+    return value.trim() !== '' && Number.isFinite(width) && width > 0 ? Math.max(Math.round(width), DETAIL_FORM_MIN_WIDTH) : null;
+}
+
+/**
+ * A width, min width or max width typed in the tab, into the draft: the one typed keeps its value, the
+ * others follow it - min <= width <= max. A number that is none (and an empty width) leaves the draft
+ * as it was; an empty min or max is none
+ * @param part the input typed in
+ */
+export function setWidths(draft: DetailFormDraft, part: 'width' | 'minWidth' | 'maxWidth', value: string) {
+    const typed = typedWidth(value);
+    if (typed === null && (part === 'width' || value.trim() !== '')) {
+        return;
+    }
+    if (part === 'width') {
+        const min = draft.minWidth ?? DETAIL_FORM_MIN_WIDTH;
+        draft.width = Math.min(Math.max(typed as number, min), draft.maxWidth ?? Number.POSITIVE_INFINITY);
+    } else if (part === 'minWidth') {
+        draft.minWidth = typed ?? undefined;
+        if (typed !== null) {
+            draft.width = Math.max(draft.width, typed);
+            draft.maxWidth = draft.maxWidth === undefined ? undefined : Math.max(draft.maxWidth, typed);
+        }
+    } else {
+        draft.maxWidth = typed ?? undefined;
+        if (typed !== null) {
+            draft.width = Math.min(draft.width, typed);
+            draft.minWidth = draft.minWidth === undefined ? undefined : Math.min(draft.minWidth, typed);
+        }
+    }
+}
+
+/**
+ * The place a field is moved to: `to` is the gap before the option of that index (the length: after
+ * the last). The field is picked
+ * @param from the index of the field in the list
+ */
+export function moveField(draft: DetailFormDraft, from: number, to: number) {
+    const field = draft.order[from];
+    draft.order.splice(from, 1);
+    draft.order.splice(to > from ? to - 1 : to, 0, field);
+    draft.active = field;
+}
+
+/**
+ * The gap of the list a drag is over: before the first option whose middle is under the pointer, the
+ * number of options after the last
+ * @param y the pointer's clientY
+ */
+function gapAt(options: HTMLElement[], y: number): number {
+    const at = options.findIndex((option) => {
+        const rect = option.getBoundingClientRect();
+        return y < rect.top + rect.height / 2;
+    });
+    return at === -1 ? options.length : at;
+}
+
+/**
+ * A press on the drag handle of a field: the field is picked, and dragged to another place of the list
+ * while the pointer moves (followPointer, the handle captures it). A line between two options shows
+ * where it goes, the list scrolls near its top and bottom. Let go, it is moved there (moveField) - not
+ * when that is where it was. pointercancel moves nothing
+ * @param from the index of the field
+ */
+function dragField(down: PointerEvent, draft: DetailFormDraft, from: number, update: () => void) {
+    if (!isPrimaryPress(down)) {
+        return;
+    }
+    const handle = down.currentTarget as HTMLElement;
+    const list = handle.closest('[role="listbox"]') as HTMLElement;
+    const options = () => Array.from(list.querySelectorAll<HTMLElement>('[role="option"]'));
+    draft.active = draft.order[from];
+    update();
+    // the handle's tooltip would stay where the drag started
+    hideTooltip();
+
+    let gap = from;
+    const clear = () => {
+        for (const option of options()) {
+            option.classList.remove(DRAGGED_CLASS, DROP_BEFORE_CLASS, DROP_AFTER_CLASS);
+        }
+    };
+    handle.setPointerCapture(down.pointerId);
+    options()[from]?.classList.add(DRAGGED_CLASS);
+    followPointer(handle, down, {
+        move: (event) => {
+            const rect = list.getBoundingClientRect();
+            if (event.clientY < rect.top + EDGE) {
+                list.scrollTop -= EDGE_SCROLL;
+            } else if (event.clientY > rect.bottom - EDGE) {
+                list.scrollTop += EDGE_SCROLL;
+            }
+            const all = options();
+            gap = gapAt(all, event.clientY);
+            clear();
+            all[from]?.classList.add(DRAGGED_CLASS);
+            // no line where it is: before or after itself
+            if (gap !== from && gap !== from + 1) {
+                if (gap < all.length) {
+                    all[gap].classList.add(DROP_BEFORE_CLASS);
+                } else {
+                    all[all.length - 1].classList.add(DROP_AFTER_CLASS);
+                }
+            }
+        },
+        up: () => {
+            clear();
+            if (gap !== from && gap !== from + 1) {
+                moveField(draft, from, gap);
+                update();
+            }
+        },
+        cancel: clear
+    });
 }
 
 /**
@@ -130,7 +301,8 @@ export function detailFormTabPanel(
 }
 
 /**
- * The settings of the tab: Show the detail form, Width, the list of the fields, Move up / Move down
+ * The settings of the tab: Show the detail form, Expanded, the widths, the list of the fields, Move up /
+ * Move down
  */
 function settings(ctx: Grid, dialog: HTMLElement, draft: DetailFormDraft, update: () => void): TemplateResult {
     const gridInterface = ctx.gridInterface;
@@ -202,42 +374,75 @@ function settings(ctx: Grid, dialog: HTMLElement, draft: DetailFormDraft, update
                 : `columnSettings.type.${gridInterface.getDatasource().getField(field).type}`
         );
 
-    const widthId = idOf(ctx, 'width');
     const widthHintId = idOf(ctx, 'width-hint');
     const fieldsId = idOf(ctx, 'fields');
     const fieldsHintId = idOf(ctx, 'fields-hint');
 
-    return html`<label class="column-settings-check">
+    /** a checkbox of the tab and its text */
+    const check = (className: string, label: TextId, checked: boolean, set: (checked: boolean) => void, hintId?: string) =>
+        html`<label class="column-settings-check">
             <input
                 type="checkbox"
-                class="detail-form-settings-show"
-                .checked=${live(draft.show)}
+                class=${className}
+                .checked=${live(checked)}
+                aria-describedby=${hintId ?? nothing}
                 @change=${(event: Event) => {
-                    draft.show = (event.target as HTMLInputElement).checked;
+                    set((event.target as HTMLInputElement).checked);
                     update();
                 }}
-            /><span>${text('columnSettings.detailForm.show')}</span>
-        </label>
+            /><span>${text(label)}</span>
+        </label>`;
+
+    /**
+     * an input of a width: its label over it. The min and max are empty when they are none, the
+     * placeholder says what that is
+     */
+    const widthInput = (
+        part: 'width' | 'minWidth' | 'maxWidth',
+        label: TextId,
+        value: number | undefined,
+        placeholder?: string
+    ) => {
+        const id = idOf(ctx, part);
+        return html`<div class="detail-form-settings-width-field">
+            <label class="column-settings-label" for=${id}>${text(label)}</label>
+            <input
+                id=${id}
+                class="filter-editor-value detail-form-settings-${part}"
+                type="number"
+                min=${DETAIL_FORM_MIN_WIDTH}
+                step="10"
+                placeholder=${placeholder ?? nothing}
+                .value=${live(value === undefined ? '' : String(value))}
+                aria-describedby=${widthHintId}
+                @change=${(event: Event) => {
+                    setWidths(draft, part, (event.target as HTMLInputElement).value);
+                    update();
+                }}
+            />
+        </div>`;
+    };
+
+    return html`${check('detail-form-settings-show', 'columnSettings.detailForm.show', draft.show, (checked) => {
+        draft.show = checked;
+    })}
         <div class="column-settings-field">
-            <label class="column-settings-label" for=${widthId}>${text('columnSettings.detailForm.width')}</label>
-            <div class="column-settings-input-row">
-                <input
-                    id=${widthId}
-                    class="filter-editor-value detail-form-settings-width"
-                    type="number"
-                    min=${DETAIL_FORM_MIN_WIDTH}
-                    step="10"
-                    .value=${live(String(draft.width))}
-                    aria-describedby=${widthHintId}
-                    @change=${(event: Event) => {
-                        const width = Number((event.target as HTMLInputElement).value);
-                        // a number of px, at least the least width. Anything else: the width it had
-                        if (Number.isFinite(width) && width > 0) {
-                            draft.width = Math.max(Math.round(width), DETAIL_FORM_MIN_WIDTH);
-                        }
-                        update();
-                    }}
-                />
+            ${check(
+                'detail-form-settings-expanded',
+                'columnSettings.detailForm.expanded',
+                draft.expanded,
+                (checked) => {
+                    draft.expanded = checked;
+                },
+                idOf(ctx, 'expanded-hint')
+            )}
+            <div class="column-settings-hint" id=${idOf(ctx, 'expanded-hint')}>${text('columnSettings.detailForm.expanded.hint')}</div>
+        </div>
+        <div class="column-settings-field">
+            <div class="detail-form-settings-widths">
+                ${widthInput('width', 'columnSettings.detailForm.width', draft.width)}
+                ${widthInput('minWidth', 'columnSettings.detailForm.minWidth', draft.minWidth, String(DETAIL_FORM_MIN_WIDTH))}
+                ${widthInput('maxWidth', 'columnSettings.detailForm.maxWidth', draft.maxWidth, text('columnSettings.detailForm.maxWidth.none'))}
             </div>
             <div class="column-settings-hint" id=${widthHintId}>${text('columnSettings.detailForm.width.hint')}</div>
         </div>
@@ -254,7 +459,10 @@ function settings(ctx: Grid, dialog: HTMLElement, draft: DetailFormDraft, update
             >
                 ${draft.order.map((field, at) => {
                     const included = draft.included.has(field);
-                    const multiline = gridInterface.getDatasource().getField(field).multiline;
+                    const multiline = multilineOf(
+                        gridInterface.getDatasource().getField(field),
+                        gridInterface.__getGridConfig().columns[field]
+                    );
                     return html`<div
                         class="column-settings-option detail-form-settings-option"
                         role="option"
@@ -274,6 +482,14 @@ function settings(ctx: Grid, dialog: HTMLElement, draft: DetailFormDraft, update
                         <span class="column-settings-option-type">${typeName(field)}</span>
                         ${multiline ? html`<span class="column-settings-badge">${text('columnSettings.detailForm.multiline')}</span>` : nothing}
                         ${layout.has(field) ? nothing : html`<span class="column-settings-badge">${text('columnSettings.detailForm.hidden')}</span>`}
+                        <span
+                            class="simple-html-grid-drag-handle detail-form-settings-handle"
+                            aria-hidden="true"
+                            data-tooltip=${text('columnSettings.detailForm.drag')}
+                            @pointerdown=${(event: PointerEvent) => dragField(event, draft, at, update)}
+                            @click=${(event: Event) => event.stopPropagation()}
+                            >${DRAG_HANDLE_ICON}</span
+                        >
                     </div>`;
                 })}
             </div>

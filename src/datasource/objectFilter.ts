@@ -16,6 +16,8 @@ export interface ResolvedCondition {
     type: FieldType;
     /** `true`: a text is compared as it is, see FilterCondition.caseSensitive. Used by text only */
     caseSensitive?: boolean;
+    /** `true`: `*`, `%` and `_` of a text value are no wildcards, see FilterCondition.literal. Used by text only */
+    literal?: boolean;
 }
 
 /**
@@ -105,7 +107,7 @@ export function objectFilter(rowData: Entity, filter: ResolvedCondition) {
             filterOperator = rangeOperator(filterOperator);
             break;
         case 'text':
-            return compareText(rowValue, filter.value, filterOperator, filter.caseSensitive === true);
+            return compareText(rowValue, filter.value, filterOperator, filter.caseSensitive === true, filter.literal === true);
         case 'boolean':
             // a blank is false (see "0 is blank" on FilterOperator): the cell shows it unchecked
             rowValue = rowValue === '' || rowValue === 0 || rowValue === null || rowValue === undefined ? false : rowValue;
@@ -185,29 +187,36 @@ export function rangeOperator(operator: FilterOperator): FilterOperator {
  * A text condition. The row value as text - a blank (null, undefined) is `''`, anything else
  * `String(value)` - and the value as text, both in lower case unless `caseSensitive`. `*` and `%` in
  * the value are wildcards: any text, none too, line breaks too. `_` is one character, any - as in SQL
- * `LIKE`. The rest of the value is taken as it is, there is no escape. The text `LESS_THAN` ... (a
- * text field does not offer them) compare the two texts as JavaScript does, code unit by code unit,
- * without wildcards
+ * `LIKE`. The rest of the value is taken as it is, there is no escape; `literal` takes all of it as
+ * it is, the wildcards too. The text `LESS_THAN` ... (a text field does not offer them) compare the
+ * two texts as JavaScript does, code unit by code unit, without wildcards
  */
-function compareText(rowValue: unknown, value: unknown, operator: FilterOperator, caseSensitive: boolean): boolean {
+function compareText(
+    rowValue: unknown,
+    value: unknown,
+    operator: FilterOperator,
+    caseSensitive: boolean,
+    literal: boolean
+): boolean {
     const asText = (from: unknown) => {
         const text = from === null || from === undefined ? '' : String(from);
         return caseSensitive ? text : text.toLowerCase();
     };
     const row = asText(rowValue);
     const text = asText(value);
+    const matches = literal ? hasText : matchesText;
 
     switch (operator) {
         case 'NOT_EQUAL_TO':
-            return !matchesText(row, text, true, true);
+            return !matches(row, text, true, true);
         case 'CONTAINS':
-            return matchesText(row, text, false, false);
+            return matches(row, text, false, false);
         case 'DOES_NOT_CONTAIN':
-            return !matchesText(row, text, false, false);
+            return !matches(row, text, false, false);
         case 'BEGIN_WITH':
-            return matchesText(row, text, true, false);
+            return matches(row, text, true, false);
         case 'END_WITH':
-            return matchesText(row, text, false, true);
+            return matches(row, text, false, true);
         case 'LESS_THAN':
             return row < text;
         case 'LESS_THAN_OR_EQUAL_TO':
@@ -218,8 +227,22 @@ function compareText(rowValue: unknown, value: unknown, operator: FilterOperator
             return row >= text;
         default:
             // EQUAL, and an operator of plain js that is none
-            return matchesText(row, text, true, true);
+            return matches(row, text, true, true);
     }
+}
+
+/**
+ * matchesText without wildcards (FilterCondition.literal): true when `row` has `text` in it, as it is.
+ * `fromStart`: at the start of `row`, `toEnd`: at its end - both: the whole of `row`
+ */
+function hasText(row: string, text: string, fromStart: boolean, toEnd: boolean): boolean {
+    if (fromStart && toEnd) {
+        return row === text;
+    }
+    if (fromStart) {
+        return row.startsWith(text);
+    }
+    return toEnd ? row.endsWith(text) : row.includes(text);
 }
 
 /**

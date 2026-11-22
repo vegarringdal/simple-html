@@ -164,6 +164,26 @@ export type GridConfig = {
      */
     filterOperatorIndicator?: boolean;
     /**
+     * the header filters filter as you type, default `false`: after a short pause in typing (300ms), no
+     * Enter needed - a number or date column when the text is a number or a date, not half typed. The
+     * default of every column, a column's own `filterOnType` wins; the user turns it on and off per
+     * column (the operator choice of the header filter, Filter › in its menu, the grid config dialog),
+     * which is state: `GridState.headerFilters[field].filterOnType`. Not a boolean column, its checkbox
+     * filters on a click. See the filtering guide, "Filter as you type"
+     *
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     filterOnType: true, // every header filter filters while typing
+     *     columns: { notes: { filterOnType: false } }, // but this one on Enter
+     *     layout: { center: [{ fields: ['name'], width: 150 }, { fields: ['notes'], width: 200 }] }
+     * };
+     * ```
+     */
+    filterOnType?: boolean;
+    /**
      * shows the settings button, a gear at the right end of the footer, default `true`: it opens the
      * grid config dialog - each column's display format, a text column's template and link, applied
      * to the state (`GridState.formats`), so `getState()` keeps what the user set. Its name and tooltip
@@ -380,9 +400,9 @@ export type GridConfig = {
      * it all. The cells' values can be edited there too, see {@link DetailForm}.
      *
      * Part of the grid's state (`GridState.detailForm`): the user turns it on, picks the fields and
-     * their order in the grid config dialog (the gear in the footer, tab *Detail form*), and
-     * `getState()` has what they picked, to save. `resetState()` goes back to this one (unless
-     * `initialState.detailForm` is given).
+     * their order in the grid config dialog (the gear in the footer, tab *Detail form*), drags its width
+     * and collapses it, and `getState()` has what they did, to save. `resetState()` goes back to this one
+     * (unless `initialState.detailForm` is given). `expanded: false` starts it collapsed.
      *
      * @sample detail-form
      * @example
@@ -392,7 +412,7 @@ export type GridConfig = {
      * const config: GridConfig = {
      *     layout: { center: [{ fields: ['name'], width: 150 }, { fields: ['city'], width: 120 }] },
      *     // the notes are not in the layout: the form shows them, all their lines
-     *     detailForm: { show: true, fields: ['name', 'notes', 'city'], width: 320 }
+     *     detailForm: { show: true, fields: ['name', 'notes', 'city'], width: 320, minWidth: 200, maxWidth: 600 }
      * };
      * ```
      */
@@ -418,8 +438,13 @@ export type GridConfig = {
  * - **A narrow grid** - where the rows would get less room than the form beside it, or the scrolling
  *   columns less than 150px (a phone, wide pinned columns) - has the form under the rows instead, 40 % of
  *   the grid's height.
+ * - **Collapsed** (`expanded: false`) it is a narrow strip at the right of the rows - a bar over the
+ *   footer under them - with its title: the button of its title bar expands it, and collapses it again.
+ * - **Its width**: the user drags the form's left edge (or its arrow keys) between `minWidth` and
+ *   `maxWidth`, and sets all three in the grid config dialog. The width dragged is `width`.
  *
- * Plain JSON, part of the state: `getState()` gives it, `setState({ detailForm })` sets it.
+ * Plain JSON, part of the state: `getState()` gives it, `setState({ detailForm })` sets it - what the user
+ * changed with it: the fields, the width dragged, collapsed or expanded.
  *
  * @sample detail-form
  * @example
@@ -429,6 +454,9 @@ export type GridConfig = {
  * const detailForm: DetailForm = { show: true, fields: ['company', 'notes', 'orderDate'], width: 300 };
  * gridInterface.setState({ detailForm });
  * gridInterface.getState().detailForm; // { show: true, fields: ['company', 'notes', 'orderDate'], width: 300 }
+ *
+ * // collapsed to a strip, between 200 and 500px when the user drags it wider
+ * gridInterface.setState({ detailForm: { ...detailForm, expanded: false, minWidth: 200, maxWidth: 500 } });
  * ```
  */
 export interface DetailForm {
@@ -436,8 +464,21 @@ export interface DetailForm {
     show: boolean;
     /** the fields it shows, in this order: fields of the columns, or any field of the rows */
     fields: string[];
-    /** its width in px, default 300 - at least 150 */
+    /**
+     * its width in px, default 300 - laid out between `minWidth` and `maxWidth`. The user changes it by
+     * dragging the form's left edge
+     */
     width?: number;
+    /**
+     * `false`: collapsed, a narrow strip with the form's title - the button in its title bar expands it.
+     * Default `true`. The button changes it, so a saved state keeps what the user made it last; the grid
+     * config dialog has it too (*Expanded*)
+     */
+    expanded?: boolean;
+    /** the least width in px a drag (and `width`) gives the form, default and at least 150 */
+    minWidth?: number;
+    /** the most width in px a drag (and `width`) gives the form, default none - the rows keep their room */
+    maxWidth?: number;
 }
 
 /**
@@ -606,6 +647,25 @@ export type ColumnConfig = {
      */
     filterCaseSensitive?: boolean;
     /**
+     * `true`: the column's header filter filters as you type, after a short pause (300ms) - no Enter
+     * needed. A number or date column filters when the text is a number or a date, not while one is half
+     * typed. Left out: the grid's `filterOnType`, else `false`. The user turns it on and off in the
+     * operator choice of the header filter, Filter › in its menu and the grid config dialog - state,
+     * `GridState.headerFilters[field].filterOnType`. Ignored on a boolean column: its checkbox filters on
+     * a click
+     *
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     columns: { name: { operator: 'CONTAINS', filterOnType: true } }, // a search as you type
+     *     layout: { center: [{ fields: ['name'], width: 150 }] }
+     * };
+     * ```
+     */
+    filterOnType?: boolean;
+    /**
      * the name of another column whose value in the row is the type of this cell -
      * `'text' | 'number' | 'boolean' | 'date' | 'datetime'`. A number/text/date etc in the same
      * column, for property/value style data. Only for a `text` field (the default), and a value that
@@ -619,7 +679,7 @@ export type ColumnConfig = {
     /**
      * makes the column's cells readonly while the grid is editable (`GridConfig.readonly: false`). The
      * grid draws red stripes behind them. The `isReadonly` hook ({@link GridHooks}) can decide per row
-     * instead
+     * instead. The user's from the grid config dialog (`format.readonly`, Read only) wins
      */
     readonly?: boolean;
 
@@ -880,8 +940,8 @@ export interface GridState {
     filter: FilterExpression | null;
     /**
      * what the header filter cells show, keyed by field: the value typed or picked, the operator
-     * picked in the header filter's menu and whether its "Match case" is on. Only the columns that have
-     * one of them are listed.
+     * picked in the header filter's menu, whether its "Match case" is on and its filter as you type.
+     * Only the columns that have one of them are listed.
      *
      * The rows are filtered by `filter`: these are what the header shows, the conditions they made are
      * in `filter` already. A state from `getState()` has both.
@@ -906,9 +966,9 @@ export interface GridState {
      */
     formats: Record<string, ColumnFormat>;
     /**
-     * the detail form - whether it is shown, its fields in their order and its width - what
-     * `GridConfig.detailForm` starts with and the grid config dialog (tab *Detail form*) changes. See
-     * {@link DetailForm}
+     * the detail form - whether it is shown, its fields in their order, its width (dragged too), whether
+     * it is expanded or collapsed - what `GridConfig.detailForm` starts with and the user changes: the
+     * grid config dialog (tab *Detail form*), the form's edge and its title bar. See {@link DetailForm}
      */
     detailForm: DetailForm;
 }
@@ -925,14 +985,22 @@ export interface GridState {
  *     name: { value: 'Ann*', caseSensitive: true }, // typed in the name column, "Match case" on
  *     age: { value: 30, operator: 'LESS_THAN_OR_EQUAL_TO' }, // the operator picked in the menu
  *     balance: { value: [1000, 5000], operator: 'BETWEEN' }, // typed as 1000..5000
- *     active: { value: true } // a boolean column's checkbox
+ *     active: { value: true }, // a boolean column's checkbox
+ *     city: { value: 'Os*', filterOnType: true }, // filter as you type turned on
+ *     due: { value: new Date(2026, 10, 16), operator: 'EQUAL' } // `2026-W47` typed, the column shown as weekIso
  * };
  * ```
  */
 export interface HeaderFilter {
     /**
      * what the header filter cell shows: the text typed, the date picked, `true`/`false` for a
-     * checkbox, `[from, to]` for `BETWEEN` (an open end null). null is empty
+     * checkbox, `[from, to]` for `BETWEEN` (an open end null). null is empty.
+     *
+     * A number or a date typed is stored as its value: a number, a `Date`. In a column that filters as
+     * shown (`ColumnFormat.filterAsShown`) the date is the start of the period typed - `2026-W47` is
+     * stored as Monday 2026-11-16 00:00, `2026-W40..2026-W47` as `[Monday of week 40, Monday of week 47]`
+     * - and the cell shows it in the column's format again: `2026-W47`. The conditions of the whole week
+     * are in `GridState.filter`
      */
     value: unknown;
     /**
@@ -942,6 +1010,12 @@ export interface HeaderFilter {
     operator?: FilterOperator;
     /** `true` when "Match case" is on in the header filter's menu, see `ColumnConfig.filterCaseSensitive` */
     caseSensitive?: boolean;
+    /**
+     * filter as you type, as the user turned it on (`true`) or off (`false`) in the operator choice, the
+     * filter menu or the grid config dialog. Left out: the column's `filterOnType`, else the grid's -
+     * listed only when the user's differs from it. See `ColumnConfig.filterOnType`
+     */
+    filterOnType?: boolean;
 }
 
 /**

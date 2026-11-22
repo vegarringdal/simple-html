@@ -203,8 +203,9 @@ A display format is how a column shows its values, picked by the user: right cli
 **Format ›**. A date column shows its dates as ISO, Norwegian, US ... or a part of them - the week,
 the day of the week, the days until; a number column picks its decimals, its thousands separator and
 its decimal mark. It is a view setting, like a column's width: only the text shown changes, the value
-stays as it is - an edited cell shows the value, the header filter is typed as before. It is part of
-the state, so `getState()` keeps it.
+stays as it is - an edited cell shows the value. The header filter takes the text as the cells show it:
+`2026-W47` in a column shown as weeks is that week, see [Filter as shown](#filter-as-shown). It is part
+of the state, so `getState()` keeps it.
 
 Give a column the format it starts with in the config, `ColumnConfig.format`: an object with a part
 for the field's type, `date` for a `date` or `datetime` field, `number` for a `number` field.
@@ -356,8 +357,8 @@ that reads or writes it, keep to the field's formatter:
 | the aggregates in the group rows and the totals row | the display format of a number column, see [Aggregates](18-aggregates.md#how-they-are-shown) |
 | the summary of the selected cells in the footer | the display format of the first number field, its decimals - as is: two at most |
 | Find, the fitted width (`fitColumns()`), the dimmed repeated values | the text the cells show |
-| the header filter, its placeholder | the field's formatter: **you type a date, not a week** - `2026-11-22`, not `2026-W47` |
-| the filter chips, the filter editor, `getFilterString()` | the field's formatter: a filter is on the value |
+| the header filter, its placeholder, the range block of its menu, the date pickers | the display format - **you type a week**, `2026-W47`, and the filter is the whole week (`filterAsShown`, see [Filter as shown](#filter-as-shown)). `filterAsShown: false`, the day of the week and a time of day: the field's formatter, `2026-11-22` |
+| the filter chips, the filter editor, `getFilterString()` | the field's formatter: a filter is on the value - `2026-W47` typed is a BETWEEN of `2026-11-16` and `2026-11-22` there |
 | the names of the group rows | the field's formatter, made by the datasource |
 | sorting, grouping | the value: a column shown as weeks sorts and groups by its dates |
 | copy (Ctrl+C, Copy ›) and the CSV export | the field's formatter: the value, so a paste reads it back - `2026-W47` and `1 234 567,89` it could not |
@@ -378,6 +379,86 @@ gridInterface.resetState(); // the formats of the config again
 ```
 
 See [State](03-state.md#display-formats-in-the-state).
+
+### Filter as shown
+
+The header filter of a column with a display format takes the text **as the cells show it**, and
+filters on what it stands for - a week, a month, a minute is the whole of it. It is on by default:
+`filterAsShown: false` in the column's format turns it off, the grid config dialog has it as a checkbox.
+
+| format | typed | filters on |
+| --- | --- | --- |
+| `weekIso`, `weekUs` | `2026-W47` | the week: Monday 16 to Sunday 22 November (US: Sunday to Saturday, within the year) |
+| `month`, `quarter`, `year` | `2026-11`, `2026 Q4`, `2026` | the month, the quarter, the year |
+| `iso`, `norwegian`, `norwegianShort`, `us`, `uk` | `22.11.2026`, `11/22/2026` | the day - a whole day of a `datetime` column too |
+| `medium`, `long`, `full` | `Nov 22, 2026`, `22. november 2026` | the day, the names in the language of `format.locale` |
+| `daysUntil` | `5` | the day in 5 days: `≤ 5` is up to then - overdue too, `≥ 0` from today |
+| `isoTime`, `norwegianTime` | `2026-11-22 13:45` | the minute, 13:45:00 to 13:45:59 |
+| `isoSeconds`, `norwegianSeconds` | `2026-11-22 13:45:12` | the second |
+| a number format | `1 234,5`, `50 %` | the number read with the format's separators: 1234.5; a percent is a hundredth, 0.5 |
+| `weekday`, `time`, `timeSeconds` | | not filtered as shown: a Sunday and 13:45 are of any week, any day - typed as the field's formatter reads it (`2026-11-22`) |
+
+The operator works on the whole period, and the filter is made of ordinary date conditions:
+
+| typed | the filter |
+| --- | --- |
+| `= 2026-W47` | `BETWEEN` 2026-11-16 and 2026-11-22 |
+| `≥ 2026-W47` | from Monday, `≥ 2026-11-16` |
+| `> 2026-W47` | after Sunday, `> 2026-11-22` |
+| `< 2026-W47` | before Monday, `< 2026-11-16` |
+| `≤ 2026-W47` | to Sunday, `≤ 2026-11-22` |
+| `≠ 2026-W47` | an OR group: `< 2026-11-16` or `> 2026-11-22` or blank - as `≠` a day, a blank date is not in it |
+| `2026-W40..2026-W47` (Between) | Monday of week 40 to Sunday of week 47 - an end left out is open |
+
+The end of a period is its last day for a `date` column, its last second (23:59:59) for a `datetime`
+column. A period of one day on a `date` column, one second on a `datetime` column, is the condition as
+without a format: `EQUAL 2026-11-22`.
+
+- **No date functions in SQL.** The filter is plain conditions on dates, so
+  [`toSqlWhere()`](22-sql.md#a-week-typed-in-the-grid) makes a range of the column of them - an index on
+  it works, in every dialect - and so does a backend of your own.
+- **The cell keeps what was typed.** The state has the value as before: a date, the start of the period
+  typed - `2026-W47` is stored as Monday 2026-11-16 00:00, a BETWEEN as the starts of its two ends - and
+  the cell shows it in the format again, `2026-W47`, after a render and after a saved state. See
+  [Header filters in the state](03-state.md#header-filters-in-the-state).
+- **The text in full**, as shown: `2026-W4` is week 4, `2026-W` is no week and no filter, a column of
+  minutes takes the minute. A leading 0 can be left out (`22.1.2026`), case does not matter
+  (`2026-w47`, `2026 q4`), a week and a quarter are written as the texts `format.weekIso`,
+  `format.weekUs` and `format.quarter` have them (`uke 47 2026`). An ISO date is read too: `2026-11-18`
+  typed in a column of weeks is its week.
+- **The placeholder** of the empty header filter is an example, today in the format: `2026-W47`,
+  `1 234,5`; *Days from today* for `daysUntil` (the text `filter.placeholder.daysUntil`). A column's own
+  `placeholderFilter` wins.
+- **The date pickers** write the format: a day picked in a column of weeks is `2026-W47`, the range
+  picker of Between `2026-W40..2026-W47`, and it opens from Monday of the first week to Sunday of the
+  last. The range block of the filter menu reads and writes it too.
+- **The format changed** by the user - Format › in the header menu, the grid config dialog - runs a
+  header filter with a value again, as the cell shows it then: `2026-W47` switched to *Month* is
+  `2026-11`, November; to *Default* `2026-11-16`, that day. `setState({ formats })` from code leaves the
+  filter as it is.
+- The footer's chips, the filter editor and `getFilterString()` show the conditions: the dates.
+- A number format reads the number only, the operators are as without it: `≥ 1 234,5` is `≥ 1234.5`.
+  The cell shows the number with the format's separators and the decimals it has: `12.34` typed in a
+  column of one decimal stays `12.34`.
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    columns: {
+        due: { format: { date: 'weekIso' }, operator: 'EQUAL' }, // `2026-W47` is the week
+        born: { format: { date: 'norwegian', filterAsShown: false } }, // typed as YYYY-MM-DD
+        balance: { format: { number: { thousands: ' ', decimal: ',' } } } // `1 234,5`
+    },
+    layout: {
+        center: [
+            { fields: ['due'], width: 100 },
+            { fields: ['born'], width: 100 },
+            { fields: ['balance'], width: 120 }
+        ]
+    }
+};
+```
 
 ## Templates and links
 
@@ -529,8 +610,10 @@ hides the gear ([Grid config](02-grid-config.md#grid-options)).
 Its title is *Grid config*. Under the title bar are two tabs:
 
 - **Columns**, below: the settings of each column. `openColumnSettings()` opens the dialog on it.
-- **Detail form**: the detail form at the right of the rows - *Show the detail form*, its width, and the
-  fields it shows in their order. `openDetailFormSettings()` opens the dialog on it. See
+- **Detail form**: the detail form at the right of the rows - *Show the detail form*, *Expanded*, its
+  width with its *Min width* and *Max width* (empty: none; the one typed keeps its value, the others
+  follow it), and the fields it shows in their order - each with a drag handle at its right that drags
+  it to another place, a line showing where. `openDetailFormSettings()` opens the dialog on it. See
   [The detail form](02-grid-config.md#the-detail-form).
 
 The tabs are a tab list: Tab comes to the tab shown, ArrowLeft / ArrowRight (Home / End) show another.
@@ -541,11 +624,16 @@ The Columns tab:
 
 - **The columns** of the layout are at the left, in their order, each with its label, its type and
   what it has set - *Format*, *Text*, *Link*, *Checkbox*, *Blank / 0*, *Label*, *Placeholder*,
-  *Colours*, or *Error*. The arrows, Home, End, PageUp / PageDown and a letter pick one, a click too.
-- **Label**, every column: the column's label - empty is the column's own, which the input shows. It
+  *Multiline*, *Read only*, *Colours*, or *Error*. The arrows, Home, End, PageUp / PageDown and a letter pick one, a
+  click too.
+- **Label**, every column: the column's label - empty is the column's own, which the input shows. The ✎ of
+  the column chooser sets it too ([The column chooser](10-menus.md#the-column-chooser)). It
   is the label wherever the grid names the column, the exports' headers too.
 - **A date, datetime or number column** has its format: a picker that opens the entries of Format ›,
-  the same list as the header menu. A number column has *Show blank as 0* and *Show 0 as blank* too,
+  the same list as the header menu. Under it, with a format, *Filter as shown* (on): the header filter
+  takes the text as the cells show it, see [Filter as shown](#filter-as-shown) - off, the format has
+  `filterAsShown: false`. It is off and greyed out for the day of the week and a time of day, the hint
+  under it says why. A number column has *Show blank as 0* and *Show 0 as blank* too,
   one or the other: they start as the column shows them, its `numberOverride` too, and turning the
   column's own off is kept as `'NONE'`.
 - **A text column** has *Text shown* (the template, empty for the cell's own text), *Show as link*,
@@ -557,6 +645,13 @@ The Columns tab:
   checkbox shows no text: while it is on, the template and the link of a text column, the format and
   blank / 0 of a number column are gone from the column and from the dialog. A checked value that is
   empty, the same two values, a value of a number column that is no number are problems.
+- **Multiline**, a text column that is not shown as checkboxes: its cells are text of several lines -
+  the first line shown, the text editor to edit it (Enter a new line), taller rows with `fitRows()`. It
+  starts as the field has it (`multiline` of its field); off, only a value with a line break is shown
+  as several lines, as always.
+- **Read only**, every column: its cells can not be edited, also in an editable grid - or, unchecked, a
+  column that is `readonly` in the config can. It starts as the column has it. The `isReadonly` hook
+  still has the last word.
 - **Filter placeholder**, for every column but a checkbox: the placeholder of the column's header
   filter - empty is the one it has without, which the input shows - or *Use the column label*: the
   label is the placeholder, the input is off.
@@ -564,6 +659,9 @@ The Columns tab:
   picker of the operators it offers - the same as Filter › Operator › - with *Default:* and the operator
   the column starts with under it (its `operator`, else the type's: `≥` for a number or date, `=` for a
   text). A column with one operator (`filterOperators`) shows it, there is nothing to pick.
+- **Filter as you type**, after the operator, every column but a checkbox: the header filter filters
+  after a short pause in typing, see [Filter as you type](06-filtering.md#filter-as-you-type). It starts
+  as the column has it (its `filterOnType`, the grid's, or the user's from the operator choice).
 - **Colour rules**, every column: the [colour rules](#colour-rules) of its cells, in their order - the
   first that matches wins. Each rule is a group: its operator (a picker of the operators the column's
   filter offers, not In / Not In), its value as it is typed in the header filter - *From* and *To* for
@@ -585,10 +683,13 @@ The Columns tab:
 - **Apply** sets the formats of the state, `setState({ formats })`: `getState()` has them - to save
   them, see [Saving it](03-state.md#saving-it). A filter operator that changed is switched as Operator ›
   does it: the header filter's value is filtered on again with it, the state has it
-  (`headerFilters[field].operator`) and the grid sends `filter-operator-change`. *Apply & close* applies
-  and closes, *Cancel* (and the ✕, Esc) closes without applying. *Reset column* and *Reset all* go back
-  to the formats the grid starts with - `ColumnConfig.format`, or `initialState.formats` - and to the
-  column's default operator, in the dialog, until Apply.
+  (`headerFilters[field].operator`) and the grid sends `filter-operator-change`. A header filter whose
+  column reads its text in another way now (another format filtered as shown, *Filter as shown* turned
+  on or off) runs again, as the cell shows it. *Filter as you type* is state too
+  (`headerFilters[field].filterOnType`). *Apply & close* applies and closes, *Cancel* (and the ✕, Esc)
+  closes without applying. *Reset column* and *Reset all* go back to the formats the grid starts with -
+  `ColumnConfig.format`, or `initialState.formats` - and to the column's default operator and filter as
+  you type, in the dialog, until Apply.
 
 It is a modal dialog of the filter editor's kind: the focus goes into it when it opens and back to
 where it was when it closes, it is moved by its title bar and resized from every edge and corner. The
@@ -598,7 +699,7 @@ A developer sets the formats the grid starts with in `ColumnConfig.format`; what
 dialog is the state. To keep the user's settings, save `getState()` (or its `formats`) and give it back
 with `setState()` the next time.
 
-## Label, placeholder, blank / 0, checkboxes
+## Label, placeholder, blank / 0, checkboxes, multiline, read only
 
 The rest of what the grid config dialog sets is in the column's format too - so the state keeps it
 with the formats, and a developer can start a column with it in `ColumnConfig.format`:
@@ -635,11 +736,13 @@ const config: GridConfig = {
 | `placeholderLabel` | `true`: the placeholder is the column's label - not with `placeholder` | the same |
 | `numberOverride` | a `number` column: `'BLANK_TO_ZERO'`, `'ZERO_TO_BLANK'`, or `'NONE'` - neither | `ColumnConfig.numberOverride`: `'NONE'` turns it off |
 | `checkbox` | a `text` or `number` column: its cells are checkboxes, see below | |
+| `multiline` | a `text` column: `true` text of several lines, `false` one line (a value with a line break is shown as several lines still) - not with `checkbox` | the field's `multiline` (`FieldConfig`) |
+| `readonly` | any column: `true` its cells are not edited, also in an editable grid; `false` they are | `ColumnConfig.readonly` - the `isReadonly` hook gets this and has the last word |
 
 Each is checked as the rest of a format: an empty label or placeholder, a placeholder of a checkbox
 column, `numberOverride` on another type, checkboxes on a date column throw a `TypeError` when the grid
-is made, or `updateConfig()` or `setState()` is given it. A lookup column (`editor`) takes a label and
-a placeholder, not the rest.
+is made, or `updateConfig()` or `setState()` is given it. A lookup column (`editor`) takes a label,
+a placeholder and `readonly`, not the rest.
 
 ### Checkboxes
 
@@ -790,6 +893,6 @@ The column option `numberOverride` changes what a number cell shows, not the val
 `'ZERO_TO_BLANK'` shows 0 as an empty cell, `'BLANK_TO_ZERO'` an empty cell as `0`. See
 [Grid config](02-grid-config.md#column-options). The user sets it in the grid config dialog (*Show
 blank as 0*, *Show 0 as blank*): `format.numberOverride` in the state, which wins over the column's -
-`'NONE'` turns it off, see [Label, placeholder, blank / 0, checkboxes](#label-placeholder-blank--0-checkboxes).
+`'NONE'` turns it off, see [Label, placeholder, blank / 0, checkboxes, multiline, read only](#label-placeholder-blank--0-checkboxes-multiline-read-only).
 With a display format the 0 is the format's: `'BLANK_TO_ZERO'` with two decimals shows `0,00`, and
 `'ZERO_TO_BLANK'` empties what shows as `0,00`.

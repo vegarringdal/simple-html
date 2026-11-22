@@ -6,12 +6,15 @@ import type { Grid } from '../grid';
 import type { DetailForm, ParsedGridConfig } from '../gridConfig';
 import { asPx } from './asPx';
 import { cellTextOf } from './cellText';
+import { detailFormResizeHandle } from './detailFormResize';
 import { LEFT_PINNED_COLTYPE } from './GROUP_COLTYPE';
 import { getColumnLabel } from './getColumnLabel';
 import { getGroupingWidth } from './getGroupingWidth';
 import { gridText } from './gridText';
+import { CHEVRON_ICON } from './icons';
 import { normalizeLineBreaks, textLines } from './multilineText';
-import { tabBackFromDetailForm } from './tabExit';
+import { detailFormStops, tabBackFromDetailForm } from './tabExit';
+import { attachTooltips, tooltipsEnabled } from './tooltip';
 import { undoRedoAction } from './undoRedoKey';
 
 /**
@@ -43,6 +46,12 @@ import { undoRedoAction } from './undoRedoKey';
  * - **For a screen reader** a region named by its title, each value's label tied to it (`for`), errors
  *   by `aria-describedby`. In the order of Tab after the footer (tabExit.ts): the last element of the
  *   grid before the end Tab leaves it from.
+ * - **Collapsed** (`expanded: false`): a strip DETAIL_FORM_COLLAPSED px wide at the right of the rows - as
+ *   high under them - with only its title bar. The title is a button (`aria-expanded`, it controls the
+ *   body) that expands and collapses it: toggleDetailForm, the state's `expanded`. Where it is - at the
+ *   right or under the rows - does not change with it: that is the expanded width's.
+ * - **Its width** is between `minWidth` and `maxWidth` (detailFormLimits). Its left edge is a splitter
+ *   the user drags, or moves with the arrow keys (detailFormResize.ts).
  *
  * The state's part is checked and copied here too (assertDetailForm, copyDetailForm).
  */
@@ -53,8 +62,20 @@ export const DETAIL_FORM_CLASS = 'simple-html-grid-detail-form';
 /** the width in px when the state gives none */
 export const DETAIL_FORM_WIDTH = 300;
 
-/** the least width in px: a smaller `width` is laid out this wide */
+/** the least width in px: a smaller `width` (or `minWidth`) is laid out this wide */
 export const DETAIL_FORM_MIN_WIDTH = 150;
+
+/**
+ * the size in px of a collapsed form: the width of its strip at the right of the rows, the height of its
+ * bar under them - its title bar (22px) and its line (2px)
+ */
+export const DETAIL_FORM_COLLAPSED = 24;
+
+/** the class of a form under the rows, see placeDetailForm */
+export const BELOW_CLASS = 'simple-html-grid-detail-form-below';
+
+/** the class of a collapsed form, see placeDetailForm */
+const COLLAPSED_CLASS = 'simple-html-grid-detail-form-collapsed';
 
 /** the share of the grid's height the form has under the rows, in a narrow grid */
 const BELOW_SHARE = 0.4;
@@ -78,61 +99,96 @@ export function noDetailForm(): DetailForm {
 }
 
 /**
- * A copy of a detail form, as the state keeps it: `show` a boolean, each field once, `width` only when
- * it is given
+ * A copy of a detail form, as the state keeps it: `show` a boolean, each field once; `width`,
+ * `expanded`, `minWidth` and `maxWidth` only when they are given
  */
 export function copyDetailForm(form: DetailForm): DetailForm {
     const copy: DetailForm = { show: form.show === true, fields: [...new Set(form.fields)] };
     if (form.width !== undefined) {
         copy.width = form.width;
     }
+    if (form.expanded !== undefined) {
+        copy.expanded = form.expanded === true;
+    }
+    if (form.minWidth !== undefined) {
+        copy.minWidth = form.minWidth;
+    }
+    if (form.maxWidth !== undefined) {
+        copy.maxWidth = form.maxWidth;
+    }
     return copy;
 }
 
+/** true for a number of px, more than 0 */
+const isPx = (value: unknown) => typeof value === 'number' && Number.isFinite(value) && value > 0;
+
 /**
  * Checks a detail form from a config or a state - plain JavaScript and JSON are not checked by
- * TypeScript: an object with `show` (a boolean), `fields` (an array of field names) and maybe `width`
- * (a number of px, more than 0)
+ * TypeScript: an object with `show` (a boolean), `fields` (an array of field names) and maybe `width`,
+ * `minWidth` and `maxWidth` (numbers of px, more than 0 - the least not more than the most) and
+ * `expanded` (a boolean)
  * @param where the start of the message: `GridConfig.detailForm`, `setState: detailForm`
  * @throws a `TypeError` that says what is wrong
  */
 export function assertDetailForm(form: unknown, where: string): asserts form is DetailForm {
     if (typeof form !== 'object' || form === null || Array.isArray(form)) {
-        throw new TypeError(`${where} is an object { show, fields, width? }, got ${JSON.stringify(form)}`);
+        throw new TypeError(
+            `${where} is an object { show, fields, width?, expanded?, minWidth?, maxWidth? }, got ${JSON.stringify(form)}`
+        );
     }
-    const { show, fields, width } = form as Record<string, unknown>;
+    const { show, fields, width, expanded, minWidth, maxWidth } = form as Record<string, unknown>;
     if (typeof show !== 'boolean') {
         throw new TypeError(`${where}.show is true or false, got ${JSON.stringify(show)}`);
     }
     if (!Array.isArray(fields) || fields.some((field) => typeof field !== 'string')) {
         throw new TypeError(`${where}.fields is an array of field names, got ${JSON.stringify(fields)}`);
     }
-    if (width !== undefined && (typeof width !== 'number' || !Number.isFinite(width) || width <= 0)) {
-        throw new TypeError(`${where}.width is a number of px, more than 0, got ${JSON.stringify(width)}`);
+    for (const [name, value] of Object.entries({ width, minWidth, maxWidth })) {
+        if (value !== undefined && !isPx(value)) {
+            throw new TypeError(`${where}.${name} is a number of px, more than 0, got ${JSON.stringify(value)}`);
+        }
+    }
+    if (expanded !== undefined && typeof expanded !== 'boolean') {
+        throw new TypeError(`${where}.expanded is true or false, got ${JSON.stringify(expanded)}`);
+    }
+    if (typeof minWidth === 'number' && typeof maxWidth === 'number' && minWidth > maxWidth) {
+        throw new TypeError(`${where}.minWidth (${minWidth}) is more than its maxWidth (${maxWidth})`);
     }
 }
 
 /**
- * The width in px the form is laid out with: the state's `width`, at least DETAIL_FORM_MIN_WIDTH
+ * true while the form is expanded: its `expanded` is not `false`
+ */
+export function isDetailFormExpanded(form: DetailForm): boolean {
+    return form.expanded !== false;
+}
+
+/**
+ * The least and the most width in px the form is laid out with: `minWidth` - at least
+ * DETAIL_FORM_MIN_WIDTH - and `maxWidth` (none: Infinity), not less than the least
+ */
+export function detailFormLimits(form: DetailForm): { min: number; max: number } {
+    const min = Math.max(form.minWidth ?? DETAIL_FORM_MIN_WIDTH, DETAIL_FORM_MIN_WIDTH);
+    return { min, max: Math.max(form.maxWidth ?? Number.POSITIVE_INFINITY, min) };
+}
+
+/**
+ * The width in px the form is laid out with when it is expanded: the state's `width` (default
+ * DETAIL_FORM_WIDTH) between its least and most width, see detailFormLimits
  */
 export function detailFormWidth(form: DetailForm): number {
-    return Math.round(Math.max(form.width ?? DETAIL_FORM_WIDTH, DETAIL_FORM_MIN_WIDTH));
+    const { min, max } = detailFormLimits(form);
+    return Math.round(Math.min(Math.max(form.width ?? DETAIL_FORM_WIDTH, min), max));
 }
 
 /**
- * The room the form takes from the rows, in px: at the right (`right`), or under the rows (`below`)
- * where the rows would have too little room beside it - less than the form's width, or the scrolling
- * columns less than MIN_MIDDLE besides the row numbers, the pinned columns and the scrollbar. Both 0
- * when it is not shown. For updateMainElementSizes
+ * The widest the form can be at the right of the rows, in px: the rows keep as much room as the form -
+ * half the grid - and the scrolling columns MIN_MIDDLE besides the row numbers, the pinned columns and
+ * the scrollbar (that room only while there are scrolling columns)
  */
-export function detailFormSpace(ctx: Grid): { right: number; below: number } {
+function roomAtRight(ctx: Grid): number {
     const config = ctx.gridInterface.__getGridConfig();
-    const form = config.detailForm;
-    if (!form.show) {
-        return { right: 0, below: 0 };
-    }
-    const width = detailFormWidth(form);
-    const rows = ctx.element.clientWidth - width;
+    const width = ctx.element.clientWidth;
     const pinned =
         config.__selectSizeWidth +
         config.__leftWidth +
@@ -140,24 +196,56 @@ export function detailFormSpace(ctx: Grid): { right: number; below: number } {
         config.__rightWidth +
         config.__scrollbarSize;
     const middle = config.layout.center.length ? MIN_MIDDLE : 0;
-    if (rows >= width && rows - pinned >= middle) {
-        return { right: width, below: 0 };
+    return Math.floor(Math.min(width / 2, width - pinned - middle));
+}
+
+/**
+ * The room the form takes from the rows, in px: at the right (`right`), or under the rows (`below`)
+ * where its width does not fit at the right (roomAtRight: the rows would get less room than the form,
+ * or the scrolling columns less than MIN_MIDDLE). Collapsed, it takes DETAIL_FORM_COLLAPSED px where it
+ * is. Both 0 when it is not shown. `room`: roomAtRight, the widest a drag of its edge can make it. For
+ * updateMainElementSizes
+ */
+export function detailFormSpace(ctx: Grid): { right: number; below: number; room: number } {
+    const form = ctx.gridInterface.__getGridConfig().detailForm;
+    if (!form.show) {
+        return { right: 0, below: 0, room: 0 };
     }
-    return { right: 0, below: Math.round(ctx.element.clientHeight * BELOW_SHARE) };
+    const room = roomAtRight(ctx);
+    const expanded = isDetailFormExpanded(form);
+    if (detailFormWidth(form) <= room) {
+        return { right: expanded ? detailFormWidth(form) : DETAIL_FORM_COLLAPSED, below: 0, room };
+    }
+    const below = expanded ? Math.round(ctx.element.clientHeight * BELOW_SHARE) : DETAIL_FORM_COLLAPSED;
+    return { right: 0, below, room };
+}
+
+/** the room at the right of each grid's rows at its last layout, see detailFormRoom */
+const rooms = new WeakMap<Grid, number>();
+
+/**
+ * The widest the form can be at the right of the rows as the last layout found it (placeDetailForm):
+ * the most a drag of its edge gives it. 0 before the first layout
+ */
+export function detailFormRoom(ctx: Grid): number {
+    return rooms.get(ctx) ?? 0;
 }
 
 /**
  * Puts the form where detailFormSpace says, for updateMainElementSizes: at the right from under the
- * grouping panel to the footer, or under the rows over the footer. Hidden when it is not shown
+ * grouping panel to the footer, or under the rows over the footer (BELOW_CLASS). Hidden when it is not
+ * shown. A collapsed form has COLLAPSED_CLASS: its title bar is all of it
  */
-export function placeDetailForm(ctx: Grid, space: { right: number; below: number }) {
+export function placeDetailForm(ctx: Grid, space: { right: number; below: number; room: number }) {
     const element = ctx.detailForm;
     if (!element) {
         return;
     }
     const config = ctx.gridInterface.__getGridConfig();
+    rooms.set(ctx, space.room);
     element.hidden = !space.right && !space.below;
-    element.classList.toggle('simple-html-grid-detail-form-below', space.below > 0);
+    element.classList.toggle(BELOW_CLASS, space.below > 0);
+    element.classList.toggle(COLLAPSED_CLASS, !isDetailFormExpanded(config.detailForm));
     if (space.right) {
         element.style.top = asPx(config.panelHeight);
         element.style.left = '';
@@ -196,34 +284,48 @@ export function detailFormRow(ctx: Grid): { row: Entity; index: number } | null 
 }
 
 /**
- * The id of an element of the form, unique in the page: a page can have several grids
+ * The id of an element of the form, unique in the page: a page can have several grids. `form` is the
+ * form's element (the splitter of its edge controls it)
  */
-function idOf(ctx: Grid, part: string) {
+export function detailFormId(ctx: Grid, part: string) {
     return `${ctx.ariaIdPrefix}-detail-${part}`;
 }
 
 /**
  * Makes the form's element for createDom: a region named by its title, empty and hidden until
- * updateMainElementSizes places it and renderDetailForm fills it. Shift+Tab on its first field goes back
- * into the grid, see tabBackFromDetailForm
+ * updateMainElementSizes places it and renderDetailForm fills it. Shift+Tab on its first stop (the
+ * button of its title) goes back into the grid, see tabBackFromDetailForm. The tooltip of the button
+ * (Collapse / Expand the details) when the pointer rests on it, as the grid's `tooltips` option says
  */
 export function createDetailForm(ctx: Grid): HTMLElement {
     const element = document.createElement('div');
     element.className = DETAIL_FORM_CLASS;
+    element.id = detailFormId(ctx, 'form');
     element.hidden = true;
     element.setAttribute('role', 'region');
-    element.setAttribute('aria-labelledby', idOf(ctx, 'title'));
+    element.setAttribute('aria-labelledby', detailFormId(ctx, 'title'));
     // on the element itself: it goes with it
     element.addEventListener('keydown', (event) => {
         if (event.key !== 'Tab' || !event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) {
             return;
         }
-        if (event.target === element.querySelector('input, textarea, a[href]')) {
+        if (event.target === detailFormStops(ctx)[0]) {
             tabBackFromDetailForm(ctx, event);
         }
     });
+    attachTooltips(element, () => tooltipsEnabled(ctx));
     ctx.detailForm = element;
     return element;
+}
+
+/**
+ * Collapses an expanded form, expands a collapsed one: the button of its title bar. The state's
+ * `expanded` (setState), so a saved state keeps it
+ */
+export function toggleDetailForm(ctx: Grid) {
+    const gridInterface = ctx.gridInterface;
+    const form = gridInterface.getState().detailForm;
+    gridInterface.setState({ detailForm: { ...form, expanded: !isDetailFormExpanded(form) } });
 }
 
 /**
@@ -233,9 +335,11 @@ export function createDetailForm(ctx: Grid): HTMLElement {
 const rendering = new WeakSet<Grid>();
 
 /**
- * Renders the form: its title and the row's fields - "No row" without a row. Nothing while it is not
- * shown. Called with every render of the rows on screen (triggerScrollEvent) and after values changed
- * (renderChangedRows). Nothing when called while it renders: that render shows what is there
+ * Renders the form: its title bar - the button that collapses and expands it, the row's number - the
+ * splitter of its edge and the row's fields - "No row" without a row. Collapsed, the title bar only.
+ * Nothing while it is not shown. Called with every render of the rows on screen (triggerScrollEvent),
+ * after values changed (renderChangedRows) and while its width is dragged (detailFormResize.ts).
+ * Nothing when called while it renders: that render shows what is there
  */
 export function renderDetailForm(ctx: Grid) {
     // made by createDom: nothing before it
@@ -252,34 +356,58 @@ export function renderDetailForm(ctx: Grid) {
 }
 
 /**
+ * What the body of an expanded form shows: the row's fields, else "No row" or "No fields"
+ */
+function bodyContent(ctx: Grid, config: ParsedGridConfig, shown: { row: Entity } | null): TemplateResult {
+    const fields = config.detailForm.fields;
+    if (!shown) {
+        return html`<div class="simple-html-grid-detail-form-empty">${gridText(ctx, 'detailForm.noRow')}</div>`;
+    }
+    if (!fields.length) {
+        return html`<div class="simple-html-grid-detail-form-empty">${gridText(ctx, 'detailForm.noFields')}</div>`;
+    }
+    return html`${fields.map((field, index) => fieldTemplate(ctx, config, shown.row, field, index))}`;
+}
+
+/**
  * The render of renderDetailForm
  */
 function renderForm(ctx: Grid, element: HTMLElement) {
     const config = ctx.gridInterface.__getGridConfig();
-    if (!config.detailForm.show) {
+    const form = config.detailForm;
+    if (!form.show) {
         render(nothing, element);
         return;
     }
+    const expanded = isDetailFormExpanded(form);
     const shown = detailFormRow(ctx);
-    const fields = config.detailForm.fields;
-    let content: TemplateResult;
-    if (!shown) {
-        content = html`<div class="simple-html-grid-detail-form-empty">${gridText(ctx, 'detailForm.noRow')}</div>`;
-    } else if (!fields.length) {
-        content = html`<div class="simple-html-grid-detail-form-empty">${gridText(ctx, 'detailForm.noFields')}</div>`;
-    } else {
-        content = html`${fields.map((field, index) => fieldTemplate(ctx, config, shown.row, field, index))}`;
-    }
+    // collapsed: the title bar only, nothing in the body to Tab to
+    const content = expanded ? bodyContent(ctx, config, shown) : nothing;
+    // the same elements expanded and collapsed: the button keeps the focus when it is pressed
     render(
         html`<div class="simple-html-grid-detail-form-titlebar">
-                <span class="simple-html-grid-detail-form-title" id=${idOf(ctx, 'title')}>${gridText(ctx, 'detailForm.title')}</span>
+                <button
+                    type="button"
+                    class="simple-html-grid-detail-form-toggle"
+                    aria-expanded=${expanded ? 'true' : 'false'}
+                    aria-controls=${detailFormId(ctx, 'body')}
+                    data-tooltip=${gridText(ctx, expanded ? 'detailForm.collapse' : 'detailForm.expand')}
+                    @click=${() => toggleDetailForm(ctx)}
+                >
+                    ${CHEVRON_ICON}<span class="simple-html-grid-detail-form-title" id=${detailFormId(ctx, 'title')}
+                        >${gridText(ctx, 'detailForm.title')}</span
+                    >
+                </button>
                 ${
-                    shown
+                    shown && expanded
                         ? html`<span class="simple-html-grid-detail-form-row">${gridText(ctx, 'detailForm.row', { row: shown.index + 1 })}</span>`
                         : nothing
                 }
             </div>
-            <div class="simple-html-grid-detail-form-body simple-html-dialog-scroller">${content}</div>`,
+            ${expanded ? detailFormResizeHandle(ctx, form) : nothing}
+            <div class="simple-html-grid-detail-form-body simple-html-dialog-scroller" id=${detailFormId(ctx, 'body')} ?hidden=${!expanded}>
+                ${content}
+            </div>`,
         element
     );
 }
@@ -293,8 +421,8 @@ function fieldTemplate(ctx: Grid, config: ParsedGridConfig, row: Entity, field: 
     const gridInterface = ctx.gridInterface;
     const datasource = gridInterface.getDatasource();
     const history = datasource.getDataContainer().__history;
-    const id = idOf(ctx, `field-${index}`);
-    const errorsId = idOf(ctx, `errors-${index}`);
+    const id = detailFormId(ctx, `field-${index}`);
+    const errorsId = detailFormId(ctx, `errors-${index}`);
     const label = getColumnLabel(ctx, field);
     const lookup = gridInterface.__getLookupColumn(field);
 

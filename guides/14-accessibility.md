@@ -117,12 +117,15 @@ grid "Grid"  aria-rowcount=503  aria-colcount=10
 - **The detail form** (see [The detail form](02-grid-config.md#the-detail-form)): a `region` named by
   its title, *Details*; each value an input, a textarea or a checkbox with its `<label>`, `aria-readonly`
   / `readonly` where it can not be edited, `aria-required`, its errors its description
-  (`aria-describedby`) with `aria-invalid`.
+  (`aria-describedby`) with `aria-invalid`. Its title is a button (`aria-expanded`, it controls the
+  form's body) that collapses and expands it; its left edge a `separator` (focusable, named *Width of
+  the details*, its width in px as `aria-valuenow` with `aria-valuemin` / `aria-valuemax`, the arrow keys
+  move it) - the WAI-ARIA window splitter.
 - **The panel**: the x of a group chip is a button, "Remove the grouping on Country".
 - **The find bar** (Ctrl+F, see [Find](19-find.md#what-a-screen-reader-gets)): a search region named
   "Find in the grid" before the grid, with an input named "Find", the count of the matches as a status
-  (`3 of 17`, read out when it changes), the toggle button "Filter rows" (`aria-pressed`) and the
-  buttons "Previous match", "Next match" and "Close". The cells of the matches have no state of their
+  (`3 of 17`, read out when it changes), the toggle buttons "Match case" (it shows `Aa`) and "Filter
+  rows" (`aria-pressed`) and the buttons "Previous match", "Next match" and "Close". The cells of the matches have no state of their
   own for a screen reader, the count says where you are; with "Filter rows" on the footer's row count
   (a status) says how many rows are left.
 
@@ -295,7 +298,7 @@ of Tab: a click puts it there, and selects columns (Ctrl+click, Shift+click, see
 | the x of a group chip in the panel | Enter / Space | removes the grouping. It is in the tab order, before the grid |
 | the footer: Clear and the filter chips, or "No filter", the settings button | Tab / Shift+Tab | the stops after the last row: Clear and the chips while the rows are filtered, else "No filter", then the gear (`settingsButton`). Tab from the last cell of the last row gets there, Tab from the last of them leaves the grid. Shift+Tab from the first goes back to the last row. None in a footer of no height (`footerHeight: 0`) |
 | the settings button in the footer | Enter / Space | opens the grid config dialog |
-| the detail form | Tab / Shift+Tab, Ctrl+Z (Cmd+Z) | after the footer in the order of Tab: Tab from the footer's last stop goes into the form, from its last field out of the grid. Shift+Tab from its first field goes back to the footer. Ctrl+Z / Ctrl+Y undo and redo as in a cell, the focus stays |
+| the detail form | Tab / Shift+Tab, Enter / Space, ArrowLeft / ArrowRight, Ctrl+Z (Cmd+Z) | after the footer in the order of Tab: Tab from the footer's last stop goes into the form - the button of its title first (Enter or Space collapses and expands the form), then its left edge (ArrowLeft 10px wider, ArrowRight narrower), then its fields - from its last field out of the grid. Shift+Tab from its title button goes back to the footer. Ctrl+Z / Ctrl+Y undo and redo as in a cell, the focus stays |
 | the filter chips in the footer, "No filter" | Enter / Space | opens the filter editor |
 | Clear in the footer | Enter / Space | removes the filter. The focus stays on the button, now "No filter" |
 | a menu | ArrowDown / ArrowUp, Home / End, a letter | the next / previous / first / last item, the next one starting with the letter. A menu opened with the mouse leaves the focus on the cell: ArrowDown / ArrowUp get into it |
@@ -344,12 +347,14 @@ input - see [Find](19-find.md). Outside the grid Ctrl+F is the browser's.
 | Shift+Enter, Shift+F3 | the previous match, wrapping to the last |
 | Esc | closes it: the focus goes to the cell of the current match (its row is the current row), else back to where Ctrl+F was pressed. "Filter rows" is turned off, every row is shown again. In a modal dialog of your own, the dialog stays open |
 | Ctrl+F, Cmd+F | the focus back in the input, its text selected |
-| Tab / Shift+Tab | the input, "Filter rows" (the funnel), previous (↑), next (↓), close (✕). Shift+Tab from the input leaves the grid |
-| Space, Enter | on "Filter rows": turns it on or off - only the rows with a match, or every row |
+| Alt+C | "Match case" on or off - the text as it is typed, or in any case. The focus stays where it is. Not on a Mac, where Option+C types `ç` |
+| Tab / Shift+Tab | the input, "Match case" (`Aa`), "Filter rows" (the funnel), previous (↑), next (↓), close (✕). Shift+Tab from the input leaves the grid |
+| Space, Enter | on "Match case": turns it on or off. On "Filter rows": only the rows with a match, or every row |
 
 "Filter rows" has no key of its own: Tab from the input gets to it, Space turns it on or off, Shift+Tab
 goes back to the input. Alt+R was considered: on a Mac Option+R types `®` in the input, and find bars
-(VS Code's) use Alt+R for regular expressions.
+(VS Code's) use Alt+R for regular expressions. "Match case" has Alt+C, as in the find bars of Firefox and
+VS Code - by the letter the key types, so Option+C on a Mac stays `ç` (there: Tab, Space).
 
 ### The editor of a multiline cell
 
@@ -487,7 +492,9 @@ setTexts({
   a screen reader yet. A menu has no name of its own (`aria-label`), a submenu is labelled by its item.
   The field and operator pickers of the filter editor are menus of the grid too: buttons
   (`aria-haspopup="menu"`, named `Field: Country`) that open them, the keys above in them. The
-  column chooser is for the mouse, and so is the date picker of a date cell or filter - a date can be
+  column chooser is for the mouse - its search (named *Search*) and the ✎ of each field (a button named
+  *Rename Firm*, Enter saves the label typed, Esc cancels) are reached with Tab, a field is dragged with a
+  pointer only - and so is the date picker of a date cell or filter - a date can be
   typed - and its range picker. The date picker opens on a click in the cell, under it at the end of the
   page's body: no key opens it and Tab does not get into it (its days have no keys, so taking the focus
   into it would leave a keyboard user in a calendar that can not pick a day). Opened from an input of

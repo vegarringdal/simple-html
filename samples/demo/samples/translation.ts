@@ -166,6 +166,7 @@ const norwegian: Record<TextId, string> = {
     'filter.operator.endWith': 'Slutter med',
     'filter.matchCase': 'Skill store og små bokstaver',
     'filter.matchCase.hint': 'alltid',
+    'filter.filterOnType': 'Filtrer mens du skriver',
     'filter.values.search': 'Søk i verdiene',
     'filter.values.searchPlaceholder': 'Søk i verdiene',
     'filter.values.availableOnly': 'Bare verdier i filtrerte rader',
@@ -199,8 +200,12 @@ const norwegian: Record<TextId, string> = {
 
     // the column chooser
     'columnChooser.title': 'Alle felt:',
-    'columnChooser.search': 'søk',
+    'columnChooser.search': 'Søk',
     'columnChooser.close': 'Lukk',
+    'columnChooser.drag': 'Dra det inn i overskriften for å legge til kolonnen',
+    'columnChooser.rename': 'Gi nytt navn til {label}',
+    'columnChooser.label': 'Navnet til {label}',
+    'columnChooser.label.hint': 'Enter lagrer, Esc avbryter. Tomt: kolonnen får sitt eget navn',
 
     // the filter editor
     'filterEditor.title': 'Filterredigering',
@@ -281,6 +286,10 @@ const norwegian: Record<TextId, string> = {
     'columnSettings.badge.text': 'Tekst',
     'columnSettings.badge.link': 'Lenke',
     'columnSettings.badge.problem': 'Feil',
+    'columnSettings.badge.multiline': 'Flere linjer',
+    'columnSettings.badge.readonly': 'Skrivebeskyttet',
+    'columnSettings.multiline': 'Flere linjer',
+    'columnSettings.readonly': 'Skrivebeskyttet',
     'columnSettings.badge.checkbox': 'Avkrysning',
     'columnSettings.badge.numberOverride': 'Tom / 0',
     'columnSettings.badge.label': 'Navn',
@@ -289,6 +298,10 @@ const norwegian: Record<TextId, string> = {
     'columnSettings.label': 'Navn',
     'columnSettings.format': 'Format',
     'columnSettings.format.tooltip': 'Hvordan cellene viser verdien',
+    'columnSettings.filterAsShown': 'Filtrer slik det vises',
+    'columnSettings.filterAsShown.hint':
+        'Filteret i overskriften tar teksten slik cellene viser den: en uke, en måned, et år er hele perioden',
+    'columnSettings.filterAsShown.off': 'Ikke for ukedag eller klokkeslett: filteret i overskriften tar feltets format',
     'columnSettings.text': 'Tekst som vises',
     'columnSettings.text.placeholder': '{fornavn} {etternavn}',
     'columnSettings.text.hint': 'Tom: cellens egen tekst. {value} er cellens verdi, {felt} verdien til et annet felt',
@@ -311,6 +324,8 @@ const norwegian: Record<TextId, string> = {
     'columnSettings.operator': 'Filteroperator',
     'columnSettings.operator.tooltip': 'Operatoren kolonnens filter i overskriften bruker',
     'columnSettings.operator.hint': 'Standard: {operator}',
+    'columnSettings.filterOnType': 'Filtrer mens du skriver',
+    'columnSettings.filterOnType.hint': 'Etter en kort pause, uten Enter',
     'columnSettings.rules': 'Fargeregler',
     'columnSettings.rules.hint': 'Den første regelen som passer, farger cellen. Verdien sammenlignes som i kolonnefilteret',
     'columnSettings.rules.empty': 'Ingen regler',
@@ -359,11 +374,21 @@ const norwegian: Record<TextId, string> = {
     'columnSettings.tab.columns': 'Kolonner',
     'columnSettings.tab.detailForm': 'Detaljskjema',
     'columnSettings.detailForm.show': 'Vis detaljskjemaet',
+    'columnSettings.detailForm.expanded': 'Utvidet',
+    'columnSettings.detailForm.expanded.hint':
+        'Slått sammen er skjemaet en smal stripe: knappen i tittelen utvider det, og slår det sammen igjen',
     'columnSettings.detailForm.width': 'Bredde (px)',
-    'columnSettings.detailForm.width.hint': 'Der radene ville fått for lite plass ved siden av, er skjemaet under dem',
+    'columnSettings.detailForm.minWidth': 'Minste bredde (px)',
+    'columnSettings.detailForm.maxWidth': 'Største bredde (px)',
+    'columnSettings.detailForm.maxWidth.none': 'Ingen',
+    'columnSettings.detailForm.width.hint':
+        'Minst 150, mellom minste og største bredde - å dra i venstre kant av skjemaet endrer den også. Der radene ville fått for lite plass ved siden av, er skjemaet under dem',
     'columnSettings.detailForm.fields': 'Feltene i skjemaet',
-    'columnSettings.detailForm.fields.hint': 'Mellomrom tar et felt med i skjemaet eller ut av det, Alt+↑ og Alt+↓ flytter det',
-    'columnSettings.detailForm.fields.hint.mac': 'Mellomrom tar et felt med i skjemaet eller ut av det, ⌥↑ og ⌥↓ flytter det',
+    'columnSettings.detailForm.fields.hint':
+        'Mellomrom tar et felt med i skjemaet eller ut av det, Alt+↑ og Alt+↓ flytter det - eller dra det i håndtaket',
+    'columnSettings.detailForm.fields.hint.mac':
+        'Mellomrom tar et felt med i skjemaet eller ut av det, ⌥↑ og ⌥↓ flytter det - eller dra det i håndtaket',
+    'columnSettings.detailForm.drag': 'Dra for å flytte det',
     'columnSettings.detailForm.multiline': 'Flere linjer',
     'columnSettings.detailForm.hidden': 'Skjult',
     'columnSettings.detailForm.moveUp': 'Flytt opp',
@@ -374,6 +399,9 @@ const norwegian: Record<TextId, string> = {
     'detailForm.row': 'Rad {row}',
     'detailForm.noRow': 'Ingen rad',
     'detailForm.noFields': 'Ingen felt: velg dem med tannhjulet i bunnlinjen, fanen Detaljskjema',
+    'detailForm.collapse': 'Slå sammen detaljene',
+    'detailForm.expand': 'Utvid detaljene',
+    'detailForm.resize': 'Bredden på detaljene',
 
     // the footer
     'footer.rowCount': '{shown} av {total}',
@@ -434,6 +462,7 @@ const norwegian: Record<TextId, string> = {
     'filter.placeholder.text': 'Tekst',
     'filter.placeholder.number': 'Tall',
     'filter.placeholder.between': 'fra..til',
+    'filter.placeholder.daysUntil': 'Dager fra i dag',
     // the operator beside a header filter: its name, its tooltip, the symbols
     'filter.indicator': 'Operator: {operator}',
     'filter.indicator.tooltip': 'Operator: {operator} (F4)',
@@ -456,6 +485,10 @@ const norwegian: Record<TextId, string> = {
     'find.placeholder': 'Søk',
     'find.count': '{current} av {count}',
     'find.none': 'Ingen treff',
+    'find.matchCase': 'Skill store og små bokstaver',
+    'find.matchCase.text': 'Aa',
+    'find.matchCase.tooltip': 'Skill store og små bokstaver (Alt+C)',
+    'find.matchCase.tooltip.mac': 'Skill store og små bokstaver',
     'find.filterRows': 'Filtrer rader',
     'find.filterRows.tooltip': 'Vis bare radene med treff',
     'find.previous': 'Forrige treff',

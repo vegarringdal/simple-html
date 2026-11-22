@@ -9,12 +9,15 @@ import type { ColType } from './colType';
 import { contextmenuDate, contextmenuDateRange, rangeFilterText } from './contextmenuDate';
 import { contextmenuFilter } from './contextmenuFilter';
 import { filterCallback, headerFilterText, parseRangeText } from './filterCallback';
+import { cancelFilterOnType, filterAfterPause, filterTextParses, isFilterOnType } from './filterOnType';
 import { canChooseOperator, openOperatorChoice, operatorIndicator } from './filterOperatorIndicator';
 import { getColumnLabel } from './getColumnLabel';
 import { getHeaderFilterOperator } from './getHeaderFilterOperator';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { headerFilterFormatter, pickerRange } from './headerFilterFormatter';
 import { headerFilterPlaceholder } from './headerFilterPlaceholder';
+import { keepHeaderFilterFocus } from './headerOperatorMenu';
 
 export function renderHeaderFilter(
     ctx: Grid,
@@ -41,7 +44,8 @@ export function renderHeaderFilter(
         const field = ctx.gridInterface.getDatasource().getField(attribute);
         const lookup = !!ctx.gridInterface.__getLookupColumn(attribute);
         const type = lookup ? 'text' : field.type;
-        const formatter: Formatter = lookup ? TextFormatter : field.formatter;
+        // a column that filters as shown reads and writes the text in its display format (`2026-W47`)
+        const formatter: Formatter = lookup ? TextFormatter : headerFilterFormatter(ctx, attribute, cellConfig.format);
 
         // the user's from the column settings (the label, or a text), else the column's own placeholder,
         // a BETWEEN's "from..to", the formatter's (a date's format, YYYY-MM-DD), the field's type: "Text",
@@ -124,6 +128,7 @@ export function renderHeaderFilter(
                  * cell filtered on last - the menu's filter runs again with the cell's value
                  */
                 const filterTyped = () => {
+                    cancelFilterOnType(ctx);
                     const input = cell.querySelector<HTMLInputElement>('input.simple-html-grid-cell-filter-input');
                     if (input) {
                         if (lastFilter !== input.value) {
@@ -131,6 +136,29 @@ export function renderHeaderFilter(
                         }
                         lastFilter = input.value;
                     }
+                };
+
+                /**
+                 * Filter as you type (filterOnType.ts), after the pause: the text in the input, when it is
+                 * not what the cell filtered on last and is one to filter on (filterTextParses - not a date
+                 * half typed). Not when the cell shows another column now, the grid reuses its cells. The
+                 * input keeps the focus and its caret
+                 */
+                const filterWhileTyping = (input: HTMLInputElement) => {
+                    const text = input.value;
+                    const operator = getHeaderFilterOperator(ctx, attribute);
+                    if (
+                        cell.$attribute !== attribute ||
+                        !input.isConnected ||
+                        lastFilter === text ||
+                        !filterTextParses(formatter, type, operator, text)
+                    ) {
+                        return;
+                    }
+                    const refocus = keepHeaderFilterFocus(ctx);
+                    lastFilter = text;
+                    filterCallback(ctx, text, attribute);
+                    refocus();
                 };
 
                 /**
@@ -164,6 +192,13 @@ export function renderHeaderFilter(
                                 skipFocus = true;
                             }
                         }}
+                        @input=${(e: Event) => {
+                            // filter as you type: after a pause in typing, a key starts it again
+                            if (isFilterOnType(ctx, attribute)) {
+                                const input = e.target as HTMLInputElement;
+                                filterAfterPause(ctx, () => filterWhileTyping(input));
+                            }
+                        }}
                         @click=${(e: any) => {
                             if (type === 'date' || type === 'datetime') {
                                 /**
@@ -185,8 +220,13 @@ export function renderHeaderFilter(
                                     const typed = (e.target as HTMLInputElement).value;
                                     if (getHeaderFilterOperator(ctx, attribute) === 'BETWEEN') {
                                         // from..to: the range picker, on the two ends - an open end is not
-                                        // picked. Use gives from..to, Clear no filter
-                                        const range = parseRangeText(formatter, typed) ?? [null, null];
+                                        // picked. Use gives from..to, Clear no filter. Weeks shown: from
+                                        // Monday of the first to Sunday of the last (pickerRange)
+                                        const range = pickerRange(
+                                            ctx,
+                                            attribute,
+                                            parseRangeText(formatter, typed) ?? [null, null]
+                                        );
                                         contextmenuDateRange(ctx, cell, range, (picked) =>
                                             usePicked(rangeFilterText(formatter, type, picked))
                                         );
@@ -233,18 +273,25 @@ export function renderHeaderFilter(
                             if (keycode === 13) {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                if (!filterRunning) {
+                                // the pause of filter as you type is over: the text is filtered on now, once
+                                cancelFilterOnType(ctx);
+                                const typed = (e.target as HTMLInputElement).value;
+                                // Enter filters again on the same text - not when typing filtered on it already
+                                const filteredWhileTyping = isFilterOnType(ctx, attribute) && lastFilter === typed;
+                                if (!filterRunning && !filteredWhileTyping) {
                                     filterRunning = true;
 
-                                    filterCallback(ctx, (e.target as any).value, attribute);
+                                    filterCallback(ctx, typed, attribute);
 
-                                    lastFilter = (e.target as any).value;
+                                    lastFilter = typed;
                                     filterRunning = false;
                                 }
                             }
                             return cellFilterKeyNavigationCellRowHandler(ctx, cell, row, column, celno, colType, e);
                         }}
                         @blur=${(e: any) => {
+                            // the pause of filter as you type is over: leaving filters on the text now, once
+                            cancelFilterOnType(ctx);
                             /**
                              * I would have expected change to pick this up, but its not always doing so, so added this
                              */
@@ -261,6 +308,7 @@ export function renderHeaderFilter(
                             }
                         }}
                         @change=${(e: any) => {
+                            cancelFilterOnType(ctx);
                             if (!filterRunning) {
                                 filterRunning = true;
 

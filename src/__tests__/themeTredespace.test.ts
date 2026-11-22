@@ -188,6 +188,34 @@ describe('TreDeSpace theme - contrast (WCAG AA)', () => {
         });
     }
 
+    // the fields of the detail form: a quiet frame at rest (the user: "borders for an input shouldn't be
+    // that strong") that is still seen - on the form and on the field's own background - and less than the
+    // controls' frame they get under the pointer (3:1, in the pairs above); the focus outline is 3:1 to both
+    const DETAIL_INPUT: ContrastPair[] = [
+        { fg: 'grid-detail-input-border-color', on: ['grid-main-bg-color'], min: 1.25 },
+        { fg: 'grid-detail-input-border-color', on: ['grid-sec-bg-color'], min: 1.25 },
+        { fg: 'grid-focus-color', on: ['grid-sec-bg-color'], min: 3 }
+    ];
+    for (const scheme of ['light', 'dark'] as const) {
+        for (const [name, sets] of Object.entries(themes)) {
+            it(`expect the frame of a detail form field in the ${name} theme in ${scheme} quiet but seen, the focus 3:1`, () => {
+                const colour = themeColours(sets, scheme);
+                const under = DETAIL_INPUT.map((pair) => pairContrast(colour, pair)).filter(
+                    ([ratio], i) => ratio < DETAIL_INPUT[i].min
+                );
+                expect(under.map(([, text]) => text)).toEqual([]);
+
+                const quiet = pairContrast(colour, {
+                    fg: 'grid-detail-input-border-color',
+                    on: ['grid-main-bg-color'],
+                    min: 0
+                })[0];
+                const control = pairContrast(colour, { fg: 'grid-control-border-color', on: ['grid-main-bg-color'], min: 0 })[0];
+                expect(quiet).toBeLessThan(control);
+            });
+        }
+    }
+
     it('expect the pairs to cover the text, the selected rows, the tints, the row state and the date picker', () => {
         const names = new Set(CONTRAST_PAIRS.flatMap((pair) => [pair.fg, ...pair.on]));
 

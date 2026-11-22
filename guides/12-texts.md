@@ -106,8 +106,8 @@ The ids are grouped by area, the area first. Within an area:
   from the platform the browser gives (`navigator.userAgentData.platform`, else `navigator.platform`).
   The grid takes both keys everywhere (Ctrl+Z and Cmd+Z), the texts say what a user there presses.
   Translate both: a `.mac` text left out shows its English default on a Mac. They are
-  `row.edit.undo.hint`, `row.edit.redo.hint`, `find.previous.tooltip`, `cell.multiline.hint`,
-  `filterEditor.undo.tooltip` and `filterEditor.redo.tooltip`.
+  `row.edit.undo.hint`, `row.edit.redo.hint`, `find.previous.tooltip`, `find.matchCase.tooltip`,
+  `cell.multiline.hint`, `filterEditor.undo.tooltip` and `filterEditor.redo.tooltip`.
 
 ### The names of the months and days
 
@@ -363,6 +363,7 @@ Right click on a header filter.
 | `filter.operator.endWith` | `Ends with` | a text field |
 | `filter.matchCase` | `Match case` | the toggle of a text column in the filter submenu, a ✓ while it is on |
 | `filter.matchCase.hint` | `always` | its hint, on a column that always matches case (`filterCaseSensitive`) |
+| `filter.filterOnType` | `Filter as you type` | the toggle of filter as you type, a ✓ while it is on: in the filter submenu and at the bottom of the operator choice, not a boolean field |
 
 ### The value list
 
@@ -421,11 +422,18 @@ Right click on a column number, the row of numbers under the header filters.
 
 ### Column chooser
 
+`{label}` is the column's label, as the list shows it - in `columnChooser.label` the column's own label
+(what an empty input gives it).
+
 | id | English | shown |
 | --- | --- | --- |
 | `columnChooser.title` | `All Fields:` | section header |
-| `columnChooser.search` | `search` | the placeholder of the search box |
+| `columnChooser.search` | `Search` | the placeholder of the search box, its name for a screen reader |
 | `columnChooser.close` | `Close` | the button that closes it |
+| `columnChooser.drag` | `Drag it into the header to add the column` | the tooltip of a field's drag handle |
+| `columnChooser.rename` | `Rename {label}` | the ✎ of a field: its name and tooltip |
+| `columnChooser.label` | `Label of {label}` | the input the ✎ opens: its name for a screen reader |
+| `columnChooser.label.hint` | `Enter saves, Esc cancels. Empty: the column has its own label` | its tooltip |
 
 ### Filter editor
 
@@ -602,6 +610,10 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.badge.text` | `Text` | the column has a template of its text |
 | `columnSettings.badge.link` | `Link` | the column is a link |
 | `columnSettings.badge.problem` | `Error` | a template or a checkbox value of the column has a problem: Apply waits for it |
+| `columnSettings.badge.multiline` | `Multiline` | in the list of the columns: a text column made multiline |
+| `columnSettings.badge.readonly` | `Read only` | in the list of the columns: a column made read only |
+| `columnSettings.multiline` | `Multiline` | the checkbox of a text column: its cells are text of several lines (`ColumnFormat.multiline`) |
+| `columnSettings.readonly` | `Read only` | the checkbox of every column: its cells are not edited, also in an editable grid (`ColumnFormat.readonly`) |
 | `columnSettings.badge.checkbox` | `Checkbox` | the column is shown as checkboxes |
 | `columnSettings.badge.numberOverride` | `Blank / 0` | the column shows a blank as 0, or 0 as blank (or neither, over its `numberOverride`) |
 | `columnSettings.badge.label` | `Label` | the column has a label of the user's |
@@ -610,6 +622,9 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.label` | `Label` | the label of the input of the column's label, every column: empty is the column's own, the input shows it |
 | `columnSettings.format` | `Format` | the label of the format picker of a date or number column |
 | `columnSettings.format.tooltip` | `How the cells show the value` | its tooltip |
+| `columnSettings.filterAsShown` | `Filter as shown` | the checkbox under the format of a date or number column: the header filter takes the text as the cells show it |
+| `columnSettings.filterAsShown.hint` | `The header filter takes the text as the cells show it: a week, a month, a year is the whole of it` | under it |
+| `columnSettings.filterAsShown.off` | `Not for the day of the week or the time of day: the header filter takes the field's format` | under it instead, greyed out: a format that is no period of time |
 | `columnSettings.text` | `Text shown` | the label of a text column's template of its text |
 | `columnSettings.text.placeholder` | `{firstname} {lastname}` | its placeholder, a template as it is written |
 | `columnSettings.text.hint` | `Empty: the cell's own text. {value} is the cell's value, {field} the value of another field` | under it |
@@ -632,6 +647,8 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.operator` | `Filter operator` | the label of the operator picker, every column but a checkbox |
 | `columnSettings.operator.tooltip` | `The operator the header filter of the column uses` | its tooltip |
 | `columnSettings.operator.hint` | `Default: {operator}` | under it: the operator the column starts with, its name |
+| `columnSettings.filterOnType` | `Filter as you type` | the checkbox after the operator, every column but a checkbox |
+| `columnSettings.filterOnType.hint` | `After a short pause, no Enter needed` | under it |
 | `columnSettings.rules` | `Colour rules` | the heading of the column's colour rules, every column, and their name for a screen reader. A rule's operator picker has the header filter's names of the operators (`filter.operator.*`, `filter.filter.isBlank`, `filter.filter.isNotBlank`), its label and the value inputs the filter editor's (`filterEditor.label.*`) |
 | `columnSettings.rules.hint` | `The first rule that matches colours the cell. The value is compared as the header filter compares it` | under it |
 | `columnSettings.rules.empty` | `No rules` | a column without rules |
@@ -679,11 +696,17 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.tab.columns` | `Columns` | the tab of the columns' settings |
 | `columnSettings.tab.detailForm` | `Detail form` | the tab of the detail form |
 | `columnSettings.detailForm.show` | `Show the detail form` | the checkbox that shows it |
+| `columnSettings.detailForm.expanded` | `Expanded` | the checkbox that expands it, off: collapsed (`DetailForm.expanded`) |
+| `columnSettings.detailForm.expanded.hint` | `Collapsed, the form is a narrow strip: the button of its title expands it, and collapses it again` | under it |
 | `columnSettings.detailForm.width` | `Width (px)` | the label of its width |
-| `columnSettings.detailForm.width.hint` | `Where the rows would get too little room beside it, the form is under them` | under it |
+| `columnSettings.detailForm.minWidth` | `Min width (px)` | the label of its least width (`minWidth`) |
+| `columnSettings.detailForm.maxWidth` | `Max width (px)` | the label of its most width (`maxWidth`) |
+| `columnSettings.detailForm.maxWidth.none` | `None` | the placeholder of an empty most width |
+| `columnSettings.detailForm.width.hint` | `At least 150, between the min and the max width - a drag of the left edge of the form changes it too. Where the rows would get too little room beside it, the form is under them` | under the widths |
 | `columnSettings.detailForm.fields` | `Fields of the form` | the name of the list of the fields |
-| `columnSettings.detailForm.fields.hint` | `Space puts a field in the form or takes it out, Alt+↑ and Alt+↓ move it` | under the list: its keys |
-| `columnSettings.detailForm.fields.hint.mac` | `Space puts a field in the form or takes it out, ⌥↑ and ⌥↓ move it` | the same on a Mac |
+| `columnSettings.detailForm.fields.hint` | `Space puts a field in the form or takes it out, Alt+↑ and Alt+↓ move it - or drag it by its handle` | under the list: its keys |
+| `columnSettings.detailForm.fields.hint.mac` | `Space puts a field in the form or takes it out, ⌥↑ and ⌥↓ move it - or drag it by its handle` | the same on a Mac |
+| `columnSettings.detailForm.drag` | `Drag to move it` | the tooltip of the drag handle at the right of a field |
 | `columnSettings.detailForm.multiline` | `Several lines` | in the list: a field of several lines (`FieldConfig.multiline`) |
 | `columnSettings.detailForm.hidden` | `Hidden` | in the list: a column that is not in the layout |
 | `columnSettings.detailForm.moveUp` | `Move up` | the button: the field picked one up, in the form too |
@@ -703,17 +726,22 @@ row numbers show it.
 | `detailForm.row` | `Row {row}` | after the title: the row it shows |
 | `detailForm.noRow` | `No row` | without a current row, or one the filter hides |
 | `detailForm.noFields` | `No fields: pick them with the gear in the footer, tab Detail form` | shown without fields |
+| `detailForm.collapse` | `Collapse the details` | the tooltip of the button of its title while it is expanded |
+| `detailForm.expand` | `Expand the details` | the same while it is collapsed |
+| `detailForm.resize` | `Width of the details` | the splitter of its left edge: its name for a screen reader |
 
 ### Header filters
 
 What an empty header filter shows, when its column has no `placeholderFilter` of its own. A date
-filter shows its formatter's format (`YYYY-MM-DD`), a boolean filter is a checkbox.
+filter shows its formatter's format (`YYYY-MM-DD`) - filtered as shown, an example of its display format
+(`2026-W47`, see [Filtering](06-filtering.md#filter-as-shown)) - a boolean filter is a checkbox.
 
 | id | English | shown |
 | --- | --- | --- |
 | `filter.placeholder.text` | `Text` | an empty header filter of a text field |
 | `filter.placeholder.number` | `Number` | an empty header filter of a number field |
 | `filter.placeholder.between` | `from..to` | an empty header filter whose operator is `BETWEEN`, any type |
+| `filter.placeholder.daysUntil` | `Days from today` | an empty header filter of a date column shown as `daysUntil`, filtered as shown - a number of days is typed |
 
 The operator indicator in a header filter cell (`filterOperatorIndicator`, see
 [Filtering](06-filtering.md#the-operator-in-the-cell)): the symbol of the operator the filter uses,
@@ -747,6 +775,10 @@ The find bar of Ctrl+F in the grid, see [Find](19-find.md).
 | `find.placeholder` | `Find` | the placeholder of its input, and the input's name for a screen reader |
 | `find.count` | `{current} of {count}` | the count of the matches. `{current}`: the number of the current match, `{count}`: how many cells match |
 | `find.none` | `No matches` | the count when no cell matches the text |
+| `find.matchCase` | `Match case` | the `Aa` button, a toggle: its name for a screen reader |
+| `find.matchCase.text` | `Aa` | what the button shows |
+| `find.matchCase.tooltip` | `Match case (Alt+C)` | its tooltip |
+| `find.matchCase.tooltip.mac` | `Match case` | its tooltip on a Mac: Option+C types `ç` there, it is no key of the bar |
 | `find.filterRows` | `Filter rows` | the funnel button, a toggle: its name for a screen reader |
 | `find.filterRows.tooltip` | `Show only the rows with a match` | its tooltip |
 | `find.previous` | `Previous match` | the `↑` button: its name for a screen reader |

@@ -21,7 +21,8 @@ Enter, or leaves the cell, and the grid filters on it:
   character, any - as in SQL `LIKE`: `p_mp` finds `pump` and `PUMP`, `pump-__` finds `pump-01` and
   `pump-AB` but not `pump-1`. With [Match case](#match-case) on, `Ann` does not find `ANN`.
 - A number or date is typed as the field's formatter shows it (`12,5` works too, the date in the
-  format of the placeholder) and parsed with the formatter.
+  format of the placeholder) and parsed with the formatter. A column with a display format takes it as
+  its cells show it - `2026-W47` is the week, `1 234,5` a number - see [Filter as shown](#filter-as-shown).
 - **`BETWEEN`** (Filter › Operator › Between, number and date columns, or Between in the
   [range block](#the-range-block)) takes both ends in the one input, with `..` between them: `10..20` is 10 to 20, both included; `10..` is 10 or more, `..20` 20
   or less; `10` alone is 10 to 10 (a date: that day). Each end is parsed with the formatter, as a
@@ -33,6 +34,7 @@ Enter, or leaves the cell, and the grid filters on it:
 - The cell shows the operator it uses as a small symbol beside the input, a click on it changes it, see
   [The operator in the cell](#the-operator-in-the-cell).
 - Emptying the cell removes the column's condition.
+- [Filter as you type](#filter-as-you-type), per column, filters without Enter, after a short pause.
 
 ### The range picker
 
@@ -55,6 +57,66 @@ the **range picker** instead, on the `from..to` the cell has:
 The range block of the filter menu opens the same pickers from its inputs, see
 [The range block](#the-range-block). The range picker is a `DateInterface` with `rangepicker: true`:
 use it on your own page too, see [Events](09-events.md#the-date-picker).
+
+### Filter as shown
+
+A column with a [display format](08-formatting.md#display-formats) - a week, a month, the days until, a
+number with a thousands separator - takes the text in its header filter **as its cells show it**, and
+filters on the whole of what it stands for:
+
+| typed, the column shown as `weekIso` | the filter |
+| --- | --- |
+| `= 2026-W47` | `BETWEEN` Monday 2026-11-16 and Sunday 2026-11-22 |
+| `≥ 2026-W47` / `> 2026-W47` | from Monday / after Sunday |
+| `< 2026-W47` / `≤ 2026-W47` | before Monday / to Sunday |
+| `≠ 2026-W47` | an OR group: before Monday, after Sunday or blank |
+| `2026-W40..2026-W47` (Between) | Monday of week 40 to Sunday of week 47 |
+
+A month (`2026-11`), a quarter (`2026 Q4`), a year, a day of any day format (`22.11.2026`, `Nov 22,
+2026`), the days until (`≤ 5`: up to the day in 5 days), a minute (`2026-11-22 13:45`) and a second go
+the same way; a number is read with the separators of its format (`1 234,5`, `50 %`). The day of the
+week and a time of day are no period: those columns take the field's format (`2026-11-22`), as does a
+column with `filterAsShown: false` in its format. It is on by default; the grid config dialog has it as
+*Filter as shown*.
+
+The filter is ordinary date conditions - the footer's chips and the filter editor show the dates, and
+[toSqlWhere()](22-sql.md#a-week-typed-in-the-grid) makes a range of the column of them, no date
+functions. The cell shows `2026-W47` again after a render, and so does a saved state: the state holds the
+start of the period, see [Header filters in the state](03-state.md#header-filters-in-the-state). The
+placeholder is an example (`2026-W47`), the date pickers write the format, and a change of the format by
+the user runs the filter again. Every format and rule is in the formatting guide,
+[Filter as shown](08-formatting.md#filter-as-shown).
+
+### Filter as you type
+
+A header filter filters when Enter is pressed or the cell is left. With **Filter as you type** it filters
+while the user types, after a short pause (300ms) - no Enter needed:
+
+- **Per column**, turned on and off by the user in the [operator choice](#the-operator-in-the-cell) (at
+  its bottom, under a line), in the header filter menu's Filter › (beside Match case) and in the
+  [grid config dialog](08-formatting.md#the-grid-config-dialog), next to the operator. A ✓ while it is
+  on. It is state: `headerFilters[field].filterOnType`, listed when the user's differs from the default.
+- **The default** of a column is its `filterOnType`, else the grid's `filterOnType`, else off.
+- **A number or date column** filters when the text is a number or a date: a date half typed
+  (`2026-1`, `202`, `2026-W` filtered as shown) does not filter, nor a `-` alone - the rows stay until it
+  is one. Empty text removes the filter at once.
+- **Enter and leaving the cell** filter at once, as before, and end the pause: the text is filtered on
+  once. Enter on a text already filtered while typing does nothing.
+- The rows are rendered again while the user types: the header filter keeps the focus and its caret.
+- Not for a boolean column: its checkbox filters on a click.
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    filterOnType: true, // every column filters while typing
+    columns: {
+        name: { operator: 'CONTAINS' },
+        notes: { filterOnType: false } // this one on Enter
+    },
+    layout: { center: [{ fields: ['name'], width: 150 }, { fields: ['notes'], width: 200 }] }
+};
+```
 
 ### A contains search
 
@@ -187,6 +249,8 @@ screen reader.
   one in use with a ✓. Picking one does exactly what Operator › does: the operator is state
   (`headerFilters[field].operator`), the filter runs again with the value in the cell, the grid sends
   `filter-operator-change`. A text typed and not filtered yet is filtered first, as a right click does.
+  Under a line at its bottom: **Filter as you type**, a ✓ while it is on, see
+  [Filter as you type](#filter-as-you-type).
 - **F4** in the header filter opens the choice from the keyboard, the focus on its first item: the
   [menu keys](10-menus.md#the-keyboard) move in it, Enter picks - the focus goes back to the filter -
   and Esc closes it. The symbol is no stop of Tab: Tab goes from filter to filter as before.
@@ -228,6 +292,8 @@ filter is a checkbox. In Filter ›:
   (`headerFilters[field].operator`). The symbol in the cell opens the same choice, see
   [The operator in the cell](#the-operator-in-the-cell).
 - **Match case** (text columns) turns matching case on and off, see [Match case](#match-case)
+- **Filter as you type** (not a boolean column) turns it on and off, see
+  [Filter as you type](#filter-as-you-type)
 - **Blank ›** **Is blank** / **Is not blank** replace the column's conditions with `IS_BLANK` /
   `IS_NOT_BLANK`
 - **Clear Filter** removes the conditions on this column, **Clear All Filters** the whole filter
@@ -450,8 +516,10 @@ Find (Ctrl+F in the grid) has a toggle *Filter rows* in its bar: only the rows w
 the text are shown - the text as the cells show it, formatted, so the rows shown are the rows of the
 marked cells. Like *Changed rows only* it is on top of the filter (AND) and not part of it:
 `getFilter()`, the filter editor and the state do not have it. It filters the rows again when the
-text changes and whenever the rows are filtered; closing the find bar turns it off. See
-[Find](19-find.md#filter-rows).
+text changes and whenever the rows are filtered; closing the find bar turns it off. With *Match case*
+(`Aa`) it finds the text as it is typed. See [Find](19-find.md#filter-rows).
+`gridInterface.getFindFilter()` gives it as a filter, for a backend that loads the rows: see
+[Find](19-find.md#filter-rows-on-a-backend).
 
 ```ts
 gridInterface.find('denma', { filterRows: true }); // only the rows with a cell that shows "denma"
@@ -520,14 +588,15 @@ const filter: FilterExpression = { group: 'AND', children: [condition, group] };
 datasource.filter(filter);
 ```
 
-`where(field, operator, value?, { caseSensitive? })`, `and(...children)` and `or(...children)` build
-the same objects. `where('email', 'IS_BLANK')` leaves `value` out, `caseSensitive` is only there when
-it is `true`:
+`where(field, operator, value?, { caseSensitive?, literal? })`, `and(...children)` and
+`or(...children)` build the same objects. `where('email', 'IS_BLANK')` leaves `value` out,
+`caseSensitive` and `literal` are only there when they are `true`:
 
 ```ts
 import { where } from '@simple-html/grid';
 
 where('name', 'EQUAL', 'Ann', { caseSensitive: true }); // { field: 'name', operator: 'EQUAL', value: 'Ann', caseSensitive: true }
+where('discount', 'CONTAINS', '50%', { literal: true }); // finds '50% off', not '500'
 where('age', 'BETWEEN', [18, 30]); // { field: 'age', operator: 'BETWEEN', value: [18, 30] }
 where('age', 'BETWEEN', [18, null]); // 18 or more
 ```
@@ -601,7 +670,10 @@ operatorsFor(datasource.getField('name').type); // the operators of the name fie
 `caseSensitive: true`. `*` and `%` in the value stand for any text - none too, line breaks too, as
 `%` in SQL `LIKE`; `_` stands for one character, any - a line break too, a letter past U+FFFF (an
 emoji) is one - as `_` in `LIKE`. There is no escape: a `_` in the value can not be literal, it
-matches the `_` too. The rest of the value is taken as it is.
+matches the `_` too. The rest of the value is taken as it is. **`literal: true`** on the condition takes
+all of the value as it is, `*`, `%` and `_` too: `CONTAINS '50%'` finds `50% off`, not `500` - Find's
+filter for a backend (`getFindFilter()`) has it, the header filters and the filter editor do not make it
+(the filter editor leaves it out of a condition it applies).
 A text of several lines is one text: `BEGIN_WITH` is the start of the whole value, not of a line.
 
 In the SQL, `t` is `LOWER(COALESCE(col, ''))` and `v` the value in lower case with its `*` and `%`

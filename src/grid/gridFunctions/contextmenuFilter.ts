@@ -12,9 +12,11 @@ import { columnOperators, headerFilterType, headerOperators, isAlwaysCaseSensiti
 import { type DateRange, filterDate, openDateInMenu, openDateRangeInMenu, rangeEndTexts } from './contextmenuDate';
 import { DROPDOWN_FILTER_MAX_ROWS, dropDownFilterData, type ValueListEntry } from './dropDownFilterData';
 import { filterCallback } from './filterCallback';
+import { filterOnTypeItem } from './filterOnType';
 import { getHeaderFilterOperator, isHeaderFilterCaseSensitive } from './getHeaderFilterOperator';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { headerFilterFormatter, pickerRange } from './headerFilterFormatter';
 import { HEADER_OPERATOR_TEXTS, headerOperatorItems, operatorPicked } from './headerOperatorMenu';
 import { openFilterEditor } from './openFilterEditor';
 import { rebuildHeaderColumns } from './rebuildHeaderColumns';
@@ -56,7 +58,8 @@ export function contextmenuFilter(
 
 /**
  * The filter menu's default entries, new objects every call: the submenu Filter (`filter.filter`) -
- * the submenu operator, "Match case", the submenu blank, clear, clear all, a line, the filter editor -
+ * the submenu operator, "Match case", "Filter as you type" (filterOnType.ts), the submenu blank, clear,
+ * clear all, a line, the filter editor -
  * then the main tool, not in a submenu: the value list of a text or lookup column, the range block of a
  * number or date column (each hides itself for the other columns). The entries kept the ids they had
  * before they were in Filter. The ids are documented in MENU_IDS.filter.
@@ -116,6 +119,8 @@ function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
                     disabled: () => alwaysCaseSensitive,
                     action: setCaseSensitive
                 },
+                // a toggle with a check mark, not on a boolean column (its checkbox filters on a click)
+                filterOnTypeItem(ctx, attribute),
                 {
                     type: 'submenu',
                     id: 'filter.filter.blank',
@@ -428,9 +433,11 @@ const OPERATOR_SYMBOLS: Partial<Record<FilterOperator, string>> = {
  * and To. What is picked and typed is a draft, nothing is filtered until Apply (or Enter in the block).
  * Apply does what the header filter does when the operator is picked in Operator › and the value typed
  * in the cell: the operator, when it changed, is state with a `filter-operator-change` event; the value -
- * `from..to` for Between - goes to filterCallback as typed text, parsed with the field's formatter
- * (parseFilter); the cell is rendered again and shows it. An input left empty is no filter on the column,
- * as an empty cell. The placeholder of an input is the formatter's (a date's format), else "Number".
+ * `from..to` for Between - goes to filterCallback as typed text, parsed with the header filter's formatter
+ * (parseFilter: the field's, or the display format's when the column filters as shown - `2026-W47`, see
+ * headerFilterFormatter.ts); the cell is rendered again and shows it. An input left empty is no filter
+ * on the column, as an empty cell. The placeholder of an input is the formatter's (a date's format, an
+ * example of the display format), else "Number".
  *
  * A date or datetime column: a click in the input opens the grid's date picker, From or To of Between the
  * range picker - beside the input, the menu stays open (see openPicker in it). What is picked fills the
@@ -464,7 +471,8 @@ function rangeBlock(
     }
 
     const text = (id: TextId) => gridText(ctx, id);
-    const { formatter } = ctx.gridInterface.getDatasource().getField(attribute);
+    // the field's formatter, or the display format's when the column filters as shown (`2026-W47`)
+    const formatter = headerFilterFormatter(ctx, attribute, ctx.gridInterface.__getGridConfig().columns[attribute]?.format);
     // what an empty input says to type: as an empty header filter, the formatter's placeholder - a date's
     // format - else the type's
     const placeholder = formatter.placeholder || (type === 'number' ? text('filter.placeholder.number') : '');
@@ -543,7 +551,11 @@ function rangeBlock(
         const input = event.currentTarget as HTMLInputElement;
         if (state.operator === 'BETWEEN') {
             const ends = input.closest<HTMLElement>('.simple-html-grid-range-ends') ?? input;
-            const range: DateRange = [filterDate(formatter, state.texts[0]), filterDate(formatter, state.texts[1])];
+            // weeks shown: from Monday of the first to Sunday of the last (pickerRange)
+            const range: DateRange = pickerRange(ctx, attribute, [
+                filterDate(formatter, state.texts[0]),
+                filterDate(formatter, state.texts[1])
+            ]);
             closePicker = openDateRangeInMenu(
                 ctx,
                 ends,

@@ -1,6 +1,8 @@
 // @vitest-environment node
-import { describe, expect, it } from 'vitest';
-import { FILTER_OPERATORS, type FilterOperator } from '../../datasource/filterExpression';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { and, FILTER_OPERATORS, type FilterOperator } from '../../datasource/filterExpression';
+import { formatTexts } from '../../grid/columnFormat';
+import { dateConditions } from '../../grid/filterAsShown';
 import { type SqlColumn, type SqlDialect, type SqlOptions, toSqlWhere } from '../../sql';
 
 /**
@@ -319,6 +321,79 @@ describe('text', () => {
         expect(() => sql(where('name', 'EQUAL', new Date()))).toThrow(TypeError);
         expect(() => sql(where('name', 'EQUAL', true))).toThrow(TypeError);
         expect(() => sql(where('name', 'BETWEEN', [1, 2]))).toThrow(TypeError);
+    });
+});
+
+describe('literal: the wildcards of the grid as characters', () => {
+    const literal = { literal: true };
+
+    it("expect *, % and _ to be characters of each dialect's pattern, escaped where they are its wildcards", () => {
+        const value = 'a*b%c_d!e[f]g?h';
+        // LIKE ESCAPE '!': % and _ escaped, * is no wildcard of LIKE
+        expect(sql(where('name', 'EQUAL', value, literal), 'postgres').params).toEqual(['a*b!%c!_d!!e[f]g?h']);
+        expect(sql(where('name', 'EQUAL', value, literal), 'oracle').params).toEqual(['a*b!%c!_d!!e[f]g?h']);
+        // LIKE without an escape: in brackets
+        expect(sql(where('name', 'EQUAL', value, literal), 'mssql').params).toEqual(['a*b[%]c[_]d!e[[]f]g?h']);
+        // GLOB: * in brackets, % and _ are no wildcards of it
+        expect(sql(where('name', 'EQUAL', value, literal), 'sqlite').params).toEqual(['a[*]b%c_d!e[[]f]g[?]h']);
+    });
+
+    it('expect the pattern of each operator: the wildcards of the dialect around the text, the text as it is', () => {
+        const patterns = (dialect: SqlDialect) =>
+            (['EQUAL', 'NOT_EQUAL_TO', 'CONTAINS', 'DOES_NOT_CONTAIN', 'BEGIN_WITH', 'END_WITH'] as const).map(
+                (operator) => sql(where('name', operator, '50%', literal), dialect).params[0]
+            );
+        expect(patterns('postgres')).toEqual(['50!%', '50!%', '%50!%%', '%50!%%', '50!%%', '%50!%']);
+        expect(patterns('sqlite')).toEqual(['50%', '50%', '*50%*', '*50%*', '50%*', '*50%']);
+        expect(patterns('mssql')).toEqual(['50[%]', '50[%]', '%50[%]%', '%50[%]%', '50[%]%', '%50[%]']);
+    });
+
+    it("expect a blank row to match a text of wildcards no more: '' does not contain '%'", () => {
+        expect(sql(where('name', 'CONTAINS', '%')).sql).toBe(`("name" IS NULL OR LOWER("name") LIKE $1 ESCAPE '!')`);
+        expect(sql(where('name', 'CONTAINS', '%', literal)).sql).toBe(
+            `("name" IS NOT NULL AND LOWER("name") LIKE $1 ESCAPE '!')`
+        );
+        expect(sql(where('name', 'DOES_NOT_CONTAIN', '%', literal)).sql).toBe(
+            `("name" IS NULL OR NOT (LOWER("name") LIKE $1 ESCAPE '!'))`
+        );
+    });
+
+    it('expect it with caseSensitive, and on a value that is not ASCII', () => {
+        expect(sql(where('name', 'CONTAINS', 'A_b', { caseSensitive: true, literal: true }))).toEqual({
+            sql: `("name" IS NOT NULL AND "name" LIKE $1 ESCAPE '!')`,
+            params: ['%A!_b%']
+        });
+        expect(sql(where('name', 'CONTAINS', 'Æ_', literal))).toEqual({
+            sql: `("name" IS NOT NULL AND LOWER("name") LIKE LOWER($1) ESCAPE '!')`,
+            params: ['%Æ!_%']
+        });
+    });
+
+    it('expect it ignored where there are no wildcards: IN, a comparison, a number, a valueField', () => {
+        for (const [condition, other] of [
+            [where('name', 'IN', ['a_b', '%'], literal), where('name', 'IN', ['a_b', '%'])],
+            [where('name', 'LESS_THAN', 'a_b', literal), where('name', 'LESS_THAN', 'a_b')],
+            [where('age', 'EQUAL', 5, literal), where('age', 'EQUAL', 5)],
+            [
+                where('name', 'EQUAL', undefined, { valueField: 'code', literal: true }),
+                where('name', 'EQUAL', undefined, { valueField: 'code' })
+            ]
+        ]) {
+            for (const dialect of DIALECTS) {
+                expect(sql(condition, dialect), JSON.stringify(condition)).toEqual(sql(other, dialect));
+            }
+        }
+    });
+
+    it('expect anything but true, false or null to throw', () => {
+        expect(sql(where('name', 'CONTAINS', '%', { literal: false }))).toEqual(sql(where('name', 'CONTAINS', '%')));
+        expect(sql(where('name', 'CONTAINS', '%', { literal: null }))).toEqual(sql(where('name', 'CONTAINS', '%')));
+        for (const bad of ['true', 1, {}]) {
+            expect(() => sql(where('name', 'CONTAINS', '%', { literal: bad })), String(bad)).toThrow(/literal is true or false/);
+        }
+        expect(() => sql(where('name', 'CONTAINS', '%', { literall: true }))).toThrow(
+            /takes field, operator, value, valueField, caseSensitive, literal/
+        );
     });
 });
 
@@ -799,5 +874,88 @@ describe('the options', () => {
 
     it('expect the options to be checked also when there is no filter', () => {
         expect(() => toSqlWhere(null, { dialect: 'postgres', columns: { a: 'a b' } })).toThrow(/letters, digits and _/);
+    });
+});
+
+describe('a header filter as shown: a week is a range of the column, no date functions', () => {
+    // the grid makes its dates in the time zone of the browser: Oslo, as options.timeZone
+    const originalTimeZone = process.env.TZ;
+    beforeAll(() => {
+        process.env.TZ = 'Europe/Oslo';
+    });
+    afterAll(() => {
+        if (originalTimeZone === undefined) {
+            delete process.env.TZ;
+        } else {
+            process.env.TZ = originalTimeZone;
+        }
+    });
+
+    /** the conditions the header filter makes of `2026-W47` typed in a column shown as weekIso */
+    const week = (field: string, operator: FilterOperator, type: 'date' | 'datetime') =>
+        and(...dateConditions(field, operator, new Date(2026, 10, 16), type, 'weekIso', formatTexts(), new Date(2026, 10, 22)));
+
+    it('expect = 2026-W47 to be from Monday to before the Monday after: an index on the column works', () => {
+        expect(sql(week('born', 'EQUAL', 'date'))).toEqual({
+            sql: '("born" IS NOT NULL AND "born" >= CAST($1 AS timestamp) AND "born" < CAST($2 AS timestamp))',
+            params: ['2026-11-16 00:00:00', '2026-11-23 00:00:00']
+        });
+        // a datetime column: the same range, its last second included
+        expect(sql(week('seen', 'EQUAL', 'datetime'))).toEqual({
+            sql: '("seen" IS NOT NULL AND "seen" >= CAST($1 AS timestamp) AND "seen" < CAST($2 AS timestamp))',
+            params: ['2026-11-16 00:00:00', '2026-11-23 00:00:00']
+        });
+    });
+
+    it('expect > the week to be from the Monday after, ≤ to before it, ≠ outside it or null', () => {
+        expect(sql(week('born', 'GREATER_THAN', 'date'))).toEqual({
+            sql: '("born" IS NOT NULL AND "born" >= CAST($1 AS timestamp))',
+            params: ['2026-11-23 00:00:00']
+        });
+        expect(sql(week('seen', 'LESS_THAN_OR_EQUAL_TO', 'datetime'))).toEqual({
+            sql: '("seen" IS NOT NULL AND "seen" < CAST($1 AS timestamp))',
+            params: ['2026-11-23 00:00:00']
+        });
+        expect(sql(week('born', 'NOT_EQUAL_TO', 'date'))).toEqual({
+            sql: '(("born" IS NOT NULL AND "born" < CAST($1 AS timestamp)) OR ("born" IS NOT NULL AND "born" >= CAST($2 AS timestamp)) OR "born" IS NULL)',
+            params: ['2026-11-16 00:00:00', '2026-11-23 00:00:00']
+        });
+    });
+
+    it('expect 2026-W40..2026-W47 in each dialect: Monday of week 40 to before the Monday after week 47', () => {
+        const filter = and(
+            ...dateConditions(
+                'born',
+                'BETWEEN',
+                [new Date(2026, 8, 28), new Date(2026, 10, 16)],
+                'date',
+                'weekIso',
+                formatTexts(),
+                new Date(2026, 10, 22)
+            )
+        );
+        expect(DIALECTS.map((dialect) => sql(filter, dialect))).toEqual([
+            {
+                sql: '("born" IS NOT NULL AND "born" >= CAST($1 AS timestamp) AND "born" < CAST($2 AS timestamp))',
+                params: ['2026-09-28 00:00:00', '2026-11-23 00:00:00']
+            },
+            {
+                sql: `("born" IS NOT NULL AND "born" >= TO_DATE(:1, 'YYYY-MM-DD HH24:MI:SS') AND "born" < TO_DATE(:2, 'YYYY-MM-DD HH24:MI:SS'))`,
+                params: ['2026-09-28 00:00:00', '2026-11-23 00:00:00']
+            },
+            {
+                sql: '(julianday("born") IS NOT NULL AND julianday("born") >= julianday(?) AND julianday("born") < julianday(?))',
+                params: ['2026-09-28 00:00:00', '2026-11-23 00:00:00']
+            },
+            {
+                sql: '([born] IS NOT NULL AND [born] >= CAST(@p1 AS datetime2(0)) AND [born] < CAST(@p2 AS datetime2(0)))',
+                params: ['2026-09-28T00:00:00', '2026-11-23T00:00:00']
+            }
+        ]);
+    });
+
+    it('expect the conditions to be plain data: the same SQL after the filter went through JSON', () => {
+        const filter = week('born', 'NOT_EQUAL_TO', 'date');
+        expect(sql(JSON.parse(JSON.stringify(filter)))).toEqual(sql(filter));
     });
 });

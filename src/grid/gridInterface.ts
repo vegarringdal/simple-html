@@ -17,7 +17,8 @@ import {
     displayFormatter,
     formatTexts,
     hasDisplayFormat,
-    hasValueFormat
+    hasValueFormat,
+    readonlyOf
 } from './columnFormat';
 import type { CsvOptions } from './csv';
 import type { FindResult } from './findResult';
@@ -44,7 +45,7 @@ import { openColumnSettings } from './gridFunctions/columnSettings';
 import { assertDetailForm, copyDetailForm, noDetailForm } from './gridFunctions/detailForm';
 import { fillDown } from './gridFunctions/fillDown';
 import { columnConditions, sameConditions } from './gridFunctions/filterCallback';
-import { closeFind, findDataChanged, findStep, getFindResult, openFind } from './gridFunctions/findBar';
+import { closeFind, findDataChanged, findStep, getFindFilter, getFindResult, openFind } from './gridFunctions/findBar';
 import { DEFAULT_COLUMN_WIDTH, fitColumns } from './gridFunctions/fitColumns';
 import { getCellHeight } from './gridFunctions/getCellHeight';
 import { getElementByClassName } from './gridFunctions/getElementByClassName';
@@ -565,7 +566,13 @@ export class GridInterface<T> {
         if (state.headerFilters) {
             this.headerFilters = {};
             for (const [field, headerFilter] of Object.entries(state.headerFilters)) {
-                this.storeHeaderFilter(field, headerFilter.value, headerFilter.operator, headerFilter.caseSensitive === true);
+                this.storeHeaderFilter(
+                    field,
+                    headerFilter.value,
+                    headerFilter.operator,
+                    headerFilter.caseSensitive === true,
+                    typeof headerFilter.filterOnType === 'boolean' ? headerFilter.filterOnType : undefined
+                );
             }
         }
 
@@ -1297,7 +1304,8 @@ export class GridInterface<T> {
     /**
      * Finds a text in the cells, as Ctrl+F in the grid does: opens the find bar with the text, marks
      * every cell that shows it and scrolls to the current match. See {@link FindResult} for what a
-     * match is and their order - the text a cell shows, formatted, in any case.
+     * match is and their order - the text a cell shows, formatted, in any case (or as it is, with
+     * `caseSensitive`).
      *
      * The current match is the first one at or after the cell that has the focus (or the first one);
      * while the bar is open, the current match stays while it still matches, else it is the next one.
@@ -1306,11 +1314,18 @@ export class GridInterface<T> {
      *
      * **`filterRows`** turns "Filter rows" of the find bar on or off, as its toggle does: only the rows
      * with a match are shown - on top of the filter, not part of it (`getFilter()` and the state do not
-     * have it). Left out, it stays as it is. It is turned off when the bar closes ({@link closeFind},
-     * Esc), and by the footer's Clear. See {@link FindResult.filterRows}.
+     * have it, {@link getFindFilter} gives it for a backend). Left out, it stays as it is. It is turned
+     * off when the bar closes ({@link closeFind}, Esc), and by the footer's Clear. See
+     * {@link FindResult.filterRows}.
+     *
+     * **`caseSensitive`** turns "Match case" of the find bar on or off, as its toggle `Aa` does: the
+     * text is found as it is - `Acme` does not find `ACME`. The matches, the count and "Filter rows"
+     * follow it. Left out, it stays as it is; it is kept when the bar closes. See
+     * {@link FindResult.caseSensitive}.
      *
      * @param text the text to find. `''` opens the bar with no matches (and every row)
      * @param options.filterRows `true` for only the rows with a match, `false` for every row
+     * @param options.caseSensitive `true` to find the text as it is, `false` to find it in any case
      * @returns how many cells show the text
      * @throws a `TypeError` when the text is not a string
      *
@@ -1324,16 +1339,24 @@ export class GridInterface<T> {
      * // only the rows with a cell that shows "acme", then every row again with the bar still open
      * gridInterface.find('acme', { filterRows: true });
      * gridInterface.find('acme', { filterRows: false });
+     *
+     * // "Acme" as it is: not "ACME" or "acme"
+     * gridInterface.find('Acme', { caseSensitive: true });
      * gridInterface.closeFind();
      * ```
      */
-    public find(text: string, options: { filterRows?: boolean } = {}): number {
+    public find(text: string, options: { filterRows?: boolean; caseSensitive?: boolean } = {}): number {
         if (typeof text !== 'string') {
             throw new TypeError(`find(text): the text is a string, e.g. find('acme'), got ${String(text)}`);
         }
-        assertOptions('find', options, "find('acme', { filterRows: true })");
+        assertOptions('find', options, "find('acme', { filterRows: true, caseSensitive: true })");
         if (this.grid) {
-            openFind(this.grid, { text, focus: false, filterRows: options.filterRows });
+            openFind(this.grid, {
+                text,
+                focus: false,
+                filterRows: options.filterRows,
+                caseSensitive: options.caseSensitive
+            });
         }
         return this.getFind().count;
     }
@@ -1405,22 +1428,90 @@ export class GridInterface<T> {
     }
 
     /**
-     * What Find has found now: whether the bar is open, its text, whether "Filter rows" is on, how many
-     * cells match and the current match, see {@link FindResult}. A copy. The `find-change` event sends the
-     * same each time it changes.
+     * What Find has found now: whether the bar is open, its text, whether "Filter rows" and "Match case"
+     * are on, how many cells match and the current match, see {@link FindResult}. A copy. The
+     * `find-change` event sends the same each time it changes.
      *
      * @example
      * ```ts
-     * const { open, count, position, filterRows } = gridInterface.getFind();
+     * const { open, count, position, filterRows, caseSensitive } = gridInterface.getFind();
      * if (open) {
      *     console.log(count ? `${position} of ${count}` : 'no matches', filterRows ? '(rows filtered)' : '');
+     *     console.log(caseSensitive ? 'match case' : 'any case');
      * }
      * ```
      */
     public getFind(): FindResult {
         return this.grid
             ? getFindResult(this.grid)
-            : { open: false, text: '', filterRows: false, count: 0, position: 0, current: null };
+            : { open: false, text: '', filterRows: false, caseSensitive: false, count: 0, position: 0, current: null };
+    }
+
+    /**
+     * Find's "Filter rows" as a filter, for a backend that loads the rows: the rows with a match as a
+     * {@link FilterExpression}, which `toSqlWhere()` (`@simple-html/grid/sql`) turns into SQL like any
+     * other filter. AND it to `datasource.getFilter()`: "Filter rows" is on top of the filter. `null`
+     * while "Filter rows" shows every row - it is off, the bar is closed, the text is empty. The
+     * `find-filter-change` event sends it each time it changes.
+     *
+     * An OR group of one condition per field Find searches (the fields of the layout), for the fields
+     * whose cells SQL can match the way they show:
+     *
+     * - **a text field** showing its value as it is: `CONTAINS` the text, `literal` (`*`, `%` and `_`
+     *   are no wildcards: Find takes the text as it is) and `caseSensitive` with Match case - every line
+     *   of a multiline text. The same rows as Find
+     * - **a lookup column**: `IN` the values whose label - what the cells show - holds the text
+     * - **a number field**: `EQUAL` the number the text reads as, when the cell of that number shows the
+     *   text: `30` is 30 - Find also marks `130`
+     * - **a date or datetime field**: `EQUAL` the day (the second) the text is, as the cells show it:
+     *   `2026-03-14`. A part of a date is none
+     *
+     * Left out: a boolean and a column of checkboxes (Find does not search them), a text field with a
+     * formatter or a template of its own, a column whose type changes per row. With no condition, a
+     * condition of no row: `IN []` on the first field.
+     *
+     * So the filter selects the rows Find shows, or fewer - never a row without a match. The find
+     * guide has the details.
+     *
+     * @param options.fields the fields the filter may name - the ones your backend has a column for (a
+     * field made in the browser is not in the database). A field Find searches that is not in it is
+     * left out, the condition of no row is on its first. Default every field Find searches
+     * @returns the filter, or `null` for every row - also while the grid is not on the page
+     * @throws a `TypeError` for `fields` that is not a list of at least one field name
+     *
+     * @sample sql
+     * @example
+     * ```ts
+     * import { and, type FilterExpression } from '@simple-html/grid';
+     * import { toSqlWhere } from '@simple-html/grid/sql';
+     *
+     * gridInterface.find('acme', { filterRows: true });
+     * gridInterface.getFindFilter();
+     * // { group: 'OR', children: [
+     * //     { field: 'company', operator: 'CONTAINS', value: 'acme', literal: true },
+     * //     { field: 'country', operator: 'CONTAINS', value: 'acme', literal: true } ] }
+     *
+     * // what a backend gets: the filter AND the find, the fields it has columns for
+     * const find = gridInterface.getFindFilter({ fields: ['company', 'country', 'age'] });
+     * const parts = [datasource.getFilter(), find].filter((part): part is FilterExpression => part !== null);
+     * const { sql, params } = toSqlWhere(and(...parts), {
+     *     dialect: 'postgres',
+     *     columns: { company: 'company', country: 'country', age: { column: 'age', type: 'number' } }
+     * });
+     * ```
+     */
+    public getFindFilter(options: { fields?: readonly string[] } = {}): FilterExpression | null {
+        assertOptions('getFindFilter', options, "getFindFilter({ fields: ['company', 'country'] })");
+        const { fields } = options;
+        if (
+            fields !== undefined &&
+            (!Array.isArray(fields) || !fields.length || fields.some((field) => typeof field !== 'string'))
+        ) {
+            throw new TypeError(
+                `getFindFilter({ fields }): fields is a list of the field names your backend has, e.g. ['company', 'country'], got ${JSON.stringify(fields)}`
+            );
+        }
+        return this.grid ? getFindFilter(this.grid, fields) : null;
     }
 
     /**
@@ -1790,8 +1881,8 @@ export class GridInterface<T> {
 
     /**
      * @internal
-     * the header filter of a column: what its cell shows, the operator picked in its menu and its
-     * "Match case"
+     * the header filter of a column: what its cell shows, the operator picked in its menu, its "Match
+     * case" and its filter as you type
      */
     public __getHeaderFilter(field: string): HeaderFilter | undefined {
         return this.headerFilters[field];
@@ -1804,7 +1895,13 @@ export class GridInterface<T> {
      */
     public __setHeaderFilterValue(field: string, value: unknown) {
         const headerFilter = this.headerFilters[field];
-        this.storeHeaderFilter(field, value, headerFilter?.operator, headerFilter?.caseSensitive === true);
+        this.storeHeaderFilter(
+            field,
+            value,
+            headerFilter?.operator,
+            headerFilter?.caseSensitive === true,
+            headerFilter?.filterOnType
+        );
     }
 
     /**
@@ -1813,7 +1910,13 @@ export class GridInterface<T> {
      */
     public __setHeaderFilterOperator(field: string, operator: FilterOperator) {
         const headerFilter = this.headerFilters[field];
-        this.storeHeaderFilter(field, headerFilter?.value, operator, headerFilter?.caseSensitive === true);
+        this.storeHeaderFilter(
+            field,
+            headerFilter?.value,
+            operator,
+            headerFilter?.caseSensitive === true,
+            headerFilter?.filterOnType
+        );
     }
 
     /**
@@ -1822,7 +1925,23 @@ export class GridInterface<T> {
      */
     public __setHeaderFilterCaseSensitive(field: string, caseSensitive: boolean) {
         const headerFilter = this.headerFilters[field];
-        this.storeHeaderFilter(field, headerFilter?.value, headerFilter?.operator, caseSensitive);
+        this.storeHeaderFilter(field, headerFilter?.value, headerFilter?.operator, caseSensitive, headerFilter?.filterOnType);
+    }
+
+    /**
+     * @internal
+     * sets a column's filter as you type (filterOnType.ts), keeps the value, the operator and "Match
+     * case". undefined: the column's default, left out of the state
+     */
+    public __setHeaderFilterOnType(field: string, filterOnType: boolean | undefined) {
+        const headerFilter = this.headerFilters[field];
+        this.storeHeaderFilter(
+            field,
+            headerFilter?.value,
+            headerFilter?.operator,
+            headerFilter?.caseSensitive === true,
+            filterOnType
+        );
     }
 
     /**
@@ -1854,13 +1973,20 @@ export class GridInterface<T> {
     }
 
     /**
-     * stores a column's header filter, or removes it when it has no value, no operator and no "Match
-     * case" - so getState() lists only the header filters in use. An empty value ('' or undefined) is
-     * stored as null, `operator` and `caseSensitive` only when they are set
+     * stores a column's header filter, or removes it when it has no value, no operator, no "Match
+     * case" and no filter as you type of the user's - so getState() lists only the header filters in
+     * use. An empty value ('' or undefined) is stored as null, `operator`, `caseSensitive` and
+     * `filterOnType` only when they are set
      */
-    private storeHeaderFilter(field: string, value: unknown, operator: FilterOperator | undefined, caseSensitive: boolean) {
+    private storeHeaderFilter(
+        field: string,
+        value: unknown,
+        operator: FilterOperator | undefined,
+        caseSensitive: boolean,
+        filterOnType?: boolean
+    ) {
         const empty = value === null || value === undefined || value === '';
-        if (empty && !operator && !caseSensitive) {
+        if (empty && !operator && !caseSensitive && filterOnType === undefined) {
             delete this.headerFilters[field];
             return;
         }
@@ -1870,6 +1996,9 @@ export class GridInterface<T> {
         }
         if (caseSensitive) {
             headerFilter.caseSensitive = true;
+        }
+        if (filterOnType !== undefined) {
+            headerFilter.filterOnType = filterOnType;
         }
         this.headerFilters[field] = headerFilter;
     }
@@ -2013,7 +2142,8 @@ export class GridInterface<T> {
      * @param row a row of the datasource, so one of its `EntityUnion<T>` rows
      */
     public __isCellReadonly(row: Entity, field: string): boolean {
-        const readonlyByConfig = this.gridConfig.columns[field]?.readonly ?? false;
+        // the user's (format.readonly) over the column's
+        const readonlyByConfig = readonlyOf(this.gridConfig.columns[field]);
         const readonly = this.hooks.isReadonly?.(row as EntityUnion<T>, field, readonlyByConfig);
         return typeof readonly === 'boolean' ? readonly : readonlyByConfig;
     }
@@ -2583,6 +2713,7 @@ function assertRenderers(config: Partial<GridConfig>) {
  *   input takes (isHeaderOperator)
  * - `operator`: one of those the header filter takes, of `filterOperators` when it is given
  * - `filterCaseSensitive`: a boolean, `true` for a text column only
+ * - `filterOnType`: a boolean
  * @throws a `TypeError` naming the column, what it has and what it takes
  */
 function assertFilterOptions(config: Partial<GridConfig>, datasource: Datasource<any>) {
@@ -2626,6 +2757,10 @@ function assertFilterOptions(config: Partial<GridConfig>, datasource: Datasource
         }
         if (filterCaseSensitive !== undefined && typeof filterCaseSensitive !== 'boolean') {
             throw new TypeError(`${name}.filterCaseSensitive is true or false, got ${JSON.stringify(filterCaseSensitive)}`);
+        }
+        const { filterOnType } = column as Record<string, unknown>;
+        if (filterOnType !== undefined && typeof filterOnType !== 'boolean') {
+            throw new TypeError(`${name}.filterOnType is true or false, got ${JSON.stringify(filterOnType)}`);
         }
         if (filterCaseSensitive === true && type !== 'text') {
             throw new TypeError(

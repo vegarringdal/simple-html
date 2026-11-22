@@ -19,11 +19,13 @@ import {
     checkboxProblem,
     checkboxValues,
     formatNumberAs,
+    formatTexts,
     hasDisplayFormat,
     hasValueFormat,
     isCheckedValue,
     UNCHECKED_VALUE
 } from '../columnFormat';
+import { canFilterAsShown, filtersAsShown } from '../filterAsShown';
 import type { Grid } from '../grid';
 import type { MenuItem } from '../gridMenus';
 import { numberOverrideOf, overrideNumberText, zeroText } from './cellText';
@@ -38,12 +40,14 @@ import {
     detailFormTabPanel
 } from './detailFormSettings';
 import { moveDialog, resizeHandles, showDialog } from './dialogFrame';
+import { defaultFilterOnType, isFilterOnType, setFilterOnType } from './filterOnType';
 import { formatSubmenu, NUMBER_SAMPLE, PERCENT_SAMPLE } from './formatSubmenu';
 import { getColumnLabel, getConfigColumnLabel } from './getColumnLabel';
 import { getHeaderFilterOperator } from './getHeaderFilterOperator';
 import { getLayoutFields } from './getLayoutFields';
 import { configTabs, type GridConfigTab, tabId, tabPanelId } from './gridConfigTabs';
 import { gridText } from './gridText';
+import { refilterChangedFormats } from './headerFilterFormatter';
 import { defaultFilterPlaceholder, headerFilterPlaceholder } from './headerFilterPlaceholder';
 import { HEADER_OPERATOR_TEXTS, setHeaderFilterOperator } from './headerOperatorMenu';
 import { removeContextMenu } from './removeContextMenu';
@@ -72,28 +76,32 @@ import { attachTooltips, hideTooltip, tooltipsEnabled } from './tooltip';
  *   Format, Text, Link, Checkbox, Blank / 0, Label, Placeholder, Colours - or Error.
  * - **Right**, the column picked: its label (`ColumnFormat.label`, empty the column's own). A date, datetime
  *   or number column has its format, a picker that opens the entries of Format › (formatSubmenu.ts - one
- *   list of the formats); a number column Show blank as 0 and Show 0 as blank too (`numberOverride`, one or
+ *   list of the formats), and under it Filter as shown (`ColumnFormat.filterAsShown`, greyed out for a
+ *   format that is no period of time); a number column Show blank as 0 and Show 0 as blank too (`numberOverride`, one or
  *   the other). A text column the text it shows (a template, `ColumnFormat.text`), Show as link, the
  *   address (`ColumnFormat.link.url`) and Open in a new tab; a checkbox and a lookup column have none. A
  *   text and a number column can be shown as checkboxes (`ColumnFormat.checkbox`): Show as checkbox, the
  *   checked and the unchecked value - while it is on, their template, link, format and blank / 0 are
  *   gone, a checkbox shows no text. A template's ⟨{ }⟩ button puts a field in it at the caret, from a menu
  *   of the fields of the columns and the row. Then, for every column but a checkbox, the header filter:
- *   its placeholder (a text, or Use the column label - `placeholder`, `placeholderLabel`) and its
- *   operator - a picker of the operators it offers, the column's default said under it. Then its colour
- *   rules (`ColumnFormat.rules`, columnSettingsRules.ts), any column. Under it the preview: what the cell
- *   shows in the current row (else the first) in the colours of its rule, the link and its address, and
- *   why a row has no link.
+ *   its placeholder (a text, or Use the column label - `placeholder`, `placeholderLabel`), its
+ *   operator - a picker of the operators it offers, the column's default said under it - and Filter as
+ *   you type (`GridState.headerFilters[field].filterOnType`, filterOnType.ts). Then its colour rules
+ *   (`ColumnFormat.rules`, columnSettingsRules.ts), any column. Under it the preview: what the cell shows
+ *   in the current row (else the first) in the colours of its rule, the link and its address, and why a
+ *   row has no link.
  * - **The footer**: Reset column and Reset all go back to the formats the grid starts with (the config's
  *   `ColumnConfig.format`, or `initialState.formats` - the label, the placeholder, blank / 0 and the
- *   checkboxes are in them) and the column's default operator, Cancel closes,
- *   Apply sets the formats of the state (`setState({ formats })`, so `getState()` has them, to save) and
- *   switches the header filters whose operator changed, as Operator › does - and Apply & close. A template that is not
+ *   checkboxes are in them) and the column's default operator and filter as you type, Cancel closes,
+ *   Apply sets the formats of the state (`setState({ formats })`, so `getState()` has them, to save) -
+ *   a header filter whose column reads its text in another way now runs again (refilterChangedFormats) -
+ *   switches the header filters whose operator changed, as Operator › does, and their filter as you
+ *   type - and Apply & close. A template that is not
  *   valid - an address of a scheme that is not allowed, one that does not start with its scheme - has its
  *   problem under it at once, the column is marked Error and Apply does nothing until it is fixed.
  *
- * What it edits is a copy of the state's formats and the operators in use (ColumnSettings): the grid
- * changes on Apply only.
+ * What it edits is a copy of the state's formats, the operators and the filter as you type in use
+ * (ColumnSettings): the grid changes on Apply only.
  */
 
 /**
@@ -107,6 +115,11 @@ interface ColumnSettings {
      * A checkbox column is left out, its header filter is a checkbox
      */
     operators: Record<string, FilterOperator>;
+    /**
+     * the filter as you type of each column's header filter (filterOnType.ts): the one in use when it
+     * opened (isFilterOnType). A checkbox column is left out, as for `operators`
+     */
+    filterOnType: Record<string, boolean>;
     /** the column shown on the right */
     field: string;
     /** the tab shown: the columns' settings, or the detail form's */
@@ -155,6 +168,9 @@ export function openColumnSettings(ctx: Grid, field?: string, tab: GridConfigTab
         formats: ctx.gridInterface.getState().formats,
         operators: Object.fromEntries(
             fields.filter((name) => hasOperator(ctx, name)).map((name) => [name, getHeaderFilterOperator(ctx, name)])
+        ),
+        filterOnType: Object.fromEntries(
+            fields.filter((name) => hasOperator(ctx, name)).map((name) => [name, isFilterOnType(ctx, name)])
         ),
         field: field !== undefined && fields.includes(field) ? field : fields[0],
         tab,
@@ -395,12 +411,21 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
             return false;
         }
         removeContextMenu(ctx);
+        const before = gridInterface.getState().formats;
         gridInterface.setState({ formats: structuredClone(settings.formats) });
+        // a header filter whose column reads its text in another way now (filter as shown): it runs again
+        refilterChangedFormats(ctx, before);
         // a header filter whose operator changed: as if it was picked in Operator › - the filter runs again
         // with the value the cell has, the header shows it, filter-operator-change is sent
         for (const [name, operator] of Object.entries(settings.operators)) {
             if (operator !== getHeaderFilterOperator(ctx, name)) {
                 setHeaderFilterOperator(ctx, name, operator);
+            }
+        }
+        // filter as you type: state, as the toggle of the operator choice sets it
+        for (const [name, on] of Object.entries(settings.filterOnType)) {
+            if (on !== isFilterOnType(ctx, name)) {
+                setFilterOnType(ctx, name, on);
             }
         }
         // the Detail form tab's
@@ -435,6 +460,12 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         }
         if (set?.placeholder !== undefined || set?.placeholderLabel) {
             marks.push('columnSettings.badge.placeholder');
+        }
+        if (set?.multiline) {
+            marks.push('columnSettings.badge.multiline');
+        }
+        if (set?.readonly) {
+            marks.push('columnSettings.badge.readonly');
         }
         if (set?.rules?.length) {
             marks.push('columnSettings.badge.rules');
@@ -605,6 +636,46 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         }`;
     };
 
+    /** the texts the dates are written with, how the header filter reads a week, a quarter */
+    const texts = formatTexts(gridInterface.__getGridConfig().texts);
+
+    /**
+     * Under the format of a date, datetime or number column: Filter as shown (`ColumnFormat.filterAsShown`,
+     * filterAsShown.ts) - its header filter takes the text as the cells show it, `2026-W47` the week. On
+     * by default: turned off it is `filterAsShown: false` in the format. Off and greyed out for a format
+     * that is no period of time (the day of the week, a time of day), the hint says why. Not shown
+     * without a date or number format
+     */
+    const filterAsShownSettings = () => {
+        if (!hasValueFormat(format)) {
+            return nothing;
+        }
+        const can = canFilterAsShown(format, texts);
+        const hintId = idOf(ctx, 'filter-as-shown-hint');
+        return html`<div class="column-settings-field">
+            <label class="column-settings-check">
+                <input
+                    type="checkbox"
+                    class="column-settings-filter-as-shown"
+                    aria-describedby=${hintId}
+                    ?disabled=${!can}
+                    .checked=${live(filtersAsShown(format, texts))}
+                    @change=${(event: Event) =>
+                        change((next) => {
+                            if ((event.target as HTMLInputElement).checked) {
+                                delete next.filterAsShown;
+                            } else {
+                                next.filterAsShown = false;
+                            }
+                        })}
+                /><span>${text('columnSettings.filterAsShown')}</span>
+            </label>
+            <div class="column-settings-hint" id=${hintId}>
+                ${text(can ? 'columnSettings.filterAsShown.hint' : 'columnSettings.filterAsShown.off')}
+            </div>
+        </div>`;
+    };
+
     /** a date, datetime or number column: its format, a picker of the entries of Format › */
     const formatSettings = () => {
         const picked = format?.date
@@ -634,12 +705,38 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                     <span class="filter-editor-pick-text">${picked}</span>
                 </button>
             </div>
+        </div>
+        ${filterAsShownSettings()}`;
+    };
+
+    /**
+     * Beside the operator: Filter as you type (filterOnType.ts) - the header filter filters after a pause in
+     * typing. What it is in use when the dialog opened, Apply sets it as the toggle of the operator choice
+     * does
+     */
+    const filterOnTypeSettings = () => {
+        const hintId = idOf(ctx, 'filter-on-type-hint');
+        return html`<div class="column-settings-field">
+            <label class="column-settings-check">
+                <input
+                    type="checkbox"
+                    class="column-settings-filter-on-type"
+                    aria-describedby=${hintId}
+                    .checked=${live(settings.filterOnType[field] === true)}
+                    @change=${(event: Event) => {
+                        settings.filterOnType[field] = (event.target as HTMLInputElement).checked;
+                        update();
+                    }}
+                /><span>${text('columnSettings.filterOnType')}</span>
+            </label>
+            <div class="column-settings-hint" id=${hintId}>${text('columnSettings.filterOnType.hint')}</div>
         </div>`;
     };
 
     /**
      * The operator of the column's header filter: a picker of the operators the column offers (Operator ›),
-     * the one picked checked; just its name when the column offers one. The column's default under it
+     * the one picked checked; just its name when the column offers one. The column's default under it,
+     * Filter as you type after it
      */
     const operatorSettings = () => {
         const operator = settings.operators[field];
@@ -661,10 +758,11 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         </div>`;
         if (offered.length < 2) {
             return html`<div class="column-settings-field">
-                <span class="column-settings-label">${label}</span>
-                <div class="column-settings-input-row">${name(operator)}</div>
-                ${hint}
-            </div>`;
+                    <span class="column-settings-label">${label}</span>
+                    <div class="column-settings-input-row">${name(operator)}</div>
+                    ${hint}
+                </div>
+                ${filterOnTypeSettings()}`;
         }
         return html`<div class="column-settings-field">
             <span class="column-settings-label">${label}</span>
@@ -695,7 +793,8 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                 </button>
             </div>
             ${hint}
-        </div>`;
+        </div>
+        ${filterOnTypeSettings()}`;
     };
 
     /**
@@ -761,7 +860,9 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                 'placeholder',
                 'columnSettings.placeholder',
                 useLabel ? '' : (format?.placeholder ?? ''),
-                useLabel ? headerFilterPlaceholder(ctx, field, format, operator) : defaultFilterPlaceholder(ctx, field, operator),
+                useLabel
+                    ? headerFilterPlaceholder(ctx, field, format, operator)
+                    : defaultFilterPlaceholder(ctx, field, operator, format ?? {}),
                 (value) =>
                     change((next) => {
                         if (value.trim() === '') {
@@ -820,6 +921,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                     delete next.link;
                     delete next.number;
                     delete next.numberOverride;
+                    delete next.multiline;
                     next.checkbox = { checked: CHECKED_VALUE, unchecked: UNCHECKED_VALUE };
                 } else {
                     delete next.checkbox;
@@ -949,6 +1051,33 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         </div>`;
     };
 
+    /**
+     * Editing (the user: "for text we should also be able to set if it's multiline or not, and readonly in
+     * edit mode"): *Multiline* for a text column that is not shown as checkboxes (`ColumnFormat.multiline`)
+     * and *Read only* for every column (`ColumnFormat.readonly`: not edited, also in an editable grid). Each
+     * starts as the column has it - the field's `multiline`, the column's `readonly` - and set back to that
+     * it is left out of the format
+     */
+    const editingSettings = () => {
+        const own = {
+            multiline: gridInterface.getDatasource().getField(field).multiline === true,
+            readonly: gridInterface.__getGridConfig().columns[field]?.readonly === true
+        };
+        const set = (key: 'multiline' | 'readonly', on: boolean) =>
+            change((next) => {
+                if (on === own[key]) {
+                    delete next[key];
+                } else {
+                    next[key] = on;
+                }
+            });
+        const multiline =
+            kind === 'text' && format?.checkbox === undefined
+                ? checkbox('columnSettings.multiline', format?.multiline ?? own.multiline, (on) => set('multiline', on))
+                : nothing;
+        return html`${multiline} ${checkbox('columnSettings.readonly', format?.readonly ?? own.readonly, (on) => set('readonly', on))}`;
+    };
+
     const settingsOf = () => {
         // shown as checkboxes: no text to format
         const checkboxes = format?.checkbox !== undefined;
@@ -1043,8 +1172,8 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                         <span class="column-settings-heading-label">${labelOf(field)}</span>
                         <span class="column-settings-option-type">${typeName(field)}</span>
                     </div>
-                    ${labelSettings()} ${settingsOf()} ${placeholderSettings()} ${operatorSettings()} ${ruleSettings()}
-                    ${preview()}
+                    ${labelSettings()} ${settingsOf()} ${editingSettings()} ${placeholderSettings()} ${operatorSettings()}
+                    ${ruleSettings()} ${preview()}
                 </div>
             </div>
             ${detailFormTabPanel(ctx, dialog, settings.detailForm, settings.tab, update)}
@@ -1058,6 +1187,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                         @click=${() => {
                             if (settings.operators[field]) {
                                 settings.operators[field] = startOperator(ctx, field);
+                                settings.filterOnType[field] = defaultFilterOnType(ctx, field);
                             }
                             setFormat(field, structuredClone(start[field]));
                         }}
@@ -1072,6 +1202,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                             settings.formats = structuredClone(start);
                             for (const name of Object.keys(settings.operators)) {
                                 settings.operators[name] = startOperator(ctx, name);
+                                settings.filterOnType[name] = defaultFilterOnType(ctx, name);
                             }
                             update();
                         }}

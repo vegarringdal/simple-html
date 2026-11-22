@@ -174,6 +174,7 @@ export function isFilterOperator(value: unknown): value is FilterOperator {
  *   number and a `Date` as a date, also on a field that is not listed
  * - `valueField` - compare with another field of the same row instead of `value` (not `BETWEEN`)
  * - `caseSensitive` - `true`: a text is compared with upper and lower case as they are
+ * - `literal` - `true`: `*`, `%` and `_` in a text value are characters, not wildcards
  *
  * A condition without `field` or `operator` is ignored: it does not filter out anything. So is one
  * without the value it needs: a blank `value` (null, undefined, `''`, an invalid Date) and no
@@ -221,6 +222,21 @@ export interface FilterCondition {
      * formatted text ignoring case - and by `IS_BLANK` / `IS_NOT_BLANK`.
      */
     caseSensitive?: boolean;
+    /**
+     * `true`: the text of `value` is matched as it is - `*`, `%` and `_` are characters like any other,
+     * not wildcards: `'50%'` with `CONTAINS` finds `'50% off'`, not `'500'`. Default `false`: they are
+     * wildcards (see {@link FilterOperator}). Only `true` turns it on.
+     *
+     * For the conditions that match a pattern on text: `EQUAL`, `NOT_EQUAL_TO`, `CONTAINS`,
+     * `DOES_NOT_CONTAIN`, `BEGIN_WITH`, `END_WITH` on a `text` field (also a field that is not listed),
+     * with a text value. Ignored by the others - `IN` / `NOT_IN` and the comparisons have no wildcards -
+     * and on the other types. `toSqlWhere()` escapes the wildcards of the database's pattern for it.
+     *
+     * Made by code: Find's `gridInterface.getFindFilter()` makes its conditions with it, as Find takes
+     * its text as it is. The header filters and the filter editor do not make it, and the filter editor
+     * leaves it out when it applies a filter it edited.
+     */
+    literal?: boolean;
 }
 
 /**
@@ -329,6 +345,8 @@ export function or(...children: FilterExpression[]): FilterGroup {
  * then has no `value` property. `[from, to]` for `BETWEEN`, an end can be null
  * @param options.caseSensitive `true` to compare a text with upper and lower case as they are, see
  * {@link FilterCondition}. Default `false`: the condition has no `caseSensitive` property
+ * @param options.literal `true` to match the text as it is, `*`, `%` and `_` no wildcards, see
+ * {@link FilterCondition.literal}. Default `false`: the condition has no `literal` property
  * @throws a `TypeError` for a `BETWEEN` whose value is not `[from, to]`, and for options that are not
  * an object (`where(field, operator, value, true)`)
  *
@@ -344,13 +362,14 @@ export function or(...children: FilterExpression[]): FilterGroup {
  * where('country', 'NOT_IN', ['Norway', 'Sweden']);
  * where('name', 'BEGIN_WITH', 'Mc', { caseSensitive: true }); // { ..., caseSensitive: true }
  * where('email', 'IS_BLANK'); // { field: 'email', operator: 'IS_BLANK' }
+ * where('discount', 'CONTAINS', '50%', { literal: true }); // finds '50%', not '500'
  * ```
  */
 export function where(
     field: string,
     operator: FilterOperator,
     value?: unknown,
-    options: { caseSensitive?: boolean } = {}
+    options: { caseSensitive?: boolean; literal?: boolean } = {}
 ): FilterCondition {
     assertOptions('where', options, "where('name', 'EQUAL', 'Ann', { caseSensitive: true })");
     if (operator === 'BETWEEN' && !isRange(value)) {
@@ -361,6 +380,9 @@ export function where(
     const condition: FilterCondition = value === undefined ? { field, operator } : { field, operator, value };
     if (options.caseSensitive === true) {
         condition.caseSensitive = true;
+    }
+    if (options.literal === true) {
+        condition.literal = true;
     }
     return condition;
 }

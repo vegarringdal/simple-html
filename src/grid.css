@@ -21,7 +21,7 @@
     /* the filter row, the inputs, pickers and buttons of the filter editor and the value list, the
        value list's box, the filter chips, the tooltips */
     --simple-html-grid-sec-bg-color: light-dark(#ffffff, #4b5563);
-    /* scrollbar tracks, the search input of the column chooser, the focus button of a cell */
+    /* scrollbar tracks, the focus button of a cell */
     --simple-html-grid-alt-bg-color: light-dark(#ffffff, #4b5563);
     /* the lines between cells, rows and menu sections */
     --simple-html-grid-main-bg-border: light-dark(#e6e5e5, #1f2937);
@@ -125,6 +125,10 @@
     /* the frame of the controls of the value list and the filter editor - the search box, the pickers,
        the value inputs, the buttons - at least 3:1 to the menus and the dialog (WCAG 1.4.11) */
     --simple-html-grid-control-border-color: light-dark(#8c8c8c, #9ca3af);
+    /* the frame of a field of the detail form at rest: quiet, near the form's background - the field is
+       seen by its own background (--simple-html-grid-sec-bg-color). Under the pointer it has the
+       controls' frame, with the focus the focus outline */
+    --simple-html-grid-detail-input-border-color: light-dark(#d4d4d4, #5f6b7a);
     /* a range of cells (gridInterface.getRanges()): laid over its cells - over the rows, a selected
        row and an error's tint, the text keeps 4.5:1 - and the line around it, at least 3:1 to all of
        those */
@@ -915,10 +919,11 @@
     display: none;
 }
 
+/* the input gives way after the count: five buttons of 21px stay whole in a grid of 160px */
 .simple-html-grid .simple-html-grid-find-input {
     flex: 1 1 160px;
     width: 160px;
-    min-width: 40px;
+    min-width: 24px;
     box-sizing: border-box;
     margin: 0;
     padding: 0 4px;
@@ -978,6 +983,12 @@
 
 .simple-html-grid .simple-html-grid-find-button[aria-pressed='true']:hover {
     filter: brightness(1.1);
+}
+
+/* "Match case": the text Aa, in the weight of the filter editor's toggle Aa - filled with the accent
+ * colour while it is on, as "Filter rows" */
+.simple-html-grid .simple-html-grid-find-case {
+    font-weight: var(--simple-html-grid-font-weight-header);
 }
 
 /* the funnel of "Filter rows", in the colour of the button's text */
@@ -3382,6 +3393,14 @@
     outline-offset: 1px;
 }
 
+/* a setting that can not be changed for the column (Filter as shown of a time of day): greyed out, the
+ * hint under it says why */
+.simple-html-grid.filter-editor-content .column-settings-check:has(input:disabled),
+.simple-html-grid.filter-editor-content .column-settings-check input:disabled {
+    color: var(--simple-html-grid-sec-font-color);
+    cursor: default;
+}
+
 /* the checked and the unchecked value of a column's checkboxes: side by side, under each other when the
  * dialog is made narrow */
 .simple-html-grid.filter-editor-content .column-settings-values {
@@ -3692,8 +3711,18 @@
     gap: 10px;
 }
 
-.simple-html-grid.filter-editor-content .detail-form-settings-width {
-    max-width: 120px;
+/* Width, Min width, Max width: side by side, under each other where the dialog is narrow */
+.simple-html-grid.filter-editor-content .detail-form-settings-widths {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+}
+
+.simple-html-grid.filter-editor-content .detail-form-settings-width-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: 110px;
 }
 
 .simple-html-grid.filter-editor-content .detail-form-settings-list {
@@ -3744,12 +3773,64 @@
     gap: 6px;
 }
 
+/* the drag handle of a field, at the right end of its option: it moves the field (dragField). A finger
+ * drags it at once, it does not scroll the list */
+.simple-html-grid.filter-editor-content .detail-form-settings-handle {
+    margin-left: auto;
+    touch-action: none;
+}
+
+/* the field dragged: quiet, the line shows where it goes - a 2px line in the accent colour over the
+ * option it goes before, or under the last one. Inset: the list's edge does not cut it off */
+.simple-html-grid.filter-editor-content .detail-form-settings-dragged {
+    opacity: 0.5;
+}
+
+.simple-html-grid.filter-editor-content .detail-form-settings-drop-before {
+    box-shadow: inset 0 2px 0 0 var(--simple-html-grid-accent-color);
+}
+
+.simple-html-grid.filter-editor-content .detail-form-settings-drop-after {
+    box-shadow: inset 0 -2px 0 0 var(--simple-html-grid-accent-color);
+}
+
+/**
+ * A drag handle - six dots - of a row that can be dragged: a field of the Detail form tab (at its
+ * right) and of the column chooser (at its left), the same look in both. The quiet text colour, a grab
+ * cursor; it does not take the width of the text around it
+ */
+.simple-html-grid .simple-html-grid-drag-handle {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    width: 12px;
+    color: var(--simple-html-grid-sec-font-color);
+    cursor: grab;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.simple-html-grid .simple-html-grid-drag-handle:active {
+    cursor: grabbing;
+}
+
+.simple-html-grid .simple-html-grid-drag-handle-icon {
+    width: 6px;
+    height: 10px;
+    fill: currentColor;
+}
+
 /**
  * The detail form (detailForm.ts): a panel in the grid at the right of the rows - under them in a narrow
  * grid - with the current row as a form. updateMainElementSizes places it, its look is here: the
- * grid's colours, compact, square. A label over each value, the values framed as the inputs of the
- * filter editor; a readonly one without its frame's colour. It scrolls on its own, the page does not
- * scroll with it
+ * grid's colours, compact, square. A label over each value, the values on the inputs' background in a
+ * quiet frame (--simple-html-grid-detail-input-border-color) - the controls' frame under the pointer,
+ * the focus outline with the focus, the error colour with an error; a readonly one without a frame of
+ * its own colour. It scrolls on its own, the page does not scroll with it. Collapsed it is its title
+ * bar: a strip at the right with the title going down, a bar under the rows. Its left edge is a splitter
+ * (detailFormResize.ts)
  */
 .simple-html-grid .simple-html-grid-detail-form {
     position: absolute;
@@ -3778,9 +3859,40 @@
     align-items: center;
     gap: 6px;
     height: 22px;
-    padding: 0 6px;
+    padding: 0 6px 0 0;
     border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
     box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
+}
+
+/* the title is the button that collapses and expands the form: the chevron in front of it says where it
+ * goes, the whole bar can be pressed */
+.simple-html-grid .simple-html-grid-detail-form-toggle {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+    margin: 0;
+    padding: 0 0 0 6px;
+    border: 0;
+    border-radius: 0;
+    background-color: transparent;
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    text-align: left;
+    cursor: pointer;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-toggle:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid .simple-html-grid-chevron-icon {
+    flex: none;
+    width: 8px;
+    height: 8px;
 }
 
 .simple-html-grid .simple-html-grid-detail-form-title {
@@ -3795,6 +3907,70 @@
 .simple-html-grid .simple-html-grid-detail-form-row {
     flex: none;
     color: var(--simple-html-grid-sec-font-color);
+}
+
+/* the chevron points where the form goes: right at the right of the rows (collapses it there), left
+ * when it is collapsed (expands it); down under the rows, up when it is collapsed there */
+.simple-html-grid .simple-html-grid-detail-form-collapsed .simple-html-grid-chevron-icon {
+    transform: rotate(180deg);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-below .simple-html-grid-chevron-icon {
+    transform: rotate(90deg);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-below.simple-html-grid-detail-form-collapsed .simple-html-grid-chevron-icon {
+    transform: rotate(-90deg);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-body[hidden] {
+    display: none;
+}
+
+/* collapsed at the right of the rows: a strip as high as the rows, the chevron at its top and the title
+ * going down under it. Under the rows the title bar keeps its look */
+.simple-html-grid .simple-html-grid-detail-form-collapsed:not(.simple-html-grid-detail-form-below) .simple-html-grid-detail-form-titlebar {
+    flex: 1 1 auto;
+    height: auto;
+    padding: 0;
+    border-bottom: 0;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-collapsed:not(.simple-html-grid-detail-form-below) .simple-html-grid-detail-form-toggle {
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 6px;
+    padding: 7px 0;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-collapsed:not(.simple-html-grid-detail-form-below) .simple-html-grid-detail-form-title {
+    flex: 0 1 auto;
+    writing-mode: vertical-rl;
+}
+
+/* the splitter of the form's left edge (detailFormResize.ts): over the line, a few px into the form. The
+ * column resize handle's colour under the pointer and while it is dragged, the focus outline with the
+ * focus. None under the rows: the form is as wide as the grid there */
+.simple-html-grid .simple-html-grid-detail-form-resize {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    bottom: 0;
+    left: -2px;
+    width: 6px;
+    cursor: col-resize;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-resize:hover,
+.simple-html-grid .simple-html-grid-detail-form-resize-dragged {
+    background-color: var(--simple-html-grid-dropzone-color);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-below .simple-html-grid-detail-form-resize {
+    display: none;
 }
 
 .simple-html-grid .simple-html-grid-detail-form-body {
@@ -3829,7 +4005,7 @@
     height: 22px;
     margin: 0;
     padding: 0 4px;
-    border: 1px solid var(--simple-html-grid-control-border-color);
+    border: 1px solid var(--simple-html-grid-detail-input-border-color);
     border-radius: 0;
     background-color: var(--simple-html-grid-sec-bg-color);
     color: var(--simple-html-grid-main-font-color);
@@ -3838,6 +4014,13 @@
     font-weight: var(--simple-html-grid-font-weight);
     -webkit-user-select: text;
     user-select: text;
+}
+
+/* a field that can be edited, under the pointer and with the focus: the controls' frame (3:1) - with
+ * the focus the focus outline over it too */
+.simple-html-grid .simple-html-grid-detail-form-input:not([readonly]):hover,
+.simple-html-grid .simple-html-grid-detail-form-input:not([readonly]):focus {
+    border-color: var(--simple-html-grid-control-border-color);
 }
 
 /* text of several lines: as tall as its lines, all of it can be read - it grows with the text where the
@@ -3864,7 +4047,11 @@
     outline-offset: -2px;
 }
 
-.simple-html-grid .simple-html-grid-detail-form-input[aria-invalid='true'] {
+/* an error: the error colour, under the pointer and with the focus too - the errors under the field say
+ * it in words */
+.simple-html-grid .simple-html-grid-detail-form-input[aria-invalid='true'],
+.simple-html-grid .simple-html-grid-detail-form-input[aria-invalid='true']:hover,
+.simple-html-grid .simple-html-grid-detail-form-input[aria-invalid='true']:focus {
     border-color: var(--simple-html-grid-error-color);
 }
 
@@ -4036,21 +4223,137 @@
     border-right: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
-.simple-html-grid-menu-item-input {
+/**
+ * The column chooser (contextMenuColumnChooser.ts). Its search is framed as the inputs of the dialogs -
+ * the controls' frame, the inputs' background, a magnifying glass in front - the focus outline on the
+ * frame. A field: the drag handle at its left (the whole row drags), its label, the ✎ at its right -
+ * shown under the pointer and with the focus (always on a touch screen, below). The ✎ opens an input
+ * in place of the label, framed as the search
+ */
+.simple-html-grid .simple-html-grid-chooser-search {
+    display: flex;
+    align-items: center;
+    gap: 4px;
     box-sizing: border-box;
-    margin-left: 1px;
+    height: 24px;
+    margin: 4px 6px;
+    padding: 0 6px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-sec-font-color);
+    cursor: text;
+}
+
+.simple-html-grid .simple-html-grid-chooser-search:has(:focus-visible) {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: -2px;
+}
+
+.simple-html-grid .simple-html-grid-search-icon {
+    flex: none;
+    width: 10px;
+    height: 10px;
+}
+
+.simple-html-grid .simple-html-grid-chooser-search .simple-html-grid-menu-item-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    margin: 0;
+    padding: 0;
     border: 0;
-    border-radius: initial;
-    height: 20px;
-    text-align: center;
-    overflow: hidden;
-    user-select: none;
+    border-radius: 0;
+    background-color: transparent;
+    color: var(--simple-html-grid-main-font-color);
     font-family: var(--simple-html-grid-font-family);
     font-size: var(--simple-html-grid-font-size);
     font-weight: var(--simple-html-grid-font-weight-cell);
-    transition: initial;
+    text-align: left;
+}
+
+/* the frame has the outline */
+.simple-html-grid .simple-html-grid-chooser-search .simple-html-grid-menu-item-input:focus-visible {
+    outline: none;
+}
+
+.simple-html-grid .simple-html-grid-chooser-search .simple-html-grid-menu-item-input::placeholder {
+    color: var(--simple-html-grid-sec-font-color);
+    opacity: 1;
+}
+
+.simple-html-grid .simple-html-grid-column-chooser .simple-html-grid-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+.simple-html-grid .simple-html-grid-chooser-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.simple-html-grid .simple-html-grid-chooser-rename {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 0;
+    background-color: transparent;
+    color: var(--simple-html-grid-sec-font-color);
+    cursor: pointer;
+    opacity: 0;
+}
+
+.simple-html-grid .simple-html-grid-column-chooser .simple-html-grid-menu-item:hover .simple-html-grid-chooser-rename,
+.simple-html-grid .simple-html-grid-chooser-rename:focus-visible {
+    opacity: 1;
+}
+
+.simple-html-grid .simple-html-grid-chooser-rename:hover {
+    border-color: var(--simple-html-grid-control-border-color);
+    background-color: var(--simple-html-grid-sec-bg-color);
     color: var(--simple-html-grid-main-font-color);
-    background-color: var(--simple-html-grid-alt-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-pencil-icon {
+    width: 10px;
+    height: 10px;
+    fill: currentColor;
+}
+
+.simple-html-grid .simple-html-grid-chooser-label-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    box-sizing: border-box;
+    height: 18px;
+    margin: 0;
+    padding: 0 4px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight-cell);
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+.simple-html-grid .simple-html-grid-chooser-label-input::placeholder {
+    color: var(--simple-html-grid-sec-font-color);
+    opacity: 1;
 }
 
 .simple-html-grid-focus-button {
@@ -4147,13 +4450,26 @@
         line-height: var(--simple-html-grid-touch-row-height);
     }
 
-    /* the column chooser: its search, its list (more rows of the taller ones) and Close */
-    .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item-input {
-        height: var(--simple-html-grid-touch-row-height);
-    }
-
+    /* the column chooser: its list (more rows of the taller ones) and Close. Its search keeps the 24px of
+       the other searches. The ✎ of a field is always shown - a finger does not hover - a 24px target as
+       the buttons, and its input as tall */
     .simple-html-grid .simple-html-grid-menu-sub {
         max-height: min(360px, 50vh);
+    }
+
+    .simple-html-grid .simple-html-grid-chooser-rename {
+        width: 24px;
+        height: 24px;
+        opacity: 1;
+    }
+
+    .simple-html-grid .simple-html-grid-chooser-label-input {
+        height: 24px;
+    }
+
+    /* the detail form: the splitter of its edge wider for a finger, inside the form */
+    .simple-html-grid .simple-html-grid-detail-form-resize {
+        width: 10px;
     }
 
     .simple-html-grid .simple-html-grid-menu .simple-html-label-button-menu-bottom {

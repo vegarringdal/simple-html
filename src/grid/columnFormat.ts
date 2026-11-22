@@ -3,12 +3,15 @@ import type { Formatter } from '../datasource/formatter';
 import { fillText, getText, type Texts } from '../texts';
 import { LINK_PROTOCOLS, templateProblem, urlTemplateProblem } from './cellTemplate';
 import { assertColorRules, type ColorRule } from './colorRules';
+import type { ColumnConfig } from './gridConfig';
 
 /**
  * The display formats of a column: how its cells show the value, picked by the user in the header
  * menu (Format ›) or set in the config (`ColumnConfig.format`) and the state (`GridState.formats`).
  * Only the text shown changes - the value, editing, filtering, sorting, grouping, copy and the CSV
- * export stay with the field's formatter. See the formatting guide, "Display formats".
+ * export stay with the field's formatter. See the formatting guide, "Display formats". The one
+ * exception is the header filter: it takes the text as the cells show it (`filterAsShown`, see
+ * filterAsShown.ts) and makes ordinary date and number conditions of it.
  *
  * A column's format is one plain object (JSON) with a part per kind of value: `{ date: 'weekIso' }`,
  * `{ number: { decimals: 2 } }`, `{ text: '{name} ({id})', link: { url: 'https://x/{id}' } }`. The grid
@@ -253,8 +256,8 @@ export interface CheckboxFormat {
  * Only what the cells show changes - and what follows the cells: the aggregates of a number column, the
  * summary of the selected cells in the footer, Find, the fitted width and the dimmed repeated values.
  * The value stays as it was: a cell that is edited shows the value as the field's formatter writes it
- * (its `formatForEdit`), a header filter is typed as the field's formatter reads it, sorting and
- * grouping use the value, the group rows' names, copy and the CSV export the field's formatter. The
+ * (its `formatForEdit`), a header filter is typed as the cells show it (`filterAsShown`, a date or
+ * number format; else as the field's formatter reads it), sorting and grouping use the value, the group rows' names, copy and the CSV export the field's formatter. The
  * Excel export writes the value, with an Excel number format like the display format where Excel has
  * one.
  *
@@ -350,6 +353,47 @@ export interface ColumnFormat {
      * `[{ operator: 'LESS_THAN', value: '0', color: 'red' }]`. Left out: the grid's colours
      */
     rules?: ColorRule[];
+    /**
+     * the header filter of a column with a `date` or `number` format takes the text as the cells show it,
+     * see the filtering guide, "Filter as shown". Left out (or `true`): on - `2026-W47` typed in a column
+     * shown as `weekIso` is the whole week, `≥ 2026-11` from November 1, `1 234,5` a number. `false`: the
+     * header filter takes the text as the field's formatter reads it (`2026-11-16`), as it does without
+     * a format. A format that shows no period of time - `'weekday'`, `'time'`, `'timeSeconds'` - is
+     * never filtered as shown. For a `date`, `datetime` or `number` field: true or false
+     *
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const columns: GridConfig['columns'] = {
+     *     due: { format: { date: 'weekIso' } }, // `2026-W47` in the header filter is the week
+     *     born: { format: { date: 'norwegian', filterAsShown: false } } // typed as YYYY-MM-DD
+     * };
+     * ```
+     */
+    filterAsShown?: boolean;
+    /**
+     * a `text` column's cells as text of several lines (`true`) - shown on their first line, edited in the
+     * text editor, Enter a new line, taller with `fitRows()` - or of one line (`false`): only a value with a
+     * line break is shown as several lines then, as always. Wins over the field's `multiline`
+     * (`FieldConfig.multiline`). Left out: the field's. Not for a lookup column, not with `checkbox`
+     */
+    multiline?: boolean;
+    /**
+     * `true`: the column's cells can not be edited, also in an editable grid; `false`: they can, as the
+     * grid's other cells. Any column. Wins over `ColumnConfig.readonly`. Left out: the column's
+     * `readonly`. The `isReadonly` hook still has the last word, it gets this as its `readonly`
+     */
+    readonly?: boolean;
+}
+
+/**
+ * true when a column's cells are read only by its settings: the user's (`format.readonly`, the grid config
+ * dialog), else the column's `readonly` - what the `isReadonly` hook gets, it has the last word
+ * (`gridInterface.__isCellReadonly`)
+ */
+export function readonlyOf(column: ColumnConfig | undefined): boolean {
+    return column?.format?.readonly ?? column?.readonly ?? false;
 }
 
 /**
@@ -692,6 +736,9 @@ const FORMAT_KEYS: readonly (keyof ColumnFormat)[] = [
     'placeholderLabel',
     'numberOverride',
     'checkbox',
+    'filterAsShown',
+    'multiline',
+    'readonly',
     'rules'
 ];
 
@@ -735,8 +782,9 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
  * - `numberOverride` for a `number` field: `'BLANK_TO_ZERO'`, `'ZERO_TO_BLANK'` or `'NONE'`
  * - `checkbox` for a `text` or `number` field: a {@link CheckboxFormat} (checkboxProblem), not with
  *   `text`, `link`, `number` or `numberOverride`
+ * - `multiline` true or false, for a `text` field, not with `checkbox`; `readonly` true or false, any
  * - `rules` for any column: a list of {@link ColorRule}s, see assertColorRules
- * - a lookup column (`editor`: its cells show a label) takes `label`, the placeholder and `rules` only
+ * - a lookup column (`editor`: its cells show a label) takes `label`, the placeholder, `readonly` and `rules` only
  * @param name how the message names it: `GridConfig: columns.born.format`, `setState: formats.born`
  * @throws a `TypeError` naming it, what it has and what it takes
  */
@@ -755,11 +803,25 @@ export function assertColumnFormat(format: unknown, field: string, type: FieldTy
             throw new TypeError(`${name} has '${key}', a format has ${FORMAT_KEYS.join(', ')}`);
         }
     }
-    const { date, number, text, link, numberOverride, checkbox } = format;
-    if (lookup && [date, number, text, link, numberOverride, checkbox].some((part) => part !== undefined)) {
+    const { date, number, text, link, numberOverride, checkbox, multiline, readonly } = format;
+    if (lookup && [date, number, text, link, numberOverride, checkbox, multiline].some((part) => part !== undefined)) {
         throw new TypeError(
-            `${name} is ${got}: a lookup column (editor) shows the label of its value, it has no format - a label, a placeholder and rules only`
+            `${name} is ${got}: a lookup column (editor) shows the label of its value, it has no format - a label, a placeholder, readonly and rules only`
         );
+    }
+    if (readonly !== undefined && typeof readonly !== 'boolean') {
+        throw new TypeError(`${name}.readonly is ${JSON.stringify(readonly)}, it is true or false`);
+    }
+    if (multiline !== undefined) {
+        if (typeof multiline !== 'boolean') {
+            throw new TypeError(`${name}.multiline is ${JSON.stringify(multiline)}, it is true or false`);
+        }
+        if (type !== 'text') {
+            throw new TypeError(`${name}.multiline is for a text field, '${field}' is ${type}`);
+        }
+        if (checkbox !== undefined) {
+            throw new TypeError(`${name} has checkbox and multiline: a checkbox shows no text, it is the one or the other`);
+        }
     }
     assertLabelParts(format, field, type, lookup, name);
     if (format.rules !== undefined) {
@@ -813,6 +875,26 @@ export function assertColumnFormat(format: unknown, field: string, type: FieldTy
             throw new TypeError(`${name}.number is for a number field, '${field}' is ${type}`);
         }
         assertNumberFormat(number, `${name}.number`);
+    }
+    assertFilterAsShown(format.filterAsShown, field, type, lookup, name);
+}
+
+/**
+ * see assertColumnFormat: `filterAsShown`, true or false - for a date, datetime or number field, not a
+ * lookup column (its header filter finds the labels)
+ * @throws a `TypeError` naming the part and what it takes
+ */
+function assertFilterAsShown(filterAsShown: unknown, field: string, type: FieldType, lookup: boolean, name: string): void {
+    if (filterAsShown === undefined) {
+        return;
+    }
+    if (typeof filterAsShown !== 'boolean') {
+        throw new TypeError(`${name}.filterAsShown is ${JSON.stringify(filterAsShown)}, it is true or false`);
+    }
+    if (lookup || (type !== 'date' && type !== 'datetime' && type !== 'number')) {
+        throw new TypeError(
+            `${name}.filterAsShown is for a date, datetime or number field with a format, '${field}' is ${lookup ? 'a lookup column' : type}`
+        );
     }
 }
 

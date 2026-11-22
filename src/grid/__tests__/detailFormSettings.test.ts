@@ -4,13 +4,15 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DatasourceOptions } from '../../datasource/datasourceOptions';
 import type { DetailForm, GridConfig } from '../gridConfig';
 import type { GridElement } from '../gridElement';
+import { type DetailFormDraft, setWidths } from '../gridFunctions/detailFormSettings';
 import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
+import { pointerEvent } from './interactionTestHelpers';
 
 /**
  * The grid config dialog (columnSettings.ts): its title, its tabs (gridConfigTabs.ts) - the WAI-ARIA
- * tabs pattern, the keys - and the Detail form tab (detailFormSettings.ts): Show the detail form, the
- * width, the list of the fields with its keys, Move up / Move down, Reset form, Apply and Cancel. The
- * Columns tab is columnSettings.test.ts.
+ * tabs pattern, the keys - and the Detail form tab (detailFormSettings.ts): Show the detail form,
+ * Expanded, the width with its min and max, the list of the fields with its keys and drag handles, Move
+ * up / Move down, Reset form, Apply and Cancel. The Columns tab is columnSettings.test.ts.
  */
 
 beforeAll(() => {
@@ -45,7 +47,7 @@ const panel = (id: string) => document.getElementById(id) as HTMLElement;
 const shownPanel = () => Array.from(dialog().querySelectorAll<HTMLElement>('[role="tabpanel"]')).find((each) => !each.hidden);
 const list = () => dialog().querySelector('.detail-form-settings-list') as HTMLElement;
 const options = () => Array.from(list().querySelectorAll<HTMLElement>('[role="option"]'));
-/** the options: checked (in the form, and its box shows ✓), the label, the type and the badges */
+/** the options: checked (in the form, and its box shows ✓), the label, the type and the badges - the drag handle has no text */
 const optionTexts = () =>
     options().map((option) => {
         const box = option.querySelector('.detail-form-settings-box')?.textContent ?? '';
@@ -53,6 +55,7 @@ const optionTexts = () =>
         const text = Array.from(option.children)
             .slice(1)
             .map((child) => child.textContent?.trim())
+            .filter(Boolean)
             .join(' ');
         return `${box ? '[x]' : '[ ]'} ${text}`;
     });
@@ -62,7 +65,29 @@ const button = (text: string) =>
         (each) => each.textContent?.trim() === text
     ) as HTMLButtonElement;
 const show = () => dialog().querySelector('.detail-form-settings-show') as HTMLInputElement;
+const expanded = () => dialog().querySelector('.detail-form-settings-expanded') as HTMLInputElement;
 const width = () => dialog().querySelector('.detail-form-settings-width') as HTMLInputElement;
+const minWidth = () => dialog().querySelector('.detail-form-settings-minWidth') as HTMLInputElement;
+const maxWidth = () => dialog().querySelector('.detail-form-settings-maxWidth') as HTMLInputElement;
+/** the drag handle of an option */
+const handle = (at: number) => options()[at].querySelector('.detail-form-settings-handle') as HTMLElement;
+
+/** types a value into a number input of the tab, as its change event does */
+function setValue(input: HTMLInputElement, value: string) {
+    input.value = value;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+/**
+ * Lays the options out under each other, 20px each from the top of the window: happy-dom lays nothing
+ * out, a drag reads where they are
+ */
+function layOutOptions() {
+    options().forEach((option, at) => {
+        option.getBoundingClientRect = () =>
+            ({ top: at * 20, bottom: at * 20 + 20, height: 20, left: 0, right: 400, width: 400, x: 0, y: at * 20 }) as DOMRect;
+    });
+}
 
 /** a keydown on an element, returns the event */
 function press(target: Element, key: string, more: KeyboardEventInit = {}) {
@@ -284,5 +309,203 @@ describe('grid config dialog - the Detail form tab', () => {
         button('Apply').click();
         // the formats are set again, the detail form is as it was
         expect(setState.mock.calls.some(([state]) => 'detailForm' in state)).toBe(false);
+    });
+});
+
+describe('grid config dialog - Expanded, the min and max width', () => {
+    it('expect Expanded to be what the form is now - the button of its title changes it too - and Apply to collapse it', async () => {
+        const { element, gridInterface } = await mount({ show: true, fields: ['name'] });
+        gridInterface.openDetailFormSettings();
+        expect(expanded().checked).toBe(true);
+        expect(document.getElementById(expanded().getAttribute('aria-describedby') as string)?.textContent).toContain(
+            'narrow strip'
+        );
+        expanded().checked = false;
+        expanded().dispatchEvent(new Event('change', { bubbles: true }));
+        button('Apply & close').click();
+        expect(gridInterface.getState().detailForm).toEqual({ show: true, fields: ['name'], width: 300, expanded: false });
+
+        // the button of the form's title: expanded again, the dialog shows it
+        (element.querySelector('.simple-html-grid-detail-form-toggle') as HTMLElement).click();
+        gridInterface.openDetailFormSettings();
+        expect(expanded().checked).toBe(true);
+        // expanded is the default: left out of what Apply sets
+        expanded().checked = true;
+        show().checked = false;
+        show().dispatchEvent(new Event('change', { bubbles: true }));
+        button('Apply').click();
+        expect(gridInterface.getState().detailForm).toEqual({ show: false, fields: ['name'], width: 300 });
+    });
+
+    it('expect the min and max empty when they are none - 150 and None their placeholders - and set on Apply', async () => {
+        const { gridInterface } = await mount({ show: true, fields: ['name'], width: 320, minWidth: 200 });
+        gridInterface.openDetailFormSettings();
+        expect([width().value, minWidth().value, maxWidth().value]).toEqual(['320', '200', '']);
+        expect([minWidth().placeholder, maxWidth().placeholder]).toEqual(['150', 'None']);
+        for (const input of [width(), minWidth(), maxWidth()]) {
+            expect(document.getElementById(input.id === '' ? '' : input.id)).toBe(input);
+            expect(dialog().querySelector(`label[for="${input.id}"]`)?.textContent).toMatch(/width \(px\)/i);
+        }
+        setValue(maxWidth(), '500');
+        setValue(minWidth(), '');
+        button('Apply').click();
+        expect(gridInterface.getState().detailForm).toEqual({ show: true, fields: ['name'], width: 320, maxWidth: 500 });
+    });
+
+    it('expect each width at least 150, the width kept between the min and the max: the one typed keeps its value, the others follow', async () => {
+        const { gridInterface } = await mount({ show: true, fields: ['name'] });
+        gridInterface.openDetailFormSettings();
+        const widths = () => [width().value, minWidth().value, maxWidth().value];
+
+        setValue(minWidth(), '100');
+        expect(widths()).toEqual(['300', '150', '']);
+        // a min over the width: the width follows
+        setValue(minWidth(), '400');
+        expect(widths()).toEqual(['400', '400', '']);
+        // a max under the min and the width: both follow
+        setValue(maxWidth(), '350');
+        expect(widths()).toEqual(['350', '350', '350']);
+        setValue(maxWidth(), '600');
+        setValue(minWidth(), '200');
+        expect(widths()).toEqual(['350', '200', '600']);
+        // a width outside them: kept between them
+        setValue(width(), '900');
+        expect(widths()).toEqual(['600', '200', '600']);
+        setValue(width(), '180');
+        expect(widths()).toEqual(['200', '200', '600']);
+        // a min over the max: the max follows
+        setValue(minWidth(), '700');
+        expect(widths()).toEqual(['700', '700', '700']);
+        // empty: none
+        setValue(maxWidth(), '');
+        setValue(minWidth(), '');
+        expect(widths()).toEqual(['700', '', '']);
+        button('Apply').click();
+        expect(gridInterface.getState().detailForm).toEqual({ show: true, fields: ['name'], width: 700 });
+    });
+
+    it('expect what is no number to leave the widths as they were, an empty width too (setWidths)', () => {
+        const draft: DetailFormDraft = {
+            show: true,
+            expanded: true,
+            width: 300,
+            minWidth: 200,
+            maxWidth: 400,
+            order: [],
+            included: new Set(),
+            active: ''
+        };
+        for (const part of ['width', 'minWidth', 'maxWidth'] as const) {
+            setWidths(draft, part, 'wide');
+            setWidths(draft, part, '-5');
+        }
+        setWidths(draft, 'width', '');
+        expect([draft.width, draft.minWidth, draft.maxWidth]).toEqual([300, 200, 400]);
+        setWidths(draft, 'width', '333.6');
+        expect(draft.width).toEqual(334);
+    });
+
+    it('expect Reset form to give the min and max of the form the grid starts with, Cancel to keep them', async () => {
+        const { gridInterface } = await mount({ show: true, fields: ['name'], minWidth: 180, maxWidth: 420 });
+        gridInterface.openDetailFormSettings();
+        setValue(maxWidth(), '');
+        button('Cancel').click();
+        expect(gridInterface.getState().detailForm.maxWidth).toEqual(420);
+
+        gridInterface.setState({ detailForm: { show: true, fields: ['name'], width: 250 } });
+        gridInterface.openDetailFormSettings();
+        expect([minWidth().value, maxWidth().value]).toEqual(['', '']);
+        button('Reset form').click();
+        expect([width().value, minWidth().value, maxWidth().value]).toEqual(['300', '180', '420']);
+    });
+});
+
+describe('grid config dialog - a field dragged by its handle', () => {
+    it('expect a drag handle at the right of each field - hidden from a screen reader, with a tooltip - the hint saying so', async () => {
+        const { gridInterface } = await mount();
+        gridInterface.openDetailFormSettings();
+        for (const option of options()) {
+            const last = option.lastElementChild as HTMLElement;
+            expect(last.classList.contains('simple-html-grid-drag-handle')).toBe(true);
+            expect(last.getAttribute('aria-hidden')).toEqual('true');
+            expect(last.getAttribute('data-tooltip')).toEqual('Drag to move it');
+            expect(last.querySelector('svg')).not.toBeNull();
+        }
+        expect(document.getElementById(list().getAttribute('aria-describedby') as string)?.textContent).toContain(
+            'drag it by its handle'
+        );
+    });
+
+    it('expect a drag to show a line where the field goes and to move it there when it is let go - picked', async () => {
+        const { gridInterface } = await mount({ show: true, fields: ['name', 'city'] });
+        gridInterface.openDetailFormSettings();
+        layOutOptions();
+        expect(optionTexts()).toEqual([
+            '[x] Name Text',
+            '[x] City Text',
+            '[ ] Age Number',
+            '[ ] Notes Text Several lines Hidden'
+        ]);
+
+        handle(0).dispatchEvent(pointerEvent('pointerdown', { clientX: 390, clientY: 10 }));
+        // picked as it is pressed
+        expect(picked().textContent).toContain('Name');
+        expect(options()[0].classList.contains('detail-form-settings-dragged')).toBe(true);
+        // over the lower half of Age: after it, before Notes
+        document.dispatchEvent(pointerEvent('pointermove', { clientX: 390, clientY: 55 }));
+        expect(options()[3].classList.contains('detail-form-settings-drop-before')).toBe(true);
+        expect(list().querySelectorAll('.detail-form-settings-drop-before, .detail-form-settings-drop-after')).toHaveLength(1);
+        // under the last: a line under it
+        document.dispatchEvent(pointerEvent('pointermove', { clientX: 390, clientY: 75 }));
+        expect(options()[3].classList.contains('detail-form-settings-drop-after')).toBe(true);
+        document.dispatchEvent(pointerEvent('pointermove', { clientX: 390, clientY: 55 }));
+        document.dispatchEvent(pointerEvent('pointerup', { clientX: 390, clientY: 55 }));
+
+        expect(optionTexts()).toEqual([
+            '[x] City Text',
+            '[ ] Age Number',
+            '[x] Name Text',
+            '[ ] Notes Text Several lines Hidden'
+        ]);
+        expect(picked().textContent).toContain('Name');
+        expect(list().querySelectorAll('.detail-form-settings-dragged, .detail-form-settings-drop-before')).toHaveLength(0);
+        button('Apply').click();
+        expect(gridInterface.getState().detailForm.fields).toEqual(['city', 'name']);
+    });
+
+    it('expect a drag up, a drop where the field was and pointercancel - nothing moved by the last two', async () => {
+        const { gridInterface } = await mount({ show: true, fields: ['name', 'city'] });
+        gridInterface.openDetailFormSettings();
+        layOutOptions();
+        const drag = (from: number, y: number, end: 'pointerup' | 'pointercancel' = 'pointerup') => {
+            handle(from).dispatchEvent(pointerEvent('pointerdown', { clientX: 390, clientY: from * 20 + 10 }));
+            document.dispatchEvent(pointerEvent('pointermove', { clientX: 390, clientY: y }));
+            document.dispatchEvent(pointerEvent(end, { clientX: 390, clientY: y }));
+        };
+        // Notes over the upper half of Name: first
+        drag(3, 25);
+        expect(optionTexts()[1]).toEqual('[ ] Notes Text Several lines Hidden');
+        expect(picked().textContent).toContain('Notes');
+        // on itself, just under its own top: no line, nothing moved
+        drag(1, 22);
+        expect(list().querySelectorAll('.detail-form-settings-drop-before')).toHaveLength(0);
+        drag(0, 70, 'pointercancel');
+        expect(optionTexts()).toEqual([
+            '[x] Name Text',
+            '[ ] Notes Text Several lines Hidden',
+            '[x] City Text',
+            '[ ] Age Number'
+        ]);
+    });
+
+    it('expect a click on the handle not to pick another field, the keys and Move up / Move down still to move', async () => {
+        const { gridInterface } = await mount({ show: true, fields: ['name', 'city'] });
+        gridInterface.openDetailFormSettings();
+        handle(2).click();
+        // the click picks nothing: the press did (none here)
+        expect(picked().textContent).toContain('Name');
+        press(list(), 'ArrowDown', { altKey: true });
+        button('Move down').click();
+        expect(optionTexts().slice(0, 3)).toEqual(['[x] City Text', '[ ] Age Number', '[x] Name Text']);
     });
 });

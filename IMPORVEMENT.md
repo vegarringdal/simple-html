@@ -3594,6 +3594,318 @@ in the console. All passed. Found and fixed:
   column-settings-operator 13/13, display-format 39/39, full-grid 11/11, custom-cells 39/39. The new script
   is in this worktree's `.claude/browser-checks/scripts/`
 
+### Column settings: Multiline and Read only (user request)
+
+* the user, a screenshot of the Columns tab on a text column: "for text we should also be able to set if
+  its multiline or not, and readonly in edit mode"
+* columnFormat.ts: `ColumnFormat.multiline` (a text field, not with checkbox, not on a lookup column) and
+  `ColumnFormat.readonly` (any column, a lookup column too), checked in assertColumnFormat; `readonlyOf(column)`
+  - the user's over `ColumnConfig.readonly` - in `__isCellReadonly` (before the isReadonly hook) and
+  deleteRows' isLockedByHook. multilineText.ts: `multilineOf(field, column)` - the user's over the field's -
+  in isMultilineCell (cellText.ts, renderRowCell.ts pass the column) and the detail form tab's badge
+* columnSettings.ts `editingSettings`: the two checkboxes after the type's settings, starting as the column
+  has them, left out of the format when set back to that; Show as checkbox takes multiline away; badges
+* tests: columnFormatOptions.test.ts +4 (multiline true / false and a value with a line break, readonly both
+  ways and the input, the hook gets it and wins, the TypeErrors), columnSettings.test.ts +2 (the checkboxes,
+  the format, back to nothing, every type, checkbox mode), columnFormat.test.ts (the keys), texts.test.ts
+  (the badges - and the checkbox of Use the column label by its text, the new one moved the indexes)
+* browser: new `column-settings-edit-check.js` 9/9 (light and dark: Company read only - typing changes
+  nothing; City multiline - Enter opens the text editor; both off again); column-settings 144/144,
+  column-settings-more 141/141, column-settings-operator 13/13, detail-form 91/91, full-grid 11/11
+* guides 08 (the dialog, the section of the parts - its anchor renamed, links in 02 and 03), 12; JSDoc of
+  `ColumnConfig.readonly`, `FieldConfig.multiline`
+### Find: Match case, and "Filter rows" for SQL (user request)
+
+* the user, on Find: "find part, this needs to be supported in sql if possible. And be able to [set] if
+  it's supposed to be case sensitive". Done in a worktree by an agent
+* **Match case**: a toggle `Aa` in the find bar (findBar.ts), after the count and before the funnel - one
+  Tab from the input, `aria-pressed`, named "Match case", the tooltip `Match case (Alt+C)` (a `.mac` text
+  without the key). Filled with the accent colour as "Filter rows" (the bar's existing `[aria-pressed]`
+  rule), the weight of the filter editor's Aa. **Alt+C** in the bar, as Firefox and VS Code, by the letter
+  the key types (`key`, not `code`): Option+C on a Mac types `ç` and is left alone, Ctrl+Alt (AltGr) too.
+  State `bar.caseSensitive`, kept when the bar closes (as the text); `findMatches` / `findRowFilter` take
+  it (`findCase()`: as it is, or `toLowerCase()`), so the matches, the count, the marks and "Filter rows"
+  follow it - `rowFilter` has it, a change filters the rows again. The footer's chip shows the `Aa` marker
+  of a condition that matches case. API: `find(text, { caseSensitive })`, `FindResult.caseSensitive` (in
+  `find-change`). The find input got `min-width: 24px` (was 40): five buttons stay whole in a 160px grid
+* **SQL - the design**: Find matches the text the cells show, a database has the values, so "Filter rows"
+  can not be the SQL as it is. Kept: the browser's row predicate (the rows shown = the marked cells, as
+  documented). New: `gridInterface.getFindFilter(): FilterExpression | null` (findFilter.ts, no dom) -
+  "Filter rows" as a filter a backend ANDs to `getFilter()` and gives `toSqlWhere()` like any filter; null
+  while it shows every row. An OR of a condition per field of the layout, only where SQL can match the cells
+  as they show: a text field shown as it is (the built-in TextFormatter, no template, no type per row)
+  `CONTAINS` + `literal` (+ `caseSensitive`); a lookup column `IN` the values whose cell text (the lookup
+  formatter: the label) holds the text, `caseSensitive: true` on a text field (exact values), no blank, no
+  `'NULL'` (IN's blank); a number `EQUAL` the number the cell's formatter parses, when the cell of it shows
+  the text (and a blank cell too, for 0 - EQUAL 0 is the blanks); a date / datetime `EQUAL` the day /
+  second when the cell of its start and of its end both are the whole text (a partial date - the formatter
+  completes `2026-03` with today's day - is none). No field: `IN []` on the first (`1=0`). So the SQL
+  selects the rows "Filter rows" shows or fewer, never one without a match - equal on text and lookups
+  (tested on SQLite). The numbers and dates by a part of their text (`30` in `130`) can not be SQL: left out
+  rather than a superset; the rows the backend sends are filtered again by the browser's predicate anyway.
+  `getFindFilter({ fields })`: only the fields the backend has (a field made in the browser), `toSqlWhere()`
+  throws for others; the no-row condition then on `fields[0]`
+* **wildcards**: Find's text is literal, a `CONTAINS` takes `*`, `%`, `_` as wildcards and the filter
+  format had no escape - so a superset for `50%`. Added `FilterCondition.literal?: boolean` (and
+  `where(..., { literal })`): the text as it is. The datasource (objectFilter `hasText()`: includes /
+  startsWith / endsWith / ===, filter.ts passes it) and toSqlWhere (buildWhere checks it, a `Dialect.
+  wildcardLiteral()`: `!%` `!_` with ESCAPE '!', `[%]` `[_]` on SQL Server, `[*]` in GLOB) agree. Ignored
+  where there are no wildcards (IN, the comparisons, other types, a valueField). The header filters and the
+  filter editor do not make it; the editor's Apply drops it (draftToFilter builds conditions anew) -
+  documented, not changed (shared files)
+* **event**: `find-filter-change` `{ filter }` - sent from filterRows() only when the rows it filters with
+  change (on, off, the text after the typing, Match case, the layout fields) and from the footer's Clear;
+  not for a step or a data change (`find-change` is, which would loop a backend that reloads on it)
+* the SQL sample (#sample/sql): the find's SQL ANDed when Filter rows is on (`getFindFilter({ fields:
+  Object.keys(COLUMNS) })` - the phone is no column), `find-filter-change` re-renders; buttons Find "acme",
+  "ACME" with match case, "50%", "30", Close find. The find sample: Match case / Any case buttons, the log
+* texts `find.matchCase`, `find.matchCase.text`, `find.matchCase.tooltip`, `find.matchCase.tooltip.mac`
+  (+ Norwegian; keyText's MAC_TEXTS); guides 19 (Match case, Filter rows on a backend with the table of
+  field types), 22 (literal, Find's filter, five rows in "where the SQL differs"), 06, 09, 12, 13, 14
+* tests: find.test.ts 62 -> 71 (match case: matches / count / marks, the toggle and the focus, Alt+C and
+  not AltGr / ç / Shift, Tab order, find() options and kept on close, Filter rows follows it, the chip,
+  texts and the Mac tooltip); findFilter.test.ts 16 (null cases, text + literal + case, rows = Filter rows on
+  text, lookups text and number, numbers with comma / display format / numberOverride / 0, dates and
+  datetime / a partial date, the left-out fields, no-row, `fields`, "never a row without a match" over 19
+  texts in both cases, the event and when it is not sent); filterLiteral.test.ts 4 (the datasource); toSqlWhere.test.ts
+  +6 (literal per dialect and operator, blank rows, case, ignored, checked); sqlSqlite.test.ts +1 (984
+  literal conditions vs the grid on SQLite); sqlFindSqlite.test.ts 7 (the find filter on SQLite: equal to
+  "Filter rows" on text + lookup fields for 35 texts x both cases, never a row more with numbers and dates,
+  a lookup value without a label, snapshots of the SQL in the four dialects). 3595 tests, 157 files
+* browser (Chromium 1148, port 8095): new `find-case-sql-check.js` 62/62 (default and TreDeSpace, light and
+  dark: Aa by mouse / Alt+C / Tab + Space + Enter, the counts with and without case vs the datasource, the
+  pressed look 3:1, Filter rows with case and the chip; the SQL sample: case, 50% escaped per dialect, 30
+  EQUAL ANDed with the filter, typed in the bar, Esc). Shared: find-check.js 64/68 → a copy in this
+  worktree's scripts with the three checks the fifth button changes (Tab Tab to the funnel, five buttons in
+  160px with the input ≥ 24px, the Tab order) 68/68; keyboard-check 53/53, footer-no-filter-check 53/53;
+  sql-sample-check 4 FAIL before this change too: it expects `"Norway"` and `DROP TABLE` in the params,
+  which are folded to lower case since 924615b
+* known: SQL finds a number or a date by its whole value only (documented); a lookup whose labels match
+  many values can pass `limits.listLength` (1000); the lookup data changing sends no `find-filter-change`
+### Detail form: collapse, softer fields, min / max and a drag of its width, fields dragged; the column chooser (user request)
+
+* the user (screenshots of the form and the dialog's tab): "We should be able to hide/collapse. In detail
+  form, it should allow us to set expanded by default, else it's collapsed", "borders for an input
+  shouldn't be that strong, but more dimmed with background", "be able to set min/max would be nice, also
+  allow user to resize it could be also nice", "be able to drag/drop on reorder here be nice to have,
+  simple, can have a drag handle right side", "column chooser search isn't easy to see, and with also might
+  drag icon on the left side, so it shows better what to do?" and later "column chooser should also let us
+  override the label"
+* **state** (`DetailForm`, additive): `expanded?: boolean` (default `true`), `minWidth?` (default and at
+  least 150), `maxWidth?` (default none). copyDetailForm keeps each only when given; assertDetailForm
+  checks them (numbers of px, a boolean, `minWidth` not more than `maxWidth` - a TypeError, nothing
+  changes). `width` is laid out between them (detailFormLimits / detailFormWidth), the state keeps what it
+  was given (as `width` under 150 before). JSDoc of `DetailForm`, `GridConfig.detailForm`,
+  `GridState.detailForm` with examples; the typings consumer has them
+* **one `expanded`, not two**: the title's button and the dialog's *Expanded* change the same part of the
+  state - what the form is now (as *Width* shows the width dragged). The config's `expanded` is what the
+  grid starts with, a saved state gives back what the user made it. A second field (a default beside the
+  user's toggle) would only matter where no state is saved, the default is the config there already. So
+  the dialog says *Expanded* (not *Expanded by default*), its hint says the button changes it too.
+  Documented in guide 02 and 03
+* **collapsed** (detailForm.ts): the title bar is a button (chevron + *Details*, `aria-expanded`,
+  `aria-controls` the body, a tooltip *Collapse the details* / *Expand the details*) - toggleDetailForm,
+  `setState({ detailForm })`. Collapsed the form takes DETAIL_FORM_COLLAPSED (24px) where it is: a strip
+  at the right of the rows (the title going down, `writing-mode: vertical-rl`, the chevron pointing left),
+  a bar under them in a narrow grid (the chevron up). Where it is follows the expanded width, so it does
+  not jump sides when it is toggled. The same elements expanded and collapsed: the button keeps the
+  focus. The body is empty and hidden while collapsed (no stops of Tab in it)
+* **the fields** (grid.css): a quiet frame at rest - the new variable `--simple-html-grid-detail-input-
+  border-color` (`light-dark(#d4d4d4, #5f6b7a)`; TreDeSpace slate-300 / slate-700, the library's fields)
+  - on the inputs' background, the controls' frame (3:1) under the pointer and with the focus, the focus
+  outline as before; an error keeps the error colour under the pointer and with the focus, the red bar
+  and the message under the field unchanged. theme tests: the new variable has a TreDeSpace colour, and
+  a new contrast test - the frame 1.25:1 or more to the form and to the field, less than the controls'
+  frame, the focus outline 3:1 to the field - in both themes, light and dark
+* **its width dragged** (new detailFormResize.ts): the left edge is a splitter (`role="separator"`,
+  focusable, `aria-orientation`, `aria-valuenow` the width, `aria-valuemin` the min, `aria-valuemax` the
+  least of `maxWidth` and the room at the right - half the grid, the scrolling columns keep 150px: a drag
+  never puts the form under the rows). A pointer drag (followPointer, captured, `touch-action: none`)
+  lays out once a frame, pointercancel gives the width back, a press that does not move changes nothing.
+  ArrowLeft wider, ArrowRight narrower (10px). resizeDetailForm: the state's `width`, then
+  updateMainElementSizes and horizontalScrollHandler - no rebuild (`__dataSourceUpdated` walks every row),
+  but a rebuild when the scrolling columns get more room than they have column elements for
+  (getMiddleColumnsNeeded) - the columns area is right while it moves. Not shown collapsed (not rendered)
+  nor under the rows (css). 6px, 10px on touch, the column resize handle's colour under the pointer
+* **Tab** (tabExit.ts, additive): detailFormStops is exported and has the button and the splitter first:
+  Tab from the footer comes to the title's button, Shift+Tab from it goes back to the footer
+* **tooltips**: the grid attached its tooltips to the rows only - the form and the column chooser get
+  attachTooltips of their own (the `tooltips` option asked), so their `data-tooltip`s show
+* **the dialog's tab** (detailFormSettings.ts): *Expanded* with its hint; *Width*, *Min width*, *Max
+  width* side by side (empty min / max: none, placeholders `150` / *None*); setWidths keeps min <= width
+  <= max, each at least 150 - the one typed keeps its value, the others follow; what is no number leaves
+  them. Each field has a drag handle at its right (aria-hidden, tooltip *Drag to move it*): dragField -
+  the pointer captured, a 2px line in the accent colour where it goes (before an option, or under the
+  last), the dragged one quiet, the list scrolls near its edges, let go it moves there (moveField) and is
+  picked; on itself nothing. Mouse, pen, finger. Move up / Move down and Alt+↑ / Alt+↓ as before; the hint
+  says the handle. Apply sets `expanded` only when collapsed, the min / max only when set
+* **the drag handle** (new icons.ts): six dots (6x10, `currentColor`, the quiet text colour, a grab
+  cursor) - the same in the dialog's list (right) and in the column chooser (left). icons.ts has the pencil,
+  the magnifying glass and the chevron too
+* **the column chooser** (contextMenuColumnChooser.ts): the search is framed as the dialogs' inputs (a
+  `<label>` with the controls' frame, the inputs' background, a magnifying glass, the focus outline on the
+  frame), placeholder and name *Search* (`columnChooser.search` was `search`); it finds a column by its
+  label (getColumnLabel - a label of the user's too) or its field name - it found the names only - and
+  the list is in the order of the labels (it was the names'). columnChooserFields. Each field: the handle
+  at its left, the label, a ✎ at its right
+* **the ✎ of a field** (the user's later request): a button *Rename {label}*, shown under the pointer and
+  with the focus, always on a touch screen (24px there). It turns the label into an input with it, the
+  focus in it, all selected; Enter (or leaving it) saves, Esc cancels (not the chooser's Esc), empty is the
+  column's own label (the input's placeholder). renameColumn sets `ColumnFormat.label` in the state's
+  formats - the grid config dialog's *Label* - the other parts of the format kept, a format of only a label
+  taken out, nothing when it is the label it has. A press in the input or on the ✎ does not drag the
+  field. The focus goes back to the ✎ after Enter / Esc. Every render of the chooser makes its dragEvent
+  listeners again (an AbortController per render: before, only a search did)
+* touch: compact - the chooser's search 24px as the other searches (it was the 28px row height), its
+  rows 28px as before; the form's title bar 22px
+* texts: 13 new (`detailForm.collapse`, `.expand`, `.resize`; `columnSettings.detailForm.expanded`,
+  `.expanded.hint`, `.minWidth`, `.maxWidth`, `.maxWidth.none`, `.drag`; `columnChooser.drag`, `.rename`,
+  `.label`, `.label.hint`), 4 changed (`columnChooser.search` *Search*, `columnSettings.detailForm.
+  width.hint`, `.fields.hint` and its Mac one); guide 12, the Norwegian sample; the texts test walks the
+  form collapsed and the chooser's input
+* docs: guide 02 (*The detail form*: collapsed, the fields' look, min / max, the drag of the edge, the
+  keys; the column chooser's search, handle and ✎), 03 (the state's new parts, one `expanded`), 08 (the
+  dialog's tab, *Label* and the ✎), 10 (a section *The column chooser*, touch), 13 (the new variable; the
+  chooser's search on the inputs' background), 14 (the button and the splitter, the chooser's keys); the
+  sample *Detail form* (min 200 / max 600, a Collapse / expand button, the description)
+* tests: detailForm.test.ts 31 -> 46 (collapsed: the button, its tooltip, the strip, focus kept, under the rows a
+  24px bar, Tab; min / max laid out and their TypeErrors; the splitter's attributes, a drag live / at its
+  limits / pointercancel / a press, its keys, the rebuild when the column elements are too few; the Tab
+  tests: the button is the first stop), detailFormSettings.test.ts 10 -> 19 (Expanded, the widths and
+  setWidths, Reset / Cancel of them, the handles, a drag with its line, up / on itself / cancel, a click on
+  a handle), new columnChooser.test.ts 13 (the search framed, the tooltips, labels sorted, found by label / name / a
+  user's label, the handles, a press on the ✎ is no drag, rename: Enter / Esc / blur / empty keeps the
+  other parts, renameColumn), themeTredespace.test.ts +4, texts.test.ts (the walk). 3592 tests, 155 files
+* browser (Chromium 1148, port 8096): new `detail-form-more-check.js` 120/120 in the four looks (the
+  fields' frames and their contrast, hover, focus, an error in the full grid; collapse by a click, Enter,
+  Space - the strip, the rows to its edge; Tab: the button, the splitter, its keys; a mouse drag live,
+  stopped at min 200 / the room; the state round trip; the dialog: Expanded, Min over the width, a field
+  dragged by its handle with the line, Alt+↑, Apply; a phone: under the rows, collapsed to a 24px bar by a
+  tap, a field dragged by a finger) and `column-chooser-more-check.js` 76/76 (the search framed, its focus,
+  sorted, found by name / by a user's label, the handles, a field dragged into the header, the tooltips,
+  the ✎ under the pointer, rename / Esc / empty / keys, a phone: the ✎ 24px always, a tap and a label).
+  Both in this worktree's `.claude/browser-checks/scripts/`. The shared checks, unchanged, against this build: detail-form 91/91, column-settings 144/144,
+  full-grid 11/11, keyboard 53/53, touch 61/61, menus-regression 25/25
+* **open**: the chooser's drop on a label's center replaces that column (dragEvent's, as before); the
+  sticky hover of the title's button after a tap on a phone (as the other buttons); a double click on the
+  splitter to go back to the default width, Home / End on it - not made
+### Header filters: filter as shown, filter as you type (user request)
+
+The user: "when we set to iso week etc, it could be useful if it could also use that formatting as filter?
+Is that possible with sql etc? Maybe a way to set if filter is supposed to follow formatting?" and "In
+operator part, we could have added filter after typing, so you don't need to hit enter too, can be useful
+some places, prob should be under column settings too".
+
+**Filter as shown** (`ColumnFormat.filterAsShown`, on by default; new `src/grid/filterAsShown.ts` - pure,
+and `gridFunctions/headerFilterFormatter.ts` - the grid's side):
+
+* the header filter of a column with a display format takes the text as the cells show it. A date format
+  is a period - parseDateAs: a day (iso, norwegian, norwegianShort - 00-29 is 20xx as Excel, us, uk; medium /
+  long / full read with Intl's order and month names of `format.locale`), a week (weekIso: Monday-Sunday,
+  week 1 has January 4; weekUs: Sunday-Saturday inside the year, 2026-W53 is 27-31 Dec, 2027-W01 1-2 Jan -
+  the templates `format.weekIso` / `.weekUs` / `.quarter` read back, `uke 47 2026` too, any case), month,
+  quarter, year, daysUntil (today + n), the minute (isoTime, norwegianTime) and the second. weekday, time,
+  timeSeconds are no period: today's parsing (NOT_FILTERED_AS_SHOWN). An ISO date typed (and the ISO text
+  of a Date from JSON) is read as the period it is in (readDateAs). canFilterAsShown tries a sample date
+  through the format and back: a translated template without `{year}`, a language whose names are not
+  read back, are not filtered as shown
+* **the filter stays plain conditions** (dateConditions): `=` BETWEEN start and last, `≥` start, `>` last,
+  `<` start, `≤` last, BETWEEN `[start(from), last(to)]`, open ends kept. The last is the last day for a
+  `date` field, 23:59:59 for a `datetime` (they compare the day / the second). A one-day period on a
+  `date` field, one second on a `datetime`, is the condition as before (`EQUAL` the day). **≠ of a
+  period**: an OR group `LESS_THAN start, GREATER_THAN last, IS_BLANK` - as NOT_EQUAL_TO a day matches a
+  blank date (the grid and the SQL do). The header filter owns that group (isOutsidePeriod, the exact
+  shape): filterWithoutColumn replaces it, columnConditions flattens it - so typing again does not stack
+  groups, and the filter editor's Apply clears the cell when the group changed. toSqlWhere is unchanged:
+  a week is `col >= Monday AND col < next Monday` in each dialect, the index works
+* **what the state stores**: as before, the parsed value - a Date, the **start of the period typed**
+  (`2026-W47` is Monday 00:00, a BETWEEN the starts of both ends), a number. The cell shows it through the
+  header filter's formatter (asShownFormatter: `format` in the display format, `parseFilter` the period's
+  start, an example as the placeholder) - `2026-W47` again after a render and after JSON (the ISO text is
+  formatted as a Date is). Considered: storing the typed text - it round-trips trivially, but a format
+  changed afterwards could no longer read it, and daysUntil would drift from its fixed conditions. With the
+  date the cell always shows what is filtered (daysUntil `5` shows `4` tomorrow: the dates are fixed)
+* the formatter is swapped in one place for every reader of the text (headerFilterFormatter): the cell,
+  filterCallback, the placeholder (defaultFilterPlaceholder, now with the dialog's draft format), the range
+  block of the filter menu (its inputs, the pickers), the date picker and the range picker from the cell
+  (a day picked in a week column writes `2026-W47`; pickerRange opens the range picker from Monday of the
+  first week to Sunday of the last). A number format: parseNumberAs (its thousands separator and any space
+  out, its decimal mark, a dot also when it is no separator; percent a hundredth), shown with the format's
+  separators and the decimals the number has (formatNumberTyped: `12.34` stays, not rounded to `12.3`)
+* a format changed by the user (Format ›, the dialog's Apply) runs a header filter with a value again when
+  the column now reads its text another way (refilterChangedFormats): week → month shows `2026-11` and
+  filters November, → Default the day. `setState({ formats })` from code leaves the filter. Format ›
+  Default drops `filterAsShown`
+* the datetime formats take the whole text only (`2026-11-22 13:45`): a shorter text (the date alone) would
+  be stored as its start and come back as the first minute - an ISO date typed is that minute, as the cell
+  then shows
+* assertColumnFormat: `filterAsShown` true or false, for a date / datetime / number field, not a lookup
+* the dialog: *Filter as shown* under the format picker (formatSettings), on by default, `filterAsShown:
+  false` when off; greyed out with the hint *Not for the day of the week or the time of day...* for a
+  format that can not
+
+**Filter as you type** (new `gridFunctions/filterOnType.ts`):
+
+* state like Match case: `HeaderFilter.filterOnType` (true / false, only when it differs from the default,
+  `__setHeaderFilterOnType`; storeHeaderFilter keeps an entry that only has it). Defaults:
+  `ColumnConfig.filterOnType`, else `GridConfig.filterOnType`, else off. Never a boolean column. The
+  config check: true or false
+* the toggle `filter.filterOnType` (✓ while on): at the bottom of the operator choice under a line
+  (`filter.filterOnTypeSeparator` - openOperatorChoice; Operator › itself is unchanged), in Filter › after
+  Match case (MENU_IDS.filter), and the dialog's *Filter as you type* after the operator (applied as the
+  toggle, Reset column / all back to the default)
+* renderHeaderFilter: an `input` listener starts a 300ms pause (FILTER_ON_TYPE_DELAY, one per grid, a
+  WeakMap); at its end the text is filtered when it differs from the last filtered and parses
+  (filterTextParses: a number with a digit, a date of year 1000-9999 - `202`, `2026-W` half typed do not;
+  a BETWEEN each end; text always; empty removes the filter) and the cell still shows the same column (the
+  cells are reused). Enter, blur, change and opening a menu cancel the pause; Enter does not run again on a
+  text filtered while typing (it does as before without filter as you type). keepHeaderFilterFocus
+  (exported) keeps the caret too - the filter renders the rows, not the header, so the input stays
+
+**A fix found by the browser check** (not of this feature, it made the operator choice look broken):
+rebuildHeaderColumns made the middle header columns at the start of the section, and only a scroll placed
+them - a header rendered on its own (an operator picked, a filter of the menu applied, Clear, the filter
+editor) while scrolled sideways showed the first middle columns and empty headers over the ones in view.
+horizontalScrollHandler's header part is `placeHeaderColumns(ctx, type)` now, called by
+rebuildHeaderColumns for the middle section too (scrollHandlers.test.ts has it).
+
+* texts: `filter.filterOnType`, `filter.placeholder.daysUntil`, `columnSettings.filterAsShown` / `.hint` /
+  `.off`, `columnSettings.filterOnType` / `.hint`; the guide's tables, the Norwegian sample
+* docs: 06-filtering (Filter as shown, Filter as you type, the operator choice, Filter ›), 08-formatting
+  (*Filter as shown* with the formats and operators, what a display format changes, the dialog), 22-sql (*A
+  week typed in the grid*), 03-state (what the state holds), 02-grid-config (the options' tables),
+  12-texts; JSDoc of `ColumnFormat`,
+  `ColumnConfig.filterOnType`, `GridConfig.filterOnType`, `HeaderFilter`, `GridState.headerFilters`,
+  MENU_IDS
+* tests: filterAsShown.test.ts (42: every format read back, the weeks around New Year - 2027-01-01 in
+  2026-W53, weekUs 2026-W53 / 2027-W01 - summer time, the named dates in English and Norwegian, daysUntil
+  with a fake clock, the minute and second, readDateAs of an ISO text and JSON, numbers with separators and
+  percent, the formatter, each operator's conditions and the rows they select), filterAsShownGrid.test.ts
+  (31: typed weeks and each operator, the ≠ group replaced, BETWEEN, the cell after a render, the state
+  through JSON and run again, isoTime, daysUntil, numbers, percent, weekday kept, placeholders, switched
+  off, the check, lookups, the date picker and the range picker writing weeks, the range block, Format ›
+  month / Default running again, setState leaving it, the filter editor's clear, the dialog's checkbox),
+  filterOnType.test.ts (21: the pause with fake timers, focus and caret, Enter / blur once, a cell reused,
+  dates / weeks / numbers half typed, BETWEEN, defaults, the operator choice and Filter ›, boolean columns,
+  JSON and resetState, the config check, the dialog), toSqlWhere +4 (a week as a range in every dialect,
+  ≠, >, JSON), sqlSqlite +1 (the conditions of 14 typed periods × 8 operators on every date column and
+  storage against a real SQLite: the same rows), scrollHandlers +1; updated: filterOperatorIndicator (the
+  choice's end, End), gridMenus (Filter ›), columnFormat(Grid) (the key list; the old "keeps the field
+  formatter" tests with `filterAsShown: false`), texts (the walk shows the new ids). 3652 tests, 157 files
+* browser (Chromium 1148, the full grid sample, light and dark): new `filter-as-shown-check.js` 61/61 -
+  Equal from the operator choice and `2026-W47`: only week 47 (50 of 5000 rows), a BETWEEN of Monday and
+  Sunday, `2026-W47` again after a render; the placeholder `2026-W47`; the date picker's 18 November writes
+  `2026-W47`; Between `2026-W40..2026-W47`, the range picker opens on 28 September, 7-20 September writes
+  `2026-W37..2026-W38`; Updated switched to Norwegian, `16.11.2026` the whole day (00:00 to 23:59:59);
+  Credit `5 000,5` is 5000.5, shown so again; Company: Filter as you type turned on in the choice (✓, the
+  state), Begins with - no filter in the pause, the rows change without Enter, the focus and the caret (3)
+  stay, a letter in the middle keeps the caret after it, Enter after the pause runs no filter; the dialog's
+  two checkboxes, greyed out with its hint for Day of week; no page errors. Screenshots in
+  `.claude/browser-checks/shots/filter-as-shown/` of this worktree. The shared checks against it:
+  range-block 81/81, date-range 168/168, display-format 39/39, filter-case 73/73, column-settings 144/144,
+  column-settings-more 141/141, keyboard 53/53, touch 61/61; operator-indicator 67/77 - it expected the
+  choice to end with Between (its ids, End): the copy in this worktree's scripts expects the line and
+  Filter as you type at the end (End, ArrowUp, Enter picks Between) and passes 79/79
 ### Column settings: colour rules (user request)
 
 * the user: "In column settings, I would like us to be able to add conditional coloring. So it's easy to be
@@ -3766,13 +4078,13 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
   entry in the row menu; a `HYPERLINK` in the Excel export (a formula of data, Excel's 255 characters); the
   dialog's own undo (the filter editor has one); `placeholderRow` and `focusButton` on a link cell; more of
   the column in the dialog (its width, aggregates, readonly) - the whole of a column's view in one place;
-  the column chooser's search finds the field names, not the labels (a label of the user's included); the
+  the
   group chips keep the title they were grouped with when the label changes after (`GroupArgument.title`);
   a checkbox column's header filter as a checkbox (it is typed now: `1`)
 * **Display formats, more** (see *Display formats* above): grouping by the format - a group per week,
   month, quarter or year (needs a group value function in the datasource; the group names are the field
-  formatter's now); a header filter typed in the format (`2026-W47`, a week number) and a value list of
-  weeks for a date column; copy and CSV of the text shown as an option; Days until kept up to date over
+  formatter's now); a value list of weeks for a date column (the header filter takes `2026-W47` now, see
+  *Filter as shown*); copy and CSV of the text shown as an option; Days until kept up to date over
   midnight (a timer); more formats - US with time on a 12-hour clock, `november 2026`, a week without
   its year, short day names, a currency, negatives in parentheses or red, more than 4 decimals; the
   names formats in Excel with its locale codes (`[$-414]`, its names and order differ from Intl's)

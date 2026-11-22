@@ -7,7 +7,8 @@ the rows the grid's own filter selects, by the rules of [Filtering](06-filtering
 takes the filter as hostile input: no value is ever part of the SQL.
 
 It is a separate entry of the package, `@simple-html/grid/sql`, with no DOM and no lit-html: Node loads
-it with `import` and with `require`, without a bundler.
+it with `import` and with `require`, without a bundler. Find's *Filter rows* has a filter of its own for
+it, see [Find's filter](#finds-filter).
 
 ```sample sql
 ```
@@ -73,7 +74,7 @@ The filter comes from a browser, so `toSqlWhere()` takes it as hostile JSON.
   name made without quotes to lower case, Oracle to upper case, so on **Oracle write the name in upper
   case** (`'CUSTOMER_NAME'`), as the database has it.
 - **The shape is checked.** A group is `{ group?: 'AND' | 'OR', children: [...] }`, a condition
-  `{ field, operator, value?, valueField?, caseSensitive? }` with a known operator and a value of a type
+  `{ field, operator, value?, valueField?, caseSensitive?, literal? }` with a known operator and a value of a type
   its column takes. Anything else throws a `TypeError`: an array or a class where an object goes, a
   property of neither (`caseSensitiv`), an unknown operator, an object as a value, a number on a text
   column, a text that is no date, `NaN`, a text with a NUL character. Each property is read once, so a
@@ -173,6 +174,10 @@ made. `NOT (sql)` of any WHERE selects exactly the other rows.
   literal: the escape, and a `[` or `?` of `GLOB`, are escaped in the parameter.
   `EQUAL` is the whole text, `CONTAINS` `%v%`, `BEGIN_WITH` `v%`, `END_WITH` `%v`; `NOT_EQUAL_TO` and
   `DOES_NOT_CONTAIN` their `NOT`.
+- **`literal: true`** takes `*`, `%` and `_` as characters, as the grid does then: they are escaped
+  where they are wildcards of the pattern - `!%` and `!_` with `ESCAPE '!'`, `[%]` and `[_]` on SQL
+  Server, `[*]` in `GLOB` - and the rest is as above: `CONTAINS '50%'` is `LIKE '%50!%%' ESCAPE '!'`.
+  [Find's filter](#finds-filter) has it on its texts.
 - **A blank row** - null, and `''` - is the text `''`: it matches a pattern of wildcards only, and
   `NOT_EQUAL_TO` / `DOES_NOT_CONTAIN` of anything else.
 - `IS_BLANK` is null or `''`, `IS_NOT_BLANK` the others.
@@ -187,6 +192,7 @@ made. `NOT (sql)` of any WHERE selects exactly the other rows.
 | one character (`_`) | `_` | `_` | `?` | `_` |
 | literal `!` | `!!` | `!!` | `!` | `!` |
 | literal `[`, `?` | as is | as is | `[[]`, `[?]` | `[[]` |
+| `*`, `%`, `_` with `literal` | `*`, `!%`, `!_` | `*`, `!%`, `!_` | `[*]`, `%`, `_` | `*`, `[%]`, `[_]` |
 | blank | `col IS NULL OR col = ''` | `col IS NULL` | `col IS NULL OR col = ''` | `col IS NULL OR DATALENGTH(col) = 0` |
 | order | `COLLATE "C"` | binary | `COLLATE BINARY` | `COLLATE Latin1_General_100_BIN2` |
 
@@ -295,6 +301,27 @@ The text is converted with a fixed format, so no session setting changes it:
   `new Date(y, m, d)` does. The tests compare every instant with JavaScript's own `Date` in a dozen time
   zones.
 
+### A week typed in the grid
+
+A column shown as weeks, months, quarters ([display formats](08-formatting.md#display-formats)) takes
+its header filter as the cells show it: `2026-W47`. The grid makes **ordinary date conditions** of it -
+the week is a `BETWEEN` of its Monday and Sunday ([Filter as shown](08-formatting.md#filter-as-shown)) -
+so the SQL needs no `EXTRACT(WEEK ...)`, `DATEPART(ISO_WEEK ...)` or `strftime('%W')`, and each dialect
+writes the range it writes for any day - an index on the column works:
+
+| typed in the grid | the filter | PostgreSQL, a `date` column |
+| --- | --- | --- |
+| `= 2026-W47` | `BETWEEN [2026-11-16, 2026-11-22]` | `"due" >= '2026-11-16 00:00:00' AND "due" < '2026-11-23 00:00:00'` |
+| `≥ 2026-W47` | `GREATER_THAN_OR_EQUAL_TO 2026-11-16` | `"due" >= '2026-11-16 00:00:00'` |
+| `> 2026-W47` | `GREATER_THAN 2026-11-22` | `"due" >= '2026-11-23 00:00:00'` |
+| `≤ 2026-W47` | `LESS_THAN_OR_EQUAL_TO 2026-11-22` | `"due" < '2026-11-23 00:00:00'` |
+| `≠ 2026-W47` | an OR group: `LESS_THAN 2026-11-16`, `GREATER_THAN 2026-11-22`, `IS_BLANK` | `("due" < '2026-11-16 00:00:00') OR ("due" >= '2026-11-23 00:00:00') OR "due" IS NULL` |
+| `2026-W40..2026-W47` | `BETWEEN [2026-09-28, 2026-11-22]` | `"due" >= '2026-09-28 00:00:00' AND "due" < '2026-11-23 00:00:00'` |
+
+(The values are parameters, `$1`, and each comparison has `"due" IS NOT NULL AND` in front, as above.) A
+`datetime` column gets Sunday 23:59:59 as the end, the SQL is the same: `< '2026-11-23 00:00:00'`. The
+week is the user's: its days are in the browser's time zone, as `timeZone` reads them.
+
 ### BETWEEN
 
 `[from, to]`, both included: `GREATER_THAN_OR_EQUAL_TO from AND LESS_THAN_OR_EQUAL_TO to`, each with
@@ -345,6 +372,29 @@ without a field or an operator (null, `''`), one without the value it needs (nul
 `Date`) and no `valueField`, a `BETWEEN` with both ends blank, an empty group. A field that is not in
 `columns` throws also then.
 
+## Find's filter
+
+Find (Ctrl+F in the grid) has a toggle *Filter rows*: only the rows with a cell that shows the text.
+It is not part of the filter - it tests the text the cells show - so `getFilter()` has not got it.
+**`gridInterface.getFindFilter()`** gives it as a filter for the backend: AND it to the filter, and
+`toSqlWhere()` makes SQL of it like of any other filter. `find-filter-change` says when it changed.
+
+```ts
+import { and, type FilterExpression } from '@simple-html/grid';
+
+const parts = [datasource.getFilter(), gridInterface.getFindFilter()].filter(
+    (part): part is FilterExpression => part !== null
+);
+const filter = and(...parts); // send it, as the filter alone before
+```
+
+It is an OR group: for a text field `CONTAINS` the text with `literal: true` (Find takes `*`, `%` and `_`
+as they are) and `caseSensitive: true` with *Match case*; for a lookup column `IN` the values whose label
+holds the text; for a number or a date field `EQUAL` the value the text is; `IN []` (`1=0`) when no field
+gives a condition. Its SQL selects the rows *Filter rows* shows, or fewer - never a row without a match:
+the same rows on the text fields and the lookup columns. The [find guide](19-find.md#filter-rows-on-a-backend)
+has every field type; the differences are in the table below.
+
 ## Where the SQL differs from the grid
 
 Where SQL can do what the grid does, the SQL selects the same rows: the tests run thousands of filters
@@ -358,10 +408,15 @@ database decides:
 | `IN` on a date | the text the formatter shows; a `Date` in the list never matches | the day or second of each value, a `Date` too |
 | a `datetime` stored as an instant, the hour the clocks go back | the wall clock, which shows that hour twice: both 02:30 match | the instant: the first 02:30 (`'local'` storage is the wall clock, the same as the grid) |
 | `datetime` with a `valueField` | to the second | the columns as they are: milliseconds count |
-| a text `valueField` | `*`, `%` and `_` in the other column are wildcards | no wildcards |
+| a text `valueField` | `*`, `%` and `_` in the other column are wildcards (with `literal: true` not: the same) | no wildcards |
 | SQL Server, a text `valueField` | trailing spaces count | `=` ignores them |
 | comparisons of text (`LESS_THAN` ...) | UTF-16 code units | code points: differs only for letters past U+FFFF against U+E000-U+FFFF |
 | what is no filter | an unknown operator is `EQUAL` (text) or `GREATER_THAN_OR_EQUAL_TO`, `'or'` is AND, `'abc'` on a number is 0, a malformed `BETWEEN` is left out | a `TypeError` |
+| [Find's filter](#finds-filter), a number field | *Filter rows*: a cell whose text holds the text - `30` finds `130`, `30.5`, `1 030` | the number the text is: `EQUAL 30`. `0` is no condition (it would be the blank rows too), unless a blank shows `0` |
+| Find's filter, a date or datetime field | a cell whose text holds the text - `2026-03` finds every day of March | the day (second) when the text is all of a cell's text, `2026-03-14`; else no condition |
+| Find's filter, a lookup column | the label a cell shows, also of a value the lookup has no row for (the cell shows the value) | `IN` the values of the lookup's rows whose label holds the text: not the others. A short text in a large lookup is a long list - over `limits.listLength` (1000) it throws, raise it |
+| Find's filter, a text field with a formatter or template of its own, a `dynamicCellTypeColumn` | the text the cell shows | no condition: the database has the value, not that text |
+| Find's filter, a field the backend has no column for | searched, as every field of the layout | `getFindFilter({ fields })` leaves it out; left in, `toSqlWhere()` throws |
 
 ## A full example
 
