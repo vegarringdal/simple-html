@@ -14,6 +14,11 @@ import { LINK_PROTOCOLS, templateProblem, urlTemplateProblem } from './cellTempl
  * shows a value through one place: GridInterface.__getCellFormatter, a Formatter made by
  * displayFormatter() - and for a text template, which needs the row, templateFormatter() of
  * cellTemplate.ts. The address of a link is GridInterface.__getCellLink.
+ *
+ * The format has the rest of what the user sets for a column in the column settings dialog too: the
+ * column's label (`label`, read by getColumnLabel), the placeholder of its header filter (`placeholder`,
+ * `placeholderLabel` - headerFilterPlaceholder.ts), a number column's blank / 0 (`numberOverride`,
+ * numberOverrideOf in cellText.ts) and the checkboxes of a text or number column (`checkbox`).
  */
 
 /**
@@ -198,6 +203,46 @@ export interface LinkFormat {
 }
 
 /**
+ * The checkboxes of a `text` or `number` column, `ColumnFormat.checkbox`: each cell is a checkbox, for
+ * a field that holds a flag as `1` / `0`, `'Y'` / `'N'`. A cell is checked when its value is the
+ * checked value - its text trimmed, a number equal to it. Clicked (or Space), an editable cell writes
+ * the checked or the unchecked value: a number for a number field (`1`), else the text (`'1'`); an
+ * unchecked value `''` empties the cell (null), as Delete does.
+ *
+ * The value stays the value: copy, paste, the CSV and Excel exports, sorting, grouping, the header
+ * filter and the filter menu's value list have `1` and `0`, as without the checkboxes.
+ *
+ * | format | checked | a click writes |
+ * | --- | --- | --- |
+ * | `{}` | `'1'`, `' 1 '`; `1` in a number field | `'1'` / `'0'`, `1` / `0` in a number field |
+ * | `{ checked: 'Y', unchecked: 'N' }` | `'Y'` | `'Y'` / `'N'` |
+ * | `{ checked: '1', unchecked: '' }` | `'1'` | `'1'` / null |
+ *
+ * @example
+ * ```ts
+ * import type { CheckboxFormat, GridConfig } from '@simple-html/grid';
+ *
+ * const yesNo: CheckboxFormat = { checked: 'Y', unchecked: 'N' };
+ * const columns: GridConfig['columns'] = {
+ *     newsletter: { format: { checkbox: {} } }, // '1' / '0' (a text field) or 1 / 0 (a number field)
+ *     approved: { format: { checkbox: yesNo } }
+ * };
+ * ```
+ */
+export interface CheckboxFormat {
+    /**
+     * the value of a checked cell, written when it is checked: text, not `''`. A number for a number
+     * field (`'1'`, `'-1'`). Left out: `'1'`
+     */
+    checked?: string;
+    /**
+     * the value written when a cell is unchecked: text, `''` empties the cell. A number or `''` for a
+     * number field. Not the checked value. Left out: `'0'`. A cell whose value is neither is unchecked
+     */
+    unchecked?: string;
+}
+
+/**
  * The display format of a column, `ColumnConfig.format` and `GridState.formats`: one plain object (JSON)
  * with a part for the kind of value the column holds - `date` for a `date` or `datetime` field, `number`
  * for a `number` field, `text` and `link` for a `text` field. A part for another type throws a
@@ -215,6 +260,12 @@ export interface LinkFormat {
  * code: a saved state can come from anywhere, nothing in a format is run. See the formatting guide,
  * "Templates" and "Links".
  *
+ * The rest of what the user sets in the column settings dialog is in the format too, so the state
+ * keeps it with the rest: the column's `label` and the `placeholder` of its header filter (any column),
+ * a number column's `numberOverride` (blank as 0, 0 as blank), and `checkbox` - the cells of a text or
+ * number column as checkboxes. Each wins over the column's own option (`ColumnConfig.label`,
+ * `placeholderFilter`, `numberOverride`).
+ *
  * @example
  * ```ts
  * import type { ColumnFormat, GridConfig } from '@simple-html/grid';
@@ -226,7 +277,9 @@ export interface LinkFormat {
  *         due: { format: week }, // 2026-W47
  *         balance: { format: { number: { decimals: 2, thousands: ' ', decimal: ',' } } }, // 1 234 567,89
  *         name: { format: { text: '{name} ({id})' } }, // Ann (12)
- *         company: { format: { link: { url: 'https://duckduckgo.com/?q={company}', newTab: true } } }
+ *         company: { format: { link: { url: 'https://duckduckgo.com/?q={company}', newTab: true } } },
+ *         stock: { format: { label: 'In stock', placeholderLabel: true, numberOverride: 'ZERO_TO_BLANK' } },
+ *         newsletter: { format: { checkbox: { checked: '1', unchecked: '0' } } } // '1' is checked
  *     },
  *     layout: {
  *         center: [
@@ -234,7 +287,9 @@ export interface LinkFormat {
  *             { fields: ['due'], width: 100 },
  *             { fields: ['balance'], width: 120 },
  *             { fields: ['name'], width: 120 },
- *             { fields: ['company'], width: 150 }
+ *             { fields: ['company'], width: 150 },
+ *             { fields: ['stock'], width: 80 },
+ *             { fields: ['newsletter'], width: 80 }
  *         ]
  *     }
  * };
@@ -254,6 +309,34 @@ export interface ColumnFormat {
     text?: string;
     /** the cells of a `text` column are links, see {@link LinkFormat} */
     link?: LinkFormat;
+    /**
+     * the column's label, any column: its header and everywhere the grid names the column - the menus,
+     * the column chooser, the filter editor, the footer's filter, copy with headers and the headers of
+     * the CSV and Excel exports. Wins over `ColumnConfig.label`. Left out: the column's own label. Not
+     * `''`
+     */
+    label?: string;
+    /**
+     * the placeholder of the column's empty header filter, any column but a `boolean` one (its filter is
+     * a checkbox): `'Search the names'`. Wins over `ColumnConfig.placeholderFilter`. Left out: the
+     * column's own placeholder, else the type's (`Text`, `YYYY-MM-DD` ...). Not `''`, not with
+     * `placeholderLabel`
+     */
+    placeholder?: string;
+    /** `true`: the placeholder of the column's header filter is the column's label, see `placeholder` */
+    placeholderLabel?: boolean;
+    /**
+     * what the cells of a `number` column show for a blank and for 0 - the value is not changed:
+     * `'BLANK_TO_ZERO'` a blank as `0`, `'ZERO_TO_BLANK'` 0 as an empty cell, `'NONE'` both as they
+     * are. Wins over `ColumnConfig.numberOverride` - `'NONE'` turns the column's off. Left out: the
+     * column's `numberOverride`
+     */
+    numberOverride?: 'BLANK_TO_ZERO' | 'ZERO_TO_BLANK' | 'NONE';
+    /**
+     * the cells of a `text` or `number` column are checkboxes, see {@link CheckboxFormat}. Not with
+     * `text`, `link`, `number` or `numberOverride`: a checkbox shows no text
+     */
+    checkbox?: CheckboxFormat;
 }
 
 /**
@@ -293,10 +376,52 @@ export function formatTexts(overrides?: Texts): FormatTexts {
 const DAY = 86_400_000;
 
 /**
- * true when a column's format changes what its cells show: it has a part. `{}` does not
+ * true when a column's format has a part - it changes how the column is shown: its cells, its label,
+ * its header filter's placeholder. `{}` does not: the state leaves it out
  */
 export function hasDisplayFormat(format: ColumnFormat | undefined): format is ColumnFormat {
-    return format?.date !== undefined || format?.number !== undefined || format?.text !== undefined || format?.link !== undefined;
+    return FORMAT_KEYS.some((key) => format?.[key] !== undefined);
+}
+
+/** the checked value of a column's checkboxes when its format leaves it out */
+export const CHECKED_VALUE = '1';
+
+/** the unchecked value of a column's checkboxes when its format leaves it out */
+export const UNCHECKED_VALUE = '0';
+
+/**
+ * The values of a column's checkboxes, with the defaults: `'1'` checked, `'0'` unchecked
+ */
+export function checkboxValues(checkbox: CheckboxFormat): { checked: string; unchecked: string } {
+    return { checked: checkbox.checked ?? CHECKED_VALUE, unchecked: checkbox.unchecked ?? UNCHECKED_VALUE };
+}
+
+/**
+ * true when a cell of a column with checkboxes is checked: its value is the checked value - a number
+ * equal to it (`1` and `'1'`, `'1.0'`), else its text trimmed (`' 1 '` and `'1'`). A blank is not
+ */
+export function isCheckedValue(value: unknown, checkbox: CheckboxFormat): boolean {
+    const checked = checkboxValues(checkbox).checked.trim();
+    if (typeof value === 'number') {
+        // Number('') is 0: the checked value is never '' (assertColumnFormat)
+        return checked !== '' && value === Number(checked);
+    }
+    return value !== null && value !== undefined && String(value).trim() === checked;
+}
+
+/**
+ * The value a click writes into a cell of a column with checkboxes: the checked or the unchecked value,
+ * as the field's type has it - a number for a number field (`1`), else the text (`'1'`). An unchecked
+ * value `''` is null, an empty cell
+ * @param on the cell is checked now
+ */
+export function checkboxValueOf(on: boolean, checkbox: CheckboxFormat, type: FieldType): unknown {
+    const values = checkboxValues(checkbox);
+    const text = on ? values.checked : values.unchecked;
+    if (text.trim() === '') {
+        return null;
+    }
+    return type === 'number' ? Number(text) : text;
 }
 
 /**
@@ -544,7 +669,27 @@ export function displayFormatter(fieldFormatter: Formatter, format: ColumnFormat
 /**
  * the parts of a column's format, for the check of one from plain JavaScript or JSON
  */
-const FORMAT_KEYS: readonly (keyof ColumnFormat)[] = ['date', 'number', 'text', 'link'];
+const FORMAT_KEYS: readonly (keyof ColumnFormat)[] = [
+    'date',
+    'number',
+    'text',
+    'link',
+    'label',
+    'placeholder',
+    'placeholderLabel',
+    'numberOverride',
+    'checkbox'
+];
+
+/**
+ * the keys a column's checkboxes have
+ */
+const CHECKBOX_FORMAT_KEYS: readonly (keyof CheckboxFormat)[] = ['checked', 'unchecked'];
+
+/**
+ * the values of `numberOverride`
+ */
+const NUMBER_OVERRIDES: readonly NonNullable<ColumnFormat['numberOverride']>[] = ['BLANK_TO_ZERO', 'ZERO_TO_BLANK', 'NONE'];
 
 /**
  * the keys a link has
@@ -571,7 +716,12 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
  * - `text` and `link` for a `text` field: a template that is text, not `''`, without a placeholder of
  *   the grid's own (`{__...}`); a {@link LinkFormat} whose `url` starts with `https://`, `http://`,
  *   `mailto:` or `tel:` or is one placeholder (cellTemplate.ts, urlTemplateProblem)
- * - not on a lookup column (`editor`: its cells show a label)
+ * - `label` and `placeholder` text, not `''`; `placeholderLabel` true or false, not with `placeholder`;
+ *   no placeholder for a `boolean` field (its header filter is a checkbox)
+ * - `numberOverride` for a `number` field: `'BLANK_TO_ZERO'`, `'ZERO_TO_BLANK'` or `'NONE'`
+ * - `checkbox` for a `text` or `number` field: a {@link CheckboxFormat} (checkboxProblem), not with
+ *   `text`, `link`, `number` or `numberOverride`
+ * - a lookup column (`editor`: its cells show a label) takes `label` and the placeholder only
  * @param name how the message names it: `GridConfig: columns.born.format`, `setState: formats.born`
  * @throws a `TypeError` naming it, what it has and what it takes
  */
@@ -582,7 +732,7 @@ export function assertColumnFormat(format: unknown, field: string, type: FieldTy
     const got = JSON.stringify(format);
     if (!isObject(format)) {
         throw new TypeError(
-            `${name} is ${got}, it is an object: { date: 'norwegian' } for a date field, { number: { decimals: 2 } } for a number field, { text: '{name} ({id})' } or { link: { url: 'https://example.com/{id}' } } for a text field`
+            `${name} is ${got}, it is an object: { date: 'norwegian' } for a date field, { number: { decimals: 2 } } for a number field, { text: '{name} ({id})' } or { link: { url: 'https://example.com/{id}' } } for a text field, { label: 'Name' } for any`
         );
     }
     for (const key of Object.keys(format)) {
@@ -590,9 +740,30 @@ export function assertColumnFormat(format: unknown, field: string, type: FieldTy
             throw new TypeError(`${name} has '${key}', a format has ${FORMAT_KEYS.join(', ')}`);
         }
     }
-    const { date, number, text, link } = format;
-    if (lookup && (date !== undefined || number !== undefined || text !== undefined || link !== undefined)) {
-        throw new TypeError(`${name} is ${got}: a lookup column (editor) shows the label of its value, it has no format`);
+    const { date, number, text, link, numberOverride, checkbox } = format;
+    if (lookup && [date, number, text, link, numberOverride, checkbox].some((part) => part !== undefined)) {
+        throw new TypeError(
+            `${name} is ${got}: a lookup column (editor) shows the label of its value, it has no format - a label and a placeholder only`
+        );
+    }
+    assertLabelParts(format, field, type, lookup, name);
+    if (numberOverride !== undefined) {
+        if (type !== 'number') {
+            throw new TypeError(`${name}.numberOverride is for a number field, '${field}' is ${type}`);
+        }
+        if (!NUMBER_OVERRIDES.some((known) => known === numberOverride)) {
+            throw new TypeError(
+                `${name}.numberOverride is ${JSON.stringify(numberOverride)}, it is ${NUMBER_OVERRIDES.map((each) => `'${each}'`).join(', ')}`
+            );
+        }
+    }
+    if (checkbox !== undefined) {
+        assertCheckboxFormat(checkbox, field, type, `${name}.checkbox`);
+        // a checkbox shows no text: no template, link or number format, no blank / 0
+        const other = (['text', 'link', 'number', 'numberOverride'] as const).find((key) => format[key] !== undefined);
+        if (other) {
+            throw new TypeError(`${name} has checkbox and ${other}: a checkbox shows no text, it is the one or the other`);
+        }
     }
     if ((text !== undefined || link !== undefined) && type !== 'text') {
         throw new TypeError(`${name}.${text !== undefined ? 'text' : 'link'} is for a text field, '${field}' is ${type}`);
@@ -662,6 +833,112 @@ function assertNumberFormat(format: unknown, name: string): void {
         throw new TypeError(
             `${name} has '${String(thousands)}' as the thousands separator and the decimal mark${leftOut}: give them different characters`
         );
+    }
+}
+
+/**
+ * see assertColumnFormat: the label of a column, the placeholder of its header filter
+ * @throws a `TypeError` naming the part and what it takes
+ */
+function assertLabelParts(format: Record<string, unknown>, field: string, type: FieldType, lookup: boolean, name: string): void {
+    const { label, placeholder, placeholderLabel } = format;
+    const isText = (value: unknown) => typeof value === 'string' && value.trim() !== '';
+    if (label !== undefined && !isText(label)) {
+        throw new TypeError(
+            `${name}.label is ${JSON.stringify(label)}, it is the column's label: text, not '' - left out, the column's own`
+        );
+    }
+    if ((placeholder !== undefined || placeholderLabel !== undefined) && type === 'boolean' && !lookup) {
+        throw new TypeError(
+            `${name}.${placeholder !== undefined ? 'placeholder' : 'placeholderLabel'} is for a header filter that is typed in, '${field}' is boolean: its filter is a checkbox`
+        );
+    }
+    if (placeholder !== undefined && !isText(placeholder)) {
+        throw new TypeError(
+            `${name}.placeholder is ${JSON.stringify(placeholder)}, it is the placeholder of the header filter: text, not '' - left out, the column's own`
+        );
+    }
+    if (placeholderLabel !== undefined && typeof placeholderLabel !== 'boolean') {
+        throw new TypeError(`${name}.placeholderLabel is ${JSON.stringify(placeholderLabel)}, it is true or false`);
+    }
+    if (placeholder !== undefined && placeholderLabel === true) {
+        throw new TypeError(
+            `${name} has placeholder and placeholderLabel: true - the placeholder is the text or the label, not both`
+        );
+    }
+}
+
+/**
+ * true for text that is a number: `'1'`, `'-1'`, `'0.5'` - not `''`, not `'one'`
+ */
+function isNumberText(text: string): boolean {
+    return text.trim() !== '' && Number.isFinite(Number(text));
+}
+
+/**
+ * What is wrong with the values of a column's checkboxes (with the defaults), null when nothing - for
+ * assertColumnFormat and the column settings dialog:
+ * - `'checkedEmpty'`: the checked value is `''` - a blank cell would be checked
+ * - `'checkedNumber'`, `'uncheckedNumber'`: a value of a number field is no number (`''` empties the
+ *   cell, an unchecked value can be it)
+ * - `'same'`: the two values are the same - a click could not uncheck a cell
+ */
+export function checkboxProblem(
+    checkbox: CheckboxFormat,
+    type: FieldType
+): 'checkedEmpty' | 'checkedNumber' | 'uncheckedNumber' | 'same' | null {
+    const { checked, unchecked } = checkboxValues(checkbox);
+    if (checked.trim() === '') {
+        return 'checkedEmpty';
+    }
+    if (type === 'number' && !isNumberText(checked)) {
+        return 'checkedNumber';
+    }
+    if (type === 'number' && unchecked.trim() !== '' && !isNumberText(unchecked)) {
+        return 'uncheckedNumber';
+    }
+    const same = type === 'number' ? Number(checked) === Number(unchecked) : checked.trim() === unchecked.trim();
+    return same && unchecked.trim() !== '' ? 'same' : null;
+}
+
+/**
+ * see assertColumnFormat: the checkboxes of a text or number column
+ * @throws a `TypeError` naming the part and what it takes
+ */
+function assertCheckboxFormat(checkbox: unknown, field: string, type: FieldType, name: string): void {
+    if (type !== 'text' && type !== 'number') {
+        throw new TypeError(`${name} is for a text or number field, '${field}' is ${type}`);
+    }
+    if (!isObject(checkbox)) {
+        throw new TypeError(`${name} is ${JSON.stringify(checkbox)}, it is an object: { checked?: '1', unchecked?: '0' }`);
+    }
+    for (const key of Object.keys(checkbox)) {
+        if (!CHECKBOX_FORMAT_KEYS.some((known) => known === key)) {
+            throw new TypeError(`${name} has '${key}', a checkbox has ${CHECKBOX_FORMAT_KEYS.join(', ')}`);
+        }
+    }
+    for (const key of CHECKBOX_FORMAT_KEYS) {
+        if (checkbox[key] !== undefined && typeof checkbox[key] !== 'string') {
+            throw new TypeError(`${name}.${key} is ${JSON.stringify(checkbox[key])}, it is text: '1', '0', 'Y'`);
+        }
+    }
+    // its parts are text or left out now
+    const values = checkboxValues(checkbox as CheckboxFormat);
+    switch (checkboxProblem(checkbox as CheckboxFormat, type)) {
+        case 'checkedEmpty':
+            throw new TypeError(`${name}.checked is "", it is the value of a checked cell - left out, '1'`);
+        case 'checkedNumber':
+            throw new TypeError(
+                `${name}.checked is ${JSON.stringify(values.checked)}: '${field}' is a number field, it takes a number - '1'`
+            );
+        case 'uncheckedNumber':
+            throw new TypeError(
+                `${name}.unchecked is ${JSON.stringify(values.unchecked)}: '${field}' is a number field, it takes a number - '0' - or '' for an empty cell`
+            );
+        case 'same':
+            throw new TypeError(
+                `${name} has ${JSON.stringify(values.checked)} as the checked and the unchecked value: a click could not uncheck a cell`
+            );
     }
 }
 

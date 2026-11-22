@@ -10,6 +10,7 @@ import {
     formatNumberAs,
     formatTexts,
     hasDisplayFormat,
+    hasValueFormat,
     type NumberFormat
 } from '../columnFormat';
 import type { Grid } from '../grid';
@@ -20,7 +21,9 @@ import { gridText } from './gridText';
  * Format › in the header menu: how the column's cells show the value, picked by the user - the display
  * formats of columnFormat.ts. A date or datetime column lists the date formats, a number column the
  * number formats; text and boolean columns, and a lookup column (its cells show a label), have none.
- * The format in use has a ✓, "Default" when the column has none: the field's formatter.
+ * The format in use has a ✓, "Default" when the column has none: the field's formatter. A pick changes
+ * the date or number part of the column's format only (`ColumnFormat.date`, `.number`): its label, its
+ * blank / 0 from the column settings stay. A number column shown as checkboxes has no Format ›.
  *
  * A pick changes the grid's state (GridState.formats), so getState() keeps it and resetState() goes back
  * to the config's (ColumnConfig.format). Every hint is an example: the format applied to today (a date
@@ -128,8 +131,18 @@ export function formatSubmenu(ctx: Grid, attribute: string, target: FormatTarget
     /** the example of a number format: 1234567.891, 0.256 with Percent */
     const numberExample = (format: NumberFormat) => formatNumberAs(format.percent ? PERCENT_SAMPLE : NUMBER_SAMPLE, format);
 
-    /** sets the column's format, undefined: none (Default) */
-    const set = target.set;
+    /**
+     * sets the column's date or number format, undefined: none (Default). The rest of the column's format
+     * - its label, its blank / 0 ... from the column settings - stays as it is
+     */
+    const set = (part: Pick<ColumnFormat, 'date' | 'number'> | undefined) => {
+        const next: ColumnFormat = { ...current(), ...part };
+        if (!part) {
+            delete next.date;
+            delete next.number;
+        }
+        target.set(hasDisplayFormat(next) ? next : undefined);
+    };
     const pickNumber = (change: NumberFormat) => set({ number: changed(change) });
 
     const dateItem = (format: DateFormat, visible: boolean): MenuItem => ({
@@ -167,7 +180,7 @@ export function formatSubmenu(ctx: Grid, attribute: string, target: FormatTarget
             id: 'header.format.default',
             label: text('header.format.default'),
             hint: isNumber ? fieldFormatter.format(NUMBER_SAMPLE) : fieldFormatter.format(now),
-            selected: () => !hasDisplayFormat(current()),
+            selected: () => !hasValueFormat(current()),
             action: () => set(undefined)
         },
         { type: 'separator', id: 'header.format.defaultSeparator' },
@@ -236,7 +249,8 @@ export function formatSubmenu(ctx: Grid, attribute: string, target: FormatTarget
         type: 'submenu',
         id: 'header.format',
         label: text('header.format'),
-        visible: () => isDate || isNumber,
+        // a number column shown as checkboxes (ColumnFormat.checkbox) shows no number
+        visible: () => isDate || (isNumber && !current()?.checkbox),
         entries
     };
 }

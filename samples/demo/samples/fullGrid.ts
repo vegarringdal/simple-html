@@ -19,7 +19,8 @@ import { COMPANIES, COUNTRIES, createStage, type DemoSample, FRUITS, mountGrid }
  */
 
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-const TAGS = Array.from({ length: 9 }, (_, i) => `tag${i + 1}`);
+// eight tags: with newsletter the grid has 50 columns
+const TAGS = Array.from({ length: 8 }, (_, i) => `tag${i + 1}`);
 const KPIS = Array.from({ length: 9 }, (_, i) => `kpi${i + 1}`);
 const STATUSES = ['open', 'waiting', 'done'];
 const CITIES = ['Oslo', 'Bergen', 'Stockholm', 'Copenhagen', 'Helsinki', 'Reykjavik', 'Berlin', 'Paris', 'Madrid', 'Rome'];
@@ -99,6 +100,8 @@ function config(readonly: boolean): GridConfig {
             },
             email: { format: { link: { url: 'mailto:{email}' } } },
             phone: { format: { link: { url: 'tel:{phone}' } } },
+            // a flag stored as the text '1' / '0': the column settings' Show as checkbox shows it as checkboxes
+            newsletter: { label: 'Newsletter' },
             countryCode: { label: 'Country', editor: { type: 'select', lookup: 'full-grid-countries' } },
             status: { renderer: 'full-grid-status' },
             age: { aggregate: 'avg' },
@@ -128,6 +131,7 @@ function config(readonly: boolean): GridConfig {
                 column('fruit', 90),
                 column('phone', 120),
                 column('email', 180),
+                column('newsletter', 90),
                 column('notes', 160),
                 ...MONTHS.map((month) => column(month, 80)),
                 ...TAGS.map((tag) => column(tag, 90)),
@@ -171,7 +175,8 @@ function makeRows(count: number, start: number) {
                 rnd() > 0.8
                     ? `Call before delivery\nGate code ${1000 + Math.floor(rnd() * 9000)}\nAsk for ${pick(['Ann', 'Bob', 'Cid'])}`
                     : '',
-            approved: rnd() > 0.5
+            approved: rnd() > 0.5,
+            newsletter: rnd() > 0.6 ? '1' : '0'
         };
         let total = 0;
         for (const month of MONTHS) {
@@ -207,7 +212,7 @@ export const fullGrid: DemoSample = {
     group: 'Getting started',
     fullPage: true,
     description:
-        '50 columns of every kind - text, numbers (money edited as the plain number), dates, a date and time, checkboxes, a lookup, a badge, notes of several lines, monthly sales with aggregates - pinned left and right. Credit, Due Date and Updated have display formats (Format › in the header menu: weeks, days until, Norwegian separators...). City shows a template with the country code of another column; Fruit, Email and Phone are links (a search, mailto:, tel:): change them with the gear at the right end of the footer, the column settings - Save formats keeps them. Add 5 000 rows at a time, turn editing on and off, group, filter, sort, select ranges, export to Excel (gridInterface.downloadExcel), Ctrl+F, Ctrl+D, Ctrl+Z, right click for the menus.',
+        '50 columns of every kind - text, numbers (money edited as the plain number), dates, a date and time, checkboxes, a lookup, a badge, notes of several lines, monthly sales with aggregates - pinned left and right. Credit, Due Date and Updated have display formats (Format › in the header menu: weeks, days until, Norwegian separators...). City shows a template with the country code of another column; Fruit, Email and Phone are links (a search, mailto:, tel:); Newsletter is 1 / 0 as text: change them with the gear at the right end of the footer, the column settings - a label, the placeholder of the filter, blank / 0 of a number, Show as checkbox - Save formats keeps them. Add 5 000 rows at a time, turn editing on and off, group, filter, sort, select ranges, export to Excel (gridInterface.downloadExcel), Ctrl+F, Ctrl+D, Ctrl+Z, right click for the menus.',
     run(stage) {
         const style = document.createElement('style');
         style.textContent = STYLE;

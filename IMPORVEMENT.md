@@ -3279,6 +3279,105 @@ in the console. All passed. Found and fixed:
   in the dialog, Less than picked, Apply → the header's indicator shows `<`, no operator on a checkbox
   column); column-settings-check 144/144
 
+### Column settings: a label, the placeholder, blank / 0, checkboxes (user request)
+
+* the user: "for columns we should also be able to set placeholder, with option to use column label as
+  this", "Also be able to set custom label is useful", "under numbers, I want a checkbox to be able to set
+  null/blank to show as 0 and option to set 0 to show as blank", "under text we also want to be able to
+  override to checkbox, useful for one have 0, 1"
+* **where it lives**: new optional parts of `ColumnFormat`, so the state keeps them with the formats -
+  Apply, Reset column / Reset all, `getState()`, a saved state as JSON, `initialState.formats` work as
+  before, and the developer starts a column with them in `ColumnConfig.format`: `label`, `placeholder`,
+  `placeholderLabel`, `numberOverride: 'BLANK_TO_ZERO' | 'ZERO_TO_BLANK' | 'NONE'`, `checkbox:
+  CheckboxFormat` (`{ checked?: string; unchecked?: string }`, `'1'` / `'0'` left out; exported type).
+  Each wins over the column's own option (`ColumnConfig.label`, `placeholderFilter`, `numberOverride`);
+  `'NONE'` is needed to turn a column's own `numberOverride` off. `hasDisplayFormat` is "has a part" now
+  (the new keys too); Format › reads `hasValueFormat` for its Default ✓ and sets only the `date` / `number`
+  part - a pick there kept nothing else before (it replaced the whole format: a label would have gone)
+* **checked** (assertColumnFormat, TypeError, config and setState): a label / placeholder of text, not
+  `''`; no placeholder on a boolean field (its filter is a checkbox; a lookup on one is typed); placeholder
+  not with `placeholderLabel: true`; `numberOverride` on a number field, of the three; `checkbox` on a
+  text or number field, its values text, the checked one not `''`, numbers on a number field (`''` for
+  the unchecked one), not the same two (`'1'` / `'1.0'` on a number field are the same); `checkbox` not
+  with `text`, `link`, `number`, `numberOverride` (a checkbox shows no text); a lookup column takes a label
+  and a placeholder only. `checkboxProblem()` is shared by the check and the dialog
+* **the label** (getColumnLabel.ts): `format.label`, else `getConfigColumnLabel` (the column's `label`,
+  the field's, the name prettified). getColumnLabel is the one place: the header, the header filter's and
+  the cells' names, the menus, the column chooser, the filter editor, the footer's chips, the aggregates
+  of stacked fields, the drag ghost and a new group chip, fitColumns, copy with headers (and the header
+  line a paste leaves out) - and **the headers of the CSV and Excel exports**: the label the user sees and
+  chose (a CSV/Excel file is read by people; the developer's `header: false` / `fields` are unchanged).
+  Group chips keep the title they were grouped with (`GroupArgument.title`, data of the grouping)
+* **the placeholder** (new headerFilterPlaceholder.ts, moved out of renderHeaderFilter.ts with typePlaceholder):
+  the label of the same format (the dialog's draft label too) with `placeholderLabel`, else `placeholder`,
+  else `defaultFilterPlaceholder` - the column's `placeholderFilter`, a BETWEEN's from..to, the formatter's,
+  the type's. The user's wins over the BETWEEN's too, as `placeholderFilter` did
+* **blank / 0** (cellText.ts `numberOverrideOf(column)`): the user's, else the column's, `'NONE'` none -
+  none with checkboxes (the exports write the value). Used by the cells, cellTextOf (Find, fitColumns,
+  dimmed repeats), the CSV and the Excel export: the old code path (overrideNumberText), one more input
+* **checkboxes** (renderRowCell.ts): a text or number column whose cell is of its field's type, not a
+  lookup and without a renderer of your own, takes the boolean branch: the same `<input type="checkbox">`,
+  keys, ranges (Shift / Ctrl+click), context menu, readonly and `allowPasteClearOnly` as a boolean cell.
+  Checked: `isCheckedValue` - the value's text trimmed is the checked value, a number equal to it. The
+  change writes `checkboxValueOf(!checked)` from the value, not from the box (the click renders the cell
+  again first, see the boolean cell's inverted `!e.target.checked`): the text, a number in a number field,
+  null for an unchecked `''`. Space is the browser's click. Undo, the edited marker and validation as any
+  edit. cellTextOf gives such a cell the type `boolean` and the value's text: Find skips it, fitColumns
+  gives it a checkbox's room, the value list and dimmed repeats see the value. Copy, paste, CSV, Excel,
+  sorting, grouping and the header filter have the value (the header filter is typed: `1`). Format › is
+  hidden on a number column with checkboxes
+* **number columns with 0/1**: supported as text columns are (a database's 0/1 flag is often a number):
+  the values are numbers as text (`'1'`, `'-1'`, `''`), written as numbers; the number format and blank / 0
+  go while it is on
+* **the dialog** (columnSettings.ts, new small functions in the panel - the frame, title, footer and
+  `render` structure as they were; `ColumnSettings` unchanged, it is all in its `formats`): *Label* first
+  (every column; its input's placeholder is the column's own label - empty is that); a text / number
+  column *Show as checkbox* first of its settings (a switch that does not move: turned on it takes the
+  template, the link, the number format and blank / 0 out of the draft and their fields away, *Checked
+  value* / *Unchecked value* side by side with a hint and the problems - Error badge, Apply held back);
+  a number column *Show blank as 0* / *Show 0 as blank* under its format (one turns the other off; they
+  start as the column shows them, its own `numberOverride` too: off over the column's own is `'NONE'`, the
+  same as the column's own is left out); *Filter placeholder* before the operator for every column but a
+  checkbox (the input's placeholder is what empty gives, `defaultFilterPlaceholder` with the draft's
+  operator; *Use the column label* makes the input disabled, dashed, the label in it). The list, the
+  heading, a letter and the preview's checkbox use the draft's label. The badges are a list now - Error
+  alone, else Checkbox, Link / Text, Format, Blank / 0, Label, Placeholder - right aligned, on a line of
+  their own under the label when the option has no room (the label keeps 80px). The preview shows blank
+  / 0 and a disabled checkbox. *A checkbox column has no settings* became *... no format* (it has a label)
+* css (grid.css): `.column-settings-badges`, `.column-settings-values` / `-value`, a disabled
+  `.filter-editor-value` dashed, `.column-settings-preview-checkbox`; the option wraps. Colours are the
+  existing variables (no new ones), no border-radius, nothing larger on touch
+* texts: 16 new (`columnSettings.badge.checkbox`, `.badge.numberOverride`, `.badge.label`,
+  `.badge.placeholder`, `.label`, `.blankToZero`, `.zeroToBlank`, `.checkbox`, `.checked`, `.unchecked`,
+  `.checkbox.hint`, `.placeholder`, `.placeholderLabel`, `.problem.checkedEmpty`, `.problem.notNumber`,
+  `.problem.sameValues`), `columnSettings.none.boolean` changed; the guide's table and the Norwegian sample
+* docs: 08-formatting.md (the dialog's list, a new section *Label, placeholder, blank / 0, checkboxes* with
+  the checkboxes' rules, `numberOverride`), 02 (the column label's order, `label`, `placeholderFilter`,
+  `numberOverride`, `format`), 03 (the state), 15 (the export's header), 12 (texts); JSDoc of
+  `ColumnFormat` (each part, the example), `CheckboxFormat`, `ColumnConfig.label` / `placeholderFilter` /
+  `numberOverride` / `format`, `GridState.formats`; typings consumer. The full grid sample: a Newsletter
+  column of `'1'` / `'0'` text (eight tags instead of nine: still 50 columns), the description
+* tests: new columnFormatOptions.test.ts (16: the label in the header, the filter's name, the chips, the
+  filter editor, the column chooser, the CSV and Excel headers, resetState; the config's format label; Format
+  › keeps the label and blank / 0; the placeholder over `placeholderFilter` and BETWEEN, the label, a
+  TypeError on a checkbox column; blank / 0 over the column's, NONE, the CSV, Excel, Find; checkboxes:
+  rendered, a click writing text / numbers / null, undo, readonly / readonly column / paste-clear-only, the
+  value in CSV, Excel, the header filter, the value list, sorting, Find skips them, no Format ›, a renderer
+  and dynamicCellTypeColumn win, TypeErrors, the state as JSON); columnFormat +8 (the checks, the helpers);
+  columnSettings +6 (the label and a letter, the placeholder and Use the column label, blank / 0 over the
+  config's, Show as checkbox on a text and a number column and their problems, Cancel / JSON / Reset) and
+  its checkboxes found by their text now (Show as checkbox is the first); texts (the walk shows the new
+  ones). 3456 tests, 150 files
+* browser (Chromium 1148): new `column-settings-more-check.js` 141/141 in the four looks - the label typed
+  (list, heading, badge), Apply → the header, the filter's name, the column chooser, the footer chip, the
+  filter editor, the CSV header; the placeholder, Use the column label (dashed, off); 0 as blank / blank as
+  0 one or the other, the cells and the CSV; Show as checkbox on Newsletter: 1 / 0, a problem holding Apply,
+  the cells checked where 1, a click writes '1' / '0' as text, Space back, Shift+click nothing, editing off
+  nothing, the CSV, a header filter on 1, sorting; the state as JSON, resetState, setState; Reset all. A
+  phone (390px, touch): the badges on a line of their own. The shared checks: column-settings 144/144,
+  column-settings-operator 13/13, display-format 39/39, full-grid 11/11, custom-cells 39/39. The new script
+  is in this worktree's `.claude/browser-checks/scripts/`
+
 ## Considered, not done
 
 ## Candidates / not started
@@ -3343,7 +3442,10 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
   addresses within the app (resolved against a base the config gives, the base's origin kept); an "Open link"
   entry in the row menu; a `HYPERLINK` in the Excel export (a formula of data, Excel's 255 characters); the
   dialog's own undo (the filter editor has one); `placeholderRow` and `focusButton` on a link cell; more of
-  the column in the dialog (its label, width, aggregates, readonly) - the whole of a column's view in one place
+  the column in the dialog (its width, aggregates, readonly) - the whole of a column's view in one place;
+  the column chooser's search finds the field names, not the labels (a label of the user's included); the
+  group chips keep the title they were grouped with when the label changes after (`GroupArgument.title`);
+  a checkbox column's header filter as a checkbox (it is typed now: `1`)
 * **Display formats, more** (see *Display formats* above): grouping by the format - a group per week,
   month, quarter or year (needs a group value function in the datasource; the group names are the field
   formatter's now); a header filter typed in the format (`2026-W47`, a week number) and a value list of

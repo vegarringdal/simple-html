@@ -598,7 +598,12 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.badge.format` | `Format` | in the list: the column has a date or number format |
 | `columnSettings.badge.text` | `Text` | the column has a template of its text |
 | `columnSettings.badge.link` | `Link` | the column is a link |
-| `columnSettings.badge.problem` | `Error` | a template of the column has a problem: Apply waits for it |
+| `columnSettings.badge.problem` | `Error` | a template or a checkbox value of the column has a problem: Apply waits for it |
+| `columnSettings.badge.checkbox` | `Checkbox` | the column is shown as checkboxes |
+| `columnSettings.badge.numberOverride` | `Blank / 0` | the column shows a blank as 0, or 0 as blank (or neither, over its `numberOverride`) |
+| `columnSettings.badge.label` | `Label` | the column has a label of the user's |
+| `columnSettings.badge.placeholder` | `Placeholder` | the column's header filter has a placeholder of the user's |
+| `columnSettings.label` | `Label` | the label of the input of the column's label, every column: empty is the column's own, the input shows it |
 | `columnSettings.format` | `Format` | the label of the format picker of a date or number column |
 | `columnSettings.format.tooltip` | `How the cells show the value` | its tooltip |
 | `columnSettings.text` | `Text shown` | the label of a text column's template of its text |
@@ -610,8 +615,16 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.url.hint` | `Starts with https://, http://, mailto: or tel: - or is one {field} that holds the whole address` | under it |
 | `columnSettings.newTab` | `Open in a new tab` | the checkbox of `newTab` |
 | `columnSettings.insertField` | `Insert a field` | the `{ }` button beside a template: its name and tooltip |
-| `columnSettings.none.boolean` | `A checkbox column has no settings` | the settings of a boolean column |
+| `columnSettings.none.boolean` | `A checkbox column has no format` | the settings of a boolean column, under its label |
 | `columnSettings.none.lookup` | `A lookup column shows the label of its value: it has no format` | the settings of a lookup column |
+| `columnSettings.blankToZero` | `Show blank as 0` | the checkbox of a number column: a blank cell shows `0` |
+| `columnSettings.zeroToBlank` | `Show 0 as blank` | a number column: 0 shows as an empty cell |
+| `columnSettings.checkbox` | `Show as checkbox` | a text or number column: its cells are checkboxes |
+| `columnSettings.checked` | `Checked value` | the label of the value of a checked cell |
+| `columnSettings.unchecked` | `Unchecked value` | the label of the value written when a cell is unchecked |
+| `columnSettings.checkbox.hint` | `A click writes the other value. An empty unchecked value empties the cell` | under the two values: a cell is checked when its value is the checked value |
+| `columnSettings.placeholder` | `Filter placeholder` | the label of the placeholder of the column's header filter, every column but a checkbox: empty is the column's own, the input shows it |
+| `columnSettings.placeholderLabel` | `Use the column label` | the checkbox: the placeholder is the column's label |
 | `columnSettings.operator` | `Filter operator` | the label of the operator picker, every column but a checkbox |
 | `columnSettings.operator.tooltip` | `The operator the header filter of the column uses` | its tooltip |
 | `columnSettings.operator.hint` | `Default: {operator}` | under it: the operator the column starts with, its name |
@@ -625,6 +638,9 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.problem.unknownField` | `No field {field} in this row` | `{field}`: a placeholder that is no column, no field and not in the row of the preview |
 | `columnSettings.problem.blank` | `{field} is empty in this row: no link, the text only` | `{field}`: the label of the column of the address that is empty |
 | `columnSettings.problem.invalid` | `No valid address in this row: no link, the text only` | what the row fills in is no address |
+| `columnSettings.problem.checkedEmpty` | `Write the checked value` | the checked value of a column's checkboxes is empty |
+| `columnSettings.problem.notNumber` | `{value} is no number: a number column writes numbers` | `{value}`: a checked or unchecked value of a number column, as typed |
+| `columnSettings.problem.sameValues` | `The checked and the unchecked value are the same: a click could not uncheck a cell` | the two values are the same |
 | `columnSettings.resetColumn` | `Reset column` | the button: the column's settings as the grid starts with them |
 | `columnSettings.resetColumn.tooltip` | `The settings the column starts with` | its tooltip |
 | `columnSettings.resetAll` | `Reset all` | the button: every column's |

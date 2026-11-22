@@ -456,7 +456,9 @@ export type ColumnConfig = {
     /**
      * the column's header text. Left out, the label of the datasource field (`FieldConfig.label`) is
      * used, and without that the field name prettified (`first_name` is `First Name`). The grid shows
-     * the same label everywhere: header, column chooser, group chip, filter editor, footer filter
+     * the same label everywhere: header, column chooser, group chip, filter editor, footer filter, the
+     * headers of the exports. The label the user gives the column in the column settings dialog
+     * (`format.label`, {@link ColumnFormat}) wins
      */
     label?: string;
     /**
@@ -466,7 +468,8 @@ export type ColumnConfig = {
      */
     placeholderRow?: string;
     /**
-     * shown in the empty header filter. Default: the formatter's placeholder (date fields), else the field's type: `Text` or `Number` (texts `filter.placeholder.*`)
+     * shown in the empty header filter. Default: the formatter's placeholder (date fields), else the field's type: `Text` or `Number` (texts `filter.placeholder.*`).
+     * The user's from the column settings dialog (`format.placeholder`, `format.placeholderLabel`) wins
      *
      * @sample required-placeholders
      */
@@ -556,7 +559,8 @@ export type ColumnConfig = {
     /**
      * for a number field, what a cell shows - the value is not changed: `'ZERO_TO_BLANK'` shows 0 as an
      * empty cell, `'BLANK_TO_ZERO'` shows an empty value as `0`. Default: the value as the formatter
-     * shows it
+     * shows it. The user's from the column settings dialog (`format.numberOverride`, Show blank as 0,
+     * Show 0 as blank) wins - its `'NONE'` turns this off
      *
      * @sample misc-options
      */
@@ -661,6 +665,11 @@ export type ColumnConfig = {
      * and a link, see {@link LinkFormat} (`{ link: { url: 'mailto:{email}' } }`). Left out: the field's
      * formatter.
      *
+     * The rest of what the column settings dialog sets is here too: `label`, the header filter's
+     * `placeholder` / `placeholderLabel`, a number column's `numberOverride`, and `checkbox` - the cells
+     * of a text or number column as checkboxes, see {@link CheckboxFormat}
+     * (`{ checkbox: { checked: '1', unchecked: '0' } }`).
+     *
      * Only the text shown changes: the cells, the aggregates of the column, the summary of the selected
      * cells, Find. The value is not changed, and editing, the header filter, sorting, grouping, copy and
      * the CSV export keep to the field's formatter - a cell shown as `2026-W47` is edited as
@@ -683,14 +692,16 @@ export type ColumnConfig = {
      *         born: { format: { date: 'norwegian' } }, // 22.11.2026
      *         due: { format: { date: 'daysUntil' } }, // 3: due in 3 days
      *         balance: { format: { number: { decimals: 2, thousands: ' ', decimal: ',' } } }, // 1 234 567,89
-     *         email: { format: { link: { url: 'mailto:{email}' } } } // a link that writes an email
+     *         email: { format: { link: { url: 'mailto:{email}' } } }, // a link that writes an email
+     *         newsletter: { format: { label: 'News', checkbox: {} } } // '1' / '0' as checkboxes
      *     },
      *     layout: {
      *         center: [
      *             { fields: ['born'], width: 100 },
      *             { fields: ['due'], width: 80 },
      *             { fields: ['balance'], width: 120 },
-     *             { fields: ['email'], width: 180 }
+     *             { fields: ['email'], width: 180 },
+     *             { fields: ['newsletter'], width: 80 }
      *         ]
      *     }
      * };
@@ -821,8 +832,10 @@ export interface GridState {
      * the display formats of the columns, keyed by field - what `ColumnConfig.format` starts with and
      * the header menu (Format ›) and the column settings dialog change:
      * `{ born: { date: 'weekIso' }, balance: { number: { decimals: 2 } }, email: { link: { url: 'mailto:{email}' } } }`.
-     * Only the fields that have one are listed; a field left out shows its field's formatter. See
-     * {@link ColumnFormat}. Its templates are text, not code: a state from storage runs nothing
+     * Only the fields that have one are listed; a field left out shows its field's formatter. With the
+     * rest of the column settings: the label, the placeholder, blank / 0, the checkboxes
+     * (`{ company: { label: 'Firm' }, newsletter: { checkbox: {} } }`). See {@link ColumnFormat}. Its
+     * templates are text, not code: a state from storage runs nothing
      */
     formats: Record<string, ColumnFormat>;
 }

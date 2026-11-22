@@ -525,15 +525,27 @@ The gear at the right end of the footer opens it - and *Column settings…* in t
 column, and `gridInterface.openColumnSettings(field)` from a button of your own. `settingsButton: false`
 hides the gear ([Grid config](02-grid-config.md#grid-options)).
 
-- **The columns** of the layout are at the left, in their order, each with its type and what it has
-  set - *Format*, *Text*, *Link*, or *Error*. The arrows, Home, End, PageUp / PageDown and a letter pick
-  one, a click too.
+- **The columns** of the layout are at the left, in their order, each with its label, its type and
+  what it has set - *Format*, *Text*, *Link*, *Checkbox*, *Blank / 0*, *Label*, *Placeholder*, or
+  *Error*. The arrows, Home, End, PageUp / PageDown and a letter pick one, a click too.
+- **Label**, every column: the column's label - empty is the column's own, which the input shows. It
+  is the label wherever the grid names the column, the exports' headers too.
 - **A date, datetime or number column** has its format: a picker that opens the entries of Format ›,
-  the same list as the header menu.
+  the same list as the header menu. A number column has *Show blank as 0* and *Show 0 as blank* too,
+  one or the other: they start as the column shows them, its `numberOverride` too, and turning the
+  column's own off is kept as `'NONE'`.
 - **A text column** has *Text shown* (the template, empty for the cell's own text), *Show as link*,
   *Address* and *Open in a new tab*. The `{ }` button beside a template opens a menu of the fields -
   the columns' and those of the row, by their labels, with a search - and puts the one picked in at the
   caret: no need to know the names of the fields.
+- **Show as checkbox**, a text or number column: its cells are checkboxes - for a flag of `1` / `0`.
+  The *Checked value* (`1`) and the *Unchecked value* (`0`, empty empties the cell) are under it. A
+  checkbox shows no text: while it is on, the template and the link of a text column, the format and
+  blank / 0 of a number column are gone from the column and from the dialog. A checked value that is
+  empty, the same two values, a value of a number column that is no number are problems.
+- **Filter placeholder**, for every column but a checkbox: the placeholder of the column's header
+  filter - empty is the one it has without, which the input shows - or *Use the column label*: the
+  label is the placeholder, the input is off.
 - **Filter operator**, for every column but a checkbox: the operator of the column's header filter, a
   picker of the operators it offers - the same as Filter › Operator › - with *Default:* and the operator
   the column starts with under it (its `operator`, else the type's: `≥` for a number or date, `=` for a
@@ -542,8 +554,9 @@ hides the gear ([Grid config](02-grid-config.md#grid-options)).
   the link - a click opens it in a new tab - and its address, and why the row has no link (a field
   that is empty in it, an address that is not allowed, a field that does not exist).
 - **A problem of a template** is shown under it at once: no address, one that does not start with its
-  scheme, `javascript:` and the other schemes that are not allowed, a field of the grid's own. The
-  column is marked *Error*, and Apply does nothing until it is fixed.
+  scheme, `javascript:` and the other schemes that are not allowed, a field of the grid's own - and so
+  is a problem of the checkbox values. The column is marked *Error*, and Apply does nothing until it is
+  fixed.
 - **Apply** sets the formats of the state, `setState({ formats })`: `getState()` has them - to save
   them, see [Saving it](03-state.md#saving-it). A filter operator that changed is switched as Operator ›
   does it: the header filter's value is filtered on again with it, the state has it
@@ -559,6 +572,69 @@ texts are `columnSettings.*`, see [Texts](12-texts.md#column-settings).
 A developer sets the formats the grid starts with in `ColumnConfig.format`; what the user sets in the
 dialog is the state. To keep the user's settings, save `getState()` (or its `formats`) and give it back
 with `setState()` the next time.
+
+## Label, placeholder, blank / 0, checkboxes
+
+The rest of what the column settings dialog sets is in the column's format too - so the state keeps it
+with the formats, and a developer can start a column with it in `ColumnConfig.format`:
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    columns: {
+        // the header, and wherever the grid names the column: Firm
+        company: { label: 'Company', format: { label: 'Firm', placeholderLabel: true } },
+        // the header filter's placeholder
+        city: { format: { placeholder: 'Search the cities' } },
+        // a number column: a blank cell shows 0
+        discount: { format: { numberOverride: 'BLANK_TO_ZERO' } },
+        // '1' / '0' (text) or 1 / 0 (a number field) as checkboxes
+        newsletter: { format: { checkbox: { checked: '1', unchecked: '0' } } }
+    },
+    layout: {
+        center: [
+            { fields: ['company'], width: 150 },
+            { fields: ['city'], width: 120 },
+            { fields: ['discount'], width: 80 },
+            { fields: ['newsletter'], width: 90 }
+        ]
+    }
+};
+```
+
+| part | for | wins over |
+| --- | --- | --- |
+| `label` | any column: the label wherever the grid names the column - the header, the menus, the column chooser, the filter editor, the footer's filter, copy with headers, the headers of the CSV and Excel exports | `ColumnConfig.label` |
+| `placeholder` | any column but a `boolean` one: the placeholder of its empty header filter | `ColumnConfig.placeholderFilter`, and a BETWEEN's `from..to` |
+| `placeholderLabel` | `true`: the placeholder is the column's label - not with `placeholder` | the same |
+| `numberOverride` | a `number` column: `'BLANK_TO_ZERO'`, `'ZERO_TO_BLANK'`, or `'NONE'` - neither | `ColumnConfig.numberOverride`: `'NONE'` turns it off |
+| `checkbox` | a `text` or `number` column: its cells are checkboxes, see below | |
+
+Each is checked as the rest of a format: an empty label or placeholder, a placeholder of a checkbox
+column, `numberOverride` on another type, checkboxes on a date column throw a `TypeError` when the grid
+is made, or `updateConfig()` or `setState()` is given it. A lookup column (`editor`) takes a label and
+a placeholder, not the rest.
+
+### Checkboxes
+
+`checkbox: { checked?, unchecked? }` makes each cell of a text or number column a checkbox: for a flag
+a database keeps as `1` / `0`, `'Y'` / `'N'`.
+
+- A cell is **checked** when its value is the checked value (`'1'` left out): its text trimmed, `' 1 '`
+  too, or a number equal to it - `1` in a number field. Anything else is unchecked, a blank too.
+- A click, or Space, on an editable cell **writes the other value**: the checked value, or the unchecked
+  one (`'0'` left out) - a number in a number field (`1`, `0`), else the text. An unchecked value `''`
+  empties the cell (null), as Delete does. Shift+click and Ctrl+click make ranges, as on a boolean
+  cell; a readonly grid or cell and `allowPasteClearOnly` write nothing. Undo takes it back.
+- **The value stays the value**: copy, paste, the CSV and Excel exports, sorting, grouping, the header
+  filter (typed: `1`) and the filter menu's value list have `1` and `0`. Find does not look in a
+  checkbox, `fitColumns()` gives it a checkbox's room.
+- A checkbox shows no text: not with `text`, `link`, `number` or `numberOverride` (a `TypeError`), and a
+  number column with checkboxes has no Format ›. A renderer of your own (`renderer`) wins, and a cell of
+  another type in a `dynamicCellTypeColumn` is shown as its type.
+- The checked value is not `''`, the two are not the same, and a number field takes numbers - `'1'`,
+  `'-1'`, `''` for the unchecked one: else a `TypeError`.
 
 ## The type from another field
 
@@ -605,5 +681,8 @@ const config: GridConfig = {
 
 The column option `numberOverride` changes what a number cell shows, not the value:
 `'ZERO_TO_BLANK'` shows 0 as an empty cell, `'BLANK_TO_ZERO'` an empty cell as `0`. See
-[Grid config](02-grid-config.md#column-options). With a display format the 0 is the format's:
-`'BLANK_TO_ZERO'` with two decimals shows `0,00`, and `'ZERO_TO_BLANK'` empties what shows as `0,00`.
+[Grid config](02-grid-config.md#column-options). The user sets it in the column settings dialog (*Show
+blank as 0*, *Show 0 as blank*): `format.numberOverride` in the state, which wins over the column's -
+`'NONE'` turns it off, see [Label, placeholder, blank / 0, checkboxes](#label-placeholder-blank--0-checkboxes).
+With a display format the 0 is the format's: `'BLANK_TO_ZERO'` with two decimals shows `0,00`, and
+`'ZERO_TO_BLANK'` empties what shows as `0,00`.

@@ -16,6 +16,7 @@ import {
     type XlsxSheet
 } from '../xlsx';
 import { rangeBlock } from './cellRanges';
+import { numberOverrideOf } from './cellText';
 import { getCellType } from './getCellType';
 import { getColumnLabel } from './getColumnLabel';
 import { getLayoutFields } from './getLayoutFields';
@@ -130,8 +131,9 @@ function excelCell(gridInterface: GridInterface<any>, field: string): (row: Enti
     const fieldType = datasource.getField(field).type;
     // a column with dynamicCellTypeColumn takes the type from the row
     const dynamic = !!column?.dynamicCellTypeColumn;
-    // as the cells: numberOverride follows the field's type, not the cell's
-    const numberOverride = fieldType === 'number' ? column?.numberOverride : undefined;
+    // as the cells: numberOverride follows the field's type, not the cell's - the user's from the column
+    // settings first (numberOverrideOf)
+    const numberOverride = fieldType === 'number' ? numberOverrideOf(column) : undefined;
     // the column's display format as an Excel number format, undefined where Excel has none. A column
     // with dynamicCellTypeColumn is a text field: it has no date or number format. The template and the
     // link of a text column are not exported: the cell is its value, as copy and the CSV export have it

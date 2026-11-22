@@ -3193,8 +3193,9 @@
 
 .simple-html-grid.filter-editor-content .column-settings-option {
     display: flex;
+    flex-wrap: wrap;
     align-items: baseline;
-    gap: 6px;
+    gap: 3px 6px;
     padding: 3px 6px;
     cursor: pointer;
 }
@@ -3213,8 +3214,9 @@
     outline-offset: -2px;
 }
 
+/* the label: 80px at least on its line, else the badges go to the next line (a long label is cut off) */
 .simple-html-grid.filter-editor-content .column-settings-option-label {
-    flex: 1 1 auto;
+    flex: 1 1 80px;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -3227,8 +3229,17 @@
     font-weight: var(--simple-html-grid-font-weight);
 }
 
-/* what a column has set - Format, Text, Link, Error - a small box on the inputs' background, so its text
- * keeps its contrast on a selected option */
+/* what a column has set - Format, Text, Link, Checkbox, Blank / 0, Label, Placeholder, Error: together at
+ * the right, on a line of their own under the label when the option has no room for them */
+.simple-html-grid.filter-editor-content .column-settings-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 3px;
+    margin-left: auto;
+}
+
+/* a badge: a small box on the inputs' background, so its text keeps its contrast on a selected option */
 .simple-html-grid.filter-editor-content .column-settings-badge {
     flex: none;
     padding: 0 4px;
@@ -3334,6 +3345,36 @@
 
 .simple-html-grid.filter-editor-content .column-settings-check input:focus-visible {
     outline-offset: 1px;
+}
+
+/* the checked and the unchecked value of a column's checkboxes: side by side, under each other when the
+ * dialog is made narrow */
+.simple-html-grid.filter-editor-content .column-settings-values {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px 12px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-value {
+    flex: 1 1 110px;
+    min-width: 0;
+    max-width: 200px;
+}
+
+/* an input that is off - the placeholder while Use the column label is on: its frame dashed, its
+ * placeholder (the label) keeps its colour */
+.simple-html-grid.filter-editor-content .filter-editor-value:disabled {
+    border-style: dashed;
+    background-color: transparent;
+    cursor: default;
+}
+
+/* the preview of a column shown as checkboxes: the checkbox as the cell has it */
+.simple-html-grid.filter-editor-content .column-settings-preview-checkbox {
+    width: 13px;
+    height: 13px;
+    margin: 0;
+    accent-color: var(--simple-html-grid-accent-color);
 }
 
 /* a checkbox or a lookup column: it has no settings */

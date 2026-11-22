@@ -3,6 +3,7 @@ import type { Entity } from '../../datasource/entity';
 import { buildCsv, CSV_SEPARATORS, type CsvOptions, escapeFormula, rawValueText } from '../csv';
 import type { GridInterface } from '../gridInterface';
 import { rangeBlock } from './cellRanges';
+import { numberOverrideOf } from './cellText';
 import { getCellType } from './getCellType';
 import { getColumnLabel } from './getColumnLabel';
 import { getLayoutFields } from './getLayoutFields';
@@ -137,8 +138,9 @@ export function cellText(gridInterface: GridInterface<any>, field: string, forma
     const formatter = datasource.getFormatter(field);
     // a column with dynamicCellTypeColumn takes the type, and so the formatter, from the row
     const dynamic = !!column?.dynamicCellTypeColumn;
-    // as the cells: numberOverride follows the field's type, not the cell's
-    const numberOverride = datasource.getField(field).type === 'number' ? column?.numberOverride : undefined;
+    // as the cells: numberOverride follows the field's type, not the cell's - the user's from the column
+    // settings first (numberOverrideOf)
+    const numberOverride = datasource.getField(field).type === 'number' ? numberOverrideOf(column) : undefined;
 
     return (row) => {
         const cellFormatter = dynamic ? datasource.getFormatter(field, getCellType({ gridInterface }, field, row)) : formatter;

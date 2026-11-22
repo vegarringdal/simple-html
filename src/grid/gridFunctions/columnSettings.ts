@@ -11,17 +11,30 @@ import {
     urlTemplateProblem,
     VALUE_PLACEHOLDER
 } from '../cellTemplate';
-import { type ColumnFormat, formatNumberAs, hasDisplayFormat, hasValueFormat } from '../columnFormat';
+import {
+    CHECKED_VALUE,
+    type CheckboxFormat,
+    type ColumnFormat,
+    checkboxProblem,
+    checkboxValues,
+    formatNumberAs,
+    hasDisplayFormat,
+    hasValueFormat,
+    isCheckedValue,
+    UNCHECKED_VALUE
+} from '../columnFormat';
 import type { Grid } from '../grid';
 import type { MenuItem } from '../gridMenus';
+import { numberOverrideOf, overrideNumberText, zeroText } from './cellText';
 import { defaultHeaderOperator, headerFilterType, headerOperators } from './columnFilterOptions';
 import { contextMenuAttributes } from './contextMenuAttributes';
 import { moveDialog, resizeHandles, showDialog } from './dialogFrame';
 import { formatSubmenu, NUMBER_SAMPLE, PERCENT_SAMPLE } from './formatSubmenu';
-import { getColumnLabel } from './getColumnLabel';
+import { getColumnLabel, getConfigColumnLabel } from './getColumnLabel';
 import { getHeaderFilterOperator } from './getHeaderFilterOperator';
 import { getLayoutFields } from './getLayoutFields';
 import { gridText } from './gridText';
+import { defaultFilterPlaceholder, headerFilterPlaceholder } from './headerFilterPlaceholder';
 import { HEADER_OPERATOR_TEXTS, setHeaderFilterOperator } from './headerOperatorMenu';
 import { removeContextMenu } from './removeContextMenu';
 import { closeFilterEditor } from './renderFilterEditor';
@@ -41,17 +54,23 @@ import { attachTooltips, hideTooltip, tooltipsEnabled } from './tooltip';
  *
  * - **Left**: the columns of the layout, in their order - a listbox, one stop of Tab, the arrows, Home,
  *   End, PageUp / PageDown and a letter pick one. Each has its label, its type and what it has set:
- *   Format, Text, Link - or Error.
- * - **Right**, the column picked: a date, datetime or number column has its format, a picker that opens
- *   the entries of Format › (formatSubmenu.ts - one list of the formats); a text column the text it shows
- *   (a template, `ColumnFormat.text`), Show as link, the address (`ColumnFormat.link.url`) and Open in a
- *   new tab; a checkbox and a lookup column have none. A template's ⟨{ }⟩ button puts a field in it at the
- *   caret, from a menu of the fields of the columns and the row. Then the operator of the column's header
- *   filter - a picker of the operators it offers, the column's default said under it - for every column
- *   but a checkbox. Under it the preview: what the cell shows in the current row (else the first), the
- *   link and its address, and why a row has no link.
+ *   Format, Text, Link, Checkbox, Blank / 0, Label, Placeholder - or Error.
+ * - **Right**, the column picked: its label (`ColumnFormat.label`, empty the column's own). A date, datetime
+ *   or number column has its format, a picker that opens the entries of Format › (formatSubmenu.ts - one
+ *   list of the formats); a number column Show blank as 0 and Show 0 as blank too (`numberOverride`, one or
+ *   the other). A text column the text it shows (a template, `ColumnFormat.text`), Show as link, the
+ *   address (`ColumnFormat.link.url`) and Open in a new tab; a checkbox and a lookup column have none. A
+ *   text and a number column can be shown as checkboxes (`ColumnFormat.checkbox`): Show as checkbox, the
+ *   checked and the unchecked value - while it is on, their template, link, format and blank / 0 are
+ *   gone, a checkbox shows no text. A template's ⟨{ }⟩ button puts a field in it at the caret, from a menu
+ *   of the fields of the columns and the row. Then, for every column but a checkbox, the header filter:
+ *   its placeholder (a text, or Use the column label - `placeholder`, `placeholderLabel`) and its
+ *   operator - a picker of the operators it offers, the column's default said under it. Under it the
+ *   preview: what the cell shows in the current row (else the first), the link and its address, and why
+ *   a row has no link.
  * - **The footer**: Reset column and Reset all go back to the formats the grid starts with (the config's
- *   `ColumnConfig.format`, or `initialState.formats`) and the column's default operator, Cancel closes,
+ *   `ColumnConfig.format`, or `initialState.formats` - the label, the placeholder, blank / 0 and the
+ *   checkboxes are in them) and the column's default operator, Cancel closes,
  *   Apply sets the formats of the state (`setState({ formats })`, so `getState()` has them, to save) and
  *   switches the header filters whose operator changed, as Operator › does - and Apply & close. A template that is not
  *   valid - an address of a scheme that is not allowed, one that does not start with its scheme - has its
@@ -187,6 +206,31 @@ function formatProblems(format: ColumnFormat | undefined): Problem[] {
 }
 
 /**
+ * What is wrong with the values of a column's checkboxes, whatever the row (checkboxProblem): the checked
+ * value is empty, a value of a number column is no number, the two are the same. Apply does nothing
+ * while a column has one
+ * @param type the type of the column's field
+ */
+function checkboxProblems(format: ColumnFormat | undefined, type: ColumnKind): Problem[] {
+    if (!format?.checkbox || (type !== 'text' && type !== 'number')) {
+        return [];
+    }
+    const values = checkboxValues(format.checkbox);
+    switch (checkboxProblem(format.checkbox, type)) {
+        case 'checkedEmpty':
+            return [{ id: 'columnSettings.problem.checkedEmpty' }];
+        case 'checkedNumber':
+            return [{ id: 'columnSettings.problem.notNumber', values: { value: values.checked } }];
+        case 'uncheckedNumber':
+            return [{ id: 'columnSettings.problem.notNumber', values: { value: values.unchecked } }];
+        case 'same':
+            return [{ id: 'columnSettings.problem.sameValues' }];
+        default:
+            return [];
+    }
+}
+
+/**
  * What the preview finds in a row: a field the templates name that is no column, no field of the
  * datasource and not in the row (a typo, mostly), and why the row has no link - a field of the address
  * empty, no valid address, a scheme that is not allowed. Not for a format with a problem of its own
@@ -311,7 +355,16 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
     };
 
     // the columns whose format has a problem: Apply does nothing while there is one
-    const withProblems = new Set(Object.keys(settings.formats).filter((name) => formatProblems(settings.formats[name]).length));
+    const withProblems = new Set(
+        Object.keys(settings.formats).filter(
+            (name) =>
+                formatProblems(settings.formats[name]).length ||
+                (fields.includes(name) && checkboxProblems(settings.formats[name], kindOf(ctx, name)).length)
+        )
+    );
+
+    /** the label of a column in the dialog: the one typed (the draft's), else the column's own */
+    const labelOf = (name: string) => settings.formats[name]?.label || getConfigColumnLabel(ctx, name);
 
     const apply = () => {
         if (withProblems.size) {
@@ -330,19 +383,34 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
     };
 
     const typeName = (name: string) => text(`columnSettings.type.${kindOf(ctx, name)}`);
-    /** what a column has set, for its option in the list */
-    const badge = (name: string): TextId | null => {
+    /** what a column has set, for its option in the list: Error alone when it has a problem */
+    const badges = (name: string): TextId[] => {
         const set = settings.formats[name];
         if (withProblems.has(name)) {
-            return 'columnSettings.badge.problem';
+            return ['columnSettings.badge.problem'];
+        }
+        const marks: TextId[] = [];
+        if (set?.checkbox) {
+            marks.push('columnSettings.badge.checkbox');
         }
         if (set?.link) {
-            return 'columnSettings.badge.link';
+            marks.push('columnSettings.badge.link');
+        } else if (set?.text !== undefined) {
+            marks.push('columnSettings.badge.text');
         }
-        if (set?.text !== undefined) {
-            return 'columnSettings.badge.text';
+        if (set && hasValueFormat(set)) {
+            marks.push('columnSettings.badge.format');
         }
-        return set && hasValueFormat(set) ? 'columnSettings.badge.format' : null;
+        if (set?.numberOverride !== undefined) {
+            marks.push('columnSettings.badge.numberOverride');
+        }
+        if (set?.label !== undefined) {
+            marks.push('columnSettings.badge.label');
+        }
+        if (set?.placeholder !== undefined || set?.placeholderLabel) {
+            marks.push('columnSettings.badge.placeholder');
+        }
+        return marks;
     };
 
     /**
@@ -363,7 +431,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         } else if (isTypedCharacter(event) && event.key !== ' ') {
             const letter = event.key.toLocaleLowerCase();
             const after = [...fields.slice(index + 1), ...fields.slice(0, index + 1)];
-            const found = after.find((name) => getColumnLabel(ctx, name).toLocaleLowerCase().startsWith(letter));
+            const found = after.find((name) => labelOf(name).toLocaleLowerCase().startsWith(letter));
             next = found === undefined ? -1 : fields.indexOf(found);
         }
         if (next !== -1) {
@@ -601,6 +669,174 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         </div>`;
     };
 
+    /**
+     * A text of the column that is not a template - its label, the header filter's placeholder: its label
+     * and the input. Empty is none: the column's own, which the input shows as its placeholder
+     * @param part the part of the input's id
+     * @param shown what the input shows when it is empty
+     * @param write puts the text in the dialog, `''` for none
+     * @param disabled the input is off: Use the column label
+     */
+    const textInput = (
+        part: string,
+        label: TextId,
+        value: string,
+        shown: string,
+        write: (value: string) => void,
+        disabled = false
+    ) => {
+        const inputId = idOf(ctx, part);
+        return html`<label class="column-settings-label" for=${inputId}>${text(label)}</label>
+            <div class="column-settings-input-row">
+                <input
+                    id=${inputId}
+                    class="filter-editor-value"
+                    type="text"
+                    spellcheck="false"
+                    autocomplete="off"
+                    placeholder=${shown}
+                    ?disabled=${disabled}
+                    .value=${live(value)}
+                    @input=${(event: Event) => write((event.target as HTMLInputElement).value)}
+                />
+            </div>`;
+    };
+
+    /** the column's label (`ColumnFormat.label`): empty, the column's own - shown in the input */
+    const labelSettings = () =>
+        html`<div class="column-settings-field">
+            ${textInput('label', 'columnSettings.label', format?.label ?? '', getConfigColumnLabel(ctx, field), (value) =>
+                change((next) => {
+                    if (value.trim() === '') {
+                        delete next.label;
+                    } else {
+                        next.label = value;
+                    }
+                })
+            )}
+        </div>`;
+
+    /**
+     * The placeholder of the column's header filter: a text (`ColumnFormat.placeholder`, empty the one it
+     * has without - shown in the input), or Use the column label (`placeholderLabel`) - the input is off
+     * then, and shows the label. Every column but a checkbox one, as the operator
+     */
+    const placeholderSettings = () => {
+        const operator = settings.operators[field];
+        if (!operator) {
+            return nothing;
+        }
+        const useLabel = format?.placeholderLabel === true;
+        return html`<div class="column-settings-field">
+            ${textInput(
+                'placeholder',
+                'columnSettings.placeholder',
+                useLabel ? '' : (format?.placeholder ?? ''),
+                useLabel ? headerFilterPlaceholder(ctx, field, format, operator) : defaultFilterPlaceholder(ctx, field, operator),
+                (value) =>
+                    change((next) => {
+                        if (value.trim() === '') {
+                            delete next.placeholder;
+                        } else {
+                            next.placeholder = value;
+                        }
+                    }),
+                useLabel
+            )}
+            ${checkbox('columnSettings.placeholderLabel', useLabel, (on) =>
+                change((next) => {
+                    delete next.placeholder;
+                    if (on) {
+                        next.placeholderLabel = true;
+                    } else {
+                        delete next.placeholderLabel;
+                    }
+                })
+            )}
+        </div>`;
+    };
+
+    /**
+     * A number column: Show blank as 0, Show 0 as blank - one or the other (`ColumnFormat.numberOverride`).
+     * They start as the column shows them, its own `numberOverride` too: one turned off over the column's
+     * own is `'NONE'`, the same as the column's own is none in the format
+     */
+    const numberOverrideSettings = () => {
+        const column = gridInterface.__getGridConfig().columns[field];
+        const own = column?.numberOverride;
+        const now = numberOverrideOf({ ...column, format });
+        const set = (override: 'BLANK_TO_ZERO' | 'ZERO_TO_BLANK' | undefined) =>
+            change((next) => {
+                if (override === own) {
+                    delete next.numberOverride;
+                } else {
+                    next.numberOverride = override ?? 'NONE';
+                }
+            });
+        return html`${checkbox('columnSettings.blankToZero', now === 'BLANK_TO_ZERO', (on) => set(on ? 'BLANK_TO_ZERO' : undefined))}
+        ${checkbox('columnSettings.zeroToBlank', now === 'ZERO_TO_BLANK', (on) => set(on ? 'ZERO_TO_BLANK' : undefined))}`;
+    };
+
+    /**
+     * A text or number column: Show as checkbox (`ColumnFormat.checkbox`), and while it is on the checked and
+     * the unchecked value side by side, a hint and their problems under them. Turned on, the template, the
+     * link, the number format and blank / 0 go: a checkbox shows no text - their settings are not shown
+     */
+    const checkboxSettings = () => {
+        const set = format?.checkbox;
+        const toggle = checkbox('columnSettings.checkbox', set !== undefined, (on) =>
+            change((next) => {
+                if (on) {
+                    delete next.text;
+                    delete next.link;
+                    delete next.number;
+                    delete next.numberOverride;
+                    next.checkbox = { checked: CHECKED_VALUE, unchecked: UNCHECKED_VALUE };
+                } else {
+                    delete next.checkbox;
+                }
+            })
+        );
+        if (!set) {
+            return toggle;
+        }
+        const values = checkboxValues(set);
+        const problems = checkboxProblems(format, kind);
+        const hintId = idOf(ctx, 'checkbox-hint');
+        const problemId = idOf(ctx, 'checkbox-problem');
+        /** the input of one of the values */
+        const valueInput = (part: keyof CheckboxFormat, label: TextId) => {
+            const inputId = idOf(ctx, part);
+            return html`<div class="column-settings-field column-settings-value">
+                <label class="column-settings-label" for=${inputId}>${text(label)}</label>
+                <input
+                    id=${inputId}
+                    class="filter-editor-value"
+                    type="text"
+                    spellcheck="false"
+                    autocomplete="off"
+                    aria-describedby=${`${hintId} ${problemId}`}
+                    aria-invalid=${problems.length ? 'true' : 'false'}
+                    .value=${live(values[part])}
+                    @input=${(event: Event) =>
+                        change((next) => {
+                            next.checkbox = { ...values, [part]: (event.target as HTMLInputElement).value };
+                        })}
+                />
+            </div>`;
+        };
+        return html`${toggle}
+            <div class="column-settings-field">
+                <div class="column-settings-values">
+                    ${valueInput('checked', 'columnSettings.checked')} ${valueInput('unchecked', 'columnSettings.unchecked')}
+                </div>
+                <div class="column-settings-hint" id=${hintId}>${text('columnSettings.checkbox.hint')}</div>
+                <div class="column-settings-problems" id=${problemId} aria-live="polite">
+                    ${problems.map((problem) => html`<div class="column-settings-problem">${text(problem.id, problem.values)}</div>`)}
+                </div>
+            </div>`;
+    };
+
     /** what the cell shows in the row of the preview, its link and why it has none */
     const preview = () => {
         if (kind === 'boolean' || kind === 'lookup') {
@@ -613,9 +849,27 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                 : 'columnSettings.preview.first'
             : 'columnSettings.preview.none';
         let content: TemplateResult | typeof nothing = nothing;
-        if (at) {
-            // the format of the dialog through the grid's own code, as the cell will show it
-            const shown = gridInterface.__getCellFormatter(field, undefined, at.row, format).format(at.row[field]);
+        if (at && format?.checkbox) {
+            // a checkbox, checked as the cell will be
+            content = html`<div class="column-settings-preview-cell">
+                <input
+                    type="checkbox"
+                    class="column-settings-preview-checkbox"
+                    disabled
+                    aria-label=${labelOf(field)}
+                    .checked=${isCheckedValue(at.row[field], format.checkbox)}
+                />
+            </div>`;
+        } else if (at) {
+            // the format of the dialog through the grid's own code, as the cell will show it - with the
+            // blank / 0 of a number column
+            const formatter = gridInterface.__getCellFormatter(field, undefined, at.row, format);
+            const column = { ...gridInterface.__getGridConfig().columns[field], format };
+            const formatted = formatter.format(at.row[field]);
+            const shown =
+                kind === 'number'
+                    ? overrideNumberText(formatted, numberOverrideOf(column), zeroText(column, formatter))
+                    : formatted;
             const link = formatProblems(format).length ? null : gridInterface.__getLinkResult(field, at.row, format);
             const href = link && 'href' in link ? link.href : null;
             const problems = formatProblems(format).length ? [] : rowProblems(ctx, field, format, at.row, link);
@@ -639,12 +893,15 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
     };
 
     const settingsOf = () => {
+        // shown as checkboxes: no text to format
+        const checkboxes = format?.checkbox !== undefined;
         switch (kind) {
             case 'text':
-                return textSettings();
+                return html`${checkboxSettings()} ${checkboxes ? nothing : textSettings()}`;
+            case 'number':
+                return html`${checkboxSettings()} ${checkboxes ? nothing : html`${formatSettings()} ${numberOverrideSettings()}`}`;
             case 'date':
             case 'datetime':
-            case 'number':
                 return formatSettings();
             default:
                 return html`<div class="column-settings-none">${text(kind === 'lookup' ? 'columnSettings.none.lookup' : 'columnSettings.none.boolean')}</div>`;
@@ -682,7 +939,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                     @keydown=${listKeydown}
                 >
                     ${fields.map((name, index) => {
-                        const mark = badge(name);
+                        const marks = badges(name);
                         return html`<div
                             class="column-settings-option"
                             role="option"
@@ -691,13 +948,19 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                             aria-selected=${name === field ? 'true' : 'false'}
                             @click=${() => select(name)}
                         >
-                            <span class="column-settings-option-label">${getColumnLabel(ctx, name)}</span>
+                            <span class="column-settings-option-label">${labelOf(name)}</span>
                             <span class="column-settings-option-type">${typeName(name)}</span>
                             ${
-                                mark
-                                    ? html`<span class=${`column-settings-badge${mark === 'columnSettings.badge.problem' ? ' column-settings-badge-problem' : ''}`}
-                                          >${text(mark)}</span
-                                      >`
+                                // the badges together: on a line of their own when the option has no room
+                                marks.length
+                                    ? html`<span class="column-settings-badges">
+                                          ${marks.map(
+                                              (mark) =>
+                                                  html`<span class=${`column-settings-badge${mark === 'columnSettings.badge.problem' ? ' column-settings-badge-problem' : ''}`}
+                                                      >${text(mark)}</span
+                                                  >`
+                                          )}
+                                      </span>`
                                     : nothing
                             }
                         </div>`;
@@ -705,10 +968,10 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                 </div>
                 <div class="column-settings-panel">
                     <div class="column-settings-heading">
-                        <span class="column-settings-heading-label">${getColumnLabel(ctx, field)}</span>
+                        <span class="column-settings-heading-label">${labelOf(field)}</span>
                         <span class="column-settings-option-type">${typeName(field)}</span>
                     </div>
-                    ${settingsOf()} ${operatorSettings()} ${preview()}
+                    ${labelSettings()} ${settingsOf()} ${placeholderSettings()} ${operatorSettings()} ${preview()}
                 </div>
             </div>
             <div class="filter-editor-footer">

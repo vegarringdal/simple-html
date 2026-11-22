@@ -8,6 +8,9 @@ import { setTexts } from '../../texts';
 import {
     assertColumnFormat,
     type ColumnFormat,
+    checkboxProblem,
+    checkboxValueOf,
+    checkboxValues,
     compactNumberFormat,
     DATE_FORMATS,
     DATETIME_FORMATS,
@@ -21,6 +24,7 @@ import {
     formatValueAs,
     hasDisplayFormat,
     hasValueFormat,
+    isCheckedValue,
     isoWeek,
     usWeek
 } from '../columnFormat';
@@ -373,6 +377,12 @@ describe('display formats - the value of a cell', () => {
         expect(hasDisplayFormat({ number: {} })).toBe(true);
         expect(hasDisplayFormat({ text: '{value} kg' })).toBe(true);
         expect(hasDisplayFormat({ link: { url: '{website}' } })).toBe(true);
+        // the rest of the column settings: a format of its own too
+        expect(hasDisplayFormat({ label: 'Who' })).toBe(true);
+        expect(hasDisplayFormat({ placeholder: 'Search' })).toBe(true);
+        expect(hasDisplayFormat({ placeholderLabel: false })).toBe(true);
+        expect(hasDisplayFormat({ numberOverride: 'NONE' })).toBe(true);
+        expect(hasDisplayFormat({ checkbox: {} })).toBe(true);
     });
 
     it('expect hasValueFormat only for a date or number format: a template needs the row', () => {
@@ -472,7 +482,9 @@ describe('display formats - the check of a format', () => {
         expect(check(null, 'date')).toThrow(TypeError);
         expect(check([], 'date')).toThrow(TypeError);
         expect(check({ color: 'red' }, 'text')).toThrow(
-            new TypeError("GridConfig: columns.field.format has 'color', a format has date, number, text, link")
+            new TypeError(
+                "GridConfig: columns.field.format has 'color', a format has date, number, text, link, label, placeholder, placeholderLabel, numberOverride, checkbox"
+            )
         );
     });
 
@@ -569,6 +581,127 @@ describe('display formats - the check of a format', () => {
         );
         expect(check({ link: { url: '{base}/customer/{id}' } }, 'text')).toThrow(/it starts with https:\/\//);
         expect(check({ link: { url: 'https://x.com/{__controller}' } }, 'text')).toThrow(/has \{__controller\}/);
+    });
+
+    it('expect a label and a placeholder on any column, text not empty; no placeholder on a checkbox column', () => {
+        for (const type of ['text', 'number', 'date', 'datetime', 'boolean'] as const) {
+            expect(check({ label: 'Who' }, type), type).not.toThrow();
+        }
+        expect(check({ placeholder: 'Search', placeholderLabel: false }, 'number')).not.toThrow();
+        expect(check({ placeholderLabel: true }, 'date')).not.toThrow();
+        // a lookup column takes them: they are no format of its cells
+        expect(check({ label: 'Code', placeholder: 'A code', numberOverride: undefined }, 'number', true)).not.toThrow();
+        expect(check({ label: '' }, 'text')).toThrow(/format.label is "", it is the column's label: text, not ''/);
+        expect(check({ label: '  ' }, 'text')).toThrow(TypeError);
+        expect(check({ label: 12 }, 'text')).toThrow(/format.label is 12/);
+        expect(check({ placeholder: '' }, 'text')).toThrow(
+            /format.placeholder is "", it is the placeholder of the header filter/
+        );
+        expect(check({ placeholderLabel: 'yes' }, 'text')).toThrow(/format.placeholderLabel is "yes", it is true or false/);
+        expect(check({ placeholder: 'Search', placeholderLabel: true }, 'text')).toThrow(
+            /has placeholder and placeholderLabel: true - the placeholder is the text or the label, not both/
+        );
+        expect(check({ placeholder: 'Yes' }, 'boolean')).toThrow(
+            /format.placeholder is for a header filter that is typed in, 'field' is boolean: its filter is a checkbox/
+        );
+        expect(check({ placeholderLabel: true }, 'boolean')).toThrow(/format.placeholderLabel is for a header filter/);
+        // a lookup column on a boolean field filters on its labels, typed
+        expect(check({ placeholderLabel: true }, 'boolean', true)).not.toThrow();
+    });
+
+    it('expect numberOverride on a number field, of the three values; not on a lookup column', () => {
+        for (const numberOverride of ['BLANK_TO_ZERO', 'ZERO_TO_BLANK', 'NONE']) {
+            expect(check({ numberOverride, number: { decimals: 2 } }, 'number'), numberOverride).not.toThrow();
+        }
+        expect(check({ numberOverride: 'ZERO' }, 'number')).toThrow(
+            /format.numberOverride is "ZERO", it is 'BLANK_TO_ZERO', 'ZERO_TO_BLANK', 'NONE'/
+        );
+        expect(check({ numberOverride: 'NONE' }, 'text')).toThrow(/format.numberOverride is for a number field, 'field' is text/);
+        expect(check({ numberOverride: 'NONE' }, 'number', true)).toThrow(/a lookup column \(editor\) shows the label/);
+    });
+
+    it('expect checkboxes on a text or number field, values that are text, numbers for a number field', () => {
+        expect(check({ checkbox: {} }, 'text')).not.toThrow();
+        expect(check({ checkbox: {} }, 'number')).not.toThrow();
+        expect(check({ checkbox: { checked: 'Y', unchecked: 'N' }, label: 'Flag' }, 'text')).not.toThrow();
+        expect(check({ checkbox: { checked: '1', unchecked: '' } }, 'number')).not.toThrow();
+        expect(check({ checkbox: { checked: '-1', unchecked: '0.5' } }, 'number')).not.toThrow();
+
+        expect(check({ checkbox: {} }, 'date')).toThrow(/format.checkbox is for a text or number field, 'field' is date/);
+        expect(check({ checkbox: {} }, 'boolean')).toThrow(TypeError);
+        expect(check({ checkbox: {} }, 'text', true)).toThrow(/a lookup column \(editor\) shows the label/);
+        expect(check({ checkbox: true }, 'text')).toThrow(
+            /format.checkbox is true, it is an object: \{ checked\?: '1', unchecked\?: '0' \}/
+        );
+        expect(check({ checkbox: { on: '1' } }, 'text')).toThrow(/format.checkbox has 'on', a checkbox has checked, unchecked/);
+        expect(check({ checkbox: { checked: 1 } }, 'number')).toThrow(/format.checkbox.checked is 1, it is text/);
+        expect(check({ checkbox: { checked: '' } }, 'text')).toThrow(
+            /format.checkbox.checked is "", it is the value of a checked cell/
+        );
+        expect(check({ checkbox: { checked: 'yes' } }, 'number')).toThrow(
+            /format.checkbox.checked is "yes": 'field' is a number field, it takes a number/
+        );
+        expect(check({ checkbox: { unchecked: 'no' } }, 'number')).toThrow(
+            /format.checkbox.unchecked is "no": 'field' is a number field/
+        );
+        expect(check({ checkbox: { checked: '0' } }, 'text')).toThrow(
+            /format.checkbox has "0" as the checked and the unchecked value: a click could not uncheck a cell/
+        );
+        // the same number written two ways
+        expect(check({ checkbox: { checked: '1', unchecked: '1.0' } }, 'number')).toThrow(
+            /as the checked and the unchecked value/
+        );
+    });
+
+    it('expect checkboxes not with a template, a link, a number format or blank / 0: a checkbox shows no text', () => {
+        expect(check({ checkbox: {}, text: '{value}' }, 'text')).toThrow(
+            /format has checkbox and text: a checkbox shows no text, it is the one or the other/
+        );
+        expect(check({ checkbox: {}, link: { url: '{site}' } }, 'text')).toThrow(/has checkbox and link/);
+        expect(check({ checkbox: {}, number: {} }, 'number')).toThrow(/has checkbox and number/);
+        expect(check({ checkbox: {}, numberOverride: 'NONE' }, 'number')).toThrow(/has checkbox and numberOverride/);
+    });
+});
+
+describe('display formats - the checkboxes of a text or number column', () => {
+    it('expect the values with the defaults 1 and 0', () => {
+        expect(checkboxValues({})).toEqual({ checked: '1', unchecked: '0' });
+        expect(checkboxValues({ checked: 'Y' })).toEqual({ checked: 'Y', unchecked: '0' });
+        expect(checkboxValues({ checked: 'Y', unchecked: '' })).toEqual({ checked: 'Y', unchecked: '' });
+    });
+
+    it('expect a cell checked when its value is the checked value: its text trimmed, a number equal to it', () => {
+        const ones = {};
+        expect(
+            [' 1 ', '1', 1, 1.0, '0', 0, '', null, undefined, '01', 'true', true].map((value) => isCheckedValue(value, ones))
+        ).toEqual([true, true, true, true, false, false, false, false, false, false, false, false]);
+        expect(isCheckedValue(1, { checked: '1.0' })).toBe(true);
+        expect(isCheckedValue('Y', { checked: 'Y' })).toBe(true);
+        expect(isCheckedValue('y', { checked: 'Y' })).toBe(false);
+        // a number is never the checked value of text
+        expect(isCheckedValue(0, { checked: 'Y' })).toBe(false);
+    });
+
+    it('expect the value written: a number for a number field, the text for the rest, null for an empty value', () => {
+        expect(checkboxValueOf(true, {}, 'text')).toBe('1');
+        expect(checkboxValueOf(false, {}, 'text')).toBe('0');
+        expect(checkboxValueOf(true, {}, 'number')).toBe(1);
+        expect(checkboxValueOf(false, {}, 'number')).toBe(0);
+        expect(checkboxValueOf(true, { checked: 'Y', unchecked: 'N' }, 'text')).toBe('Y');
+        expect(checkboxValueOf(false, { checked: 'Y', unchecked: '' }, 'text')).toBeNull();
+        expect(checkboxValueOf(false, { unchecked: ' ' }, 'number')).toBeNull();
+    });
+
+    it('expect the problems of the values: none, the checked one empty, no number, the same two', () => {
+        expect(checkboxProblem({}, 'text')).toBeNull();
+        expect(checkboxProblem({ unchecked: '' }, 'number')).toBeNull();
+        expect(checkboxProblem({ checked: ' ' }, 'text')).toBe('checkedEmpty');
+        expect(checkboxProblem({ checked: 'x' }, 'number')).toBe('checkedNumber');
+        expect(checkboxProblem({ unchecked: 'x' }, 'number')).toBe('uncheckedNumber');
+        expect(checkboxProblem({ checked: 'x' }, 'text')).toBeNull();
+        expect(checkboxProblem({ checked: 'Y', unchecked: ' Y ' }, 'text')).toBe('same');
+        expect(checkboxProblem({ checked: '1', unchecked: '1.0' }, 'number')).toBe('same');
+        expect(checkboxProblem({ checked: '1', unchecked: '1.0' }, 'text')).toBeNull();
     });
 });
 

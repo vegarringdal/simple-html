@@ -249,8 +249,9 @@ const conditions = (operators: FilterOperator[]): FilterCondition[] =>
 
 /**
  * The column settings dialog: the list of every kind of column, the settings of a text column - its
- * template, a link and each problem of an address - of a number column (its format picker), of a checkbox
- * and a lookup column, and the preview of the current row, the first row and none
+ * template, a link and each problem of an address - of a number column (its format picker, blank / 0, a
+ * label and a placeholder, its checkboxes and each problem of their values), of a checkbox and a lookup
+ * column, and the preview of the current row, the first row and none
  */
 function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: () => void) {
     const dialog = () => document.querySelector('dialog.column-settings') as HTMLDialogElement;
@@ -279,8 +280,9 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
     // a template: the column's badge
     type('text', '{name}');
     check();
-    // a link: no address, then one that does not start with its scheme, then one of another scheme
-    toggle(0);
+    // a link: no address, then one that does not start with its scheme, then one of another scheme. The
+    // first checkbox is Show as checkbox
+    toggle(1);
     check();
     type('url', '«zz»');
     check();
@@ -298,6 +300,23 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
     (dialog().querySelector('.column-settings-format') as HTMLElement).click();
     check();
     (document.querySelector('[data-menu-id="header.format.number.norwegian"]') as HTMLElement).click();
+    check();
+    // Show blank as 0 (Show as checkbox, Show blank as 0, Show 0 as blank, Use the column label), a label
+    // and a placeholder of the user's: their badges
+    toggle(1);
+    type('label', '«age2»');
+    type('placeholder', '«x»');
+    check();
+    toggle(3);
+    check();
+    // shown as checkboxes: the two values, their hint, each problem of them
+    toggle(0);
+    check();
+    type('checked', '');
+    check();
+    type('checked', '«x»');
+    check();
+    type('checked', '0');
     check();
     // a checkbox and a lookup column: no settings
     option('«Active»').click();

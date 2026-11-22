@@ -2,11 +2,12 @@ import { html, nothing, render, svg } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import { type Entity, isGroupRow } from '../../datasource/entity';
 import { isMissingValue } from '../../datasource/validatorRegistry';
+import { checkboxValueOf, isCheckedValue } from '../columnFormat';
 import type { Grid } from '../grid';
 import { ariaColIndex, setAria } from './ariaGrid';
 import { asPx } from './asPx';
 import { cellRowKeyNavigationCellRowHandler } from './cellRowKeyNavigationCellRowHandler';
-import { overrideNumberText, zeroText } from './cellText';
+import { numberOverrideOf, overrideNumberText, zeroText } from './cellText';
 import type { ColType } from './colType';
 import { contextmenuDate } from './contextmenuDate';
 import { contextmenuRow } from './contextmenuRow';
@@ -158,13 +159,21 @@ export function renderRowCell(
             dimmed = 'simple-html-mandatory';
         }
 
+        // a text or number column shown as checkboxes (ColumnFormat.checkbox): checked when the value is
+        // the checked value. Not a cell of another type (dynamicCellTypeColumn), nor a lookup column
+        const checkboxFormat =
+            !lookupColumn && cellConfigType === fieldType && (fieldType === 'text' || fieldType === 'number')
+                ? cellConfig.format?.checkbox
+                : undefined;
+
         // a checkbox shows the raw value, every other cell the text from the formatter
-        const checked = Boolean(entity?.[attribute]);
+        const checked = checkboxFormat ? isCheckedValue(entity?.[attribute], checkboxFormat) : Boolean(entity?.[attribute]);
         const formatted = formatter.format(entity?.[attribute]);
-        // not for a lookup column, it shows a label. 0 as the display format shows it: 0,00
+        // not for a lookup column, it shows a label. 0 as the display format shows it: 0,00. The user's
+        // blank / 0 from the column settings first (numberOverrideOf)
         const value =
             fieldType === 'number' && !lookupColumn
-                ? overrideNumberText(formatted, cellConfig.numberOverride, zeroText(cellConfig, formatter))
+                ? overrideNumberText(formatted, numberOverrideOf(cellConfig), zeroText(cellConfig, formatter))
                 : formatted;
 
         // the name of the input for a screen reader: the column's label, as in the header
@@ -232,7 +241,7 @@ export function renderRowCell(
                 repeated,
                 hostStyle: firstLinePadding
             });
-        } else if (cellConfigType === 'boolean') {
+        } else if (cellConfigType === 'boolean' || checkboxFormat) {
             // the renderer the cell had is done: lit-html replaces its host
             releaseRenderer(cell);
             render(
@@ -283,6 +292,14 @@ export function renderRowCell(
                             if (!cellReadOnly && !config.readonly) {
                                 if (cellConfig.allowPasteClearOnly) {
                                     // nothing
+                                } else if (checkboxFormat) {
+                                    // the other value than the cell has: the checked value, or the unchecked
+                                    // one - a number for a number field. From the value, not the checkbox: the
+                                    // click above rendered the cell again
+                                    const on = !isCheckedValue(entity[attribute], checkboxFormat);
+                                    entity[attribute] = checkboxValueOf(on, checkboxFormat, fieldType);
+                                    e.target.checked = isCheckedValue(entity[attribute], checkboxFormat);
+                                    showEdit();
                                 } else {
                                     // booleans are not parsed, the checkbox gives the value
                                     entity[attribute] = !e.target.checked;

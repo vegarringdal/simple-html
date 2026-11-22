@@ -12,9 +12,12 @@ import { isMultilineCell } from './multilineText';
  * What a cell of a field shows for a row, see cellTextOf
  */
 export interface CellText {
-    /** the type the cell is shown as, see getCellType. A `boolean` cell is a checkbox, its text is not shown */
+    /**
+     * the type the cell is shown as, see getCellType. A `boolean` cell is a checkbox, its text is not shown:
+     * also the cell of a column with checkboxes (`ColumnFormat.checkbox`), its text is the value's
+     */
     type: FieldType;
-    /** the text: the value formatted - with the column's display format (`ColumnConfig.format`) - and the column's `numberOverride` */
+    /** the text: the value formatted - with the column's display format (`ColumnConfig.format`) - and the column's `numberOverride` (numberOverrideOf) */
     text: string;
     /** a cell of several lines, see isMultilineCell: it shows its first line, more in a taller row */
     multiline: boolean;
@@ -35,6 +38,20 @@ export function overrideNumberText(text: string, numberOverride: ColumnConfig['n
         return '';
     }
     return text;
+}
+
+/**
+ * What a number column shows for a blank and for 0: the user's choice from the column settings
+ * (`ColumnFormat.numberOverride`, the state's formats) wins over the column's `numberOverride` - its
+ * `'NONE'` turns the column's off. undefined: none, also for a column with checkboxes
+ * (`ColumnFormat.checkbox`): they show no text, and the exports write the value
+ */
+export function numberOverrideOf(column: ColumnConfig | undefined): ColumnConfig['numberOverride'] {
+    if (column?.format?.checkbox) {
+        return undefined;
+    }
+    const override = column?.format?.numberOverride ?? column?.numberOverride;
+    return override === 'NONE' ? undefined : override;
 }
 
 /**
@@ -87,12 +104,19 @@ export function cellTextOf(
             ? formatter.format(row[field])
             : fillTemplate(template, cellFieldText(field, row[field], formatter, ctx.gridInterface.__fieldTextOf(row)));
 
+    const numberOverride = numberOverrideOf(column);
+    // the checkboxes of a text or number column (ColumnFormat.checkbox): a checkbox, its text the value's
+    const checkbox = fieldConfig.type === 'text' || fieldConfig.type === 'number' ? column?.format?.checkbox : undefined;
+
     return (row) => {
         // getCellType reads the row only for a dynamicCellTypeColumn, the field's type otherwise
         const type = column?.dynamicCellTypeColumn ? getCellType(ctx, field, row) : fieldConfig.type;
+        if (checkbox && type === fieldConfig.type) {
+            return { type: 'boolean', text: formatter.format(row[field]), multiline: false };
+        }
         const formatted = type === fieldConfig.type ? textOf(row) : datasource.getFormatter(field, type).format(row[field]);
         // as the cell: by the field's type, numberOverride is an option of a number column
-        const text = fieldConfig.type === 'number' ? overrideNumberText(formatted, column?.numberOverride, zero) : formatted;
+        const text = fieldConfig.type === 'number' ? overrideNumberText(formatted, numberOverride, zero) : formatted;
         return { type, text, multiline: isMultilineCell(fieldConfig, type, text) };
     };
 }

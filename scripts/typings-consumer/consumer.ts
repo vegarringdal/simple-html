@@ -16,6 +16,7 @@ import {
     type CellRenderer,
     type CellRendererInstance,
     type Changes,
+    type CheckboxFormat,
     type ColumnConfig,
     type ColumnEditor,
     type ColumnFormat,
@@ -953,6 +954,21 @@ const bareLink: ColumnFormat = { link: 'https://x.com' };
 // @ts-expect-error the label of a link is the text of the column, ColumnFormat.text
 const linkLabel: LinkFormat = { url: 'https://x.com', label: '{name}' };
 console.log(linkColumns, bareLink, linkLabel);
+
+// the rest of the column settings: a label, the header filter's placeholder, blank / 0, checkboxes
+const yesNo: CheckboxFormat = { checked: 'Y', unchecked: 'N' };
+const settingsColumns: Record<string, ColumnConfig> = {
+    company: { format: { label: 'Firm', placeholderLabel: true } },
+    city: { format: { placeholder: 'Search the cities' } },
+    discount: { format: { numberOverride: 'NONE' } },
+    newsletter: { format: { checkbox: {} } },
+    approved: { format: { checkbox: yesNo } }
+};
+// @ts-expect-error numberOverride is one of three texts
+const zeroOverride: ColumnFormat = { numberOverride: 'ZERO' };
+// @ts-expect-error the values of a checkbox are text, also for a number field
+const numberChecked: CheckboxFormat = { checked: 1 };
+console.log(settingsColumns, zeroOverride, numberChecked);
 
 // the sql entry, through the package's "exports" (bundler resolution here, node16 in tsconfig.sql.json):
 // a filter of the grid is a filter toSqlWhere takes

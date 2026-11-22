@@ -985,8 +985,10 @@ export class GridInterface<T> {
 
     /**
      * Opens the column settings dialog: the columns of the layout on the left, the settings of the one
-     * picked on the right - a date or number column's display format (as Format › in the header menu), a
-     * text column's template and link, with a preview of the current row. The user opens it with the gear
+     * picked on the right - its label, a date or number column's display format (as Format › in the header
+     * menu), a number column's blank / 0, a text column's template and link, a text or number column as
+     * checkboxes, the placeholder and the operator of the header filter, with a preview of the current
+     * row (see {@link ColumnFormat}). The user opens it with the gear
      * at the right end of the footer (`GridConfig.settingsButton`) or *Column settings…* in the header
      * menu; call this from a button of your own.
      *

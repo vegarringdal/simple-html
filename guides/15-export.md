@@ -284,8 +284,9 @@ const text = gridInterface.getCsv({ fields: ['id', 'name', 'email'] });
 const file = await gridInterface.getExcel({ fields: ['id', 'name', 'email'] });
 ```
 
-The header has the labels the grid's header shows: the column's `label`, else the datasource
-field's `label`, else the field name prettified (`first_name` is `First Name`). The CSV export can
+The header has the labels the grid's header shows: the label the user gave the column in the column
+settings (`format.label`), else the column's `label`, else the datasource field's `label`, else the
+field name prettified (`first_name` is `First Name`). The CSV export can
 leave its header line out with `header: false`; an Excel file always has its header row.
 
 ## CSV

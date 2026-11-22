@@ -293,6 +293,12 @@ const DEFAULTS = {
     'columnSettings.badge.text': 'Text',
     'columnSettings.badge.link': 'Link',
     'columnSettings.badge.problem': 'Error',
+    'columnSettings.badge.checkbox': 'Checkbox',
+    'columnSettings.badge.numberOverride': 'Blank / 0',
+    'columnSettings.badge.label': 'Label',
+    'columnSettings.badge.placeholder': 'Placeholder',
+    // every column: its label, empty the column's own (the input shows it)
+    'columnSettings.label': 'Label',
     // a date, datetime or number column: the picker of its format, the entries of Format ›
     'columnSettings.format': 'Format',
     'columnSettings.format.tooltip': 'How the cells show the value',
@@ -307,8 +313,19 @@ const DEFAULTS = {
     'columnSettings.url.hint': 'Starts with https://, http://, mailto: or tel: - or is one {field} that holds the whole address',
     'columnSettings.newTab': 'Open in a new tab',
     'columnSettings.insertField': 'Insert a field',
-    'columnSettings.none.boolean': 'A checkbox column has no settings',
+    'columnSettings.none.boolean': 'A checkbox column has no format',
     'columnSettings.none.lookup': 'A lookup column shows the label of its value: it has no format',
+    // a number column: what a blank and 0 show, one or the other
+    'columnSettings.blankToZero': 'Show blank as 0',
+    'columnSettings.zeroToBlank': 'Show 0 as blank',
+    // a text or a number column shown as checkboxes: the value of a checked cell, the one written unchecked
+    'columnSettings.checkbox': 'Show as checkbox',
+    'columnSettings.checked': 'Checked value',
+    'columnSettings.unchecked': 'Unchecked value',
+    'columnSettings.checkbox.hint': 'A click writes the other value. An empty unchecked value empties the cell',
+    // every column but a checkbox: the placeholder of its header filter, a text or the column's label
+    'columnSettings.placeholder': 'Filter placeholder',
+    'columnSettings.placeholderLabel': 'Use the column label',
     // every column but a checkbox: the operator of its header filter, {operator} the column's default
     'columnSettings.operator': 'Filter operator',
     'columnSettings.operator.tooltip': 'The operator the header filter of the column uses',
@@ -325,6 +342,10 @@ const DEFAULTS = {
     'columnSettings.problem.unknownField': 'No field {field} in this row',
     'columnSettings.problem.blank': '{field} is empty in this row: no link, the text only',
     'columnSettings.problem.invalid': 'No valid address in this row: no link, the text only',
+    // the values of the checkboxes: {value} is the value as typed
+    'columnSettings.problem.checkedEmpty': 'Write the checked value',
+    'columnSettings.problem.notNumber': '{value} is no number: a number column writes numbers',
+    'columnSettings.problem.sameValues': 'The checked and the unchecked value are the same: a click could not uncheck a cell',
     // the buttons
     'columnSettings.resetColumn': 'Reset column',
     'columnSettings.resetColumn.tooltip': 'The settings the column starts with',

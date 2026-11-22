@@ -5,10 +5,11 @@ import { Datasource } from '../../datasource/dataSource';
 import type { DatasourceOptions } from '../../datasource/datasourceOptions';
 import type { GridConfig } from '../gridConfig';
 import type { GridElement } from '../gridElement';
+import type { GridInterface } from '../gridInterface';
 import { MENU_IDS } from '../gridMenus';
 import { registerLookup } from '../lookup';
 import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { gridOf, menuEntry, openLabelMenu } from './interactionTestHelpers';
+import { gridOf, headerFilterInput, labelCell, menuEntry, openLabelMenu } from './interactionTestHelpers';
 
 /**
  * The column settings dialog (columnSettings.ts) and the gear that opens it (rebuildFooter.ts): the
@@ -83,6 +84,9 @@ const list = () => dialog().querySelector('[role="listbox"]') as HTMLElement;
 const heading = () => dialog().querySelector('.column-settings-heading')?.textContent?.replace(/\s+/g, ' ').trim();
 const input = (part: string) => dialog().querySelector(`input[id$="-settings-${part}"]`) as HTMLInputElement | null;
 const checkboxes = () => Array.from(dialog().querySelectorAll<HTMLInputElement>('.column-settings-check input'));
+/** the checkbox of a setting, by its text */
+const checkbox = (label: string) =>
+    checkboxes().find((each) => each.parentElement?.textContent?.trim() === label) as HTMLInputElement;
 const button = (text: string) =>
     Array.from(dialog().querySelectorAll<HTMLButtonElement>('button')).find(
         (each) => each.textContent?.trim() === text
@@ -100,10 +104,10 @@ function type(part: string, value: string) {
 }
 
 /** turns a checkbox on or off, as a click: checked, then its change event */
-function toggle(index: number) {
-    const checkbox = checkboxes()[index];
-    checkbox.checked = !checkbox.checked;
-    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+function toggle(label: string) {
+    const element = checkbox(label);
+    element.checked = !element.checked;
+    element.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
 /** a keydown on an element, returns the event */
@@ -334,7 +338,7 @@ describe('column settings - the settings of each type', () => {
         const { gridInterface } = await mountGrid(config(), rows(), fields());
 
         gridInterface.openColumnSettings('active');
-        expect(dialog().querySelector('.column-settings-none')?.textContent?.trim()).toEqual('A checkbox column has no settings');
+        expect(dialog().querySelector('.column-settings-none')?.textContent?.trim()).toEqual('A checkbox column has no format');
         expect(dialog().querySelector('.column-settings-preview')).toBeNull();
         gridInterface.openColumnSettings('code');
         expect(dialog().querySelector('.column-settings-none')?.textContent?.trim()).toEqual(
@@ -386,12 +390,12 @@ describe('column settings - a link', () => {
         gridInterface.openColumnSettings('company');
         expect(input('url')).toBeNull();
 
-        toggle(0);
+        toggle('Show as link');
         expect(input('url')?.placeholder).toEqual('https://example.com/customer/{id}');
-        expect(checkboxes()[1].checked).toBe(true);
-        expect(checkboxes()[1].parentElement?.textContent?.trim()).toEqual('Open in a new tab');
+        expect(checkbox('Open in a new tab').checked).toBe(true);
+        expect(checkbox('Open in a new tab').parentElement?.textContent?.trim()).toEqual('Open in a new tab');
 
-        toggle(0);
+        toggle('Show as link');
         expect(input('url')).toBeNull();
         expect(selected().querySelector('.column-settings-badge')).toBeNull();
     });
@@ -399,7 +403,7 @@ describe('column settings - a link', () => {
     it('expect the problems of an address at once, the column marked Error, Apply held back', async () => {
         const { gridInterface } = await mountGrid(config(), rows(), fields());
         gridInterface.openColumnSettings('company');
-        toggle(0);
+        toggle('Show as link');
 
         expect(problems()).toEqual(['Write the address']);
         expect(input('url')?.getAttribute('aria-invalid')).toEqual('true');
@@ -424,7 +428,7 @@ describe('column settings - a link', () => {
     it('expect a valid address: the preview a link in a new tab, its address under it, no problem', async () => {
         const { gridInterface } = await mountGrid(config(), rows(), fields());
         gridInterface.openColumnSettings('company');
-        toggle(0);
+        toggle('Show as link');
         type('url', 'https://crm.example.com/customer/{id}');
 
         expect(problems()).toEqual([]);
@@ -445,7 +449,7 @@ describe('column settings - a link', () => {
         const { gridInterface, datasource } = await mountGrid(config(), rows(), fields());
         datasource.setRowAsCurrentEntity(1);
         gridInterface.openColumnSettings('company');
-        toggle(0);
+        toggle('Show as link');
 
         // Bob has no company
         type('url', 'https://duckduckgo.com/?q={company}');
@@ -461,7 +465,7 @@ describe('column settings - a link', () => {
         const { gridInterface, datasource } = await mountGrid(config(), rows(), fields());
         datasource.getRows()[0].company = 'javascript:alert(1)';
         gridInterface.openColumnSettings('company');
-        toggle(0);
+        toggle('Show as link');
         type('url', '{company}');
 
         expect(previewCell().querySelector('a')).toBeNull();
@@ -472,7 +476,7 @@ describe('column settings - a link', () => {
     it('expect the field button to list the fields of the columns and of the row, and to put the one picked at the caret', async () => {
         const { gridInterface } = await mountGrid(config(), rows(), fields());
         gridInterface.openColumnSettings('company');
-        toggle(0);
+        toggle('Show as link');
         type('url', 'https://crm.example.com/customer/');
         const url = input('url') as HTMLInputElement;
         url.setSelectionRange(url.value.length, url.value.length);
@@ -506,7 +510,7 @@ describe('column settings - Apply and Reset', () => {
         const { element, gridInterface } = await mountGrid(config(), rows(), fields());
         gridInterface.openColumnSettings('company');
         type('text', '{company} ({id})');
-        toggle(0);
+        toggle('Show as link');
         type('url', 'mailto:{company}');
 
         button('Apply').click();
@@ -518,7 +522,7 @@ describe('column settings - Apply and Reset', () => {
         // the cell is a link now
         expect(element.querySelector('a.simple-html-grid-cell-link')?.textContent).toEqual('Acme & Co (12)');
 
-        toggle(1);
+        toggle('Open in a new tab');
         button('Apply & close').click();
         expect(dialog()).toBeNull();
         expect(gridInterface.getState().formats.company).toEqual({ text: '{company} ({id})', link: { url: 'mailto:{company}' } });
@@ -533,7 +537,7 @@ describe('column settings - Apply and Reset', () => {
         other.gridInterface.setState(saved);
         other.gridInterface.openColumnSettings('company');
         expect(input('url')?.value).toEqual('{company}');
-        expect(checkboxes()[1].checked).toBe(true);
+        expect(checkbox('Open in a new tab').checked).toBe(true);
     });
 
     it('expect Reset column to go back to the format the column starts with, Reset all to every one', async () => {
@@ -712,5 +716,192 @@ describe('column settings - the filter operator', () => {
         button('Apply').click();
         expect(gridInterface.getState().headerFilters.balance?.operator).toEqual('GREATER_THAN_OR_EQUAL_TO');
         expect(gridInterface.getState().headerFilters.born?.operator).toEqual('GREATER_THAN_OR_EQUAL_TO');
+    });
+});
+
+describe('column settings - the label, the placeholder, blank / 0, the checkboxes', () => {
+    const badges = () => Array.from(selected().querySelectorAll('.column-settings-badge'), (badge) => badge.textContent?.trim());
+    const formats = (gridInterface: GridInterface<any>) => gridInterface.getState().formats;
+
+    it("expect the label: the column's own in the input; the list, the heading, the badge and a letter follow it; Apply", async () => {
+        const { element, gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('company');
+
+        expect(input('label')?.placeholder).toEqual('Company');
+        expect(input('label')?.value).toEqual('');
+        expect(document.querySelector(`label[for="${input('label')?.id}"]`)?.textContent?.trim()).toEqual('Label');
+        type('label', 'Firm');
+        expect(selected().querySelector('.column-settings-option-label')?.textContent).toEqual('Firm');
+        expect(heading()).toEqual('Firm Text');
+        expect(badges()).toEqual(['Label']);
+        // a letter finds the label typed
+        press(list(), 'n');
+        expect(selected().dataset.field).toEqual('name');
+        press(list(), 'f');
+        expect(selected().dataset.field).toEqual('company');
+        // the dialog's, until Apply
+        expect(formats(gridInterface).company).toBeUndefined();
+
+        button('Apply').click();
+        expect(formats(gridInterface).company).toEqual({ label: 'Firm' });
+        expect(labelCell(element, 'company').textContent?.trim()).toEqual('Firm');
+        // emptied, spaces only: the column's own again
+        type('label', ' ');
+        expect(badges()).toEqual([]);
+        button('Apply & close').click();
+        expect(formats(gridInterface).company).toBeUndefined();
+        expect(labelCell(element, 'company').textContent?.trim()).toEqual('Company');
+    });
+
+    it('expect the placeholder: the one it has in the input, a text, or the label - the input off; none for a checkbox column', async () => {
+        const { element, gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('name');
+
+        expect(input('placeholder')?.placeholder).toEqual('Text');
+        type('placeholder', 'Search');
+        expect(badges()).toEqual(['Placeholder']);
+        type('label', 'Who');
+        toggle('Use the column label');
+        expect(input('placeholder')?.disabled).toBe(true);
+        expect(input('placeholder')?.placeholder).toEqual('Who');
+        expect(input('placeholder')?.value).toEqual('');
+
+        button('Apply').click();
+        expect(formats(gridInterface).name).toEqual({ label: 'Who', placeholderLabel: true });
+        expect(headerFilterInput(element, 'name').placeholder).toEqual('Who');
+        toggle('Use the column label');
+        expect(input('placeholder')?.disabled).toBe(false);
+        expect(input('placeholder')?.placeholder).toEqual('Text');
+
+        // a checkbox column: its label only
+        options()[LAYOUT.indexOf('active')].click();
+        expect(input('placeholder')).toBeNull();
+        expect(input('label')?.placeholder).toEqual('Active');
+        expect(dialog().querySelector('.column-settings-none')?.textContent?.trim()).toEqual('A checkbox column has no format');
+        // a lookup column: its label and placeholder, no checkboxes
+        options()[LAYOUT.indexOf('code')].click();
+        expect(input('placeholder')?.placeholder).toEqual('Text');
+        expect(checkbox('Show as checkbox')).toBeUndefined();
+    });
+
+    it("expect Show blank as 0 and Show 0 as blank, one or the other, in the preview; over the column's own numberOverride", async () => {
+        const { datasource, gridInterface } = await mountGrid(
+            config({ columns: { ...config().columns, balance: { numberOverride: 'ZERO_TO_BLANK' } } }),
+            rows(),
+            fields()
+        );
+        // Bob's balance is 0
+        datasource.setRowAsCurrentEntity(1);
+        gridInterface.openColumnSettings('balance');
+
+        expect([checkbox('Show blank as 0').checked, checkbox('Show 0 as blank').checked]).toEqual([false, true]);
+        expect(previewCell().textContent?.trim()).toEqual('');
+        expect(badges()).toEqual([]);
+        toggle('Show blank as 0');
+        expect([checkbox('Show blank as 0').checked, checkbox('Show 0 as blank').checked]).toEqual([true, false]);
+        expect(previewCell().textContent?.trim()).toEqual('0');
+        expect(badges()).toEqual(['Blank / 0']);
+
+        // both off over the column's own: NONE
+        toggle('Show blank as 0');
+        expect([checkbox('Show blank as 0').checked, checkbox('Show 0 as blank').checked]).toEqual([false, false]);
+        button('Apply').click();
+        expect(formats(gridInterface).balance).toEqual({ numberOverride: 'NONE' });
+        // the column's own again: nothing of the user's
+        toggle('Show 0 as blank');
+        button('Apply').click();
+        expect(formats(gridInterface).balance).toBeUndefined();
+    });
+
+    it('expect Show as checkbox on a text column: its values, the template and the link gone, the problems, Apply', async () => {
+        const { element, gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('company');
+        type('text', '{company}!');
+        toggle('Show as link');
+        type('url', 'https://x.com/{id}');
+
+        toggle('Show as checkbox');
+        expect([input('text'), input('url'), checkbox('Show as link')]).toEqual([null, null, undefined]);
+        expect([input('checked')?.value, input('unchecked')?.value]).toEqual(['1', '0']);
+        expect(badges()).toEqual(['Checkbox']);
+        const previewBox = () => previewCell().querySelector('input[type="checkbox"]') as HTMLInputElement;
+        expect(previewBox().checked).toBe(false);
+
+        type('checked', '');
+        expect(problems()).toEqual(['Write the checked value']);
+        expect(input('checked')?.getAttribute('aria-invalid')).toEqual('true');
+        expect(badges()).toEqual(['Error']);
+        expect(button('Apply').getAttribute('aria-disabled')).toEqual('true');
+        type('checked', '0');
+        expect(problems()).toEqual(['The checked and the unchecked value are the same: a click could not uncheck a cell']);
+        // Ann's company: checked
+        type('checked', 'Acme & Co');
+        expect(problems()).toEqual([]);
+        expect(previewBox().checked).toBe(true);
+
+        button('Apply').click();
+        expect(formats(gridInterface).company).toEqual({ checkbox: { checked: 'Acme & Co', unchecked: '0' } });
+        const cell = element.querySelector('input[data-attribute="company"]') as HTMLInputElement;
+        expect([cell.type, cell.checked]).toEqual(['checkbox', true]);
+
+        // off: the text settings again, empty
+        toggle('Show as checkbox');
+        expect(input('text')?.value).toEqual('');
+        expect(input('checked')).toBeNull();
+    });
+
+    it('expect Show as checkbox on a number column: the format and blank / 0 gone, numbers only', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('balance');
+        picker().click();
+        menuEntry('header.format.number.norwegian').click();
+        toggle('Show 0 as blank');
+
+        toggle('Show as checkbox');
+        expect([picker(), checkbox('Show 0 as blank'), checkbox('Show blank as 0')]).toEqual([null, undefined, undefined]);
+        type('checked', 'yes');
+        expect(problems()).toEqual(['yes is no number: a number column writes numbers']);
+        type('checked', '1');
+        type('unchecked', 'no');
+        expect(problems()).toEqual(['no is no number: a number column writes numbers']);
+        type('unchecked', '');
+        expect(problems()).toEqual([]);
+
+        button('Apply').click();
+        expect(formats(gridInterface).balance).toEqual({ checkbox: { checked: '1', unchecked: '' } });
+    });
+
+    it('expect Cancel to apply nothing, the state as JSON in the dialog, Reset column and Reset all back to the start', async () => {
+        const { gridInterface } = await mountGrid(
+            config({ columns: { ...config().columns, name: { label: 'Name', format: { label: 'Person' } } } }),
+            rows(),
+            fields()
+        );
+        gridInterface.openColumnSettings('name');
+        expect(input('label')?.value).toEqual('Person');
+        type('label', 'Who');
+        button('Cancel').click();
+        expect(formats(gridInterface).name).toEqual({ label: 'Person' });
+
+        gridInterface.setState({
+            formats: { name: { label: 'Who', placeholder: 'Find' }, company: { checkbox: { checked: 'Y', unchecked: 'N' } } }
+        });
+        const saved = JSON.parse(JSON.stringify(gridInterface.getState()));
+        const other = await mountGrid(config(), rows(), fields());
+        other.gridInterface.setState(saved);
+        other.gridInterface.openColumnSettings('company');
+        expect(checkbox('Show as checkbox').checked).toBe(true);
+        expect([input('checked')?.value, input('unchecked')?.value]).toEqual(['Y', 'N']);
+        button('Reset column').click();
+        expect(checkbox('Show as checkbox').checked).toBe(false);
+        expect(input('checked')).toBeNull();
+        button('Cancel').click();
+
+        gridInterface.openColumnSettings('name');
+        expect([input('label')?.value, input('placeholder')?.value]).toEqual(['Who', 'Find']);
+        button('Reset all').click();
+        expect([input('label')?.value, input('placeholder')?.value]).toEqual(['Person', '']);
+        button('Apply').click();
+        expect(formats(gridInterface)).toEqual({ born: { date: 'norwegian' }, name: { label: 'Person' } });
     });
 });

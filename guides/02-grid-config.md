@@ -146,10 +146,14 @@ The [Multiline text](#sample/multiline) sample has buttons for each, and the men
 
 A column's header shows the first of:
 
-1. its `label` in `columns`
-2. the field's `label` in the datasource's `fields`
-3. the field name, with the first letter in upper case and `_` as a space: `first_name` shows as
+1. the label the user gave it in the column settings dialog: `format.label`, state (`GridState.formats`)
+2. its `label` in `columns`
+3. the field's `label` in the datasource's `fields`
+4. the field name, with the first letter in upper case and `_` as a space: `first_name` shows as
    `First Name`, but `firstName` as `Firstname`. Give such a field a label.
+
+The grid names the column with it everywhere: the header, the menus, the column chooser, the filter
+editor, the footer's filter, copy with headers and the headers of the CSV and Excel exports.
 
 ### Column options
 
@@ -157,15 +161,15 @@ Every option of a `ColumnConfig` is optional.
 
 | option | what it does |
 | --- | --- |
-| `label` | the header text |
+| `label` | the header text. The user's label from the column settings (`format.label`) wins |
 | `readonly` | the cell can not be edited, also when the grid can. Shown with stripes |
 | `placeholderRow` | text shown in an empty cell, by default on the current row only (`placeholderRowCurrentEntityOnly`) |
-| `placeholderFilter` | text shown in the empty header filter. Default: the formatter's placeholder (`YYYY-MM-DD` for dates), else the field's type - `Text` or `Number` (texts `filter.placeholder.*`) |
+| `placeholderFilter` | text shown in the empty header filter. Default: the formatter's placeholder (`YYYY-MM-DD` for dates), else the field's type - `Text` or `Number` (texts `filter.placeholder.*`). The user's from the column settings (`format.placeholder`, `format.placeholderLabel`) wins |
 | `operator` | the operator the header filter starts with. Default `EQUAL` for text (the whole text: `ann` does not find `Anna`), `GREATER_THAN_OR_EQUAL_TO` for a number or date. One of the column's operators the header filter's input takes - not `IN`, `NOT_IN`, `IS_BLANK`, `IS_NOT_BLANK` - else a `TypeError`. See [Filtering](06-filtering.md#header-filters) |
 | `filterOperators` | the operators the column offers in the header filter's menu and the filter editor, e.g. `['CONTAINS', 'BEGIN_WITH', 'IS_BLANK']`: some of its type's (`operatorsFor(type)`), with one the header filter takes. Default: all of its type's. A `TypeError` for an operator of another type. See [Filtering](06-filtering.md#the-operators-a-column-offers) |
 | `filterCaseSensitive` | `true`: the grid's conditions on the column match case - the header filter, its value list, the row menu's filter and the filter editor. Its Match case is on and can not be turned off. Text columns only, else a `TypeError`. See [Filtering](06-filtering.md#match-case) |
-| `numberOverride` | number fields only: `'ZERO_TO_BLANK'` shows 0 as an empty cell, `'BLANK_TO_ZERO'` shows an empty cell as 0. The value is not changed |
-| `format` | how the cells show the value, a display format: `{ date: 'norwegian' }` (22.11.2026), `{ date: 'weekIso' }` (2026-W47) for a date or datetime field, `{ number: { decimals: 2, thousands: ' ', decimal: ',' } }` (1 234 567,89) for a number field; for a text field a template of its text and a link, `{ text: '{name} ({id})', link: { url: 'https://crm.example.com/customer/{id}', newTab: true } }`. Only the text shown: editing, filtering, sorting and copy keep to the field's formatter. Where the grid starts - the user picks another in the header menu (Format ›) or the column settings dialog, it is state (`GridState.formats`). A `TypeError` for a format that does not fit the field, and for a link of another scheme than https, http, mailto, tel. See [Display formats](08-formatting.md#display-formats) and [Templates and links](08-formatting.md#templates-and-links) |
+| `numberOverride` | number fields only: `'ZERO_TO_BLANK'` shows 0 as an empty cell, `'BLANK_TO_ZERO'` shows an empty cell as 0. The value is not changed. The user's from the column settings (`format.numberOverride`) wins |
+| `format` | how the cells show the value, a display format: `{ date: 'norwegian' }` (22.11.2026), `{ date: 'weekIso' }` (2026-W47) for a date or datetime field, `{ number: { decimals: 2, thousands: ' ', decimal: ',' } }` (1 234 567,89) for a number field; for a text field a template of its text and a link, `{ text: '{name} ({id})', link: { url: 'https://crm.example.com/customer/{id}', newTab: true } }`. Only the text shown: editing, filtering, sorting and copy keep to the field's formatter. Where the grid starts - the user picks another in the header menu (Format ›) or the column settings dialog, it is state (`GridState.formats`). It has the rest of the column settings too: `label`, `placeholder` / `placeholderLabel`, `numberOverride` and `checkbox` (a text or number column of `1` / `0` as checkboxes). A `TypeError` for a format that does not fit the field, and for a link of another scheme than https, http, mailto, tel. See [Display formats](08-formatting.md#display-formats), [Templates and links](08-formatting.md#templates-and-links) and [Label, placeholder, blank / 0, checkboxes](08-formatting.md#label-placeholder-blank--0-checkboxes) |
 | `allowPasteClearOnly` | typing in the cell does nothing, paste and clear from the row menu work. For a field you set from a dropdown of your own |
 | `editor` | the value is picked from a list: `{ type: 'select' \| 'grid', lookup: '<id>', set? }`, a select or a dropdown grid of a lookup registered with `registerLookup()`. The cell shows the label. See [Lookups](20-lookups.md) |
 | `focusButton` | shows a `...` button in the focused cell, see [Events](09-events.md#cell-events). Not with `editor`, it has its own button |

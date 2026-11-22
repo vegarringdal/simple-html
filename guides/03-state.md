@@ -170,6 +170,10 @@ gridInterface.setState({ formats });
 - `setState({ formats })` replaces every column's format - start from `getState().formats` to change
   one. A format that does not fit its field throws a `TypeError`, and nothing of the state changes.
 - It is plain JSON: a state saved with `JSON.stringify` gives the same formats back.
+- The rest of what the user sets in the column settings dialog is in a column's format too - its
+  `label`, the header filter's `placeholder` / `placeholderLabel`, a number column's `numberOverride`,
+  `checkbox` - so it is saved and given back with the formats, see
+  [Label, placeholder, blank / 0, checkboxes](08-formatting.md#label-placeholder-blank--0-checkboxes).
 
 ## Header filters in the state
 
