@@ -896,10 +896,11 @@
     display: none;
 }
 
+/* the input gives way after the count: five buttons of 21px stay whole in a grid of 160px */
 .simple-html-grid .simple-html-grid-find-input {
     flex: 1 1 160px;
     width: 160px;
-    min-width: 40px;
+    min-width: 24px;
     box-sizing: border-box;
     margin: 0;
     padding: 0 4px;
@@ -959,6 +960,12 @@
 
 .simple-html-grid .simple-html-grid-find-button[aria-pressed='true']:hover {
     filter: brightness(1.1);
+}
+
+/* "Match case": the text Aa, in the weight of the filter editor's toggle Aa - filled with the accent
+ * colour while it is on, as "Filter rows" */
+.simple-html-grid .simple-html-grid-find-case {
+    font-weight: var(--simple-html-grid-font-weight-header);
 }
 
 /* the funnel of "Filter rows", in the colour of the button's text */

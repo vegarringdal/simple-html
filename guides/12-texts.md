@@ -106,8 +106,8 @@ The ids are grouped by area, the area first. Within an area:
   from the platform the browser gives (`navigator.userAgentData.platform`, else `navigator.platform`).
   The grid takes both keys everywhere (Ctrl+Z and Cmd+Z), the texts say what a user there presses.
   Translate both: a `.mac` text left out shows its English default on a Mac. They are
-  `row.edit.undo.hint`, `row.edit.redo.hint`, `find.previous.tooltip`, `cell.multiline.hint`,
-  `filterEditor.undo.tooltip` and `filterEditor.redo.tooltip`.
+  `row.edit.undo.hint`, `row.edit.redo.hint`, `find.previous.tooltip`, `find.matchCase.tooltip`,
+  `cell.multiline.hint`, `filterEditor.undo.tooltip` and `filterEditor.redo.tooltip`.
 
 ### The names of the months and days
 
@@ -723,6 +723,10 @@ The find bar of Ctrl+F in the grid, see [Find](19-find.md).
 | `find.placeholder` | `Find` | the placeholder of its input, and the input's name for a screen reader |
 | `find.count` | `{current} of {count}` | the count of the matches. `{current}`: the number of the current match, `{count}`: how many cells match |
 | `find.none` | `No matches` | the count when no cell matches the text |
+| `find.matchCase` | `Match case` | the `Aa` button, a toggle: its name for a screen reader |
+| `find.matchCase.text` | `Aa` | what the button shows |
+| `find.matchCase.tooltip` | `Match case (Alt+C)` | its tooltip |
+| `find.matchCase.tooltip.mac` | `Match case` | its tooltip on a Mac: Option+C types `ç` there, it is no key of the bar |
 | `find.filterRows` | `Filter rows` | the funnel button, a toggle: its name for a screen reader |
 | `find.filterRows.tooltip` | `Show only the rows with a match` | its tooltip |
 | `find.previous` | `Previous match` | the `↑` button: its name for a screen reader |

@@ -3594,6 +3594,75 @@ in the console. All passed. Found and fixed:
   column-settings-operator 13/13, display-format 39/39, full-grid 11/11, custom-cells 39/39. The new script
   is in this worktree's `.claude/browser-checks/scripts/`
 
+### Find: Match case, and "Filter rows" for SQL (user request)
+
+* the user, on Find: "find part, this needs to be supported in sql if possible. And be able to [set] if
+  it's supposed to be case sensitive". Done in a worktree by an agent
+* **Match case**: a toggle `Aa` in the find bar (findBar.ts), after the count and before the funnel - one
+  Tab from the input, `aria-pressed`, named "Match case", the tooltip `Match case (Alt+C)` (a `.mac` text
+  without the key). Filled with the accent colour as "Filter rows" (the bar's existing `[aria-pressed]`
+  rule), the weight of the filter editor's Aa. **Alt+C** in the bar, as Firefox and VS Code, by the letter
+  the key types (`key`, not `code`): Option+C on a Mac types `ç` and is left alone, Ctrl+Alt (AltGr) too.
+  State `bar.caseSensitive`, kept when the bar closes (as the text); `findMatches` / `findRowFilter` take
+  it (`findCase()`: as it is, or `toLowerCase()`), so the matches, the count, the marks and "Filter rows"
+  follow it - `rowFilter` has it, a change filters the rows again. The footer's chip shows the `Aa` marker
+  of a condition that matches case. API: `find(text, { caseSensitive })`, `FindResult.caseSensitive` (in
+  `find-change`). The find input got `min-width: 24px` (was 40): five buttons stay whole in a 160px grid
+* **SQL - the design**: Find matches the text the cells show, a database has the values, so "Filter rows"
+  can not be the SQL as it is. Kept: the browser's row predicate (the rows shown = the marked cells, as
+  documented). New: `gridInterface.getFindFilter(): FilterExpression | null` (findFilter.ts, no dom) -
+  "Filter rows" as a filter a backend ANDs to `getFilter()` and gives `toSqlWhere()` like any filter; null
+  while it shows every row. An OR of a condition per field of the layout, only where SQL can match the cells
+  as they show: a text field shown as it is (the built-in TextFormatter, no template, no type per row)
+  `CONTAINS` + `literal` (+ `caseSensitive`); a lookup column `IN` the values whose cell text (the lookup
+  formatter: the label) holds the text, `caseSensitive: true` on a text field (exact values), no blank, no
+  `'NULL'` (IN's blank); a number `EQUAL` the number the cell's formatter parses, when the cell of it shows
+  the text (and a blank cell too, for 0 - EQUAL 0 is the blanks); a date / datetime `EQUAL` the day /
+  second when the cell of its start and of its end both are the whole text (a partial date - the formatter
+  completes `2026-03` with today's day - is none). No field: `IN []` on the first (`1=0`). So the SQL
+  selects the rows "Filter rows" shows or fewer, never one without a match - equal on text and lookups
+  (tested on SQLite). The numbers and dates by a part of their text (`30` in `130`) can not be SQL: left out
+  rather than a superset; the rows the backend sends are filtered again by the browser's predicate anyway.
+  `getFindFilter({ fields })`: only the fields the backend has (a field made in the browser), `toSqlWhere()`
+  throws for others; the no-row condition then on `fields[0]`
+* **wildcards**: Find's text is literal, a `CONTAINS` takes `*`, `%`, `_` as wildcards and the filter
+  format had no escape - so a superset for `50%`. Added `FilterCondition.literal?: boolean` (and
+  `where(..., { literal })`): the text as it is. The datasource (objectFilter `hasText()`: includes /
+  startsWith / endsWith / ===, filter.ts passes it) and toSqlWhere (buildWhere checks it, a `Dialect.
+  wildcardLiteral()`: `!%` `!_` with ESCAPE '!', `[%]` `[_]` on SQL Server, `[*]` in GLOB) agree. Ignored
+  where there are no wildcards (IN, the comparisons, other types, a valueField). The header filters and the
+  filter editor do not make it; the editor's Apply drops it (draftToFilter builds conditions anew) -
+  documented, not changed (shared files)
+* **event**: `find-filter-change` `{ filter }` - sent from filterRows() only when the rows it filters with
+  change (on, off, the text after the typing, Match case, the layout fields) and from the footer's Clear;
+  not for a step or a data change (`find-change` is, which would loop a backend that reloads on it)
+* the SQL sample (#sample/sql): the find's SQL ANDed when Filter rows is on (`getFindFilter({ fields:
+  Object.keys(COLUMNS) })` - the phone is no column), `find-filter-change` re-renders; buttons Find "acme",
+  "ACME" with match case, "50%", "30", Close find. The find sample: Match case / Any case buttons, the log
+* texts `find.matchCase`, `find.matchCase.text`, `find.matchCase.tooltip`, `find.matchCase.tooltip.mac`
+  (+ Norwegian; keyText's MAC_TEXTS); guides 19 (Match case, Filter rows on a backend with the table of
+  field types), 22 (literal, Find's filter, five rows in "where the SQL differs"), 06, 09, 12, 13, 14
+* tests: find.test.ts 62 -> 71 (match case: matches / count / marks, the toggle and the focus, Alt+C and
+  not AltGr / ç / Shift, Tab order, find() options and kept on close, Filter rows follows it, the chip,
+  texts and the Mac tooltip); findFilter.test.ts 16 (null cases, text + literal + case, rows = Filter rows on
+  text, lookups text and number, numbers with comma / display format / numberOverride / 0, dates and
+  datetime / a partial date, the left-out fields, no-row, `fields`, "never a row without a match" over 19
+  texts in both cases, the event and when it is not sent); filterLiteral.test.ts 4 (the datasource); toSqlWhere.test.ts
+  +6 (literal per dialect and operator, blank rows, case, ignored, checked); sqlSqlite.test.ts +1 (984
+  literal conditions vs the grid on SQLite); sqlFindSqlite.test.ts 7 (the find filter on SQLite: equal to
+  "Filter rows" on text + lookup fields for 35 texts x both cases, never a row more with numbers and dates,
+  a lookup value without a label, snapshots of the SQL in the four dialects). 3595 tests, 157 files
+* browser (Chromium 1148, port 8095): new `find-case-sql-check.js` 62/62 (default and TreDeSpace, light and
+  dark: Aa by mouse / Alt+C / Tab + Space + Enter, the counts with and without case vs the datasource, the
+  pressed look 3:1, Filter rows with case and the chip; the SQL sample: case, 50% escaped per dialect, 30
+  EQUAL ANDed with the filter, typed in the bar, Esc). Shared: find-check.js 64/68 → a copy in this
+  worktree's scripts with the three checks the fifth button changes (Tab Tab to the funnel, five buttons in
+  160px with the input ≥ 24px, the Tab order) 68/68; keyboard-check 53/53, footer-no-filter-check 53/53;
+  sql-sample-check 4 FAIL before this change too: it expects `"Norway"` and `DROP TABLE` in the params,
+  which are folded to lower case since 924615b
+* known: SQL finds a number or a date by its whole value only (documented); a lookup whose labels match
+  many values can pass `limits.listLength` (1000); the lookup data changing sends no `find-filter-change`
+
 ## Considered, not done
 
 ## Candidates / not started

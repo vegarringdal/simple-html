@@ -5,7 +5,7 @@ import type { Grid } from '../grid';
 import { renderTotalsRow } from './aggregates';
 import { clearAllColumnFilters } from './clearAllColumnFilters';
 import { openColumnSettings } from './columnSettings';
-import { findFilterRowsText } from './findBar';
+import { findFilterRowsCaseSensitive, findFilterRowsText } from './findBar';
 import { getColumnLabel } from './getColumnLabel';
 import { getElementByClassName } from './getElementByClassName';
 import { gridText } from './gridText';
@@ -284,7 +284,16 @@ export function renderFooter(ctx: Grid) {
                       ${
                           findChip !== null
                               ? html`<span class="footer-filter-chip footer-filter-find" title=${findChip}
-                                    ><span class="footer-filter-find-text">${findChip}</span></span
+                                    ><span class="footer-filter-find-text">${findChip}</span>${
+                                        // Match case: the marker of a condition that matches case
+                                        findFilterRowsCaseSensitive(ctx)
+                                            ? html`<span
+                                                  class="footer-filter-case"
+                                                  title=${gridText(ctx, 'footer.matchCase.tooltip')}
+                                                  >${gridText(ctx, 'footer.matchCase')}</span
+                                              >`
+                                            : null
+                                    }</span
                                 >`
                               : null
 }

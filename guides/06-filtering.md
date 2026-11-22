@@ -450,8 +450,10 @@ Find (Ctrl+F in the grid) has a toggle *Filter rows* in its bar: only the rows w
 the text are shown - the text as the cells show it, formatted, so the rows shown are the rows of the
 marked cells. Like *Changed rows only* it is on top of the filter (AND) and not part of it:
 `getFilter()`, the filter editor and the state do not have it. It filters the rows again when the
-text changes and whenever the rows are filtered; closing the find bar turns it off. See
-[Find](19-find.md#filter-rows).
+text changes and whenever the rows are filtered; closing the find bar turns it off. With *Match case*
+(`Aa`) it finds the text as it is typed. See [Find](19-find.md#filter-rows).
+`gridInterface.getFindFilter()` gives it as a filter, for a backend that loads the rows: see
+[Find](19-find.md#filter-rows-on-a-backend).
 
 ```ts
 gridInterface.find('denma', { filterRows: true }); // only the rows with a cell that shows "denma"
@@ -520,14 +522,15 @@ const filter: FilterExpression = { group: 'AND', children: [condition, group] };
 datasource.filter(filter);
 ```
 
-`where(field, operator, value?, { caseSensitive? })`, `and(...children)` and `or(...children)` build
-the same objects. `where('email', 'IS_BLANK')` leaves `value` out, `caseSensitive` is only there when
-it is `true`:
+`where(field, operator, value?, { caseSensitive?, literal? })`, `and(...children)` and
+`or(...children)` build the same objects. `where('email', 'IS_BLANK')` leaves `value` out,
+`caseSensitive` and `literal` are only there when they are `true`:
 
 ```ts
 import { where } from '@simple-html/grid';
 
 where('name', 'EQUAL', 'Ann', { caseSensitive: true }); // { field: 'name', operator: 'EQUAL', value: 'Ann', caseSensitive: true }
+where('discount', 'CONTAINS', '50%', { literal: true }); // finds '50% off', not '500'
 where('age', 'BETWEEN', [18, 30]); // { field: 'age', operator: 'BETWEEN', value: [18, 30] }
 where('age', 'BETWEEN', [18, null]); // 18 or more
 ```
@@ -601,7 +604,10 @@ operatorsFor(datasource.getField('name').type); // the operators of the name fie
 `caseSensitive: true`. `*` and `%` in the value stand for any text - none too, line breaks too, as
 `%` in SQL `LIKE`; `_` stands for one character, any - a line break too, a letter past U+FFFF (an
 emoji) is one - as `_` in `LIKE`. There is no escape: a `_` in the value can not be literal, it
-matches the `_` too. The rest of the value is taken as it is.
+matches the `_` too. The rest of the value is taken as it is. **`literal: true`** on the condition takes
+all of the value as it is, `*`, `%` and `_` too: `CONTAINS '50%'` finds `50% off`, not `500` - Find's
+filter for a backend (`getFindFilter()`) has it, the header filters and the filter editor do not make it
+(the filter editor leaves it out of a condition it applies).
 A text of several lines is one text: `BEGIN_WITH` is the start of the whole value, not of a line.
 
 In the SQL, `t` is `LOWER(COALESCE(col, ''))` and `v` the value in lower case with its `*` and `%`
