@@ -154,6 +154,9 @@
     /* the selected day blue-950 in a blue-400 frame, today's bar blue-400: the library's span and
        today. Its picked day is blue-400 with slate-950 text, the date picker's text is slate-200 */
     --simple-html-date-main-bg-selected: light-dark(#dbeafe, oklch(28.2% 0.091 267.935));
+    /* the days between From and To of a range picker: blue-950, the library's span - its ends have the
+       blue-400 frame of the selected day */
+    --simple-html-date-in-range-bg-color: light-dark(#dbeafe, oklch(28.2% 0.091 267.935));
     --simple-html-date-selected-border: light-dark(#2563eb, oklch(70.7% 0.165 254.624));
     --simple-html-date-today-color: light-dark(#2563eb, oklch(70.7% 0.165 254.624));
     --simple-html-date-focus-color: light-dark(#2563eb, oklch(70.7% 0.165 254.624));

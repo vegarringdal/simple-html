@@ -114,7 +114,8 @@ differ from the widgets for that, or because the grid has one colour where the w
   library's checked box and picked day - its primary Button is blue-950 in a blue-400 frame, a fill
   under 3:1 to the dialog
 - the date picker's selected day is blue-950 in a blue-400 frame (the library's range fill): its
-  picked day (blue-400) has slate-950 text, the date picker's text is slate-200
+  picked day (blue-400) has slate-950 text, the date picker's text is slate-200. The days between From
+  and To of a range picker are blue-950 too, the library's span: From and To have the frame
 - the line of the current match of Find is amber-200: amber-400 is under 3:1 to the match's tint on a
   selected row
 - the links are blue-800 in light and blue-100 in dark, not the accent blue-400: a link's text keeps
@@ -466,6 +467,14 @@ bold with a bar under it, the selected day has a frame and a fill. At the bottom
 minutes, each a number between a step down and a step up (the arrow keys step it too), and Clear,
 Now and Use in a bar of buttons of the same width - Use in the colours of the selected day.
 
+A range picker (`rangepicker: true`, the grid's date header filter with Between) has two months side
+by side with « ‹ before the first and › » after the last (`.simple-html-date-nav-space` holds their
+place in the other header). From and To have the frame and fill of the selected day
+(`.simple-html-date-day-selected`), the days between them a fill of their own
+(`.simple-html-date-day-in-range`). Under the months, as wide as both, the line of From and To
+(`.simple-html-date-range-ends`: a label over the day picked) and Clear and Use - no hours, minutes
+or Now. The bottom is `.simple-html-date-range`.
+
 | variable | colours | light | dark |
 | --- | --- | --- | --- |
 | `--simple-html-date-main-bg-color` | the background, the buttons, the hour and minute inputs | `white` | `#374151` |
@@ -476,15 +485,16 @@ Now and Use in a bar of buttons of the same width - Use in the colours of the se
 | `--simple-html-date-button-border` | the frame of the buttons and of the hour and minute inputs | `#d1d0d0` | `#6b7280` |
 | `--simple-html-date-hover-bg-color` | a day or a button under the pointer | `#e5ebf1` | `#4b5563` |
 | `--simple-html-date-main-bg-selected` | the selected day, the Use button | `#bdd4e7` | `#234882` |
+| `--simple-html-date-in-range-bg-color` | a range picker: the days between From and To - midway between the background and the selected day | `#dee9f3` | `#2d4469` |
 | `--simple-html-date-selected-border` | the frame of the selected day and of the Use button | `#3f73a8` | `#7fb0ff` |
 | `--simple-html-date-today-color` | the bar under today | `#005fcc` | `#93c5fd` |
 | `--simple-html-date-focus-color` | the outline of the element with the keyboard focus (in the grid: the grid's) | `#005fcc` | `#b3d7ff` |
 | `--simple-html-date-font-size` | the text | `11px` | |
 | `--simple-html-date-font-family` | the text | `'Roboto', 'Helvetica', 'Arial', 'sans-serif'` | |
 
-The text has a contrast of at least 4.5:1 to its background, in light and in dark; the frame of the
-selected day and the bar under today at least 3:1 to the background and the selected day's fill
-(WCAG 1.4.3 and 1.4.11). Keep that when you change them. The dimmed days and the week numbers had
+The text has a contrast of at least 4.5:1 to its background, in light and in dark - the fill of the
+days of a range too; the frame of the selected day and the bar under today at least 3:1 to the
+background, the selected day's fill and the fill of a range (WCAG 1.4.3 and 1.4.11). Keep that when you change them. The dimmed days and the week numbers had
 lighter colours before v6 (`#dfdfdf`, `#8b8b8b`): too light to read.
 
 `--simple-html-date-header-bg-border` is still set, but nothing in `date.css` uses it.

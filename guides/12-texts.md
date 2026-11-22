@@ -374,6 +374,7 @@ and a lookup column.
 | `filter.values.search` | `Search values` | the name of the search box, for a screen reader |
 | `filter.values.searchPlaceholder` | `Search values` | the placeholder of the search box |
 | `filter.values.availableOnly` | `Only values in filtered rows` | the checkbox that lists only the values the other filters let through |
+| `filter.values.textSearch` | `Filter on the text: contains "{text}"` | the checkbox under the search box that filters on the text typed (`CONTAINS`), not the values found; `{text}` is the text |
 | `filter.values.rowsFound` | `{count} values` | under the search box, `{count}`: the number of values listed |
 | `filter.values.rowsFound.one` | `{count} value` | the same, when one value is listed |
 | `filter.values.truncated` | `Only the first {max} values are shown` | instead, `{max}`: the most values listed (100), when there are more |
@@ -785,7 +786,9 @@ A cell drawn by a renderer of your own (`ColumnConfig.renderer`), see [Custom ce
 
 ### Date picker
 
-Of a date cell and a date header filter, and a `DateInterface` of your own.
+Of a date cell, a date header filter and the filter menu's range block, and a `DateInterface` of your
+own. The range picker shows its From and To as the day, the month's name and the year: `22 November
+2026`.
 
 | id | English | shown |
 | --- | --- | --- |
@@ -794,7 +797,10 @@ Of a date cell and a date header filter, and a `DateInterface` of your own.
 | `datePicker.week` | `W` | header of the week numbers |
 | `datePicker.clear` | `Clear` | button, empties the date |
 | `datePicker.now` | `Now` | button, goes to now |
-| `datePicker.use` | `Use` | button, picks the date |
+| `datePicker.use` | `Use` | button, picks the date (the range of a range picker) |
+| `datePicker.from` | `From` | a range picker (a date header filter with Between, From and To of the filter menu): the label over the first day picked |
+| `datePicker.to` | `To` | a range picker: the label over the last day picked |
+| `datePicker.rangeOpen` | `–` | a range picker: under From or To while that day is not picked, an open end |
 | `datePicker.previousYear` | `Previous year` | the « button left of the month: its name for a screen reader and its tooltip |
 | `datePicker.previousMonth` | `Previous month` | the ‹ button left of the month |
 | `datePicker.nextMonth` | `Next month` | the › button right of the month |

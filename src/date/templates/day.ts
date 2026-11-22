@@ -2,6 +2,20 @@ import { html } from 'lit-html';
 import type { DateInterface } from '../dateInterface';
 import type { IDateConfig } from '../interfaces';
 import { isSameDay } from '../utils/isSameDay';
+import { isInRange, isRangePicker, nextRange } from '../utils/rangePicker';
+
+/**
+ * A day clicked in a range picker: From, then To, then From again - see nextRange. From and To are the
+ * selected days
+ */
+function rangeClicked(event: MouseEvent, ctx: DateInterface, day: Date) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const range = nextRange(ctx.config.datepickerRange, day);
+    ctx.config.datepickerRange = range;
+    ctx.selected = new Set(range.flatMap((end) => (end ? [end.getTime()] : [])));
+}
 
 function clicked(event: MouseEvent, ctx: DateInterface, currentDate: Date) {
     event.preventDefault();
@@ -62,8 +76,9 @@ function clicked(event: MouseEvent, ctx: DateInterface, currentDate: Date) {
 
 /**
  * A day of the month: its number, and the classes `simple-html-date-day-dimmed` (a day of the month
- * before or after), `-selected`, `-today` and `-hidden` (a dimmed day with `hideDimmedDates`).
- * A click picks it (date picker) or selects it (calendar)
+ * before or after), `-selected`, `-in-range` (between From and To of a range picker), `-today` and
+ * `-hidden` (a dimmed day with `hideDimmedDates`).
+ * A click picks it (date picker), picks From or To (range picker) or selects it (calendar)
  */
 export function day(context: DateInterface, config: IDateConfig, year: number, month: number, block: number) {
     const FirstDateOfMonth = new Date(year, month, 1);
@@ -122,6 +137,13 @@ export function day(context: DateInterface, config: IDateConfig, year: number, m
         classList.push('simple-html-date-day-selected');
     }
 
+    // a range picker: the days between From and To. In the month shown only, as the selected days
+    const range = isRangePicker(config);
+    const dayOnly = new Date(year, month, day);
+    if (range && !dimmedCell && isInRange(context.config.datepickerRange, dayOnly)) {
+        classList.push('simple-html-date-day-in-range');
+    }
+
     // today has a mark of its own, also when it is not the day picked. In the month shown only, as
     // the selected day
     if (isSameDay(Date.now(), currentDate) && !dimmedCell) {
@@ -137,7 +159,11 @@ export function day(context: DateInterface, config: IDateConfig, year: number, m
         <div
             class=${classList.join(' ')}
             @click=${(e: MouseEvent) => {
-                clicked(e, context, currentDate);
+                if (range) {
+                    rangeClicked(e, context, dayOnly);
+                } else {
+                    clicked(e, context, currentDate);
+                }
                 context.render();
             }}
         >

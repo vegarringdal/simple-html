@@ -1332,6 +1332,63 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### The row menu of a row number: rows only (user request)
+
+##### Changed
+- **On a row number the row menu is about rows**: Undo / Redo ›, Select ›, Copy ›, Delete › and Size ›. What
+  needs a cell or is not about rows is left out - Paste ›, Clear ›, Filter ›, View ›, Export ›, Undo cell
+  edit, Copy › Cell Value / Column / Range, Select ›'s cell entries, Fit column to this cell - where they were
+  greyed out. They are hidden with `visible`: a `menus.row` hook still gets them. On a cell nothing changed.
+
+#### Docs site: Developer Guide and User Guide (user request)
+
+##### Docs
+- The sidebar's "Guides - DEV" is **Developer Guide**, "User guide" **User Guide**.
+
+#### Dates: a range picker for Between, the date picker in the filter menu (user request)
+
+##### Added
+- **A range picker**: `IDateConfig.rangepicker` (with `datepicker: true`) shows two months side by side - one
+  on a window narrower than two months - with « ‹ › » once for the pair. The first day clicked is From, the
+  next To (swapped when it is before), a third starts again; the days between are marked
+  (`simple-html-date-day-in-range`, `--simple-html-date-in-range-bg-color`). A From / To line and Clear / Use
+  under the months. `IDateConfig.datepickerRange` is the range it opens on; the `range-select` event sends
+  `[from, to]` (an end not picked is null, open) or null for Clear. Texts `datePicker.from`, `datePicker.to`,
+  `datePicker.rangeOpen`.
+- **A date header filter with Between** opens the range picker on its from..to; Use filters, Clear empties it
+  (the operator stays Between). A `datetime` range is whole days: from 00:00:00 to 23:59:59.
+- **The filter menu's range block**: a click in the value input of a date or datetime column opens the date
+  picker, in From or To with Between the range picker - inside the filter menu, which stays open. Use fills
+  the inputs, Apply still applies; Esc closes the picker only.
+
+##### Changed
+- `DateInterface.clearSelection()` clears a range too.
+
+#### Aggregates: lines of text, the values not bold (user request)
+
+##### Changed
+- **The lines of aggregates are lines of text**: under a group row's name, and after the first line of the
+  totals row, each aggregate line is `multilineLineHeight` high (15px by default), not a whole `cellHeight` -
+  as the lines of a multiline cell. A group row with sum and avg is 52px, not 66px.
+- **The values of a group row are in the weight of the cells**: only the group's name is bold. The totals
+  row keeps its bold.
+
+#### The value list: filter on the text searched (user request)
+
+##### Added
+- **Filter on the text: contains "…"** under the value list's search box, when it has text (and the column
+  offers `CONTAINS`): checked, Apply (or Enter) filters on the text instead of the values found - the header
+  filter gets `CONTAINS` and the text, as if picked in Operator › and typed in the cell, so rows added later
+  are found too; `*`, `%` and `_` are wildcards. The list stays as a greyed out preview. Text
+  `filter.values.textSearch`.
+
+#### Tooltips over every field (user request)
+
+##### Fixed
+- **The tooltip of Aa in the filter editor was behind the fields** of the conditions under it. Every input of
+  the grid has `z-index: 1000` (in a flex row that layers it, positioned or not) and the tooltip had 600:
+  it has 10000 now, over every layer of the grid - in the filter editor, the column settings and the header.
+
 #### Column settings: the filter operator of each column (user request)
 
 ##### Added

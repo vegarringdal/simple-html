@@ -25,4 +25,27 @@ export interface DateEvents {
      * sends it - read `dateInterface.getSelected()`.
      */
     'date-select': Date | null;
+    /**
+     * A range was picked in a range picker (`rangepicker: true`): the "Use" button sends `[from, to]`,
+     * the days picked at 00:00, From never after To. An end not picked is null - an open end: `[from,
+     * null]` after one click, `[null, null]` when no day was clicked. The "Clear" button sends `null`.
+     * Clicking the days only picks them, neither sends the event.
+     *
+     * @example
+     * ```ts
+     * import { DateInterface } from '@simple-html/grid';
+     *
+     * declare const dateInterface: DateInterface;
+     *
+     * dateInterface.on('range-select', (range) => {
+     *     if (!range) {
+     *         console.log('cleared');
+     *         return;
+     *     }
+     *     const [from, to] = range;
+     *     console.log(from?.toDateString() ?? 'open', to?.toDateString() ?? 'open');
+     * });
+     * ```
+     */
+    'range-select': [Date | null, Date | null] | null;
 }

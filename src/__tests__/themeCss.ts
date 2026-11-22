@@ -324,12 +324,18 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
     ...on('grid-multiline-color', 3, ROWS_AND_SELECTED),
     ...on('grid-lookup-icon-color', 3, ['grid-lookup-button-bg-color']),
     ...on('grid-group-line-color', 3, ['grid-main-bg-color']),
-    // the date picker: its text, the frame of the selected day and today's bar
-    ...on('date-main-color', 4.5, ['date-main-bg-color', 'date-hover-bg-color', 'date-main-bg-selected']),
+    // the date picker: its text - on the days between From and To of a range picker too - the frame of
+    // the selected day (beside those days too) and today's bar
+    ...on('date-main-color', 4.5, [
+        'date-main-bg-color',
+        'date-hover-bg-color',
+        'date-main-bg-selected',
+        'date-in-range-bg-color'
+    ]),
     ...on('date-dimmed-color', 4.5, ['date-main-bg-color']),
     ...on('date-week-color', 4.5, ['date-main-bg-color']),
-    ...on('date-selected-border', 3, ['date-main-bg-color', 'date-main-bg-selected']),
-    ...on('date-today-color', 3, ['date-main-bg-color', 'date-main-bg-selected'])
+    ...on('date-selected-border', 3, ['date-main-bg-color', 'date-main-bg-selected', 'date-in-range-bg-color']),
+    ...on('date-today-color', 3, ['date-main-bg-color', 'date-main-bg-selected', 'date-in-range-bg-color'])
 ];
 
 /**

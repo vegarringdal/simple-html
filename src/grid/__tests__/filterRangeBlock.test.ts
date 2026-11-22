@@ -1,6 +1,9 @@
 // @vitest-environment happy-dom
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { isPopoverShown } from '../../__tests__/popoverStub';
+// the date picker element registers itself on import, the package entry does this for users
+import '../../date/dateElement';
 import { Datasource } from '../../datasource/dataSource';
 import { and, type FilterOperator, where } from '../../datasource/filterExpression';
 import type { GridConfig } from '../gridConfig';
@@ -9,7 +12,7 @@ import type { GridHooks } from '../gridHooks';
 import { MENU_IDS, type MenuEntry } from '../gridMenus';
 import { registerLookup } from '../lookup';
 import { type MountedGrid, mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
-import { headerFilterInput, menuEntry, openFilterMenu, openMenus, typeInHeaderFilter } from './interactionTestHelpers';
+import { headerFilterInput, menuEntry, openFilterMenu, openMenus, sleep, typeInHeaderFilter } from './interactionTestHelpers';
 
 /**
  * The range block of the filter menu of a number, date or datetime column (`filter.range`): the operators
@@ -631,5 +634,262 @@ describe('filter menu - the range block: tooltips', () => {
         operator('>').dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
         const tooltip = document.querySelector<HTMLElement>('.simple-html-grid-tooltip');
         expect(tooltip === null || tooltip.style.display === 'none').toBe(true);
+    });
+});
+
+describe('filter menu - the range block: the date picker', () => {
+    /** the date picker open from the block, its `<simple-html-date>` */
+    const picker = () => document.querySelector<HTMLElement>('simple-html-date');
+    /** the days of the first month shown, not the dimmed days of the months around it */
+    const days = () =>
+        Array.from(
+            picker()
+                ?.querySelector('.simple-html-date-month')
+                ?.querySelectorAll<HTMLElement>('.simple-html-date-day:not(.simple-html-date-day-dimmed)') ?? []
+        );
+    const clickDay = (day: number) => days()[day - 1].click();
+    const selectedDays = () =>
+        days()
+            .filter((cell) => cell.classList.contains('simple-html-date-day-selected'))
+            .map((cell) => Number(cell.textContent?.trim()));
+    /** a button of the picker: Clear, Now, Use */
+    const pickerButton = (text: string) =>
+        Array.from(picker()?.querySelectorAll<HTMLElement>('button.simple-html-date-button') ?? []).find(
+            (candidate) => candidate.textContent?.trim() === text
+        ) as HTMLElement;
+    const title = () => picker()?.querySelector('.simple-html-date-month-title')?.textContent?.replace(/\s+/g, ' ').trim();
+    const click = (input: HTMLInputElement) => input.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const pointerdown = (target: Element) => target.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+
+    /**
+     * the filter menu of `field`, and a task after it: until then a click is taken for the click that
+     * opened the menu (menuJustOpened) - a click in the picker must keep the menu open also after it
+     */
+    const openMenu = async (element: GridElement, field: string) => {
+        openFilterMenu(element, field);
+        await sleep(0);
+    };
+
+    it('expect a click in the value input of a date column to open the date picker, the menu staying open', async () => {
+        const { element } = await mount();
+        await openMenu(element, 'born');
+        type(inputs()[0], '2026-01-05');
+
+        click(inputs()[0]);
+
+        expect(picker()).not.toBeNull();
+        // on the date the input holds, the date picker of one date: its time, Clear / Now / Use
+        expect(title()).toEqual('January 2026');
+        expect(selectedDays()).toEqual([5]);
+        expect(picker()?.querySelector('.simple-html-date-time')).not.toBeNull();
+        // a popover of its own in the menu's popover: it closes with the menu
+        const popover = picker()?.parentElement as HTMLElement;
+        expect(popover.popover).toEqual('manual');
+        expect(isPopoverShown(popover)).toBe(true);
+        expect(block()?.closest('[popover]')?.contains(popover)).toBe(true);
+        expect(menuOpen()).toBe(true);
+    });
+
+    it('expect a day and Use to fill the input, the picker to close, nothing filtered until Apply', async () => {
+        const { element, datasource } = await mount();
+        await openMenu(element, 'born');
+        type(inputs()[0], '2026-01-05');
+        click(inputs()[0]);
+
+        clickDay(18);
+        expect(menuOpen()).toBe(true);
+        pickerButton('Use').click();
+
+        expect(inputs()[0].value).toEqual('2026-01-18');
+        expect(picker()).toBeNull();
+        expect(menuOpen()).toBe(true);
+        expect(datasource.getFilter()).toBeNull();
+
+        button('Apply').click();
+        expect(datasource.getFilter()).toEqual(and(where('born', 'GREATER_THAN_OR_EQUAL_TO', new Date(2026, 0, 18))));
+        expect(names(datasource)).toEqual(['Cid']);
+        expect(menuOpen()).toBe(false);
+    });
+
+    it('expect Clear to empty the input, Cancel to leave the filter as it was', async () => {
+        const { element, datasource } = await mount();
+        typeInHeaderFilter(element, 'born', '2026-01-05');
+        const before = datasource.getFilter();
+        await openMenu(element, 'born');
+        click(inputs()[0]);
+
+        pickerButton('Clear').click();
+
+        expect(inputs()[0].value).toEqual('');
+        expect(menuOpen()).toBe(true);
+        button('Cancel').click();
+        expect(datasource.getFilter()).toEqual(before);
+        expect(headerFilterInput(element, 'born').value).toEqual('2026-01-05');
+    });
+
+    it("expect a datetime's date and time picked in the input", async () => {
+        const { element } = await mount();
+        await openMenu(element, 'at');
+        type(inputs()[0], '2026-01-02T10:30:00');
+        click(inputs()[0]);
+
+        clickDay(5);
+        pickerButton('Use').click();
+
+        expect(inputs()[0].value).toEqual('2026-01-05T10:30:00');
+    });
+
+    it('expect From or To of Between to open the range picker on both, Use to fill both, Apply to filter', async () => {
+        const { element, datasource } = await mount();
+        await openMenu(element, 'born');
+        operator('Between').click();
+        type(inputs()[0], '2026-01-01');
+
+        click(inputs()[1]);
+
+        expect(picker()?.querySelector('.simple-html-date-range')).not.toBeNull();
+        expect(title()).toEqual('January 2026');
+        expect(selectedDays()).toEqual([1]);
+        // From is picked, the next day is To
+        clickDay(5);
+        pickerButton('Use').click();
+
+        expect(inputs().map((input) => input.value)).toEqual(['2026-01-01', '2026-01-05']);
+        expect(picker()).toBeNull();
+        expect(datasource.getFilter()).toBeNull();
+        button('Apply').click();
+        expect(datasource.getFilter()).toEqual(and(where('born', 'BETWEEN', [new Date(2026, 0, 1), new Date(2026, 0, 5)])));
+        expect(names(datasource)).toEqual(['Ann', 'Bob']);
+        expect(headerFilterInput(element, 'born').value).toEqual('2026-01-01..2026-01-05');
+    });
+
+    it('expect Clear of the range picker to empty From and To', async () => {
+        const { element } = await mount();
+        await openMenu(element, 'born');
+        operator('Between').click();
+        type(inputs()[0], '2026-01-01');
+        type(inputs()[1], '2026-01-09');
+        click(inputs()[0]);
+        expect(selectedDays()).toEqual([1, 9]);
+
+        pickerButton('Clear').click();
+
+        expect(inputs().map((input) => input.value)).toEqual(['', '']);
+    });
+
+    it("expect a datetime's range to be whole days: To at 23:59:59", async () => {
+        const { element, datasource } = await mount();
+        await openMenu(element, 'at');
+        operator('Between').click();
+        type(inputs()[0], '2026-01-01');
+        click(inputs()[0]);
+
+        clickDay(5);
+        pickerButton('Use').click();
+
+        expect(inputs().map((input) => input.value)).toEqual(['2026-01-01T00:00:00', '2026-01-05T23:59:59']);
+        button('Apply').click();
+        // Bob at 12:00 on the 5th is in, Cid on February 1st not
+        expect(names(datasource)).toEqual(['Ann', 'Bob']);
+    });
+
+    it('expect Esc to close the picker only - from the input or the picker - a second Esc the menu', async () => {
+        const { element } = await mount();
+        await openMenu(element, 'born');
+        click(inputs()[0]);
+
+        expect(press(inputs()[0], 'Escape').defaultPrevented).toBe(true);
+        expect(picker()).toBeNull();
+        expect(menuOpen()).toBe(true);
+
+        click(inputs()[0]);
+        press(picker() as HTMLElement, 'Escape');
+        expect(picker()).toBeNull();
+        expect(menuOpen()).toBe(true);
+
+        press(inputs()[0], 'Escape');
+        expect(menuOpen()).toBe(false);
+    });
+
+    it('expect a press in the menu outside the picker to close it, one in its input to leave it open', async () => {
+        const { element } = await mount();
+        await openMenu(element, 'born');
+        click(inputs()[0]);
+
+        pointerdown(inputs()[0]);
+        click(inputs()[0]);
+        expect(picker()).not.toBeNull();
+        expect(document.querySelectorAll('simple-html-date')).toHaveLength(1);
+
+        pointerdown(operator('>'));
+        expect(picker()).toBeNull();
+        expect(menuOpen()).toBe(true);
+    });
+
+    it('expect another operator picked to close the picker of the input before', async () => {
+        const { element } = await mount();
+        await openMenu(element, 'born');
+        click(inputs()[0]);
+
+        // from the keyboard: no press before the change
+        radio('Between').checked = true;
+        radio('Between').dispatchEvent(new Event('change', { bubbles: true }));
+
+        expect(picker()).toBeNull();
+        expect(inputs()).toHaveLength(2);
+    });
+
+    it('expect the picker to close with the menu', async () => {
+        const { element } = await mount();
+        await openMenu(element, 'born');
+        click(inputs()[0]);
+
+        button('Cancel').click();
+
+        expect(menuOpen()).toBe(false);
+        expect(picker()).toBeNull();
+    });
+
+    it('expect a click in the picker - a day, Use - not to be a click outside the menu', async () => {
+        const { element } = await mount();
+        await openMenu(element, 'born');
+        type(inputs()[0], '2026-01-05');
+        click(inputs()[0]);
+        const reached = vi.fn();
+        document.addEventListener('click', reached);
+
+        clickDay(9);
+        pickerButton('Use').click();
+        document.removeEventListener('click', reached);
+
+        expect(reached).not.toHaveBeenCalled();
+        expect(menuOpen()).toBe(true);
+        expect(inputs()[0].value).toEqual('2026-01-09');
+    });
+
+    it('expect a press in the picker not to take the focus from the input, but in its hour and minute inputs', async () => {
+        const { element } = await mount();
+        await openMenu(element, 'at');
+        click(inputs()[0]);
+        const mousedown = (target: Element) => {
+            const event = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+            target.dispatchEvent(event);
+            return event.defaultPrevented;
+        };
+
+        expect(mousedown(days()[3])).toBe(true);
+        expect(mousedown(pickerButton('Use'))).toBe(true);
+        expect(mousedown(picker()?.querySelector('.simple-html-date-stepper input') as HTMLElement)).toBe(false);
+    });
+
+    it('expect no picker on a number column', async () => {
+        const { element } = await mount();
+        await openMenu(element, 'age');
+
+        click(inputs()[0]);
+        operator('Between').click();
+        click(inputs()[1]);
+
+        expect(picker()).toBeNull();
     });
 });

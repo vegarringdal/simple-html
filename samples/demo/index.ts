@@ -100,7 +100,7 @@ interface Page {
 const pages = new Map<string, Page>();
 
 /**
- * Guides - DEV, User guide, Samples, API: a part of the sidebar that folds, with a link to each page in it. The items of
+ * Developer Guide, User Guide, Samples, API: a part of the sidebar that folds, with a link to each page in it. The items of
  * a group (the samples' "Getting started", "Datasource" ...) are a part of their own in it that folds
  * too. Everything starts folded; the parts around the page shown unfold (see show)
  */
@@ -147,7 +147,7 @@ navSection('Status', [
 // the guides for developers; the user guide for the people using a grid comes when the features are done
 if (guides.length) {
     navSection(
-        'Guides - DEV',
+        'Developer Guide',
         guides.map((guide) => ({
             route: `guide/${guide.id}`,
             label: guide.title,
@@ -155,7 +155,7 @@ if (guides.length) {
         }))
     );
 }
-navSection('User guide', [{ route: 'user-guide/todo', label: 'TODO', render: (main) => renderUserGuidePage(main) }]);
+navSection('User Guide', [{ route: 'user-guide/todo', label: 'TODO', render: (main) => renderUserGuidePage(main) }]);
 navSection(
     'Samples',
     SAMPLES.map((sample) => ({

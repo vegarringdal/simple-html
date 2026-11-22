@@ -102,7 +102,8 @@ export type GridConfig = {
      * (`gridInterface.fitRows()`) the lines of a cell's text after its first are this far apart - the
      * first line is in the cell's input, `cellHeight` high. So the text reads as a paragraph, and a row
      * of a note of three lines is `cellHeight + 2 * multilineLineHeight` high (52px by default). The
-     * editor of a multiline cell has the same line height.
+     * editor of a multiline cell has the same line height, and so do the lines of aggregates under a
+     * group row's name and after the first of the totals row (`ColumnConfig.aggregate`).
      *
      * 15 is about 1.35 times the default font size (11px). With a larger font
      * (`--simple-html-grid-font-size`) make it larger too, as `cellHeight`: the grid needs it in px to

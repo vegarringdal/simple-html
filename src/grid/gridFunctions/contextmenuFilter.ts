@@ -9,6 +9,7 @@ import type { MenuBlock, MenuContext, MenuEntry } from '../gridMenus';
 import { clearAllColumnFilters } from './clearAllColumnFilters';
 import type { ColType } from './colType';
 import { columnOperators, headerFilterType, headerOperators, isAlwaysCaseSensitive } from './columnFilterOptions';
+import { type DateRange, filterDate, openDateInMenu, openDateRangeInMenu, rangeEndTexts } from './contextmenuDate';
 import { DROPDOWN_FILTER_MAX_ROWS, dropDownFilterData, type ValueListEntry } from './dropDownFilterData';
 import { filterCallback } from './filterCallback';
 import { getHeaderFilterOperator, isHeaderFilterCaseSensitive } from './getHeaderFilterOperator';
@@ -160,6 +161,13 @@ function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
  * Nothing is filtered until Apply: the checkboxes are a draft, Cancel (or Esc, a click outside)
  * leaves the filter as it was.
  *
+ * **A text search** (the user: "if search in box like this, we need to be able to click its a text search
+ * only too"): with text in the search box, *Filter on the text: contains "…"* - when the column offers
+ * `CONTAINS`. Checked, Apply filters on the text instead of the values: the header filter gets the operator
+ * `CONTAINS` and the text, as if picked in Operator › and typed in its cell (the cell shows it, the
+ * indicator `*a*`); `*`, `%` and `_` in it are wildcards there. The list stays as a preview, greyed out:
+ * the values with the text in them, ignoring case.
+ *
  * The keyboard: Tab goes on from the menu's items into it (see itemKeydown in showMenu) - the search
  * box, the checkboxes, Cancel, Apply. ArrowDown / ArrowUp move between the search box and the
  * checkboxes, Space checks one, Enter in the search box or on a checkbox applies, as Apply does.
@@ -172,8 +180,12 @@ function valueListBlock(ctx: Grid, attribute: string, offered: FilterOperator[])
     const state = {
         searchInput: '',
         availableOnly: true,
+        // the search box's text is the filter, not the values checked
+        textSearch: false,
         data: dropDownFilterData(ctx, attribute, true, '')
     };
+    // a text search is a CONTAINS of the header filter: only when the column offers it
+    const canSearchText = offered.includes('CONTAINS');
 
     const block: MenuBlock = {
         type: 'block',
@@ -196,6 +208,10 @@ function valueListBlock(ctx: Grid, attribute: string, offered: FilterOperator[])
         if (!data) {
             return;
         }
+        if (textSearchOn()) {
+            applyTextSearch();
+            return;
+        }
         const valuesOf = (entries: ValueListEntry[]) => entries.flatMap((entry) => entry.values);
         const checked = valuesOf(data.entries.filter((entry) => data.checked.has(entry)));
         const unchecked = valuesOf(data.entries.filter((entry) => !data.checked.has(entry)));
@@ -203,6 +219,27 @@ function valueListBlock(ctx: Grid, attribute: string, offered: FilterOperator[])
             filterCallback(ctx, null, attribute, unchecked.length ? unchecked : null, true);
         } else {
             filterCallback(ctx, null, attribute, checked.length ? checked : null, false);
+        }
+        removeContextMenu(ctx);
+    };
+
+    /** true when Apply filters on the search box's text: the option checked, and text in the box */
+    const textSearchOn = () => canSearchText && state.textSearch && state.searchInput.trim() !== '';
+
+    /**
+     * The text search: as if CONTAINS was picked in Operator › and the text typed in the header filter
+     * (rangeBlock's apply does the same) - the operator, when it changed, is state with a
+     * `filter-operator-change` event; the cell is rendered again and shows the text. Then the menu closes
+     */
+    const applyTextSearch = () => {
+        const changed = getHeaderFilterOperator(ctx, attribute) !== 'CONTAINS';
+        if (changed) {
+            ctx.gridInterface.__setHeaderFilterOperator(attribute, 'CONTAINS');
+        }
+        filterCallback(ctx, state.searchInput.trim(), attribute);
+        rebuildHeaderColumns(ctx);
+        if (changed) {
+            operatorPicked(ctx, attribute, 'CONTAINS');
         }
         removeContextMenu(ctx);
     };
@@ -260,6 +297,14 @@ function valueListBlock(ctx: Grid, attribute: string, offered: FilterOperator[])
             reRender();
         };
 
+        const toggleTextSearch = () => {
+            state.textSearch = !state.textSearch;
+            reRender();
+        };
+
+        // a text search: the values are a preview, they can not be checked
+        const preview = textSearchOn();
+
         const toggleAvailableOnly = () => {
             state.availableOnly = !state.availableOnly;
             state.data = dropDownFilterData(ctx, attribute, state.availableOnly, state.searchInput);
@@ -282,7 +327,12 @@ function valueListBlock(ctx: Grid, attribute: string, offered: FilterOperator[])
         const valueRow = (entry: ValueListEntry) => {
             const count = data.truncated ? undefined : entry.count;
             return html`<label class="simple-html-grid-value-row">
-                <input type="checkbox" .checked=${live(data.checked.has(entry))} @change=${() => toggleValue(entry)} />
+                <input
+                    type="checkbox"
+                    .checked=${live(preview || data.checked.has(entry))}
+                    ?disabled=${preview}
+                    @change=${() => toggleValue(entry)}
+                />
                 <span
                     class=${entry.blank ? 'simple-html-grid-value-text simple-html-grid-value-blank' : 'simple-html-grid-value-text'}
                     @mouseenter=${showCutOffText}
@@ -307,6 +357,16 @@ function valueListBlock(ctx: Grid, attribute: string, offered: FilterOperator[])
                     @input=${search}
                 />
                 ${
+                    canSearchText && state.searchInput.trim() !== ''
+                        ? html`<label class="simple-html-grid-value-row simple-html-grid-value-option simple-html-grid-value-text-search">
+                              <input type="checkbox" .checked=${live(state.textSearch)} @change=${toggleTextSearch} />
+                              <span class="simple-html-grid-value-text" @mouseenter=${showCutOffText}
+                                  >${text('filter.values.textSearch', { text: state.searchInput.trim() })}</span
+                              >
+                          </label>`
+                        : nothing
+                }
+                ${
                     data.enableAvailableOnlyOption
                         ? html`<label class="simple-html-grid-value-row simple-html-grid-value-option">
                               <input type="checkbox" .checked=${live(state.availableOnly)} @change=${toggleAvailableOnly} />
@@ -315,13 +375,13 @@ function valueListBlock(ctx: Grid, attribute: string, offered: FilterOperator[])
                         : nothing
                 }
                 <div class="simple-html-grid-value-info" aria-live="polite">${info}</div>
-                <div class="simple-html-grid-value-box">
+                <div class=${preview ? 'simple-html-grid-value-box simple-html-grid-value-preview' : 'simple-html-grid-value-box'}>
                     <label class="simple-html-grid-value-row simple-html-grid-value-all">
                         <input
                             type="checkbox"
-                            .checked=${live(allChecked)}
-                            .indeterminate=${someChecked}
-                            ?disabled=${total === 0}
+                            .checked=${live(preview || allChecked)}
+                            .indeterminate=${!preview && someChecked}
+                            ?disabled=${preview || total === 0}
                             @change=${toggleAll}
                         />
                         <span class="simple-html-grid-value-text">${text('filter.values.selectAll')}</span>
@@ -371,6 +431,10 @@ const OPERATOR_SYMBOLS: Partial<Record<FilterOperator, string>> = {
  * `from..to` for Between - goes to filterCallback as typed text, parsed with the field's formatter
  * (parseFilter); the cell is rendered again and shows it. An input left empty is no filter on the column,
  * as an empty cell. The placeholder of an input is the formatter's (a date's format), else "Number".
+ *
+ * A date or datetime column: a click in the input opens the grid's date picker, From or To of Between the
+ * range picker - beside the input, the menu stays open (see openPicker in it). What is picked fills the
+ * inputs, a draft as what is typed.
  *
  * The keyboard: Tab goes on from the menu's items into it (see itemKeydown in showMenu), Shift+Tab back.
  * The operators are radio buttons, one stop of Tab: the arrows move between them, as in any radio group.
@@ -456,10 +520,61 @@ function rangeBlock(
     };
 
     /**
+     * The date picker open from an input of a date or datetime column: the function that closes it, null
+     * while none is open
+     */
+    let closePicker: (() => void) | null = null;
+    const pickerClosed = () => {
+        closePicker = null;
+    };
+
+    /**
+     * A click in an input of a date or datetime column opens the grid's date picker beside the menu's
+     * input, the menu stays open (openDateInMenu): on the date the input holds, Use puts the date picked in
+     * it - Clear empties it. From and To of Between open the range picker under them, on the two dates
+     * they hold: Use puts From and To in them (a datetime's To at 23:59:59, the range is whole days).
+     * Picking only fills the draft: Apply applies. A click in the input while the picker is open leaves
+     * it as it is
+     */
+    const openPicker = (event: MouseEvent, index: number) => {
+        if ((type !== 'date' && type !== 'datetime') || closePicker) {
+            return;
+        }
+        const input = event.currentTarget as HTMLInputElement;
+        if (state.operator === 'BETWEEN') {
+            const ends = input.closest<HTMLElement>('.simple-html-grid-range-ends') ?? input;
+            const range: DateRange = [filterDate(formatter, state.texts[0]), filterDate(formatter, state.texts[1])];
+            closePicker = openDateRangeInMenu(
+                ctx,
+                ends,
+                range,
+                (picked) => {
+                    state.texts = rangeEndTexts(formatter, type, picked);
+                    reRender();
+                },
+                pickerClosed
+            );
+            return;
+        }
+        closePicker = openDateInMenu(
+            ctx,
+            input,
+            filterDate(formatter, state.texts[index]),
+            (date) => {
+                state.texts[index] = formatter.format(date);
+                reRender();
+            },
+            pickerClosed
+        );
+    };
+
+    /**
      * Another operator in the draft. Picked with the mouse (the last input was no key) the focus goes on
-     * to the input: the arrows of the keyboard stay in the group
+     * to the input: the arrows of the keyboard stay in the group. A date picker open from the input
+     * before closes: it was for the inputs of the operator before
      */
     const pick = (operator: FilterOperator) => {
+        closePicker?.();
         state.operator = operator;
         singleValue();
         reRender();
@@ -497,6 +612,7 @@ function rangeBlock(
                 @input=${(event: Event) => {
                     state.texts[index] = (event.target as HTMLInputElement).value;
                 }}
+                @click=${(event: MouseEvent) => openPicker(event, index)}
             />`;
 
         /**

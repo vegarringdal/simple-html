@@ -3279,6 +3279,149 @@ in the console. All passed. Found and fixed:
   in the dialog, Less than picked, Apply → the header's indicator shows `<`, no operator on a checkbox
   column); column-settings-check 144/144
 
+### The tooltip behind the filter editor's fields (user request)
+
+* the user, a screenshot of the filter editor: "match case tooltip in filter editor is behind form elements..
+  this needs something better". The tooltip of Aa was cut by the value input of the next condition
+* why: `.simple-html-grid input { z-index: 1000 }` is every input under a `.simple-html-grid` element - the
+  filter editor dialog is one. The input is not positioned, but it is a flex item, and a flex item paints by
+  its z-index; the tooltip (`position: fixed`, a child of the dialog) had 600
+* grid.css: the tooltip's z-index is 10000 - over every layer of the grid (the highest is 2000). A tooltip
+  of a menu is in the menu's popover, the top layer, as before
+* tests: tooltipLayer.test.ts - the tooltip's z-index over every other one of grid.css, date.css and the
+  TreDeSpace theme. Browser: new `editor-tooltip-check.js` 11/11 (hovers each Aa of four conditions, light
+  and dark, and asks `elementsFromPoint` - with the tooltip's pointer-events on, it skips an element
+  without - what is on top at its middle and corners: the tooltip; it was 7/11 before the fix);
+  filter-case 73/73, column-settings 144/144
+
+### The value list: a text search (user request)
+
+* the user, a screenshot of the value list with "den" searched (Denmark, Sweden): "if search in box like this,
+  we need to be able to click its a text search only too". Apply was always an `IN` of the values found
+* contextmenuFilter.ts valueListBlock: with text in the search box and `CONTAINS` among the column's operators,
+  a checkbox *Filter on the text: contains "…"* (`.simple-html-grid-value-text-search`, the row style of
+  *Only values in filtered rows*). Checked, Apply and Enter call applyTextSearch: `CONTAINS` in the header
+  filter's state when it was another (`filter-operator-change`), filterCallback with the text, the header
+  rendered again - what rangeBlock's apply does. The values are a preview: checked and disabled, the box
+  `.simple-html-grid-value-preview` at 60% opacity, its rows without pointer events (the box still scrolls);
+  unchecked the draft of the values is as it was
+* tests: filterContextMenu.test.ts +6 (the option only with text, the preview and back, Apply: the filter,
+  the state, the cell, the event once, a row added later; Enter and `_`; no option without CONTAINS; a
+  lookup column's labels); texts.test.ts types a search (a digit) so the text is shown
+* browser: new `value-list-text-search-check.js` 33/33 (light, dark, TreDeSpace dark, a phone: the option,
+  the preview, Apply → CONTAINS "den", the cell and `*a*`, every row has den); value-list 51/51,
+  filter-submenu-close 17/17, menus-regression 25/25
+* guides: filtering (the value list), texts
+
+### Aggregates: less room around the lines, the values not bold (user request)
+
+* the user, screenshots of group rows with Avg / Sum / Avg: "think padding is a bit much when multiple
+  aggregates", "maybe using bold is a bit much too?". Every aggregate line was a whole `cellHeight` (22px),
+  a group row with two was 66px; the values took the group row's header bold
+* aggregates.ts: `aggregateRowHeights` uses cellHeightOf (rowHeights.ts) - the first line `cellHeight`, each
+  line more `multilineLineHeight`; new `aggregateLineBox` places a line as a taller cell's lines are placed
+  (linesUnderTop): a group row's aggregates from 19px, 15px apart; the totals row's first line as before,
+  the others under it. grid.css: `.simple-html-grid-group-aggregates .simple-html-grid-aggregate` in
+  `--simple-html-grid-font-weight`; the name keeps the header's bold, the totals row its bold
+* aggregates.test.ts: the heights and tops (37 / 52px, 19 / 34px); guide 18 (the group rows), JSDoc of
+  `multilineLineHeight`
+* browser: new `aggregate-lines-check.js` 11/11 (light and dark: 22 + 15 per line, the lines 15px apart, the
+  name 700 and the values 500, every text inside its row); full-grid 11/11, footer-summary 11/11
+### Date filters: the date picker in the range block, a range picker for Between (user request)
+
+* the user, on a date column's filter: "our date picker needs to come when we select" (the range block's
+  inputs were plain text inputs: opening the date picker as a grid menu closed the filter menu, one menu at
+  a time) and "if its in between when we select datepicker, we need to be able to select range... so there
+  is 2 date pickers side by side" (a BETWEEN header cell, `2026-11-22..2026-11-28`, opened the single date
+  picker, and Use replaced the range with one day)
+* **a range mode in the date component** (public API): `IDateConfig.rangepicker` (with `datepicker: true`;
+  a calendar ignores it), `IDateConfig.datepickerRange` (`[Date | null, Date | null] | null`, the range it
+  opens on and the range picked so far), the event `range-select` (`[from, to]`, an end not picked null -
+  an open end; `null` for Clear). Two months side by side, one when the window is narrower than two months
+  and 10px (`rangeMonths`, a phone); « ‹ once before the first month and › » after the last
+  (`simple-html-date-nav-space` keeps the name of the month in the middle). The first day is From, the next
+  To (swapped when before From, the same day twice is that day), a third starts again (`nextRange`);
+  From and To `-selected`, the days between `simple-html-date-day-in-range` (not on the dimmed days, as
+  `-selected`). Under the months, as wide as both: From and To (label over `22 November 2026`, `–` while not
+  picked, `aria-live`) and Clear / Use - no hours, minutes or Now. Days at 00:00 (`rangeDays`: a range given
+  with times or the wrong way round is made days, From first, new dates); Use sends copies.
+  `clearSelection()` clears the range too. The date picker and the calendar render as before (their tests
+  unchanged); `month()` / `monthHeader()` take the index of the month (default 0)
+* **grid**: contextmenuDate.ts has one builder for the grid's pickers (`createDatePicker`: datePickerConfig,
+  texts) and: `contextmenuDateRange` (the range picker as the grid's menu, placed with placeMenu - measured,
+  not `datepickerHeight`), `openDateInMenu` / `openDateRangeInMenu` (a picker from an element of the open
+  menu), `rangeEndTexts` / `rangeFilterText` (a range as the inputs' texts / `from..to`), `filterDate`
+  * the header filter: a click with the operator BETWEEN (getHeaderFilterOperator, at the click) opens the
+    range picker on `parseRangeText` of the cell; Use is `filterCallback(from..to)` - as typed - Clear `''`
+    (the operator stays Between)
+  * the range block: a click in the value input of a date / datetime column opens the date picker on the
+    date it holds, Use fills it, Clear empties it; From or To of Between open the range picker under both
+    (anchored on `.simple-html-grid-range-ends`) on the two dates, Use fills both. Only the draft: Apply /
+    Enter applies, Cancel / Esc / a click outside leave the filter. Another operator closes it
+  * **the filter menu stays open**: the picker is a `popover="manual"` put in the menu's popover
+    (`ctx.contextMenu`), as a submenu is - it is no level of the menu tree, so watchBlock does not close it -
+    and closes with the menu. Its clicks stop at it (the document's click handler closes a menu on a click
+    outside `.simple-html-grid-menu`, and Clear / Use bubble); a mousedown in it is canceled but in its hour
+    and minute inputs, so the focus stays in the block's input (Enter applies, Esc reaches the menu); Esc on
+    the menu closes the picker and is canceled (addMenuListeners leaves the menu), the second Esc closes the
+    menu; a pointerdown in the menu outside the picker and its anchor closes it. The touch listener counts it
+    in the menu (`ctx.contextMenu.contains`)
+* **a datetime range is whole days**: From 00:00:00, To 23:59:59 - the built-in datetime formatters show
+  the seconds and the filter compares to the second (toFilterTime), so 23:59 would miss 23:59:30
+* css: `--simple-html-date-in-range-bg-color` `light-dark(#dee9f3, #2d4469)` (midway the background and the
+  selected day), TreDeSpace blue-950 (the library's span, its ends framed); CONTRAST_PAIRS +3 (the text,
+  the selected frame and today's bar on it). No border-radius; the bottom's buttons are the date picker's
+  24px
+* texts `datePicker.from`, `datePicker.to`, `datePicker.rangeOpen` (`–`); the guide's table, the Norwegian
+  sample (Fra, Til)
+* docs: guide 06 (the header filters' table, BETWEEN, a new "The range picker", the range block's date
+  picker), 09 (the range picker's example and `range-select`), 10 (the picker in the menu's popover), 12
+  (the texts), 13 (the look, the classes, the variable, TreDeSpace), 14 (keyboard, `aria-live`); JSDoc of
+  IDateConfig (`rangepicker` with an example, `datepickerRange`, the fields it sets), DateEvents
+  `range-select`, DateInterface, the templates; typings consumer (the range API, a one-end range rejected)
+* tests: new src/date/__tests__/rangePicker.test.ts (26: two months / one on a 390px window / the 510px
+  edge, the navigation once for the pair, no time, opening on today / From / To, the clicks - From, To, swap,
+  a third, the same day, over the two months, dimmed days unmarked - the range given with times and
+  reversed, a day click not reaching the page, clearSelection, Use / Clear / open ends / copies, no event
+  while picking, aria-live, its own texts, the date picker and the calendar as before);
+  datePickerCell.test.ts +7 (the BETWEEN cell: the range picker on from..to, two days and Use - state,
+  filter, cell, rows -, one day = an open end, Clear keeps the operator, an empty cell opens on today, a
+  datetime's 23:59:59 with the rows, another operator after Between the date picker again);
+  filterRangeBlock.test.ts +14 (the value input's picker in the menu's popover, Use fills - nothing filtered
+  until Apply -, Clear and Cancel, a datetime's time, From / To with the range picker and Apply, its Clear, a
+  datetime's 23:59:59, Esc from the input and from the picker then the menu, a press outside / in the input,
+  another operator, closing with the menu, its clicks not reaching the document, the focus kept, no picker
+  on a number); texts.test.ts (the range picker opened: every id shown, no English). 3418 -> 3465 tests,
+  150 files
+* browser (Chromium 1148): new `date-range-check.js` 168/168 in six looks (1300x1000 light, dark,
+  TreDeSpace light, dark; a phone 390x844 with touch - taps - light and TreDeSpace dark): the BETWEEN cell's
+  range picker (two months, one on the phone, on its from..to, in the window, no rounded corners, the fill),
+  two days and Use (the rows, the cell), the range block's From with the range picker in the menu's popover
+  (menu open, Use fills both, nothing filtered, Apply filters), ≥ with the date picker on the input's date,
+  Esc the picker only then the menu, Enter after a pick applies, the ≥ cell's date picker. The shared checks:
+  range-block 81/81 (it types its dates: `fill()` does not click), touch 61/61 (59/61 once while the test
+  suite ran beside it: the momentum of a swipe, timing), display-format 39/39, custom-cells 39/39. The
+  script is in this worktree's `.claude/browser-checks/scripts/`, its screenshots in
+  `.claude/browser-checks/shots/date-range/`
+
+### Docs site: Developer Guide, User Guide (user request)
+
+* the user: "Guides DEV could be called Developer Guide, and User guide, called User Guide"
+* samples/demo/index.ts (the sections), pages.ts (the user guide's title), site.test.ts; the shared
+  full-grid-check.js expects "Developer Guide" (backup `.before-guide-rename`): 11/11, sidebar-toggle 15/15
+
+### The row menu of a row number: rows only (user request)
+
+* the user, a screenshot of the menu on a row number (Undo / Redo, Select, Copy, Paste, Clear, Delete,
+  Filter, View, Size, Export): "row number context menu have too many options that does not belong there"
+* contextmenuRow.ts: `onCell` (the field is not `''`) in `visible` of Paste ›, Clear ›, Filter ›, View ›,
+  Export ›, Undo cell edit, Copy › Cell Value / Column / Range, Select ›'s cell separator, Range to here and
+  Add this cell, Size › Fit column to this cell; the `noCell` greying in them went (never shown without a
+  cell). Left: Undo / Redo, Select, Copy, Delete, Size - about as a spreadsheet's row header
+* selectMenu.test.ts: the menu tree of a row number is MENU_IDS.row without those, the five submenus, the
+  hook still gets `row.filter`; the cell entries are not there (were greyed out). Guides 10, 17
+* browser: new `row-number-menu-check.js` 7/7 (light and dark: the five on a row number, Copy › the rows
+  only, on a cell the whole menu)
 ### Grid config: tabs, and a detail form at the right of the rows (user request)
 
 * the user: "Want us to be able to also define detail form for the right side. So enable, then select
