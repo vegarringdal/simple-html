@@ -617,7 +617,7 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.badge.checkbox` | `Checkbox` | the column is shown as checkboxes |
 | `columnSettings.badge.numberOverride` | `Blank / 0` | the column shows a blank as 0, or 0 as blank (or neither, over its `numberOverride`) |
 | `columnSettings.badge.label` | `Label` | the column has a label of the user's |
-| `columnSettings.badge.placeholder` | `Placeholder` | the column's header filter has a placeholder of the user's |
+| `columnSettings.badge.placeholder` | `Placeholder` | the column's empty cells have a placeholder of the user's |
 | `columnSettings.badge.rules` | `Colours` | the column has colour rules |
 | `columnSettings.label` | `Label` | the label of the input of the column's label, every column: empty is the column's own, the input shows it |
 | `columnSettings.format` | `Format` | the label of the format picker of a date or number column |
@@ -642,8 +642,8 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.checked` | `Checked value` | the label of the value of a checked cell |
 | `columnSettings.unchecked` | `Unchecked value` | the label of the value written when a cell is unchecked |
 | `columnSettings.checkbox.hint` | `A click writes the other value. An empty unchecked value empties the cell` | under the two values: a cell is checked when its value is the checked value |
-| `columnSettings.placeholder` | `Filter placeholder` | the label of the placeholder of the column's header filter, every column but a checkbox: empty is the column's own, the input shows it |
-| `columnSettings.placeholderLabel` | `Use the column label` | the checkbox: the placeholder is the column's label |
+| `columnSettings.placeholder` | `Placeholder` | the label of the placeholder of the column's empty cells, every column but a checkbox: empty is the column's own (`placeholderRow`), the input shows it |
+| `columnSettings.placeholderLabel` | `Use the column label` | the checkbox: the placeholder of the empty cells is the column's label |
 | `columnSettings.operator` | `Filter operator` | the label of the operator picker, every column but a checkbox |
 | `columnSettings.operator.tooltip` | `The operator the header filter of the column uses` | its tooltip |
 | `columnSettings.operator.hint` | `Default: {operator}` | under it: the operator the column starts with, its name |

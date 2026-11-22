@@ -154,33 +154,54 @@ describe('column format - the label of the user', () => {
     });
 });
 
-describe('column format - the placeholder of the header filter', () => {
-    it("expect a text, or the column's label, over the column's placeholderFilter and a BETWEEN's", async () => {
+describe('column format - the placeholder of the empty cells', () => {
+    it("expect a text, or the column's label, over the column's placeholderRow - not the header filter's", async () => {
         const { element, gridInterface } = await mountGrid(
-            columns({ name: { label: 'Name', placeholderFilter: 'find' } }, 'name', 'age'),
-            [{ name: 'Ann', age: 3 }],
+            // every row's empty cells, not only the current row's
+            {
+                ...columns({ name: { label: 'Name', placeholderRow: 'required', placeholderFilter: 'find' } }, 'name', 'age'),
+                placeholderRowCurrentEntityOnly: false
+            },
+            [
+                { name: null, age: null },
+                { name: 'Ann', age: 3 }
+            ],
             { fields: { age: 'number' } }
         );
-        const placeholder = (attribute: string) => headerFilterInput(element, attribute).placeholder;
-        expect([placeholder('name'), placeholder('age')]).toEqual(['find', 'Number']);
+        // the empty cell of the first row; the header filters keep their own
+        const placeholder = (attribute: string) => cells(element, attribute)[0].placeholder;
+        const filterPlaceholder = (attribute: string) => headerFilterInput(element, attribute).placeholder;
+        expect([placeholder('name'), placeholder('age')]).toEqual(['required', '']);
 
-        gridInterface.setState({ formats: { name: { placeholder: 'Search the names' }, age: { placeholder: 'Years' } } });
-        expect([placeholder('name'), placeholder('age')]).toEqual(['Search the names', 'Years']);
-        // the user's wins over a BETWEEN's from..to too
-        gridInterface.setState({ headerFilters: { age: { value: null, operator: 'BETWEEN' } } });
-        expect(placeholder('age')).toEqual('Years');
+        gridInterface.setState({
+            formats: { name: { placeholderRow: 'Name of the customer' }, age: { placeholderRow: 'Years' } }
+        });
+        expect([placeholder('name'), placeholder('age')]).toEqual(['Name of the customer', 'Years']);
+        expect([filterPlaceholder('name'), filterPlaceholder('age')]).toEqual(['find', 'Number']);
 
         // the label: the user's label, else the column's own
-        gridInterface.setState({ formats: { name: { placeholderLabel: true, label: 'Who' }, age: { placeholderLabel: true } } });
+        gridInterface.setState({
+            formats: { name: { placeholderRowLabel: true, label: 'Who' }, age: { placeholderRowLabel: true } }
+        });
         expect([placeholder('name'), placeholder('age')]).toEqual(['Who', 'Age']);
         gridInterface.setState({ formats: {} });
-        expect([placeholder('name'), placeholder('age')]).toEqual(['find', 'from..to']);
+        expect([placeholder('name'), placeholder('age')]).toEqual(['required', '']);
     });
 
-    it('expect a TypeError for a placeholder of a checkbox column, its filter is a checkbox', async () => {
+    it('expect it on the current row only with placeholderRowCurrentEntityOnly', async () => {
+        const { element, gridInterface, datasource } = await mountGrid(
+            { ...columns({}, 'name'), placeholderRowCurrentEntityOnly: true },
+            [{ name: null }, { name: null }]
+        );
+        gridInterface.setState({ formats: { name: { placeholderRow: 'Name' } } });
+        datasource.setRowAsCurrentEntity(1);
+        expect(cells(element, 'name').map((cell) => cell.placeholder)).toEqual(['', 'Name']);
+    });
+
+    it('expect a TypeError for a placeholder of a checkbox column, its cells are checkboxes', async () => {
         const { gridInterface } = await mountGrid(columns({}, 'active'), [{ active: true }], { fields: { active: 'boolean' } });
-        expect(() => gridInterface.setState({ formats: { active: { placeholder: 'Yes' } } })).toThrow(
-            /setState: formats.active.placeholder is for a header filter that is typed in/
+        expect(() => gridInterface.setState({ formats: { active: { placeholderRow: 'Yes' } } })).toThrow(
+            /setState: formats.active.placeholderRow is for a cell that is typed in/
         );
         // a label it takes
         gridInterface.setState({ formats: { active: { label: 'On' } } });
@@ -376,7 +397,7 @@ describe('column format - the checkboxes of a text or number column', () => {
         const { element, gridInterface } = await mountGrid(columns({}, 'name', 'flag'), rows());
         gridInterface.setState({
             formats: {
-                flag: { checkbox: { checked: '1', unchecked: '0' }, label: 'Flag', placeholderLabel: true }
+                flag: { checkbox: { checked: '1', unchecked: '0' }, label: 'Flag', placeholderRowLabel: true }
             }
         });
         const saved = JSON.parse(JSON.stringify(gridInterface.getState()));
@@ -385,9 +406,8 @@ describe('column format - the checkboxes of a text or number column', () => {
 
         gridInterface.setState(saved);
         expect(cells(element, 'flag')[0].type).toEqual('checkbox');
-        expect(headerFilterInput(element, 'flag').placeholder).toEqual('Flag');
         expect(gridInterface.getState().formats).toEqual({
-            flag: { checkbox: { checked: '1', unchecked: '0' }, label: 'Flag', placeholderLabel: true }
+            flag: { checkbox: { checked: '1', unchecked: '0' }, label: 'Flag', placeholderRowLabel: true }
         });
     });
 });

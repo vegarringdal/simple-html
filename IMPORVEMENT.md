@@ -4015,6 +4015,22 @@ rebuildHeaderColumns for the middle section too (scrollHandlers.test.ts has it).
   `rowClass` hook does it in code); `fitColumns()` measures the normal weight - a bold cell can be a few px
   wider; a date picker for a rule's date value
 
+### The placeholder of the column settings is the empty cells' (user request)
+
+* the user, after the column settings got a placeholder with "Use the column label": "filter placeholder,
+  that was supposed to be for row..." - the placeholder an empty cell shows (`ColumnConfig.placeholderRow`),
+  not the header filter's
+* columnFormat.ts: `ColumnFormat.placeholder` / `placeholderLabel` are `placeholderRow` / `placeholderRowLabel`
+  (not released yet: renamed, not kept) - over `ColumnConfig.placeholderRow`; `rowPlaceholder(column, label)`
+  in renderRowCell.ts. The header filter has its own again (`defaultFilterPlaceholder`; headerFilterPlaceholder
+  went). The dialog's *Placeholder* (was *Filter placeholder*) shows the column's own `placeholderRow` in its
+  input, not for a checkbox column or one shown as checkboxes
+* tests: columnFormatOptions (the empty cells, every row with `placeholderRowCurrentEntityOnly: false`, the
+  current row only by default, the header filter's own, the TypeError), columnFormat (the checks), columnSettings
+  (the dialog); the typings consumer; guides 02, 03, 08, 12
+* browser: the shared `column-settings-more-check.js` reads the current row's Company input and the header
+  filter's own placeholder (backup `.before-row-placeholder`): 149/149
+
 ## Considered, not done
 
 ## Candidates / not started

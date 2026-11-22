@@ -2,7 +2,7 @@ import { html, nothing, render, svg } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import { type Entity, isGroupRow } from '../../datasource/entity';
 import { isMissingValue } from '../../datasource/validatorRegistry';
-import { checkboxValueOf, isCheckedValue } from '../columnFormat';
+import { checkboxValueOf, isCheckedValue, rowPlaceholder } from '../columnFormat';
 import type { Grid } from '../grid';
 import { ariaColIndex, setAria } from './ariaGrid';
 import { asPx } from './asPx';
@@ -402,7 +402,7 @@ export function renderRowCell(
                         .readOnly=${multiline || !!lookupColumn || !!config.readonly || cellReadOnly}
                         aria-describedby=${more ? moreId : nothing}
                         aria-haspopup=${lookupEditable ? lookupPopup : nothing}
-                        placeholder=${showPlaceHolder ? cellConfig.placeholderRow : ''}
+                        placeholder=${showPlaceHolder ? rowPlaceholder(cellConfig, label) : ''}
                         @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
                             contextmenuRow(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);

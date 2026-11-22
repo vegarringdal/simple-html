@@ -570,14 +570,14 @@ export type ColumnConfig = {
      */
     label?: string;
     /**
-     * shown in an empty cell, see `GridConfig.placeholderRowCurrentEntityOnly`
+     * shown in an empty cell, see `GridConfig.placeholderRowCurrentEntityOnly`. The user's from the grid
+     * config dialog (`format.placeholderRow`, or the column's label with `format.placeholderRowLabel`) wins
      *
      * @sample required-placeholders
      */
     placeholderRow?: string;
     /**
      * shown in the empty header filter. Default: the formatter's placeholder (date fields), else the field's type: `Text` or `Number` (texts `filter.placeholder.*`).
-     * The user's from the grid config dialog (`format.placeholder`, `format.placeholderLabel`) wins
      *
      * @sample required-placeholders
      */
@@ -792,8 +792,8 @@ export type ColumnConfig = {
      * and a link, see {@link LinkFormat} (`{ link: { url: 'mailto:{email}' } }`). Left out: the field's
      * formatter.
      *
-     * The rest of what the grid config dialog sets is here too: `label`, the header filter's
-     * `placeholder` / `placeholderLabel`, a number column's `numberOverride`, and `checkbox` - the cells
+     * The rest of what the grid config dialog sets is here too: `label`, the empty cells'
+     * `placeholderRow` / `placeholderRowLabel`, a number column's `numberOverride`, and `checkbox` - the cells
      * of a text or number column as checkboxes, see {@link CheckboxFormat}
      * (`{ checkbox: { checked: '1', unchecked: '0' } }`).
      *

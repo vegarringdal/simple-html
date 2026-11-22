@@ -347,7 +347,7 @@ const DEFAULTS = {
     'columnSettings.unchecked': 'Unchecked value',
     'columnSettings.checkbox.hint': 'A click writes the other value. An empty unchecked value empties the cell',
     // every column but a checkbox: the placeholder of its header filter, a text or the column's label
-    'columnSettings.placeholder': 'Filter placeholder',
+    'columnSettings.placeholder': 'Placeholder',
     'columnSettings.placeholderLabel': 'Use the column label',
     // every column but a checkbox: the operator of its header filter, {operator} the column's default
     'columnSettings.operator': 'Filter operator',

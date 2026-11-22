@@ -1439,8 +1439,9 @@ rows); the vertical time is rendering every cell of every row on screen, which s
   winning over the column's own option - and a developer can set them in `ColumnConfig.format`:
   - **Label** (`ColumnFormat.label`): the column's label everywhere the grid names it - the header, the
     menus, the filter editor, the footer's chips, the headers of copy, CSV and Excel.
-  - **Filter placeholder** (`placeholder`) or **Use the column label** (`placeholderLabel: true`): the
-    header filter's placeholder, over `placeholderFilter` and Between's "from..to".
+  - **Placeholder** (`placeholderRow`) or **Use the column label** (`placeholderRowLabel: true`): the
+    placeholder of the column's empty cells, over `ColumnConfig.placeholderRow` (on the current row only by
+    default, `placeholderRowCurrentEntityOnly`). The header filter keeps its own placeholder.
   - **Show blank as 0** / **Show 0 as blank** for a number column (`numberOverride`: `'BLANK_TO_ZERO'`,
     `'ZERO_TO_BLANK'`, or `'NONE'` to turn the column's own off).
   - **Show as checkbox** for a text or number column of `1` / `0` (`checkbox: { checked?, unchecked? }`,

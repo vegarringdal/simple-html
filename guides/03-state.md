@@ -172,7 +172,7 @@ gridInterface.setState({ formats });
   one. A format that does not fit its field throws a `TypeError`, and nothing of the state changes.
 - It is plain JSON: a state saved with `JSON.stringify` gives the same formats back.
 - The rest of what the user sets in the grid config dialog is in a column's format too - its
-  `label`, the header filter's `placeholder` / `placeholderLabel`, a number column's `numberOverride`,
+  `label`, the empty cells' `placeholderRow` / `placeholderRowLabel`, a number column's `numberOverride`,
   `checkbox`, `multiline`, `readonly`, the colour `rules` - so it is saved and given back with the formats, see
   [Label, placeholder, blank / 0, checkboxes, multiline, read only](08-formatting.md#label-placeholder-blank--0-checkboxes-multiline-read-only) and
   [Colour rules](08-formatting.md#colour-rules). A rule's value is text as it is typed in the header
