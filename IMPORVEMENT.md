@@ -3101,6 +3101,18 @@ in the console. All passed. Found and fixed:
   the page's width, remembered, show; phone: hidden, opens over the page, a page picked / a tap beside /
   Esc close it; a 2200px window: 30 rows, the full grid 85); full grid 11/11, sample height 5/5
 
+### Docs site: the bottom of a sample page could not be reached
+
+* found checking the column settings: the full grid sample's grid footer (the count, No filter, the
+  settings gear) was 80px below a 1300 x 1400 window and could not be scrolled to - the body does not
+  scroll (`overflow: hidden`), `.main` did not either, and the full page grid was `100vh - 190px` high, a
+  guess of what is above it that a longer description and more buttons outgrew. Any sample page whose
+  description, buttons and 15-row grid were taller than the window was cut off the same way
+* `.main` scrolls (`overflow-y: auto`) when its page is taller than the window; the full page grid fills
+  the height its page leaves (flex: 1), 15 rows at least - no guess. Checked at 1400 and 800 high: the
+  footer in view (the grid 44 and 17 rows); sample height 5/5, full grid 11/11, sidebar 15/15, touch
+  61/61, find 68/68, footer summary 11/11, display format 39/39, lookups 55/55
+
 ### Column settings: a dialog, templates and links of a text column (user request)
 
 * the user: "on text we also like to add formatting rules with inline editor, so we can set that a value is

@@ -1359,6 +1359,12 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - The footer's filter chips collapsed only when they started left of the selection summary; now in every
   overlap.
 
+#### Docs site: a sample page scrolls
+
+##### Fixed
+- A sample page taller than the window was cut off and could not be scrolled - the full grid sample's grid
+  footer was below the window. The page scrolls, and the full grid sample's grid fills the height left.
+
 #### Touch: less padding (user request)
 
 ##### Changed
