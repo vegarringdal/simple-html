@@ -59,6 +59,7 @@ export type { ColorRule, PaletteColor } from './grid/colorRules';
 export type { CheckboxFormat, ColumnFormat, DateFormat, LinkFormat, NumberFormat } from './grid/columnFormat';
 export { type CreateGridOptions, createGrid } from './grid/createGrid';
 export type { CsvOptions, CsvSeparator } from './grid/csv';
+export { DATE_PRESETS, type DatePreset } from './grid/datePresets';
 export type { FindResult } from './grid/findResult';
 export type {
     ColumnConfig,

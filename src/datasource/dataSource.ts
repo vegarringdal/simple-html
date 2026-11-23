@@ -65,6 +65,8 @@ export type EntityUnion<T> = Entity & T;
 export interface FilterConditionNode {
     /** always `'condition'` */
     kind: 'condition';
+    /** the field of the condition, its name: `label` is what is shown */
+    field: string;
     /** the field's label, or what the `label` function given to `getFilterTree()` returns */
     label: string;
     /** the operator's name, e.g. `'EQUAL'`, see {@link FilterOperator} */
@@ -2811,7 +2813,7 @@ export class Datasource<T = any> {
      *
      * datasource.getFilterTree();
      * // { kind: 'group', group: 'AND', children: [
-     * //     { kind: 'condition', label: 'Age', operator: 'GREATER_THAN', value: '18', hasValue: true, caseSensitive: false }
+     * //     { kind: 'condition', field: 'age', label: 'Age', operator: 'GREATER_THAN', value: '18', hasValue: true, caseSensitive: false }
      * // ] }
      *
      * // the codes of country shown as names
@@ -2819,7 +2821,7 @@ export class Datasource<T = any> {
      * const countryName: Formatter = { ...TextFormatter, format: (value) => names[String(value)] ?? TextFormatter.format(value) };
      * datasource.filter(where('country', 'IN', ['NO', 'SE']));
      * datasource.getFilterTree(undefined, (field) => (field === 'country' ? countryName : undefined));
-     * // ... { kind: 'condition', label: 'country', operator: 'IN', value: 'Norway, Sweden', hasValue: true, caseSensitive: false } ...
+     * // ... { kind: 'condition', field: 'country', label: 'country', operator: 'IN', value: 'Norway, Sweden', hasValue: true, caseSensitive: false } ...
      * ```
      */
     public getFilterTree(
@@ -2852,6 +2854,7 @@ export class Datasource<T = any> {
             const formatter = formatterOf(expression.field);
             const node: FilterConditionNode = {
                 kind: 'condition',
+                field: expression.field,
                 label: label(expression.field),
                 operator: expression.operator,
                 value: '',

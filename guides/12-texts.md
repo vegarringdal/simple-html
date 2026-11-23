@@ -401,6 +401,34 @@ texts - and the text `filter.operator.between`. Each is named by the text of its
 | `filter.range.run` | `Apply` | the button that filters, as typing in the header filter |
 | `filter.range.cancel` | `Cancel` | the button that closes the menu without filtering |
 
+### The quick dates
+
+The part of the filter menu of a date or datetime column under the range block: a button for each
+quick date (`ColumnConfig.datePresets`). A quick date's name is shown on its button, in the header
+filter cell while it filters - typed there, it is that quick date - and on the footer's chip
+(`Order date = This month`). The tooltip of a button is its days, written as the field shows a date:
+`{from}` and `{to}`, the day alone when they are one.
+
+| id | English | shown |
+| --- | --- | --- |
+| `filter.dates` | `Quick dates` | the name of the buttons together, for a screen reader |
+| `filter.dates.today` | `Today` | today |
+| `filter.dates.yesterday` | `Yesterday` | yesterday |
+| `filter.dates.thisWeek` | `This week` | the week of today, from the date picker's first day of the week (Monday) |
+| `filter.dates.lastWeek` | `Last week` | the week before |
+| `filter.dates.thisMonth` | `This month` | this month |
+| `filter.dates.lastMonth` | `Last month` | the month before |
+| `filter.dates.thisQuarter` | `This quarter` | this quarter |
+| `filter.dates.lastQuarter` | `Last quarter` | the quarter before |
+| `filter.dates.thisYear` | `This year` | this year |
+| `filter.dates.lastYear` | `Last year` | last year |
+| `filter.dates.last7Days` | `Last 7 days` | today and the 6 days before |
+| `filter.dates.last30Days` | `Last 30 days` | today and the 29 days before |
+| `filter.dates.next7Days` | `Next 7 days` | today and the 6 days after |
+| `filter.dates.overdue` | `Overdue` | every day before today - only on a column that lists it in `datePresets` |
+| `filter.dates.range` | `{from} – {to}` | the tooltip of a button: its first and last day (a datetime's first and last second) |
+| `filter.dates.before` | `Before {date}` | the tooltip of Overdue, `{date}` today |
+
 ### Column menu
 
 Right click on a column number, the row of numbers under the header filters.

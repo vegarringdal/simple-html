@@ -4125,6 +4125,112 @@ rebuildHeaderColumns for the middle section too (scrollHandlers.test.ts has it).
 * browser: the shared sidebar-toggle-check.js expects about 30 rows (28 to 31) where it expected more than 30
   (backup `.before-full-30`): 15/15; full-grid 11/11, sample-height 5/5, detail-form 91/91, color-rules 90/90
 
+### Quick dates: Today, This week, Last month ... one click on a date column (user request)
+
+The user: one click for the date ranges filtered on all day in an ERP - Today, Yesterday, This week, Last
+week, This month, Last month, This quarter, Last quarter, This year, Last year, Last 7 days, Last 30 days,
+Next 7 days, maybe Overdue - on date and datetime columns.
+
+* **where**: a block of buttons, `filter.dates`, under the range block of a date column's filter menu, as
+  wide (220px), two columns - this one and the one before side by side - 24px buttons (on touch too: the
+  block stays compact, 7 rows). One click filters and closes the menu, no Apply: it is no draft. Chosen over
+  a submenu (`Filter › Dates ›`): seen at once, one tap on a phone (a submenu is two), and it is next to the
+  range block that makes the other ranges. The one in use filled with the accent colour (`aria-current`), the
+  tooltip of a button its days as the field writes a date (`2026-11-16 – 2026-11-22`, a datetime's seconds,
+  Overdue `Before 2026-11-22`). Keyboard: one stop of Tab after the range block (a roving tabindex: the one
+  in use, else the first), ArrowLeft / ArrowRight / ArrowUp / ArrowDown in the two columns, Home / End,
+  Enter / Space. A `role="group"` named *Quick dates*
+* **the days** (new `src/grid/datePresets.ts`, pure): `datePresetDays(preset, now, weekStart)` - new Dates
+  made from year / month / day (`new Date(y, m, d)`: a summer time change is no hour off). The week starts on
+  the date picker's `datePickerConfig.weekStart` (`weekStartOf`, Monday by default - ISO; 0 Sunday), so This
+  week is the week the picker shows. Last / Next 7 days and Last 30 days count today in (today and the 6 days
+  before / after) - documented in the guide's table. Overdue is `[null, yesterday]`: an open start, blanks
+  never match. `datePresetRange` makes a datetime's To 23:59:59, as the range picker does
+* **relative, stored as itself**: `HeaderFilter.datePreset` (`GridState.headerFilters[field]`) with the
+  operator `BETWEEN` and the `[from, to]` computed last; the datasource's filter is a plain `BETWEEN` of the
+  days (withColumnConditions in filterCallback.ts: the column's top level conditions replaced, as typing
+  does). So `getFilter()`, `getFilterString()`, the filter editor and `toSqlWhere()` see dates, never the
+  preset. Computed again from today: when picked; when a state with it is set - applyState stores it and
+  replaces the column's conditions in the state's `filter` (or the grid's when the state has none), so
+  `setState(saved)` on another day filters on that day, and `{ value: null, datePreset: 'today' }` alone
+  filters; `initialState`, `resetState()`; Enter on its name; and `gridInterface.refreshDatePresets()`
+  (public: filters again only when the days changed), which the grid calls on the window's `focus` and on
+  `visibilitychange` to visible (listeners on the window and the document, aborted when the grid leaves the
+  page - `Grid.datePresetListenersAbort`). A page looked at over midnight without either needs the app's
+  timer: the JSDoc has one. A preset a column can not take (no date column, no `BETWEEN`, an unknown id) is
+  dropped from a state, the rest of the header filter kept
+* **the operator** is set to `BETWEEN` (a preset is a range; `filter-operator-change` when it was another).
+  Considered: leaving the user's operator and showing a symbol of its own - the cell, the range block, the
+  date pickers and filterCallback all read the operator, a stale one beside a `[from, to]` would need special
+  cases everywhere. Clearing the column afterwards leaves Between picked, as the range block's Between does
+* **what shows it**: the cell its name (renderHeaderFilter; the indicator `a..b`), the footer's chip
+  `Order date = This month` - getFilterTree's condition nodes now have `field` (FilterConditionNode, public,
+  additive) so the footer knows the column: a `BETWEEN` of the top AND group on a column with a preset; the
+  range block its days in From / To; the button filled
+* **what ends it**: a new value (`__setHeaderFilterValue` drops it): a date typed or picked, Clear Filter,
+  Blank ›, a filter replaced as a whole (the row menu's Replace filter, Clear); another operator (filterCallback runs the value with
+  it: This week with ≥ is ≥ Monday). Kept: picking Between again, filter as you type, a display format
+  changed (refilterChangedFormats runs filterCallback with the value - datePresetToRun runs the preset
+  again), the range block's Apply with nothing changed, the filter editor's Apply when the column's
+  conditions are as they were (`__clearChangedHeaderFilters`). Changed in the editor, it is dropped - the
+  editor shows and edits the dates, documented. The name typed in the cell (`today`, `LAST WEEK`) is the
+  quick date - the cell shows the name, so whatever it shows filters again the same way
+* **a display format plays no part**: This month on a column shown as weeks is the month (dateConditions is
+  not used), the tooltips are written with the field's formatter for the same reason
+* **which a column offers**: `ColumnConfig.datePresets` - a list in its order, `false` / `[]` none; left out
+  every one but Overdue (`DEFAULT_DATE_PRESETS`; "before today" means something on a due date, not a
+  birthday). Exported `DATE_PRESETS` (frozen, every id in the menu's order) and the type `DatePreset`.
+  assertDatePresets (gridInterface.ts, in assertFilterOptions): a list of ids or false, a date or datetime
+  column, `BETWEEN` among its operators - a `TypeError` naming the column. Like `filterOperators` it limits
+  what the user picks, not a state
+* texts `filter.dates` (the group), `filter.dates.<id>` (14 names), `filter.dates.range` (`{from} – {to}`),
+  `filter.dates.before` (`Before {date}`); the Norwegian sample (I dag, I går, Denne uken, Forrige uke, Denne
+  måneden, Forrige måned, Dette kvartalet, Forrige kvartal, I år, I fjor, Siste 7 dager, Siste 30 dager,
+  Neste 7 dager, Forfalt; Hurtigvalg av datoer, Før {date}). css: grid.css only, the existing variables (no
+  new colour, nothing for TreDeSpace), no border-radius
+* samples: Full grid's Due date offers every quick date (Overdue too); Filtering has a button that sets
+  This month from code, its description mentions them
+* docs: guide 06 (a new *Quick dates*: the table of days, relative, plain filter, what shows / ends it, the
+  keyboard, `datePresets`; the filter menu, the footer), 03 (*Quick dates in the state*), 02 (the column
+  option), 10 (`filter.dates`, the keyboard), 12 (*The quick dates* table), 22 (*A quick date*: the WHERE of
+  Today, This month, Overdue); JSDoc of `DatePreset`, `DATE_PRESETS`, `ColumnConfig.datePresets`,
+  `HeaderFilter.datePreset`, `GridState.headerFilters`, `refreshDatePresets()`, MENU_IDS, MenuBlock,
+  FilterConditionNode.field; typings consumer (the ids, `datePresets`, the state, refresh; a wrong id, `true`
+  and DATE_PRESETS.push rejected)
+* tests: new src/grid/__tests__/datePresets.test.ts (41): every preset on Sunday 2026-11-22; 00:00 days; ISO
+  vs Sunday (and Saturday) week starts; the new year; month and quarter ends; leap years (2028-02-29); a week
+  over summer time; date vs datetime ranges; ids / defaults; weekStartOf; with a faked clock in the grid: the
+  block where it shows, the names, datePresets order / false / [], no BETWEEN, the tooltips, weekStart 0,
+  each preset's rows on a date and on a datetime column, cell / indicator / chip / state / plain filter, the
+  menu again (filled, the stop of Tab, the range block's days), other columns kept, the event once, the
+  keyboard, a menus hook; Enter on the name and the name typed, a date typed, another operator / Between
+  again, Clear and Is blank, the range block's Apply unchanged / changed, filter as you type and a format
+  change, the filter editor's keep / drop; a state through JSON set ten days later (December), headerFilters
+  alone, initialState and resetState on another day, presets a column can not take dropped,
+  refreshDatePresets (nothing on the same day, a spy), the window's focus and visibilitychange - none after
+  the grid left the page, toSqlWhere of This month (date), Today (datetime), Overdue; the config check. Passes
+  in Oslo, New York and Tokyo time. Changed on purpose: filterRangeBlock (the date menu has `filter.dates`,
+  MENU_IDS' last three), gridMenus (text and number menus without `filter.dates`), texts walk (Updated offers
+  every quick date, its menu and a picked one shown; the test formatter's placeholder is data; the TypeError
+  test's datasource has the fields), filterString / filterExpression / filterOperatorsByType (the tree's
+  `field`). 3850 -> 3891 tests, 165 files
+* browser (Chromium 1148, `page.clock` fixed to Sunday 2026-11-22): new `date-presets-check.js` 69/69 - the
+  Full grid light and dark (1300x1100): the block under the range block, 13 / 14 buttons, two columns, 24px,
+  square, in the window; the tooltip; each preset on Orderdate against the rows counted in the page (0 to
+  5000), menu closed, cell, chip, state; the indicator; reopened filled with the range block's days; Updated
+  (datetime) Last 7 days, To 23:59:59; Duedate (weekIso) This month is the month (269 rows, not the 366 of
+  its weeks), Overdue without blanks; `2026-W47` typed replaces it, `last month` typed is Last month; the
+  keyboard (Shift+F10, Tab, arrows, Enter, the outline); the state through JSON on 2 December is December; the
+  window's focus on the 23rd moves Today. A phone (390x844, touch, the Filtering sample): in the window, 24px,
+  a tap filters. No page errors. Shared checks against it: date-range 168/168, filter-as-shown 61/61,
+  operator-indicator 79/79, touch 61/61; range-block 79/81 - it expected the date column's menu to end with
+  the range block: the copy in this worktree's scripts expects `filter.dates` after it, 81/81; filter-ui
+  115/117 - not this change: its Filter › list predates Filter as you type (`filter.filterOnType`). Script
+  and screenshots in this worktree's `.claude/browser-checks/` (`shots/date-presets/`)
+* not done: a "Tomorrow" / "Next week" / "Next month" (easy to add: an id, its days, a text); quick dates in
+  the column settings dialog; a grid-wide default (`GridConfig.datePresets`); Year to date; refreshing on a
+  timer of the grid's own at midnight
+
 ## Considered, not done
 
 ## Candidates / not started

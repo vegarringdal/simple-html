@@ -4,7 +4,7 @@ import type { Datasource, EntityUnion } from '../datasource/dataSource';
 import type { DatasourceEvents } from '../datasource/datasourceEvents';
 import { type Entity, isGroupRow } from '../datasource/entity';
 import type { FieldType } from '../datasource/field';
-import { type FilterExpression, type FilterOperator, operatorsFor } from '../datasource/filterExpression';
+import { type FilterExpression, type FilterOperator, operatorsFor, where } from '../datasource/filterExpression';
 import type { Formatter } from '../datasource/formatter';
 import { Emitter, type EventHandler } from '../emitter';
 import { assertTexts } from '../texts';
@@ -21,6 +21,7 @@ import {
     readonlyOf
 } from './columnFormat';
 import type { CsvOptions } from './csv';
+import { DATE_PRESETS, type DatePreset, datePresetRange, isDatePreset, takesDatePresets, weekStartOf } from './datePresets';
 import type { FindResult } from './findResult';
 import type { Grid } from './grid';
 import type {
@@ -51,7 +52,7 @@ import {
     mayDeleteRow
 } from './gridFunctions/editPermissions';
 import { fillDown } from './gridFunctions/fillDown';
-import { columnConditions, sameConditions } from './gridFunctions/filterCallback';
+import { columnConditions, sameConditions, withColumnConditions } from './gridFunctions/filterCallback';
 import { closeFind, findDataChanged, findStep, getFindFilter, getFindResult, openFind } from './gridFunctions/findBar';
 import { DEFAULT_COLUMN_WIDTH, fitColumns } from './gridFunctions/fitColumns';
 import { getCellHeight } from './gridFunctions/getCellHeight';
@@ -207,7 +208,7 @@ export class GridInterface<T> {
      * `format` does not fit its field (see {@link ColumnFormat}), a column's `editor` is wrong - its
      * lookup not registered, see {@link ColumnEditor} - a column's `renderer` is not the id of a
      * registered cell renderer, or is given with an `editor`, or a column's `filterOperators`,
-     * `operator` or `filterCaseSensitive` does not fit its type, see {@link ColumnConfig} - when
+     * `operator`, `filterCaseSensitive` or `datePresets` does not fit its type, see {@link ColumnConfig} - when
      * `detailForm` is not a {@link DetailForm}, and when `edit` is not an object of the permissions
      * `add`, `change` and `delete`, each true or false (see {@link EditPermissions})
      *
@@ -367,6 +368,43 @@ export class GridInterface<T> {
     }
 
     /**
+     * Computes the quick date filters of the header filters from today again (`HeaderFilter.datePreset`:
+     * Today, This week ... picked in a date column's filter menu) and filters the rows again when their
+     * days changed - the day changed since they filtered. Nothing when none changed.
+     *
+     * The grid calls it when the window gets the focus back and when the page is shown again: the user
+     * back the next morning sees today's rows. A grid that is looked at over midnight without either - a
+     * screen on the wall - calls it from a timer of the app's.
+     *
+     * @sample filtering
+     * @example
+     * ```ts
+     * // a minute past midnight, every night
+     * const msToMidnight = () => {
+     *     const now = new Date();
+     *     return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 1).getTime() - now.getTime();
+     * };
+     * const nightly = () => {
+     *     gridInterface.refreshDatePresets();
+     *     setTimeout(nightly, msToMidnight());
+     * };
+     * setTimeout(nightly, msToMidnight());
+     * ```
+     */
+    public refreshDatePresets() {
+        const fields = Object.keys(this.headerFilters).filter((field) => this.headerFilters[field].datePreset);
+        if (!fields.length) {
+            return;
+        }
+        const datasource = this.getDatasource();
+        const before = datasource.getFilter();
+        const after = this.withDatePresets(before);
+        if (fields.some((field) => !sameConditions(columnConditions(before, field), columnConditions(after, field)))) {
+            datasource.filter(after);
+        }
+    }
+
+    /**
      * The state the grid starts in and resetState() goes back to: the config's initialState, with the
      * config's layout and empty values for what it leaves out. A new copy every call, applyState()
      * hands its parts on to the datasource and the grid, and they change them in place
@@ -421,8 +459,8 @@ export class GridInterface<T> {
      * column's `aggregate` is no aggregate function or needs a number field, a column's `format` does
      * not fit its field (see {@link ColumnFormat}), a column's `editor` is wrong - its lookup not
      * registered, see {@link ColumnEditor} - a column's `renderer` is not the id of a registered cell
-     * renderer, or is given with an `editor`, or a column's `filterOperators`, `operator` or
-     * `filterCaseSensitive` does not fit its type, see {@link ColumnConfig} - when `detailForm` is
+     * renderer, or is given with an `editor`, or a column's `filterOperators`, `operator`,
+     * `filterCaseSensitive` or `datePresets` does not fit its type, see {@link ColumnConfig} - when `detailForm` is
      * not a {@link DetailForm}, and when `edit` is not an object of the permissions `add`, `change` and
      * `delete`, each true or false (see {@link EditPermissions})
      *
@@ -592,13 +630,22 @@ export class GridInterface<T> {
         if (state.headerFilters) {
             this.headerFilters = {};
             for (const [field, headerFilter] of Object.entries(state.headerFilters)) {
+                // a quick date the column can take is a BETWEEN, its days computed below
+                const datePreset = this.datePresetOf(field, headerFilter.datePreset);
                 this.storeHeaderFilter(
                     field,
                     headerFilter.value,
-                    headerFilter.operator,
+                    datePreset ? 'BETWEEN' : headerFilter.operator,
                     headerFilter.caseSensitive === true,
-                    typeof headerFilter.filterOnType === 'boolean' ? headerFilter.filterOnType : undefined
+                    typeof headerFilter.filterOnType === 'boolean' ? headerFilter.filterOnType : undefined,
+                    datePreset
                 );
+            }
+            // the quick dates are relative: computed from today, their conditions replace the columns' in
+            // the filter set - the state's, else the datasource's. A state saved yesterday with Today filters
+            // on today
+            if (Object.values(this.headerFilters).some((headerFilter) => headerFilter.datePreset)) {
+                state.filter = this.withDatePresets(state.filter !== undefined ? state.filter : this.getDatasource().getFilter());
             }
         }
 
@@ -1917,7 +1964,7 @@ export class GridInterface<T> {
     /**
      * @internal
      * sets what a column's header filter cell shows, keeps the operator picked and "Match case".
-     * null/'' is empty
+     * null/'' is empty. A quick date (`datePreset`) is replaced: the value is the user's now
      */
     public __setHeaderFilterValue(field: string, value: unknown) {
         const headerFilter = this.headerFilters[field];
@@ -1932,7 +1979,8 @@ export class GridInterface<T> {
 
     /**
      * @internal
-     * sets the operator picked in a column's header filter menu, keeps the value and "Match case"
+     * sets the operator picked in a column's header filter menu, keeps the value and "Match case" - and a
+     * quick date when it is `BETWEEN` (a quick date is one), filterCallback runs it again then
      */
     public __setHeaderFilterOperator(field: string, operator: FilterOperator) {
         const headerFilter = this.headerFilters[field];
@@ -1941,7 +1989,25 @@ export class GridInterface<T> {
             headerFilter?.value,
             operator,
             headerFilter?.caseSensitive === true,
-            headerFilter?.filterOnType
+            headerFilter?.filterOnType,
+            operator === 'BETWEEN' ? headerFilter?.datePreset : undefined
+        );
+    }
+
+    /**
+     * @internal
+     * sets a quick date as a column's header filter (datePresetFilter.ts): the operator `BETWEEN`, the
+     * `[from, to]` of its days as the value, and the quick date. Keeps "Match case" and filter as you type
+     */
+    public __setHeaderFilterDatePreset(field: string, datePreset: DatePreset, value: [Date | null, Date]) {
+        const headerFilter = this.headerFilters[field];
+        this.storeHeaderFilter(
+            field,
+            value,
+            'BETWEEN',
+            headerFilter?.caseSensitive === true,
+            headerFilter?.filterOnType,
+            datePreset
         );
     }
 
@@ -1951,7 +2017,14 @@ export class GridInterface<T> {
      */
     public __setHeaderFilterCaseSensitive(field: string, caseSensitive: boolean) {
         const headerFilter = this.headerFilters[field];
-        this.storeHeaderFilter(field, headerFilter?.value, headerFilter?.operator, caseSensitive, headerFilter?.filterOnType);
+        this.storeHeaderFilter(
+            field,
+            headerFilter?.value,
+            headerFilter?.operator,
+            caseSensitive,
+            headerFilter?.filterOnType,
+            headerFilter?.datePreset
+        );
     }
 
     /**
@@ -1966,7 +2039,8 @@ export class GridInterface<T> {
             headerFilter?.value,
             headerFilter?.operator,
             headerFilter?.caseSensitive === true,
-            filterOnType
+            filterOnType,
+            headerFilter?.datePreset
         );
     }
 
@@ -2001,15 +2075,17 @@ export class GridInterface<T> {
     /**
      * stores a column's header filter, or removes it when it has no value, no operator, no "Match
      * case" and no filter as you type of the user's - so getState() lists only the header filters in
-     * use. An empty value ('' or undefined) is stored as null, `operator`, `caseSensitive` and
-     * `filterOnType` only when they are set
+     * use. An empty value ('' or undefined) is stored as null, `operator`, `caseSensitive`,
+     * `filterOnType` and `datePreset` only when they are set
+     * @param datePreset the quick date the value was computed from, see `HeaderFilter.datePreset`
      */
     private storeHeaderFilter(
         field: string,
         value: unknown,
         operator: FilterOperator | undefined,
         caseSensitive: boolean,
-        filterOnType?: boolean
+        filterOnType?: boolean,
+        datePreset?: DatePreset
     ) {
         const empty = value === null || value === undefined || value === '';
         if (empty && !operator && !caseSensitive && filterOnType === undefined) {
@@ -2026,7 +2102,45 @@ export class GridInterface<T> {
         if (filterOnType !== undefined) {
             headerFilter.filterOnType = filterOnType;
         }
+        if (datePreset) {
+            headerFilter.datePreset = datePreset;
+        }
         this.headerFilters[field] = headerFilter;
+    }
+
+    /**
+     * `datePreset` of a state's header filter when the column can take it: a quick date (datePresets.ts)
+     * on a date or datetime column - not a lookup column - whose header filter offers `BETWEEN`. Else
+     * undefined: the header filter is kept without it. It need not be one the column's `datePresets`
+     * offers, as an operator of the state is not checked against `filterOperators` either
+     */
+    private datePresetOf(field: string, datePreset: unknown): DatePreset | undefined {
+        if (!isDatePreset(datePreset)) {
+            return undefined;
+        }
+        const type = this.__getLookupColumn(field) ? 'text' : this.getDatasource().getField(field).type;
+        return takesDatePresets(type, headerOperators(this.gridConfig.columns[field], type)) ? datePreset : undefined;
+    }
+
+    /**
+     * The quick dates of the header filters computed from today (datePresetRange, the week from the date
+     * picker's `weekStart`): each one's value is set to its days now, and its `BETWEEN` replaces the
+     * column's conditions in `filter` (withColumnConditions, as a header filter does). The filter as it
+     * is when no header filter is a quick date
+     */
+    private withDatePresets(filter: FilterExpression | null): FilterExpression | null {
+        const now = new Date();
+        const weekStart = weekStartOf(this.gridConfig.datePickerConfig);
+        let result = filter;
+        for (const [field, headerFilter] of Object.entries(this.headerFilters)) {
+            if (!headerFilter.datePreset) {
+                continue;
+            }
+            const range = datePresetRange(headerFilter.datePreset, this.getDatasource().getField(field).type, now, weekStart);
+            headerFilter.value = range;
+            result = withColumnConditions(result, field, [where(field, 'BETWEEN', range)]);
+        }
+        return result;
     }
 
     /**
@@ -2778,6 +2892,7 @@ function assertRenderers(config: Partial<GridConfig>) {
  * - `operator`: one of those the header filter takes, of `filterOperators` when it is given
  * - `filterCaseSensitive`: a boolean, `true` for a text column only
  * - `filterOnType`: a boolean
+ * - `datePresets`: see assertDatePresets
  * @throws a `TypeError` naming the column, what it has and what it takes
  */
 function assertFilterOptions(config: Partial<GridConfig>, datasource: Datasource<any>) {
@@ -2831,6 +2946,30 @@ function assertFilterOptions(config: Partial<GridConfig>, datasource: Datasource
                 `${name}.filterCaseSensitive is for a text column, '${field}' is ${type}: its filters have no case`
             );
         }
+        assertDatePresets(column, type, name);
+    }
+}
+
+/**
+ * `ColumnConfig.datePresets`: `false`, or a list of quick dates (DATE_PRESETS) - for a date or datetime
+ * column. A list that is not empty needs `BETWEEN` among the column's operators: a quick date is one
+ * @param type the type the column filters as: a lookup column's is text
+ * @param name the column, for the message
+ */
+function assertDatePresets(column: ColumnConfig, type: FieldType, name: string) {
+    const { datePresets } = column as Record<string, unknown>;
+    if (datePresets === undefined || datePresets === false) {
+        return;
+    }
+    const ids = DATE_PRESETS.map((id) => `'${id}'`).join(', ');
+    if (!Array.isArray(datePresets) || !datePresets.every(isDatePreset)) {
+        throw new TypeError(`${name}.datePresets is false or a list of quick dates (${ids}), got ${JSON.stringify(datePresets)}`);
+    }
+    if (type !== 'date' && type !== 'datetime') {
+        throw new TypeError(`${name}.datePresets is for a date or datetime column, this one filters as ${type}`);
+    }
+    if (datePresets.length && !takesDatePresets(type, headerOperators(column, type))) {
+        throw new TypeError(`${name}.datePresets needs 'BETWEEN' in its filterOperators: a quick date is a range of days`);
     }
 }
 

@@ -12,6 +12,7 @@ import { DateInterface } from '../../date/dateInterface';
 import type { IDateConfig } from '../../date/interfaces';
 import { setTexts, TEXTS, type Texts } from '../../texts';
 import { registerCellRenderer } from '../cellRendererRegistry';
+import { DATE_PRESETS } from '../datePresets';
 import type { GridConfig } from '../gridConfig';
 import { MAX_OPTIONS } from '../gridFunctions/lookupEditor';
 import { GridInterface } from '../gridInterface';
@@ -119,10 +120,12 @@ const rows = () => [
 ];
 
 // the datetime column: the hint of Default in its Format › is its formatter's text - data, like a cell's.
-// Without the T of the built-in one, a letter that is no text
+// Without the T of the built-in one, a letter that is no text. Its placeholder - the range block's input
+// shows it - is data too
 registerFormatter('texts-datetime', {
     ...DateFormatterYYYYMMDDTHHMMSS,
-    format: (value) => DateFormatterYYYYMMDDTHHMMSS.format(value).replace('T', ' ')
+    format: (value) => DateFormatterYYYYMMDDTHHMMSS.format(value).replace('T', ' '),
+    placeholder: '«yyyy»'
 });
 
 // country is a custom cell: the editor of one line opens over it
@@ -154,8 +157,8 @@ const config = (texts?: Texts): GridConfig => ({
         age: { label: '«Age»' },
         // the placeholder of a date filter is the formatter's (YYYY-MM-DD), not a text
         born: { label: '«Born»', placeholderFilter: '«born»' },
-        // a datetime: its Format › has the formats with the time
-        updated: { label: '«Updated»', placeholderFilter: '«updated»' },
+        // a datetime: its Format › has the formats with the time. Every quick date in its filter menu
+        updated: { label: '«Updated»', placeholderFilter: '«updated»', datePresets: [...DATE_PRESETS] },
         active: { label: '«Active»' },
         notes: { label: '«Notes»' },
         code: { label: '«Code»', editor: { type: 'select', lookup: 'texts-codes' } },
@@ -571,6 +574,14 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     });
     gridInterface.setState({ headerFilters: {} });
 
+    // the quick dates of a datetime column, Overdue too: their names, the group's name and the days of each
+    // (the tooltips, the datetime formatter's digits). One clicked: its name in the cell and on the chip
+    openFilterMenu(element, 'updated');
+    check();
+    (document.querySelector('[data-menu-id="filter.dates"] [data-preset="thisMonth"]') as HTMLElement).click();
+    check();
+    gridInterface.setState({ headerFilters: {}, filter: and(where('age', 'GREATER_THAN', 10)) });
+
     // the filter editor: AND with an OR group, a condition compared with a field not picked yet. A text
     // condition has the Match case toggle, of a column that always matches case its other tooltip, a
     // BETWEEN its inputs from and to
@@ -826,7 +837,8 @@ describe('texts in the grid - where a text comes from', () => {
 
 describe('texts in the grid - what GridConfig.texts takes', () => {
     it('expect a TypeError for a text that is not a string, from the constructor and updateConfig()', () => {
-        const datasource = new Datasource();
+        // the fields of the config's columns: its quick dates are for a date column
+        const datasource = new Datasource(fields);
         // a config from JSON can have anything
         expect(() => new GridInterface({ ...config(), texts: JSON.parse('{ "row.copy": null }') }, datasource)).toThrow(
             /'row\.copy'/

@@ -195,6 +195,27 @@ const DEFAULTS = {
     'filter.range.to': 'To',
     'filter.range.run': 'Apply',
     'filter.range.cancel': 'Cancel',
+    // the quick dates of a date or datetime column, 'filter.dates': a button each, one click filters
+    // (ColumnConfig.datePresets). The name of the group for a screen reader, the name of each - shown in
+    // the header filter cell and the footer's chip while it filters - and the tooltip of a button: the
+    // days it filters on, {from} and {to} as the field shows a date; {date} today for Overdue
+    'filter.dates': 'Quick dates',
+    'filter.dates.today': 'Today',
+    'filter.dates.yesterday': 'Yesterday',
+    'filter.dates.thisWeek': 'This week',
+    'filter.dates.lastWeek': 'Last week',
+    'filter.dates.thisMonth': 'This month',
+    'filter.dates.lastMonth': 'Last month',
+    'filter.dates.thisQuarter': 'This quarter',
+    'filter.dates.lastQuarter': 'Last quarter',
+    'filter.dates.thisYear': 'This year',
+    'filter.dates.lastYear': 'Last year',
+    'filter.dates.last7Days': 'Last 7 days',
+    'filter.dates.last30Days': 'Last 30 days',
+    'filter.dates.next7Days': 'Next 7 days',
+    'filter.dates.overdue': 'Overdue',
+    'filter.dates.range': '{from} – {to}',
+    'filter.dates.before': 'Before {date}',
 
     // the column menu, right click on a column number (under the header filters): MENU_IDS.column
     'column.copy.column': 'Copy column',
@@ -712,7 +733,7 @@ export type Texts = { [id in TextId]?: string } & { [id: string]: string };
  *
  * | ids | where |
  * | --- | --- |
- * | `row.*`, `header.*`, `filter.*`, `column.*` | the right click menus: the ids of {@link MENU_IDS}. A hint (the text in parentheses) is `<id>.hint`. `filter.values.*`: the value list of the filter menu, `filter.range.*` its range block |
+ * | `row.*`, `header.*`, `filter.*`, `column.*` | the right click menus: the ids of {@link MENU_IDS}. A hint (the text in parentheses) is `<id>.hint`. `filter.values.*`: the value list of the filter menu, `filter.range.*` its range block, `filter.dates.*` its quick dates |
  * | `columnChooser.*` | the column chooser |
  * | `filterEditor.*` | the filter editor, its field and operator menus. `filterEditor.operator.<FilterOperator>`: the names of the operators |
  * | `footer.*` | the footer: the row count, the filter chips, the "No filter" button. `footer.operator.<FilterOperator>`: the short names of the operators (`=`, `contains`) |

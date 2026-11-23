@@ -322,6 +322,23 @@ writes the range it writes for any day - an index on the column works:
 `datetime` column gets Sunday 23:59:59 as the end, the SQL is the same: `< '2026-11-23 00:00:00'`. The
 week is the user's: its days are in the browser's time zone, as `timeZone` reads them.
 
+### A quick date
+
+A [quick date](06-filtering.md#quick-dates) of the grid - This month, Last 7 days, Overdue - is relative,
+the grid computes its days from today when it filters. The filter it makes, and so `toSqlWhere()`, is a
+plain `BETWEEN` of those days: `toSqlWhere()` never sees `'thisMonth'`, and a WHERE made today has
+today's dates. On 22 November 2026 (PostgreSQL, a `date` column):
+
+| quick date | the filter | the WHERE |
+| --- | --- | --- |
+| Today | `BETWEEN [2026-11-22, 2026-11-22]` | `"order_date" >= '2026-11-22 00:00:00' AND "order_date" < '2026-11-23 00:00:00'` |
+| This month | `BETWEEN [2026-11-01, 2026-11-30]` | `"order_date" >= '2026-11-01 00:00:00' AND "order_date" < '2026-12-01 00:00:00'` |
+| Overdue | `BETWEEN [null, 2026-11-21]` | `"order_date" < '2026-11-22 00:00:00'` |
+
+A `datetime` column gets the last day at 23:59:59, the WHERE is the same. As for a week typed, the values
+are parameters with `IS NOT NULL AND` in front, an index on the column works, and the days are the
+user's: the browser's time zone, as `timeZone` reads them.
+
 ### BETWEEN
 
 `[from, to]`, both included: `GREATER_THAN_OR_EQUAL_TO from AND LESS_THAN_OR_EQUAL_TO to`, each with

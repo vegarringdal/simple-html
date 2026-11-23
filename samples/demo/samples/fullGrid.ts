@@ -1,5 +1,6 @@
 import {
     type CellRenderer,
+    DATE_PRESETS,
     Datasource,
     type FieldConfig,
     type FieldType,
@@ -113,7 +114,8 @@ function config(readonly: boolean): GridConfig {
             balance: { aggregate: ['sum', 'avg'], format: { rules: [{ operator: 'LESS_THAN', value: '0', color: 'red' }] } },
             // display formats: what the cells show, the value stays - right click a column label, Format ›
             credit: { format: { number: { decimals: 2, thousands: ' ', decimal: ',' } } },
-            dueDate: { format: { date: 'weekIso' } },
+            // the quick dates of its filter menu: every one, Overdue too (the others leave Overdue out)
+            dueDate: { format: { date: 'weekIso' }, datePresets: [...DATE_PRESETS] },
             updated: { format: { date: 'norwegianTime' } },
             total: { readonly: true, aggregate: 'sum' },
             notes: { label: 'Notes' }

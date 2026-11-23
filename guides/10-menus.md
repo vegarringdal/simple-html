@@ -128,7 +128,7 @@ The menus follow the WAI-ARIA [menu pattern](https://www.w3.org/WAI/ARIA/apg/pat
 | ArrowRight | opens the submenu of the item, the focus on its first item |
 | ArrowLeft | closes the submenu, the focus back on its item |
 | Esc | in a submenu: closes it, the focus back on its item. In the menu: closes it, the focus goes back where it was |
-| Tab, Shift+Tab | closes the menu, the focus goes back where it was. In a menu with a block - the filter menu's value list or range block - Tab is the browser's: it goes on into the block's inputs, and Shift+Tab back to the item the keyboard was on |
+| Tab, Shift+Tab | closes the menu, the focus goes back where it was. In a menu with a block - the filter menu's value list, range block or quick dates - Tab is the browser's: it goes on into the block's inputs, and Shift+Tab back to the item the keyboard was on |
 
 For a screen reader the menu is a `menu`, an item a `menuitem` - a `menuitemcheckbox` with
 `aria-checked` when it has a `selected` callback (the aggregates, the dimmed values, the operator in
@@ -138,7 +138,9 @@ the checkboxes, *Cancel* and *Apply* are stops of Tab; ArrowDown / ArrowUp move 
 box and the checkboxes, Enter in them applies, see [The value list](06-filtering.md#the-value-list). In
 the range block the operators are a radio group - one stop of Tab, the arrows pick another one - then
 the input (From and To), *Cancel* and *Apply*; Enter applies, see
-[The range block](06-filtering.md#the-range-block).
+[The range block](06-filtering.md#the-range-block). The quick dates after it are one stop of Tab:
+the arrows move between them (two columns), Enter or Space filters, see
+[Quick dates](06-filtering.md#quick-dates).
 
 ## Changing the grid's menus
 
@@ -472,6 +474,7 @@ the `menus.row` hook still gets them, by their ids. A group row's number has no 
 | `filter.filter.advanced` | Advanced Filter…: opens the filter editor | |
 | `filter.values` | the value list: a search box, "Select all" and a checkbox per value, "Cancel" and "Apply". One `MenuBlock`, its texts are `filter.values.*` | a text field, a lookup column - that has `IN` |
 | `filter.range` | the range block: the operators of Operator › as a row of buttons (=, ≠, <, ≤, >, ≥, Between), an input - From and To for Between - "Cancel" and "Apply": as the operator picked in Operator › and the value typed in the header filter. One `MenuBlock`, its texts are `filter.range.*` | a number, date or datetime field, not a lookup column |
+| `filter.dates` | the quick dates, under the range block: a button each - Today, Yesterday, This week ... - one click filters on its days and closes the menu. One `MenuBlock`, its texts are `filter.dates.*`. See [Quick dates](06-filtering.md#quick-dates) | a date or datetime field with `BETWEEN`, `datePresets` not `false` |
 
 See [Filtering](06-filtering.md#the-header-filter-menu) for what the filter menu's entries do.
 

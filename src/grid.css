@@ -2464,6 +2464,61 @@
     margin-top: 2px;
 }
 
+/**
+ * The quick dates of the filter menu of a date column (datePresetBlock.ts), under the range block and as
+ * wide: a button each in two columns - this one and the one before side by side - one click filters. The
+ * one in use filled with the accent colour, as the operator picked in the range block. 24px high on a
+ * touch screen too, as the range block's buttons: the WCAG 2.2 minimum target, the block stays compact
+ */
+.simple-html-grid .simple-html-grid-date-presets {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+    box-sizing: border-box;
+    min-width: 220px;
+    max-width: 320px;
+    padding: 6px 8px 8px;
+    border-top: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+.simple-html-grid .simple-html-grid-date-presets .simple-html-grid-date-preset {
+    box-sizing: border-box;
+    min-width: 0;
+    height: 24px;
+    margin: 0;
+    padding: 0 6px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+
+.simple-html-grid .simple-html-grid-date-presets .simple-html-grid-date-preset:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+/* the one the header filter filters on */
+.simple-html-grid .simple-html-grid-date-presets .simple-html-grid-date-preset[aria-current='true'] {
+    border-color: var(--simple-html-grid-accent-color);
+    background-color: var(--simple-html-grid-accent-color);
+    color: var(--simple-html-grid-accent-font-color);
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+/* the keyboard on one: the outline outside, inside a filled one it would not show */
+.simple-html-grid .simple-html-grid-date-presets .simple-html-grid-date-preset:focus-visible {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: 1px;
+}
+
 .simple-html-draggable-element {
     pointer-events: none;
 }

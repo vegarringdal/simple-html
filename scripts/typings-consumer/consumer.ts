@@ -25,6 +25,7 @@ import {
     type CsvOptions,
     type CsvSeparator,
     createGrid,
+    DATE_PRESETS,
     DataContainer,
     Datasource,
     type DatasourceEvents,
@@ -33,6 +34,7 @@ import {
     type DateFormat,
     DateFormatterYYYYMMDD,
     DateInterface,
+    type DatePreset,
     type DetailForm,
     type EditPermissions,
     type Entity,
@@ -1036,6 +1038,22 @@ const hexColour: ColorRule = { operator: 'EQUAL', value: '1', color: '#ff0000' }
 // @ts-expect-error the value is text as typed in the header filter
 const numberValue: ColorRule = { operator: 'EQUAL', value: 1, color: 'red' };
 console.log(ruleColumns, hexColour, numberValue);
+// quick dates: the ids a column offers, the one a header filter keeps - relative, computed from today
+const quickDate: DatePreset = 'thisMonth';
+const quickDateColumns: Record<string, ColumnConfig> = {
+    dueDate: { datePresets: [...DATE_PRESETS] },
+    orderDate: { datePresets: ['today', 'last7Days', quickDate] },
+    born: { datePresets: false }
+};
+gridInterface.setState({ headerFilters: { orderDate: { value: null, datePreset: 'overdue' } } });
+gridInterface.refreshDatePresets();
+// @ts-expect-error a quick date the grid does not have
+const tomorrow: DatePreset = 'tomorrow';
+// @ts-expect-error true is no list: every one but Overdue is the default, left out
+const allQuickDates: ColumnConfig = { datePresets: true };
+// @ts-expect-error DATE_PRESETS is read only: copy it
+DATE_PRESETS.push('today');
+console.log(quickDateColumns, tomorrow, allQuickDates);
 
 // the sql entry, through the package's "exports" (bundler resolution here, node16 in tsconfig.sql.json):
 // a filter of the grid is a filter toSqlWhere takes
