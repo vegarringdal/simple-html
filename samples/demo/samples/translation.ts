@@ -538,7 +538,7 @@ const norwegian: Record<TextId, string> = {
     'columnSettings.detailForm.section': 'Navn',
     'columnSettings.detailForm.section.hint':
         'Feltene under den i listen, fram til neste seksjon, er i den. Overskriften folder den sammen',
-    'columnSettings.detailForm.collapsed': 'Sammenfoldet',
+    'columnSettings.detailForm.open': 'Åpen fra start',
     'columnSettings.detailForm.minRows': 'Minst linjer',
     'columnSettings.detailForm.paddingTop': 'Luft over (px)',
     'columnSettings.detailForm.paddingBottom': 'Luft under (px)',

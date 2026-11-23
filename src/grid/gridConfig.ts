@@ -733,8 +733,10 @@ export interface DetailForm {
  *   expands it again
  * - **`panel`** - `true`: a panel - a frame around its header and its fields, on a background of its own.
  *   Default `false`: a header with a line under it
- * - **`collapsed`** - `true`: collapsed, its header only. The header's button changes it, so a saved state
- *   keeps what the user made it last
+ * - **`collapsed`** - `true`: it starts collapsed, its header only. Default `false`: it starts open. The
+ *   header's button opens and closes it while the form shows these fields and sections - the user's, not
+ *   the state's: `collapsed` stays the default, and a detail form set again (`setState`, the dialog's
+ *   Apply, `resetState()`) starts from it
  * - **`paddingTop`**, **`paddingBottom`** - room in px above and under the section, default 0
  *
  * The grid config dialog (tab *Detail form*) adds sections to the list of the fields (*Add section*), they
@@ -765,7 +767,7 @@ export interface DetailFormSection {
     section: string;
     /** `true`: a frame around it, on a background of its own - default a header with a line under it */
     panel?: boolean;
-    /** `true`: collapsed, its header only - default `false` */
+    /** `true`: it starts collapsed, its header only - default `false`, open. The header's button opens and closes it */
     collapsed?: boolean;
     /** room in px above it, default 0 */
     paddingTop?: number;

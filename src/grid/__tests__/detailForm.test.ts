@@ -873,22 +873,31 @@ describe('detail form - sections (DetailFormSection) and the options of a field 
         ]);
     });
 
-    it('expect the header to collapse and expand its section, kept in the state', async () => {
-        const { element, gridInterface } = await mount({ detailForm: SECTIONS });
+    it("expect the header to open and close its section - the user's, its collapsed the default it starts with", async () => {
+        const { element, gridInterface, datasource } = await mount({ detailForm: SECTIONS });
         header(element, 'More').click();
-        expect(gridInterface.getState().detailForm.fields[1]).toEqual({
-            section: 'More',
-            collapsed: true,
-            paddingTop: 12,
-            paddingBottom: 3
-        });
         expect(sections(element).map((s) => [s.title, s.expanded, s.fields])).toEqual([
             ['More', 'false', []],
             ['Money', 'false', []]
         ]);
         header(element, 'Money').click();
         expect(sections(element)[1]).toMatchObject({ expanded: 'true', hidden: false, fields: ['balance'] });
-        expect(gridInterface.getState().detailForm.fields[4]).toEqual({ section: 'Money', panel: true, collapsed: false });
+        // the defaults in the state stay as they were
+        expect(gridInterface.getState().detailForm.fields).toEqual(SECTIONS.fields);
+        // kept with another row, a width dragged, the form collapsed and expanded
+        datasource.setRowAsCurrentEntity(1);
+        gridInterface.setState({ detailForm: { ...gridInterface.getState().detailForm, width: 320 } });
+        toggle(element).click();
+        toggle(element).click();
+        expect(sections(element).map((s) => s.expanded)).toEqual(['false', 'true']);
+        // other sections: from their defaults again
+        gridInterface.setState({ detailForm: { ...SECTIONS, fields: [...SECTIONS.fields, 'site'] } });
+        expect(sections(element).map((s) => s.expanded)).toEqual(['true', 'false']);
+        // and resetState() too
+        header(element, 'More').click();
+        gridInterface.resetState();
+        gridInterface.setState({ detailForm: SECTIONS });
+        expect(sections(element).map((s) => s.expanded)).toEqual(['true', 'false']);
     });
 
     it('expect minRows on a textarea - its rows and the min height - and nothing on a field of one line', async () => {

@@ -593,7 +593,7 @@ const DEFAULTS = {
     'columnSettings.detailForm.section': 'Name',
     'columnSettings.detailForm.section.hint':
         'The fields under it in the list, up to the next section, are in it. Its header collapses it',
-    'columnSettings.detailForm.collapsed': 'Collapsed',
+    'columnSettings.detailForm.open': 'Open at start',
     'columnSettings.detailForm.minRows': 'Min lines',
     'columnSettings.detailForm.paddingTop': 'Space above (px)',
     'columnSettings.detailForm.paddingBottom': 'Space below (px)',

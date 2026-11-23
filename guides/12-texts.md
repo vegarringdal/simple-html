@@ -900,7 +900,7 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.detailForm.section` | `Name` | the label of its name |
 | `columnSettings.detailForm.section.hint` | `The fields under it in the list, up to the next section, are in it. Its header collapses it` | under it |
 | `columnSettings.detailForm.panel` | `Panel: a frame around it` | the checkbox of `panel` |
-| `columnSettings.detailForm.collapsed` | `Collapsed` | the checkbox of `collapsed` |
+| `columnSettings.detailForm.open` | `Open at start` | the checkbox of a section's default: off is `collapsed` |
 | `columnSettings.detailForm.removeSection` | `Remove section` | the button: the section out of the form, its fields stay |
 | `columnSettings.detailForm.reset` | `Reset form` | the button at the footer's left on the Detail form tab: the detail form the grid starts with |
 | `columnSettings.detailForm.reset.tooltip` | `The detail form the grid starts with` | its tooltip |

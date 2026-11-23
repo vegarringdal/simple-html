@@ -320,7 +320,10 @@ const config: GridConfig = {
 - **Sections** are entries of `fields` between the field names (`DetailFormSection`): `{ section: 'Address' }`
   has the fields after it, up to the next section; the fields before the first are in none. Its header is
   a button with a chevron (`aria-expanded`, its fields a `group` named by it) that collapses the section
-  and expands it again - `collapsed`, kept in the state. `panel: true` puts a frame around it,
+  and expands it again. `collapsed: true` is its default: it starts collapsed (*Open at start* off in the
+  dialog). The header's button is the user's, while the form shows these sections: it does not change
+  `collapsed`, and a detail form set again (the dialog's Apply, `setState`, `resetState()`) starts from
+  the defaults. `panel: true` puts a frame around it,
   `paddingTop` / `paddingBottom` give it room in px. In the dialog's tab *Detail form* a section is a row of
   the list: *Add section* adds one under the row picked, the fields are moved under it as any row is, and
   its name, *Panel*, *Collapsed* and room are set under the list (*Remove section* takes it out, its fields

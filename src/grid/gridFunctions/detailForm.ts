@@ -533,7 +533,7 @@ function sectionTemplate(
     ctx: Grid,
     { section, index, fields }: { section: DetailFormSection; index: number; fields: TemplateResult[] }
 ): TemplateResult {
-    const collapsed = section.collapsed === true;
+    const collapsed = isSectionCollapsed(ctx, index, section);
     const headerId = detailFormId(ctx, `section-${index}`);
     const groupId = detailFormId(ctx, `section-${index}-fields`);
     const room: Record<string, string> = {};
@@ -568,20 +568,45 @@ function sectionTemplate(
 }
 
 /**
- * Collapses an expanded section of the form, expands a collapsed one: the button of its header. Its
- * `collapsed` in the state's detail form (setState): a saved state keeps it
+ * the sections the user opened or closed with their header, per grid: the section's index and whether it
+ * is collapsed now - for the fields and sections they were toggled in. Other ones (the dialog's Apply,
+ * setState, resetState with other fields or sections) start again from each section's `collapsed`, its
+ * default; a width dragged, the form collapsed and expanded keep them
+ */
+const toggled = new WeakMap<Grid, { fields: string; collapsed: Map<number, boolean> }>();
+
+/** the toggles of the grid's detail form now: none for other fields than they were made for */
+function togglesOf(ctx: Grid): Map<number, boolean> {
+    const fields = JSON.stringify(ctx.gridInterface.__getGridConfig().detailForm.fields);
+    let entry = toggled.get(ctx);
+    if (!entry || entry.fields !== fields) {
+        entry = { fields, collapsed: new Map() };
+        toggled.set(ctx, entry);
+    }
+    return entry.collapsed;
+}
+
+/**
+ * true while a section is collapsed: as the user toggled it with its header, else its `collapsed` - the
+ * default it starts with
+ * @param index the section's place in the form's fields
+ */
+export function isSectionCollapsed(ctx: Grid, index: number, section: DetailFormSection): boolean {
+    return togglesOf(ctx).get(index) ?? section.collapsed === true;
+}
+
+/**
+ * Collapses an expanded section of the form, expands a collapsed one: the button of its header. Kept by the
+ * grid while it shows this detail form - not in the state: the section's `collapsed` stays its default
  * @param index the section's place in the form's fields
  */
 export function toggleDetailFormSection(ctx: Grid, index: number) {
-    const gridInterface = ctx.gridInterface;
-    const form = gridInterface.getState().detailForm;
-    const entry = form.fields[index];
+    const entry = ctx.gridInterface.__getGridConfig().detailForm.fields[index];
     if (!entry || !isDetailFormSection(entry)) {
         return;
     }
-    const fields = [...form.fields];
-    fields[index] = { ...entry, collapsed: entry.collapsed !== true };
-    gridInterface.setState({ detailForm: { ...form, fields } });
+    togglesOf(ctx).set(index, !isSectionCollapsed(ctx, index, entry));
+    renderDetailForm(ctx);
 }
 
 /**

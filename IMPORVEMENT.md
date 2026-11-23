@@ -4907,6 +4907,17 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * tests: configVersion.test.ts (the conversion, the errors, export and import round trip, a v5 config into a
   grid). Docs: grid config guide *Exporting with a version*, MIGRATION.md
 
+### Detail form sections: open or collapsed by default (user request)
+
+* the user: "collapse panels also need a option if its default open or not". `collapsed` was both the
+  default and what the header's button wrote (into the state): a click changed the default
+* `collapsed` is the default now - *Open at start* in the dialog (checked: not collapsed). The header's
+  button is kept by the grid (detailForm.ts `toggled`, per grid, keyed by the form's fields as JSON): a
+  width dragged, the form collapsed / expanded, another row keep it; other fields or sections (the dialog's
+  Apply, setState, resetState) start from the defaults
+* tests: detailForm.test.ts (the toggle is not in the state, what keeps and what resets it),
+  detailFormSettings.test.ts (Open at start)
+
 ### The detail form: sections are rows of the list (user request)
 
 * the user, on the dialog with a section header per field: "it could be useful if we could add section

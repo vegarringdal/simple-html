@@ -184,8 +184,8 @@ gridInterface.setState({ formats });
 ## The detail form in the state
 
 `detailForm` is the detail form at the right of the rows: whether it is shown, the fields it shows in
-their order with the sections between them (`{ section, panel?, collapsed?, ... }`, each collapsed or
-not), its width and its least and most width, whether it is expanded or collapsed, and the options of its
+their order with the sections between them (`{ section, panel?, collapsed?, ... }` - `collapsed` is
+the default a section starts with, the header's button does not change it), its width and its least and most width, whether it is expanded or collapsed, and the options of its
 fields (`fieldOptions`: the least lines, room above and under) - a view setting of the user, like the
 columns.
 

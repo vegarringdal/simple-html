@@ -558,7 +558,9 @@ describe('the Detail form tab - sections and the settings of the entry picked', 
         expect(heading()).toBe('Settings of the section Section');
         setValue(input('section-name') as HTMLInputElement, '  Address ');
         (input('panel') as HTMLInputElement).click();
-        (input('collapsed') as HTMLInputElement).click();
+        // Open at start: checked for a new one - off, it starts collapsed
+        expect(input('open')?.checked).toBe(true);
+        (input('open') as HTMLInputElement).click();
         setValue(input('sectionPaddingTop') as HTMLInputElement, '8');
         expect(optionTexts()[1]).toBe('[ ] Address Section Panel');
         // a section is no field: Space does not take it out, it has no box

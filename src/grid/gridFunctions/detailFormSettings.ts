@@ -48,7 +48,8 @@ import { hideTooltip } from './tooltip';
  *   *Add section*: a new section under the one picked, picked - its name typed under the list
  * - *Settings of {field} in the form* (DetailFormFieldOptions, setFieldOption): *Min lines* for a field of
  *   several lines, *Space above (px)* and *Space below (px)*
- * - *Settings of the section {section}* (setSectionOption): *Name*, *Panel*, *Collapsed*, *Space above /
+ * - *Settings of the section {section}* (setSectionOption): *Name*, *Panel*, *Open at start* (not
+ *   `collapsed`: its default - the header's button opens and closes it while the form is shown), *Space above /
  *   below (px)*, and *Remove section* - its fields stay, in the section before it
  *
  * What it edits is a draft (DetailFormDraft) in the dialog's draft: the grid changes on Apply only
@@ -746,13 +747,14 @@ function sectionSettings(
         setSectionOption(section, name, value);
         update();
     };
-    const check = (name: 'panel' | 'collapsed', label: TextId) =>
+    /** a checkbox of the section: `invert` - checked when the option is not `true` (Open at start: not collapsed) */
+    const check = (name: 'panel' | 'collapsed', className: string, label: TextId, invert = false) =>
         html`<label class="column-settings-check">
             <input
                 type="checkbox"
-                class=${`detail-form-settings-${name}`}
-                .checked=${live(section[name] === true)}
-                @change=${(event: Event) => set(name)((event.target as HTMLInputElement).checked)}
+                class=${`detail-form-settings-${className}`}
+                .checked=${live((section[name] === true) !== invert)}
+                @change=${(event: Event) => set(name)((event.target as HTMLInputElement).checked !== invert)}
             /><span>${text(label)}</span>
         </label>`;
     return html`<div class="column-settings-field detail-form-settings-field" role="group" aria-labelledby=${headingId}>
@@ -770,7 +772,8 @@ function sectionSettings(
             @change=${(event: Event) => set('section')((event.target as HTMLInputElement).value)}
         />
         <div class="column-settings-hint" id=${hintId}>${text('columnSettings.detailForm.section.hint')}</div>
-        ${check('panel', 'columnSettings.detailForm.panel')} ${check('collapsed', 'columnSettings.detailForm.collapsed')}
+        ${check('panel', 'panel', 'columnSettings.detailForm.panel')}
+        ${check('collapsed', 'open', 'columnSettings.detailForm.open', true)}
         <div class="detail-form-settings-widths">
             ${numberInput(ctx, 'sectionPaddingTop', 'columnSettings.detailForm.paddingTop', section.paddingTop, set('paddingTop'), { placeholder: '0', min: 0 })}
             ${numberInput(ctx, 'sectionPaddingBottom', 'columnSettings.detailForm.paddingBottom', section.paddingBottom, set('paddingBottom'), { placeholder: '0', min: 0 })}
