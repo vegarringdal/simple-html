@@ -1332,6 +1332,29 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Calculated columns; colour rules on several fields, by formula, in any colour (user request)
+
+##### Added
+- **Calculated columns**: `GridConfig.calculatedColumns` / `GridState.calculatedColumns`
+  (`{ [field]: { formula, label?, type? } }`, `CalculatedColumn`, `CalculatedType`), and *Add calculated column*
+  in the grid config dialog (the formula with the `{ }` field button, the type it gives, its value in the
+  preview row, its problems at once). A calculated field is computed when it is read - the row proxy answers
+  it - so it is never an edit, never in `getChanges()` or JSON, and always current; the filter, sort,
+  grouping, aggregates, cells, copy, exports, Find and the detail form read it as any field. Read only.
+  `toSqlWhere()` throws for a condition on one (it is no column of the database) - guide 22 shows the ways
+  round. Guide 23 *Calculated columns*, sample *Calculated columns*.
+- **Formulas** (`formula.ts`): numbers, text, `{field}`, `+ - * / &`, comparisons, AND / OR / NOT, IF, ROUND,
+  ABS, MIN, MAX, TODAY, DAYS, YEAR, MONTH, CONCAT, COALESCE, ISBLANK; checked for types before they run, a
+  blank gives a blank, a row that can not be computed a blank cell. **Safe**: read by our own tokenizer and
+  parser into a fixed set of parts - no `eval`, no `Function`, no `.` or `[]`; functions and fields from Maps
+  (`constructor`, `{__proto__}` are refused), rows read as own properties; at most 1000 characters, 500
+  parts, 32 deep; no cycles between calculated columns; results are text, never markup.
+- **Colour rules, more**: a rule is a value (as before), **conditions** on other fields of the row (AND /
+  OR, `conditions`, `combine`, `RuleCondition`) or a **formula** (`expression`) that gives true / false.
+  **14 palette colours** (amber, lime, teal, cyan, indigo, pink, brown added) and **any colour** `#rrggbb`
+  from a colour picker (`RuleColor`): on a background of its own the text is black or white, whichever
+  reads; a text colour of its own is made lighter in dark mode until it reads.
+
 #### Keyboard shortcuts help (user request)
 
 ##### Added
