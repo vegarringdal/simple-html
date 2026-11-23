@@ -15,9 +15,11 @@ const path = require('node:path');
  *   (`6.0.0`) only. `beta` publishes `<version>-beta.<branch>.<run>` (`6.0.0-beta.v6-maybe.42`): the
  *   branch made safe for a version (letters, digits, `-`), the run number of the workflow, so every
  *   run is a new version. Its npm tag is `beta-<branch>`: `npm install ...@beta-v6-maybe` gets the
- *   latest beta of that branch, `latest` stays the last release
+ *   latest beta of that branch, `latest` stays the last release. `next` publishes
+ *   `<version>-next.<run>` (`6.0.0-next.7`), the run number of its workflow (next.yml), with the npm tag
+ *   `next`: `npm install ...@next` gets the last one, from whatever branch it was run on
  *
- * Usage: node scripts/githubPackage.js release|beta
+ * Usage: node scripts/githubPackage.js release|beta|next
  * Reads GITHUB_REPOSITORY_OWNER, GITHUB_REPOSITORY, GITHUB_REF_NAME and GITHUB_RUN_NUMBER (set by GitHub
  * Actions). Writes `version` and `tag` to GITHUB_OUTPUT when it is set, and prints them.
  */
@@ -37,7 +39,7 @@ function branchSlug(branch) {
 
 /**
  * The package.json fields and the npm tag to publish with
- * @param {'release' | 'beta'} kind
+ * @param {'release' | 'beta' | 'next'} kind
  * @param {{ version: string }} pkg the package.json as it is
  * @param {{ owner: string, repository: string, branch: string, run: string }} env
  * @returns {{ name: string, version: string, tag: string, repositoryUrl: string }}
@@ -55,14 +57,17 @@ function packageFor(kind, pkg, env) {
     if (kind === 'release') {
         return { name, version: base, tag: 'latest', repositoryUrl };
     }
-    if (kind === 'beta') {
+    if (kind === 'beta' || kind === 'next') {
         if (!/^\d+$/.test(String(env.run))) {
-            throw new Error('githubPackage: GITHUB_RUN_NUMBER must be set for a beta (GitHub Actions sets it)');
+            throw new Error(`githubPackage: GITHUB_RUN_NUMBER must be set for a ${kind} (GitHub Actions sets it)`);
+        }
+        if (kind === 'next') {
+            return { name, version: `${base}-next.${env.run}`, tag: 'next', repositoryUrl };
         }
         const slug = branchSlug(env.branch);
         return { name, version: `${base}-beta.${slug}.${env.run}`, tag: `beta-${slug}`, repositoryUrl };
     }
-    throw new Error(`githubPackage: 'release' or 'beta', not '${kind}'`);
+    throw new Error(`githubPackage: 'release', 'beta' or 'next', not '${kind}'`);
 }
 
 function run() {

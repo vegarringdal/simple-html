@@ -1332,6 +1332,13 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### A dev build to GitHub Packages, by hand (user request)
+
+##### Added
+- The `next` workflow (`.github/workflows/next.yml`), run from the Actions tab on any branch: every check,
+  then publishes `<version>-next.<run>` - `6.0.0-next.1`, `6.0.0-next.2` ... - to GitHub Packages with the
+  npm tag `next`. `scripts/githubPackage.js next` makes the version (tested).
+
 #### The grid config dialog: a column's settings in tabs (user request)
 
 ##### Changed

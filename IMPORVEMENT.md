@@ -4879,6 +4879,19 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
   in it from its first line, on any machine. Checked: all 4252 with `TZ=UTC`, the three files with
   `TZ=America/New_York`
 
+### A dev build to GitHub Packages: the next workflow (user request)
+
+* the user: publish to GitHub's free package registry by hand, as `{package version}-next.{run number}`;
+  package.json says 6.0.0
+* `.github/workflows/next.yml`: workflow_dispatch, the checks of beta.yml, `githubPackage.js next`,
+  `npm publish --tag next`. GITHUB_RUN_NUMBER counts the runs of this workflow: 6.0.0-next.1, .2 ...
+* githubPackage.js: the kind `next` - `<version>-next.<run>`, tag `next`, the same name
+  (`@<owner>/simple-html-grid`) and checks (a final version in package.json, a run number). Tests in
+  scripts/__tests__/githubPackage.test.ts; README and the changelog say how to install it
+* beta.yml is kept (`-beta.<branch>.<run>`, a tag per branch)
+* "Run workflow" shows for a workflow on the default branch only: next.yml has to be on master too, as
+  release.yml and beta.yml (see *Questions for the user*)
+
 ## Considered, not done
 
 ## Candidates / not started
@@ -4897,7 +4910,7 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
 * **The amber of the traffic lights** (icon sets, `--simple-html-grid-icon-amber-color`): `#92400e` in light
   mode looks brown beside the red - it is that dark to keep 3:1 on selected rows and the palette's
   backgrounds. An outlined icon would allow a brighter fill: worth it?
-* **The publish workflows on master**: copy `.github/workflows/release.yml` and `beta.yml` onto master, so
+* **The publish workflows on master**: copy `.github/workflows/release.yml`, `beta.yml` and `next.yml` onto master, so
   GitHub shows their "Run workflow" buttons? (Nothing is pushed to master without asking.)
 * **actions/checkout and actions/setup-node v4 → v7**: the Node 20 deprecation warning of the runs - bump
   them?

@@ -1,0 +1,60 @@
+# Publishes a dev build of a branch to GitHub Packages (npm.pkg.github.com), by hand: the Actions tab,
+# "next", "Run workflow", pick the branch. The version is <package.json version>-next.<run> - 6.0.0-next.1,
+# 6.0.0-next.2 ... the run number of this workflow, a new version every run - with the npm tag `next`, so
+#   npm install @simple-html/grid@npm:@<owner>/simple-html-grid@next
+# gets the last one. `latest` stays the last release (release.yml). See scripts/githubPackage.js.
+#
+# GitHub shows "Run workflow" for a workflow that is on the default branch: this file has to be on it too.
+name: next
+
+on:
+    workflow_dispatch:
+
+permissions:
+    contents: read
+    packages: write
+
+# one at a time: the run numbers in order
+concurrency:
+    group: next
+    cancel-in-progress: false
+
+jobs:
+    next:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+                  cache: npm
+                  registry-url: https://npm.pkg.github.com
+
+            # npm ci builds dist too (the prepare script)
+            - run: npm ci
+
+            # the checks of checks.yml: a dev build is tried by others, it must pass them too
+            - run: npm run typecheck
+            - run: npx vitest run
+            - run: npx biome check . --diagnostic-level=error
+            - run: npm run check:typings
+            - run: npm run check:docs
+
+            - id: package
+              run: node scripts/githubPackage.js next
+
+            - run: npm publish --tag next
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: summary
+              env:
+                  NAME: ${{ steps.package.outputs.name }}
+                  VERSION: ${{ steps.package.outputs.version }}
+                  BRANCH: ${{ github.ref_name }}
+              run: |
+                  echo "Published $NAME@$VERSION (next) from $BRANCH" >> "$GITHUB_STEP_SUMMARY"
+                  echo '```' >> "$GITHUB_STEP_SUMMARY"
+                  echo "npm install @simple-html/grid@npm:$NAME@$VERSION" >> "$GITHUB_STEP_SUMMARY"
+                  echo '```' >> "$GITHUB_STEP_SUMMARY"

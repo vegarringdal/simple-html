@@ -53,12 +53,15 @@ packages (a personal access token with `read:packages`), in an `.npmrc` next to 
 
 ```sh
 npm install @simple-html/grid@npm:@airemote/simple-html-grid              # the last release
+npm install @simple-html/grid@npm:@airemote/simple-html-grid@next          # the last dev build
+npm install @simple-html/grid@npm:@airemote/simple-html-grid@6.0.0-next.3  # one dev build
 npm install @simple-html/grid@npm:@airemote/simple-html-grid@beta-v6-maybe # the last beta of a branch
 ```
 
-A release is published from the default branch only (the `release` workflow), a beta from any branch
-(the `beta` workflow, `<version>-beta.<branch>.<run>`, npm tag `beta-<branch>`); both run from the
-Actions tab and only publish what passes the checks. See `scripts/githubPackage.js`.
+A release is published from the default branch only (the `release` workflow), a dev build from any
+branch (the `next` workflow, `<version>-next.<run>`, npm tag `next`), a beta from any branch (the `beta`
+workflow, `<version>-beta.<branch>.<run>`, npm tag `beta-<branch>`); all run from the Actions tab and
+only publish what passes the checks. See `scripts/githubPackage.js`.
 
 Or install it from a git branch, the `prepare` script builds `dist` on install:
 
