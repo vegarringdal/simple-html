@@ -48,6 +48,7 @@ export { DateInterface } from './date/dateInterface';
  */
 export type { IDateConfig, IStyle } from './date/interfaces';
 export type { EventHandler } from './emitter';
+export type { CalculatedColumn, CalculatedType } from './grid/calculatedColumns';
 export type { CellRange } from './grid/cellRange';
 export {
     type CellRenderContext,
@@ -55,7 +56,7 @@ export {
     type CellRendererInstance,
     registerCellRenderer
 } from './grid/cellRendererRegistry';
-export type { ColorRule, PaletteColor } from './grid/colorRules';
+export type { ColorRule, PaletteColor, RuleColor, RuleCondition } from './grid/colorRules';
 export type { CheckboxFormat, ColumnFormat, DateFormat, LinkFormat, NumberFormat } from './grid/columnFormat';
 export { type CreateGridOptions, createGrid } from './grid/createGrid';
 export type { CsvOptions, CsvSeparator } from './grid/csv';

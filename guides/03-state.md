@@ -18,6 +18,7 @@ it with `getState()`, give it back with `setState()`, and go back to the start w
 | `aggregates` | the aggregate functions of the columns, keyed by field (`{ balance: ['sum', 'avg'] }`): what `ColumnConfig.aggregate` starts with and the header menu changes, see [Aggregates](18-aggregates.md#from-the-header-menu) |
 | `totalsRow` | whether the totals row is shown: `GridConfig.totalsRow`, turned on and off in the header menu |
 | `formats` | the display formats of the columns, keyed by field (`{ born: { date: 'weekIso' } }`, `{ email: { link: { url: 'mailto:{email}' } } }`): what `ColumnConfig.format` starts with and the header menu's Format ›, the grid config dialog and the column chooser's ✎ (a label) change, see [Display formats](08-formatting.md#display-formats) and [Templates and links](08-formatting.md#templates-and-links) |
+| `calculatedColumns` | the calculated columns, keyed by field (`{ total: { formula: '{price} * {qty}', label: 'Total' } }`): what `GridConfig.calculatedColumns` starts with and the grid config dialog adds, changes and removes, see [Calculated columns in the state](#calculated-columns-in-the-state) |
 | `detailForm` | the detail form: whether it is shown, its fields in their order, its width (dragged too) and its least and most width, expanded or collapsed (`{ show: true, fields: ['name', 'notes'], width: 300 }`) - what `GridConfig.detailForm` starts with and the grid config dialog, the form's edge and its title change, see [The detail form](02-grid-config.md#the-detail-form) |
 
 ```ts
@@ -208,6 +209,35 @@ gridInterface.setState({
   labels it. `show` or `expanded` that is not a boolean, `fields` that is not a list of names, a
   `width`, `minWidth` or `maxWidth` that is no number of px, or a `minWidth` more than the `maxWidth`
   throws a `TypeError`, and nothing of the state changes.
+- It is plain JSON.
+
+## Calculated columns in the state
+
+`calculatedColumns` is keyed by field: the columns whose value a formula computes from the row, see
+[Calculated columns](23-calculated-columns.md).
+
+```ts
+const saved = gridInterface.getState().calculatedColumns; // { total: { formula: '{price} * {qty}', label: 'Total' } }
+
+// one more, at the end of the layout
+const layout = gridInterface.getState().layout;
+layout.center.push({ fields: ['half'], width: 90 });
+gridInterface.setState({ calculatedColumns: { ...saved, half: { formula: '{price} / 2' } }, layout });
+```
+
+- It starts as `GridConfig.calculatedColumns` (or `initialState.calculatedColumns`), and `resetState()`
+  goes back to it. `updateConfig({ calculatedColumns })` shows new ones at once.
+- The user changes it in the grid config dialog: its Apply is a `setState({ calculatedColumns })`, with
+  the layout of a new one.
+- `setState({ calculatedColumns })` replaces all of them, and the rows are filtered, sorted and grouped
+  again with their values. One left out is taken out of the layout, the sort, the grouping, the filter,
+  the header filters and the detail form; its format and aggregates go.
+- **A saved state runs nothing**: a formula is text read by the grid's own small language - no `eval`.
+  A formula with a problem, a name that is a field of the rows, anything that is no calculated column
+  throws a `TypeError`, and nothing of the state changes. See
+  [Security](23-calculated-columns.md#security).
+- It is applied before the formats and aggregates of the same state: a `format` of a calculated column
+  is checked against its type.
 - It is plain JSON.
 
 ## Header filters in the state

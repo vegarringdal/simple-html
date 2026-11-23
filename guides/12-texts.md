@@ -661,17 +661,92 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.rules.none` | `None` | the first swatch: no text colour, no background - the name and tooltip |
 | `columnSettings.rules.color.red` | `Red` | a swatch of the palette: its name and tooltip |
 | `columnSettings.rules.color.orange` | `Orange` | |
+| `columnSettings.rules.color.amber` | `Amber` | |
 | `columnSettings.rules.color.yellow` | `Yellow` | |
+| `columnSettings.rules.color.lime` | `Lime` | |
 | `columnSettings.rules.color.green` | `Green` | |
+| `columnSettings.rules.color.teal` | `Teal` | |
+| `columnSettings.rules.color.cyan` | `Cyan` | |
 | `columnSettings.rules.color.blue` | `Blue` | |
+| `columnSettings.rules.color.indigo` | `Indigo` | |
 | `columnSettings.rules.color.purple` | `Purple` | |
+| `columnSettings.rules.color.pink` | `Pink` | |
+| `columnSettings.rules.color.brown` | `Brown` | |
 | `columnSettings.rules.color.grey` | `Grey` | |
+| `columnSettings.rules.custom` | `Custom colour` | the colour picker after the swatches, a custom colour (`#rrggbb`): its name and tooltip |
+| `columnSettings.rules.contrast.rows` | `The text colour has {ratio}:1 to the light rows, under 4.5:1: hard to read` | a custom text colour that is hard to read on the light rows, `{ratio}` its contrast (`3.2`). Apply is not held back |
+| `columnSettings.rules.contrast.background` | `The text colour has {ratio}:1 to the background, under 4.5:1: hard to read` | the same on the rule's custom background |
+| `columnSettings.rules.kind` | `Condition` | the label of the kind of a rule's condition, three radio buttons |
+| `columnSettings.rules.kind.value` | `Value` | the kind: the cell's value, an operator and a value |
+| `columnSettings.rules.kind.conditions` | `Conditions` | the kind: conditions on fields of the row |
+| `columnSettings.rules.kind.formula` | `Formula` | the kind: a formula that is true or false - also the name of its input |
+| `columnSettings.rules.combine.AND` | `All of them` | the picker over two conditions or more: all must be true (`combine: 'AND'`) |
+| `columnSettings.rules.combine.OR` | `Any of them` | one is enough (`combine: 'OR'`) |
+| `columnSettings.rules.combine.tooltip` | `Whether all the conditions must be true, or one of them` | its tooltip |
+| `columnSettings.rules.condition` | `Condition {number}` | the name of a condition for a screen reader, `{number}` its place: 1 is the first |
+| `columnSettings.rules.condition.field` | `Field` | the picker of a condition's field: its tooltip, and its name before the field |
+| `columnSettings.rules.condition.add` | `Add condition` | the button under the conditions |
+| `columnSettings.rules.condition.remove` | `Remove condition` | the ✕ of a condition |
+| `columnSettings.rules.formula.placeholder` | `{balance} < 0 AND {status} = "late"` | the placeholder of a rule's formula, a formula as it is written |
+| `columnSettings.rules.formula.true` | `True in this row: the rule colours the cell` | under the formula: what it is in the row of the preview |
+| `columnSettings.rules.formula.false` | `False in this row` | |
+| `columnSettings.rules.problem.conditions` | `Add a condition` | a rule of the kind Conditions without one |
+| `columnSettings.rules.problem.expression` | `Write the formula, true or false` | a rule of the kind Formula without a formula |
 | `columnSettings.rules.moveUp` | `Move up` | the button that moves a rule before the one above it: its name and tooltip |
 | `columnSettings.rules.moveDown` | `Move down` | after the one under it |
 | `columnSettings.rules.remove` | `Remove rule` | the ✕ of a rule |
 | `columnSettings.rules.problem.value` | `Write the value to compare with` | a rule's operator compares, its value is empty (a Between: both) |
 | `columnSettings.rules.problem.style` | `Pick a text colour, a background or bold` | a rule that colours nothing |
 | `columnSettings.rules.unread` | `The column does not read {value}: the rule colours no cell` | `{value}`: a value the field's formatter does not read - a date of another format. Apply is not held back |
+| `columnSettings.calculated` | `Calculated column` | the heading of a calculated column's settings, at the top of its settings |
+| `columnSettings.calculated.add` | `Add calculated column` | the button under the list of the columns |
+| `columnSettings.calculated.add.tooltip` | `A column computed from the other fields of the row` | its tooltip |
+| `columnSettings.calculated.defaultLabel` | `Calculated {number}` | the label of a calculated column added, `{number}` the one of its field `calc_<number>` |
+| `columnSettings.calculated.name` | `Field name` | the label of its field name - an input while it is new, its name after |
+| `columnSettings.calculated.name.hint` | `A letter, then letters, digits and _. Not changed once applied` | under the input |
+| `columnSettings.calculated.formula` | `Formula` | the label of its formula |
+| `columnSettings.calculated.formula.placeholder` | `{price} * {qty}` | its placeholder, a formula as it is written |
+| `columnSettings.calculated.formula.hint` | `Fields in braces, numbers, "text", + - * / &, = <> < <= > >=, AND OR NOT, IF ROUND ABS MIN MAX TODAY DAYS YEAR MONTH CONCAT COALESCE ISBLANK` | under it: the language. The keywords and the names of the functions are the language's, keep them |
+| `columnSettings.calculated.gives` | `Gives: {type}` | the type of its values, `{type}` the name of a type (`columnSettings.type.*`) |
+| `columnSettings.calculated.value` | `In this row: {value}` | its value in the row of the preview |
+| `columnSettings.calculated.blank` | `(blank)` | the value when it is blank |
+| `columnSettings.calculated.applyFirst` | `Apply first: then the format and the colour rules of a {type} column` | a calculated column new, or of another type now: its other settings after Apply |
+| `columnSettings.calculated.remove` | `Remove calculated column` | the button: it leaves the draft, and on Apply the layout |
+| `columnSettings.calculated.problem.name` | `The field name is a letter, then letters, digits and _ - 64 at most` | a field name typed that a calculated column can not have |
+| `columnSettings.calculated.problem.taken` | `The field name is a field already: give the column a name of its own` | the name typed is a field of the datasource, of the rows or of another column |
+| `columnSettings.badge.calculated` | `Calculated` | in the list of the columns: a calculated column |
+| `columnSettings.formula.type.number` | `a number` | the name of a type in a problem of a formula (`{got}`, `{expected}`, `{type}`) |
+| `columnSettings.formula.type.text` | `a text` | |
+| `columnSettings.formula.type.date` | `a date` | |
+| `columnSettings.formula.type.boolean` | `true / false` | |
+| `columnSettings.formula.problem.empty` | `Write the formula` | the problems of a formula - of a calculated column and of a rule of the kind Formula |
+| `columnSettings.formula.problem.length` | `The formula is longer than {max} characters` | over the limit, 1000 |
+| `columnSettings.formula.problem.depth` | `The formula nests deeper than {max} levels` | brackets, functions, a minus or NOT in front, 32 |
+| `columnSettings.formula.problem.size` | `The formula has more than {max} parts` | 500 |
+| `columnSettings.formula.problem.character` | `{text} at {position} is no part of a formula` | a character no part of the language: `$`, `;`. `{position}`: the character, 1 the first |
+| `columnSettings.formula.problem.unexpected` | `{text} at {position} can not be there` | `1 2`, a `)` too many |
+| `columnSettings.formula.problem.end` | `The formula ends too soon` | `1 +`, `ROUND(1` |
+| `columnSettings.formula.problem.text` | `The text at {position} has no closing quote` | |
+| `columnSettings.formula.problem.field` | `The field at {position} has no closing brace` | a `{` without its `}`, and `{}` |
+| `columnSettings.formula.problem.function` | `{name} is no function: {names}` | `{names}`: the functions of the language |
+| `columnSettings.formula.problem.arguments` | `{name} has {count} values: it is written {usage}` | `{usage}`: how it is written, `ROUND(x, n)` |
+| `columnSettings.formula.problem.name` | `{name} at {position} is no function - a field is written in braces` | a word that is no keyword and has no `(` after it |
+| `columnSettings.formula.problem.internal` | `{field} is the grid's own, not a field` | `{field}`: a field that starts with `__` |
+| `columnSettings.formula.problem.unknownField` | `No field {field}` | a field that is no column, no field of the datasource, no calculated column |
+| `columnSettings.formula.problem.cycle` | `{field} is computed from itself` | a calculated column read by its own formula, straight or through another |
+| `columnSettings.formula.problem.fieldProblem` | `{field} has a problem of its own` | a calculated column read whose formula has a problem |
+| `columnSettings.formula.problem.number` | `{what} takes a number: {part} is {got}` | `{what}`: an operator or a function, `{part}`: the part as written, `{got}`: its type |
+| `columnSettings.formula.problem.date` | `{what} takes a date: {part} is {got}` | |
+| `columnSettings.formula.problem.boolean` | `{what} takes true / false: {part} is {got}` | |
+| `columnSettings.formula.problem.same` | `{what} takes values of one type: {part} is {got}, {other} is {expected}` | `=`, IF, COALESCE ... on two types |
+| `columnSettings.formula.problem.order` | `{what} compares numbers, texts and dates, not true / false` | `<` on true / false |
+| `columnSettings.formula.problem.chain` | `Compare two values at a time ({position}): a < b AND b < c` | `a < b < c` |
+| `columnSettings.formula.problem.digits` | `ROUND takes a whole number of digits from -10 to 10, not {part}` | |
+| `columnSettings.formula.problem.result` | `The formula gives {got}, it must give {expected}` | a rule's formula that is not true / false, a column's `type` that is not its formula's |
+| `columnSettings.formula.problem.divide` | `Divides by 0 in this row: no value` | the preview: the formula in the row of the preview. The cell is empty |
+| `columnSettings.formula.problem.value` | `{field} is not {type} in this row: no value` | a value that is not of its field's type, a text in a number field |
+| `columnSettings.formula.problem.overflow` | `A number too big in this row: no value` | |
+| `columnSettings.formula.problem.long` | `A text of more than {max} characters in this row: no value` | `&`, CONCAT: 10000 at most |
 | `columnSettings.preview.current` | `Preview, the current row` | the title of the preview of the current row |
 | `columnSettings.preview.first` | `Preview, the first row` | of the first row, without a current row |
 | `columnSettings.preview.none` | `No rows to preview` | without rows |

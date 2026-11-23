@@ -83,24 +83,41 @@
     /* the text of a link, underlined: blue-800 in light, blue-100 in dark - the library's blue-400
        accent is under 4.5:1 to the tints of Find and a range on a selected row, its blue-600 in light */
     --simple-html-grid-link-color: light-dark(#1e40af, oklch(93.2% 0.032 255.585));
-    /* the palette of the colour rules (ColumnFormat.rules), from the library's Tailwind scale: the text
-       red, blue and purple 800, orange, yellow and green 900, slate-700 in light - their 800 is under
-       4.5:1 under a range's tint on a grey background - and 300 in dark; the backgrounds 200 and
-       slate-300 in light, 950 and slate-800 in dark. Blue's background is sky: blue-200 and blue-950 are
-       the selected rows. The contrasts of grid.css's palette */
+    /* the palette of the colour rules (ColumnFormat.rules), its 14 colours from the library's Tailwind
+       scale: the text red, blue, indigo, purple and pink 800, orange, amber, yellow, lime, green, teal and
+       cyan 900, slate-700 in light - their 800 is under 4.5:1 under a range's tint on a grey background -
+       and 300 in dark; the backgrounds 200 and slate-300 in light (amber and cyan 300, apart from yellow
+       and blue), 950 and slate-800 in dark. Blue's background is sky: blue-200 and blue-950 are the
+       selected rows. Tailwind has no brown: it is made of orange's hue (50-60) with less chroma, at the
+       lightness of the others - oklch(40% 0.07 50) text and oklch(87% 0.04 60) background in light,
+       oklch(86% 0.05 60) and oklch(27% 0.045 45) in dark. The contrasts of grid.css's palette */
     --simple-html-grid-palette-red-color: light-dark(oklch(44.4% 0.177 26.899), oklch(80.8% 0.114 19.571));
     --simple-html-grid-palette-orange-color: light-dark(oklch(40.8% 0.123 38.172), oklch(83.7% 0.128 66.29));
+    --simple-html-grid-palette-amber-color: light-dark(oklch(41.4% 0.112 45.904), oklch(87.9% 0.169 91.605));
     --simple-html-grid-palette-yellow-color: light-dark(oklch(42.1% 0.095 57.708), oklch(90.5% 0.182 98.111));
+    --simple-html-grid-palette-lime-color: light-dark(oklch(40.5% 0.101 131.063), oklch(89.7% 0.196 126.665));
     --simple-html-grid-palette-green-color: light-dark(oklch(39.3% 0.095 152.535), oklch(87.1% 0.15 154.449));
+    --simple-html-grid-palette-teal-color: light-dark(oklch(38.6% 0.063 188.416), oklch(85.5% 0.138 181.071));
+    --simple-html-grid-palette-cyan-color: light-dark(oklch(39.8% 0.07 227.392), oklch(86.5% 0.127 207.078));
     --simple-html-grid-palette-blue-color: light-dark(oklch(42.4% 0.199 265.638), oklch(80.9% 0.105 251.813));
+    --simple-html-grid-palette-indigo-color: light-dark(oklch(39.8% 0.195 277.366), oklch(78.5% 0.115 274.713));
     --simple-html-grid-palette-purple-color: light-dark(oklch(43.8% 0.218 303.724), oklch(82.7% 0.119 306.383));
+    --simple-html-grid-palette-pink-color: light-dark(oklch(45.9% 0.187 3.815), oklch(82.3% 0.12 346.018));
+    --simple-html-grid-palette-brown-color: light-dark(oklch(40% 0.07 50), oklch(86% 0.05 60));
     --simple-html-grid-palette-grey-color: light-dark(oklch(37.2% 0.044 257.287), oklch(86.9% 0.022 252.894));
     --simple-html-grid-palette-red-bg-color: light-dark(oklch(88.5% 0.062 18.334), oklch(25.8% 0.092 26.042));
     --simple-html-grid-palette-orange-bg-color: light-dark(oklch(90.1% 0.076 70.697), oklch(26.6% 0.079 36.259));
+    --simple-html-grid-palette-amber-bg-color: light-dark(oklch(87.9% 0.169 91.605), oklch(27.9% 0.077 45.635));
     --simple-html-grid-palette-yellow-bg-color: light-dark(oklch(94.5% 0.129 101.54), oklch(28.6% 0.066 53.813));
+    --simple-html-grid-palette-lime-bg-color: light-dark(oklch(93.8% 0.127 124.321), oklch(27.4% 0.072 132.109));
     --simple-html-grid-palette-green-bg-color: light-dark(oklch(92.5% 0.084 155.995), oklch(26.6% 0.065 152.934));
+    --simple-html-grid-palette-teal-bg-color: light-dark(oklch(91% 0.096 180.426), oklch(27.7% 0.046 192.524));
+    --simple-html-grid-palette-cyan-bg-color: light-dark(oklch(86.5% 0.127 207.078), oklch(30.2% 0.056 229.695));
     --simple-html-grid-palette-blue-bg-color: light-dark(oklch(90.1% 0.058 230.902), oklch(29.3% 0.066 243.157));
+    --simple-html-grid-palette-indigo-bg-color: light-dark(oklch(87% 0.065 274.039), oklch(25.7% 0.09 281.288));
     --simple-html-grid-palette-purple-bg-color: light-dark(oklch(90.2% 0.063 306.703), oklch(29.1% 0.149 302.717));
+    --simple-html-grid-palette-pink-bg-color: light-dark(oklch(89.9% 0.061 343.231), oklch(28.4% 0.109 3.907));
+    --simple-html-grid-palette-brown-bg-color: light-dark(oklch(87% 0.04 60), oklch(27% 0.045 45));
     --simple-html-grid-palette-grey-bg-color: light-dark(oklch(86.9% 0.022 252.894), oklch(27.9% 0.041 260.031));
     /* the totals row: slate-800 as the library's title bars, its text slate-100 (--dock-text-hi) */
     --simple-html-grid-totals-bg-color: light-dark(#e2e8f0, #283548);

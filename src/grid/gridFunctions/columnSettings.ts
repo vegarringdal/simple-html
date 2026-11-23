@@ -1,8 +1,18 @@
 import { html, nothing, render, type TemplateResult } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
+import { styleMap } from 'lit-html/directives/style-map.js';
 import { type Entity, isGroupRow } from '../../datasource/entity';
+import type { FieldType } from '../../datasource/field';
 import type { FilterOperator } from '../../datasource/filterExpression';
 import type { TextId } from '../../texts';
+import {
+    type CalculatedColumn,
+    type CompiledColumn,
+    calculatedLabel,
+    compileCalculatedColumns,
+    isCalculatedName,
+    readerOf
+} from '../calculatedColumns';
 import {
     isInternalField,
     type LinkResult,
@@ -11,7 +21,7 @@ import {
     urlTemplateProblem,
     VALUE_PLACEHOLDER
 } from '../cellTemplate';
-import { colorRuleClasses, colorRuleOf } from '../colorRules';
+import { colorRuleClasses, colorRuleOf, colorRuleStyle, type RuleFieldOf } from '../colorRules';
 import {
     CHECKED_VALUE,
     type CheckboxFormat,
@@ -26,7 +36,9 @@ import {
     UNCHECKED_VALUE
 } from '../columnFormat';
 import { canFilterAsShown, filtersAsShown } from '../filterAsShown';
+import { type FormulaType, type FormulaValue, formulaProblemText } from '../formula';
 import type { Grid } from '../grid';
+import type { GridState } from '../gridConfig';
 import type { MenuItem } from '../gridMenus';
 import { numberOverrideOf, overrideNumberText, zeroText } from './cellText';
 import { defaultHeaderOperator, headerFilterType, headerOperators } from './columnFilterOptions';
@@ -50,6 +62,7 @@ import { gridText } from './gridText';
 import { refilterChangedFormats } from './headerFilterFormatter';
 import { defaultFilterPlaceholder, headerFilterPlaceholder } from './headerFilterPlaceholder';
 import { HEADER_OPERATOR_TEXTS, setHeaderFilterOperator } from './headerOperatorMenu';
+import { prettyPrintString } from './prettyPrintString';
 import { removeContextMenu } from './removeContextMenu';
 import { closeFilterEditor } from './renderFilterEditor';
 import { isTypedCharacter } from './renderRowCell';
@@ -100,8 +113,17 @@ import { attachTooltips, hideTooltip, tooltipsEnabled } from './tooltip';
  *   valid - an address of a scheme that is not allowed, one that does not start with its scheme - has its
  *   problem under it at once, the column is marked Error and Apply does nothing until it is fixed.
  *
- * What it edits is a copy of the state's formats, the operators and the filter as you type in use
- * (ColumnSettings): the grid changes on Apply only.
+ * - **Calculated columns** (`GridState.calculatedColumns`, calculatedColumns.ts): *Add calculated
+ *   column* under the list adds one at the end of the list - `calc_1`, *Calculated 1* - and picks it.
+ *   A calculated column has its own settings at the top, in place of the label: its field name (while
+ *   it is new; once applied it stays), its label, its formula with the `{ }` button, the type it gives,
+ *   its value in the row of the preview and the problems of the formula (at once: Apply waits), and
+ *   *Remove calculated column*. Its other settings are those of its type once it is applied with that
+ *   type - before, a hint says to apply first. Apply puts a new one at the end of the layout, takes a
+ *   removed one out of it (setState: the layout, the sort, the filter ...).
+ *
+ * What it edits is a copy of the state's formats, the calculated columns, the operators and the filter
+ * as you type in use (ColumnSettings): the grid changes on Apply only.
  */
 
 /**
@@ -126,6 +148,12 @@ interface ColumnSettings {
     tab: GridConfigTab;
     /** what the Detail form tab edits, see detailFormSettings.ts */
     detailForm: DetailFormDraft;
+    /** the calculated columns, by field: a copy of the state's when it opened (GridState.calculatedColumns) */
+    calculated: Record<string, CalculatedColumn>;
+    /** the calculated columns added in the dialog, in their order: at the end of the layout on Apply */
+    added: string[];
+    /** the field name typed for an added calculated column that is no name it can have yet, by its field */
+    typedNames: Record<string, string>;
 }
 
 /** a problem of a template, a text of the grid and its values */
@@ -136,6 +164,9 @@ interface Problem {
 
 /** the kind of a column, for its settings: its field's type, or a lookup column */
 type ColumnKind = 'text' | 'number' | 'boolean' | 'date' | 'datetime' | 'lookup';
+
+/** the field type of the values of a formula: a date is a date field */
+const fieldTypeOf = (type: FormulaType): FieldType => type;
 
 /** what the arrows of the list move by, PageUp and PageDown */
 const PAGE = 10;
@@ -174,7 +205,10 @@ export function openColumnSettings(ctx: Grid, field?: string, tab: GridConfigTab
         ),
         field: field !== undefined && fields.includes(field) ? field : fields[0],
         tab,
-        detailForm: detailFormDraft(ctx, ctx.gridInterface.getState().detailForm)
+        detailForm: detailFormDraft(ctx, ctx.gridInterface.getState().detailForm),
+        calculated: ctx.gridInterface.getState().calculatedColumns,
+        added: [],
+        typedNames: {}
     });
 }
 
@@ -327,7 +361,9 @@ function previewRow(ctx: Grid): { row: Entity; current: boolean } | null {
  * row (not the grid's own, `__...`)
  */
 function pickableFields(ctx: Grid, row: Entity | undefined): string[] {
-    const fields = new Set(Object.keys(ctx.gridInterface.__getGridConfig().columns));
+    const fields = new Set(
+        Object.keys(ctx.gridInterface.__getGridConfig().columns).filter((name) => !ctx.gridInterface.__isGoneCalculated(name))
+    );
     for (const name of row ? Object.keys(row) : []) {
         if (!isInternalField(name)) {
             fields.add(name);
@@ -364,11 +400,82 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
     const text = (id: TextId, values?: Readonly<Record<string, unknown>>) => gridText(ctx, id, values);
     const update = () => renderColumnSettings(ctx, settings);
 
-    const fields = layoutFields(ctx);
+    const datasource = gridInterface.getDatasource();
+    const columns = gridInterface.__getGridConfig().columns;
+    /** a calculated column of the dialog's draft */
+    const isDraftCalculated = (name: string) => Object.hasOwn(settings.calculated, name);
+    // the calculated columns of the draft read, with the fields the grid knows (as setState() reads them)
+    const names = gridInterface.__calculatedNames();
+    const compiled = compileCalculatedColumns(settings.calculated, names.fieldType);
+    // the calculated columns of the layout removed in the dialog: no field anymore
+    const removedCalculated = new Set(
+        layoutFields(ctx).filter((name) => gridInterface.__isCalculated(name) && !isDraftCalculated(name))
+    );
+    const fields = [...layoutFields(ctx).filter((name) => !removedCalculated.has(name)), ...settings.added];
+    if (!fields.includes(settings.field)) {
+        settings.field = fields[0];
+    }
     const field = settings.field;
-    const kind = kindOf(ctx, field);
+    /** the type a calculated column of the draft gives, null while its formula has a problem */
+    const draftType = (name: string): FormulaType | null => {
+        const each = compiled.get(name);
+        return each && 'formula' in each ? each.formula.type : null;
+    };
+    /**
+     * a calculated column whose settings of its type wait for Apply: new, of another type now, or with a
+     * problem - the grid has it of another type (or not at all) until then
+     */
+    const pending = (name: string) =>
+        isDraftCalculated(name) &&
+        (!gridInterface.__isCalculated(name) || draftType(name) === null || datasource.getField(name).type !== draftType(name));
+    /** the kind of a column: a calculated column waiting for Apply has the type of its formula */
+    const kindOfColumn = (name: string): ColumnKind => (pending(name) ? (draftType(name) ?? 'text') : kindOf(ctx, name));
+    const kind = kindOfColumn(field);
     const format = settings.formats[field];
     const at = previewRow(ctx);
+    /** what a colour rule's condition or formula knows of a field, with the draft's calculated columns */
+    const appliedFieldOf = gridInterface.__ruleFieldOf();
+    const fieldOf: RuleFieldOf = (name) => {
+        if (isDraftCalculated(name)) {
+            const type = draftType(name);
+            return type ? { type: fieldTypeOf(type), lookup: false } : undefined;
+        }
+        return gridInterface.__isCalculated(name) ? undefined : appliedFieldOf(name);
+    };
+    /** the fields a formula can name, for its `{ }` button: the columns, the layout, the calculated columns */
+    const formulaFields = [
+        ...new Set([...fields, ...Object.keys(columns), ...Object.keys(settings.calculated)].filter((name) => fieldOf(name)))
+    ];
+    /** the value of a calculated column of the draft in a row, or why it has none; null for another column */
+    const draftResult = (name: string, row: Entity) => {
+        const each: CompiledColumn | undefined = compiled.get(name);
+        return each && 'formula' in each ? each.formula.evaluate(readerOf(row, { has: isDraftCalculated })) : null;
+    };
+    /** a row as the preview sees it: the values of the draft's calculated columns in it */
+    const previewOf = (row: Entity): Entity => {
+        if (!Object.keys(settings.calculated).length) {
+            return row;
+        }
+        const values: Record<string, FormulaValue> = {};
+        for (const name of Object.keys(settings.calculated)) {
+            const result = draftResult(name, row);
+            values[name] = result && 'value' in result ? result.value : null;
+        }
+        return { ...row, ...values };
+    };
+    /** the problem of a calculated column of the draft: its field name (a new one), its formula */
+    const calculatedProblem = (name: string): string | null => {
+        const typed = settings.typedNames[name];
+        if (typed !== undefined) {
+            return isCalculatedName(typed)
+                ? text('columnSettings.calculated.problem.taken')
+                : text('columnSettings.calculated.problem.name');
+        }
+        const each = compiled.get(name);
+        return each && 'problem' in each
+            ? formulaProblemText(each.problem, (id, values) => gridText(ctx, id as TextId, values))
+            : null;
+    };
 
     /** sets a column's format in the dialog, none when it shows nothing (`{}`) */
     const setFormat = (name: string, next: ColumnFormat | undefined) => {
@@ -394,25 +501,63 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
     };
 
     // the columns whose format has a problem: Apply does nothing while there is one
-    const withProblems = new Set(
-        Object.keys(settings.formats).filter(
+    const withProblems = new Set([
+        ...Object.keys(settings.formats).filter(
             (name) =>
-                formatProblems(settings.formats[name]).length ||
-                (fields.includes(name) && checkboxProblems(settings.formats[name], kindOf(ctx, name)).length) ||
-                (fields.includes(name) && colorRulesHaveProblem(settings.formats[name]?.rules))
-        )
-    );
+                !removedCalculated.has(name) &&
+                (formatProblems(settings.formats[name]).length ||
+                    (fields.includes(name) && checkboxProblems(settings.formats[name], kindOfColumn(name)).length) ||
+                    (fields.includes(name) && colorRulesHaveProblem(settings.formats[name]?.rules, fieldOf)))
+        ),
+        ...Object.keys(settings.calculated).filter((name) => calculatedProblem(name) !== null)
+    ]);
 
-    /** the label of a column in the dialog: the one typed (the draft's), else the column's own */
-    const labelOf = (name: string) => settings.formats[name]?.label || getConfigColumnLabel(ctx, name);
+    /** the label of a column in the dialog: the one typed (the draft's), else the column's own - a calculated column's of the draft */
+    const labelOf = (name: string) =>
+        settings.formats[name]?.label ||
+        (isDraftCalculated(name)
+            ? columns[name]?.label || calculatedLabel(settings.calculated[name], name, prettyPrintString)
+            : getConfigColumnLabel(ctx, name));
 
     const apply = () => {
         if (withProblems.size) {
             return false;
         }
         removeContextMenu(ctx);
-        const before = gridInterface.getState().formats;
-        gridInterface.setState({ formats: structuredClone(settings.formats) });
+        const state = gridInterface.getState();
+        const before = state.formats;
+        // the formats of the calculated columns removed go with them
+        const formats = structuredClone(settings.formats);
+        for (const name of Object.keys(formats)) {
+            if (gridInterface.__isCalculated(name) && !isDraftCalculated(name)) {
+                delete formats[name];
+            }
+        }
+        const next: Partial<GridState> = { formats };
+        if (settings.added.length || JSON.stringify(settings.calculated) !== JSON.stringify(state.calculatedColumns)) {
+            // the calculated columns first (setState gives them to the datasource), a new one at the end
+            next.calculatedColumns = structuredClone(settings.calculated);
+            if (settings.added.length) {
+                state.layout.center.push(...settings.added.map((name) => ({ fields: [name], width: 100 })));
+                next.layout = state.layout;
+            }
+        }
+        const removed = new Set(Object.keys(state.calculatedColumns).filter((name) => !isDraftCalculated(name)));
+        gridInterface.setState(next);
+        settings.added = [];
+        settings.typedNames = {};
+        // the detail form of the draft without the removed ones, as setState took them out
+        for (const name of removed) {
+            settings.detailForm.included.delete(name);
+        }
+        settings.detailForm.order = settings.detailForm.order.filter((name) => !removed.has(name));
+        // a column new in the layout: its header filter's operator and filter as you type, as they are
+        for (const name of layoutFields(ctx)) {
+            if (!Object.hasOwn(settings.operators, name) && hasOperator(ctx, name)) {
+                settings.operators[name] = getHeaderFilterOperator(ctx, name);
+                settings.filterOnType[name] = isFilterOnType(ctx, name);
+            }
+        }
         // a header filter whose column reads its text in another way now (filter as shown): it runs again
         refilterChangedFormats(ctx, before);
         // a header filter whose operator changed: as if it was picked in Operator › - the filter runs again
@@ -430,17 +575,19 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         }
         // the Detail form tab's
         applyDetailForm(ctx, settings.detailForm);
+        // the dialog stays open: the badges, a calculated column applied
+        update();
         return true;
     };
 
-    const typeName = (name: string) => text(`columnSettings.type.${kindOf(ctx, name)}`);
+    const typeName = (name: string) => text(`columnSettings.type.${kindOfColumn(name)}`);
     /** what a column has set, for its option in the list: Error alone when it has a problem */
     const badges = (name: string): TextId[] => {
         const set = settings.formats[name];
         if (withProblems.has(name)) {
             return ['columnSettings.badge.problem'];
         }
-        const marks: TextId[] = [];
+        const marks: TextId[] = isDraftCalculated(name) ? ['columnSettings.badge.calculated'] : [];
         if (set?.checkbox) {
             marks.push('columnSettings.badge.checkbox');
         }
@@ -506,7 +653,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
      * @param inputId the id of the template's input
      * @param write puts the new template in the dialog
      */
-    const insertButton = (inputId: string, write: (template: string) => void) =>
+    const insertButton = (inputId: string, write: (template: string) => void, list = pickableFields(ctx, at?.row)) =>
         html`<button
             type="button"
             class="filter-editor-icon column-settings-insert"
@@ -531,7 +678,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                         input.focus();
                         input.setSelectionRange(start + placeholder.length, start + placeholder.length);
                     },
-                    pickableFields(ctx, at?.row)
+                    list
                 );
             }}
         >
@@ -982,8 +1129,158 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                         delete next.rules;
                     }
                 }),
-            idOf: (part) => idOf(ctx, part)
+            idOf: (part) => idOf(ctx, part),
+            fieldOf,
+            fields: formulaFields,
+            row: at ? previewOf(at.row) : undefined,
+            insertButton: (inputId, write) => insertButton(inputId, write, formulaFields)
         });
+
+    /**
+     * A calculated column of the draft (GridState.calculatedColumns): at the top of its settings, in place
+     * of the label - its field name (a new one only, until Apply), its label, its formula with the `{ }`
+     * button and the type it gives, its value in the row of the preview, its problem, Remove
+     */
+    const calculatedSettings = () => {
+        const column = settings.calculated[field];
+        const added = settings.added.includes(field);
+        /** the column changed, in the draft */
+        const changeColumn = (edit: (next: CalculatedColumn) => void) => {
+            const next = { ...column };
+            edit(next);
+            settings.calculated[field] = next;
+            update();
+        };
+        const rename = (typed: string) => {
+            const taken =
+                typed !== field &&
+                (isDraftCalculated(typed) ||
+                    fields.includes(typed) ||
+                    (Object.hasOwn(columns, typed) && !gridInterface.__isGoneCalculated(typed)) ||
+                    names.isTaken(typed));
+            if (!isCalculatedName(typed) || taken) {
+                // kept as typed, the problem says why: the column keeps its field until then
+                settings.typedNames[field] = typed;
+                update();
+                return;
+            }
+            delete settings.typedNames[field];
+            settings.calculated = Object.fromEntries(
+                Object.entries(settings.calculated).map(([name, each]) => [name === field ? typed : name, each])
+            );
+            settings.added = settings.added.map((name) => (name === field ? typed : name));
+            if (settings.formats[field]) {
+                settings.formats[typed] = settings.formats[field];
+                delete settings.formats[field];
+            }
+            settings.field = typed;
+            update();
+        };
+        const remove = () => {
+            const index = fields.indexOf(field);
+            delete settings.calculated[field];
+            delete settings.formats[field];
+            delete settings.typedNames[field];
+            settings.added = settings.added.filter((name) => name !== field);
+            const left = fields.filter((name) => name !== field);
+            settings.field = left[Math.min(index, left.length - 1)];
+            update();
+            dialog.querySelector<HTMLElement>('.column-settings-list')?.focus();
+        };
+        const result = at ? draftResult(field, at.row) : null;
+        const type = draftType(field);
+        const shown = (value: FormulaValue) =>
+            value === null
+                ? text('columnSettings.calculated.blank')
+                : datasource.getFormatter(field, type ? fieldTypeOf(type) : 'text').format(value);
+        const problem = calculatedProblem(field);
+        const formulaId = idOf(ctx, 'calculated-formula');
+        const problemId = idOf(ctx, 'calculated-problem');
+        return html`<div class="column-settings-field column-settings-calculated" role="group" aria-labelledby=${idOf(ctx, 'calculated-heading')}>
+            <span class="column-settings-label" id=${idOf(ctx, 'calculated-heading')}>${text('columnSettings.calculated')}</span>
+            ${
+                added
+                    ? html`${textInput('calculated-name', 'columnSettings.calculated.name', settings.typedNames[field] ?? field, '', rename)}
+                          <div class="column-settings-hint">${text('columnSettings.calculated.name.hint')}</div>`
+                    : html`<span class="column-settings-label">${text('columnSettings.calculated.name')}</span>
+                          <div class="column-settings-input-row column-settings-calculated-name">${field}</div>`
+            }
+            ${textInput('calculated-label', 'columnSettings.label', column.label ?? '', prettyPrintString(field), (value) =>
+                changeColumn((next) => {
+                    if (value.trim() === '') {
+                        delete next.label;
+                    } else {
+                        next.label = value;
+                    }
+                    // the label typed is the one shown: a label of the format would win over it
+                    if (settings.formats[field]?.label !== undefined) {
+                        const { label: _, ...rest } = settings.formats[field];
+                        if (hasDisplayFormat(rest)) {
+                            settings.formats[field] = rest;
+                        } else {
+                            delete settings.formats[field];
+                        }
+                    }
+                })
+            )}
+            <label class="column-settings-label" for=${formulaId}>${text('columnSettings.calculated.formula')}</label>
+            <div class="column-settings-input-row">
+                <input
+                    id=${formulaId}
+                    class="filter-editor-value column-settings-template column-settings-formula"
+                    type="text"
+                    spellcheck="false"
+                    autocomplete="off"
+                    placeholder=${text('columnSettings.calculated.formula.placeholder')}
+                    aria-describedby=${`${idOf(ctx, 'calculated-hint')} ${problemId}`}
+                    aria-invalid=${problem ? 'true' : 'false'}
+                    .value=${live(column.formula)}
+                    @input=${(event: Event) =>
+                        changeColumn((next) => {
+                            next.formula = (event.target as HTMLInputElement).value;
+                        })}
+                />
+                ${insertButton(
+                    formulaId,
+                    (formula) =>
+                        changeColumn((next) => {
+                            next.formula = formula;
+                        }),
+                    formulaFields.filter((name) => name !== field)
+                )}
+            </div>
+            <div class="column-settings-hint" id=${idOf(ctx, 'calculated-hint')}>${text('columnSettings.calculated.formula.hint')}</div>
+            ${type ? html`<div class="column-settings-calculated-type">${text('columnSettings.calculated.gives', { type: text(`columnSettings.type.${type}`) })}</div>` : nothing}
+            ${
+                result && 'value' in result
+                    ? html`<div class="column-settings-calculated-value">${text('columnSettings.calculated.value', { value: shown(result.value) })}</div>`
+                    : nothing
+            }
+            <div class="column-settings-problems" id=${problemId} aria-live="polite">
+                ${problem ? html`<div class="column-settings-problem">${problem}</div>` : nothing}
+                ${
+                    !problem && result && 'problem' in result
+                        ? html`<div class="column-settings-problem">${formulaProblemText(result.problem, (id, values) => gridText(ctx, id as TextId, values))}</div>`
+                        : nothing
+                }
+            </div>
+            <div class="column-settings-input-row">
+                <button
+                    type="button"
+                    class="simple-html-grid-button column-settings-calculated-remove"
+                    aria-disabled=${fields.length < 2 ? 'true' : nothing}
+                    @click=${() => {
+                        if (fields.length > 1) {
+                            remove();
+                        }
+                    }}
+                >
+                    ${text('columnSettings.calculated.remove')}
+                </button>
+            </div>
+            ${pending(field) && type ? html`<div class="column-settings-hint column-settings-calculated-pending">${text('columnSettings.calculated.applyFirst', { type: text(`columnSettings.type.${type}`) })}</div>` : nothing}
+        </div>`;
+    };
 
     /** what the cell shows in the row of the preview, its link and why it has none */
     const preview = () => {
@@ -998,33 +1295,35 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                 : 'columnSettings.preview.first'
             : 'columnSettings.preview.none';
         let content: TemplateResult | typeof nothing = nothing;
+        // the row with the values of the draft's calculated columns
+        const row = at ? previewOf(at.row) : null;
         // the colours of the rule that matches the row's value (the dialog's rules), as the cell will have them
-        const colors = at
-            ? colorRuleClasses(colorRuleOf(gridInterface, field, at.row, format))
-                  .map((name) => ` ${name}`)
-                  .join('')
-            : '';
+        const rule = row ? colorRuleOf(gridInterface, field, row, format) : null;
+        const colors = colorRuleClasses(rule)
+            .map((name) => ` ${name}`)
+            .join('');
+        const style = styleMap(colorRuleStyle(rule));
         const lookupColumn = gridInterface.__getLookupColumn(field);
-        if (at && (format?.checkbox || kind === 'boolean')) {
+        if (row && (format?.checkbox || kind === 'boolean')) {
             // a checkbox, checked as the cell will be
-            content = html`<div class=${`column-settings-preview-cell${colors}`}>
+            content = html`<div class=${`column-settings-preview-cell${colors}`} style=${style}>
                 <input
                     type="checkbox"
                     class="column-settings-preview-checkbox"
                     disabled
                     aria-label=${labelOf(field)}
-                    .checked=${format?.checkbox ? isCheckedValue(at.row[field], format.checkbox) : Boolean(at.row[field])}
+                    .checked=${format?.checkbox ? isCheckedValue(row[field], format.checkbox) : Boolean(row[field])}
                 />
             </div>`;
-        } else if (at && lookupColumn) {
+        } else if (row && lookupColumn) {
             // the label of the value, as the cell shows it
-            content = html`<div class=${`column-settings-preview-cell${colors}`}>${lookupColumn.formatter.format(at.row[field])}</div>`;
-        } else if (at) {
+            content = html`<div class=${`column-settings-preview-cell${colors}`} style=${style}>${lookupColumn.formatter.format(row[field])}</div>`;
+        } else if (at && row) {
             // the format of the dialog through the grid's own code, as the cell will show it - with the
             // blank / 0 of a number column
             const formatter = gridInterface.__getCellFormatter(field, undefined, at.row, format);
             const column = { ...gridInterface.__getGridConfig().columns[field], format };
-            const formatted = formatter.format(at.row[field]);
+            const formatted = formatter.format(row[field]);
             const shown =
                 kind === 'number'
                     ? overrideNumberText(formatted, numberOverrideOf(column), zeroText(column, formatter))
@@ -1032,7 +1331,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
             const link = formatProblems(format).length ? null : gridInterface.__getLinkResult(field, at.row, format);
             const href = link && 'href' in link ? link.href : null;
             const problems = formatProblems(format).length ? [] : rowProblems(ctx, field, format, at.row, link);
-            content = html`<div class=${`column-settings-preview-cell${colors}`}>
+            content = html`<div class=${`column-settings-preview-cell${colors}`} style=${style}>
                     ${
                         // the link as the cell has it, in a new tab: the dialog stays
                         href
@@ -1094,6 +1393,29 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         }
     };
 
+    /**
+     * Add calculated column: a new one at the end of the list - the first `calc_<n>` that is free, labelled
+     * *Calculated <n>*, no formula yet (its problem says so) - picked, the focus on its formula
+     */
+    const addCalculated = () => {
+        let number = 1;
+        const free = (name: string) =>
+            !isDraftCalculated(name) &&
+            !fields.includes(name) &&
+            !(Object.hasOwn(columns, name) && !gridInterface.__isGoneCalculated(name)) &&
+            !names.isTaken(name);
+        while (!free(`calc_${number}`)) {
+            number++;
+        }
+        const name = `calc_${number}`;
+        settings.calculated[name] = { formula: '', label: text('columnSettings.calculated.defaultLabel', { number }) };
+        settings.added.push(name);
+        settings.field = name;
+        update();
+        dialog.querySelector<HTMLElement>(`#${idOf(ctx, 'calculated-formula')}`)?.focus();
+        dialog.querySelector(`#${idOf(ctx, `option-${fields.length}`)}`)?.scrollIntoView({ block: 'nearest' });
+    };
+
     const close = () => closeColumnSettings(ctx);
     // Apply and Apply & close are greyed out while a column has a problem - aria-disabled, not disabled: a
     // disabled button loses the focus and its tooltip
@@ -1131,6 +1453,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                 aria-labelledby=${tabId(ctx, 'columns')}
                 ?hidden=${settings.tab !== 'columns'}
             >
+                <div class="column-settings-columns">
                 <div
                     class="column-settings-list simple-html-dialog-scroller"
                     role="listbox"
@@ -1167,13 +1490,27 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                         </div>`;
                     })}
                 </div>
+                <button
+                    type="button"
+                    class="simple-html-grid-button column-settings-calculated-add"
+                    data-tooltip=${text('columnSettings.calculated.add.tooltip')}
+                    @click=${addCalculated}
+                >
+                    ${text('columnSettings.calculated.add')}
+                </button>
+                </div>
                 <div class="column-settings-panel">
                     <div class="column-settings-heading">
                         <span class="column-settings-heading-label">${labelOf(field)}</span>
                         <span class="column-settings-option-type">${typeName(field)}</span>
                     </div>
-                    ${labelSettings()} ${settingsOf()} ${editingSettings()} ${placeholderSettings()} ${operatorSettings()}
-                    ${ruleSettings()} ${preview()}
+                    ${isDraftCalculated(field) ? calculatedSettings() : labelSettings()}
+                    ${
+                        pending(field)
+                            ? nothing
+                            : html`${settingsOf()} ${isDraftCalculated(field) ? nothing : editingSettings()} ${placeholderSettings()}
+                              ${operatorSettings()} ${ruleSettings()} ${preview()}`
+                    }
                 </div>
             </div>
             ${detailFormTabPanel(ctx, dialog, settings.detailForm, settings.tab, update)}
@@ -1189,6 +1526,11 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                                 settings.operators[field] = startOperator(ctx, field);
                                 settings.filterOnType[field] = defaultFilterOnType(ctx, field);
                             }
+                            // a calculated column the grid starts with: its formula and label too
+                            const startColumn = gridInterface.__getStartCalculated()[field];
+                            if (startColumn && isDraftCalculated(field)) {
+                                settings.calculated[field] = startColumn;
+                            }
                             setFormat(field, structuredClone(start[field]));
                         }}
                     >
@@ -1200,6 +1542,10 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                         data-tooltip=${text('columnSettings.resetAll.tooltip')}
                         @click=${() => {
                             settings.formats = structuredClone(start);
+                            // the calculated columns the grid starts with: one added or removed in the dialog is not
+                            settings.calculated = gridInterface.__getStartCalculated();
+                            settings.added = [];
+                            settings.typedNames = {};
                             for (const name of Object.keys(settings.operators)) {
                                 settings.operators[name] = startOperator(ctx, name);
                                 settings.filterOnType[name] = defaultFilterOnType(ctx, name);

@@ -4015,6 +4015,121 @@ rebuildHeaderColumns for the middle section too (scrollHandlers.test.ts has it).
   `rowClass` hook does it in code); `fitColumns()` measures the normal weight - a bold cell can be a few px
   wider; a date picker for a rule's date value
 
+### Calculated columns, colour rules on several fields / formulas / more colours (user request)
+
+The user: "be able to add dynamic column in column config would also be nice, very useful when we get to
+conditional formatting with background color etc", for the colour rules "maybe if based on multiple column
+values etc", "color rules we need to be able to set more colours, maybe color picker? also expression based on
+other columns values etc", and "important that expressions is injection proof, so no one can hack / script
+injection".
+
+* **The formula language** (new `src/grid/formula.ts`): a tokenizer, a recursive descent parser into a fixed
+  set of node kinds (number, text, boolean, field, negate, not, binary, call), a type check, and an
+  evaluator that switches on the kind - no `eval`, `new Function`, timers, regexes / css / html from input.
+  Grammar: `OR` < `AND` < `NOT` < one comparison (`= <> < <= > >=`, no `a < b < c`) < `&` < `+ -` < `* /` <
+  unary `- +` < primary (number with `.`, text in `"` / `'` with the quote doubled, `TRUE` / `FALSE`,
+  `{field}`, `NAME(args)`, brackets). Keywords and functions in any case. Functions (a `Map`, so
+  `constructor` / `toString` are none): IF (lazy), ROUND (halves away from 0, n -10..10), ABS, MIN / MAX
+  (numbers or dates, blanks skipped), TODAY, DAYS (calendar days, DST-safe), YEAR, MONTH, CONCAT, COALESCE,
+  ISBLANK. Types number / text / date (a datetime is a date) / boolean, checked before it runs: field types
+  from the datasource (an unlisted field is text). Blanks: null in arithmetic and functions -> null, a
+  comparison false (`=` true for two blanks), AND / OR / NOT / IF take blank as false, `&` takes ''.
+  Texts compare without case (`localeCompare`, sensitivity accent), dates on the day; a computed number keeps
+  15 significant digits (`0.1 + 0.2` is 0.3). A row where it can not be computed (divide by 0, a value not of
+  its field's type, Infinity, a text over 10 000) gives a problem of the row -> a blank cell, never a throw.
+  Limits: 1000 characters, 500 parts, 32 levels. Every problem has a text id
+  (`columnSettings.formula.problem.*`) with its position / part / types
+* **The values** (new `src/datasource/calculatedField.ts`, entityHandler.ts, dataContainer.ts, dataSource.ts):
+  chosen over storing values on the rows - the container keeps a Map of calculated fields, the row proxy's get
+  trap answers a read of one with `value(row)`, the set trap ignores it. So it is never an edit (not dirty, not
+  in getChanges / JSON / Object.keys, not sent), always current after edits, undo / redo, upsert, live data,
+  resetData - nothing to invalidate - and every reader (filter, sort, group, aggregate, cells, copy, CSV /
+  Excel, Find, detail form) reads it as a field. `getField()` / `getFormatter()` / `__getFieldConfig()` know
+  its type and label. The kept aggregates: a calculated field's change count moves with the fields it uses
+  (transitively) and when it is set, a TODAY() one also when the day changes; `rows-changed` names it with
+  the field. A listed field name or `__` is refused (TypeError); a datasource on the container can not list
+  a calculated name. The fast path of the get trap stays a `size` check when there are none
+* **The grid** (new `src/grid/calculatedColumns.ts`, gridInterface.ts, gridConfig.ts, new
+  gridFunctions/calculatedState.ts): `CalculatedColumn { formula, label?, type? }`, `CalculatedType`;
+  `GridConfig.calculatedColumns`, `GridState.calculatedColumns` (getState / setState / resetState /
+  initialState / updateConfig). Compiled together: a column can read another, a cycle (direct or long) is a
+  problem. Registered on the datasource before the formats / aggregates / filter options are checked (the
+  constructor, updateConfig, applyState), taken back when one of those throws, and on destroy() (only the
+  ones this grid set). Names: `^[A-Za-z][A-Za-z0-9_]{0,63}$`, not an Object.prototype name, not a listed
+  field or an own field of a row; 50 at most. A removed one leaves the layout, sort, grouping, filter
+  (`filterWithout`), header filters, detail form, its format and aggregates; the column chooser hides it
+  (`__isGoneCalculated`). New ones get a `columns` entry; the datasource parts are applied again when they
+  change. Read only in `__isCellReadonly` (one early return)
+* **Colour rules** (colorRules.ts): `ColorRule.operator` optional; three kinds - Value (as before, saved
+  states unchanged), Conditions (`conditions: RuleCondition[]` of `{ field, operator, value? }`, `combine:
+  'AND' | 'OR'`, each tested with the context of its field: type, formatter, lookup label, case), Formula
+  (`expression`, must be boolean, compiled once per grid and cached until the fields change -
+  `__ruleFormulaMatches`). Checks: one kind, conditions 1..20 on known fields (`RuleFieldOf`), operator of
+  the field's type, the formula's problem, `combine` only with conditions. A rule colouring the whole row:
+  not done (see below)
+* **More colours, custom colours** (grid.css, theme-tredespace.css by a forked agent; ruleColors.ts): 14
+  palette colours (amber, lime, teal, cyan, indigo, pink, brown new, the 7 old unchanged, every contrast pair
+  of the theme tests kept in both themes); `RuleColor = PaletteColor | '#rrggbb'` (strict regex). A custom
+  colour is a custom property set with `style.setProperty()` (showCellColor, `styleMap` in the detail form and
+  the preview): `--simple-html-grid-rule-bg`, `--simple-html-grid-rule-text-light` / `-dark`, classes
+  `-text-custom` / `-bg-custom`. A custom background without a text colour gets black or white (higher
+  contrast); a custom text colour is as picked in light and lightened (HSL) in dark until 4.5:1 on #5a6370
+  (the lightest dark row); on a custom background as picked. The dialog warns under 4.5:1 (light rows or
+  the custom background). theme.test.ts knows the three cell properties
+* **The dialog** (columnSettings.ts, columnSettingsRules.ts): *Add calculated column* under the list (calc_n,
+  *Calculated n*, the focus in its formula); a calculated column's section in place of the label: field name
+  (while new: rename, problems name / taken), label (drops a format label), formula with `{ }` (the
+  formula fields), *Gives: Type*, the value in the preview row, its problems at once (Error badge, Apply
+  held; a row problem is said, not held), *Remove calculated column*, *Apply first* while its type is not
+  applied (its type-specific settings wait - the format / filter / rule helpers read the datasource's type).
+  Apply: `setState({ formats, calculatedColumns, layout })` - a new one at the end of center (100px); the
+  removed ones' formats and detail form fields dropped; Reset column / Reset all include them. Rules: a kind
+  radio group on the rule's first line with Move up / down / Remove; Conditions lines (field picker - the
+  field menu with search -, operator, value, ✕; a field of another type takes its default operator),
+  Add condition, All / Any picker over two or more; Formula input with `{ }` and the result in the preview row;
+  the colour picker after the swatches (a `+` box until picked, the picked frame then). Problems use the
+  draft's calculated columns (a rule on a removed one is an Error)
+* **Security**: the hostile list - no code execution (source scanned in the test), Map function lookup, no
+  member access, fields only known ones and own properties (`readerOf`), `__` refused, limits, no recursion
+  (cycles refused before a row is read), results are data (lit text bindings / `.value`), strict names and
+  colours, a TypeError before anything changes. CSV: calculated values pass `escapeFormulas` (on by default)
+  as any text; Excel writes inline strings only; the clipboard does not escape (as documented before)
+* `toSqlWhere` unchanged: a condition on a calculated column throws its existing TypeError (`filter.children[0].field
+  "total" is not one of the columns`); guide 22 *Calculated columns* says so, with a generated column / view
+  and a `withoutFields` helper for a browser-only filter
+* texts: 75 new (`columnSettings.calculated.*`, `columnSettings.formula.*`, the kinds / conditions / combine /
+  formula / custom / contrast of the rules, 7 colour names, `columnSettings.badge.calculated`), guide 12's
+  table, Norwegian in the translation sample. The texts walk shows them all (a calculated column with every
+  problem, the kinds of a rule); its checker leaves the formula language's words and the walk's field names
+  alone; its timeout 90s (it ran near 30s before)
+* docs: new guide 23 *Calculated columns* (config, the formulas, functions, types, blanks, comparisons,
+  how the values are provided, state, the dialog, rules on several fields, SQL, Security); 02 (the label
+  order, *Calculated columns*), 03 (*Calculated columns in the state*), 08 (the dialog's list, *Colour rules*:
+  kinds, parts, conditions, palette of 14, custom colours, checks), 13 (14 colours by the fork; custom
+  colours: the properties, the classes, the picker), 22. JSDoc of every new public type; index.ts exports
+  `CalculatedColumn`, `CalculatedType`, `RuleColor`, `RuleCondition`; typings consumer
+* sample: new *Calculated columns* (Formatting): Total, Days late, a rule on two fields, a formula rule
+  with a custom colour, totals; not in the full grid sample (its description would grow)
+* tests: formula (22), formulaHostile (13: the source, eval / Function spies, prototype names, payloads and
+  a seeded fuzz of 3000 formulas with a row that records its reads, markup in a cell, hostile names,
+  colours, cycles), calculatedFields (12, datasource), calculatedColumns (21, grid), colorRuleKinds (16),
+  columnSettingsCalculated (12, dialog); updated colorRules, columnSettingsRules, gridState, texts walk,
+  theme tests. 3881 tests, 169 files
+* browser (Chromium 1148, port 8093): new `calculated-column-check.js` 61/61 in four looks + a phone (the
+  sample's values, sort by the label, the header filter, an edit, the multi-field and the formula rule with
+  its custom colour readable, the dialog: three columns - `{ }`, IF, DAYS(TODAY()) - an invalid one, a
+  division by 0, Apply, a Conditions rule and a Formula rule with the colour picker made in the dialog, the
+  state JSON round trip, no rounded corners). Shared: column-settings 144/144, column-settings-edit 9/9,
+  full-grid 11/11, detail-form 91/91, filter-as-shown 61/61, find-case-sql 62/62; color-rules 98/98 with a
+  copy in this worktree (the Tab order: the rule's buttons are on its first line now, the colour picker is a
+  stop after the swatches); column-settings-more 133/149 - its failures test the row placeholder
+  (`placeholderRowLabel`) of the parallel placeholder work, its `.before-row-placeholder` copy 141/141
+* not done, candidates: a rule that colours the whole row (a row class from the rules: every cell's render
+  would test every column's row rules - kept out, the `rowClass` hook does it in code); the type-specific
+  settings of a new calculated column before Apply (the format / filter helpers read the datasource);
+  renaming an applied calculated column; more functions (DAY, WEEKDAY, text functions, a date + days);
+  a calculated value in a lookup's label; a backend computing it (the SQL guide shows a generated column)
+
 ## Considered, not done
 
 ## Candidates / not started

@@ -2,7 +2,7 @@ import type { FieldType } from '../datasource/field';
 import type { Formatter } from '../datasource/formatter';
 import { fillText, getText, type Texts } from '../texts';
 import { LINK_PROTOCOLS, templateProblem, urlTemplateProblem } from './cellTemplate';
-import { assertColorRules, type ColorRule } from './colorRules';
+import { assertColorRules, type ColorRule, type RuleFieldOf } from './colorRules';
 import type { ColumnConfig } from './gridConfig';
 
 /**
@@ -786,9 +786,18 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
  * - `rules` for any column: a list of {@link ColorRule}s, see assertColorRules
  * - a lookup column (`editor`: its cells show a label) takes `label`, the placeholder, `readonly` and `rules` only
  * @param name how the message names it: `GridConfig: columns.born.format`, `setState: formats.born`
+ * @param fieldOf the fields a colour rule's condition or formula can name (see assertColorRules). Left
+ * out: none but the column's own
  * @throws a `TypeError` naming it, what it has and what it takes
  */
-export function assertColumnFormat(format: unknown, field: string, type: FieldType, lookup: boolean, name: string): void {
+export function assertColumnFormat(
+    format: unknown,
+    field: string,
+    type: FieldType,
+    lookup: boolean,
+    name: string,
+    fieldOf?: RuleFieldOf
+): void {
     if (format === undefined) {
         return;
     }
@@ -825,7 +834,7 @@ export function assertColumnFormat(format: unknown, field: string, type: FieldTy
     }
     assertLabelParts(format, field, type, lookup, name);
     if (format.rules !== undefined) {
-        assertColorRules(format.rules, type, lookup, `${name}.rules`);
+        assertColorRules(format.rules, type, lookup, `${name}.rules`, fieldOf);
     }
     if (numberOverride !== undefined) {
         if (type !== 'number') {

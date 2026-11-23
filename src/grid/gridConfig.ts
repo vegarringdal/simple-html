@@ -4,6 +4,7 @@ import type { GroupArgument } from '../datasource/groupArgument';
 import type { SortArgument } from '../datasource/sortArgument';
 import type { IDateConfig } from '../date/interfaces';
 import type { Texts } from '../texts';
+import type { CalculatedColumn } from './calculatedColumns';
 import type { ColumnFormat } from './columnFormat';
 
 /**
@@ -66,6 +67,33 @@ export type GridConfig = {
      * @sample column-layout
      */
     layout: GridLayout;
+    /**
+     * The calculated columns the grid starts with, by field name: columns whose values a formula
+     * computes from the other fields of the row - `{ total: { formula: '{price} * {qty}' } }`. Put their
+     * fields in the `layout`, give them `columns` options (a label, an aggregate, a format) as any field.
+     * See {@link CalculatedColumn} and the guide "Calculated columns".
+     *
+     * Part of the grid's state (`GridState.calculatedColumns`): the user adds, changes and removes them in
+     * the grid config dialog, `getState()` has them. `resetState()` goes back to these (unless
+     * `initialState.calculatedColumns` is given); `updateConfig({ calculatedColumns })` shows new ones
+     * at once and makes them what `resetState()` goes back to.
+     *
+     * @sample calculated-columns
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     calculatedColumns: {
+     *         total: { formula: '{price} * {qty}', label: 'Total' },
+     *         daysLate: { formula: 'DAYS({due}, TODAY())', label: 'Days late' }
+     *     },
+     *     columns: { total: { aggregate: 'sum' } },
+     *     layout: { center: [{ fields: ['price', 'qty'], width: 80 }, { fields: ['total'], width: 90 }, { fields: ['daysLate'], width: 80 }] }
+     * };
+     * ```
+     */
+    calculatedColumns?: Record<string, CalculatedColumn>;
     /**
      * The state the grid starts in, and `resetState()` goes back to: sorted, grouped, filtered ...
      * What is left out starts empty (no sorting, no filter ...), the layout is `layout`.
@@ -971,6 +999,14 @@ export interface GridState {
      * grid config dialog (tab *Detail form*), the form's edge and its title bar. See {@link DetailForm}
      */
     detailForm: DetailForm;
+    /**
+     * the calculated columns, by field name - what `GridConfig.calculatedColumns` starts with and the
+     * user adds, changes and removes in the grid config dialog: `{ total: { formula: '{price} * {qty}',
+     * label: 'Total' } }`. Their formulas are text, not code: a state from storage runs nothing. A column
+     * left out that the grid had is taken out of the layout, the sort, the grouping, the filter and the
+     * detail form. See {@link CalculatedColumn}
+     */
+    calculatedColumns: Record<string, CalculatedColumn>;
 }
 
 /**
@@ -1020,10 +1056,10 @@ export interface HeaderFilter {
 
 /**
  * @internal
- * The options of the config: all of it but `columns`, `layout` and `initialState`, the parts the grid
- * copies and changes.
+ * The options of the config: all of it but `columns`, `layout`, `initialState` and `calculatedColumns`,
+ * the parts the grid copies and changes.
  */
-export type GridOptions = Omit<GridConfig, 'columns' | 'layout' | 'initialState'>;
+export type GridOptions = Omit<GridConfig, 'columns' | 'layout' | 'initialState' | 'calculatedColumns'>;
 
 /**
  * @internal

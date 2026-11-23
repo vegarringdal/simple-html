@@ -151,7 +151,7 @@ A column's header shows the first of:
 1. the label the user gave it in the grid config dialog or with the ✎ of the column chooser: `format.label`,
    state (`GridState.formats`)
 2. its `label` in `columns`
-3. the field's `label` in the datasource's `fields`
+3. the field's `label` in the datasource's `fields` - for a calculated column its `label`
 4. the field name, with the first letter in upper case and `_` as a space: `first_name` shows as
    `First Name`, but `firstName` as `Firstname`. Give such a field a label.
 
@@ -182,6 +182,24 @@ Every option of a `ColumnConfig` is optional.
 
 `focusButton` takes `'ALWAYS'`, `'SHOW_IF_GRID_NOT_READONLY'` or
 `'SHOW_IF_GRID_AND_CELL_NOT_READONLY'`.
+
+### Calculated columns
+
+`calculatedColumns` adds columns whose value a formula computes from the row - a field of their own,
+put in the `layout` as any field, with `columns` options as any column:
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    calculatedColumns: { total: { formula: '{price} * {qty}', label: 'Total' } },
+    columns: { total: { aggregate: 'sum', format: { number: { decimals: 2 } } } },
+    layout: { center: [{ fields: ['price'], width: 80 }, { fields: ['qty'], width: 60 }, { fields: ['total'], width: 90 }] }
+};
+```
+
+They are read only, part of the state (`GridState.calculatedColumns`), and the user adds and changes
+them in the grid config dialog. See [Calculated columns](23-calculated-columns.md).
 
 ```sample required-placeholders
 ```

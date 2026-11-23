@@ -623,9 +623,13 @@ left end has the resets of the tab shown.
 The Columns tab:
 
 - **The columns** of the layout are at the left, in their order, each with its label, its type and
-  what it has set - *Format*, *Text*, *Link*, *Checkbox*, *Blank / 0*, *Label*, *Placeholder*,
+  what it has set - *Calculated*, *Format*, *Text*, *Link*, *Checkbox*, *Blank / 0*, *Label*, *Placeholder*,
   *Multiline*, *Read only*, *Colours*, or *Error*. The arrows, Home, End, PageUp / PageDown and a letter pick one, a
   click too.
+- **Add calculated column**, under the list: a column whose value a formula computes from the row. A
+  calculated column has its field name, label and formula at the top of its settings, the type it gives
+  and its value in the row of the preview, its problems at once, and *Remove calculated column*. See
+  [Calculated columns](23-calculated-columns.md#in-the-grid-config-dialog).
 - **Label**, every column: the column's label - empty is the column's own, which the input shows. The ✎ of
   the column chooser sets it too ([The column chooser](10-menus.md#the-column-chooser)). It
   is the label wherever the grid names the column, the exports' headers too.
@@ -663,15 +667,22 @@ The Columns tab:
   after a short pause in typing, see [Filter as you type](06-filtering.md#filter-as-you-type). It starts
   as the column has it (its `filterOnType`, the grid's, or the user's from the operator choice).
 - **Colour rules**, every column: the [colour rules](#colour-rules) of its cells, in their order - the
-  first that matches wins. Each rule is a group: its operator (a picker of the operators the column's
-  filter offers, not In / Not In), its value as it is typed in the header filter - *From* and *To* for
-  Between, none for Is Blank, a checkbox *Checked* for a checkbox column - then *Text colour* and
-  *Background*, a row of square swatches each (*None* and the palette; one stop of Tab, the arrows
-  pick, each named by its colour for a screen reader and in its tooltip) and *Bold*. *Move up*, *Move
-  down* and *Remove rule* at its right, *Add rule* under the rules (red text on a red background, the
-  column's header filter operator; the focus goes to its operator). A rule without its value, or with
-  nothing to colour, is a problem; a value the column does not read (a date of another format) is said,
-  it colours no cell.
+  first that matches wins. Each rule is a group. Its first line: the kind of its condition - *Value*,
+  *Conditions* or *Formula*, radio buttons - and *Move up*, *Move down* and *Remove rule* at its right.
+  *Value*: its operator (a picker of the operators the column's filter offers, not In / Not In) and its
+  value as it is typed in the header filter - *From* and *To* for Between, none for Is Blank, a checkbox
+  *Checked* for a checkbox column. *Conditions*: a line for each - its field (a picker of the columns and
+  the calculated columns, with a search), its operator and value as for that field, a ✕ - *Add
+  condition* under them, and over two or more *All of them* / *Any of them*. *Formula*: a formula that
+  is true or false, with the `{ }` button, and under it whether it is true in the row of the preview.
+  Then *Text colour* and *Background*, a row of square swatches each (*None* and the palette; one stop
+  of Tab, the arrows pick, each named by its colour for a screen reader and in its tooltip) with the
+  colour picker of a custom colour after them (a `+` until one is picked), and *Bold*. *Add rule* under
+  the rules (red text on a red background, the column's header filter operator; the focus goes to its
+  operator). A rule without its value, without a condition, with a condition on a field the grid does
+  not know, with a formula that has a problem or is not true / false, or with nothing to colour, is a
+  problem; a value the column does not read (a date of another format) and a custom text colour under
+  4.5:1 are said, they hold nothing back.
 - **The preview** shows what the cell shows in the current row (else the first row shown), in the
   colours of the rule its value matches: the text, the link - a click opens it in a new tab - and its
   address, and why the row has no link (a field that is empty in it, an address that is not allowed, a
@@ -766,11 +777,21 @@ a database keeps as `1` / `0`, `'Y'` / `'N'`.
 
 ## Colour rules
 
-A column's colour rules colour a cell from its value - its text, its background, bold: a negative
-balance in red, the orders that wait on an orange background. No code: a rule is a condition - an
-operator and a value, as the column's header filter has them - and a style from a palette. The user
-makes them in the [grid config dialog](#the-grid-config-dialog) (*Colour rules*), a developer starts a
-column with them in `ColumnConfig.format`:
+A column's colour rules colour a cell from its row - its text, its background, bold: a negative
+balance in red, the orders that wait on an orange background, the name of a customer who is late and
+owes. No code: a rule is a condition and a style from a palette (or a custom colour). The condition is
+one of three kinds:
+
+- **Value** (`operator`, `value`): the cell's own value, as the column's header filter tests it - below.
+- **Conditions** (`conditions`, `combine`): conditions on fields of the row - the column's own, others, a
+  [calculated column](23-calculated-columns.md) - each tested as the header filter of its field tests
+  it; all of them (`combine: 'AND'`, the default) or any (`'OR'`).
+- **Formula** (`expression`): a [formula](23-calculated-columns.md#the-formulas) that is true or false -
+  `{balance} < 0 AND {status} = "late"`, `DAYS({due}, TODAY()) > 7`. True colours the cell; a row where
+  it can not be computed is not coloured.
+
+The user makes them in the [grid config dialog](#the-grid-config-dialog) (*Colour rules*), a developer
+starts a column with them in `ColumnConfig.format`:
 
 ```ts
 import type { GridConfig } from '@simple-html/grid';
@@ -791,14 +812,31 @@ const config: GridConfig = {
         // both ends included, an end '' is open
         due: { format: { rules: [{ operator: 'BETWEEN', value: ['2026-11-01', '2026-11-30'], background: 'yellow' }] } },
         // empty - or 0, as in the filter
-        notes: { format: { rules: [{ operator: 'IS_BLANK', background: 'grey' }] } }
+        notes: { format: { rules: [{ operator: 'IS_BLANK', background: 'grey' }] } },
+        // conditions on other fields: late AND owing; a formula with a custom colour
+        name: {
+            format: {
+                rules: [
+                    {
+                        conditions: [
+                            { field: 'status', operator: 'EQUAL', value: 'late' },
+                            { field: 'balance', operator: 'GREATER_THAN', value: '0' }
+                        ],
+                        background: 'red',
+                        bold: true
+                    },
+                    { expression: 'DAYS({due}, TODAY()) > 30', background: '#c4b5fd' }
+                ]
+            }
+        }
     },
     layout: {
         center: [
             { fields: ['balance'], width: 100 },
             { fields: ['status'], width: 100 },
             { fields: ['due'], width: 100 },
-            { fields: ['notes'], width: 150 }
+            { fields: ['notes'], width: 150 },
+            { fields: ['name'], width: 150 }
         ]
     }
 };
@@ -808,8 +846,11 @@ const config: GridConfig = {
 | --- | --- |
 | `operator` | how the value is compared: an operator of the column's type - `EQUAL`, `NOT_EQUAL_TO`, `CONTAINS`, `BEGIN_WITH`, `LESS_THAN`, `GREATER_THAN_OR_EQUAL_TO`, `BETWEEN`, `IS_BLANK`, `IS_NOT_BLANK` ... ([Operators](06-filtering.md#operators)). Not `IN` / `NOT_IN`: a rule compares one value, give each value a rule |
 | `value` | what it is compared with, text as it is typed in the header filter: `'100'`, `'late'`, `'2026-11-22'`, `'true'` / `'false'` for a checkbox column. `[from, to]` for `BETWEEN`. Left out for `IS_BLANK` / `IS_NOT_BLANK` |
-| `color` | the text colour: `'red'`, `'orange'`, `'yellow'`, `'green'`, `'blue'`, `'purple'` or `'grey'` |
-| `background` | the background, a colour of the same palette |
+| `conditions` | the kind *Conditions*, in place of `operator`: 1 to 20 of `{ field, operator, value? }` - a field of the grid, an operator of its type, a value as typed in its header filter |
+| `combine` | with `conditions`: `'AND'` (the default) all of them, `'OR'` one of them |
+| `expression` | the kind *Formula*, in place of `operator`: a formula that is true or false |
+| `color` | the text colour: `'red'`, `'orange'`, `'amber'`, `'yellow'`, `'lime'`, `'green'`, `'teal'`, `'cyan'`, `'blue'`, `'indigo'`, `'purple'`, `'pink'`, `'brown'`, `'grey'` - or a custom colour, `'#rrggbb'` |
+| `background` | the background, a colour of the same palette or `'#rrggbb'` |
 | `bold` | `true`: bold text |
 
 - **The condition is the header filter's.** The value is read as the column's header filter reads what
@@ -825,12 +866,18 @@ const config: GridConfig = {
   cell no rule matches has the grid's colours.
 - **A value the column does not read** - a date of another format, `22.11.2026` in a `YYYY-MM-DD`
   column - matches no cell (the header filter filters nothing with it); the dialog says so.
-- **The palette is the theme's**: each colour is a text colour and a background, css variables with a
+- **A condition on another field** (*Conditions*) is that field's header filter's: its type, its
+  formatter, a lookup column's label, its Match case. A calculated column is a field like the others.
+- **The palette is the theme's**: 14 colours, each a text colour and a background, css variables with a
   light and a dark colour, in both themes - readable: a text colour has 4.5:1 to the rows, the selected
-  rows and every background of the palette, the grid's text 4.5:1 to the backgrounds. There are no free
-  colours (`'#ff0000'` throws a `TypeError`): a hex colour is one colour in light and in dark, it can
-  not be readable in both. A theme changes the palette, see
-  [Theming, colour rules](13-theming.md#colour-rules).
+  rows and every background of the palette, the grid's text 4.5:1 to the backgrounds. A theme changes
+  the palette, see [Theming, colour rules](13-theming.md#colour-rules).
+- **A custom colour** is `#` and six hex digits - nothing else (`'red;'`, `'url(...)'`, `'#fff'` throw a
+  `TypeError`). It is one colour in light and in dark, so the grid keeps it readable: a custom
+  background without a text colour gets black or white text, whichever reads better on it; a custom
+  text colour is the colour picked in light and lighter in dark, until it has 4.5:1 to the rows. The
+  dialog warns when a custom text colour has less than 4.5:1 to the light rows or to its background.
+  It reaches the page as a css custom property, never as css text.
 - **Where**: every cell of the column - an input, a multiline cell, a link (the rule's text colour in
   place of the link's, still underlined), a template, a custom cell (its text takes the colour; a
   renderer that sets a colour of its own keeps it), a checkbox (its background). The values of the
@@ -840,9 +887,11 @@ const config: GridConfig = {
   their tint and the grid's text - so they stand out; a range's tint is laid over the rule's
   background. A selected row keeps its colour in the other cells; the rule's background is the cell's,
   over it. The focus outline, the marker of an edited cell and of more lines are on top. Bold stays.
-- **Checked** as the rest of a format: an operator the type does not have, `IN` / `NOT_IN`, a rule
-  without the value its operator needs, one that colours nothing, a colour that is not in the palette
-  throw a `TypeError` when the grid is made, or `updateConfig()` or `setState()` is given it.
+- **Checked** as the rest of a format: no kind of condition or two, an operator the type does not
+  have, `IN` / `NOT_IN`, a rule without the value its operator needs, a condition on a field the grid
+  does not know, a formula with a problem or that is not true / false, one that colours nothing, a
+  colour that is neither of the palette nor `#rrggbb` throw a `TypeError` when the grid is made, or
+  `updateConfig()` or `setState()` is given it.
 - **It is state** with the rest of the column's format: Apply in the dialog, `getState()`, a state
   saved as JSON (the value is text, a date too), Reset column / Reset all to the config's.
 
