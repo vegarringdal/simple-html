@@ -254,7 +254,7 @@ of the new row gets a generated negative number. When grouped, the row goes into
 group is expanded.
 
 Many rows at once: `addNewRows()` - the rows are sorted and grouped once, not once per row. The grid's
-[import](23-import.md) adds its rows with it.
+[import](24-import.md) adds its rows with it.
 
 ```ts
 const added = datasource.addNewRows([{ company: 'NEW 1' }, { company: 'NEW 2' }]); // the first one selected

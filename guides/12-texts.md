@@ -868,7 +868,7 @@ row numbers show it.
 ### Import dialog
 
 The import dialog (`gridInterface.openImport()`, the menus' entries with `GridConfig.importMenu`), see
-[Import](23-import.md). `{size}`, `{rows}`, `{columns}` and `{cells}` in the error of a file too large are
+[Import](24-import.md). `{size}`, `{rows}`, `{columns}` and `{cells}` in the error of a file too large are
 the limits (`IMPORT_LIMITS`); `{row}` is the row of the file, from 1; `{field}` the label of a column;
 `{text}` a value as the file has it.
 

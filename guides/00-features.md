@@ -162,6 +162,7 @@ On a Mac, Ctrl is Cmd and Alt is Option.
 | Safe for spreadsheets | Text starting with `=`, `+`, `-` or `@` is written so a spreadsheet does not run it as a formula | [guide](15-export.md#formulas-csv-injection) · [sample](#sample/export) |
 | From the menu | Right click a cell: Export › Excel, all rows or the selected rows | [guide](15-export.md#from-the-row-menu) · [sample](#sample/export) |
 | What you see | The rows the filter lets through, sorted, the columns in their order - or the selected rows | [guide](15-export.md#the-rows) · [sample](#sample/export) |
+| Import | Rows pasted from Excel, or a CSV or Excel file, become new rows: see where each column goes, what is wrong, then import - one undo step | [guide](24-import.md) · [sample](#sample/import) |
 
 ## State
 

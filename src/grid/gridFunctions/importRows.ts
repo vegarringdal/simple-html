@@ -15,7 +15,7 @@ import { writeCellValue } from './lookupColumn';
  * The grid's side of the import: rows of cells - from a file (importFile.ts), from the clipboard, from
  * code - become new rows of the datasource. The import dialog (importDialog.ts) and
  * `gridInterface.importRows()` use it. Reads the interface and the datasource only, so it works without
- * a connected grid too. See guides/23-import.md.
+ * a connected grid too. See guides/24-import.md.
  *
  * - **Columns to fields**: each column of the rows goes to a field, or is skipped (`ImportOptions.fields`).
  *   With a header row they are matched by name (headerFields): a header cell that is the label of a

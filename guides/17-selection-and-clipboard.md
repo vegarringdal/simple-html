@@ -399,7 +399,7 @@ allow first (Ctrl+V needs no permission).
 ### Paste as new rows
 
 Rows copied in Excel or Google Sheets can be added as new rows: with `importMenu` in the config, the row
-menu's Paste › has *As new rows…*. It opens the [import dialog](23-import.md) with the rows on the
+menu's Paste › has *As new rows…*. It opens the [import dialog](24-import.md) with the rows on the
 clipboard - their columns from the right clicked cell's column on, as a paste of a block, or by name when
 the first line names the columns (the dialog says which, and a picker over each column changes it). The
 values are read as typing reads them, the problems are listed before anything is added, and *Import* adds

@@ -1332,6 +1332,22 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Import: rows pasted from Excel, CSV and Excel files (user request)
+
+##### Added
+- **The import dialog**: a CSV or .xlsx file picked or dropped, or rows pasted from Excel / Google Sheets
+  (Ctrl+V in the dialog, or the row menu's Paste › *As new rows…*) become new rows. The first rows with a field
+  picker over each column (matched by name, else by position), *First row is a header*, the separator, the
+  sheet, the decimal mark and the order of dates when they matter; the problems in words ("Row 3, Age: Not a
+  number: abc") and on the cells; rows with problems imported marked or skipped. Values read as typing reads
+  them, plus a file's forms (`1 234,5`, ISO dates); validation is run before anything is added. One undo
+  step. `GridConfig.importMenu` (off by default) shows *Import rows…* in the header menu and *As new rows…*;
+  both need an editable grid and `edit.add`. `gridInterface.openImport()`, `importRows()`, `readImportFile()`,
+  `ImportFileError`, `IMPORT_LIMITS`; `datasource.addNewRows()`. Guide 24 *Import*, sample *Import*.
+- **A file is not trusted**: our own unzip (`DecompressionStream`) and xlsx reader - 20 MB a file, 100 MB
+  unzipped, 100 000 rows, 1 000 columns, 1 000 000 cells; zip bombs, lying sizes, encryption, ZIP64 and
+  `<!DOCTYPE` refused; content shown as text only.
+
 #### Named views (user request)
 
 ##### Added

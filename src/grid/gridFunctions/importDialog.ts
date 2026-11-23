@@ -26,7 +26,7 @@ import { attachTooltips, hideTooltip, tooltipsEnabled } from './tooltip';
 
 /**
  * The import dialog: rows from a CSV or an Excel file, or pasted from a spreadsheet, become new rows of
- * the grid - see guides/23-import.md. A modal `<dialog class="simple-html-grid filter-editor-content
+ * the grid - see guides/24-import.md. A modal `<dialog class="simple-html-grid filter-editor-content
  * import-dialog">` on the body, of the filter editor's kind (dialogFrame.ts): its title bar, body and
  * footer have the filter editor's classes and look; moved by the title bar, resized from every edge and
  * corner, Esc closes it, the focus goes back to where it was.

@@ -364,7 +364,7 @@ the `menus.row` hook still gets them, by their ids. A group row's number has no 
 | `row.paste.cell` | Paste cell (selected rows): the column of the selected rows, readonly cells skipped. Greyed out with no row selected | the grid is editable, and `edit` allows `change` or `add` |
 | `row.paste.range` | Paste range: the clipboard as Ctrl+V pastes it with ranges - one value into every cell of them, a block from the top left of the last one. Reads the clipboard with `navigator.clipboard.readText()`, the browser may ask the user first. Greyed out without a range | the grid is editable, and `edit` allows `change` or `add` |
 | `row.paste.newRowsSeparator` | a line | `importMenu`, the grid is editable and `edit` allows `add` |
-| `row.paste.newRows` | As new rows…: the import dialog with the rows on the clipboard (`gridInterface.openImport(text)`) - their columns from this cell's column on, or by the names of a header row - added as new rows on *Import*, see [Import](23-import.md) | `importMenu`, the grid is editable and `edit` allows `add` |
+| `row.paste.newRows` | As new rows…: the import dialog with the rows on the clipboard (`gridInterface.openImport(text)`) - their columns from this cell's column on, or by the names of a header row - added as new rows on *Import*, see [Import](24-import.md) | `importMenu`, the grid is editable and `edit` allows `add` |
 | `row.clear` | Clear › - a submenu | the grid is editable, and `edit` allows `change` or `add` |
 | `row.clear.current` | Clear cell: empties the cell right clicked. Greyed out when it is readonly, as Paste cell | the grid is editable, and `edit` allows `change` or `add` |
 | `row.clear.cell` | Clear cell (selected rows): empties the column of the selected rows, readonly cells skipped. Greyed out with no row selected | the grid is editable, and `edit` allows `change` or `add` |
@@ -459,7 +459,7 @@ the `menus.row` hook still gets them, by their ids. A group row's number has no 
 | `header.format.percent` | Percent, a toggle: the number times 100 with ` %` | a number field |
 | `header.settings` | Column settings… - opens the grid config dialog on this column (`gridInterface.openColumnSettings(field)`): its display format, a text column's template and link, see [The grid config dialog](08-formatting.md#the-grid-config-dialog) | |
 | `header.shortcuts` | Keyboard shortcuts… - opens the keyboard shortcuts help (`gridInterface.openShortcutHelp()`), its hint the key that opens it anywhere in the grid: Ctrl+/ (⌘/ on a Mac). See [The keyboard shortcuts help](14-accessibility.md#the-keyboard-shortcuts-help) | `shortcutHelp` (the default) |
-| `header.import` | Import rows… - opens the import dialog (`gridInterface.openImport()`): a CSV or Excel file, or rows pasted from a spreadsheet, as new rows, see [Import](23-import.md) | `importMenu`, the grid is editable and `edit` allows `add` |
+| `header.import` | Import rows… - opens the import dialog (`gridInterface.openImport()`): a CSV or Excel file, or rows pasted from a spreadsheet, as new rows, see [Import](24-import.md) | `importMenu`, the grid is editable and `edit` allows `add` |
 | `header.aggregate` | Aggregate › - a submenu | |
 | `header.aggregate.sum` | Sum - a toggle with a ✓ when on: the column's sum in the group rows and the totals row, see [Aggregates](18-aggregates.md) | a number field |
 | `header.aggregate.avg` | Average, a toggle | a number field |
