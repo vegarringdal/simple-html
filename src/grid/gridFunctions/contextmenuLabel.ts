@@ -10,8 +10,8 @@ import { contextMenuColumnChooser } from './contextMenuColumnChooser';
 import { formatSubmenu } from './formatSubmenu';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
-import { shortcutHelpEntry } from './shortcutHelp';
 import { openImportDialog } from './importDialog';
+import { shortcutHelpEntry } from './shortcutHelp';
 import { placeUnderCell, showMenu } from './showMenu';
 
 /**
