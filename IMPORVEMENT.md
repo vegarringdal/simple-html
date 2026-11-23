@@ -4125,6 +4125,412 @@ rebuildHeaderColumns for the middle section too (scrollHandlers.test.ts has it).
 * browser: the shared sidebar-toggle-check.js expects about 30 rows (28 to 31) where it expected more than 30
   (backup `.before-full-30`): 15/15; full-grid 11/11, sample-height 5/5, detail-form 91/91, color-rules 90/90
 
+### The multiline editor: a ✕ (user request)
+
+* the user, a phone screenshot of the editor with "Ctrl+Enter to save, Esc to cancel" under it: "multiline box,
+  add also a close x bottom right in footer panel, useful for mouse/touch" - a finger has neither key
+* textEditor.ts: the hint is in a footer row with a ✕ button at its right (`.simple-html-grid-text-editor-close`,
+  20px, the touch row height on a finger): it saves and closes as a click beside the editor does, the focus
+  back in the cell - its mousedown is prevented so the focus stays in the text (Safari does not focus a
+  clicked button, and a phone's keyboard does not flicker). A readonly editor's ✕ is "Close". The editor
+  attaches the tooltips (the ✕'s), hides one on close. Texts `cell.multiline.close`, `.closeReadonly`
+* multiline.test.ts +2; guide 05 (the editor's table), 12
+* browser: new `text-editor-close-check.js` 10/10 (a phone: tap to open, the 28px ✕ at the bottom right, a
+  tap saves and closes; wide dark with the mouse: saved, the focus back in the cell); multiline-lines,
+  keyboard, custom-cells as before
+### Docs site: a feature overview (user request)
+
+* the user: "Maybe docs should have a feature table / tables / list?". What the grid can do was spread over 22
+  guides and 35 samples; nothing said it at a glance - for a developer weighing the grid, or a power user
+* new `guides/00-features.md`, *Feature overview*: 19 tables by area (data and setup, columns and layout,
+  display and formatting, filtering, sorting and grouping, selection and clipboard, editing, find, detail form,
+  grid config dialog, menus, export, state, live data, theming, texts and translation, accessibility, touch,
+  SQL helpers), each `Feature | What it does | See`: one plain line per feature, and links to the guide's
+  heading and the sample (every sample is linked). Then the keyboard shortcuts used most, `Keys | What they
+  do`, linked to the full list in guide 14. Only what is there: each line checked against the guides and the
+  samples (a row menu filter has Replace / Add, not "leave out"; CSV separators `,` `;` tab). Calculated
+  columns are left out (built in parallel, the user adds them)
+* a guide, so `check:docs` checks its links and headings and the site renders it as the others; in the
+  sidebar a section of its own, **Features**, between Status and Developer Guide (index.ts: the guide
+  `features` goes there, the rest to the Developer Guide). Being the first guide it is the **start page** of
+  the site (no hash) - was Getting started. Getting started's *Where to go next* links it
+* index.css: `.doc table` is `display: block; overflow-x: auto` - a table wider than the page scrolls in its own
+  box instead of the whole article sideways (a phone, the option tables of guide 02). The overview's tables
+  (`.doc[data-guide='features']`, the attribute set by renderGuidePage) are as wide as the page with the same
+  fixed columns, so the 19 read as one list; narrower columns under 600px so they fit a 390px phone
+* README: a *Features* section, 15 highlights, linking the overview on the site and the file
+* tests: site.test.ts expects the sections Status, Features, Developer Guide ...; the start page
+  `#guide/features`; new test of the overview (its own section, the tables and their columns, every link to a
+  page of the site, more than 25 samples linked). 3851 tests, 164 files
+* browser (Chromium 1148, port 8095): new `features-page-check.js` 21/21 - the sidebar, the start page, the
+  same column widths in every table, light and dark colours, all 143 links (108 guide headings found and
+  scrolled to, 35 samples open with a grid), a phone: no sideways scroll, no text out of a cell, guide 02's
+  tables scroll in their own box. Screenshots looked at (desktop and phone, light and dark). Shared:
+  sidebar-toggle 15/15, sample-height 5/5; full-grid 10/11 - it opened `#guide/02-grid-config`, no route,
+  which showed the start page; the copy in this worktree's `.claude/browser-checks/scripts/` opens
+  `#guide/grid-config` (backup `.before-features`): 11/11
+* not done, candidates: a check that every sample is in the overview (it would fail the merge of a new
+  sample until its line is written); the User Guide page is still the TODO
+### Keyboard shortcuts help (user request)
+
+* the user: a help overlay of the grid's keyboard shortcuts, opened from the keyboard (`?` when not typing,
+  maybe F1 or Ctrl+/) and from the UI
+* the keys: `?` where the key types nothing - a readonly cell, a checkbox, a column header, a row number, a
+  button of the grid - and Ctrl+/ (Cmd+/) anywhere in the grid, also while typing in a cell, a header
+  filter or the find bar (as Google Sheets and Docs). One keydown listener on the grid element, next to
+  Find's (createDom): it leaves a key that is used already (a character typed in a lookup cell opens its
+  list, in a custom cell its editor - canceled) and the keys of an IME. "Types nothing": not an input or a
+  textarea that is not readonly, not contenteditable; the element is the first of the event's path (a
+  shadow root). F1 was left out: Chrome's help on Windows, and nothing it adds to Ctrl+/
+* the UI: *Keyboard shortcuts…* in the header menu after *Column settings…* (`header.shortcuts`, its hint
+  Ctrl+/ - ⌘/ on a Mac). Not in the footer (no more stops of Tab there, another task works on it) and not
+  in the grid config dialog (a dialog from a dialog)
+* `GridConfig.shortcutHelp` (default `true`): `false` turns the keys and the menu entry off;
+  `gridInterface.openShortcutHelp()` opens it from code always. A lookup's dropdown grid has it `false`
+* the dialog (shortcutHelp.ts): a modal `<dialog>` of the filter editor's kind (dialogFrame.ts: moved,
+  resized, Esc, the focus back), a search (the column chooser's look), a hint (the arrows are the caret's,
+  Alt moves between the cells), a table per group - its caption the title, the keys a row header of
+  `<kbd>`s, what they do a cell. Opened by a key the focus is in the search; by a click on the dialog (a
+  phone's keyboard). The search keeps the entries whose text, keys or group have the text, else a status
+  says none does
+* the list (shortcutList.ts): 9 groups, 52 entries - moving around, selecting cells, in a cell, changing
+  values, copy and paste, find, filters / headers / groups, menus, dialogs and this help. Each key was
+  checked against its handler (cellRowKeyNavigation, jumpKeys, rangeSelection, renderRowCell, customCell,
+  textEditor, lookupEditor, undoRedoKey, fillDown, rangeClipboard, deleteRows, columnNumbers, findBar,
+  renderHeaderFilter, cellFilterKeyNavigation, headerLabelKeydown, renderRowGroup, showMenu,
+  addMenuListeners, gridConfigTabs, detailFormSettings, renderFilterEditor). Not listed because the grid
+  has no such key: Ctrl+A, Ctrl+X (the input's own cut), Shift+Space / Ctrl+Space. An entry can be left
+  out where its keys do nothing: `editable` (a readonly grid), `operatorIndicator`, `shortcutHelp`,
+  `notMac` (Alt+C)
+* platform: on a Mac ⌘ ⌥ ⇧, in a Mac's order and without the `+` (⇧⌘Z) - keyText.ts's `.mac` texts.
+  The key names are texts (`shortcuts.key.*`, Strg / Entf for a translation); a letter, F2 and the arrows
+  are shown as they are
+* one list for the dialog and the docs: guide 14's *Every key of the help* is made from it
+  (`src/grid/__tests__/shortcutDocs.ts` prints it), a test checks the guide has it as it is, and that every
+  key of the list is in the guide's keyboard section (where each key is described, and tested)
+* texts: 90 `shortcuts.*` and `header.shortcuts(.hint, .hint.mac)` - guide 12 (*Keyboard shortcuts help*,
+  the `.mac` list), Norwegian in the translation sample. css: the dialog and the key caps with the existing
+  variables (no theme change), square, a phone's width
+* docs: guide 14 (*The keyboard shortcuts help*, `?` / Ctrl+/ in the cell table, the help in *The rest* and
+  in *What a screen reader gets*), 02 (options), 10 (`header.shortcuts`), 12; JSDoc of `shortcutHelp`,
+  `openShortcutHelp()`, MENU_IDS.header
+* tests: new shortcutHelp.test.ts (27: the keys and where they type, Ctrl+/ / Cmd+/, a lookup cell, Alt and
+  AltGr, a used key, `shortcutHelp: false` and updateConfig; the dialog, a readonly grid,
+  filterOperatorIndicator, the focus, the search, a Mac, translated key names, closing, one dialog, a menu
+  closed, the grid leaving the page, before the grid is on the page; the header menu entry; the list's
+  texts, its keys, a Mac's order, the guide's table, the guide's keyboard section); texts.test (the help
+  shown, on a Mac too - a key cap that is a letter or F2 is no text), gridMenus, lookups, configJson.
+  3877 tests, 165 files
+* **found on the way, fixed - the ✕ of the dialogs on a touch screen**: the resize handle of the top right
+  corner is 20px there (`pointer: coarse`) and covered the middle of the ✕ - a tap resized the dialog
+  instead of closing it, in the filter editor and the grid config dialog too. The ✕ is over the handles
+  now (`z-index: 4`, grid.css)
+* browser (Chromium 1148, port 8096): new `shortcut-help-check.js` 41/41 - `?` typed in an editable cell,
+  a header filter and the find bar is typed; Ctrl+/ from a cell opens it, the focus in the search, Esc
+  back to the cell; a readonly grid: `?` on a cell and on a column header opens it (the `?` not typed in
+  the search), no *Changing values*; the search (`undo`, `zzz` and its status); the header menu entry
+  (the focus on the dialog), the ✕; `shortcutHelp: false`; light, dark, TreDeSpace light and dark - in the
+  window, square, the text 9.7:1 and more, the keys 7:1 and more, their frame 3:1; a Mac user agent (⌘Y /
+  ⇧⌘Z, ⌥⇧Home, no Alt+C, Cmd+/, the menu's ⌘/); a phone (390px wide, the list scrolls, nothing sideways, a
+  tap on the ✕ closes it). The screenshots looked at. Shared checks: keyboard 53/53, find 68/68, touch
+  61/61, full-grid 11/11. The new script is in this worktree's `.claude/browser-checks/scripts/`
+* not done, candidates: F1 (Chrome's help on Windows); a "?" button of its own somewhere (the footer, the
+  grid config dialog); a key that leaves out the entries of a cell the grid does not have (no lookup
+  column: no lookup keys) - the list is per grid config, not per column; Shift+F10 is shown on a Mac too,
+  where browsers may send no context menu for it (not tried on a Mac)
+### Calculated columns, colour rules on several fields / formulas / more colours (user request)
+
+The user: "be able to add dynamic column in column config would also be nice, very useful when we get to
+conditional formatting with background color etc", for the colour rules "maybe if based on multiple column
+values etc", "color rules we need to be able to set more colours, maybe color picker? also expression based on
+other columns values etc", and "important that expressions is injection proof, so no one can hack / script
+injection".
+
+* **The formula language** (new `src/grid/formula.ts`): a tokenizer, a recursive descent parser into a fixed
+  set of node kinds (number, text, boolean, field, negate, not, binary, call), a type check, and an
+  evaluator that switches on the kind - no `eval`, `new Function`, timers, regexes / css / html from input.
+  Grammar: `OR` < `AND` < `NOT` < one comparison (`= <> < <= > >=`, no `a < b < c`) < `&` < `+ -` < `* /` <
+  unary `- +` < primary (number with `.`, text in `"` / `'` with the quote doubled, `TRUE` / `FALSE`,
+  `{field}`, `NAME(args)`, brackets). Keywords and functions in any case. Functions (a `Map`, so
+  `constructor` / `toString` are none): IF (lazy), ROUND (halves away from 0, n -10..10), ABS, MIN / MAX
+  (numbers or dates, blanks skipped), TODAY, DAYS (calendar days, DST-safe), YEAR, MONTH, CONCAT, COALESCE,
+  ISBLANK. Types number / text / date (a datetime is a date) / boolean, checked before it runs: field types
+  from the datasource (an unlisted field is text). Blanks: null in arithmetic and functions -> null, a
+  comparison false (`=` true for two blanks), AND / OR / NOT / IF take blank as false, `&` takes ''.
+  Texts compare without case (`localeCompare`, sensitivity accent), dates on the day; a computed number keeps
+  15 significant digits (`0.1 + 0.2` is 0.3). A row where it can not be computed (divide by 0, a value not of
+  its field's type, Infinity, a text over 10 000) gives a problem of the row -> a blank cell, never a throw.
+  Limits: 1000 characters, 500 parts, 32 levels. Every problem has a text id
+  (`columnSettings.formula.problem.*`) with its position / part / types
+* **The values** (new `src/datasource/calculatedField.ts`, entityHandler.ts, dataContainer.ts, dataSource.ts):
+  chosen over storing values on the rows - the container keeps a Map of calculated fields, the row proxy's get
+  trap answers a read of one with `value(row)`, the set trap ignores it. So it is never an edit (not dirty, not
+  in getChanges / JSON / Object.keys, not sent), always current after edits, undo / redo, upsert, live data,
+  resetData - nothing to invalidate - and every reader (filter, sort, group, aggregate, cells, copy, CSV /
+  Excel, Find, detail form) reads it as a field. `getField()` / `getFormatter()` / `__getFieldConfig()` know
+  its type and label. The kept aggregates: a calculated field's change count moves with the fields it uses
+  (transitively) and when it is set, a TODAY() one also when the day changes; `rows-changed` names it with
+  the field. A listed field name or `__` is refused (TypeError); a datasource on the container can not list
+  a calculated name. The fast path of the get trap stays a `size` check when there are none
+* **The grid** (new `src/grid/calculatedColumns.ts`, gridInterface.ts, gridConfig.ts, new
+  gridFunctions/calculatedState.ts): `CalculatedColumn { formula, label?, type? }`, `CalculatedType`;
+  `GridConfig.calculatedColumns`, `GridState.calculatedColumns` (getState / setState / resetState /
+  initialState / updateConfig). Compiled together: a column can read another, a cycle (direct or long) is a
+  problem. Registered on the datasource before the formats / aggregates / filter options are checked (the
+  constructor, updateConfig, applyState), taken back when one of those throws, and on destroy() (only the
+  ones this grid set). Names: `^[A-Za-z][A-Za-z0-9_]{0,63}$`, not an Object.prototype name, not a listed
+  field or an own field of a row; 50 at most. A removed one leaves the layout, sort, grouping, filter
+  (`filterWithout`), header filters, detail form, its format and aggregates; the column chooser hides it
+  (`__isGoneCalculated`). New ones get a `columns` entry; the datasource parts are applied again when they
+  change. Read only in `__isCellReadonly` (one early return)
+* **Colour rules** (colorRules.ts): `ColorRule.operator` optional; three kinds - Value (as before, saved
+  states unchanged), Conditions (`conditions: RuleCondition[]` of `{ field, operator, value? }`, `combine:
+  'AND' | 'OR'`, each tested with the context of its field: type, formatter, lookup label, case), Formula
+  (`expression`, must be boolean, compiled once per grid and cached until the fields change -
+  `__ruleFormulaMatches`). Checks: one kind, conditions 1..20 on known fields (`RuleFieldOf`), operator of
+  the field's type, the formula's problem, `combine` only with conditions. A rule colouring the whole row:
+  not done (see below)
+* **More colours, custom colours** (grid.css, theme-tredespace.css by a forked agent; ruleColors.ts): 14
+  palette colours (amber, lime, teal, cyan, indigo, pink, brown new, the 7 old unchanged, every contrast pair
+  of the theme tests kept in both themes); `RuleColor = PaletteColor | '#rrggbb'` (strict regex). A custom
+  colour is a custom property set with `style.setProperty()` (showCellColor, `styleMap` in the detail form and
+  the preview): `--simple-html-grid-rule-bg`, `--simple-html-grid-rule-text-light` / `-dark`, classes
+  `-text-custom` / `-bg-custom`. A custom background without a text colour gets black or white (higher
+  contrast); a custom text colour is as picked in light and lightened (HSL) in dark until 4.5:1 on #5a6370
+  (the lightest dark row); on a custom background as picked. The dialog warns under 4.5:1 (light rows or
+  the custom background). theme.test.ts knows the three cell properties
+* **The dialog** (columnSettings.ts, columnSettingsRules.ts): *Add calculated column* under the list (calc_n,
+  *Calculated n*, the focus in its formula); a calculated column's section in place of the label: field name
+  (while new: rename, problems name / taken), label (drops a format label), formula with `{ }` (the
+  formula fields), *Gives: Type*, the value in the preview row, its problems at once (Error badge, Apply
+  held; a row problem is said, not held), *Remove calculated column*, *Apply first* while its type is not
+  applied (its type-specific settings wait - the format / filter / rule helpers read the datasource's type).
+  Apply: `setState({ formats, calculatedColumns, layout })` - a new one at the end of center (100px); the
+  removed ones' formats and detail form fields dropped; Reset column / Reset all include them. Rules: a kind
+  radio group on the rule's first line with Move up / down / Remove; Conditions lines (field picker - the
+  field menu with search -, operator, value, ✕; a field of another type takes its default operator),
+  Add condition, All / Any picker over two or more; Formula input with `{ }` and the result in the preview row;
+  the colour picker after the swatches (a `+` box until picked, the picked frame then). Problems use the
+  draft's calculated columns (a rule on a removed one is an Error)
+* **Security**: the hostile list - no code execution (source scanned in the test), Map function lookup, no
+  member access, fields only known ones and own properties (`readerOf`), `__` refused, limits, no recursion
+  (cycles refused before a row is read), results are data (lit text bindings / `.value`), strict names and
+  colours, a TypeError before anything changes. CSV: calculated values pass `escapeFormulas` (on by default)
+  as any text; Excel writes inline strings only; the clipboard does not escape (as documented before)
+* `toSqlWhere` unchanged: a condition on a calculated column throws its existing TypeError (`filter.children[0].field
+  "total" is not one of the columns`); guide 22 *Calculated columns* says so, with a generated column / view
+  and a `withoutFields` helper for a browser-only filter
+* texts: 75 new (`columnSettings.calculated.*`, `columnSettings.formula.*`, the kinds / conditions / combine /
+  formula / custom / contrast of the rules, 7 colour names, `columnSettings.badge.calculated`), guide 12's
+  table, Norwegian in the translation sample. The texts walk shows them all (a calculated column with every
+  problem, the kinds of a rule); its checker leaves the formula language's words and the walk's field names
+  alone; its timeout 90s (it ran near 30s before)
+* docs: new guide 23 *Calculated columns* (config, the formulas, functions, types, blanks, comparisons,
+  how the values are provided, state, the dialog, rules on several fields, SQL, Security); 02 (the label
+  order, *Calculated columns*), 03 (*Calculated columns in the state*), 08 (the dialog's list, *Colour rules*:
+  kinds, parts, conditions, palette of 14, custom colours, checks), 13 (14 colours by the fork; custom
+  colours: the properties, the classes, the picker), 22. JSDoc of every new public type; index.ts exports
+  `CalculatedColumn`, `CalculatedType`, `RuleColor`, `RuleCondition`; typings consumer
+* sample: new *Calculated columns* (Formatting): Total, Days late, a rule on two fields, a formula rule
+  with a custom colour, totals; not in the full grid sample (its description would grow)
+* tests: formula (22), formulaHostile (13: the source, eval / Function spies, prototype names, payloads and
+  a seeded fuzz of 3000 formulas with a row that records its reads, markup in a cell, hostile names,
+  colours, cycles), calculatedFields (12, datasource), calculatedColumns (21, grid), colorRuleKinds (16),
+  columnSettingsCalculated (12, dialog); updated colorRules, columnSettingsRules, gridState, texts walk,
+  theme tests. 3881 tests, 169 files
+* browser (Chromium 1148, port 8093): new `calculated-column-check.js` 61/61 in four looks + a phone (the
+  sample's values, sort by the label, the header filter, an edit, the multi-field and the formula rule with
+  its custom colour readable, the dialog: three columns - `{ }`, IF, DAYS(TODAY()) - an invalid one, a
+  division by 0, Apply, a Conditions rule and a Formula rule with the colour picker made in the dialog, the
+  state JSON round trip, no rounded corners). Shared: column-settings 144/144, column-settings-edit 9/9,
+  full-grid 11/11, detail-form 91/91, filter-as-shown 61/61, find-case-sql 62/62; color-rules 98/98 with a
+  copy in this worktree (the Tab order: the rule's buttons are on its first line now, the colour picker is a
+  stop after the swatches); column-settings-more 133/149 - its failures test the row placeholder
+  (`placeholderRowLabel`) of the parallel placeholder work, its `.before-row-placeholder` copy 141/141
+* not done, candidates: a rule that colours the whole row (a row class from the rules: every cell's render
+  would test every column's row rules - kept out, the `rowClass` hook does it in code); the type-specific
+  settings of a new calculated column before Apply (the format / filter helpers read the datasource);
+  renaming an applied calculated column; more functions (DAY, WEEKDAY, text functions, a date + days);
+  a calculated value in a lookup's label; a backend computing it (the SQL guide shows a generated column)
+### Quick dates: Today, This week, Last month ... one click on a date column (user request)
+
+The user: one click for the date ranges filtered on all day in an ERP - Today, Yesterday, This week, Last
+week, This month, Last month, This quarter, Last quarter, This year, Last year, Last 7 days, Last 30 days,
+Next 7 days, maybe Overdue - on date and datetime columns.
+
+* **where**: a block of buttons, `filter.dates`, under the range block of a date column's filter menu, as
+  wide (220px), two columns - this one and the one before side by side - 24px buttons (on touch too: the
+  block stays compact, 7 rows). One click filters and closes the menu, no Apply: it is no draft. Chosen over
+  a submenu (`Filter › Dates ›`): seen at once, one tap on a phone (a submenu is two), and it is next to the
+  range block that makes the other ranges. The one in use filled with the accent colour (`aria-current`), the
+  tooltip of a button its days as the field writes a date (`2026-11-16 – 2026-11-22`, a datetime's seconds,
+  Overdue `Before 2026-11-22`). Keyboard: one stop of Tab after the range block (a roving tabindex: the one
+  in use, else the first), ArrowLeft / ArrowRight / ArrowUp / ArrowDown in the two columns, Home / End,
+  Enter / Space. A `role="group"` named *Quick dates*
+* **the days** (new `src/grid/datePresets.ts`, pure): `datePresetDays(preset, now, weekStart)` - new Dates
+  made from year / month / day (`new Date(y, m, d)`: a summer time change is no hour off). The week starts on
+  the date picker's `datePickerConfig.weekStart` (`weekStartOf`, Monday by default - ISO; 0 Sunday), so This
+  week is the week the picker shows. Last / Next 7 days and Last 30 days count today in (today and the 6 days
+  before / after) - documented in the guide's table. Overdue is `[null, yesterday]`: an open start, blanks
+  never match. `datePresetRange` makes a datetime's To 23:59:59, as the range picker does
+* **relative, stored as itself**: `HeaderFilter.datePreset` (`GridState.headerFilters[field]`) with the
+  operator `BETWEEN` and the `[from, to]` computed last; the datasource's filter is a plain `BETWEEN` of the
+  days (withColumnConditions in filterCallback.ts: the column's top level conditions replaced, as typing
+  does). So `getFilter()`, `getFilterString()`, the filter editor and `toSqlWhere()` see dates, never the
+  preset. Computed again from today: when picked; when a state with it is set - applyState stores it and
+  replaces the column's conditions in the state's `filter` (or the grid's when the state has none), so
+  `setState(saved)` on another day filters on that day, and `{ value: null, datePreset: 'today' }` alone
+  filters; `initialState`, `resetState()`; Enter on its name; and `gridInterface.refreshDatePresets()`
+  (public: filters again only when the days changed), which the grid calls on the window's `focus` and on
+  `visibilitychange` to visible (listeners on the window and the document, aborted when the grid leaves the
+  page - `Grid.datePresetListenersAbort`). A page looked at over midnight without either needs the app's
+  timer: the JSDoc has one. A preset a column can not take (no date column, no `BETWEEN`, an unknown id) is
+  dropped from a state, the rest of the header filter kept
+* **the operator** is set to `BETWEEN` (a preset is a range; `filter-operator-change` when it was another).
+  Considered: leaving the user's operator and showing a symbol of its own - the cell, the range block, the
+  date pickers and filterCallback all read the operator, a stale one beside a `[from, to]` would need special
+  cases everywhere. Clearing the column afterwards leaves Between picked, as the range block's Between does
+* **what shows it**: the cell its name (renderHeaderFilter; the indicator `a..b`), the footer's chip
+  `Order date = This month` - getFilterTree's condition nodes now have `field` (FilterConditionNode, public,
+  additive) so the footer knows the column: a `BETWEEN` of the top AND group on a column with a preset; the
+  range block its days in From / To; the button filled
+* **what ends it**: a new value (`__setHeaderFilterValue` drops it): a date typed or picked, Clear Filter,
+  Blank ›, a filter replaced as a whole (the row menu's Replace filter, Clear); another operator (filterCallback runs the value with
+  it: This week with ≥ is ≥ Monday). Kept: picking Between again, filter as you type, a display format
+  changed (refilterChangedFormats runs filterCallback with the value - datePresetToRun runs the preset
+  again), the range block's Apply with nothing changed, the filter editor's Apply when the column's
+  conditions are as they were (`__clearChangedHeaderFilters`). Changed in the editor, it is dropped - the
+  editor shows and edits the dates, documented. The name typed in the cell (`today`, `LAST WEEK`) is the
+  quick date - the cell shows the name, so whatever it shows filters again the same way
+* **a display format plays no part**: This month on a column shown as weeks is the month (dateConditions is
+  not used), the tooltips are written with the field's formatter for the same reason
+* **which a column offers**: `ColumnConfig.datePresets` - a list in its order, `false` / `[]` none; left out
+  every one but Overdue (`DEFAULT_DATE_PRESETS`; "before today" means something on a due date, not a
+  birthday). Exported `DATE_PRESETS` (frozen, every id in the menu's order) and the type `DatePreset`.
+  assertDatePresets (gridInterface.ts, in assertFilterOptions): a list of ids or false, a date or datetime
+  column, `BETWEEN` among its operators - a `TypeError` naming the column. Like `filterOperators` it limits
+  what the user picks, not a state
+* texts `filter.dates` (the group), `filter.dates.<id>` (14 names), `filter.dates.range` (`{from} – {to}`),
+  `filter.dates.before` (`Before {date}`); the Norwegian sample (I dag, I går, Denne uken, Forrige uke, Denne
+  måneden, Forrige måned, Dette kvartalet, Forrige kvartal, I år, I fjor, Siste 7 dager, Siste 30 dager,
+  Neste 7 dager, Forfalt; Hurtigvalg av datoer, Før {date}). css: grid.css only, the existing variables (no
+  new colour, nothing for TreDeSpace), no border-radius
+* samples: Full grid's Due date offers every quick date (Overdue too); Filtering has a button that sets
+  This month from code, its description mentions them
+* docs: guide 06 (a new *Quick dates*: the table of days, relative, plain filter, what shows / ends it, the
+  keyboard, `datePresets`; the filter menu, the footer), 03 (*Quick dates in the state*), 02 (the column
+  option), 10 (`filter.dates`, the keyboard), 12 (*The quick dates* table), 22 (*A quick date*: the WHERE of
+  Today, This month, Overdue); JSDoc of `DatePreset`, `DATE_PRESETS`, `ColumnConfig.datePresets`,
+  `HeaderFilter.datePreset`, `GridState.headerFilters`, `refreshDatePresets()`, MENU_IDS, MenuBlock,
+  FilterConditionNode.field; typings consumer (the ids, `datePresets`, the state, refresh; a wrong id, `true`
+  and DATE_PRESETS.push rejected)
+* tests: new src/grid/__tests__/datePresets.test.ts (41): every preset on Sunday 2026-11-22; 00:00 days; ISO
+  vs Sunday (and Saturday) week starts; the new year; month and quarter ends; leap years (2028-02-29); a week
+  over summer time; date vs datetime ranges; ids / defaults; weekStartOf; with a faked clock in the grid: the
+  block where it shows, the names, datePresets order / false / [], no BETWEEN, the tooltips, weekStart 0,
+  each preset's rows on a date and on a datetime column, cell / indicator / chip / state / plain filter, the
+  menu again (filled, the stop of Tab, the range block's days), other columns kept, the event once, the
+  keyboard, a menus hook; Enter on the name and the name typed, a date typed, another operator / Between
+  again, Clear and Is blank, the range block's Apply unchanged / changed, filter as you type and a format
+  change, the filter editor's keep / drop; a state through JSON set ten days later (December), headerFilters
+  alone, initialState and resetState on another day, presets a column can not take dropped,
+  refreshDatePresets (nothing on the same day, a spy), the window's focus and visibilitychange - none after
+  the grid left the page, toSqlWhere of This month (date), Today (datetime), Overdue; the config check. Passes
+  in Oslo, New York and Tokyo time. Changed on purpose: filterRangeBlock (the date menu has `filter.dates`,
+  MENU_IDS' last three), gridMenus (text and number menus without `filter.dates`), texts walk (Updated offers
+  every quick date, its menu and a picked one shown; the test formatter's placeholder is data; the TypeError
+  test's datasource has the fields), filterString / filterExpression / filterOperatorsByType (the tree's
+  `field`). 3850 -> 3891 tests, 165 files
+* browser (Chromium 1148, `page.clock` fixed to Sunday 2026-11-22): new `date-presets-check.js` 69/69 - the
+  Full grid light and dark (1300x1100): the block under the range block, 13 / 14 buttons, two columns, 24px,
+  square, in the window; the tooltip; each preset on Orderdate against the rows counted in the page (0 to
+  5000), menu closed, cell, chip, state; the indicator; reopened filled with the range block's days; Updated
+  (datetime) Last 7 days, To 23:59:59; Duedate (weekIso) This month is the month (269 rows, not the 366 of
+  its weeks), Overdue without blanks; `2026-W47` typed replaces it, `last month` typed is Last month; the
+  keyboard (Shift+F10, Tab, arrows, Enter, the outline); the state through JSON on 2 December is December; the
+  window's focus on the 23rd moves Today. A phone (390x844, touch, the Filtering sample): in the window, 24px,
+  a tap filters. No page errors. Shared checks against it: date-range 168/168, filter-as-shown 61/61,
+  operator-indicator 79/79, touch 61/61; range-block 79/81 - it expected the date column's menu to end with
+  the range block: the copy in this worktree's scripts expects `filter.dates` after it, 81/81; filter-ui
+  115/117 - not this change: its Filter › list predates Filter as you type (`filter.filterOnType`). Script
+  and screenshots in this worktree's `.claude/browser-checks/` (`shots/date-presets/`)
+* not done: a "Tomorrow" / "Next week" / "Next month" (easy to add: an id, its days, a text); quick dates in
+  the column settings dialog; a grid-wide default (`GridConfig.datePresets`); Year to date; refreshing on a
+  timer of the grid's own at midnight
+### Named views (user request)
+
+* the user: saved views like "My open orders" / "Late deliveries" to switch between, the state of the grid
+  under a name - with Save / Save as / Revert / Rename / Delete / Set as default and a "modified" marker
+* **a view is plain JSON**, `GridView { id, name, state, readonly?, default? }` (new `src/grid/gridView.ts`,
+  exported type). `state` is what `getState()` gives; applied, what it leaves out is the config's state
+  (`getStartState()`: `initialState` + `layout`) - a view is all of the state, not a change of the one shown,
+  and a view saved before a part was added to the state (calculated columns ...) gets the config's
+* **API** on `GridInterface`: `getViews()`, `setViews(views)`, `getCurrentView()` (null = "Standard", the
+  config's state), `isViewModified()`, `applyView(id | null)` (null = `resetState()`), `saveView()` (over the
+  view shown), `saveViewAs(name)`, `renameView(id, name)`, `deleteView(id)`, `setDefaultView(id | null)`.
+  Event `views-change { views }` on every change of the list by the user or those calls - not by `setViews()`
+  / `updateConfig({ views })` (the app gave the list: no save loop), nor on a switch
+* **config**: `views` (the list the grid starts with), `viewsStorageKey` (the opt-in localStorage helper,
+  try/catch, a warning when it can not write; stored: the views that are not readonly + the default's id -
+  readonly views come from the config every time, once the user saved some the stored list is the user's),
+  `viewsButton` (default: true when `views` or `viewsStorageKey` is given - a grid without them looks as
+  before). `TypeError`s for a list that is no list of views (ids unique, one default at most) and a key that is
+  no text; a stored list that is broken is passed by, a default view that can not be applied too (a warning,
+  the grid starts in the config's state)
+* **modified**: the state as JSON with the keys sorted (`viewStateText`), compared with a snapshot taken
+  right after the view was applied or saved - a snapshot, not the stored `state`, so the normalising of
+  `applyState()` (Dates, the order of the header filters, defaults filled in) is no change. Left out:
+  `expandedGroups` (opening a group is no change of the view; the view still keeps them) and layout columns
+  without fields (`__parseConfig` drops them). The footer computes it on render; the few state changes that do
+  not rebuild call `__refreshViewsButton()`: an operator picked, Match case, filter as you type, the detail
+  form's width dragged (detailFormResize.ts)
+* **interplay** (decided): `setState()` from code and the grid config dialog's Apply mark the view changed
+  (it stays the view shown); `resetState()` is Standard - no view, also when the grid started in a default
+  view; the default view is applied on top of `initialState` when the grid is made; deleting the view shown
+  keeps the state (Standard, marked changed - *Save as new view…* gets it back, so no confirmation);
+  `updateConfig()` keeps an unchanged Standard unchanged (a new layout or columns is the config's state);
+  `updateConfig({ views | viewsStorageKey })` makes the list again as at start, `setViews()` replaces it
+* **UI: a button at the left end of the footer** (`viewsMenu.ts`), on the line of the filter's row - the left
+  end was empty, the gear is at the right end. Chosen over the grouping panel (often hidden, `panelHeight`, and
+  the group chips fill it) and over a tab of the grid config dialog (two clicks to switch, and other work
+  changes that dialog). It shows the view's name, a `*` in the edited-cell colour when changed, a chevron;
+  `aria-label`/tooltip "View: My open orders (changed)"; the first stop of Tab in the footer. The filter goes
+  first on a narrow grid: the footer keeps 36px on both sides (`has-views`) and the name is cut where the
+  filter's row starts (`fitViews`, as `fitSummary`) down to the `*` and the chevron - a sliver of a name is
+  hidden. The menu (showMenu, the grid's keyboard): Standard and the views with ✓ - one click to switch, hints
+  *default* / *shared* - then Save, Save as new view…, Revert changes, Rename…, Delete, Default view (a ✓
+  toggle); greyed out where they do not apply. A second click on the button closes it. The name is asked in a
+  menu block at the button (input with the focus, a line saying what is wrong - empty, a name another view has
+  in any case - Cancel / Save, Enter, Esc). Not part of the `menus` hook: `viewsButton: false` + the API for a
+  control of your own. Existing colour variables only (no new ones, no TreDeSpace entry needed), square
+* texts `views.*` (17, guide 12 table, Norwegian in the translation sample)
+* docs: guide 03 new *Views* (the button, where they are kept, applying / saving / modified and the
+  interplay), 02 (options), 09 (`views-change`), 10 (*The views menu*), 12 (texts); JSDoc with examples on
+  every new member; the typings consumer. New sample *Named views* (`samples/demo/samples/views.ts`, group
+  Config, two shared readonly views + `viewsStorageKey`, the API from buttons); the full grid sample has
+  `viewsStorageKey` (description unchanged)
+* tests: new gridViews.test.ts (35: the helpers - assertViews, ids, the state text, storage read / write /
+  throwing, the start list, the name problems; the API - save as, modified and back, two views switched, a view
+  of a few parts, groups opened, save / rename / delete / default and their TypeErrors, the default view on
+  start and a broken one, setViews, updateConfig; localStorage across two grids; the button - when shown, the
+  name / `*` / aria-label, without a rebuild, the first Tab stop, the menu's entries and greyed ones, every
+  command, the name asked, Rename, the grid's texts). texts.test.ts shows the button, the menu and the name
+  (its describe's timeout 30s -> 60s: 15-25s alone, 40s in the whole run on a loaded machine). 3885 tests,
+  165 files (was 3850, 164); tsc, biome, check:typings, check:docs, typecheck, build, build:demo pass
+* not done, candidates: a views hook in `GridMenus`; sharing a view of the user's with others (the app's,
+  from `views-change`); a confirmation for Delete
+* browser (Chromium 1148, port 8091): new `views-check.js` 46/46 (in this worktree's
+  `.claude/browser-checks/scripts/`) - two views saved with other filters and columns (a column resized with
+  the mouse marks Standard changed), switched, the `*` and "(changed)", Save, Revert changes, Rename…,
+  Default view, a reload keeps them and opens in the default, Delete keeps the state; the keyboard (Enter /
+  Space on the button, the arrows, Enter applies and gives the focus back, Esc, a letter, the first Tab
+  stop); the name asked (focus, empty, taken, Enter); the button on the line of "No filter", clear of it and
+  of the chips; contrast 4.5:1 and the `*` 3:1 in light, dark, TreDeSpace light and dark; a phone (Pixel 7):
+  the button cut to its `*` and chevron beside two chips, the menu and the name in the window; the full grid
+  sample with three chips. Screenshots looked at (light, dark, both TreDeSpace, phone, full grid): first
+  version on the phone showed a sliver of the name ("/*") - the button's padding and the footer's room made
+  wider and a name under 16px hidden. Shared checks, unchanged: footer-no-filter 53/53, footer-summary
+  11/11, keyboard 53/53, full-grid 11/11, column-settings 144/144, detail-form 91/91
 ### Import: CSV and Excel files, paste rows as new rows (user request)
 
 * the user: paste rows copied in Excel / Google Sheets as new rows (a paste wrote into existing cells only),

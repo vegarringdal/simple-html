@@ -75,6 +75,10 @@ const DATE_LIGHT: Record<string, string> = {
     '--simple-html-date-main-bg-selected': '#bdd4e7'
 };
 
+// the custom properties the grid sets on a cell itself, not variables of the theme: a custom colour of a
+// colour rule (`#rrggbb`, ruleColors.ts), checked and set with style.setProperty()
+const CELL_PROPERTIES = ['--simple-html-grid-rule-text-light', '--simple-html-grid-rule-text-dark', '--simple-html-grid-rule-bg'];
+
 // the variables that are one plain colour, the same in light and dark
 const SAME_IN_DARK = ['--simple-html-grid-scrollbar-shadow-color', '--simple-html-grid-readonly-stripe-color'];
 
@@ -91,7 +95,9 @@ describe('theme - every colour a variable', () => {
         const used = [...`${readCss('grid.css')}${readCss('date.css')}`.matchAll(/var\((--simple-html-[\w-]+)/g)].map(
             (match) => match[1]
         );
-        const missing = [...new Set(used)].filter((name) => !gridVariables.has(name) && !dateVariables.has(name));
+        const missing = [...new Set(used)].filter(
+            (name) => !gridVariables.has(name) && !dateVariables.has(name) && !CELL_PROPERTIES.includes(name)
+        );
 
         expect(missing).toEqual([]);
     });

@@ -22,11 +22,12 @@ const FIELD_CLASS = 'simple-html-grid-menu-item';
 /**
  * The fields the column chooser lists for a search: every column of the config whose field name or
  * label (getColumnLabel - a label the user gave it too) has the search in it, any case. By their labels,
- * as the list shows them
+ * as the list shows them. Not a calculated column that was removed: it is no field anymore
  */
 export function columnChooserFields(ctx: Pick<Grid, 'gridInterface'>, search: string): { field: string; label: string }[] {
     const query = search.trim().toLowerCase();
     return Object.keys(ctx.gridInterface.__getGridConfig().columns)
+        .filter((field) => !ctx.gridInterface.__isGoneCalculated(field))
         .map((field) => ({ field, label: getColumnLabel(ctx, field) }))
         .filter(({ field, label }) => field.toLowerCase().includes(query) || label.toLowerCase().includes(query))
         .sort((a, b) => a.label.localeCompare(b.label));

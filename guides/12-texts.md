@@ -107,7 +107,9 @@ The ids are grouped by area, the area first. Within an area:
   The grid takes both keys everywhere (Ctrl+Z and Cmd+Z), the texts say what a user there presses.
   Translate both: a `.mac` text left out shows its English default on a Mac. They are
   `row.edit.undo.hint`, `row.edit.redo.hint`, `find.previous.tooltip`, `find.matchCase.tooltip`,
-  `cell.multiline.hint`, `filterEditor.undo.tooltip` and `filterEditor.redo.tooltip`.
+  `cell.multiline.hint`, `filterEditor.undo.tooltip`, `filterEditor.redo.tooltip`,
+  `header.shortcuts.hint`, `shortcuts.hint` and the modifiers of the keyboard shortcuts help,
+  `shortcuts.key.ctrl`, `shortcuts.key.alt` and `shortcuts.key.shift`.
 
 ### The names of the months and days
 
@@ -325,6 +327,9 @@ Right click on a header label.
 | `header.format.decimalMark.comma` | `Comma` | `1,5` |
 | `header.format.percent` | `Percent` | turns percent on or off: 0.256 is `25.6 %` |
 | `header.settings` | `Column settings…` | opens the grid config dialog on the column, see [Grid config dialog](#grid-config-dialog) |
+| `header.shortcuts` | `Keyboard shortcuts…` | opens the keyboard shortcuts help, see [Keyboard shortcuts help](#keyboard-shortcuts-help) |
+| `header.shortcuts.hint` | `Ctrl+/` | its hint: the key that opens the help anywhere in the grid |
+| `header.shortcuts.hint.mac` | `⌘/` | its hint on a Mac |
 | `header.import` | `Import rows…` | opens the import dialog (`GridConfig.importMenu`), see [Import dialog](#import-dialog) |
 | `header.aggregate` | `Aggregate` | the aggregate submenu |
 | `header.aggregate.sum` | `Sum` | turns the column's sum on or off |
@@ -402,6 +407,34 @@ texts - and the text `filter.operator.between`. Each is named by the text of its
 | `filter.range.to` | `To` | the label of the second input, with Between |
 | `filter.range.run` | `Apply` | the button that filters, as typing in the header filter |
 | `filter.range.cancel` | `Cancel` | the button that closes the menu without filtering |
+
+### The quick dates
+
+The part of the filter menu of a date or datetime column under the range block: a button for each
+quick date (`ColumnConfig.datePresets`). A quick date's name is shown on its button, in the header
+filter cell while it filters - typed there, it is that quick date - and on the footer's chip
+(`Order date = This month`). The tooltip of a button is its days, written as the field shows a date:
+`{from}` and `{to}`, the day alone when they are one.
+
+| id | English | shown |
+| --- | --- | --- |
+| `filter.dates` | `Quick dates` | the name of the buttons together, for a screen reader |
+| `filter.dates.today` | `Today` | today |
+| `filter.dates.yesterday` | `Yesterday` | yesterday |
+| `filter.dates.thisWeek` | `This week` | the week of today, from the date picker's first day of the week (Monday) |
+| `filter.dates.lastWeek` | `Last week` | the week before |
+| `filter.dates.thisMonth` | `This month` | this month |
+| `filter.dates.lastMonth` | `Last month` | the month before |
+| `filter.dates.thisQuarter` | `This quarter` | this quarter |
+| `filter.dates.lastQuarter` | `Last quarter` | the quarter before |
+| `filter.dates.thisYear` | `This year` | this year |
+| `filter.dates.lastYear` | `Last year` | last year |
+| `filter.dates.last7Days` | `Last 7 days` | today and the 6 days before |
+| `filter.dates.last30Days` | `Last 30 days` | today and the 29 days before |
+| `filter.dates.next7Days` | `Next 7 days` | today and the 6 days after |
+| `filter.dates.overdue` | `Overdue` | every day before today - only on a column that lists it in `datePresets` |
+| `filter.dates.range` | `{from} – {to}` | the tooltip of a button: its first and last day (a datetime's first and last second) |
+| `filter.dates.before` | `Before {date}` | the tooltip of Overdue, `{date}` today |
 
 ### Column menu
 
@@ -556,6 +589,31 @@ The short names of the operators, on a chip:
 | `footer.operator.IS_BLANK` | `is blank` |
 | `footer.operator.IS_NOT_BLANK` | `is not blank` |
 
+### Views
+
+The named views (`GridConfig.views`): the views button at the footer's left end, its menu, and the
+name asked for by *Save as new view…* and *Rename…*, see [Views](03-state.md#views).
+
+| id | English | shown |
+| --- | --- | --- |
+| `views.standard` | `Standard` | the name of no view: the config's state - on the button, and first in the menu |
+| `views.button` | `View: {name}` | the name (`aria-label`) and tooltip of the button, `{name}`: the view shown |
+| `views.button.modified` | `View: {name} (changed)` | the same while the state changed since the view was applied or saved: the `*` after the name on the button |
+| `views.default.hint` | `default` | the hint after the view the grid starts in (`GridView.default`), Standard when no view is |
+| `views.shared.hint` | `shared` | the hint after a readonly view (`GridView.readonly`) |
+| `views.save` | `Save` | saves the state over the view shown |
+| `views.saveAs` | `Save as new view…` | saves the state as a new view, asks for its name |
+| `views.revert` | `Revert changes` | applies the view shown again: what changed since is taken back |
+| `views.rename` | `Rename…` | asks for another name for the view shown |
+| `views.delete` | `Delete` | deletes the view shown |
+| `views.setDefault` | `Default view` | a toggle with a ✓: the view shown is the one the grid starts in |
+| `views.name` | `Name of the view` | the label of the input of the name |
+| `views.name.empty` | `Give the view a name` | under the input while it is empty, or only spaces |
+| `views.name.taken` | `Another view has this name` | under the input while another view has the name (in any case) |
+| `views.name.cancel` | `Cancel` | closes it, nothing saved |
+| `views.name.save` | `Save` | saves the new view (*Save as new view…*) |
+| `views.name.rename` | `Rename` | gives the view the name (*Rename…*) |
+
 ### Aggregates
 
 The aggregates of the columns (`ColumnConfig.aggregate`), see [Aggregates](18-aggregates.md). A
@@ -663,17 +721,92 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.rules.none` | `None` | the first swatch: no text colour, no background - the name and tooltip |
 | `columnSettings.rules.color.red` | `Red` | a swatch of the palette: its name and tooltip |
 | `columnSettings.rules.color.orange` | `Orange` | |
+| `columnSettings.rules.color.amber` | `Amber` | |
 | `columnSettings.rules.color.yellow` | `Yellow` | |
+| `columnSettings.rules.color.lime` | `Lime` | |
 | `columnSettings.rules.color.green` | `Green` | |
+| `columnSettings.rules.color.teal` | `Teal` | |
+| `columnSettings.rules.color.cyan` | `Cyan` | |
 | `columnSettings.rules.color.blue` | `Blue` | |
+| `columnSettings.rules.color.indigo` | `Indigo` | |
 | `columnSettings.rules.color.purple` | `Purple` | |
+| `columnSettings.rules.color.pink` | `Pink` | |
+| `columnSettings.rules.color.brown` | `Brown` | |
 | `columnSettings.rules.color.grey` | `Grey` | |
+| `columnSettings.rules.custom` | `Custom colour` | the colour picker after the swatches, a custom colour (`#rrggbb`): its name and tooltip |
+| `columnSettings.rules.contrast.rows` | `The text colour has {ratio}:1 to the light rows, under 4.5:1: hard to read` | a custom text colour that is hard to read on the light rows, `{ratio}` its contrast (`3.2`). Apply is not held back |
+| `columnSettings.rules.contrast.background` | `The text colour has {ratio}:1 to the background, under 4.5:1: hard to read` | the same on the rule's custom background |
+| `columnSettings.rules.kind` | `Condition` | the label of the kind of a rule's condition, three radio buttons |
+| `columnSettings.rules.kind.value` | `Value` | the kind: the cell's value, an operator and a value |
+| `columnSettings.rules.kind.conditions` | `Conditions` | the kind: conditions on fields of the row |
+| `columnSettings.rules.kind.formula` | `Formula` | the kind: a formula that is true or false - also the name of its input |
+| `columnSettings.rules.combine.AND` | `All of them` | the picker over two conditions or more: all must be true (`combine: 'AND'`) |
+| `columnSettings.rules.combine.OR` | `Any of them` | one is enough (`combine: 'OR'`) |
+| `columnSettings.rules.combine.tooltip` | `Whether all the conditions must be true, or one of them` | its tooltip |
+| `columnSettings.rules.condition` | `Condition {number}` | the name of a condition for a screen reader, `{number}` its place: 1 is the first |
+| `columnSettings.rules.condition.field` | `Field` | the picker of a condition's field: its tooltip, and its name before the field |
+| `columnSettings.rules.condition.add` | `Add condition` | the button under the conditions |
+| `columnSettings.rules.condition.remove` | `Remove condition` | the ✕ of a condition |
+| `columnSettings.rules.formula.placeholder` | `{balance} < 0 AND {status} = "late"` | the placeholder of a rule's formula, a formula as it is written |
+| `columnSettings.rules.formula.true` | `True in this row: the rule colours the cell` | under the formula: what it is in the row of the preview |
+| `columnSettings.rules.formula.false` | `False in this row` | |
+| `columnSettings.rules.problem.conditions` | `Add a condition` | a rule of the kind Conditions without one |
+| `columnSettings.rules.problem.expression` | `Write the formula, true or false` | a rule of the kind Formula without a formula |
 | `columnSettings.rules.moveUp` | `Move up` | the button that moves a rule before the one above it: its name and tooltip |
 | `columnSettings.rules.moveDown` | `Move down` | after the one under it |
 | `columnSettings.rules.remove` | `Remove rule` | the ✕ of a rule |
 | `columnSettings.rules.problem.value` | `Write the value to compare with` | a rule's operator compares, its value is empty (a Between: both) |
 | `columnSettings.rules.problem.style` | `Pick a text colour, a background or bold` | a rule that colours nothing |
 | `columnSettings.rules.unread` | `The column does not read {value}: the rule colours no cell` | `{value}`: a value the field's formatter does not read - a date of another format. Apply is not held back |
+| `columnSettings.calculated` | `Calculated column` | the heading of a calculated column's settings, at the top of its settings |
+| `columnSettings.calculated.add` | `Add calculated column` | the button under the list of the columns |
+| `columnSettings.calculated.add.tooltip` | `A column computed from the other fields of the row` | its tooltip |
+| `columnSettings.calculated.defaultLabel` | `Calculated {number}` | the label of a calculated column added, `{number}` the one of its field `calc_<number>` |
+| `columnSettings.calculated.name` | `Field name` | the label of its field name - an input while it is new, its name after |
+| `columnSettings.calculated.name.hint` | `A letter, then letters, digits and _. Not changed once applied` | under the input |
+| `columnSettings.calculated.formula` | `Formula` | the label of its formula |
+| `columnSettings.calculated.formula.placeholder` | `{price} * {qty}` | its placeholder, a formula as it is written |
+| `columnSettings.calculated.formula.hint` | `Fields in braces, numbers, "text", + - * / &, = <> < <= > >=, AND OR NOT, IF ROUND ABS MIN MAX TODAY DAYS YEAR MONTH CONCAT COALESCE ISBLANK` | under it: the language. The keywords and the names of the functions are the language's, keep them |
+| `columnSettings.calculated.gives` | `Gives: {type}` | the type of its values, `{type}` the name of a type (`columnSettings.type.*`) |
+| `columnSettings.calculated.value` | `In this row: {value}` | its value in the row of the preview |
+| `columnSettings.calculated.blank` | `(blank)` | the value when it is blank |
+| `columnSettings.calculated.applyFirst` | `Apply first: then the format and the colour rules of a {type} column` | a calculated column new, or of another type now: its other settings after Apply |
+| `columnSettings.calculated.remove` | `Remove calculated column` | the button: it leaves the draft, and on Apply the layout |
+| `columnSettings.calculated.problem.name` | `The field name is a letter, then letters, digits and _ - 64 at most` | a field name typed that a calculated column can not have |
+| `columnSettings.calculated.problem.taken` | `The field name is a field already: give the column a name of its own` | the name typed is a field of the datasource, of the rows or of another column |
+| `columnSettings.badge.calculated` | `Calculated` | in the list of the columns: a calculated column |
+| `columnSettings.formula.type.number` | `a number` | the name of a type in a problem of a formula (`{got}`, `{expected}`, `{type}`) |
+| `columnSettings.formula.type.text` | `a text` | |
+| `columnSettings.formula.type.date` | `a date` | |
+| `columnSettings.formula.type.boolean` | `true / false` | |
+| `columnSettings.formula.problem.empty` | `Write the formula` | the problems of a formula - of a calculated column and of a rule of the kind Formula |
+| `columnSettings.formula.problem.length` | `The formula is longer than {max} characters` | over the limit, 1000 |
+| `columnSettings.formula.problem.depth` | `The formula nests deeper than {max} levels` | brackets, functions, a minus or NOT in front, 32 |
+| `columnSettings.formula.problem.size` | `The formula has more than {max} parts` | 500 |
+| `columnSettings.formula.problem.character` | `{text} at {position} is no part of a formula` | a character no part of the language: `$`, `;`. `{position}`: the character, 1 the first |
+| `columnSettings.formula.problem.unexpected` | `{text} at {position} can not be there` | `1 2`, a `)` too many |
+| `columnSettings.formula.problem.end` | `The formula ends too soon` | `1 +`, `ROUND(1` |
+| `columnSettings.formula.problem.text` | `The text at {position} has no closing quote` | |
+| `columnSettings.formula.problem.field` | `The field at {position} has no closing brace` | a `{` without its `}`, and `{}` |
+| `columnSettings.formula.problem.function` | `{name} is no function: {names}` | `{names}`: the functions of the language |
+| `columnSettings.formula.problem.arguments` | `{name} has {count} values: it is written {usage}` | `{usage}`: how it is written, `ROUND(x, n)` |
+| `columnSettings.formula.problem.name` | `{name} at {position} is no function - a field is written in braces` | a word that is no keyword and has no `(` after it |
+| `columnSettings.formula.problem.internal` | `{field} is the grid's own, not a field` | `{field}`: a field that starts with `__` |
+| `columnSettings.formula.problem.unknownField` | `No field {field}` | a field that is no column, no field of the datasource, no calculated column |
+| `columnSettings.formula.problem.cycle` | `{field} is computed from itself` | a calculated column read by its own formula, straight or through another |
+| `columnSettings.formula.problem.fieldProblem` | `{field} has a problem of its own` | a calculated column read whose formula has a problem |
+| `columnSettings.formula.problem.number` | `{what} takes a number: {part} is {got}` | `{what}`: an operator or a function, `{part}`: the part as written, `{got}`: its type |
+| `columnSettings.formula.problem.date` | `{what} takes a date: {part} is {got}` | |
+| `columnSettings.formula.problem.boolean` | `{what} takes true / false: {part} is {got}` | |
+| `columnSettings.formula.problem.same` | `{what} takes values of one type: {part} is {got}, {other} is {expected}` | `=`, IF, COALESCE ... on two types |
+| `columnSettings.formula.problem.order` | `{what} compares numbers, texts and dates, not true / false` | `<` on true / false |
+| `columnSettings.formula.problem.chain` | `Compare two values at a time ({position}): a < b AND b < c` | `a < b < c` |
+| `columnSettings.formula.problem.digits` | `ROUND takes a whole number of digits from -10 to 10, not {part}` | |
+| `columnSettings.formula.problem.result` | `The formula gives {got}, it must give {expected}` | a rule's formula that is not true / false, a column's `type` that is not its formula's |
+| `columnSettings.formula.problem.divide` | `Divides by 0 in this row: no value` | the preview: the formula in the row of the preview. The cell is empty |
+| `columnSettings.formula.problem.value` | `{field} is not {type} in this row: no value` | a value that is not of its field's type, a text in a number field |
+| `columnSettings.formula.problem.overflow` | `A number too big in this row: no value` | |
+| `columnSettings.formula.problem.long` | `A text of more than {max} characters in this row: no value` | `&`, CONCAT: 10000 at most |
 | `columnSettings.preview.current` | `Preview, the current row` | the title of the preview of the current row |
 | `columnSettings.preview.first` | `Preview, the first row` | of the first row, without a current row |
 | `columnSettings.preview.none` | `No rows to preview` | without rows |
@@ -847,6 +980,102 @@ The find bar of Ctrl+F in the grid, see [Find](19-find.md).
 | `find.close` | `Close` | the `✕` button, closes the find bar |
 | `find.close.tooltip` | `Close (Esc)` | its tooltip |
 
+### Keyboard shortcuts help
+
+The keyboard shortcuts help - `?` and Ctrl+/ in the grid, *Keyboard shortcuts…* in the header menu - see
+[The keyboard shortcuts help](14-accessibility.md#the-keyboard-shortcuts-help). Its title bar, its search
+and the hint under it, then the names of the keys: a key with a name of its own has a text, a letter, a
+function key (F2) and the arrows are shown as they are. The modifiers have a text for a Mac. Then each
+group of keys: its title, and what each of its keys does.
+
+| id | English | shown |
+| --- | --- | --- |
+| `shortcuts.title` | `Keyboard shortcuts` | its title, its name for a screen reader |
+| `shortcuts.title.tooltip` | `Drag to move the dialog` | the tooltip of its title |
+| `shortcuts.close` | `Close` | the `✕` button: its name for a screen reader and its tooltip |
+| `shortcuts.search` | `Search` | the placeholder of the search, and its name for a screen reader |
+| `shortcuts.none` | `No key matches the search` | under the search when no key has what is typed in it, a status |
+| `shortcuts.hint` | `The arrows, Home and End move the caret in a cell. With Alt they move between the cells` | under the search, its description for a screen reader |
+| `shortcuts.hint.mac` | `The arrows, Home and End move the caret in a cell. With ⌥ they move between the cells` | the same on a Mac |
+| `shortcuts.key.ctrl` | `Ctrl` | the key Ctrl - the grid takes Cmd for it too |
+| `shortcuts.key.ctrl.mac` | `⌘` | the key Ctrl on a Mac: Cmd |
+| `shortcuts.key.alt` | `Alt` | the key Alt |
+| `shortcuts.key.alt.mac` | `⌥` | the key Alt on a Mac: Option |
+| `shortcuts.key.shift` | `Shift` | the key Shift |
+| `shortcuts.key.shift.mac` | `⇧` | the key Shift on a Mac |
+| `shortcuts.key.enter` | `Enter` | the key Enter |
+| `shortcuts.key.esc` | `Esc` | the key Esc |
+| `shortcuts.key.tab` | `Tab` | the key Tab |
+| `shortcuts.key.space` | `Space` | the space bar |
+| `shortcuts.key.home` | `Home` | the key Home |
+| `shortcuts.key.end` | `End` | the key End |
+| `shortcuts.key.pageUp` | `Page Up` | the key PageUp |
+| `shortcuts.key.pageDown` | `Page Down` | the key PageDown |
+| `shortcuts.key.delete` | `Delete` | the key Delete |
+| `shortcuts.key.backspace` | `Backspace` | the key Backspace |
+| `shortcuts.key.menu` | `Menu` | the key the menu key |
+| `shortcuts.group.move` | `Moving around` | the title of a group of keys, the caption of its table |
+| `shortcuts.move.tab` | `The next / previous cell` | what Tab / Shift+Tab do |
+| `shortcuts.move.sideways` | `The cell to the left / right` | what Alt+ArrowLeft / Alt+ArrowRight do |
+| `shortcuts.move.upDown` | `The cell above / below` | what Alt+ArrowUp / Alt+ArrowDown do |
+| `shortcuts.move.enter` | `The cell below, from a cell that can be edited` | what Enter does |
+| `shortcuts.move.row` | `The first / last cell of the row` | what Alt+Home / Alt+End do |
+| `shortcuts.move.grid` | `The first / last cell of the grid` | what Ctrl+Home / Ctrl+End do |
+| `shortcuts.move.page` | `A page of rows up / down` | what PageUp / PageDown do |
+| `shortcuts.move.columns` | `A page of columns left / right` | what Alt+PageUp / Alt+PageDown do |
+| `shortcuts.move.edge` | `The edge of the data in the column, up / down` | what Ctrl+ArrowUp / Ctrl+ArrowDown do |
+| `shortcuts.group.select` | `Selecting cells` | the title of a group of keys, the caption of its table |
+| `shortcuts.select.cell` | `A range of cells, one cell further each time` | what Alt+Shift+Arrows does |
+| `shortcuts.select.page` | `The range a page up / down` | what Shift+PageUp / Shift+PageDown do |
+| `shortcuts.select.row` | `The range to the first / last cell of the row` | what Alt+Shift+Home / Alt+Shift+End do |
+| `shortcuts.select.grid` | `The range to the first / last cell of the grid` | what Ctrl+Shift+Home / Ctrl+Shift+End do |
+| `shortcuts.select.edge` | `The range to the edge of the data, up / down` | what Ctrl+Shift+ArrowUp / Ctrl+Shift+ArrowDown do |
+| `shortcuts.select.clear` | `No range of cells any more` | what Esc does |
+| `shortcuts.group.cell` | `In a cell` | the title of a group of keys, the caption of its table |
+| `shortcuts.cell.editor` | `Open the editor of a cell of several lines, or of a custom cell` | what Enter / F2 do |
+| `shortcuts.cell.save` | `In the editor of several lines: save the text` | what Ctrl+Enter does |
+| `shortcuts.cell.cancel` | `Close an editor or the list of a lookup cell, nothing saved` | what Esc does |
+| `shortcuts.cell.list` | `Open the list of a lookup cell` | what Alt+ArrowDown / F4 do |
+| `shortcuts.cell.check` | `Check or uncheck a checkbox` | what Space does |
+| `shortcuts.cell.link` | `Open the link of a link cell` | what Alt+Enter does |
+| `shortcuts.group.edit` | `Changing values` | the title of a group of keys, the caption of its table |
+| `shortcuts.edit.undo` | `Undo, the focus to the cell it changed` | what Ctrl+Z does |
+| `shortcuts.edit.redo` | `Redo` | what Ctrl+Y / Ctrl+Shift+Z do |
+| `shortcuts.edit.fillDown` | `Fill down: the values of the row above, or of the top row of the range` | what Ctrl+D does |
+| `shortcuts.edit.clear` | `Empty the cells of a range` | what Delete / Backspace do |
+| `shortcuts.edit.deleteRows` | `On a row number: mark its row for deletion, or the selected rows` | what Delete / Backspace do |
+| `shortcuts.group.clipboard` | `Copy and paste` | the title of a group of keys, the caption of its table |
+| `shortcuts.clipboard.copy` | `Copy the range of cells, or the value of the cell` | what Ctrl+C does |
+| `shortcuts.clipboard.paste` | `Paste cells copied here or in a spreadsheet` | what Ctrl+V does |
+| `shortcuts.clipboard.columns` | `On a column number: copy the selected columns` | what Ctrl+C does |
+| `shortcuts.group.find` | `Find` | the title of a group of keys, the caption of its table |
+| `shortcuts.find.open` | `Open the find bar` | what Ctrl+F does |
+| `shortcuts.find.next` | `The next match` | what Enter / F3 do |
+| `shortcuts.find.previous` | `The previous match` | what Shift+Enter / Shift+F3 do |
+| `shortcuts.find.matchCase` | `Match case on or off` | what Alt+C does |
+| `shortcuts.find.close` | `Close the find bar` | what Esc does |
+| `shortcuts.group.header` | `Filters, headers and groups` | the title of a group of keys, the caption of its table |
+| `shortcuts.header.filter` | `In a header filter: filter` | what Enter does |
+| `shortcuts.header.operator` | `In a header filter: choose the operator` | what F4 does |
+| `shortcuts.header.label` | `From a header filter: up to its column header` | what Alt+ArrowUp does |
+| `shortcuts.header.sort` | `On a column header: sort, again the other way` | what Enter / Space do |
+| `shortcuts.header.addSort` | `On a column header: add the column to the sort` | what Shift+Enter / Shift+Space do |
+| `shortcuts.header.group` | `On a group row: expand or collapse it` | what Enter / Space do |
+| `shortcuts.group.menus` | `Menus` | the title of a group of keys, the caption of its table |
+| `shortcuts.menus.open` | `The menu of the cell, header, filter or number with the focus` | what Shift+F10 / the menu key do |
+| `shortcuts.menus.move` | `The next / previous item` | what ArrowDown / ArrowUp do |
+| `shortcuts.menus.use` | `Use the item, or open its submenu` | what Enter / Space do |
+| `shortcuts.menus.submenu` | `Open / close a submenu` | what ArrowRight / ArrowLeft do |
+| `shortcuts.menus.close` | `Close the menu` | what Esc does |
+| `shortcuts.group.dialogs` | `Dialogs and this help` | the title of a group of keys, the caption of its table |
+| `shortcuts.dialogs.help` | `This help, where the key types nothing` | what ? does |
+| `shortcuts.dialogs.helpAnywhere` | `This help, also while typing in a cell` | what Ctrl+/ does |
+| `shortcuts.dialogs.close` | `Close a dialog` | what Esc does |
+| `shortcuts.dialogs.undo` | `In the filter editor: undo / redo` | what Ctrl+Z / Ctrl+Y do |
+| `shortcuts.dialogs.tabs` | `In the grid config dialog: the tab before / after` | what ArrowLeft / ArrowRight do |
+| `shortcuts.dialogs.moveField` | `The fields of the detail form: move the field up / down` | what Alt+ArrowUp / Alt+ArrowDown do |
+| `shortcuts.dialogs.toggleField` | `The fields of the detail form: in the form or out` | what Space does |
+
 ### Screen readers
 
 Labels (`aria-label`) that are read out, not shown. The [keyboard and accessibility
@@ -892,6 +1121,8 @@ opens over it, see [Editing](05-editing.md#multiline-text).
 | `cell.multiline.hint` | `Ctrl+Enter to save, Esc to cancel` | under the textarea of the editor. Cmd+Enter saves too |
 | `cell.multiline.hint.mac` | `⌘Enter to save, Esc to cancel` | the same on a Mac |
 | `cell.multiline.hintReadonly` | `Esc to close` | under the textarea of the editor of a readonly cell |
+| `cell.multiline.close` | `Save and close` | the ✕ at the right of the editor's hint: its name and tooltip - it saves and closes, as a click beside the editor |
+| `cell.multiline.closeReadonly` | `Close` | the same ✕ in the editor of a readonly cell |
 
 ### Lookup columns
 

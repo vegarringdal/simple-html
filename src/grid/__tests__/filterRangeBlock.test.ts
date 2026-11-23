@@ -119,7 +119,10 @@ describe('filter menu - the range block: where it is shown', () => {
             const shown = Array.from(document.querySelectorAll('.simple-html-grid-menu[role="menu"] > [data-menu-id]')).map(
                 (entry) => entry.getAttribute('data-menu-id')
             );
-            expect(shown, field).toEqual(['filter.filter', 'filter.range']);
+            // a date's quick dates under it (datePresets.test.ts)
+            expect(shown, field).toEqual(
+                field === 'age' ? ['filter.filter', 'filter.range'] : ['filter.filter', 'filter.range', 'filter.dates']
+            );
         }
     });
 
@@ -142,8 +145,8 @@ describe('filter menu - the range block: where it is shown', () => {
         };
         const { element } = await mount({}, { menus: { filter } });
         openFilterMenu(element, 'age');
-        expect(MENU_IDS.filter.slice(-2)).toEqual(['filter.values', 'filter.range']);
-        expect(seen[0]).toEqual(['filter.filter', 'filter.values', 'filter.range']);
+        expect(MENU_IDS.filter.slice(-3)).toEqual(['filter.values', 'filter.range', 'filter.dates']);
+        expect(seen[0]).toEqual(['filter.filter', 'filter.values', 'filter.range', 'filter.dates']);
     });
 
     it('expect a menus.filter hook to remove it, or to put a block of its own in its place', async () => {

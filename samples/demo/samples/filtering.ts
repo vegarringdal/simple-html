@@ -6,7 +6,7 @@ export const filtering: DemoSample = {
     title: 'Filtering',
     group: 'Datasource',
     description:
-        'Users can type in the filter row under the headers, or use the built-in filter editor for advanced conditions. From code you build a filter with where(), and() and or() - a single condition, or AND/OR groups nested as deep as you need. A condition has no type of its own: the datasource takes it from its fields, and each type has its operators (operatorsFor): BETWEEN for numbers and dates, CONTAINS for text. A text condition can match case: where(field, operator, value, { caseSensitive: true }), "Match case" in a header filter\'s menu, Aa in the filter editor. The filter is plain data, getFilter() gives it back.',
+        'Users can type in the filter row under the headers, or use the built-in filter editor for advanced conditions. From code you build a filter with where(), and() and or() - a single condition, or AND/OR groups nested as deep as you need. A condition has no type of its own: the datasource takes it from its fields, and each type has its operators (operatorsFor): BETWEEN for numbers and dates, CONTAINS for text. A text condition can match case: where(field, operator, value, { caseSensitive: true }), "Match case" in a header filter\'s menu, Aa in the filter editor. A date column\'s filter menu has quick dates - Today, This week, Last month ... - one click each, relative: a saved state filters on the days of the day it is set. The filter is plain data, getFilter() gives it back.',
     run(stage) {
         const ui = createStage(stage);
         const { datasource, gridInterface } = mountGrid(ui.gridHost, baseGridConfig());
@@ -34,6 +34,11 @@ export const filtering: DemoSample = {
                     where('date1', 'GREATER_THAN_OR_EQUAL_TO', new Date(2026, 6, 1))
                 )
             );
+        });
+        ui.button('date: This month, a quick date', () => {
+            // as Quick dates › This month in the date column's filter menu: relative, a state saved with it
+            // filters on the month it is set in. The grid computes the BETWEEN of the days and shows the name
+            gridInterface.setState({ headerFilters: { date1: { value: null, datePreset: 'thisMonth' } } });
         });
         ui.button('Log the filter', () => {
             // the filter is plain data - typing in a header filter adds to it.

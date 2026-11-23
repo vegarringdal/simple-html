@@ -92,6 +92,8 @@ export function resizeDetailForm(ctx: Grid, width: number | undefined) {
     const scrollLeft = getElementByClassName(ctx.element, 'simple-html-grid-body-view-pinned-middle').scrollLeft;
     horizontalScrollHandler(ctx, scrollLeft);
     renderDetailForm(ctx);
+    // the width is state: the views button marks the view shown as changed
+    ctx.gridInterface.__refreshViewsButton();
 }
 
 /**

@@ -5,6 +5,7 @@ import type { Grid } from '../grid';
 import { renderTotalsRow } from './aggregates';
 import { clearAllColumnFilters } from './clearAllColumnFilters';
 import { openColumnSettings } from './columnSettings';
+import { activeDatePreset, datePresetName } from './datePresetFilter';
 import { findFilterRowsCaseSensitive, findFilterRowsText } from './findBar';
 import { getColumnLabel } from './getColumnLabel';
 import { getElementByClassName } from './getElementByClassName';
@@ -12,6 +13,7 @@ import { gridText } from './gridText';
 import { activeCellOfMenu } from './lastPress';
 import { openFilterEditor } from './openFilterEditor';
 import { selectionSummary } from './selectionSummary';
+import { viewsButtonTemplate } from './viewsMenu';
 
 /**
  * The footer runs inside every rebuild, so it must never throw - if it does, the rows are not
@@ -58,14 +60,22 @@ const MAX_FOOTER_CONDITIONS = 5;
 /**
  * A chip: the label, the operator and the value. A BETWEEN with both ends: `between`, the start, `and`
  * (the text `footer.betweenAnd`) and the end; with one end it is shown as what it is, `≥ 10` or
- * `≤ 20`. A condition that matches case has "Aa" after its value
+ * `≤ 20`. A condition that matches case has "Aa" after its value. The BETWEEN of a quick date is its
+ * name: `Order date = This month`
+ * @param top a condition of the filter's top AND group: a header filter's own
  */
-function renderNode(ctx: Grid, node: FilterNode): unknown {
+function renderNode(ctx: Grid, node: FilterNode, top = false): unknown {
     if (node.kind === 'condition') {
         const valueSpan = (text: string) => html`<span class="footer-filter-value">${text}</span>`;
         let operator = operatorLabel(ctx, node.operator);
         let value: unknown = node.hasValue ? valueSpan(node.value) : null;
-        if (node.operator === 'BETWEEN' && node.value !== '' && node.valueTo) {
+        // a quick date of the header filter (datePresetFilter.ts): its name, `Order date = This month` - its
+        // BETWEEN is a condition of the top AND group, the header filter's own
+        const preset = top && node.operator === 'BETWEEN' ? activeDatePreset(ctx, node.field) : undefined;
+        if (preset) {
+            operator = operatorLabel(ctx, 'EQUAL');
+            value = valueSpan(datePresetName(ctx, preset));
+        } else if (node.operator === 'BETWEEN' && node.value !== '' && node.valueTo) {
             value = html`${valueSpan(node.value)} <span class="footer-filter-op">${gridText(ctx, 'footer.betweenAnd')}</span>
                 ${valueSpan(node.valueTo)}`;
         } else if (node.operator === 'BETWEEN') {
@@ -92,12 +102,17 @@ function renderNode(ctx: Grid, node: FilterNode): unknown {
     return html`<span class="footer-filter-group">${renderChildren(ctx, node)}</span>`;
 }
 
-function renderChildren(ctx: Grid, group: FilterGroupNode) {
+/**
+ * the chips of a group's children
+ * @param root the group is the filter's root: an AND root's conditions are the header filters' own
+ */
+function renderChildren(ctx: Grid, group: FilterGroupNode, root = false) {
     const connector = gridText(ctx, group.group === 'OR' ? 'footer.or' : 'footer.and');
+    const top = root && group.group === 'AND';
     return (group.children || []).map(
         (child, i) => html`
             ${i > 0 ? html`<span class="footer-filter-connector">${connector}</span>` : null}
-            ${renderNode(ctx, child)}
+            ${renderNode(ctx, child, top)}
         `
     );
 }
@@ -178,6 +193,36 @@ function fitSummary(footer: HTMLElement) {
     }
 }
 
+// the space in px between the views button and the filter's row - which has 6px of its own before Clear
+const VIEWS_GAP = 4;
+
+// the least width in px of the name on a cut views button: two letters and the ellipsis, else none
+const MIN_VIEW_NAME = 16;
+
+/**
+ * The name on the views button (viewsMenu.ts) is cut where the filter's row starts - Clear and the chips,
+ * or "No filter" - so the button is never painted over them on a narrow grid: the filter goes first. Its
+ * `*` and chevron stay, in the room the footer keeps at its left end (has-views); its tooltip has the
+ * whole name. renderFooter gives it its width from the css back before it paints, as the summary's
+ */
+function fitViews(footer: HTMLElement) {
+    const row = footer.querySelector('.footer-filter');
+    const views = footer.querySelector<HTMLElement>('.footer-views');
+    if (!row || !views) {
+        return;
+    }
+    const rowLeft = row.getBoundingClientRect().left;
+    const viewsRect = views.getBoundingClientRect();
+    if (viewsRect.right + VIEWS_GAP > rowLeft) {
+        views.style.maxWidth = `${Math.max(0, rowLeft - VIEWS_GAP - viewsRect.left)}px`;
+        // a sliver of the name is no name: the * and the chevron alone then
+        const name = views.querySelector<HTMLElement>('.footer-views-name');
+        if (name && name.getBoundingClientRect().width < MIN_VIEW_NAME) {
+            name.style.display = 'none';
+        }
+    }
+}
+
 /**
  * The totals row and the footer, for a rebuild
  */
@@ -202,7 +247,12 @@ export function rebuildFooter(ctx: Grid) {
  * filter's row - the last stop of Tab in the footer. It opens the grid config dialog
  * (columnSettings.ts) on the column of the cell that had the focus. With it the footer keeps its room on
  * both sides (`has-settings`): the filter's row stays in the middle and never reaches under it, the
- * summary of the selected cells ends left of it
+ * summary of the selected cells ends left of it.
+ *
+ * The views button (`GridConfig.viewsButton`, viewsMenu.ts) is at the left end on that line, the first
+ * stop of Tab in the footer: the name of the view shown, a click opens the views menu. With it the
+ * footer keeps the same room on both sides (`has-views`), and its name is cut where the filter's row
+ * starts (fitViews)
  */
 export function renderFooter(ctx: Grid) {
     const footer = getElementByClassName(ctx.element, 'simple-html-grid-footer');
@@ -253,6 +303,16 @@ export function renderFooter(ctx: Grid) {
     const shownSummary = footer.querySelector<HTMLElement>('.footer-summary');
     if (shownSummary) {
         shownSummary.style.maxWidth = '';
+    }
+    // the views button at the left end, null when it is not shown. Kept by lit too: fitViews cuts it below
+    const viewsButton = viewsButtonTemplate(ctx, scrollbarHeight);
+    const shownViews = footer.querySelector<HTMLElement>('.footer-views');
+    if (shownViews) {
+        shownViews.style.maxWidth = '';
+        const shownName = shownViews.querySelector<HTMLElement>('.footer-views-name');
+        if (shownName) {
+            shownName.style.display = '';
+        }
     }
 
     // `collapse` replaces the chips with a single summary box - used both when there are more
@@ -321,7 +381,7 @@ export function renderFooter(ctx: Grid) {
                                         count: conditionCount
                                     })}</span
                                 >`
-                                  : renderChildren(ctx, filterTree)
+                                  : renderChildren(ctx, filterTree, true)
 }
                       </div>`
                               : null
@@ -338,9 +398,10 @@ export function renderFooter(ctx: Grid) {
         render(
             html`
                 <div
-                    class="footer-inner ${filtered ? 'has-filter' : ''} ${hasRow && !filtered ? 'no-filter' : ''} ${settings ? 'has-settings' : ''}"
+                    class="footer-inner ${filtered ? 'has-filter' : ''} ${hasRow && !filtered ? 'no-filter' : ''} ${settings ? 'has-settings' : ''} ${viewsButton ? 'has-views' : ''}"
                     style=${hasRow ? `padding-top:${scrollbarHeight}px;` : ''}
                 >
+                    ${viewsButton}
                     <span
                         class="footer-count"
                         role="status"
@@ -366,4 +427,5 @@ export function renderFooter(ctx: Grid) {
         }
     }
     fitSummary(footer);
+    fitViews(footer);
 }

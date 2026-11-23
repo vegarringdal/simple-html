@@ -201,7 +201,7 @@ describe('column settings - colour rules: the section', () => {
         expect(badges('name')).toEqual([]);
     });
 
-    it('expect the swatches: a radio group named Text colour or Background, None and the seven colours, each named', async () => {
+    it('expect the swatches: a radio group named Text colour or Background, None and the fourteen colours, each named', async () => {
         const { gridInterface } = await mount();
         gridInterface.openColumnSettings('balance');
 
@@ -216,10 +216,17 @@ describe('column settings - colour rules: the section', () => {
                 'None',
                 'Red',
                 'Orange',
+                'Amber',
                 'Yellow',
+                'Lime',
                 'Green',
+                'Teal',
+                'Cyan',
                 'Blue',
+                'Indigo',
                 'Purple',
+                'Pink',
+                'Brown',
                 'Grey'
             ]);
             expect(swatches(0, kind).every((swatch) => swatch.type === 'radio')).toBe(true);

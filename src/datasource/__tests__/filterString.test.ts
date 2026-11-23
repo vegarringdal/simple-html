@@ -89,7 +89,15 @@ describe('datasource filter tree (footer chips)', () => {
             kind: 'group',
             group: 'AND',
             children: [
-                { kind: 'condition', label: 'name', operator: 'EQUAL', value: 'person1', hasValue: true, caseSensitive: false }
+                {
+                    kind: 'condition',
+                    field: 'name',
+                    label: 'name',
+                    operator: 'EQUAL',
+                    value: 'person1',
+                    hasValue: true,
+                    caseSensitive: false
+                }
             ]
         });
     });
@@ -100,8 +108,24 @@ describe('datasource filter tree (footer chips)', () => {
             kind: 'group',
             group: 'OR',
             children: [
-                { kind: 'condition', label: 'group', operator: 'EQUAL', value: 'group1', hasValue: true, caseSensitive: false },
-                { kind: 'condition', label: 'name', operator: 'CONTAINS', value: 'person', hasValue: true, caseSensitive: false }
+                {
+                    kind: 'condition',
+                    field: 'group',
+                    label: 'group',
+                    operator: 'EQUAL',
+                    value: 'group1',
+                    hasValue: true,
+                    caseSensitive: false
+                },
+                {
+                    kind: 'condition',
+                    field: 'name',
+                    label: 'name',
+                    operator: 'CONTAINS',
+                    value: 'person',
+                    hasValue: true,
+                    caseSensitive: false
+                }
             ]
         });
     });
@@ -110,6 +134,7 @@ describe('datasource filter tree (footer chips)', () => {
         ds2.filter(and(where('name', 'IS_BLANK')));
         expect(ds2.getFilterTree()?.children[0]).toEqual({
             kind: 'condition',
+            field: 'name',
             label: 'name',
             operator: 'IS_BLANK',
             value: '',
@@ -128,6 +153,7 @@ describe('datasource filter tree (footer chips)', () => {
         expect((tree!.children[0] as { children: unknown[] }).children).toHaveLength(2);
         expect(tree?.children[1]).toEqual({
             kind: 'condition',
+            field: 'group',
             label: 'group',
             operator: 'EQUAL',
             value: 'group1',

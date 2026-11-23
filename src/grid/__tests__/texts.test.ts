@@ -12,6 +12,8 @@ import { DateInterface } from '../../date/dateInterface';
 import type { IDateConfig } from '../../date/interfaces';
 import { setTexts, TEXTS, type Texts } from '../../texts';
 import { registerCellRenderer } from '../cellRendererRegistry';
+import { DATE_PRESETS } from '../datePresets';
+import { FUNCTIONS } from '../formula';
 import type { GridConfig } from '../gridConfig';
 import { MAX_OPTIONS } from '../gridFunctions/lookupEditor';
 import { GridInterface } from '../gridInterface';
@@ -72,8 +74,37 @@ const TEMPLATE_EXAMPLES = new Set([
     'columnSettings.text.placeholder',
     'columnSettings.text.hint',
     'columnSettings.url.placeholder',
-    'columnSettings.url.hint'
+    'columnSettings.url.hint',
+    'columnSettings.calculated.formula.placeholder',
+    'columnSettings.rules.formula.placeholder'
 ]);
+
+/**
+ * the words of the formula language - how its functions are written (`ROUND(x, n)`), their names - and
+ * the fields the walk writes in formulas and the names of its calculated columns: not texts, they are
+ * the language's and the data's. A problem
+ * of a formula shows them as they are (calculated columns, formula colour rules)
+ */
+const FORMULA_WORDS = [
+    ...Array.from(FUNCTIONS.values(), (spec) => spec.usage),
+    ...FUNCTIONS.keys(),
+    'AND',
+    'OR',
+    'NOT',
+    'TRUE',
+    'FALSE',
+    '{age}',
+    '{born}',
+    '{name}',
+    '{notes}',
+    '{calc_1}',
+    // the placeholder of the label of a calculated column the walk adds: its field name made readable
+    'Calc 1',
+    'Calc 2'
+];
+
+/** a text shown without the words of the formula language, see FORMULA_WORDS */
+const withoutFormulaWords = (text: string) => FORMULA_WORDS.reduce((rest, word) => rest.replaceAll(word, ''), text);
 
 /**
  * every text as «id», with the {names} of its default after it: the values are still shown
@@ -121,10 +152,12 @@ const rows = () => [
 ];
 
 // the datetime column: the hint of Default in its Format › is its formatter's text - data, like a cell's.
-// Without the T of the built-in one, a letter that is no text
+// Without the T of the built-in one, a letter that is no text. Its placeholder - the range block's input
+// shows it - is data too
 registerFormatter('texts-datetime', {
     ...DateFormatterYYYYMMDDTHHMMSS,
-    format: (value) => DateFormatterYYYYMMDDTHHMMSS.format(value).replace('T', ' ')
+    format: (value) => DateFormatterYYYYMMDDTHHMMSS.format(value).replace('T', ' '),
+    placeholder: '«yyyy»'
 });
 
 // country is a custom cell: the editor of one line opens over it
@@ -158,8 +191,8 @@ const config = (texts?: Texts): GridConfig => ({
         age: { label: '«Age»' },
         // the placeholder of a date filter is the formatter's (YYYY-MM-DD), not a text
         born: { label: '«Born»', placeholderFilter: '«born»' },
-        // a datetime: its Format › has the formats with the time
-        updated: { label: '«Updated»', placeholderFilter: '«updated»' },
+        // a datetime: its Format › has the formats with the time. Every quick date in its filter menu
+        updated: { label: '«Updated»', placeholderFilter: '«updated»', datePresets: [...DATE_PRESETS] },
         active: { label: '«Active»' },
         notes: { label: '«Notes»' },
         code: { label: '«Code»', editor: { type: 'select', lookup: 'texts-codes' } },
@@ -197,7 +230,10 @@ const fields = {
 function shownTexts(node: Node = document.body, texts: string[] = []): string[] {
     if (node.nodeType === Node.TEXT_NODE) {
         const text = node.textContent?.trim();
-        if (text) {
+        // a key of the keyboard shortcuts help that is a letter or a function key (Ctrl+C, F2) is shown as
+        // it is: the key, no text. The keys with a name have a text (shortcuts.key.*)
+        const keyCap = !!node.parentElement?.closest('kbd') && /^(F\d{1,2}|[A-Z])$/.test(text ?? '');
+        if (text && !keyCap) {
             texts.push(text);
         }
     }
@@ -226,7 +262,7 @@ function checker() {
     const ids = new Map(Object.keys(TEXTS).map((id) => [id.toUpperCase(), id]));
     const check = (more: string[] = []) => {
         for (const text of [...shownTexts(), ...more]) {
-            expect(text.replace(/«[^»]*»/g, ''), `not a text: "${text}"`).not.toMatch(/[A-Za-z]/);
+            expect(withoutFormulaWords(text.replace(/«[^»]*»/g, '')), `not a text: "${text}"`).not.toMatch(/[A-Za-z]/);
             for (const [, id] of text.matchAll(/«([^»]+)»/g)) {
                 const known = ids.get(id.toUpperCase());
                 if (known) {
@@ -261,7 +297,7 @@ const conditions = (operators: FilterOperator[]): FilterCondition[] =>
  * column, the colour rules (a rule's parts, its problems, a value a date column does not read, a checkbox
  * column's value), and the preview of the current row, the first row and none
  */
-function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: () => void) {
+function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (more?: string[]) => void) {
     const dialog = () => document.querySelector('dialog.column-settings') as HTMLDialogElement;
     const input = (part: string) => dialog().querySelector(`input[id$="-settings-${part}"]`) as HTMLInputElement;
     const type = (part: string, value: string) => {
@@ -368,6 +404,104 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
     option('«Active»').click();
     byId('rules-add').click();
     check();
+
+    // what the dialog shows after each step below, checked at the end: a walk of the whole page after
+    // each would take longer than the test may
+    const dialogTexts: string[] = [];
+    const collect = () => dialogTexts.push(...shownTexts(dialog()));
+    // the kinds of a rule, on a text column: Conditions - two of them, All of them, its menu with Any of
+    // them, none left; Formula - empty, not true / false, true and false in the row of the preview (the
+    // first row shown: «age» 20); a custom text colour hard to read on the rows, then on its background
+    const pick = (part: string) => {
+        const radio = dialog().querySelector(`input[id$="-settings-${part}"]`) as HTMLInputElement;
+        radio.checked = true;
+        radio.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+    option('«Name»').click();
+    byId('rules-add').click();
+    pick('rule-0-kind-conditions');
+    byId('rule-0-condition-add').click();
+    collect();
+    byId('rule-0-combine').click();
+    collect();
+    (document.querySelector('[data-menu-id="columnSettings.rules.combine.OR"]') as HTMLElement).click();
+    byId('rule-0-condition-1-remove').click();
+    byId('rule-0-condition-0-remove').click();
+    collect();
+    pick('rule-0-kind-formula');
+    collect();
+    for (const formula of ['{age}', '{age} > 5', '{age} > 50']) {
+        type('rule-0-expression', formula);
+        collect();
+    }
+    for (const [kind, colour] of [
+        ['color', '#999999'],
+        ['background', '#888888']
+    ]) {
+        type(`rule-0-${kind}-custom`, colour);
+        collect();
+    }
+
+    // a calculated column: added (its settings, the problem of no formula), each problem of a formula -
+    // of the syntax, the fields, the types, the limits - and of the row of the preview, its type and its
+    // value (a blank too), a second one that reads the first while it has a problem, the problems of its
+    // field name. Not applied: Cancel
+    const button = (id: string) =>
+        Array.from(dialog().querySelectorAll('button')).find((each) => each.textContent?.includes(id)) as HTMLElement;
+    button('columnSettings.calculated.add').click();
+    collect();
+    for (const formula of [
+        `1${'+1'.repeat(500)}`,
+        `${'('.repeat(33)}1${')'.repeat(33)}`,
+        Array.from({ length: 251 }, () => '1').join('+'),
+        '1 $ 2',
+        '1)',
+        '1 +',
+        '"1',
+        '{1',
+        '_(1)',
+        'ROUND()',
+        '_ + 1',
+        '{__«x»}',
+        '{«zz»}',
+        '{calc_1}',
+        '"«x»" * 2',
+        'YEAR(1)',
+        'NOT {born}',
+        'TRUE * 2',
+        '1 = "«x»"',
+        'TRUE < FALSE',
+        '1 < 2 < 3',
+        'ROUND(1, 1.5)',
+        '{age} / 0',
+        `{age} * ${'9'.repeat(400)}`,
+        '{name} & ""',
+        '{age} + 1'
+    ]) {
+        type('calculated-formula', formula);
+        collect();
+    }
+    // the row of the preview with a value that is not of its field's type, and with a text too long
+    const shown = datasource.getRows()[0] as Entity;
+    shown.age = '«x»';
+    type('calculated-formula', '{age} + 2');
+    collect();
+    datasource.undo();
+    shown.notes = `«${'1'.repeat(10_001)}»`;
+    type('calculated-formula', '{notes} & 1');
+    collect();
+    datasource.undo();
+    // a second one that reads the first, while the first has a problem
+    type('calculated-formula', '1 +');
+    button('columnSettings.calculated.add').click();
+    type('calculated-formula', '{calc_1}');
+    collect();
+    // its field name: no name, a field already
+    type('calculated-name', '1');
+    collect();
+    type('calculated-name', 'age');
+    collect();
+    check(dialogTexts);
     (
         Array.from(dialog().querySelectorAll('button')).find((button) =>
             button.textContent?.includes('columnSettings.cancel')
@@ -417,6 +551,44 @@ function showDetailForm({ datasource, gridInterface }: MountedGrid, check: () =>
     datasource.setRowAsCurrentEntity(0);
     check();
     gridInterface.setState({ detailForm: before });
+}
+
+/**
+ * The named views: the views button at the footer's left end - Standard, changed - its menu with a
+ * readonly view that is the default (its hints), the name asked for by Save as new view… - none yet, one
+ * another view has - and by Rename…. The names of the views are data, in «»
+ */
+function showViews({ element, gridInterface }: MountedGrid, check: () => void) {
+    const viewsButton = () => element.querySelector('.footer-views-button') as HTMLButtonElement;
+    const nameInput = () => document.querySelector('.simple-html-grid-view-name-input') as HTMLInputElement;
+    const typeName = (name: string) => {
+        nameInput().value = name;
+        nameInput().dispatchEvent(new Event('input', { bubbles: true }));
+    };
+    const before = gridInterface.getState();
+    // the button of Standard and the menu: its entries, the hints of the shared view that is the default
+    gridInterface.updateConfig({ viewsButton: true });
+    gridInterface.setViews([{ id: 'shared', name: '«shared»', state: {}, readonly: true, default: true }]);
+    viewsButton().click();
+    check();
+    gridInterface.closeMenu();
+    // changed: the button's name says so. The name asked for, none yet, then one the shared view has
+    gridInterface.setState({ sorting: [{ attribute: 'age', ascending: false }] });
+    viewsButton().click();
+    menuEntry('views.saveAs').click();
+    check();
+    typeName('«shared»');
+    check();
+    typeName('«mine»');
+    nameInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    // Rename…: its button
+    viewsButton().click();
+    menuEntry('views.rename').click();
+    check();
+    gridInterface.closeMenu();
+    gridInterface.setViews([]);
+    gridInterface.updateConfig({ viewsButton: false });
+    gridInterface.setState(before);
 }
 
 /**
@@ -528,6 +700,16 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     check();
     gridInterface.closeFind();
 
+    // the keyboard shortcuts help: its groups and keys, then a search that finds nothing. And the header
+    // menu's entry, its hint
+    gridInterface.openShortcutHelp();
+    check();
+    const shortcutSearch = document.querySelector('.shortcut-help-search') as HTMLInputElement;
+    shortcutSearch.value = 'zzz';
+    shortcutSearch.dispatchEvent(new Event('input', { bubbles: true }));
+    check();
+    (document.querySelector('dialog.shortcut-help .filter-editor-close') as HTMLElement).click();
+
     // the editor of the notes, and read-only in a readonly grid
     const notes = element.querySelector('input[data-attribute="notes"]') as HTMLInputElement;
     const pressKey = (target: Element, key: string) =>
@@ -575,7 +757,8 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     gridInterface.clearRanges();
 
     // on a Mac: the texts that name a key, `<id>.mac` - the hints of undo and redo, the find bar's
-    // previous, the hint of the editor of the notes, the tooltips of the filter editor's undo and redo
+    // previous, the hint of the editor of the notes, the tooltips of the filter editor's undo and redo,
+    // the modifiers of the keyboard shortcuts help and the hint of its menu entry
     const platform = vi.spyOn(navigator, 'platform', 'get').mockReturnValue('MacIntel');
     try {
         openRowMenu(element, 'age', 0);
@@ -590,6 +773,13 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
         gridInterface.openFilterEditor();
         check();
         clickIcon('«filterEditor.closeButton.tooltip»');
+        // the keyboard shortcuts help: the modifiers and its hint, and the hint of its menu entry
+        gridInterface.openShortcutHelp();
+        check();
+        (document.querySelector('dialog.shortcut-help .filter-editor-close') as HTMLElement).click();
+        openLabelMenu(element, 'age');
+        check();
+        gridInterface.closeMenu();
     } finally {
         platform.mockRestore();
     }
@@ -667,6 +857,14 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     });
     gridInterface.setState({ headerFilters: {} });
 
+    // the quick dates of a datetime column, Overdue too: their names, the group's name and the days of each
+    // (the tooltips, the datetime formatter's digits). One clicked: its name in the cell and on the chip
+    openFilterMenu(element, 'updated');
+    check();
+    (document.querySelector('[data-menu-id="filter.dates"] [data-preset="thisMonth"]') as HTMLElement).click();
+    check();
+    gridInterface.setState({ headerFilters: {}, filter: and(where('age', 'GREATER_THAN', 10)) });
+
     // the filter editor: AND with an OR group, a condition compared with a field not picked yet. A text
     // condition has the Match case toggle, of a column that always matches case its other tooltip, a
     // BETWEEN its inputs from and to
@@ -706,6 +904,8 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     showColumnSettings({ element, datasource, gridInterface }, check);
     // the detail form and its tab of the dialog, see showDetailForm
     showDetailForm({ element, datasource, gridInterface }, check);
+    // the views button and its menu, see showViews
+    showViews({ element, datasource, gridInterface }, check);
     // the import dialog, see showImport
     await showImport({ element, datasource, gridInterface }, check);
 
@@ -831,9 +1031,10 @@ afterEach(() => {
     setTexts({});
 });
 
-// showEverything opens every part of the grid one by one (every menu, the editors, the date picker
-// ...): seconds, more on a loaded machine than the 5s vitest gives a test
-describe('texts in the grid - every text replaced', { timeout: 30_000 }, () => {
+// showEverything opens every part of the grid one by one (every menu, the editors, the date picker, the
+// calculated columns and the kinds of a colour rule, the views menu ...): seconds, more on a loaded machine than the 5s
+// vitest gives a test - 30s and more with two workers busy
+describe('texts in the grid - every text replaced', { timeout: 90_000 }, () => {
     it('expect every text from setTexts(), none left in English, and every id shown', async () => {
         setTexts(fakeTexts(() => true));
         const { seen, check } = checker();
@@ -924,7 +1125,8 @@ describe('texts in the grid - where a text comes from', () => {
 
 describe('texts in the grid - what GridConfig.texts takes', () => {
     it('expect a TypeError for a text that is not a string, from the constructor and updateConfig()', () => {
-        const datasource = new Datasource();
+        // the fields of the config's columns: its quick dates are for a date column
+        const datasource = new Datasource(fields);
         // a config from JSON can have anything
         expect(() => new GridInterface({ ...config(), texts: JSON.parse('{ "row.copy": null }') }, datasource)).toThrow(
             /'row\.copy'/

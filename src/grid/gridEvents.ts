@@ -5,6 +5,7 @@ import type { FindResult } from './findResult';
 import type { ColumnConfig } from './gridConfig';
 import type { ColType } from './gridFunctions/colType';
 import type { HTMLCellElement } from './gridFunctions/HTMLCellElement';
+import type { GridView } from './gridView';
 
 /**
  * The cell a grid event happened on. Most {@link GridEvents} send this, some with more fields.
@@ -273,5 +274,33 @@ export interface GridEvents {
     'find-filter-change': {
         /** the filter of the rows "Filter rows" shows, as `getFindFilter()` gives it - null for every row */
         filter: FilterExpression | null;
+    };
+
+    /**
+     * The list of named views changed: a view was saved (over the one shown, or as a new one), renamed,
+     * deleted or made the default - in the views menu of the footer, or by `saveView()`, `saveViewAs()`,
+     * `renameView()`, `deleteView()`, `setDefaultView()`. Store `views` - in a backend, say - and give it
+     * back as `GridConfig.views` next time. Not sent by `setViews()` and `updateConfig({ views })`: you
+     * gave the list, you have it. Nor when the user only switches to another view.
+     *
+     * `views` is what `gridInterface.getViews()` gives now: copies, plain JSON - the readonly views of
+     * yours are in it too, leave them out when you store the user's. See {@link GridView}.
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * gridInterface.on('views-change', async ({ views }) => {
+     *     const own = views.filter((view) => !view.readonly);
+     *     await fetch('/api/settings/orders-grid-views', {
+     *         method: 'PUT',
+     *         headers: { 'Content-Type': 'application/json' },
+     *         body: JSON.stringify(own)
+     *     });
+     * });
+     * ```
+     */
+    'views-change': {
+        /** every view, in their order: copies */
+        views: GridView[];
     };
 }

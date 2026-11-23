@@ -264,7 +264,22 @@ const on = (fg: string, min: number, backgrounds: (string | string[])[], alpha?:
 const under = (tint: string, backgrounds: string[]) => backgrounds.map((background) => [tint, background]);
 
 /** the colours of the palette of the colour rules (ColumnFormat.rules) */
-const PALETTE = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'grey'];
+const PALETTE = [
+    'red',
+    'orange',
+    'amber',
+    'yellow',
+    'lime',
+    'green',
+    'teal',
+    'cyan',
+    'blue',
+    'indigo',
+    'purple',
+    'pink',
+    'brown',
+    'grey'
+];
 /** the backgrounds of the palette: a cell's, laid over the row - under a range's tint too */
 const PALETTE_BACKGROUNDS = PALETTE.map((colour) => `grid-palette-${colour}-bg-color`);
 

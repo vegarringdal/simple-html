@@ -322,6 +322,23 @@ writes the range it writes for any day - an index on the column works:
 `datetime` column gets Sunday 23:59:59 as the end, the SQL is the same: `< '2026-11-23 00:00:00'`. The
 week is the user's: its days are in the browser's time zone, as `timeZone` reads them.
 
+### A quick date
+
+A [quick date](06-filtering.md#quick-dates) of the grid - This month, Last 7 days, Overdue - is relative,
+the grid computes its days from today when it filters. The filter it makes, and so `toSqlWhere()`, is a
+plain `BETWEEN` of those days: `toSqlWhere()` never sees `'thisMonth'`, and a WHERE made today has
+today's dates. On 22 November 2026 (PostgreSQL, a `date` column):
+
+| quick date | the filter | the WHERE |
+| --- | --- | --- |
+| Today | `BETWEEN [2026-11-22, 2026-11-22]` | `"order_date" >= '2026-11-22 00:00:00' AND "order_date" < '2026-11-23 00:00:00'` |
+| This month | `BETWEEN [2026-11-01, 2026-11-30]` | `"order_date" >= '2026-11-01 00:00:00' AND "order_date" < '2026-12-01 00:00:00'` |
+| Overdue | `BETWEEN [null, 2026-11-21]` | `"order_date" < '2026-11-22 00:00:00'` |
+
+A `datetime` column gets the last day at 23:59:59, the WHERE is the same. As for a week typed, the values
+are parameters with `IS NOT NULL AND` in front, an index on the column works, and the days are the
+user's: the browser's time zone, as `timeZone` reads them.
+
 ### BETWEEN
 
 `[from, to]`, both included: `GREATER_THAN_OR_EQUAL_TO from AND LESS_THAN_OR_EQUAL_TO to`, each with
@@ -371,6 +388,60 @@ As the grid leaves them out ([the filter format](06-filtering.md#the-filter-form
 without a field or an operator (null, `''`), one without the value it needs (null, `''`, an invalid
 `Date`) and no `valueField`, a `BETWEEN` with both ends blank, an empty group. A field that is not in
 `columns` throws also then.
+
+## Calculated columns
+
+A [calculated column](23-calculated-columns.md) (`GridState.calculatedColumns`) is computed in the
+browser, from the row: the database has no column of it. A filter on one - its header filter, a rule of
+the filter editor - is a condition like any other in `datasource.getFilter()`, on a field that is in no
+`columns` of yours. `toSqlWhere()` refuses it, as any field it does not know, with a `TypeError` that
+names it - answer it with a 400:
+
+```ts
+import { toSqlWhere } from '@simple-html/grid/sql';
+
+const filter = { group: 'AND', children: [{ field: 'total', operator: 'GREATER_THAN', value: 100 }] };
+try {
+    toSqlWhere(filter, { dialect: 'postgres', columns: { price: { column: 'price', type: 'number' } } });
+} catch (error) {
+    // TypeError: toSqlWhere: filter.children[0].field "total" is not one of the columns
+}
+```
+
+It is never left out: that would load more rows than the user filtered for. Two ways to filter on it in
+a backend:
+
+- **Let the database compute it too.** A generated column, or a column of a view, with the same
+  expression - `total numeric GENERATED ALWAYS AS (price * qty) STORED` on PostgreSQL, `AS (price * qty)`
+  on SQL Server, Oracle and SQLite - listed in `columns` with its type:
+  `columns: { total: { column: 'total', type: 'number' } }`. Keep the two the same: the grid's blanks
+  and `DAYS()` are the grid's, see [the formulas](23-calculated-columns.md#the-formulas).
+- **Filter it in the browser only.** Send the filter without the conditions on the calculated columns,
+  and let the grid filter the rows that came back - `datasource.filter()` with the whole filter:
+
+```ts
+import type { FilterExpression } from '@simple-html/grid';
+
+/** the filter without the conditions on these fields, null when nothing is left */
+function withoutFields(filter: FilterExpression | null, fields: ReadonlySet<string>): FilterExpression | null {
+    if (!filter) {
+        return null;
+    }
+    if ('children' in filter) {
+        const children = filter.children
+            .map((child) => withoutFields(child, fields))
+            .filter((child): child is FilterExpression => child !== null);
+        return children.length ? { ...filter, children } : null;
+    }
+    return fields.has(filter.field) || (filter.valueField !== undefined && fields.has(filter.valueField)) ? null : filter;
+}
+
+const calculated = new Set(Object.keys(gridInterface.getState().calculatedColumns));
+const forTheBackend = withoutFields(datasource.getFilter(), calculated);
+```
+
+  Take care with OR: without its conditions on a calculated column, an OR group lets more rows
+  through - which is what the browser then filters, but more rows travel.
 
 ## Find's filter
 

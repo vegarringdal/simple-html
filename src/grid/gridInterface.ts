@@ -1,16 +1,26 @@
 import { AGGREGATE_FUNCTIONS, type AggregateFunction, isAggregateFunction } from '../datasource/aggregate';
 import { assertOptions } from '../datasource/assertOptions';
+import type { CalculatedField } from '../datasource/calculatedField';
 import type { Datasource, EntityUnion } from '../datasource/dataSource';
 import type { DatasourceEvents } from '../datasource/datasourceEvents';
 import { type Entity, isGroupRow } from '../datasource/entity';
 import type { FieldType } from '../datasource/field';
-import { type FilterExpression, type FilterOperator, operatorsFor } from '../datasource/filterExpression';
+import { type FilterExpression, type FilterOperator, operatorsFor, where } from '../datasource/filterExpression';
 import type { Formatter } from '../datasource/formatter';
 import { Emitter, type EventHandler } from '../emitter';
 import { assertTexts } from '../texts';
+import {
+    assertCalculatedColumns,
+    type CalculatedColumn,
+    calculatedFields,
+    calculatedLabel,
+    compileCalculatedColumns,
+    readerOf
+} from './calculatedColumns';
 import type { CellRange } from './cellRange';
 import { getCellRenderer } from './cellRendererRegistry';
 import { cellFieldText, type FieldText, fieldTextOf, type LinkResult, linkOf, templateFormatter } from './cellTemplate';
+import type { RuleFieldOf } from './colorRules';
 import {
     assertColumnFormat,
     type ColumnFormat,
@@ -21,7 +31,9 @@ import {
     readonlyOf
 } from './columnFormat';
 import type { CsvOptions } from './csv';
+import { DATE_PRESETS, type DatePreset, datePresetRange, isDatePreset, takesDatePresets, weekStartOf } from './datePresets';
 import type { FindResult } from './findResult';
+import { compileFormula, type Formula } from './formula';
 import type { Grid } from './grid';
 import type {
     ColumnConfig,
@@ -37,6 +49,7 @@ import type {
 } from './gridConfig';
 import type { GridEvents } from './gridEvents';
 import { aggregateRowHeights, normalizeAggregates } from './gridFunctions/aggregates';
+import { filterWithout, layoutWithout } from './gridFunctions/calculatedState';
 import { assertRanges, layoutKey, type RangeState, rangeState, sameRanges } from './gridFunctions/cellRanges';
 import { headerOperators, isHeaderOperator } from './gridFunctions/columnFilterOptions';
 import { renderColumnNumbers } from './gridFunctions/columnNumbers';
@@ -51,7 +64,7 @@ import {
     mayDeleteRow
 } from './gridFunctions/editPermissions';
 import { fillDown } from './gridFunctions/fillDown';
-import { columnConditions, sameConditions } from './gridFunctions/filterCallback';
+import { columnConditions, sameConditions, withColumnConditions } from './gridFunctions/filterCallback';
 import { closeFind, findDataChanged, findStep, getFindFilter, getFindResult, openFind } from './gridFunctions/findBar';
 import { DEFAULT_COLUMN_WIDTH, fitColumns } from './gridFunctions/fitColumns';
 import { getCellHeight } from './gridFunctions/getCellHeight';
@@ -65,12 +78,14 @@ import { assertImportOptions, type ImportOptions, type ImportResult, importRows 
 import { type LookupColumn, lookupColumnsOf } from './gridFunctions/lookupColumn';
 import { TOOLTIP_LINES } from './gridFunctions/multilineText';
 import { openFilterEditor } from './gridFunctions/openFilterEditor';
+import { prettyPrintString } from './gridFunctions/prettyPrintString';
 import { focusedCell, pointOf, renderRangeClasses } from './gridFunctions/rangeSelection';
 import { rebuildFooter, renderFooter } from './gridFunctions/rebuildFooter';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
 import { requestRowsRender } from './gridFunctions/renderChangedRows';
 import { fitRowLinesOf, layoutColumns, MULTILINE_LINE_HEIGHT, rowHeightOf } from './gridFunctions/rowHeights';
 import { ROW_STATUS_WIDTH } from './gridFunctions/rowStatus';
+import { openShortcutHelp } from './gridFunctions/shortcutHelp';
 import { placeAt, showMenu } from './gridFunctions/showMenu';
 import { closeTextEditor } from './gridFunctions/textEditor';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
@@ -78,6 +93,7 @@ import { updateMainElementSizes } from './gridFunctions/updateMainElementSizes';
 import { updateVerticalScrollHeight } from './gridFunctions/updateVerticalScrollHeight';
 import type { CellClass, GridHooks } from './gridHooks';
 import type { MenuContext, MenuEntry, MenuPosition } from './gridMenus';
+import { assertViews, type GridView, newViewId, startViews, viewStateText, writeStoredViews } from './gridView';
 import type { ExcelOptions } from './xlsx';
 import type { ImportCell } from './xlsxRead';
 
@@ -193,6 +209,51 @@ export class GridInterface<T> {
     private sortValues = new Map<string, (value: unknown) => string>();
 
     /**
+     * the named views, see getViews(): copies of what was given (GridConfig.views, the storage,
+     * setViews()). The grid changes them: saveView(), renameView() ...
+     */
+    private views: GridView[] = [];
+
+    /**
+     * the id of the view shown, see getCurrentView(). null: none, "Standard" - the config's state
+     */
+    private currentViewId: string | null = null;
+
+    /**
+     * the state as text (viewStateText) right after the view shown - or Standard - was applied or saved:
+     * what isViewModified() compares the state with. null when it is not known - the view shown was
+     * deleted, the state shown is no view's: modified
+     */
+    private viewBaseline: string | null = null;
+
+    /**
+     * the calculated columns of the state, by field (GridState.calculatedColumns): the grid's own copy
+     */
+    private calculated: Record<string, CalculatedColumn> = {};
+
+    /** the config's calculated columns: what resetState() goes back to, see GridState.calculatedColumns */
+    private configCalculated: Record<string, CalculatedColumn> = {};
+
+    /**
+     * the calculated fields this interface gave the datasource (__setCalculatedField), by field: kept to
+     * take them back - not what another grid on the same datasource gave it since
+     */
+    private calculatedFieldsSet = new Map<string, CalculatedField>();
+
+    /**
+     * every field that was a calculated column of this grid (the config's too): one that is not anymore
+     * is no field of the rows - its column options stay, the column chooser does not list it
+     */
+    private everCalculated = new Set<string>();
+
+    /**
+     * the formulas of the formula colour rules (`ColorRule.expression`), read once each: null for one with
+     * a problem or that is not true / false. Read again when the fields can be others - new calculated
+     * columns, new columns
+     */
+    private ruleFormulas = new Map<string, Formula | null>();
+
+    /**
      * Most of the time {@link createGrid} makes the interface. Make it yourself for a
      * `<simple-html-grid>` element you place on your own, and connect it with
      * `element.connectInterface()`.
@@ -210,7 +271,7 @@ export class GridInterface<T> {
      * `format` does not fit its field (see {@link ColumnFormat}), a column's `editor` is wrong - its
      * lookup not registered, see {@link ColumnEditor} - a column's `renderer` is not the id of a
      * registered cell renderer, or is given with an `editor`, or a column's `filterOperators`,
-     * `operator` or `filterCaseSensitive` does not fit its type, see {@link ColumnConfig} - when
+     * `operator`, `filterCaseSensitive` or `datePresets` does not fit its type, see {@link ColumnConfig} - when
      * `detailForm` is not a {@link DetailForm}, and when `edit` is not an object of the permissions
      * `add`, `change` and `delete`, each true or false (see {@link EditPermissions})
      *
@@ -233,17 +294,40 @@ export class GridInterface<T> {
         assertConfigTexts(gridConfig);
         assertTooltipLines(gridConfig);
         assertLineHeight(gridConfig);
-        assertAggregates(gridConfig, datasource);
-        assertFormats(gridConfig, datasource);
-        assertRenderers(gridConfig);
-        assertFilterOptions(gridConfig, datasource);
         assertConfigDetailForm(gridConfig);
         assertEditPermissions(gridConfig.edit);
-        this.lookupColumns = lookupColumnsOf(gridConfig.columns, datasource);
+        assertConfigViews(gridConfig);
         this.dataSource = datasource;
+        // the calculated columns first: the checks of the formats, the aggregates and the filters read
+        // their types from the datasource
+        const fieldType = this.calculatedFieldType(gridConfig.columns ?? {}, gridConfig.layout);
+        if (gridConfig.calculatedColumns !== undefined) {
+            assertCalculatedColumns(gridConfig.calculatedColumns, fieldType, this.isTakenName, 'GridConfig: calculatedColumns');
+        }
+        if (gridConfig.initialState?.calculatedColumns !== undefined) {
+            assertCalculatedColumns(
+                gridConfig.initialState.calculatedColumns,
+                fieldType,
+                this.isTakenName,
+                'GridConfig: initialState.calculatedColumns'
+            );
+        }
+        const startCalculated = structuredClone(gridConfig.initialState?.calculatedColumns ?? gridConfig.calculatedColumns ?? {});
+        this.registerCalculated(startCalculated, fieldType);
+        try {
+            assertAggregates(gridConfig, datasource);
+            assertFormats(gridConfig, datasource, this.ruleFieldOf(gridConfig.columns ?? {}, gridConfig.layout));
+            assertRenderers(gridConfig);
+            assertFilterOptions(gridConfig, datasource);
+            this.lookupColumns = lookupColumnsOf(gridConfig.columns, datasource);
+        } catch (error) {
+            // the datasource is left as it was
+            this.registerCalculated({}, fieldType);
+            throw error;
+        }
         this.hooks = { ...hooks };
 
-        const { columns, layout, initialState, ...options } = gridConfig;
+        const { columns, layout, initialState, calculatedColumns, ...options } = gridConfig;
         this.options = options;
         this.gridConfig = {
             ...withDefaults(options),
@@ -256,10 +340,16 @@ export class GridInterface<T> {
         this.configFormats = formatsOfColumns(this.gridConfig.columns);
         // structuredClone, not JSON: it keeps the Dates of a filter
         this.initialState = structuredClone(initialState ?? {});
+        this.configCalculated = structuredClone(calculatedColumns ?? {});
+        for (const name of [...Object.keys(this.configCalculated), ...Object.keys(startCalculated)]) {
+            this.everCalculated.add(name);
+        }
 
         // before the start state is applied: it can sort on a lookup column
         this.setSortValues();
-        this.applyState(this.getStartState());
+        // the views of the config and the storage: the default one is the state the grid starts in
+        this.views = startViews(gridConfig.views, gridConfig.viewsStorageKey);
+        this.applyStartView();
     }
 
     /**
@@ -296,7 +386,8 @@ export class GridInterface<T> {
             aggregates: aggregatesOfColumns(this.gridConfig.columns),
             totalsRow: this.gridConfig.totalsRow,
             formats: formatsOfColumns(this.gridConfig.columns),
-            detailForm: copyDetailForm(this.gridConfig.detailForm)
+            detailForm: copyDetailForm(this.gridConfig.detailForm),
+            calculatedColumns: structuredClone(this.calculated)
         };
     }
 
@@ -348,6 +439,10 @@ export class GridInterface<T> {
      * no grouping, no filter, no header filters. A `layout` or `initialState` given to
      * {@link updateConfig} since is the one it goes back to.
      *
+     * It is the view "Standard" of the views menu: no named view is shown after it
+     * ({@link getCurrentView} is null) - also when the grid started in a default view
+     * (`GridView.default`). `applyView(id)` goes back to a view.
+     *
      * @sample grid-state
      * @example
      * ```ts
@@ -367,6 +462,379 @@ export class GridInterface<T> {
      */
     public resetState() {
         this.applyState(this.getStartState());
+        this.showView(null);
+    }
+
+    /**
+     * The named views, in their order: the views of the config and the storage (`GridConfig.views`,
+     * `viewsStorageKey`), with what the user saved, renamed and deleted since - or the list given to
+     * {@link setViews}. See {@link GridView}. Copies: changing them changes nothing in the grid.
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * gridInterface.getViews().map((view) => view.name); // ['Late deliveries', 'My open orders']
+     * ```
+     */
+    public getViews(): GridView[] {
+        return structuredClone(this.views);
+    }
+
+    /**
+     * Replaces the list of named views: loaded from a backend, say. The view shown stays shown when the
+     * list has its id, else none is ("Standard", marked as changed: the state shown is the old view's) -
+     * nothing is applied, the grid shows what it showed. Written to localStorage with
+     * `GridConfig.viewsStorageKey`. Sends no `views-change`: you gave the list.
+     *
+     * The grid keeps a copy, the list passed in is not changed later.
+     *
+     * @param views the views, see {@link GridView}
+     * @throws a `TypeError` when `views` is no list of views - an id or a name that is no text, a state
+     * that is no object, two views of one id, two defaults - before anything changes
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * import type { GridView } from '@simple-html/grid';
+     *
+     * const response = await fetch('/api/settings/orders-grid-views');
+     * const views: GridView[] = await response.json();
+     * gridInterface.setViews(views);
+     * ```
+     */
+    public setViews(views: GridView[]) {
+        assertViews(views, 'setViews()');
+        this.views = structuredClone(views);
+        if (this.currentViewId !== null && !this.views.some((view) => view.id === this.currentViewId)) {
+            this.currentViewId = null;
+            this.viewBaseline = null;
+        }
+        this.viewsChanged(false);
+    }
+
+    /**
+     * The named view the grid shows: the one applied last (the views menu, {@link applyView}, the
+     * default view when the grid was made) or saved last. A copy, null when none is - "Standard" in the
+     * views menu, the config's state: after {@link resetState}, and when the view shown was deleted.
+     *
+     * A change of the state after it - a filter, a column resized, `setState()` - keeps it the view shown:
+     * {@link isViewModified} says the state is not the view's any more.
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * const view = gridInterface.getCurrentView();
+     * console.log(view ? `${view.name}${gridInterface.isViewModified() ? ' *' : ''}` : 'Standard');
+     * ```
+     */
+    public getCurrentView(): GridView | null {
+        const view = this.views.find((each) => each.id === this.currentViewId);
+        return view ? structuredClone(view) : null;
+    }
+
+    /**
+     * `true` when the state changed since the view shown was applied or saved - or, with none shown,
+     * since the grid started in the config's state or went back to it: the `*` after the name on the
+     * views button. A filter, a column moved or resized, a sort, a format, `setState()` ... - the state
+     * compared as JSON, with the expanded groups left out (opening a group changes no view). The
+     * current row, the scroll position and Find are no state.
+     *
+     * Going back: `applyView(id)` the view again, `resetState()` with none shown. `true` too when the
+     * view shown was deleted: the state is no view's.
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * gridInterface.applyView('late');
+     * gridInterface.isViewModified(); // false
+     * gridInterface.setState({ sorting: [{ attribute: 'company', ascending: true }] });
+     * gridInterface.isViewModified(); // true
+     * ```
+     */
+    public isViewModified(): boolean {
+        return this.viewBaseline === null || viewStateText(this.getState()) !== this.viewBaseline;
+    }
+
+    /**
+     * Shows a named view: applies its state, and it is the view shown ({@link getCurrentView}) - as a
+     * click on it in the views menu. What its `state` leaves out is the state the grid starts in
+     * (`GridConfig.initialState` and the config's `layout`): a view is all of the state, not a change of
+     * the state shown. Applied again, it takes back what changed since.
+     *
+     * `null` is "Standard": the config's state, as {@link resetState}.
+     *
+     * @param id the view's `id`, see {@link getViews}
+     * @throws a `TypeError` when no view has the id, and when its state does not fit the grid - aggregates
+     * or a display format of a field that is not of their type, a detail form that is none - as
+     * `setState()` throws, before anything changes
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * gridInterface.applyView('late'); // the view "Late deliveries"
+     * gridInterface.applyView(null); // Standard: the config's state
+     * ```
+     */
+    public applyView(id: string | null) {
+        if (id === null) {
+            this.resetState();
+            return;
+        }
+        const view = this.viewOf(id, 'applyView()');
+        this.applyState({ ...this.getStartState(), ...structuredClone(view.state) });
+        this.showView(id);
+    }
+
+    /**
+     * Saves the state now over the view shown - *Save* in the views menu - and sends `views-change`. Its
+     * name, id and default stay as they are; it is not modified any more.
+     *
+     * @returns the view saved, a copy
+     * @throws a `TypeError` when no view is shown ("Standard", the config's state: {@link saveViewAs}
+     * makes a view of it) and when the view shown is `readonly`
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * gridInterface.applyView('mine');
+     * gridInterface.setState({ sorting: [{ attribute: 'dueDate', ascending: true }] });
+     * gridInterface.saveView(); // "My open orders" sorted on the due date from now on
+     * ```
+     */
+    public saveView(): GridView {
+        if (this.currentViewId === null) {
+            throw new TypeError("saveView(): no view is shown - Standard is the config's state, saveViewAs() makes a view of it");
+        }
+        const view = this.ownView(this.currentViewId, 'saveView()');
+        const state = this.getState();
+        view.state = state;
+        this.viewBaseline = viewStateText(state);
+        this.viewsChanged(true);
+        return structuredClone(view);
+    }
+
+    /**
+     * Saves the state now as a new view, at the end of the list - *Save as new view…* in the views menu -
+     * and sends `views-change`. It is the view shown from then on. Its id is made by the grid (`view-`
+     * and a random part), see the view returned.
+     *
+     * The name can be one another view has, the views menu does not let the user give one.
+     *
+     * @param name the view's name, its spaces at the ends taken off
+     * @returns the view saved, a copy
+     * @throws a `TypeError` when `name` is no text, or only spaces
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * const view = gridInterface.saveViewAs('Late deliveries');
+     * view.id; // 'view-mi3x0h2k-4fz9qa', for applyView(), renameView() ...
+     * ```
+     */
+    public saveViewAs(name: string): GridView {
+        const view: GridView = { id: newViewId(this.views), name: viewName(name, 'saveViewAs()'), state: this.getState() };
+        this.views.push(view);
+        this.showView(view.id, false);
+        this.viewsChanged(true);
+        return structuredClone(view);
+    }
+
+    /**
+     * Gives a view another name - *Rename…* in the views menu - and sends `views-change`.
+     *
+     * @param id the view's `id`
+     * @param name its new name, its spaces at the ends taken off. It can be one another view has
+     * @throws a `TypeError` when no view has the id, when the view is `readonly`, and when `name` is no
+     * text, or only spaces
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * gridInterface.renameView('mine', 'My orders');
+     * ```
+     */
+    public renameView(id: string, name: string) {
+        const view = this.ownView(id, 'renameView()');
+        view.name = viewName(name, 'renameView()');
+        this.viewsChanged(true);
+    }
+
+    /**
+     * Deletes a view - *Delete* in the views menu - and sends `views-change`. The view shown deleted, the
+     * grid shows what it showed: no view is shown then ("Standard", marked as changed), and *Save as new
+     * view…* still makes a view of it.
+     *
+     * @param id the view's `id`
+     * @throws a `TypeError` when no view has the id, and when the view is `readonly`
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * gridInterface.deleteView('mine');
+     * ```
+     */
+    public deleteView(id: string) {
+        const view = this.ownView(id, 'deleteView()');
+        this.views = this.views.filter((each) => each !== view);
+        if (this.currentViewId === id) {
+            this.currentViewId = null;
+            this.viewBaseline = null;
+        }
+        this.viewsChanged(true);
+    }
+
+    /**
+     * Makes a view the default - the one the grid applies when it is made (`GridView.default`), *Default
+     * view* in the views menu - and sends `views-change`. One at a time: the default before is not any
+     * more. A readonly view can be the default. Nothing is applied now.
+     *
+     * @param id the view's `id`, null for none: the grid starts in the config's state ("Standard")
+     * @throws a `TypeError` when no view has the id
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * gridInterface.setDefaultView('late'); // the next time the grid is made it shows "Late deliveries"
+     * gridInterface.setDefaultView(null); // the config's state
+     * ```
+     */
+    public setDefaultView(id: string | null) {
+        if (id !== null) {
+            this.viewOf(id, 'setDefaultView()');
+        }
+        for (const view of this.views) {
+            if (view.id === id) {
+                view.default = true;
+            } else {
+                delete view.default;
+            }
+        }
+        this.viewsChanged(true);
+    }
+
+    /**
+     * The state the grid starts in: the default view (`GridView.default`) applied on top of the start
+     * state (getStartState), else the start state. A default view that can not be applied - stored by a
+     * version of the app of before, say - is passed by with a warning: the grid starts all the same
+     */
+    private applyStartView() {
+        const view = this.views.find((each) => each.default);
+        if (view) {
+            try {
+                this.applyState({ ...this.getStartState(), ...structuredClone(view.state) });
+                this.showView(view.id, false);
+                return;
+            } catch (error) {
+                console.warn(
+                    `GridConfig.views: the default view '${view.name}' could not be applied, the grid starts without it`,
+                    error
+                );
+            }
+        }
+        this.applyState(this.getStartState());
+        this.showView(null, false);
+    }
+
+    /**
+     * Makes `id` the view shown, the state now its own (not modified) - after it was applied or saved -
+     * and renders the views button again: the rebuild of applyState() showed the view before
+     * @param render false when the caller renders it (viewsChanged) or the grid is being made
+     */
+    private showView(id: string | null, render = true) {
+        this.currentViewId = id;
+        this.viewBaseline = viewStateText(this.getState());
+        if (render) {
+            this.__refreshViewsButton();
+        }
+    }
+
+    /**
+     * The view of the id, the grid's own object
+     * @param where the caller, for the message
+     * @throws a `TypeError` when no view has the id
+     */
+    private viewOf(id: string, where: string): GridView {
+        const view = this.views.find((each) => each.id === id);
+        if (!view) {
+            throw new TypeError(`${where}: no view has the id '${id}'`);
+        }
+        return view;
+    }
+
+    /**
+     * The view of the id, to change: not a readonly one
+     * @throws a `TypeError` when no view has the id, and when it is readonly
+     */
+    private ownView(id: string, where: string): GridView {
+        const view = this.viewOf(id, where);
+        if (view.readonly) {
+            throw new TypeError(`${where}: the view '${view.name}' is readonly - saveViewAs() makes a view of the user's of it`);
+        }
+        return view;
+    }
+
+    /**
+     * After the list of views changed: it is written to localStorage (GridConfig.viewsStorageKey), sent
+     * with `views-change` when it was the user's change - not the list given by the app - and the views
+     * button shows it
+     */
+    private viewsChanged(send: boolean) {
+        if (this.options.viewsStorageKey) {
+            writeStoredViews(this.options.viewsStorageKey, this.views);
+        }
+        if (send) {
+            this.__callSubscribers('views-change', { views: this.getViews() });
+        }
+        this.__refreshViewsButton();
+    }
+
+    /**
+     * @internal
+     * Renders the footer again when it shows the views button: its name and its `*` follow the state.
+     * A rebuild renders it anyway; this is for a change of the state that does not rebuild - the width
+     * of the detail form dragged, filter as you type turned on - and for a change of the views
+     */
+    public __refreshViewsButton() {
+        if (this.grid?.domCreated && this.gridConfig.viewsButton) {
+            renderFooter(this.grid);
+        }
+    }
+
+    /**
+     * Computes the quick date filters of the header filters from today again (`HeaderFilter.datePreset`:
+     * Today, This week ... picked in a date column's filter menu) and filters the rows again when their
+     * days changed - the day changed since they filtered. Nothing when none changed.
+     *
+     * The grid calls it when the window gets the focus back and when the page is shown again: the user
+     * back the next morning sees today's rows. A grid that is looked at over midnight without either - a
+     * screen on the wall - calls it from a timer of the app's.
+     *
+     * @sample filtering
+     * @example
+     * ```ts
+     * // a minute past midnight, every night
+     * const msToMidnight = () => {
+     *     const now = new Date();
+     *     return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 1).getTime() - now.getTime();
+     * };
+     * const nightly = () => {
+     *     gridInterface.refreshDatePresets();
+     *     setTimeout(nightly, msToMidnight());
+     * };
+     * setTimeout(nightly, msToMidnight());
+     * ```
+     */
+    public refreshDatePresets() {
+        const fields = Object.keys(this.headerFilters).filter((field) => this.headerFilters[field].datePreset);
+        if (!fields.length) {
+            return;
+        }
+        const datasource = this.getDatasource();
+        const before = datasource.getFilter();
+        const after = this.withDatePresets(before);
+        if (fields.some((field) => !sameConditions(columnConditions(before, field), columnConditions(after, field)))) {
+            datasource.filter(after);
+        }
     }
 
     /**
@@ -387,7 +855,8 @@ export class GridInterface<T> {
             totalsRow: initialState.totalsRow ?? this.options.totalsRow ?? false,
             formats: initialState.formats ?? structuredClone(this.configFormats),
             // applyState checks it and keeps a copy
-            detailForm: initialState.detailForm ?? this.options.detailForm ?? noDetailForm()
+            detailForm: initialState.detailForm ?? this.options.detailForm ?? noDetailForm(),
+            calculatedColumns: initialState.calculatedColumns ?? structuredClone(this.configCalculated)
         };
     }
 
@@ -412,6 +881,10 @@ export class GridInterface<T> {
      *   `updateConfig({ edit: { delete: false } })` allows adding and changing. The cells follow at
      *   once; an open menu, date picker, lookup list or editor of a multiline cell is closed - what was
      *   typed in the editor is not saved. See {@link EditPermissions}.
+     * - **`views` and `viewsStorageKey` make the list of views again**, as when the grid is made: the
+     *   config's and the stored ones. Nothing is applied; the view shown stays shown when the list still
+     *   has it. See {@link GridView}. With no view shown ("Standard") and the state the config's, the
+     *   grid still shows the config's state after a new `layout` or `columns`: not marked as changed.
      *
      * The rest of the state - sorting, grouping, filter, header filters - is kept, and so are the
      * handlers subscribed with {@link on}. The object passed in is not changed, the grid copies
@@ -424,8 +897,8 @@ export class GridInterface<T> {
      * column's `aggregate` is no aggregate function or needs a number field, a column's `format` does
      * not fit its field (see {@link ColumnFormat}), a column's `editor` is wrong - its lookup not
      * registered, see {@link ColumnEditor} - a column's `renderer` is not the id of a registered cell
-     * renderer, or is given with an `editor`, or a column's `filterOperators`, `operator` or
-     * `filterCaseSensitive` does not fit its type, see {@link ColumnConfig} - when `detailForm` is
+     * renderer, or is given with an `editor`, or a column's `filterOperators`, `operator`,
+     * `filterCaseSensitive` or `datePresets` does not fit its type, see {@link ColumnConfig} - when `detailForm` is
      * not a {@link DetailForm}, and when `edit` is not an object of the permissions `add`, `change` and
      * `delete`, each true or false (see {@link EditPermissions})
      *
@@ -447,15 +920,43 @@ export class GridInterface<T> {
         assertConfigTexts(config);
         assertTooltipLines(config);
         assertLineHeight(config);
-        assertAggregates(config, this.dataSource);
-        assertFormats(config, this.dataSource);
-        assertRenderers(config);
-        assertFilterOptions(config, this.dataSource);
         assertConfigDetailForm(config);
         assertEditPermissions(config.edit);
-        // checked before anything changes, like the rest
-        const lookupColumns = 'columns' in config ? lookupColumnsOf(config.columns, this.dataSource) : null;
-        const { columns, layout, initialState, ...options } = config;
+        assertConfigViews(config);
+        // the calculated columns first, as in the constructor: the checks below read their types. Taken
+        // back when one of them throws
+        let calculatedNext: Record<string, CalculatedColumn> | undefined;
+        const fieldType = this.calculatedFieldType(
+            config.columns ?? this.gridConfig.columns,
+            config.layout ?? this.gridConfig.layout
+        );
+        if ('calculatedColumns' in config) {
+            calculatedNext = structuredClone(config.calculatedColumns ?? {});
+            assertCalculatedColumns(calculatedNext, fieldType, this.isTakenName, 'GridConfig: calculatedColumns');
+            this.registerCalculated(calculatedNext, fieldType);
+        }
+        let lookupColumns: Map<string, LookupColumn> | null;
+        try {
+            assertAggregates(config, this.dataSource);
+            assertFormats(
+                config,
+                this.dataSource,
+                this.ruleFieldOf(config.columns ?? this.gridConfig.columns, config.layout ?? this.gridConfig.layout)
+            );
+            assertRenderers(config);
+            assertFilterOptions(config, this.dataSource);
+            // checked before anything changes, like the rest
+            lookupColumns = 'columns' in config ? lookupColumnsOf(config.columns, this.dataSource) : null;
+        } catch (error) {
+            if (calculatedNext) {
+                this.registerCalculated(this.calculated, fieldType);
+            }
+            throw error;
+        }
+        const { columns, layout, initialState, calculatedColumns, ...options } = config;
+        // Standard (no view shown) as the config's state stays unchanged: the config's layout or columns
+        // are what it shows from now on, see isViewModified
+        const keepStandard = this.currentViewId === null && !this.isViewModified();
 
         // other edit permissions: what is open was opened under the old ones - a menu, the date picker, the
         // editor of a multiline cell, a lookup's list - and could still write into a row they lock now.
@@ -478,6 +979,8 @@ export class GridInterface<T> {
         // `in`, so that `columns: undefined` gives every column the defaults, as it does for an option.
         // Their aggregates are the ones resetState() goes back to from now on
         if ('columns' in config) {
+            // a formula of a colour rule can read other columns now
+            this.ruleFormulas.clear();
             this.gridConfig.columns = structuredClone(columns ?? {});
             this.configAggregates = aggregatesOfColumns(this.gridConfig.columns);
             this.configFormats = formatsOfColumns(this.gridConfig.columns);
@@ -496,14 +999,32 @@ export class GridInterface<T> {
         if ('initialState' in config) {
             this.initialState = structuredClone(initialState ?? {});
         }
+        // the views made again, as when the grid was made: the config's and the stored ones. The view
+        // shown stays shown when it is still there
+        if ('views' in config || 'viewsStorageKey' in config) {
+            this.views = startViews(this.options.views, this.options.viewsStorageKey);
+            if (this.currentViewId !== null && !this.views.some((view) => view.id === this.currentViewId)) {
+                this.currentViewId = null;
+                this.viewBaseline = null;
+            }
+        }
+
+        // shown now, as a layout, and what resetState() goes back to
+        const next: Partial<GridState> = {};
+        if (calculatedNext) {
+            this.configCalculated = structuredClone(calculatedNext);
+            next.calculatedColumns = calculatedNext;
+        }
 
         // a grid always has a layout, `layout: undefined` keeps it
         if (layout) {
             this.configLayout = copyLayout(layout);
-            this.applyState({ layout: copyLayout(layout) });
-        } else {
-            // rebuilds once, the state stays as it is
-            this.applyState({});
+            next.layout = copyLayout(layout);
+        }
+        // rebuilds once, the rest of the state stays as it is
+        this.applyState(next);
+        if (keepStandard) {
+            this.showView(null);
         }
     }
 
@@ -545,15 +1066,38 @@ export class GridInterface<T> {
      * (shift+click sort, drag/drop, resizing)
      */
     private applyState(state: Partial<GridState>) {
-        // checked before anything changes: a wrong one throws and leaves the grid as it is
-        if (state.aggregates) {
-            assertAggregates({ columns: columnsWithAggregates(state.aggregates) }, this.dataSource, 'setState: aggregates');
+        // checked before anything changes: a wrong one throws and leaves the grid as it is. The calculated
+        // columns are given to the datasource first, the aggregates and formats are checked with their
+        // types - and taken back when one of them throws
+        const calculatedBefore = this.calculated;
+        const calculated = state.calculatedColumns;
+        const fieldType = this.calculatedFieldType(this.gridConfig.columns, state.layout ?? this.gridConfig.layout);
+        if (calculated !== undefined) {
+            assertCalculatedColumns(calculated, fieldType, this.isTakenName, 'setState: calculatedColumns');
+            this.registerCalculated(calculated, fieldType);
         }
-        if (state.formats) {
-            this.assertStateFormats(state.formats);
+        try {
+            if (state.aggregates) {
+                assertAggregates({ columns: columnsWithAggregates(state.aggregates) }, this.dataSource, 'setState: aggregates');
+            }
+            if (state.formats) {
+                this.assertStateFormats(state.formats);
+            }
+            if (state.detailForm !== undefined) {
+                assertDetailForm(state.detailForm, 'setState: detailForm');
+            }
+        } catch (error) {
+            if (calculated !== undefined) {
+                this.registerCalculated(calculatedBefore, fieldType);
+            }
+            throw error;
         }
-        if (state.detailForm !== undefined) {
-            assertDetailForm(state.detailForm, 'setState: detailForm');
+        // the calculated columns the grid had and has not anymore: no field of the rows now
+        const removed = new Set(
+            calculated === undefined ? [] : Object.keys(calculatedBefore).filter((name) => !Object.hasOwn(calculated, name))
+        );
+        if (calculated !== undefined) {
+            this.calculated = calculated;
         }
         this.suppressEvents = true;
 
@@ -595,23 +1139,39 @@ export class GridInterface<T> {
         if (state.headerFilters) {
             this.headerFilters = {};
             for (const [field, headerFilter] of Object.entries(state.headerFilters)) {
+                // a quick date the column can take is a BETWEEN, its days computed below
+                const datePreset = this.datePresetOf(field, headerFilter.datePreset);
                 this.storeHeaderFilter(
                     field,
                     headerFilter.value,
-                    headerFilter.operator,
+                    datePreset ? 'BETWEEN' : headerFilter.operator,
                     headerFilter.caseSensitive === true,
-                    typeof headerFilter.filterOnType === 'boolean' ? headerFilter.filterOnType : undefined
+                    typeof headerFilter.filterOnType === 'boolean' ? headerFilter.filterOnType : undefined,
+                    datePreset
                 );
+            }
+            // the quick dates are relative: computed from today, their conditions replace the columns' in
+            // the filter set - the state's, else the datasource's. A state saved yesterday with Today filters
+            // on today
+            if (Object.values(this.headerFilters).some((headerFilter) => headerFilter.datePreset)) {
+                state.filter = this.withDatePresets(state.filter !== undefined ? state.filter : this.getDatasource().getFilter());
             }
         }
 
-        const datasourceParts = state.filter !== undefined || state.sorting || state.grouping || state.expandedGroups;
+        if (calculated !== undefined) {
+            this.applyCalculatedColumns(removed);
+        }
+
+        // new calculated columns: the rows are filtered, sorted and grouped on their values again
+        const datasourceParts =
+            calculated !== undefined || state.filter !== undefined || state.sorting || state.grouping || state.expandedGroups;
         if (datasourceParts) {
-            // what is not given: the datasource's own, it replaces these when it is given new ones
+            // what is not given: the datasource's own, it replaces these when it is given new ones. A
+            // calculated column that is gone is taken out of them
             const datasource = this.getDatasource();
-            const filter = state.filter !== undefined ? state.filter : datasource.getFilter();
-            const sorting = state.sorting ?? datasource.getLastSorting();
-            const grouping = state.grouping ?? datasource.getGrouping();
+            const filter = filterWithout(state.filter !== undefined ? state.filter : datasource.getFilter(), removed);
+            const sorting = (state.sorting ?? datasource.getLastSorting()).filter((sort) => !removed.has(sort.attribute));
+            const grouping = (state.grouping ?? datasource.getGrouping()).filter((group) => !removed.has(group.attribute));
             const expandedGroups = state.expandedGroups ?? datasource.getExpanded();
 
             if (!sorting.length) {
@@ -648,6 +1208,181 @@ export class GridInterface<T> {
         } else {
             this.__dataSourceUpdated();
         }
+    }
+
+    /**
+     * The calculated columns of the state are new (applyState): each has an entry in `columns` (the
+     * column chooser lists it); one that is gone leaves the layout, the header filters and the detail
+     * form, and its format and aggregates - its entry stays, for the options of the config, the column
+     * chooser does not list it (__isGoneCalculated)
+     * @param removed the calculated columns the grid had and has not anymore
+     */
+    private applyCalculatedColumns(removed: ReadonlySet<string>) {
+        const columns = this.gridConfig.columns;
+        for (const name of Object.keys(this.calculated)) {
+            columns[name] ??= {};
+        }
+        if (!removed.size) {
+            return;
+        }
+        this.gridConfig.layout = layoutWithout(this.gridConfig.layout, removed);
+        for (const name of removed) {
+            if (columns[name]) {
+                delete columns[name].format;
+                delete columns[name].aggregate;
+            }
+            delete this.headerFilters[name];
+        }
+        const detailForm = this.gridConfig.detailForm;
+        if (detailForm.fields.some((field) => removed.has(field))) {
+            this.gridConfig.detailForm = { ...detailForm, fields: detailForm.fields.filter((field) => !removed.has(field)) };
+        }
+    }
+
+    /**
+     * Gives the datasource a calculated field for each calculated column (CalculatedField) and takes back
+     * the ones this grid gave it that are not among them - not what another grid gave it since. A column
+     * whose formula has a problem gets none (the checks keep such a column out of the state)
+     * @param fieldType the type of a field that is not calculated, see calculatedFieldType
+     */
+    private registerCalculated(columns: Record<string, CalculatedColumn>, fieldType: (field: string) => FieldType | undefined) {
+        const compiled = compileCalculatedColumns(columns, fieldType);
+        const fields = calculatedFields(compiled, (name) => calculatedLabel(columns[name], name, prettyPrintString));
+        for (const [name, field] of this.calculatedFieldsSet) {
+            if (!fields.has(name) && this.dataSource.__getCalculatedField(name) === field) {
+                this.dataSource.__setCalculatedField(name, null);
+            }
+        }
+        for (const [name, field] of fields) {
+            this.dataSource.__setCalculatedField(name, field);
+            this.everCalculated.add(name);
+        }
+        this.calculatedFieldsSet = fields;
+        // a formula of a colour rule reads the calculated columns: read them again
+        this.ruleFormulas.clear();
+    }
+
+    /**
+     * What a colour rule's condition or formula knows of a field (RuleFieldOf): a field of the datasource,
+     * a calculated column, a column of the config or the layout - its type in the datasource, and whether
+     * it is a lookup column (`editor`). undefined for another field, and for a calculated column that is
+     * gone
+     * @param columns the columns of the config
+     * @param layout the layout
+     */
+    private ruleFieldOf(columns: Record<string, ColumnConfig>, layout: GridLayout): RuleFieldOf {
+        const fieldType = this.calculatedFieldType(columns, layout);
+        return (field) => {
+            // the calculated columns given to the datasource: the state's, or the new ones while they are checked
+            const known = this.calculatedFieldsSet.has(field) || fieldType(field) !== undefined;
+            return known
+                ? { type: this.dataSource.getField(field).type, lookup: columns[field]?.editor !== undefined }
+                : undefined;
+        };
+    }
+
+    /**
+     * @internal
+     * What a colour rule's condition or formula knows of a field now, see ruleFieldOf - for the grid config
+     * dialog
+     */
+    public __ruleFieldOf(): RuleFieldOf {
+        return this.ruleFieldOf(this.gridConfig.columns, this.gridConfig.layout);
+    }
+
+    /**
+     * @internal
+     * true when the formula of a colour rule (`ColorRule.expression`) is true in the row. A formula with a
+     * problem, or that is not true / false, is never true - nor is it in a row where it can not be
+     * computed. Never throws
+     */
+    public __ruleFormulaMatches(expression: string, row: Entity): boolean {
+        let formula = this.ruleFormulas.get(expression);
+        if (formula === undefined) {
+            const fieldOf = this.__ruleFieldOf();
+            const compiled = compileFormula(expression, (field) => {
+                const known = fieldOf(field);
+                return known ? { type: known.type === 'datetime' ? 'date' : known.type } : undefined;
+            });
+            formula = 'formula' in compiled && compiled.formula.type === 'boolean' ? compiled.formula : null;
+            this.ruleFormulas.set(expression, formula);
+        }
+        if (!formula) {
+            return false;
+        }
+        const result = formula.evaluate(readerOf(row, this.calculatedFieldsSet));
+        return 'value' in result && result.value === true;
+    }
+
+    /**
+     * The type a formula reads a field that is not calculated with (compileCalculatedColumns): the
+     * datasource's `fields`, else text for a field of a column or of the layout. undefined for a field
+     * the grid does not know - and for a calculated column that is gone
+     * @param columns the columns of the config
+     * @param layout the layout
+     */
+    private calculatedFieldType(
+        columns: Record<string, ColumnConfig>,
+        layout: GridLayout
+    ): (field: string) => FieldType | undefined {
+        const inLayout = new Set(
+            [...(layout.left ?? []), ...(layout.center ?? []), ...(layout.right ?? [])].flatMap((column) => column.fields ?? [])
+        );
+        return (field) => {
+            const listed = this.dataSource.__getListedField(field);
+            if (listed) {
+                return listed.type ?? 'text';
+            }
+            if (this.everCalculated.has(field)) {
+                return undefined;
+            }
+            return Object.hasOwn(columns, field) || inLayout.has(field) ? 'text' : undefined;
+        };
+    }
+
+    /**
+     * true for a name a calculated column can not have: a field of the datasource (its `fields`, on its
+     * container too) or of its rows (an own property of a row) - the column would hide its values
+     */
+    private isTakenName = (name: string): boolean =>
+        this.dataSource.__isListedField(name) || this.dataSource.getAllData().some((row) => Object.hasOwn(row, name));
+
+    /**
+     * @internal
+     * true for a field that is a calculated column of the state (GridState.calculatedColumns)
+     */
+    public __isCalculated(field: string): boolean {
+        return Object.hasOwn(this.calculated, field);
+    }
+
+    /**
+     * @internal
+     * true for a field that was a calculated column and is not anymore: no field of the rows, the column
+     * chooser does not list it
+     */
+    public __isGoneCalculated(field: string): boolean {
+        return this.everCalculated.has(field) && !this.__isCalculated(field);
+    }
+
+    /**
+     * @internal
+     * The calculated columns the grid starts with - `initialState.calculatedColumns`, else the config's:
+     * what resetState() goes back to, and the grid config dialog's "Reset all". A copy
+     */
+    public __getStartCalculated(): Record<string, CalculatedColumn> {
+        return structuredClone(this.initialState.calculatedColumns ?? this.configCalculated);
+    }
+
+    /**
+     * @internal
+     * For the grid config dialog: the type a formula reads a field that is not calculated with, and
+     * whether a name is taken - as setState() checks them
+     */
+    public __calculatedNames(): { fieldType: (field: string) => FieldType | undefined; isTaken: (name: string) => boolean } {
+        return {
+            fieldType: this.calculatedFieldType(this.gridConfig.columns, this.gridConfig.layout),
+            isTaken: this.isTakenName
+        };
     }
 
     /**
@@ -758,8 +1493,10 @@ export class GridInterface<T> {
         // the element was not in the dom (then nothing calls it), or shows another interface now
         this.__disconnectGrid();
         this.events.clear();
-        // the datasource can be shown in another grid: it sorts its fields on their values again
+        // the datasource can be shown in another grid: it sorts its fields on their values again, and
+        // has no calculated fields of this grid
         this.clearSortValues();
+        this.registerCalculated({}, () => undefined);
     }
 
     /**
@@ -1093,6 +1830,30 @@ export class GridInterface<T> {
     public openDetailFormSettings() {
         if (this.grid) {
             openColumnSettings(this.grid, undefined, 'detailForm');
+        }
+    }
+
+    /**
+     * Opens the keyboard shortcuts help: a dialog that lists the keys of the grid in groups, with a
+     * search - as `?` (where it types nothing) and Ctrl+/ in the grid do, and *Keyboard shortcuts…* in
+     * the header menu. The keys as the platform names them, ⌘ on a Mac; a key that does nothing in this
+     * grid is left out - the editing keys of a readonly grid. For a help button of your own: it opens the
+     * help also with `GridConfig.shortcutHelp: false`, which turns the grid's own ways to open it off.
+     *
+     * A modal `<dialog>`, as the filter editor: the focus moves into it - into its search when a key
+     * opened it - Esc closes it, the focus goes back to where it was; the user drags it by its title bar
+     * and resizes it from every edge and corner. Its texts are `shortcuts.*`.
+     *
+     * Does nothing while the grid is not on the page.
+     *
+     * @example
+     * ```ts
+     * document.getElementById('keys-help')!.onclick = () => gridInterface.openShortcutHelp();
+     * ```
+     */
+    public openShortcutHelp() {
+        if (this.grid) {
+            openShortcutHelp(this.grid);
         }
     }
 
@@ -2015,7 +2776,7 @@ export class GridInterface<T> {
     /**
      * @internal
      * sets what a column's header filter cell shows, keeps the operator picked and "Match case".
-     * null/'' is empty
+     * null/'' is empty. A quick date (`datePreset`) is replaced: the value is the user's now
      */
     public __setHeaderFilterValue(field: string, value: unknown) {
         const headerFilter = this.headerFilters[field];
@@ -2030,7 +2791,8 @@ export class GridInterface<T> {
 
     /**
      * @internal
-     * sets the operator picked in a column's header filter menu, keeps the value and "Match case"
+     * sets the operator picked in a column's header filter menu, keeps the value and "Match case" - and a
+     * quick date when it is `BETWEEN` (a quick date is one), filterCallback runs it again then
      */
     public __setHeaderFilterOperator(field: string, operator: FilterOperator) {
         const headerFilter = this.headerFilters[field];
@@ -2039,8 +2801,28 @@ export class GridInterface<T> {
             headerFilter?.value,
             operator,
             headerFilter?.caseSensitive === true,
-            headerFilter?.filterOnType
+            headerFilter?.filterOnType,
+            operator === 'BETWEEN' ? headerFilter?.datePreset : undefined
         );
+    }
+
+    /**
+     * @internal
+     * sets a quick date as a column's header filter (datePresetFilter.ts): the operator `BETWEEN`, the
+     * `[from, to]` of its days as the value, and the quick date. Keeps "Match case" and filter as you type
+     */
+    public __setHeaderFilterDatePreset(field: string, datePreset: DatePreset, value: [Date | null, Date]) {
+        const headerFilter = this.headerFilters[field];
+        this.storeHeaderFilter(
+            field,
+            value,
+            'BETWEEN',
+            headerFilter?.caseSensitive === true,
+            headerFilter?.filterOnType,
+            datePreset
+        );
+        // no rebuild may follow: the views button shows the change
+        this.__refreshViewsButton();
     }
 
     /**
@@ -2049,7 +2831,16 @@ export class GridInterface<T> {
      */
     public __setHeaderFilterCaseSensitive(field: string, caseSensitive: boolean) {
         const headerFilter = this.headerFilters[field];
-        this.storeHeaderFilter(field, headerFilter?.value, headerFilter?.operator, caseSensitive, headerFilter?.filterOnType);
+        this.storeHeaderFilter(
+            field,
+            headerFilter?.value,
+            headerFilter?.operator,
+            caseSensitive,
+            headerFilter?.filterOnType,
+            headerFilter?.datePreset
+        );
+        // no rebuild may follow: the views button shows the change
+        this.__refreshViewsButton();
     }
 
     /**
@@ -2064,8 +2855,11 @@ export class GridInterface<T> {
             headerFilter?.value,
             headerFilter?.operator,
             headerFilter?.caseSensitive === true,
-            filterOnType
+            filterOnType,
+            headerFilter?.datePreset
         );
+        // no rebuild may follow: the views button shows the change
+        this.__refreshViewsButton();
     }
 
     /**
@@ -2099,15 +2893,17 @@ export class GridInterface<T> {
     /**
      * stores a column's header filter, or removes it when it has no value, no operator, no "Match
      * case" and no filter as you type of the user's - so getState() lists only the header filters in
-     * use. An empty value ('' or undefined) is stored as null, `operator`, `caseSensitive` and
-     * `filterOnType` only when they are set
+     * use. An empty value ('' or undefined) is stored as null, `operator`, `caseSensitive`,
+     * `filterOnType` and `datePreset` only when they are set
+     * @param datePreset the quick date the value was computed from, see `HeaderFilter.datePreset`
      */
     private storeHeaderFilter(
         field: string,
         value: unknown,
         operator: FilterOperator | undefined,
         caseSensitive: boolean,
-        filterOnType?: boolean
+        filterOnType?: boolean,
+        datePreset?: DatePreset
     ) {
         const empty = value === null || value === undefined || value === '';
         if (empty && !operator && !caseSensitive && filterOnType === undefined) {
@@ -2124,7 +2920,45 @@ export class GridInterface<T> {
         if (filterOnType !== undefined) {
             headerFilter.filterOnType = filterOnType;
         }
+        if (datePreset) {
+            headerFilter.datePreset = datePreset;
+        }
         this.headerFilters[field] = headerFilter;
+    }
+
+    /**
+     * `datePreset` of a state's header filter when the column can take it: a quick date (datePresets.ts)
+     * on a date or datetime column - not a lookup column - whose header filter offers `BETWEEN`. Else
+     * undefined: the header filter is kept without it. It need not be one the column's `datePresets`
+     * offers, as an operator of the state is not checked against `filterOperators` either
+     */
+    private datePresetOf(field: string, datePreset: unknown): DatePreset | undefined {
+        if (!isDatePreset(datePreset)) {
+            return undefined;
+        }
+        const type = this.__getLookupColumn(field) ? 'text' : this.getDatasource().getField(field).type;
+        return takesDatePresets(type, headerOperators(this.gridConfig.columns[field], type)) ? datePreset : undefined;
+    }
+
+    /**
+     * The quick dates of the header filters computed from today (datePresetRange, the week from the date
+     * picker's `weekStart`): each one's value is set to its days now, and its `BETWEEN` replaces the
+     * column's conditions in `filter` (withColumnConditions, as a header filter does). The filter as it
+     * is when no header filter is a quick date
+     */
+    private withDatePresets(filter: FilterExpression | null): FilterExpression | null {
+        const now = new Date();
+        const weekStart = weekStartOf(this.gridConfig.datePickerConfig);
+        let result = filter;
+        for (const [field, headerFilter] of Object.entries(this.headerFilters)) {
+            if (!headerFilter.datePreset) {
+                continue;
+            }
+            const range = datePresetRange(headerFilter.datePreset, this.getDatasource().getField(field).type, now, weekStart);
+            headerFilter.value = range;
+            result = withColumnConditions(result, field, [where(field, 'BETWEEN', range)]);
+        }
+        return result;
     }
 
     /**
@@ -2260,14 +3094,15 @@ export class GridInterface<T> {
 
     /**
      * @internal
-     * Is the cell readonly: on a row the edit permissions (`GridConfig.edit`) do not let the user change,
-     * every cell is - whatever the hook says. Else the `isReadonly` hook decides, and when it gives no
+     * Is the cell readonly: a calculated column's always; on a row the edit permissions (`GridConfig.edit`)
+     * do not let the user change, every cell is - whatever the hook says. Else the `isReadonly` hook decides, and when it gives no
      * answer (anything but `true` / `false`) the column's `readonly` option. The grid's own `readonly`
      * is not part of it, the callers check that first
      * @param row a row of the datasource, so one of its `EntityUnion<T>` rows
      */
     public __isCellReadonly(row: Entity, field: string): boolean {
-        if (!mayChangeRow(this.gridConfig.edit, row)) {
+        // a calculated column is computed, never edited; a row the edit permissions lock, every cell
+        if (this.__isCalculated(field) || !mayChangeRow(this.gridConfig.edit, row)) {
             return true;
         }
         // the user's (format.readonly) over the column's
@@ -2442,9 +3277,17 @@ export class GridInterface<T> {
         if (typeof formats !== 'object' || formats === null || Array.isArray(formats)) {
             throw new TypeError(`setState: formats is an object of formats by field, got ${JSON.stringify(formats)}`);
         }
+        const fieldOf = this.__ruleFieldOf();
         for (const [field, format] of Object.entries(formats)) {
             const lookup = this.gridConfig.columns[field]?.editor !== undefined;
-            assertColumnFormat(format, field, this.dataSource.getField(field).type, lookup, `setState: formats.${field}`);
+            assertColumnFormat(
+                format,
+                field,
+                this.dataSource.getField(field).type,
+                lookup,
+                `setState: formats.${field}`,
+                fieldOf
+            );
         }
     }
 
@@ -2684,6 +3527,9 @@ function withDefaults(options: GridOptions): ParsedGridOptions {
         copyHeaders: options.copyHeaders ?? true,
         filterOperatorIndicator: options.filterOperatorIndicator ?? true,
         settingsButton: options.settingsButton ?? true,
+        // shown when the grid has views to keep
+        viewsButton: options.viewsButton ?? (options.views !== undefined || options.viewsStorageKey !== undefined),
+        shortcutHelp: options.shortcutHelp ?? true,
         placeholderRowCurrentEntityOnly: options.placeholderRowCurrentEntityOnly ?? true,
         groupAggregates: options.groupAggregates ?? true,
         totalsRow: options.totalsRow ?? false,
@@ -2818,6 +3664,34 @@ function assertConfigDetailForm(config: Partial<GridConfig>) {
 }
 
 /**
+ * `views` is a list of {@link GridView}s (see assertViews) and `viewsStorageKey` a text: TypeScript does
+ * not catch a config from plain JavaScript or JSON. Left out or undefined is none
+ * @throws a `TypeError` that says what is wrong
+ */
+function assertConfigViews(config: Partial<GridConfig>) {
+    if (config.views !== undefined) {
+        assertViews(config.views, 'GridConfig.views');
+    }
+    if (config.viewsStorageKey !== undefined && (typeof config.viewsStorageKey !== 'string' || config.viewsStorageKey === '')) {
+        throw new TypeError(
+            `GridConfig.viewsStorageKey is the key of localStorage, a text, got ${JSON.stringify(config.viewsStorageKey)}`
+        );
+    }
+}
+
+/**
+ * The name of a view: the text with its spaces at the ends taken off
+ * @param where the caller, for the message
+ * @throws a `TypeError` when it is no text, or only spaces
+ */
+function viewName(name: unknown, where: string): string {
+    if (typeof name !== 'string' || name.trim() === '') {
+        throw new TypeError(`${where}: the name of a view is a text, not empty - got ${JSON.stringify(name)}`);
+    }
+    return name.trim();
+}
+
+/**
  * A column's `aggregate` is one of the functions or a list of them, and `sum`, `avg`, `min` and `max`
  * are for a number field: TypeScript catches neither in a config from plain JavaScript or JSON, and the
  * grid would show nothing (a text field has no numbers to sum) without a word
@@ -2853,13 +3727,20 @@ function assertAggregates(config: Partial<GridConfig>, datasource: Datasource<an
  * a number part for a number field, of the values they take, and none on a lookup column
  * @throws a `TypeError` naming the column and what it takes
  */
-function assertFormats(config: Partial<GridConfig>, datasource: Datasource<any>) {
+function assertFormats(config: Partial<GridConfig>, datasource: Datasource<any>, fieldOf: RuleFieldOf) {
     for (const [field, column] of Object.entries(config.columns ?? {})) {
         if (!column || typeof column !== 'object') {
             continue;
         }
         const type = datasource.getField(field).type;
-        assertColumnFormat(column.format, field, type, column.editor !== undefined, `GridConfig: columns.${field}.format`);
+        assertColumnFormat(
+            column.format,
+            field,
+            type,
+            column.editor !== undefined,
+            `GridConfig: columns.${field}.format`,
+            fieldOf
+        );
     }
 }
 
@@ -2893,6 +3774,7 @@ function assertRenderers(config: Partial<GridConfig>) {
  * - `operator`: one of those the header filter takes, of `filterOperators` when it is given
  * - `filterCaseSensitive`: a boolean, `true` for a text column only
  * - `filterOnType`: a boolean
+ * - `datePresets`: see assertDatePresets
  * @throws a `TypeError` naming the column, what it has and what it takes
  */
 function assertFilterOptions(config: Partial<GridConfig>, datasource: Datasource<any>) {
@@ -2946,6 +3828,30 @@ function assertFilterOptions(config: Partial<GridConfig>, datasource: Datasource
                 `${name}.filterCaseSensitive is for a text column, '${field}' is ${type}: its filters have no case`
             );
         }
+        assertDatePresets(column, type, name);
+    }
+}
+
+/**
+ * `ColumnConfig.datePresets`: `false`, or a list of quick dates (DATE_PRESETS) - for a date or datetime
+ * column. A list that is not empty needs `BETWEEN` among the column's operators: a quick date is one
+ * @param type the type the column filters as: a lookup column's is text
+ * @param name the column, for the message
+ */
+function assertDatePresets(column: ColumnConfig, type: FieldType, name: string) {
+    const { datePresets } = column as Record<string, unknown>;
+    if (datePresets === undefined || datePresets === false) {
+        return;
+    }
+    const ids = DATE_PRESETS.map((id) => `'${id}'`).join(', ');
+    if (!Array.isArray(datePresets) || !datePresets.every(isDatePreset)) {
+        throw new TypeError(`${name}.datePresets is false or a list of quick dates (${ids}), got ${JSON.stringify(datePresets)}`);
+    }
+    if (type !== 'date' && type !== 'datetime') {
+        throw new TypeError(`${name}.datePresets is for a date or datetime column, this one filters as ${type}`);
+    }
+    if (datePresets.length && !takesDatePresets(type, headerOperators(column, type))) {
+        throw new TypeError(`${name}.datePresets needs 'BETWEEN' in its filterOperators: a quick date is a range of days`);
     }
 }
 

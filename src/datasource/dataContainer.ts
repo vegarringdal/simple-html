@@ -1,5 +1,6 @@
 import { Emitter, type EventHandler } from '../emitter';
 import { assertOptions } from './assertOptions';
+import type { CalculatedField } from './calculatedField';
 import type { Changes, ModifiedEntity } from './changes';
 import type { DatasourceEvents } from './datasourceEvents';
 import type { DataEntity, Entity } from './entity';
@@ -140,6 +141,16 @@ export class DataContainer {
     private __changeCounts = new Map<string, number>();
 
     /**
+     * the calculated fields, by name (see CalculatedField): every row's proxy is given this Map and
+     * answers a read of one with its value in the row. Set by the datasources on the container
+     * (__setCalculatedField), for the grid's calculated columns
+     */
+    private __calculated = new Map<string, CalculatedField>();
+
+    /** the day (dayNumber) the change count of each calculated field that uses TODAY() was last counted on */
+    private __calculatedDays = new Map<string, number>();
+
+    /**
      * @param UniqueKeyAttribute the field that identifies a row, e.g. `'id'`. The selection follows it,
      * so it survives replacing the rows with fresh ones from a server. Left out, every row gets a
      * generated key (a negative number)
@@ -187,6 +198,11 @@ export class DataContainer {
      */
     public __addFields(types: Map<string, FieldType>, rules: Map<string, ResolvedRule[]>): void {
         for (const [field, type] of types) {
+            if (this.__calculated.has(field)) {
+                throw new Error(
+                    `Datasource: field '${field}' is a calculated field of a grid on the same container, give it another name`
+                );
+            }
             const known = this.__fieldTypes.get(field);
             if (known !== undefined && known !== type) {
                 throw new Error(
@@ -326,7 +342,64 @@ export class DataContainer {
      * while it stays the same, see Datasource.aggregate()
      */
     public __getChangeCount(field: string): number {
+        // a calculated field that uses TODAY(): its values are others the next day
+        if (this.__calculated.get(field)?.daily) {
+            const today = dayNumber();
+            if (this.__calculatedDays.get(field) !== today) {
+                this.__calculatedDays.set(field, today);
+                this.bumpCount(field);
+            }
+        }
         return this.__changeCounts.get(field) ?? 0;
+    }
+
+    /** a field's change count one up: what is kept of its values is out of date */
+    private bumpCount(field: string) {
+        this.__changeCounts.set(field, (this.__changeCounts.get(field) ?? 0) + 1);
+    }
+
+    /**
+     * @internal
+     * Sets a calculated field of the rows, or takes it out (null): from now on a read of it on any row
+     * of the container is its value, computed then (see CalculatedField). Its change count moves: an
+     * aggregate kept of it is out of date. No event is sent - the caller filters, sorts and renders again
+     * @throws a `TypeError` for a field a datasource on the container lists in its `fields`, and for a
+     * name of the grid's own (`__...`): a calculated field would hide the row's own values
+     */
+    public __setCalculatedField(name: string, field: CalculatedField | null): void {
+        if (name.startsWith('__')) {
+            throw new TypeError(
+                `Datasource: '${name}' can not be a calculated field, the names that start with __ are the grid's own`
+            );
+        }
+        if (this.__fieldTypes.has(name)) {
+            throw new TypeError(
+                `Datasource: '${name}' is a field of the datasource (its fields), a calculated field needs a name of its own`
+            );
+        }
+        if (field) {
+            this.__calculated.set(name, field);
+        } else {
+            this.__calculated.delete(name);
+            this.__calculatedDays.delete(name);
+        }
+        this.bumpCount(name);
+    }
+
+    /**
+     * @internal
+     * true when a datasource on the container lists the field in its `fields`
+     */
+    public __isListedField(name: string): boolean {
+        return this.__fieldTypes.has(name);
+    }
+
+    /**
+     * @internal
+     * the calculated field of the name, undefined when there is none
+     */
+    public __getCalculatedField(name: string): CalculatedField | undefined {
+        return this.__calculated.get(name);
     }
 
     /**
@@ -335,7 +408,7 @@ export class DataContainer {
      */
     private changed(row: Entity, field: string | null) {
         if (field !== null) {
-            this.__changeCounts.set(field, (this.__changeCounts.get(field) ?? 0) + 1);
+            this.bumpCount(field);
         }
         let fields = this.__changed.get(row);
         if (!fields) {
@@ -344,6 +417,13 @@ export class DataContainer {
         }
         if (field !== null) {
             fields.add(field);
+            // a calculated field computed from it changed with it
+            for (const [name, calculated] of this.__calculated) {
+                if (calculated.uses.includes(field)) {
+                    this.bumpCount(name);
+                    fields.add(name);
+                }
+            }
         }
         this.flushLater();
     }
@@ -1488,6 +1568,8 @@ export class DataContainer {
                       isNew,
                       // read when an edit is made, so a datasource made after the rows were set counts too
                       fieldType: (field) => this.__fieldTypes.get(field),
+                      // the Map itself: a calculated field set later is answered too
+                      calculated: this.__calculated,
                       onEdit: (row, field, oldValue) => {
                           this.__history.record({ row: row as DataEntity, field, before: oldValue, after: row[field] });
                           this.validateEdit(row, field);
@@ -1560,4 +1642,13 @@ function rulesText(rules: readonly ResolvedRule[]): string {
                 .map((key) => [key, rule[key]])
         )
     );
+}
+
+/**
+ * today as a whole number, the days since 1970-01-01 on the local calendar: when it moves, a calculated
+ * field that uses TODAY() has other values
+ */
+function dayNumber(): number {
+    const now = new Date();
+    return Math.round(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86_400_000);
 }

@@ -2,6 +2,7 @@
 
 The config is what you write. The state is what the user changes while working with the grid. Read
 it with `getState()`, give it back with `setState()`, and go back to the start with `resetState()`.
+The user can keep several under names and switch between them in the footer: [Views](#views).
 
 ## What the state is
 
@@ -14,10 +15,11 @@ it with `getState()`, give it back with `setState()`, and go back to the start w
 | `grouping` | the grouping, as `datasource.getGrouping()` |
 | `expandedGroups` | the ids of the expanded groups |
 | `filter` | the filter the rows are filtered by, as `datasource.getFilter()`. `null` when there is none |
-| `headerFilters` | what each header filter cell shows: the value, the operator picked in its menu and its Match case |
+| `headerFilters` | what each header filter cell shows: the value, the operator picked in its menu and its Match case - and a quick date (This month) |
 | `aggregates` | the aggregate functions of the columns, keyed by field (`{ balance: ['sum', 'avg'] }`): what `ColumnConfig.aggregate` starts with and the header menu changes, see [Aggregates](18-aggregates.md#from-the-header-menu) |
 | `totalsRow` | whether the totals row is shown: `GridConfig.totalsRow`, turned on and off in the header menu |
 | `formats` | the display formats of the columns, keyed by field (`{ born: { date: 'weekIso' } }`, `{ email: { link: { url: 'mailto:{email}' } } }`): what `ColumnConfig.format` starts with and the header menu's Format ›, the grid config dialog and the column chooser's ✎ (a label) change, see [Display formats](08-formatting.md#display-formats) and [Templates and links](08-formatting.md#templates-and-links) |
+| `calculatedColumns` | the calculated columns, keyed by field (`{ total: { formula: '{price} * {qty}', label: 'Total' } }`): what `GridConfig.calculatedColumns` starts with and the grid config dialog adds, changes and removes, see [Calculated columns in the state](#calculated-columns-in-the-state) |
 | `detailForm` | the detail form: whether it is shown, its fields in their order, its width (dragged too) and its least and most width, expanded or collapsed (`{ show: true, fields: ['name', 'notes'], width: 300 }`) - what `GridConfig.detailForm` starts with and the grid config dialog, the form's edge and its title change, see [The detail form](02-grid-config.md#the-detail-form) |
 
 ```ts
@@ -30,7 +32,8 @@ state.headerFilters; // { age: { value: 30 } }
 
 `filter` is what the rows are filtered by. `headerFilters` is only what the header cells show: the
 conditions a header filter made are in `filter` already. Keep both, as `getState()` gives them, so
-the header shows what the rows are filtered by.
+the header shows what the rows are filtered by. A quick date is the one exception: it is computed
+from today when the state is set, see [below](#quick-dates-in-the-state).
 
 These are **not** state: the options (`readonly`, `dimRepeatedValues`, sizes ... see
 [Grid config](02-grid-config.md)), the data and its edits, the selected rows, the current row, the
@@ -210,6 +213,35 @@ gridInterface.setState({
   throws a `TypeError`, and nothing of the state changes.
 - It is plain JSON.
 
+## Calculated columns in the state
+
+`calculatedColumns` is keyed by field: the columns whose value a formula computes from the row, see
+[Calculated columns](23-calculated-columns.md).
+
+```ts
+const saved = gridInterface.getState().calculatedColumns; // { total: { formula: '{price} * {qty}', label: 'Total' } }
+
+// one more, at the end of the layout
+const layout = gridInterface.getState().layout;
+layout.center.push({ fields: ['half'], width: 90 });
+gridInterface.setState({ calculatedColumns: { ...saved, half: { formula: '{price} / 2' } }, layout });
+```
+
+- It starts as `GridConfig.calculatedColumns` (or `initialState.calculatedColumns`), and `resetState()`
+  goes back to it. `updateConfig({ calculatedColumns })` shows new ones at once.
+- The user changes it in the grid config dialog: its Apply is a `setState({ calculatedColumns })`, with
+  the layout of a new one.
+- `setState({ calculatedColumns })` replaces all of them, and the rows are filtered, sorted and grouped
+  again with their values. One left out is taken out of the layout, the sort, the grouping, the filter,
+  the header filters and the detail form; its format and aggregates go.
+- **A saved state runs nothing**: a formula is text read by the grid's own small language - no `eval`.
+  A formula with a problem, a name that is a field of the rows, anything that is no calculated column
+  throws a `TypeError`, and nothing of the state changes. See
+  [Security](23-calculated-columns.md#security).
+- It is applied before the formats and aggregates of the same state: a `format` of a calculated column
+  is checked against its type.
+- It is plain JSON.
+
 ## Header filters in the state
 
 `headerFilters` is keyed by field. Only the columns whose header filter has a value, an operator
@@ -259,3 +291,137 @@ gridInterface.setState({
     headerFilters: { country: { value: 'Norway' } }
 });
 ```
+
+### Quick dates in the state
+
+A [quick date](06-filtering.md#quick-dates) picked in a date column's filter menu - This month, Last
+week, Overdue ... - is kept as itself, `datePreset`, with the operator `BETWEEN` and the days it was
+computed to last:
+
+```ts
+import type { GridState } from '@simple-html/grid';
+
+// getState() on 22 November 2026, after Quick dates › This month on orderDate
+const saved: Pick<GridState, 'headerFilters'> = {
+    headerFilters: {
+        orderDate: { value: [new Date(2026, 10, 1), new Date(2026, 10, 30)], operator: 'BETWEEN', datePreset: 'thisMonth' }
+    }
+};
+```
+
+It is **relative**: `setState()` (and `initialState`, `resetState()`) computes its days from the day it
+is set - the same state set on 2 December filters on December - and its `BETWEEN` replaces the
+column's conditions in the state's `filter` (in the filter the grid has, when the state has none), the
+other conditions kept. The `value` stored is only what it was last; give `value: null` and the grid
+fills it in. So `setState({ headerFilters: { orderDate: { value: null, datePreset: 'today' } } })`
+filters on today, without a `filter`. `filter` itself is plain - `getFilter()` and
+[`toSqlWhere()`](22-sql.md#a-quick-date) see the dates of the day - and through JSON its Dates are ISO
+text, as any. A quick date a column can not take (not a date column, no `BETWEEN` in its
+`filterOperators`, an id that is none) is left out, the rest of the header filter kept. A page open
+over midnight: `gridInterface.refreshDatePresets()`, which the grid calls when the window gets the
+focus back.
+
+## Views
+
+A view is a snapshot of the state under a name: "My open orders", "Late deliveries". The user saves
+the views they need and switches between them in the footer - the columns, widths, filters, sorting,
+grouping, formats and colour rules, the totals row and the detail form of each come with it. A view is
+plain JSON, a `GridView`:
+
+```ts
+import type { GridView } from '@simple-html/grid';
+
+const view: GridView = {
+    id: 'mine', // unique in the list, never shown
+    name: 'My open orders',
+    state: gridInterface.getState(), // what it applies
+    readonly: false, // true: a view of yours the user can apply, not change
+    default: false // true: the view the grid starts in
+};
+```
+
+```sample views
+```
+
+### The views button
+
+`views` or `viewsStorageKey` in the config shows the views button at the left end of the footer, on
+the line of the filter - the first stop of Tab in the footer. It shows the name of the view shown,
+**Standard** when none is: the config's state (`initialState` and `layout`). A `*` after the name says
+the state changed since the view was applied or saved - a filter, a column moved or resized, a sort; its
+name for a screen reader says it in words, "View: My open orders (changed)". A click opens the views
+menu: the views to switch to - one click - then *Save*, *Save as new view…*, *Revert changes*,
+*Rename…*, *Delete* and *Default view*, see [The views menu](10-menus.md#the-views-menu). On a narrow
+grid the filter goes first: the name is cut where the filter's row starts, its tooltip has all of it.
+`viewsButton: false` hides the button, the API below still works.
+
+### Where the views are kept
+
+The grid keeps the list; where it is stored is the app's choice:
+
+- **localStorage**: `viewsStorageKey: 'orders-grid-views'` - read when the grid is made, written
+  each time the list changes. Stored are the views that are not readonly, and which one is the default.
+  A browser that refuses (blocked storage) gives a warning in the console, the views stay until the
+  page is left.
+- **a backend**: `views-change` sends the list each time the user changes it, give it back as
+  `views` next time - or later with `setViews()`.
+
+```ts
+import { createGrid, type GridConfig, type GridView } from '@simple-html/grid';
+
+declare const config: GridConfig;
+
+const saved: GridView[] = await (await fetch('/api/settings/orders-grid-views')).json();
+const gridInterface = createGrid(host, { config: { ...config, views: saved }, datasource });
+
+gridInterface.on('views-change', async ({ views }) => {
+    await fetch('/api/settings/orders-grid-views', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(views.filter((view) => !view.readonly))
+    });
+});
+```
+
+**Views of yours** go in `views` with `readonly: true`: views the company shares, say. The user
+applies them and can save one as a view of their own (*Save as new view…*), not save over, rename or
+delete it. With `viewsStorageKey` they come from the config every time - change them and every user
+gets the new ones - while the user's own come from the storage once the user has saved one: a view of
+`views` that is not readonly and was deleted stays deleted.
+
+A view keeps the layout it was saved with. When the columns of the config change much, put a version
+in the storage key, as for a saved state (see [Saving it](#saving-it)).
+
+### Applying, saving, modified
+
+```ts
+const late = gridInterface.saveViewAs('Late deliveries'); // the state now, the view shown from now on
+gridInterface.applyView(late.id); // shows it
+gridInterface.getCurrentView()?.name; // 'Late deliveries'
+
+gridInterface.setState({ sorting: [{ attribute: 'dueDate', ascending: true }] });
+gridInterface.isViewModified(); // true: the * on the button
+gridInterface.saveView(); // saved over the view shown
+gridInterface.renameView(late.id, 'Late');
+gridInterface.setDefaultView(late.id); // the grid starts in it next time
+gridInterface.deleteView(late.id);
+gridInterface.applyView(null); // Standard: the config's state, as resetState()
+```
+
+- **A view is all of the state.** Applied, what its `state` leaves out is the config's state - its
+  `initialState` and `layout` - not what was shown before: a view of a filter and a sort only is the
+  config's columns with that filter and sort.
+- **Modified** compares the state as JSON with the one the view was applied or saved with. Opening and
+  closing groups is no change (the expanded groups are left out); the current row, the scroll
+  position and Find are no state. Applying the view again (*Revert changes*) takes the change back.
+- **`setState()` from code is a change** like the user's: the view stays the view shown, marked as
+  changed. The grid config dialog's Apply too.
+- **`resetState()`** goes back to the config's state: Standard, no view shown - also when the grid
+  started in a default view.
+- **The default view** (`default: true`, one at most) is applied when the grid is made, instead of
+  `initialState` alone - on top of it. One that can not be applied (a format that does not fit its
+  field any more) is passed by with a warning in the console: the grid starts in the config's state.
+- **Deleting the view shown** leaves the state as it is: Standard is shown, marked as changed - *Save
+  as new view…* makes it a view again. `setViews()` without the view shown does the same.
+- A readonly view, or no view shown, can not be saved over, renamed or deleted: those throw a
+  `TypeError`, and the menu greys them out. An id no view has throws too.

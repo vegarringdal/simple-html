@@ -3,6 +3,8 @@ import { aggregates } from './samples/aggregates';
 import aggregatesSource from './samples/aggregates.ts?raw';
 import { basicGrid } from './samples/basicGrid';
 import basicGridSource from './samples/basicGrid.ts?raw';
+import { calculatedColumns } from './samples/calculatedColumns';
+import calculatedColumnsSource from './samples/calculatedColumns.ts?raw';
 import { cellStyling } from './samples/cellStyling';
 import cellStylingSource from './samples/cellStyling.ts?raw';
 import { columnLayout } from './samples/columnLayout';
@@ -71,6 +73,8 @@ import { translation } from './samples/translation';
 import translationSource from './samples/translation.ts?raw';
 import { validation } from './samples/validation';
 import validationSource from './samples/validation.ts?raw';
+import { views } from './samples/views';
+import viewsSource from './samples/views.ts?raw';
 
 /**
  * a sample and the text of its file: the source the site shows with the running sample
@@ -115,11 +119,13 @@ export const SAMPLES: Sample[] = [
     { ...formatters, source: formattersSource },
     { ...customFormatter, source: customFormatterSource },
     { ...cellStyling, source: cellStylingSource },
+    { ...calculatedColumns, source: calculatedColumnsSource },
     // events
     { ...events, source: eventsSource },
     { ...filterOperatorHeader, source: filterOperatorHeaderSource },
     // config
     { ...gridState, source: gridStateSource },
+    { ...views, source: viewsSource },
     { ...tooltips, source: tooltipsSource },
     { ...translation, source: translationSource },
     { ...theming, source: themingSource },
