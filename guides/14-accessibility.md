@@ -201,10 +201,9 @@ Ctrl is Cmd on a Mac, Alt is Option.
 | ?, Ctrl+/ (Cmd+/) | the keyboard shortcuts help, see [below](#the-keyboard-shortcuts-help): `?` where it types nothing - a readonly cell, a checkbox, a lookup or custom cell that can not be edited - Ctrl+/ also while typing in a cell. Anywhere in the grid: a header filter, a column header, a row number, the find bar too. Not with `shortcutHelp: false` |
 
 The grid scrolls to the cell the focus goes to. Moving to another cell (Tab, Alt+arrows, Enter, the keys
-that jump) clears the ranges of cells, and so does typing in a cell. The focus is moved 100ms after Tab,
-Enter and an Alt+arrow - the rows scroll first: until then a key that would move it again, or type in
-the cell being left, waits (it is canceled; a key held down goes one cell at a time). The other keys -
-Esc for a menu, Ctrl+C - are not held up, nor are the keys of another grid on the page.
+that jump) clears the ranges of cells, and so does typing in a cell. The focus moves in the keydown: the
+rows are scrolled and rendered first, so the next key - a key held down, a character typed at once -
+goes on from the new cell.
 
 ### The keys that jump
 

@@ -1,28 +1,18 @@
-export function getWeekNumbers(date: Date, isoWeek: boolean) {
-    /*getWeek() was developed by Nick Baicoianu at MeanFreePath: http://www.epoch-calendar.com */
+import { isoWeek, usWeek } from '../../grid/columnFormat';
 
-    const dowOffset = isoWeek ? 1 : 0;
-    const newYear = new Date(date.getFullYear(), 0, 1);
-    let day = newYear.getDay() - dowOffset; //the day of week the year begins on
-    day = day >= 0 ? day : day + 7;
-    const daynum =
-        Math.floor(
-            (date.getTime() - newYear.getTime() - (date.getTimezoneOffset() - newYear.getTimezoneOffset()) * 60000) / 86400000
-        ) + 1;
-    let weeknum: number;
-    //if the year starts before the middle of a week
-    if (day < 4) {
-        weeknum = Math.floor((daynum + day - 1) / 7) + 1;
-        if (weeknum > 52) {
-            const nYear = new Date(date.getFullYear() + 1, 0, 1);
-            let nday = nYear.getDay() - dowOffset;
-            nday = nday >= 0 ? nday : nday + 7;
-            /*if the next year starts before the middle of
-                   the week, it is week #1 of that year*/
-            weeknum = nday < 4 ? 1 : 53;
-        }
-    } else {
-        weeknum = Math.floor((daynum + day - 1) / 7);
+/**
+ * The week number the date picker shows in front of a week, the same numbers as a date column's week
+ * formats and the header filter's `2026-W47` (columnFormat.ts):
+ * - ISO (`isoWeek: true`): the ISO 8601 week of the date - weeks start on Monday, week 1 has the year's
+ *   first Thursday, so 2027-01-01 is week 53 (of 2026)
+ * - US: Excel's `WEEKNUM` of the Saturday of the date's week (weeks start on Sunday). A week across
+ *   New Year is week 1: its days in January are week 1, and so is the row of the picker
+ * @param date any day of the week
+ */
+export function getWeekNumbers(date: Date, iso: boolean): number {
+    if (iso) {
+        return isoWeek(date).week;
     }
-    return weeknum;
+    const saturday = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 6 - date.getDay());
+    return usWeek(saturday);
 }

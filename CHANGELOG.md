@@ -1332,6 +1332,37 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Tab, Enter and Alt+arrows move the focus at once
+
+##### Changed
+- Tab, Enter and Alt+arrows in a cell or a header filter move the focus in the keydown, as the keys that
+  jump do: the row is scrolled into view and rendered, then the cell is focused. It was 100ms later, and
+  the keys that move or type were canceled until then: a held key went a cell per 100ms, a fast second
+  Alt+ArrowDown was lost. Now every key counts and goes on from the cell the focus is in.
+- The row the focus goes to is scrolled just into view, as the jump keys do (it kept two rows of room).
+
+##### Fixed
+- Alt+ArrowDown from a header filter into the first row did not make it the current row: the row that
+  was current stayed. Now the row the focus goes to is always the current row.
+
+#### The date picker's week numbers
+
+##### Fixed
+- The US week numbers of the date picker (`isoWeek: false`) are Excel's `WEEKNUM`, the numbers of a date
+  column's week format and of the header filter's `2026-W47`: they were another count, a week lower in
+  most years. The row across New Year is week 1.
+- `getWeekNumbers()` (the picker's count) gave 0 for the first days of a year in the last ISO week of the
+  year before (2027-01-01 is 53). The picker itself passed only Mondays, so its ISO numbers were right.
+
+#### Row numbers: Cmd+click, and Shift+click after Ctrl+clicks
+
+##### Fixed
+- Cmd+click on a row number (a Mac) adds or removes the row, as Ctrl+click; so does Cmd+click on a group
+  row's number (adds its rows) and on the corner (deselects all).
+- A second Shift+click after Ctrl+clicks dropped the rows the Ctrl+clicks selected - also after a finger's
+  taps and the row menu's *Rows from N to here* twice. Shift+click keeps the rows selected at the anchor
+  and changes only the range, as the column numbers do.
+
 #### The buttons of a dialog wrap on a phone
 
 ##### Fixed

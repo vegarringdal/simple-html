@@ -11,8 +11,10 @@ cells copied there into the grid, or empty them with Delete.
 
 ## Selecting rows
 
-A click on the row number selects the row, Ctrl+click adds one, Shift+click selects the rows in
-between - the datasource's selection, `datasource.getSelectedRows()`. See
+A click on the row number selects the row, Ctrl+click (Cmd+click on a Mac) adds or removes one,
+Shift+click selects the rows from the last one clicked without Shift - and keeps the rows the
+Ctrl+clicks before it selected, so a second Shift+click changes the range only. That is the
+datasource's selection, `datasource.getSelectedRows()`. See
 [Selection](04-datasource.md#selection). The row menu's Copy, Paste cell, Clear cell, Delete and the
 export of the selected rows work on these rows. A finger's tap adds or removes a row, and the row
 menu's *Select ›* does what Shift and Ctrl do, see [With a finger](#with-a-finger).

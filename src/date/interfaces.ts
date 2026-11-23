@@ -78,7 +78,11 @@ export interface IDateConfig {
 
     /** shows the week numbers in front of each week */
     showWeek: boolean;
-    /** ISO week numbers (weeks start on monday), else weeks that start on sunday */
+    /**
+     * ISO week numbers (weeks start on monday, week 1 has the year's first thursday), else US week numbers
+     * as Excel's `WEEKNUM` (weeks start on sunday, week 1 has January 1). The same numbers as a date
+     * column's week formats
+     */
     isoWeek: boolean;
 
     /** the height of a row of days, in px */

@@ -123,10 +123,6 @@ export function jumpKeydown(ctx: Grid, event: KeyboardEvent, row: number, here: 
         return false;
     }
     event.preventDefault();
-    // an Alt+arrow moves the focus in a moment: it would take it from where this one puts it
-    if (ctx.focusMovePending) {
-        return true;
-    }
     const config = ctx.gridInterface.__getGridConfig();
     const field = sectionColumns(config, here.colType)[here.column]?.fields[here.celno];
     if (field === undefined) {

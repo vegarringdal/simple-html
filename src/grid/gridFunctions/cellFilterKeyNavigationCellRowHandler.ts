@@ -1,7 +1,7 @@
 import { isGroupRow } from '../../datasource/entity';
 import type { Grid } from '../grid';
 import type { ParsedGridConfig } from '../gridConfig';
-import { focusInAMoment, focusMoveKey, nextSection, sectionColumns } from './cellRowKeyNavigationCellRowHandler';
+import { focusCellNow, nextSection, sectionColumns } from './cellRowKeyNavigationCellRowHandler';
 import type { ColType } from './colType';
 import { getElementByClassName } from './getElementByClassName';
 import type { HTMLCellElement } from './HTMLCellElement';
@@ -94,22 +94,13 @@ function leaveFilterSection(
  */
 export const cellFilterKeyNavigationCellRowHandler = (
     ctx: Grid,
-    cell: HTMLCellElement,
+    _cell: HTMLCellElement,
     row: number,
     column: number,
     celno: number,
     colType: ColType,
     event: KeyboardEvent
 ) => {
-    // a move is on its way: the keys that move or type wait for it, see focusMoveKey
-    if (ctx.focusMovePending) {
-        if (focusMoveKey(event)) {
-            event.preventDefault();
-            return false;
-        }
-        return true;
-    }
-
     // Ctrl+Home / Ctrl+End, Alt+Home / Alt+End, PageDown: see jumpKeys.ts
     if (filterJumpKeydown(ctx, event, { colType, column, celno })) {
         return false;
@@ -124,13 +115,8 @@ export const cellFilterKeyNavigationCellRowHandler = (
 
         event.preventDefault();
         const scrollerEl = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
-        const scrollerRect = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller').getBoundingClientRect();
-        const cellRect = cell.getBoundingClientRect();
         const innerWidth = scrollerEl.clientWidth;
         const scrollleft = scrollerEl.scrollLeft;
-        const top = cellRect.top - scrollerRect.top;
-        const bottom = scrollerRect.bottom - cellRect.bottom;
-        const rowHeight = ctx.gridInterface.__getGridConfig().__rowHeight * 2;
         const colLeft: number[] = [];
         const widths: number[] = [];
         let lastLeft = 0;
@@ -258,15 +244,7 @@ export const cellFilterKeyNavigationCellRowHandler = (
             }
         }
 
-        if (bottom < rowHeight) {
-            scrollerEl.scrollTop = scrollerEl.scrollTop + rowHeight;
-        }
-
-        if (top < rowHeight) {
-            scrollerEl.scrollTop = scrollerEl.scrollTop - rowHeight;
-        }
-
-        focusInAMoment(ctx, `${filterClass}cellpos-${gotoColType}-${gotoRow}-${gotoCol}-${gotoCell}`, row, gotoRow);
+        focusCellNow(ctx, `${filterClass}cellpos-${gotoColType}-${gotoRow}-${gotoCol}-${gotoCell}`, gotoRow);
     }
 
     /*
@@ -285,21 +263,6 @@ export const cellFilterKeyNavigationCellRowHandler = (
             focusHeaderLabel(ctx, colType, column, fields - 1);
             return false;
         }
-        const scrollerEl = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
-        const scrollerRect = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller').getBoundingClientRect();
-        const cellRect = cell.getBoundingClientRect();
-        const top = cellRect.top - scrollerRect.top;
-        const bottom = scrollerRect.bottom - cellRect.bottom;
-        const rowHeight = ctx.gridInterface.__getGridConfig().__rowHeight * 2;
-        const colLeft: number[] = [];
-        const widths: number[] = [];
-        let lastLeft = 0;
-        const columnsCenter = ctx.gridInterface.__getGridConfig().layout.center;
-        columnsCenter.forEach((c) => {
-            colLeft.push(lastLeft);
-            widths.push(c.width);
-            lastLeft = lastLeft + c.width;
-        });
 
         const config = ctx.gridInterface.__getGridConfig();
         const gotoColType = colType;
@@ -367,15 +330,7 @@ export const cellFilterKeyNavigationCellRowHandler = (
                 break;
         }
 
-        if (bottom < rowHeight) {
-            scrollerEl.scrollTop = scrollerEl.scrollTop + rowHeight;
-        }
-
-        if (top < rowHeight) {
-            scrollerEl.scrollTop = scrollerEl.scrollTop - rowHeight;
-        }
-
-        focusInAMoment(ctx, `${filterClass}cellpos-${gotoColType}-${gotoRow}-${gotoCol}-${gotoCell}`, row, gotoRow);
+        focusCellNow(ctx, `${filterClass}cellpos-${gotoColType}-${gotoRow}-${gotoCol}-${gotoCell}`, gotoRow);
     }
 
     /**
@@ -401,13 +356,8 @@ export const cellFilterKeyNavigationCellRowHandler = (
         }
         event.preventDefault();
         const scrollerEl = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
-        const scrollerRect = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller').getBoundingClientRect();
-        const cellRect = cell.getBoundingClientRect();
         const innerWidth = scrollerEl.clientWidth;
         const scrollleft = scrollerEl.scrollLeft;
-        const top = cellRect.top - scrollerRect.top;
-        const bottom = scrollerRect.bottom - cellRect.bottom;
-        const rowHeight = ctx.gridInterface.__getGridConfig().__rowHeight * 2;
         const colLeft: number[] = [];
         const widths: number[] = [];
         let lastLeft = 0;
@@ -564,15 +514,7 @@ export const cellFilterKeyNavigationCellRowHandler = (
                 break;
         }
 
-        if (bottom < rowHeight) {
-            scrollerEl.scrollTop = scrollerEl.scrollTop + rowHeight;
-        }
-
-        if (top < rowHeight) {
-            scrollerEl.scrollTop = scrollerEl.scrollTop - rowHeight;
-        }
-
-        focusInAMoment(ctx, `${filterClass}cellpos-${gotoColType}-${gotoRow}-${gotoCol}-${gotoCell}`, row, gotoRow);
+        focusCellNow(ctx, `${filterClass}cellpos-${gotoColType}-${gotoRow}-${gotoCol}-${gotoCell}`, gotoRow);
     }
 
     return false;

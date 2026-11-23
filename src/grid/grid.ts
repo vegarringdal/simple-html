@@ -127,12 +127,6 @@ export class Grid {
      * moving to a cell then is part of it and keeps the ranges, see rangeCellFocused in rangeSelection.ts
      */
     public rangeGesture = false;
-    /**
-     * true for the 100ms a key moves the focus in (Tab, Enter, Alt+arrows): the rows scroll first, the
-     * cell gets the focus once they are rendered. The keys that would move it or type in the cell it
-     * leaves wait for it, see focusMoveKey in cellRowKeyNavigationCellRowHandler.ts. This grid's only
-     */
-    public focusMovePending = false;
     // set by createDom
     public focusElement!: HTMLInputElement;
 

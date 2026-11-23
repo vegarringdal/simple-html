@@ -389,3 +389,21 @@ describe('calendar - setSelected', () => {
         expect(dateInterface.getSelected()).toEqual([]);
     });
 });
+
+describe('date picker - week numbers', () => {
+    const weeks = (element: HTMLElement) =>
+        Array.from(element.querySelectorAll('.simple-html-date-week')).map((week) => week.textContent?.trim());
+
+    it('expect ISO weeks in January 2027: the first row is week 53 of 2026', () => {
+        const { element } = mount(config({ startYear: 2027, startMonth: 0, datepickerDate: new Date(2027, 0, 15) }));
+        expect(weeks(element).slice(0, 3)).toEqual(['53', '1', '2']);
+    });
+
+    it('expect US weeks as Excel WEEKNUM: November 2026, the row of the 22nd is week 48', () => {
+        const { element } = mount(
+            config({ weekStart: 0, isoWeek: false, startMonth: 10, datepickerDate: new Date(2026, 10, 22) })
+        );
+        // November 2026 starts on a Sunday: rows from the 1st, 8th, 15th, 22nd, 29th
+        expect(weeks(element).slice(0, 5)).toEqual(['45', '46', '47', '48', '49']);
+    });
+});

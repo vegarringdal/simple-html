@@ -18,7 +18,8 @@ const data = () => [
 const columns = { a: {}, b: {}, c: {}, d: {} };
 
 /**
- * presses a key on the input with the given class, then waits for the handler's delayed focus
+ * presses a key on the input with the given class. The focus moves in the keydown; the wait is for
+ * what follows it (a render, an event)
  */
 async function press(element: HTMLElement, cellClass: string, code: string, modifiers: { altKey?: boolean; shiftKey?: boolean }) {
     const input = element.querySelector(`.${cellClass}`) as HTMLElement;
@@ -138,10 +139,30 @@ describe('key navigation - header filter row', () => {
 
         expect(focusedCell()).toEqual('filter-cellpos-left-pinned-0-1-0');
     });
+    it('expect alt+down from a header filter into the first row to make it the current row', async () => {
+        const { element, datasource } = await mountGrid(config(), data());
+        datasource.setRowAsCurrentEntity(1);
+
+        await press(element, 'filter-cellpos-middle-pinned-0-0-0', 'ArrowDown', { altKey: true });
+
+        expect(focusedCell()).toEqual('cellpos-middle-pinned-0-0-0');
+        expect(datasource.currentEntity).toBe(datasource.getRow(0));
+    });
+
+    it('expect alt+up from the first row into a header filter to keep the current row', async () => {
+        const { element, datasource } = await mountGrid(config(), data());
+        datasource.setRowAsCurrentEntity(0);
+
+        await press(element, 'cellpos-middle-pinned-0-0-0', 'ArrowUp', { altKey: true });
+
+        expect(focusedCell()).toEqual('filter-cellpos-middle-pinned-0-0-0');
+        expect(datasource.currentEntity).toBe(datasource.getRow(0));
+    });
 });
 
-describe('key navigation - the keys while a move is on its way', () => {
-    // the focus moves 100ms after Tab, Enter or an Alt+arrow: the rows scroll first
+describe('key navigation - the focus moves at once', () => {
+    // Tab, Enter and Alt+arrows render the rows and focus the cell in the keydown, as the jump keys do.
+    // It was 100ms later, and the keys meanwhile were canceled
     const config = (): GridConfig => ({
         readonly: false,
         columns,
@@ -163,21 +184,16 @@ describe('key navigation - the keys while a move is on its way', () => {
     };
     const altDown = { key: 'ArrowDown', code: 'ArrowDown', altKey: true };
 
-    it('expect the keys that move or type canceled until the focus is there: a held key goes one cell at a time', async () => {
-        const { element } = await mountGrid(config(), rows());
-        const from = 'cellpos-middle-pinned-0-0-0';
+    it('expect the focus in the next cell in the keydown: a held key goes on from there, a row each', async () => {
+        const { element, datasource } = await mountGrid(config(), rows());
 
-        expect(keydown(element, from, altDown).defaultPrevented).toBe(true);
-        // the repeats of a held key, from the cell being left
-        expect(keydown(element, from, altDown).defaultPrevented).toBe(true);
-        expect(keydown(element, from, { key: 'Tab', code: 'Tab' }).defaultPrevented).toBe(true);
-        expect(keydown(element, from, { key: 'Enter', code: 'Enter' }).defaultPrevented).toBe(true);
-        expect(keydown(element, from, { key: 'x', code: 'KeyX' }).defaultPrevented).toBe(true);
-        expect(keydown(element, from, { key: 'Backspace', code: 'Backspace' }).defaultPrevented).toBe(true);
-        await sleep(150);
-
-        // one row down, not three
+        expect(keydown(element, 'cellpos-middle-pinned-0-0-0', altDown).defaultPrevented).toBe(true);
         expect(focusedCell()).toEqual('cellpos-middle-pinned-1-0-0');
+        expect(datasource.currentEntity).toBe(datasource.getRow(1));
+        // the repeats of a held key come from the cell the focus is in
+        keydown(element, 'cellpos-middle-pinned-1-0-0', altDown);
+        keydown(element, 'cellpos-middle-pinned-2-0-0', { key: 'Tab', code: 'Tab' });
+        expect(focusedCell()).toEqual('cellpos-middle-pinned-2-1-0');
     });
 
     it('expect the other keys left alone meanwhile: Esc, Ctrl+C, Home, Shift', async () => {
@@ -226,7 +242,7 @@ describe('key navigation - the keys while a move is on its way', () => {
         expect(focusedCell()).toEqual('cellpos-middle-pinned-1-0-0');
     });
 
-    it('expect the keys to work again once the focus is there', async () => {
+    it('expect a character and a key in the cell the focus moved to to be its own', async () => {
         const { element } = await mountGrid(config(), rows());
         keydown(element, 'cellpos-middle-pinned-0-0-0', altDown);
         await sleep(150);
@@ -237,7 +253,7 @@ describe('key navigation - the keys while a move is on its way', () => {
         expect(focusedCell()).toEqual('cellpos-middle-pinned-2-0-0');
     });
 
-    it('expect the keys of a header filter to wait too, and the filter row in its own grid only', async () => {
+    it('expect two Tabs from a header filter to go to the next filter, the filter row in its own grid only', async () => {
         const { element } = await mountGrid(config(), rows());
         const filter = 'filter-cellpos-middle-pinned-0-0-0';
 

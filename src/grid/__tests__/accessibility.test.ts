@@ -607,6 +607,19 @@ describe('accessibility - selection', () => {
         expect(selected(element)).toEqual(['true', 'false', 'false', 'true', 'false']);
     });
 
+    it('expect cmd+click on a row number to add and remove a row, as ctrl+click', async () => {
+        const { element } = await mountGrid(pinnedConfig(), people(), fields);
+        const rowNumber = (row: number) => bodyRows(element)[row].cells[0].element;
+
+        rowNumber(0).dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        rowNumber(3).dispatchEvent(new MouseEvent('click', { bubbles: true, metaKey: true }));
+        rowNumber(4).dispatchEvent(new MouseEvent('click', { bubbles: true, metaKey: true }));
+        expect(selected(element)).toEqual(['true', 'false', 'false', 'true', 'true']);
+
+        rowNumber(3).dispatchEvent(new MouseEvent('click', { bubbles: true, metaKey: true }));
+        expect(selected(element)).toEqual(['true', 'false', 'false', 'false', 'true']);
+    });
+
     it('expect no aria-multiselectable with selectionMode single, aria-selected on the rows', async () => {
         const { element, datasource } = await mountGrid(pinnedConfig(), people(), { ...fields, selectionMode: 'single' });
         expect(gridElement(element).hasAttribute('aria-multiselectable')).toBe(false);

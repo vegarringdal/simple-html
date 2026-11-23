@@ -148,3 +148,77 @@ describe('selection - toggleRow, selectRowsTo and the anchor', () => {
         expect(other.getSelectedRows()).toEqual([0, 2, 3, 4]);
     });
 });
+
+/**
+ * Cmd+click on a Mac is Ctrl+click, and Shift+click keeps the rows the Ctrl+clicks before it selected -
+ * also a second Shift+click, as the column numbers (columnSelection.ts)
+ */
+describe('selection - Cmd+click and Shift+click after Ctrl+clicks', () => {
+    const six = () => {
+        const ds = new Datasource();
+        ds.setData([{ v: 1 }, { v: 2 }, { v: 3 }, { v: 4 }, { v: 5 }, { v: 6 }]);
+        return ds.getSelection();
+    };
+
+    it('expect Cmd+click to add and remove a row, as Ctrl+click', () => {
+        const selection = six();
+        selection.highlightRow({}, 0);
+        selection.highlightRow({ metaKey: true }, 2);
+        selection.highlightRow({ metaKey: true }, 4);
+        expect(selection.getSelectedRows()).toEqual([0, 2, 4]);
+        selection.highlightRow({ metaKey: true }, 2);
+        expect(selection.getSelectedRows()).toEqual([0, 4]);
+        expect(selection.getAnchorRow()).toBe(2);
+    });
+
+    it('expect a second Shift+click after Ctrl+clicks to keep the rows of the Ctrl+clicks, and change the range', () => {
+        const selection = six();
+        selection.highlightRow({ ctrlKey: true }, 0);
+        selection.highlightRow({ ctrlKey: true }, 3);
+        selection.highlightRow({ shiftKey: true }, 5);
+        expect(selection.getSelectedRows()).toEqual([0, 3, 4, 5]);
+        // the range shrinks, the row of the first Ctrl+click stays
+        selection.highlightRow({ shiftKey: true }, 4);
+        expect(selection.getSelectedRows()).toEqual([0, 3, 4]);
+        // the other way from the anchor
+        selection.highlightRow({ shiftKey: true }, 1);
+        expect(selection.getSelectedRows()).toEqual([0, 1, 2, 3]);
+        expect(selection.getAnchorRow()).toBe(3);
+    });
+
+    it('expect the same after a finger: taps and Rows from N to here twice', () => {
+        const selection = six();
+        selection.toggleRow(0);
+        selection.toggleRow(3);
+        selection.selectRowsTo(5);
+        selection.selectRowsTo(4);
+        expect(selection.getSelectedRows()).toEqual([0, 3, 4]);
+    });
+
+    it('expect a plain click to drop the rows kept: a Shift+click after it selects the range only', () => {
+        const selection = six();
+        selection.highlightRow({ ctrlKey: true }, 0);
+        selection.highlightRow({}, 3);
+        selection.highlightRow({ shiftKey: true }, 5);
+        expect(selection.getSelectedRows()).toEqual([3, 4, 5]);
+        selection.highlightRow({ shiftKey: true }, 2);
+        expect(selection.getSelectedRows()).toEqual([2, 3]);
+    });
+
+    it('expect a Ctrl+click after a Shift+click to keep the range, and be the new anchor', () => {
+        const selection = six();
+        selection.highlightRow({}, 0);
+        selection.highlightRow({ shiftKey: true }, 2);
+        selection.highlightRow({ ctrlKey: true }, 4);
+        selection.highlightRow({ shiftKey: true }, 5);
+        expect(selection.getSelectedRows()).toEqual([0, 1, 2, 4, 5]);
+    });
+
+    it("expect a Shift+click in 'single' mode to select the row only", () => {
+        const selection = six();
+        (selection as any).dataSource.setSelectionMode('single');
+        selection.highlightRow({}, 0);
+        selection.highlightRow({ shiftKey: true }, 3);
+        expect(selection.getSelectedRows()).toEqual([3]);
+    });
+});

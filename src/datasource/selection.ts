@@ -4,18 +4,18 @@ import { isGroupRow } from './entity';
 export class Selection {
     private selectedRows: number;
     private selection: Set<number | string>;
+    /** the anchor of a Shift+click: the last row clicked without Shift, -1 before any */
     private lastRowSelected: number;
-    private lastKeyCodeUsed: string;
+    /** the keys a Shift+click keeps: the rows selected at the last Ctrl+click, none after a plain click */
+    private keptKeys: (number | string)[];
     private dataSource: Datasource;
 
     constructor(dataSource: Datasource) {
         this.dataSource = dataSource;
         this.selectedRows = 0;
         this.selection = new Set([]);
-        // start as after a plain click on nothing. Left undefined, the first ctrl or shift click
-        // matched no case in highlightRow and selected nothing
-        this.lastKeyCodeUsed = 'none';
         this.lastRowSelected = -1;
+        this.keptKeys = [];
     }
 
     public isSelected(row: number): boolean {
@@ -64,14 +64,21 @@ export class Selection {
     }
 
     /**
-     * A click on a row number: selects, adds or removes rows by the keys held - see SelectionMode. A plain
-     * click selects the row only, Ctrl+click toggles it, Shift+click selects from the anchor (see
-     * {@link getAnchorRow}) to it. The row is made the current entity, `selection-change` is sent
+     * A click on a row number: selects, adds or removes rows by the keys held - see SelectionMode. As the
+     * column numbers (columnSelection.ts):
+     * - a plain click selects the row only, it is the anchor
+     * - Ctrl+click (Cmd+click on a Mac) adds or removes the row, it is the anchor, the rows selected then
+     *   are kept
+     * - Shift+click selects from the anchor (see {@link getAnchorRow}) to the row, and the rows kept at
+     *   the anchor. So Shift+click again changes the range, and a range made after Ctrl+clicks adds to them
+     *
+     * In `'single'` mode every click selects the row only. The row is made the current entity,
+     * `selection-change` is sent
      * @param e the keys held: a MouseEvent, or `{ ctrlKey: true }` for a click without the keyboard - a
      * finger's tap ({@link toggleRow}), the row menu's Select › (selectRowsTo)
      */
     public highlightRow(
-        e: { shiftKey?: boolean; ctrlKey?: boolean },
+        e: { shiftKey?: boolean; ctrlKey?: boolean; metaKey?: boolean },
         currentRow: number,
         overrideSelectionMode?: 'none' | 'single' | 'multiple'
     ): void {
@@ -84,150 +91,51 @@ export class Selection {
             return;
         }
 
-        const selectionMode = overrideSelectionMode || this.dataSource.getSelectionMode();
-
-        let isSel: boolean;
-        let currentselectedRows = this.getSelectedRows();
-        let currentKeyCode = '';
-
         this.dataSource.__select(currentRow);
-
-        if (currentRow !== this.lastRowSelected || currentselectedRows[0] !== currentRow) {
-            if (currentRow <= this.dataSource.length() - 1) {
-                // do I need to check this?
-
-                if (selectionMode === 'multiple') {
-                    // if multiselect duh!
-
-                    if (e.shiftKey) {
-                        currentKeyCode = 'shift';
-                        currentselectedRows = this.getSelectedRows();
-                        if (currentselectedRows.length > 0 && this.lastKeyCodeUsed === 'none') {
-                            this.lastRowSelected = currentselectedRows[0];
-                            this.lastKeyCodeUsed = 'shift';
-                        }
-                    }
-
-                    if (e.ctrlKey) {
-                        currentKeyCode = 'ctrl';
-                    }
-
-                    if (!e.ctrlKey && !e.shiftKey) {
-                        currentKeyCode = 'none';
-                    }
-
-                    switch (true) {
-                        case currentKeyCode === 'none':
-                            this.select(currentRow, false);
-                            break;
-                        case this.lastKeyCodeUsed === 'shift' && currentKeyCode === 'ctrl':
-                            isSel = this.isSelected(currentRow);
-                            if (isSel === true) {
-                                this.deselect(currentRow);
-                            } else {
-                                this.select(currentRow, true);
-                            }
-                            this.lastRowSelected = currentRow;
-                            break;
-
-                        case this.lastKeyCodeUsed === 'ctrl' && currentKeyCode === 'shift': {
-                            const oldSel = this.getSelectedRows();
-                            // either way: a row above the anchor selected nothing
-                            this.selectRange(
-                                Math.min(this.lastRowSelected, currentRow),
-                                Math.max(this.lastRowSelected, currentRow)
-                            );
-                            const newSel = this.getSelectedRows();
-                            this.setSelectedRows(oldSel.concat(newSel));
-
-                            break;
-                        }
-
-                        case this.lastKeyCodeUsed === 'ctrl' && currentKeyCode === 'ctrl':
-                            isSel = this.isSelected(currentRow);
-                            if (isSel === true) {
-                                this.deselect(currentRow);
-                            } else {
-                                this.select(currentRow, true);
-                            }
-                            this.lastRowSelected = currentRow;
-                            break;
-
-                        case this.lastKeyCodeUsed === 'none' && currentKeyCode === 'ctrl':
-                            isSel = this.isSelected(currentRow);
-                            if (isSel === true) {
-                                this.deselect(currentRow);
-                            } else {
-                                this.select(currentRow, true);
-                            }
-                            this.lastRowSelected = currentRow;
-                            break;
-
-                        case this.lastKeyCodeUsed === 'shift' && currentKeyCode === 'shift':
-                            if (this.lastRowSelected > currentRow) {
-                                this.selectRange(currentRow, this.lastRowSelected);
-                            } else {
-                                this.selectRange(this.lastRowSelected, currentRow);
-                            }
-
-                            break;
-
-                        case this.lastKeyCodeUsed === 'none' && currentKeyCode === 'shift':
-                            if (this.lastRowSelected !== -1) {
-                                if (this.lastRowSelected > currentRow) {
-                                    this.selectRange(currentRow, this.lastRowSelected);
-                                } else {
-                                    this.selectRange(this.lastRowSelected, currentRow);
-                                }
-                            } else {
-                                this.lastRowSelected = currentRow;
-                                this.select(currentRow, false);
-                            }
-                            break;
-                        default:
-                            console.error('error, this should not happen, debug selection');
-                    }
-                } else {
-                    this.select(currentRow, false);
-                }
-                this.lastKeyCodeUsed = currentKeyCode;
-
-                // update selection on rows
-                this.dataSource.__callSubscribers('selection-change', {});
-            }
-        } else {
-            // same row clicked again
-            if (e.ctrlKey) {
-                currentKeyCode = 'ctrl';
-            }
-
-            // if ctrl button we want to remove selection
-            if (currentKeyCode === 'ctrl') {
-                this.lastKeyCodeUsed = currentKeyCode;
-                isSel = this.isSelected(currentRow);
-                if (isSel === true) {
-                    this.deselect(currentRow);
-                }
-                this.lastRowSelected = currentRow;
-            } else {
-                // else we just want to make it current..
-                this.select(currentRow, false);
-            }
-            // update selection on rows
-            this.dataSource.__callSubscribers('selection-change', {});
+        if (currentRow > this.dataSource.length() - 1) {
+            return;
         }
+
+        const selectionMode = overrideSelectionMode || this.dataSource.getSelectionMode();
+        const anchor = this.getAnchorRow();
+
+        if (selectionMode !== 'multiple') {
+            this.select(currentRow, false);
+        } else if (e.shiftKey && anchor !== -1) {
+            // the anchor stays: a Shift+click after it changes the range
+            this.lastRowSelected = anchor;
+            this.selection = new Set(this.keptKeys);
+            for (let i = Math.min(anchor, currentRow); i <= Math.max(anchor, currentRow); i++) {
+                this.addRow(i);
+            }
+            this.selectedRows = this.selection.size;
+        } else if (e.ctrlKey || e.metaKey) {
+            if (this.isSelected(currentRow)) {
+                this.deselect(currentRow);
+            } else {
+                this.select(currentRow, true);
+            }
+            this.lastRowSelected = currentRow;
+            this.keptKeys = Array.from(this.selection);
+        } else {
+            // a plain click, or Shift+click with no anchor
+            this.select(currentRow, false);
+            this.lastRowSelected = currentRow;
+            this.keptKeys = [];
+        }
+
+        // update selection on rows
+        this.dataSource.__callSubscribers('selection-change', {});
     }
 
     /**
-     * The row a Shift+click on a row number selects from, the anchor: the row selected last without
-     * Shift - after a plain click the row clicked (the first selected), after a Ctrl+click the row
-     * clicked, in or out. -1 when there is none, or it is no displayed row any more. For the row menu's
-     * Select › (contextmenuRow.ts)
+     * The row a Shift+click on a row number selects from, the anchor: the last row clicked without
+     * Shift, in or out. Before any click the first selected row (a selection made by code). -1 when
+     * there is none, or it is no displayed row any more. For the row menu's Select › (contextmenuRow.ts)
      */
     public getAnchorRow(): number {
         let anchor = this.lastRowSelected;
-        // a plain click does not set lastRowSelected: Shift+click takes the first selected row, see highlightRow
-        if (this.lastKeyCodeUsed === 'none') {
+        if (anchor === -1) {
             const selected = this.getSelectedRows();
             if (selected.length > 0) {
                 anchor = selected[0];
@@ -416,19 +324,5 @@ export class Selection {
      */
     public triggerSelectionChange() {
         this.dataSource.__callSubscribers('selection-change', {});
-    }
-
-    /**
-     * selects new rows
-     * @param newRows rows to be selected
-     */
-    private setSelectedRows(newRows: number[]): void {
-        if (this.selectedRows > 0) {
-            this.selection.clear();
-        }
-        for (let i = 0; i < newRows.length; i++) {
-            this.addRow(newRows[i]);
-        }
-        this.selectedRows = this.selection.size;
     }
 }

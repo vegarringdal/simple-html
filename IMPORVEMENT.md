@@ -4782,6 +4782,63 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
   editor, the same lines at 1300px; column-settings, filter-ui, detail-form-more, import and data-bars checks
   as before
 
+### Row numbers: Cmd+click, and a second Shift+click after Ctrl+clicks
+
+* `Selection.highlightRow` (src/datasource/selection.ts) read `ctrlKey` only, and kept its state as the
+  last key used (`lastKeyCodeUsed`) and a switch over seven pairs of keys: shift after shift re-made the
+  range alone, dropping the rows of the Ctrl+clicks before it
+* now the model of the column numbers (columnSelection.ts): an anchor (`lastRowSelected`, the last row
+  clicked without Shift) and the keys kept (`keptKeys`, the selection at the last Ctrl+click, none after a
+  plain click). Shift+click = kept + the range from the anchor; Ctrl or Cmd toggles and sets both; a plain
+  click selects the row only. 'single' mode: every click selects the row. Before any click the anchor is
+  the first selected row (a selection by code), as before. The unused `setSelectedRows` removed
+* Cmd also on a group row's number (renderRowSelector.ts) and the corner (rebuildHeaderColumns.ts)
+* one change of behaviour: after a plain click, then a selection by code, Shift+click goes from the row
+  clicked, not the first selected row
+* tests: selectionModifierKeys.test.ts (Cmd, a second Shift+click, a finger, plain click drops the kept,
+  Ctrl after Shift, 'single'), accessibility.test.ts (Cmd+click on a row number in the grid). Guide 17
+  and the changelog updated
+
+### The date picker's week numbers
+
+* `src/date/utils/getWeekNumber.ts` had its own count (from epoch-calendar.com): 0 for 2027-01-01 and
+  2021-01-03 (ISO 53), and a US week that is not WEEKNUM
+* which days the picker passes (week.ts: the first day of each row, a Monday with `isoWeek`, a Sunday
+  without): ISO was right on every Monday 2015-2035; US was off in 478 of 1096 rows - a week lower than
+  the column's `usWeek` and the `2026-W47` filter
+* now `isoWeek()` / `usWeek()` of columnFormat.ts: ISO of the date; US = WEEKNUM of the Saturday of the
+  date's week, so the row across New Year (its December days too) is week 1, as Outlook. Right for any
+  day, not only the row's first
+* tests: getWeekNumber.test.ts (ISO across New Year, US = WEEKNUM, the row across New Year),
+  datePicker.test.ts (the rendered numbers of January 2027 ISO and November 2026 US). `isoWeek`'s doc
+  (interfaces.ts) and the changelog updated
+
+### Tab, Enter and Alt+arrows move the focus at once
+
+* `focusInAMoment` (cellRowKeyNavigationCellRowHandler.ts) focused the next cell in a `setTimeout` of
+  100ms, after the scroll event had rendered the rows; `ctx.focusMovePending` and `focusMoveKey` canceled
+  the keys that move or type meanwhile (the cell and filter handlers, jumpKeys.ts)
+* now `focusCellNow`: `scrollRowIntoView` (a row target), `triggerScrollEvent` (renders at once), focus -
+  as goToCell. `focusMovePending`, `focusMoveKey` and the three checks of it removed
+* found on the way: the handlers scrolled the *middle* scroller by two rows near an edge, but
+  triggerScrollEvent sets the others from the body scroller - in the same keydown that undid it (a held
+  Alt+ArrowDown stopped at the bottom of the view). Those six blocks removed, with their rects; the row
+  goes just into view as with the jump keys
+* tests: keyNavigation.test.ts (the focus in the next cell in the keydown, a held key goes on, Tab after
+  it) and jumpKeys.test.ts (a jump key right after an Alt+arrow) replace the two of the waiting. Browser:
+  focus-now-check.js (new, 11: no wait after Alt+arrows, Tab, Shift+Tab, Enter; 40 held Alt+ArrowDown
+  scroll to row 43 and back; a character right after lands in the new cell; from a header filter);
+  keyboard-check.js's two checks of the waiting changed to the new behaviour, 53/53; range-block 81/81,
+  filter-ui 117/117. Guide 14 and the changelog updated
+* Alt+ArrowDown from a header filter into row 0 did not make row 0 the current row: focusCellNow
+  compared the key's row with the target, and a header filter's row is 0 too. Now as goToCell: the target
+  row is made current when it is not (`fromRow` dropped from focusCellNow). Tests: keyNavigation.test.ts
+  (Alt+ArrowDown from a filter makes row 0 current; Alt+ArrowUp into a filter keeps it), focus-now-check.js
+  asserts the current row too
+* touch-select-check.js failed 3 of 66, the same on the code before these changes: it expected the cell
+  entries of *Select ›* and *Copy ›* greyed out on a row number, but since commit 26101022 ("The row menu
+  of a row number: only what is about rows", guide 10) they are left out. The check updated, 66/66
+
 ## Considered, not done
 
 ## Candidates / not started
@@ -4819,9 +4876,6 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
 
 ### Bugs
 
-* **The row numbers and Cmd**: Ctrl+click toggles a row, Cmd+click does not (`highlightRow` reads
-  `ctrlKey`); a second Shift+click after Ctrl+clicks drops the rows the Ctrl+clicks selected - the same
-  after a finger's taps and two Rows from N to here. The column numbers do both
 * **Touch, not tried on a device**: the touch work was checked in Chromium's emulation only. Safari on
   iOS (no `contextmenu`, the long press timed by the grid; a canceled touchend dropping the click; the
   callout and the loupe on a cell's input under `-webkit-touch-callout: none`) and Chrome on Android (its
@@ -4841,9 +4895,6 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
   view), not the last row or the footer; no Shift+Space / Ctrl+Space (a row, a column), no Ctrl+Left /
   Ctrl+Right to the edge of the data sideways (they are the input's word), no Alt+Shift+PageUp / PageDown;
   the treegrid's ArrowRight / ArrowLeft on a group row
-* **Tab, Enter and Alt+arrows move the focus 100ms later** (the rows scroll first, the cell is found by its
-  `cellpos-` class once rendered): the jump keys move it at once (scroll, render, focus - goToCell in
-  jumpKeys.ts); the old handlers could do the same and drop `focusMovePending`
 * **`grid.label`** defaults to `Grid`, read as "Grid grid"; a better default needs the app's context
 * **Only Chrome's accessibility tree** was tried: Firefox, Safari (weaker `aria-owns`) and real screen
   readers (NVDA, JAWS, VoiceOver) not
@@ -4884,10 +4935,6 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
   midnight (a timer); more formats - US with time on a 12-hour clock, `november 2026`, a week without
   its year, short day names, a currency, negatives in parentheses or red, more than 4 decimals; the
   names formats in Excel with its locale codes (`[$-414]`, its names and order differ from Intl's)
-* **The date picker's week numbers** (`src/date/utils/getWeekNumber.ts`): `getWeekNumbers(2027-01-01,
-  true)` is 0 (ISO: 53 of 2026), and so is 2021-01-03; its US mode is not WEEKNUM (2026-11-22 is 47, Excel
-  48). Which days the picker calls it with decides whether it shows: `isoWeek()` / `usWeek()` of
-  columnFormat.ts could replace it
 * **Touch, smaller things**: a finger makes ranges of cells with the row menu's Select › (Range from the
   active cell to here, Add this cell) but drags none (a hold and a drag could be one); the fill handle
   (7px) is small for a finger; the editor

@@ -516,15 +516,15 @@ describe('jump keys - other cells', () => {
         expect(document.activeElement).toBe(control);
     });
 
-    it('expect a key while an Alt+arrow moves the focus to wait for it: no jump', async () => {
+    it('expect an Alt+arrow to move the focus at once: a jump key after it goes from there', async () => {
         const { element } = await mount();
         const input = inputAt(element, 1, 'c0');
         input.focus();
         press(input, 'ArrowDown', { altKey: true, code: 'ArrowDown' });
-
-        expect(press(input, 'End', { ctrlKey: true }).defaultPrevented).toBe(true);
-        await sleep(150);
         expect(focused()).toEqual({ row: 2, field: 'c0' });
+
+        expect(press(document.activeElement as Element, 'End', { ctrlKey: true }).defaultPrevented).toBe(true);
+        expect(focused()).toEqual({ row: 499, field: 'id' });
     });
 });
 

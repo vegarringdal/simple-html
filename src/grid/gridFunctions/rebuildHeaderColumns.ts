@@ -338,7 +338,8 @@ export function rebuildHeaderColumns(ctx: Grid) {
         selectorTopLeft.setAttribute('aria-hidden', 'true');
     }
     selectorTopLeft.onclick = (e: MouseEvent) => {
-        if (e.ctrlKey) {
+        // Ctrl+click (Cmd+click on a Mac) deselects all
+        if (e.ctrlKey || e.metaKey) {
             ctx.gridInterface.getDatasource().deselectAll({ notify: true });
         } else {
             ctx.gridInterface.getDatasource().selectAll();

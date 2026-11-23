@@ -5,8 +5,9 @@ import type { ColType } from './colType';
 import { getElementByClassName } from './getElementByClassName';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { focusGroupButton } from './jumpKeys';
-import { isTypedCharacter } from './renderRowCell';
+import { scrollRowIntoView } from './rangeSelection';
 import { leaveGrid, tabGroupStop, tabLeavesRows, tabPastRows } from './tabExit';
+import { triggerScrollEvent } from './triggerScrollEvent';
 
 const TAB_KEY = 'Tab';
 const ARROW_UP_KEY = 'ArrowUp';
@@ -16,42 +17,33 @@ const ARROW_RIGHT_KEY = 'ArrowRight';
 type CurrentKey = typeof TAB_KEY | typeof ARROW_UP_KEY | typeof ARROW_DOWN_KEY | typeof ARROW_LEFT_KEY | typeof ARROW_RIGHT_KEY;
 
 /**
- * A key moves the focus in a moment, not at once (Tab, Enter, Alt+arrows): the rows scroll first, and
- * the cell is focused 100ms later, once they are rendered - `ctx.focusMovePending` meanwhile. The key
- * comes from the cell the focus is leaving until then; held down, it repeats from there. So the keys
- * that would move the focus again or type in that cell are canceled until the focus is there: Tab
- * would else be the browser's own (to the next input in the dom), an Alt+arrow would go from the old
- * cell again, a character would land in the cell being left. The other keys are left alone - Esc closes
- * a menu, Ctrl+C copies - and the other grids of the page too (it was one flag for every grid).
- * @param override the key the cell gives instead of the event's: Enter as ArrowDown, a plain arrow on a
- * custom cell
- */
-export function focusMoveKey(event: KeyboardEvent, override = ''): boolean {
-    const arrow = event.key === 'ArrowUp' || event.key === 'ArrowDown' || event.key === 'ArrowLeft' || event.key === 'ArrowRight';
-    const typing = isTypedCharacter(event) || event.key === 'Backspace' || event.key === 'Delete';
-    return !!override || event.key === 'Tab' || event.key === 'Enter' || (arrow && event.altKey) || typing;
-}
-
-/**
- * Moves the focus to the element of a class in a moment, see focusMoveKey: the rows scroll first. A
- * move to another row makes it the current row - not one to a header filter, the filter row is no row
- * of the data
+ * Moves the focus to the element of a class at once (Tab, Enter, Alt+arrows): the row is scrolled into
+ * view (scrollRowIntoView), the rows are rendered (triggerScrollEvent), then the cell is focused - as the
+ * jump keys do (goToCell in jumpKeys.ts). The key has scrolled the middle columns sideways already. The
+ * row the focus goes to is made the current row when it is not - also from a header filter into the first
+ * row. Not a header filter: the filter row is no row of the data.
+ *
+ * It was 100ms later, after the scroll event had rendered the rows, and the keys that move or type were
+ * canceled meanwhile (a held key repeated from the cell being left)
  * @param name the class of the cell's input: `cellpos-...`, `filter-cellpos-...` for a header filter
- * @param fromRow the row the key was pressed in
  * @param toRow the row it goes to
  */
-export function focusInAMoment(ctx: Grid, name: string, fromRow: number, toRow: number) {
-    ctx.focusMovePending = true;
-    setTimeout(() => {
-        const el = getElementByClassName(ctx.element, name);
-        if (el) {
-            el.focus();
-            if (toRow !== fromRow && !name.startsWith('filter-')) {
-                ctx.gridInterface.getDatasource().setRowAsCurrentEntity(toRow);
-            }
+export function focusCellNow(ctx: Grid, name: string, toRow: number) {
+    const toFilter = name.startsWith('filter-');
+    // the body scroller is the one that counts: triggerScrollEvent puts the others where it is
+    if (!toFilter) {
+        scrollRowIntoView(ctx, toRow);
+    }
+    triggerScrollEvent(ctx);
+    const el = getElementByClassName(ctx.element, name);
+    if (el) {
+        el.focus();
+        // the key's row was compared: from a header filter (row 0) into row 0 the current row stayed
+        const datasource = ctx.gridInterface.getDatasource();
+        if (!toFilter && datasource.currentEntity !== datasource.getRow(toRow)) {
+            datasource.setRowAsCurrentEntity(toRow);
         }
-        ctx.focusMovePending = false;
-    }, 100);
+    }
 }
 
 function overrideGroupRow(ctx: Grid, currentKey: string, gotoRow: number) {
@@ -170,7 +162,7 @@ function leaveSection(
  */
 export const cellRowKeyNavigationCellRowHandler = (
     ctx: Grid,
-    cell: HTMLCellElement,
+    _cell: HTMLCellElement,
     row: number,
     column: number,
     celno: number,
@@ -178,15 +170,6 @@ export const cellRowKeyNavigationCellRowHandler = (
     event: any,
     codeOverride: string // when we want to force a action
 ) => {
-    // a move is on its way: the keys that move or type wait for it, see focusMoveKey
-    if (ctx.focusMovePending) {
-        if (focusMoveKey(event, codeOverride)) {
-            event.preventDefault();
-            return false;
-        }
-        return true;
-    }
-
     const currentKey: CurrentKey = codeOverride ? codeOverride : event.code;
 
     const altKey = codeOverride ? true : event.altKey;
@@ -197,13 +180,8 @@ export const cellRowKeyNavigationCellRowHandler = (
         }
         event.preventDefault();
         const scrollerEl = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
-        const scrollerRect = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller').getBoundingClientRect();
-        const cellRect = cell.getBoundingClientRect();
         const innerWidth = scrollerEl.clientWidth;
         const scrollleft = scrollerEl.scrollLeft;
-        const top = cellRect.top - scrollerRect.top;
-        const bottom = scrollerRect.bottom - cellRect.bottom;
-        const rowHeight = ctx.gridInterface.__getGridConfig().__rowHeight * 2;
         const colLeft: number[] = [];
         const widths: number[] = [];
         let lastLeft = 0;
@@ -361,15 +339,7 @@ export const cellRowKeyNavigationCellRowHandler = (
                 break;
         }
 
-        if (bottom < rowHeight) {
-            scrollerEl.scrollTop = scrollerEl.scrollTop + rowHeight;
-        }
-
-        if (top < rowHeight) {
-            scrollerEl.scrollTop = scrollerEl.scrollTop - rowHeight;
-        }
-
-        focusInAMoment(ctx, `${filterClass}cellpos-${gotoColType}-${gotoRow}-${gotoCol}-${gotoCell}`, row, gotoRow);
+        focusCellNow(ctx, `${filterClass}cellpos-${gotoColType}-${gotoRow}-${gotoCol}-${gotoCell}`, gotoRow);
     }
 
     /*
@@ -380,21 +350,6 @@ export const cellRowKeyNavigationCellRowHandler = (
             return true;
         }
         event.preventDefault();
-        const scrollerEl = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
-        const scrollerRect = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller').getBoundingClientRect();
-        const cellRect = cell.getBoundingClientRect();
-        const top = cellRect.top - scrollerRect.top;
-        const bottom = scrollerRect.bottom - cellRect.bottom;
-        const rowHeight = ctx.gridInterface.__getGridConfig().__rowHeight * 2;
-        const colLeft: number[] = [];
-        const widths: number[] = [];
-        let lastLeft = 0;
-        const columnsCenter = ctx.gridInterface.__getGridConfig().layout.center;
-        columnsCenter.forEach((c) => {
-            colLeft.push(lastLeft);
-            widths.push(c.width);
-            lastLeft = lastLeft + c.width;
-        });
 
         const config = ctx.gridInterface.__getGridConfig();
         const gotoColType = colType;
@@ -484,15 +439,7 @@ export const cellRowKeyNavigationCellRowHandler = (
                 break;
         }
 
-        if (bottom < rowHeight) {
-            scrollerEl.scrollTop = scrollerEl.scrollTop + rowHeight;
-        }
-
-        if (top < rowHeight) {
-            scrollerEl.scrollTop = scrollerEl.scrollTop - rowHeight;
-        }
-
-        focusInAMoment(ctx, `${filterClass}cellpos-${gotoColType}-${gotoRow}-${gotoCol}-${gotoCell}`, row, gotoRow);
+        focusCellNow(ctx, `${filterClass}cellpos-${gotoColType}-${gotoRow}-${gotoCol}-${gotoCell}`, gotoRow);
     }
 
     /**
@@ -517,13 +464,8 @@ export const cellRowKeyNavigationCellRowHandler = (
         }
         event.preventDefault();
         const scrollerEl = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller');
-        const scrollerRect = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller').getBoundingClientRect();
-        const cellRect = cell.getBoundingClientRect();
         const innerWidth = scrollerEl.clientWidth;
         const scrollleft = scrollerEl.scrollLeft;
-        const top = cellRect.top - scrollerRect.top;
-        const bottom = scrollerRect.bottom - cellRect.bottom;
-        const rowHeight = ctx.gridInterface.__getGridConfig().__rowHeight * 2;
         const colLeft: number[] = [];
         const widths: number[] = [];
         let lastLeft = 0;
@@ -713,15 +655,7 @@ export const cellRowKeyNavigationCellRowHandler = (
                 break;
         }
 
-        if (bottom < rowHeight) {
-            scrollerEl.scrollTop = scrollerEl.scrollTop + rowHeight;
-        }
-
-        if (top < rowHeight) {
-            scrollerEl.scrollTop = scrollerEl.scrollTop - rowHeight;
-        }
-
-        focusInAMoment(ctx, `${filterClass}cellpos-${gotoColType}-${gotoRow}-${gotoCol}-${gotoCell}`, row, gotoRow);
+        focusCellNow(ctx, `${filterClass}cellpos-${gotoColType}-${gotoRow}-${gotoCol}-${gotoCell}`, gotoRow);
     }
 
     return false;

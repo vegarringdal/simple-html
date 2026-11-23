@@ -13,7 +13,7 @@ import { ROW_STATE_TEXT, rowStateOf, rowStatusIcon, rowStatusIconTemplate } from
 
 /**
  * The row number of a row: the first cell of the row, a click selects the row (a group row: the rows
- * of the group) - Ctrl+click adds or removes it, Shift+click selects from the anchor (selection.ts). A
+ * of the group) - Ctrl+click (Cmd+click) adds or removes it, Shift+click selects from the anchor (selection.ts). A
  * finger has neither key: in `'multiple'` mode its tap toggles the row as Ctrl+click does, the first tap
  * selects and more taps add or remove (lastPress.ts); in `'single'` mode a tap selects as a click. A
  * right click, a long press (longPress.ts) and Shift+F10 open the row menu, without a cell
@@ -101,7 +101,11 @@ export function renderRowSelector(
                         selectRows.push(i);
                     }
                     if (selectRows.length) {
-                        ds.getSelection().selectRowRange(selectRows[0], selectRows[selectRows.length - 1], e.ctrlKey || toggle);
+                        ds.getSelection().selectRowRange(
+                            selectRows[0],
+                            selectRows[selectRows.length - 1],
+                            e.ctrlKey || e.metaKey || toggle
+                        );
                         ctx.rebuild();
                     }
                 } else if (toggle) {
