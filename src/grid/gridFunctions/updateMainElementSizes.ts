@@ -6,6 +6,12 @@ import { LEFT_PINNED_COLTYPE } from './GROUP_COLTYPE';
 import { getElementByClassName } from './getElementByClassName';
 import { getGroupingWidth } from './getGroupingWidth';
 
+/**
+ * the class of the block at the right end of the header, over the rows' vertical scrollbar (createDom):
+ * `__scrollbarSize` wide, the header's columns end where the rows' end
+ */
+export const HEADER_GUTTER_CLASS = 'simple-html-grid-header-gutter';
+
 export function updateMainElementSizes(ctx: Grid) {
     const config = ctx.gridInterface.__getGridConfig();
 
@@ -100,12 +106,22 @@ export function updateMainElementSizes(ctx: Grid) {
         headerViewPortLeft.classList.remove('pinned-left-grouping-only');
     }
 
+    // the header's middle and right columns end where the rows' do: before the rows' vertical scrollbar
+    // (the body's right). The same room, so the two scroll as far and stay over each other - also on a
+    // phone, whose scrollbars take no room. The gutter fills the corner over the scrollbar
     const headerViewPortMiddle = getElementByClassName(ctx.element, 'simple-html-grid-header-view-pinned-middle');
     headerViewPortMiddle.style.left = asPx(config.__selectSizeWidth + leftWidth);
-    headerViewPortMiddle.style.right = asPx(config.__rightWidth);
+    headerViewPortMiddle.style.right = asPx(config.__rightWidth + config.__scrollbarSize);
 
     const headerViewPortRight = getElementByClassName(ctx.element, 'simple-html-grid-header-view-pinned-right');
     headerViewPortRight.style.width = asPx(config.__rightWidth);
+    headerViewPortRight.style.right = asPx(config.__scrollbarSize);
+
+    // made by createDom: a grid built before it has none
+    const gutter = ctx.element.getElementsByClassName(HEADER_GUTTER_CLASS)[0] as HTMLElement | undefined;
+    if (gutter) {
+        gutter.style.width = asPx(config.__scrollbarSize);
+    }
     if (config.__rightWidth === 0) {
         headerViewPortRight.style.display = 'none';
     } else {

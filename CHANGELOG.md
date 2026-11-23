@@ -1332,6 +1332,15 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### The header over the rows on a phone (user request)
+
+##### Fixed
+- On a phone the header's columns were 10px to the right of the rows' when the columns were scrolled to
+  their end (and a right pinned column always): the header lined up with the rows by a scrollbar of its
+  own, as wide as the rows' on a desktop - a phone's scrollbars take no room. The header leaves the room
+  of the rows' scrollbar now (`__scrollbarSize`) and fills its corner with a block in the scrollbar's
+  track colour (`.simple-html-grid-header-gutter`). The header has no scrollbar of its own.
+
 #### The column chooser: a finger drags a field on a phone (user request)
 
 ##### Fixed

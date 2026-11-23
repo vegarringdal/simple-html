@@ -258,9 +258,21 @@
     position: absolute;
     left: 0;
     right: 0;
-    overflow-y: scroll;
+    /* no scrollbar of its own: its columns leave the room of the rows' scrollbar (updateMainElementSizes),
+       the gutter fills it - a phone's scrollbar takes none, the header was wider than the rows */
+    overflow: hidden;
     pointer-events: all;
     border-bottom: 2px solid var(--simple-html-grid-pinned-border);
+}
+
+/* the corner of the header over the rows' vertical scrollbar: the scrollbar's track, from the top of the
+   header to its line */
+.simple-html-grid-header-gutter {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--simple-html-grid-alt-bg-color);
 }
 
 .simple-html-grid-header .simple-html-grid-col {
@@ -576,26 +588,6 @@
 /*
  * scrollbar
  */
-
-.simple-html-grid-header::-webkit-scrollbar {
-    width: 10px;
-}
-
-.simple-html-grid-header {
-    scrollbar-color: var(--simple-html-grid-scrollbar-thumb-color) var(--simple-html-grid-alt-bg-color);
-    scrollbar-width: thin;
-}
-
-.simple-html-grid-header::-webkit-scrollbar-thumb {
-    box-sizing: border-box;
-    background-color: var(--simple-html-grid-scrollbar-thumb-color);
-    box-shadow: inset 0 0 6px var(--simple-html-grid-scrollbar-shadow-color);
-    outline: 1px solid var(--simple-html-grid-main-bg-border);
-}
-.simple-html-grid-header::-webkit-scrollbar-track {
-    box-sizing: border-box;
-    background-color: var(--simple-html-grid-main-bg-color);
-}
 
 .simple-html-dialog-scroller::-webkit-scrollbar {
     width: 10px;

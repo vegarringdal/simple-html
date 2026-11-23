@@ -4892,6 +4892,19 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * "Run workflow" shows for a workflow on the default branch only: next.yml has to be on master too, as
   release.yml and beta.yml (see *Questions for the user*)
 
+### The header over the rows on a phone (user request)
+
+* the user, a screenshot from Brave on Android: "header/row is not in sync, header prob need a block same
+  size as scrollbar if scrollbar is active, thats why it had it even though it looked ugly"
+* the header had `overflow-y: scroll`: its own empty scrollbar was the block, as wide as the rows' (10px)
+  on a desktop. An overlay scrollbar (a phone) takes no room: the header's middle was 10px wider than the
+  rows', scrolled 10px less at the end, and its right pinned columns ended at the edge
+* updateMainElementSizes: the header's middle and right viewports end `__scrollbarSize` before the edge,
+  as the body; createDom: `.simple-html-grid-header-gutter` in the corner, the track colour. grid.css: the
+  header `overflow: hidden`, its scrollbar css gone
+* header-align-check.js (local): overlay scrollbars (--enable-features=OverlayScrollbar) and desktop -
+  every header cell over its column at the start, at the far right, with a right pinned column
+
 ### Column chooser: drag with a finger (user request)
 
 * the user: "drag drop from column chooser do not work with touch, probably other places too"

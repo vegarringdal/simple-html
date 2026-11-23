@@ -22,7 +22,7 @@ import { shortcutHelpKeydown } from './shortcutHelp';
 import { addFooterKeys, createTabExits } from './tabExit';
 import { attachTooltips, tooltipsEnabled } from './tooltip';
 import { updateHorizontalScrollWidth } from './updateHorizontalScrollWidth';
-import { updateMainElementSizes } from './updateMainElementSizes';
+import { HEADER_GUTTER_CLASS, updateMainElementSizes } from './updateMainElementSizes';
 import { updateVerticalScrollHeight } from './updateVerticalScrollHeight';
 import { verticalScrollHandler } from './verticalScrollHandler';
 
@@ -83,6 +83,10 @@ export function createDom(ctx: Grid) {
     header.appendChild(headerViewPinnedLeft);
     header.appendChild(headerViewPinnedMiddle);
     header.appendChild(headerViewPinnedRight);
+    // over the rows' vertical scrollbar: the header ends where the rows end, this fills its corner -
+    // sized by updateMainElementSizes. A browser's own scrollbar of the header did it before: a phone's
+    // takes no room, the header was wider than the rows
+    header.appendChild(createElement(DIV, HEADER_GUTTER_CLASS));
 
     const bodyViewGroup = createElement(DIV, 'simple-html-grid-body-view-group');
     const bodyViewSelector = createElement(DIV, 'simple-html-grid-body-view-selector');
