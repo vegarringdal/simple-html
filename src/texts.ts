@@ -563,6 +563,12 @@ const DEFAULTS = {
     // the tabs of the dialog, and its Detail form tab: what the detail form (GridState.detailForm) shows
     'columnSettings.tab.columns': 'Columns',
     'columnSettings.tab.detailForm': 'Detail form',
+    // the tabs of a column's settings on the Columns tab (ColumnSection in columnSettings.ts), and their list's name
+    'columnSettings.section.general': 'General',
+    'columnSettings.section.display': 'Display',
+    'columnSettings.section.filter': 'Header filter',
+    'columnSettings.section.colours': 'Colours',
+    'columnSettings.sections': 'Settings of {column}',
     'columnSettings.detailForm.show': 'Show the detail form',
     'columnSettings.detailForm.expanded': 'Expanded',
     'columnSettings.detailForm.expanded.hint':

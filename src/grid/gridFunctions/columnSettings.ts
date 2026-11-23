@@ -59,7 +59,7 @@ import { formatSubmenu, NUMBER_SAMPLE, PERCENT_SAMPLE } from './formatSubmenu';
 import { getColumnLabel, getConfigColumnLabel } from './getColumnLabel';
 import { getHeaderFilterOperator } from './getHeaderFilterOperator';
 import { getLayoutFields } from './getLayoutFields';
-import { configTabs, type GridConfigTab, tabId, tabPanelId } from './gridConfigTabs';
+import { configTabs, type GridConfigTab, tabId, tabList, tabPanelId } from './gridConfigTabs';
 import { gridText } from './gridText';
 import { refilterChangedFormats } from './headerFilterFormatter';
 import { HEADER_OPERATOR_TEXTS, setHeaderFilterOperator } from './headerOperatorMenu';
@@ -88,7 +88,9 @@ import { attachTooltips, hideTooltip, tooltipsEnabled } from './tooltip';
  * - **Left**: the columns of the layout, in their order - a listbox, one stop of Tab, the arrows, Home,
  *   End, PageUp / PageDown and a letter pick one. Each has its label, its type and what it has set:
  *   Format, Text, Link, Checkbox, Blank / 0, Label, Placeholder, Colours - or Error.
- * - **Right**, the column picked: its label (`ColumnFormat.label`, empty the column's own). A date, datetime
+ * - **Right**, the column picked, in tabs under its name (ColumnSection: General, Display, Header filter,
+ *   Colours - a tab with a problem has a mark), the preview under them: its label (`ColumnFormat.label`,
+ *   empty the column's own). A date, datetime
  *   or number column has its format, a picker that opens the entries of Format › (formatSubmenu.ts - one
  *   list of the formats), and under it Filter as shown (`ColumnFormat.filterAsShown`, greyed out for a
  *   format that is no period of time); a number column Show blank as 0 and Show 0 as blank too (`numberOverride`, one or
@@ -149,6 +151,11 @@ interface ColumnSettings {
     field: string;
     /** the tab shown: the columns' settings, or the detail form's */
     tab: GridConfigTab;
+    /**
+     * the tab of the column's settings shown on the Columns tab, see {@link ColumnSection}. Kept when another
+     * column is picked; a column without it shows General
+     */
+    section: ColumnSection;
     /** what the Detail form tab edits, see detailFormSettings.ts */
     detailForm: DetailFormDraft;
     /** the calculated columns, by field: a copy of the state's when it opened (GridState.calculatedColumns) */
@@ -169,6 +176,19 @@ interface Problem {
     id: TextId;
     values?: Readonly<Record<string, unknown>>;
 }
+
+/**
+ * The tabs of a column's settings on the Columns tab - one long form was too big (the user):
+ * - `general`: the label (a calculated column's own settings in its place), Read only and Multiline, the
+ *   placeholder
+ * - `display`: what the cell shows - the format, the text template and the link, the checkboxes, blank /
+ *   0. Not for a checkbox or a lookup column: they have none
+ * - `filter`: the header filter's operator and Filter as you type. Not for a checkbox column
+ * - `colours`: the colour rules, and a number column's data bar, colour scale and icon set
+ *
+ * A calculated column waiting for Apply has General only, and no tabs. The preview is under every tab
+ */
+type ColumnSection = 'general' | 'display' | 'filter' | 'colours';
 
 /** the kind of a column, for its settings: its field's type, or a lookup column */
 type ColumnKind = 'text' | 'number' | 'boolean' | 'date' | 'datetime' | 'lookup';
@@ -213,6 +233,7 @@ export function openColumnSettings(ctx: Grid, field?: string, tab: GridConfigTab
         ),
         field: field !== undefined && fields.includes(field) ? field : fields[0],
         tab,
+        section: 'general',
         detailForm: detailFormDraft(ctx, ctx.gridInterface.getState().detailForm),
         calculated: ctx.gridInterface.getState().calculatedColumns,
         added: [],
@@ -1466,6 +1487,65 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
     // Apply and Apply & close are greyed out while a column has a problem - aria-disabled, not disabled: a
     // disabled button loses the focus and its tooltip
     const blocked = withProblems.size ? 'true' : nothing;
+
+    // the tabs of the column's settings, see ColumnSection. A checkbox and a lookup column have no Display
+    // tab: General says they have no format
+    const hasDisplay = kind !== 'boolean' && kind !== 'lookup';
+    const sections: ColumnSection[] = pending(field)
+        ? ['general']
+        : [
+              'general',
+              ...(hasDisplay ? (['display'] as const) : []),
+              ...(settings.operators[field] ? (['filter'] as const) : []),
+              'colours'
+          ];
+    const section = sections.includes(settings.section) ? settings.section : 'general';
+    /** a setting of the tab has a problem: Apply waits for it, the tab has a mark */
+    const sectionProblem: Record<ColumnSection, boolean> = {
+        general: isDraftCalculated(field) && calculatedProblem(field) !== null,
+        display: formatProblems(format).length > 0 || checkboxProblems(format, kind).length > 0,
+        filter: false,
+        colours:
+            colorRulesHaveProblem(format?.rules, fieldOf) || valueFillProblems(field, format, settings.typedNumbers).length > 0
+    };
+    const sectionTabId = (each: ColumnSection) => idOf(ctx, `section-${each}`);
+    const sectionPanelId = (each: ColumnSection) => idOf(ctx, `section-panel-${each}`);
+    /** the tab list, none for one tab */
+    const sectionTabs = () =>
+        sections.length > 1
+            ? tabList(ctx, {
+                  tabs: sections.map((each) => ({
+                      tab: each,
+                      text: `columnSettings.section.${each}` as TextId,
+                      problem: sectionProblem[each]
+                  })),
+                  current: section,
+                  show: (each) => {
+                      settings.section = each;
+                      update();
+                  },
+                  label: text('columnSettings.sections', { column: labelOf(field) }),
+                  tabId: sectionTabId,
+                  panelId: sectionPanelId,
+                  className: 'column-settings-sections'
+              })
+            : nothing;
+    /**
+     * the panel of a tab: every tab's is rendered, the ones not shown hidden - what they hold keeps its
+     * state, and a column without the tab has none
+     */
+    const sectionPanel = (each: ColumnSection, content: TemplateResult | typeof nothing) =>
+        sections.includes(each)
+            ? html`<div
+                  class="column-settings-section"
+                  role=${sections.length > 1 ? 'tabpanel' : nothing}
+                  id=${sectionPanelId(each)}
+                  aria-labelledby=${sections.length > 1 ? sectionTabId(each) : nothing}
+                  ?hidden=${each !== section}
+              >
+                  ${content}
+              </div>`
+            : nothing;
     const start = gridInterface.__getStartFormats();
 
     render(
@@ -1550,13 +1630,17 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                         <span class="column-settings-heading-label">${labelOf(field)}</span>
                         <span class="column-settings-option-type">${typeName(field)}</span>
                     </div>
-                    ${isDraftCalculated(field) ? calculatedSettings() : labelSettings()}
-                    ${
-                        pending(field)
-                            ? nothing
-                            : html`${settingsOf()} ${isDraftCalculated(field) ? nothing : editingSettings()} ${placeholderSettings()}
-                              ${operatorSettings()} ${ruleSettings()} ${barSettings()} ${preview()}`
-                    }
+                    ${sectionTabs()}
+                    ${sectionPanel(
+                        'general',
+                        html`${isDraftCalculated(field) ? calculatedSettings() : labelSettings()}
+                        ${pending(field) ? nothing : html`${isDraftCalculated(field) ? nothing : editingSettings()} ${placeholderSettings()}`}
+                        ${pending(field) || hasDisplay ? nothing : settingsOf()}`
+                    )}
+                    ${sectionPanel('display', hasDisplay ? settingsOf() : nothing)}
+                    ${sectionPanel('filter', operatorSettings())}
+                    ${sectionPanel('colours', html`${ruleSettings()} ${barSettings()}`)}
+                    ${pending(field) ? nothing : preview()}
                 </div>
             </div>
             ${detailFormTabPanel(ctx, dialog, settings.detailForm, settings.tab, update)}

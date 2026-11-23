@@ -3452,6 +3452,34 @@
     font-weight: var(--simple-html-grid-font-weight-header);
 }
 
+/* the tabs of a column's settings (ColumnSection in columnSettings.ts): the dialog's tabs, without their
+ * room at the sides. A tab's panel lays its settings out as the panel did */
+.simple-html-grid.filter-editor-content .column-settings-tabs.column-settings-sections {
+    flex-wrap: wrap;
+    padding: 0;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-section[hidden] {
+    display: none;
+}
+
+/* a setting of the tab has a problem: a square in the colour of the Error badge (no corner is round),
+ * "Error" for a screen reader */
+.simple-html-grid.filter-editor-content .column-settings-tab-problem {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-left: 5px;
+    background-color: var(--simple-html-grid-error-color);
+    vertical-align: middle;
+}
+
 .simple-html-grid.filter-editor-content .column-settings-heading .column-settings-option-type {
     color: var(--simple-html-grid-sec-font-color);
 }

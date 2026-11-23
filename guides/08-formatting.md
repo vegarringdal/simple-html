@@ -622,7 +622,23 @@ The tabs are a tab list: Tab comes to the tab shown, ArrowLeft / ArrowRight (Hom
 The footer is the dialog's: *Apply* applies both tabs, *Cancel* drops what was changed on both. Its
 left end has the resets of the tab shown.
 
-The Columns tab:
+The Columns tab has the columns at the left and the settings of the one picked at the right - those
+in tabs of their own, under the column's name:
+
+| tab | the settings |
+| --- | --- |
+| **General** | Label - or a calculated column's field name, label and formula - Multiline, Read only, Placeholder |
+| **Display** | what the cells show: the format, Filter as shown, blank / 0, Text shown, Show as link, Show as checkbox. Not for a checkbox or a lookup column: General says they have no format |
+| **Header filter** | Filter operator, Filter as you type. Not for a checkbox column |
+| **Colours** | Colour rules; Data bars, scales, icons for a number column |
+
+A tab with a problem in it has a small red square after its name (*Error* for a screen reader): *Apply*
+waits for it. The tab picked stays when another column is picked - General for a column without it. A
+calculated column waiting for *Apply* has its own settings only, no tabs. The preview is under every
+tab. The tabs are a tab list too: Tab comes to the tab shown, ArrowLeft / ArrowRight (Home / End) show
+another.
+
+The settings, from the top:
 
 - **The columns** of the layout are at the left, in their order, each with its label, its type and
   what it has set - *Calculated*, *Format*, *Text*, *Link*, *Checkbox*, *Blank / 0*, *Label*, *Placeholder*,

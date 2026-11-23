@@ -867,6 +867,11 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.applyAndClose` | `Apply & close` | applies and closes |
 | `columnSettings.tab.columns` | `Columns` | the tab of the columns' settings |
 | `columnSettings.tab.detailForm` | `Detail form` | the tab of the detail form |
+| `columnSettings.section.general` | `General` | the tab of a column's label, read only, multiline and placeholder |
+| `columnSettings.section.display` | `Display` | the tab of what a column's cells show: format, text, link, checkboxes, blank / 0 |
+| `columnSettings.section.filter` | `Header filter` | the tab of a column's header filter operator and filter as you type |
+| `columnSettings.section.colours` | `Colours` | the tab of a column's colour rules, data bar, colour scale and icon set |
+| `columnSettings.sections` | `Settings of {column}` | the name of a column's tabs, for a screen reader. `{column}`: its label |
 | `columnSettings.detailForm.show` | `Show the detail form` | the checkbox that shows it |
 | `columnSettings.detailForm.expanded` | `Expanded` | the checkbox that expands it, off: collapsed (`DetailForm.expanded`) |
 | `columnSettings.detailForm.expanded.hint` | `Collapsed, the form is a narrow strip: the button of its title expands it, and collapses it again` | under it |

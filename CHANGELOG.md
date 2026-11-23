@@ -1332,6 +1332,21 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### The grid config dialog: a column's settings in tabs (user request)
+
+##### Changed
+- On the Columns tab the settings of the column picked are in four tabs under its name, the form was too
+  big in one: **General** (label - or a calculated column's own settings - Multiline, Read only,
+  Placeholder), **Display** (format, Filter as shown, blank / 0, text, link, checkboxes), **Header
+  filter** (operator, Filter as you type) and **Colours** (colour rules; data bars, scales, icons). The
+  preview is under every tab. A checkbox or lookup column has no Display tab, a checkbox column no Header
+  filter. The tab picked stays when another column is picked.
+- A tab with a problem in it has a small square in the error colour after its name, *Error* for a screen
+  reader. The tabs are a tab list (arrows, Home, End), as the dialog's.
+- New texts: `columnSettings.section.general`, `.display`, `.filter`, `.colours`, `columnSettings.sections`
+  (the list's name, `{column}`). New classes: `.column-settings-sections` (the list),
+  `.column-settings-section` (a tab's panel), `.column-settings-tab-problem` (the mark).
+
 #### Tab, Enter and Alt+arrows move the focus at once
 
 ##### Changed

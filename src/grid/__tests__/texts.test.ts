@@ -330,8 +330,8 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
     type('text', '{name}');
     check();
     // a link: no address, then one that does not start with its scheme, then one of another scheme. The
-    // first checkbox is Show as checkbox
-    toggle(1);
+    // checkbox is Show as link
+    toggleText('columnSettings.link');
     check();
     type('url', '«zz»');
     check();
@@ -392,7 +392,7 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
     toggleText('columnSettings.bars.scale');
     toggleText('columnSettings.bars.icons');
     // shown as checkboxes: the two values, their hint, each problem of them
-    toggle(0);
+    toggleText('columnSettings.checkbox');
     check();
     type('checked', '');
     check();

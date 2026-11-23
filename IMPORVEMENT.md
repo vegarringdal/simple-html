@@ -4839,6 +4839,35 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
   entries of *Select ›* and *Copy ›* greyed out on a row number, but since commit 26101022 ("The row menu
   of a row number: only what is about rows", guide 10) they are left out. The check updated, 66/66
 
+### The grid config dialog: a column's settings in tabs (user request)
+
+* the user: "gridconfig column config might need a sub tab per section. To big form now" - the right of
+  the Columns tab was one form of every setting: 622px of settings for a number column in the full grid
+* `ColumnSection` (columnSettings.ts): General, Display, Header filter, Colours; `settings.section` kept
+  across columns, General when the column has not the tab. A tab only when it has settings: no Display
+  for a checkbox or lookup column (General says "has no format"), no Header filter for a checkbox column;
+  a calculated column waiting for Apply has no tabs. Every tab's panel rendered, the others `hidden`
+  (what they hold keeps its state, the tests find every control); the preview under them
+* gridConfigTabs.ts: `tabList()`, the dialog's tab list made generic - the dialog's tabs use it too;
+  `TabOf.problem` puts a mark and a visually hidden " Error" after the text. A tab has a problem by the
+  same checks as `withProblems`: General the calculated column's, Display formatProblems /
+  checkboxProblems, Colours colorRulesHaveProblem / valueFillProblems
+* css: `.column-settings-sections` (no side room, wraps), `.column-settings-section` (as the panel),
+  `.column-settings-tab-problem` - a 6px square, no round corner (the theme test)
+* texts: five ids, in texts.ts, the translation sample (Norwegian) and the table of guide 12; guide 08
+  describes the tabs
+* tests: columnSettings.test.ts (the four tabs and their panels, General first; click, arrows, Home,
+  End; the tab kept, a checkbox column's two; the mark and "Error"; no tabs for a pending calculated
+  column), detailFormSettings.test.ts (its helpers: the dialog's own tabs and panels),
+  texts.test.ts (the checkboxes by their text, not their place)
+* browser: column-sections-check.js (new, 42/42 - every tab shown alone, the tallest 247px of 622, the
+  dialog in the window, Tab and the keys, the mark, a phone); `scripts/sections.js` - required by the
+  checks of the dialog, it clicks the tab of a hidden setting before Playwright acts on it, as the user
+  does. With it: color-rules 98, calculated-column 61, column-settings 144 (`http://127.0.0.1:8090/`: it
+  answers every other origin), data-bars 75, column-settings-more 149, filter-as-shown 61, operator 13,
+  edit 9, detail-form 91 (its tabs scoped), detail-form-more 120, display-format 39, edit-permissions 57,
+  multiline-lines 128 - all pass
+
 ## Considered, not done
 
 ## Candidates / not started

@@ -509,6 +509,11 @@ const norwegian: Record<TextId, string> = {
     'columnSettings.applyAndClose': 'Bruk og lukk',
     'columnSettings.tab.columns': 'Kolonner',
     'columnSettings.tab.detailForm': 'Detaljskjema',
+    'columnSettings.section.general': 'Generelt',
+    'columnSettings.section.display': 'Visning',
+    'columnSettings.section.filter': 'Kolonnefilter',
+    'columnSettings.section.colours': 'Farger',
+    'columnSettings.sections': 'Innstillinger for {column}',
     'columnSettings.detailForm.show': 'Vis detaljskjemaet',
     'columnSettings.detailForm.expanded': 'Utvidet',
     'columnSettings.detailForm.expanded.hint':

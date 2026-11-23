@@ -969,3 +969,114 @@ describe('column settings - multiline and read only', () => {
         expect(gridInterface.getState().formats.company).toEqual({ readonly: true, checkbox: { checked: '1', unchecked: '0' } });
     });
 });
+
+/**
+ * The tabs of a column's settings (ColumnSection in columnSettings.ts): General, Display, Header filter,
+ * Colours - the form was too big in one. The preview under every tab
+ */
+describe('column settings - the tabs of a column', () => {
+    const sectionList = () => dialog().querySelector('.column-settings-sections') as HTMLElement | null;
+    const sectionTabs = () => Array.from(sectionList()?.querySelectorAll<HTMLElement>('[role="tab"]') ?? []);
+    const tabTexts = () => sectionTabs().map((tab) => tab.textContent?.replace(/\s+/g, ' ').trim());
+    const sectionTab = (text: string) => sectionTabs().find((tab) => tab.textContent?.trim().startsWith(text)) as HTMLElement;
+    const shownSection = () =>
+        Array.from(dialog().querySelectorAll<HTMLElement>('.column-settings-section')).find((each) => !each.hidden);
+    const key = (target: HTMLElement, name: string) =>
+        target.dispatchEvent(new KeyboardEvent('keydown', { key: name, bubbles: true, cancelable: true }));
+
+    it('expect General, Display, Header filter and Colours for a text column, General first, the others hidden', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('company');
+
+        expect(tabTexts()).toEqual(['General', 'Display', 'Header filter', 'Colours']);
+        expect(sectionList()?.getAttribute('aria-label')).toEqual('Settings of Company');
+        expect(sectionTabs().map((tab) => tab.getAttribute('aria-selected'))).toEqual(['true', 'false', 'false', 'false']);
+        expect(sectionTabs().map((tab) => tab.tabIndex)).toEqual([0, -1, -1, -1]);
+        // each tab controls its panel, named by the tab
+        for (const tab of sectionTabs()) {
+            const panel = document.getElementById(tab.getAttribute('aria-controls') as string) as HTMLElement;
+            expect(panel.getAttribute('role')).toEqual('tabpanel');
+            expect(panel.getAttribute('aria-labelledby')).toEqual(tab.id);
+        }
+        // General: the label; the link is on Display, hidden
+        expect(shownSection()?.contains(input('label'))).toBe(true);
+        expect(shownSection()?.contains(checkbox('Show as link'))).toBe(false);
+        // the preview under the tabs
+        expect(previewCell()?.closest('.column-settings-section')).toBeNull();
+    });
+
+    it('expect a click and the arrows, Home and End to show a tab, the focus on it', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('company');
+
+        sectionTab('Display').click();
+        expect(sectionTab('Display').getAttribute('aria-selected')).toEqual('true');
+        expect(shownSection()?.contains(checkbox('Show as link'))).toBe(true);
+
+        key(sectionTab('Display'), 'ArrowRight');
+        expect(sectionTab('Header filter').getAttribute('aria-selected')).toEqual('true');
+        expect(document.activeElement).toBe(sectionTab('Header filter'));
+        expect(shownSection()?.querySelector('.column-settings-operator')).not.toBeNull();
+        key(sectionTab('Header filter'), 'End');
+        expect(document.activeElement).toBe(sectionTab('Colours'));
+        key(sectionTab('Colours'), 'ArrowRight');
+        expect(document.activeElement).toBe(sectionTab('General'));
+        key(sectionTab('General'), 'ArrowLeft');
+        expect(document.activeElement).toBe(sectionTab('Colours'));
+        key(sectionTab('Colours'), 'Home');
+        expect(document.activeElement).toBe(sectionTab('General'));
+        // the dialog's tab stays Columns
+        expect(dialog().querySelector(':scope > [role="tablist"] [aria-selected="true"]')?.textContent?.trim()).toEqual(
+            'Columns'
+        );
+    });
+
+    it('expect the tab kept when another column is picked, General for a column without it', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('company');
+        sectionTab('Display').click();
+
+        options()[0].click();
+        expect(heading()).toContain('Name');
+        expect(sectionTab('Display').getAttribute('aria-selected')).toEqual('true');
+
+        // a checkbox column has no Display tab, and no Header filter: General and Colours
+        sectionTab('Header filter').click();
+        options()[LAYOUT.indexOf('active')].click();
+        expect(tabTexts()).toEqual(['General', 'Colours']);
+        expect(sectionTab('General').getAttribute('aria-selected')).toEqual('true');
+        // General says it has no format
+        expect(shownSection()?.querySelector('.column-settings-none')?.textContent).toEqual('A checkbox column has no format');
+
+        // back on a text column: the tab picked last
+        options()[0].click();
+        expect(sectionTab('Header filter').getAttribute('aria-selected')).toEqual('true');
+    });
+
+    it('expect a mark on the tab with a problem, said as Error, gone once it is fixed', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('company');
+        sectionTab('Display').click();
+        toggle('Show as link');
+
+        sectionTab('General').click();
+        // the problem is on Display: its tab has the mark, Apply waits
+        expect(sectionTab('Display').querySelector('.column-settings-tab-problem')).not.toBeNull();
+        expect(tabTexts()).toEqual(['General', 'Display Error', 'Header filter', 'Colours']);
+        expect(sectionTab('General').querySelector('.column-settings-tab-problem')).toBeNull();
+        expect(button('Apply').getAttribute('aria-disabled')).toEqual('true');
+
+        type('url', 'https://x.com/{id}');
+        expect(sectionTab('Display').querySelector('.column-settings-tab-problem')).toBeNull();
+    });
+
+    it('expect no tabs for a calculated column waiting for Apply: its own settings only', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('company');
+        button('Add calculated column').click();
+
+        expect(sectionList()).toBeNull();
+        expect(dialog().querySelectorAll('.column-settings-section')).toHaveLength(1);
+        expect(dialog().querySelector('.column-settings-section')?.hasAttribute('role')).toBe(false);
+    });
+});

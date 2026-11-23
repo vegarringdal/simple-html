@@ -42,9 +42,11 @@ const config = (detailForm?: DetailForm): GridConfig => ({
 const mount = (detailForm?: DetailForm) => mountGrid(config(detailForm), rows(), fields());
 
 const dialog = () => document.querySelector('dialog.column-settings') as HTMLDialogElement;
-const tabs = () => Array.from(dialog().querySelectorAll<HTMLElement>('[role="tab"]'));
+// the dialog's own tabs and panels: the Columns tab has the tabs of a column's settings in it
+const tabs = () => Array.from(dialog().querySelectorAll<HTMLElement>(':scope > [role="tablist"] [role="tab"]'));
 const panel = (id: string) => document.getElementById(id) as HTMLElement;
-const shownPanel = () => Array.from(dialog().querySelectorAll<HTMLElement>('[role="tabpanel"]')).find((each) => !each.hidden);
+const shownPanel = () =>
+    Array.from(dialog().querySelectorAll<HTMLElement>(':scope > [role="tabpanel"]')).find((each) => !each.hidden);
 const list = () => dialog().querySelector('.detail-form-settings-list') as HTMLElement;
 const options = () => Array.from(list().querySelectorAll<HTMLElement>('[role="option"]'));
 /** the options: checked (in the form, and its box shows ✓), the label, the type and the badges - the drag handle has no text */
