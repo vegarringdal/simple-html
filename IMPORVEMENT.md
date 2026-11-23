@@ -4911,7 +4911,8 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
   mode looks brown beside the red - it is that dark to keep 3:1 on selected rows and the palette's
   backgrounds. An outlined icon would allow a brighter fill: worth it?
 * **The publish workflows on master**: copy `.github/workflows/release.yml`, `beta.yml` and `next.yml` onto master, so
-  GitHub shows their "Run workflow" buttons? (Nothing is pushed to master without asking.)
+  GitHub shows their "Run workflow" buttons? The user (2026-11-23): not yet - keep them ready on v6_maybe.
+  When it is time: one commit on master with the three files; a run then builds the branch picked
 * **actions/checkout and actions/setup-node v4 → v7**: the Node 20 deprecation warning of the runs - bump
   them?
 * **The old worktrees**: about 35 merged worktrees in `.claude/worktrees/` - `git worktree remove --force
