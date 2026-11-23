@@ -1332,6 +1332,19 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### A saved grid has a version: `exportConfig()` / `importConfig()` (user request)
+
+##### Added
+- `gridInterface.exportConfig()`: `{ version: 2, config, state }` - the config as the app gave it (with
+  what `updateConfig()` changed) and `getState()`, plain JSON. `importConfig(saved)` takes it back:
+  `updateConfig()` with its config, `setState()` with its state (`resetState()` without one).
+- **A saved grid without a `version` is version 1, a v5 config** (`saveConfig()`), converted on the way
+  in: `attributes` → `columns`, `columns*` → `layout`, its sort, grouping, groups expanded, filter and
+  header filter values → `initialState` and the state; `type`, `mandatory`, `tooltipText` and
+  `selectionMode` left out (the datasource's in v6). `convertGridConfig(saved)` does it alone,
+  `GRID_CONFIG_VERSION` is 2, `ExportedGrid` the type. A newer version, or a v6 config without a version,
+  throws a `TypeError`.
+
 #### The detail form: sections, lines and room per field (user request)
 
 ##### Added

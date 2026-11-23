@@ -1361,6 +1361,11 @@ What changes:
 
 ### A v5 config converted
 
+**The grid does it now**: `gridInterface.importConfig(saved)` and `convertGridConfig(saved)` take a v5
+config - a saved grid without a `version` is one - and convert it as below; `exportConfig()` saves
+`{ version: 2, config, state }`. See the grid config guide, *Exporting with a version*. The code below is
+what they do, for a config you want to convert yourself.
+
 This turns a v5 config - one you wrote, or one `saveConfig()` saved - into a v6 one: `attributes`
 become `columns`, the `columns*` the `layout`, and the state v5 kept in the config goes into
 `initialState`. It uses `fromV5()` from [Saved configs](#saved-configs) for the filter.

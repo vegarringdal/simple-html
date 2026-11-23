@@ -549,6 +549,50 @@ await fetch('/api/grids/accounts', { method: 'PUT', body: JSON.stringify(body) }
   the state, or of `initialState`. See [Dates in a saved state](03-state.md#dates-in-a-saved-state) for what the grid does
   with it.
 
+### Exporting with a version: `exportConfig()` / `importConfig()`
+
+`exportConfig()` gives the config and the state in one, with the version of the format: what
+`importConfig()` takes back. A saved grid of an older version is converted on the way in, so an app keeps
+loading what it saved before.
+
+```ts
+// save: { "version": 2, "config": { ... }, "state": { ... } }
+localStorage.setItem('my-grid', JSON.stringify(gridInterface.exportConfig()));
+
+// load: one exportConfig() made, or a config v5 saved
+const saved = JSON.parse(localStorage.getItem('my-grid') ?? 'null');
+if (saved) {
+    gridInterface.importConfig(saved);
+}
+```
+
+- **`version`** is `GRID_CONFIG_VERSION`, 2. **A saved grid without a `version` is version 1: a config
+  v5 saved (`saveConfig()`) or was written for.** It is converted: `attributes` become `columns` (its
+  placeholders with their new names), the `columns*` the `layout`, and the state v5 kept in the config -
+  the sort, the grouping, the groups expanded, the filter (v5's shape), the header filters' values -
+  `initialState` and the state. A v5 column's `type` and `mandatory` are the datasource's fields' in v6:
+  they are left out, give the datasource the field's type and its `required` rule.
+- **`config`** is the config as the app gave it - the constructor's, with what `updateConfig()` changed
+  since - and **`state`** is `getState()`. The hooks and the datasource are not in it.
+- **`importConfig()`** gives the config to `updateConfig()` - an option it leaves out stays as it is -
+  then the state to `setState()`; a saved grid without a state starts as its config says (`resetState()`).
+- **A version newer than the grid's** throws a `TypeError` (it was saved by a newer grid), and so does a
+  saved grid without a version that has `layout`, `columns` or `initialState`: that is a v6 config, save it
+  as `{ version: 2, config }`.
+- **`convertGridConfig(saved)`** is the conversion alone, for a grid made from a saved one:
+
+```ts
+import { convertGridConfig, createGrid, Datasource } from '@simple-html/grid';
+
+declare const host: HTMLElement;
+const datasource = new Datasource({ fields: { age: 'number' } });
+const { config, state } = convertGridConfig(JSON.parse(localStorage.getItem('my-grid') ?? 'null'));
+const gridInterface = createGrid(host, { config, datasource });
+if (state) {
+    gridInterface.setState(state);
+}
+```
+
 ## Rendering again
 
 The grid renders again by itself when the datasource changes: new data, sorting, filtering,

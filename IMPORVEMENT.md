@@ -4892,6 +4892,21 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * "Run workflow" shows for a workflow on the default branch only: next.yml has to be on master too, as
   release.yml and beta.yml (see *Questions for the user*)
 
+### A saved grid has a version (user request)
+
+* the user: "when we export gridConfig, we need to include version number, if no version number is used,
+  it need to expect version 1, and auto convert so its easier to use old configs". Asked: version 1 is
+  v5's saved config (v6 is 2), and a new export / import pair carries it
+* configVersion.ts: `GRID_CONFIG_VERSION`, `ExportedGrid`, `convertGridConfig()` - the converter of
+  MIGRATION.md (fromV5Config, fromV5) moved into the library, also the misspelt
+  `placeHolderRowCurrentEnityOnly`. A saved grid without a version that has v6 keys throws instead of
+  becoming an empty grid
+* gridInterface: `givenConfig` - the constructor's config with what updateConfig() changed, structuredClone'd
+  - `exportConfig()`, `importConfig()` (updateConfig first: a config that throws changes nothing)
+* a later change of the format: version 3, and a `fromVersion2` step in convertGridConfig
+* tests: configVersion.test.ts (the conversion, the errors, export and import round trip, a v5 config into a
+  grid). Docs: grid config guide *Exporting with a version*, MIGRATION.md
+
 ### The detail form: sections, min lines, room (user request)
 
 * the user: "in multiline, it could be useful to say min rows ... and for all inputs be able to add

@@ -30,6 +30,7 @@ import {
     hasValueFormat,
     readonlyOf
 } from './columnFormat';
+import { convertGridConfig, type ExportedGrid, GRID_CONFIG_VERSION } from './configVersion';
 import type { CsvOptions } from './csv';
 import { DATE_PRESETS, type DatePreset, datePresetRange, isDatePreset, takesDatePresets, weekStartOf } from './datePresets';
 import type { FindResult } from './findResult';
@@ -143,6 +144,8 @@ export class GridInterface<T> {
     // the display formats of the config's columns: what resetState() goes back to, see GridState.formats
     private configFormats: Record<string, ColumnFormat> = {};
     private initialState: Partial<GridState>;
+    /** the config as the app gave it - the constructor's, with what updateConfig() changed since: exportConfig() */
+    private givenConfig: GridConfig;
     // the functions: isReadonly, cellClass, menus. A copy, updateHooks() changes it
     private hooks: GridHooks<T>;
     private dataSource: Datasource<T>;
@@ -329,6 +332,7 @@ export class GridInterface<T> {
 
         const { columns, layout, initialState, calculatedColumns, ...options } = gridConfig;
         this.options = options;
+        this.givenConfig = structuredClone(gridConfig);
         this.gridConfig = {
             ...withDefaults(options),
             columns: structuredClone(columns ?? {}),
@@ -463,6 +467,52 @@ export class GridInterface<T> {
     public resetState() {
         this.applyState(this.getStartState());
         this.showView(null);
+    }
+
+    /**
+     * The grid as plain JSON, to save and give back to `importConfig()`: `{ version, config, state }` -
+     * the version of the format ({@link GRID_CONFIG_VERSION}), the config as the app gave it (the
+     * constructor's, with what `updateConfig()` changed since) and `getState()`, what the user did with it.
+     * The hooks and the datasource are not in it. See {@link ExportedGrid}
+     *
+     * @example
+     * ```ts
+     * localStorage.setItem('my-grid', JSON.stringify(gridInterface.exportConfig()));
+     * // { "version": 2, "config": { "layout": ..., "columns": ... }, "state": { "sorting": [] ... } }
+     * ```
+     */
+    public exportConfig(): ExportedGrid {
+        return { version: GRID_CONFIG_VERSION, config: structuredClone(this.givenConfig), state: this.getState() };
+    }
+
+    /**
+     * Takes a saved grid back: one `exportConfig()` made, or an older one - a saved grid without a
+     * `version` is a config v5 saved (`saveConfig()`) or was written for, converted on the way in
+     * ({@link convertGridConfig}). Its config is given to `updateConfig()` - an option it leaves out stays
+     * as it is - then its state to `setState()`; without a state the grid goes to the config's start
+     * (`resetState()`).
+     *
+     * A v5 column's `type` and `mandatory` are the datasource's fields' in v6: they are left out, give the
+     * datasource the field's type and its `required` rule.
+     * @throws a `TypeError` for what is no saved grid, a version newer than this grid's, and what
+     * `updateConfig()` and `setState()` throw for - the config is checked first: a config that throws
+     * changes nothing
+     * @example
+     * ```ts
+     * const saved = JSON.parse(localStorage.getItem('my-grid') ?? 'null');
+     * if (saved) {
+     *     gridInterface.importConfig(saved);
+     * }
+     * ```
+     */
+    public importConfig(saved: unknown) {
+        const { config, state } = convertGridConfig(saved);
+        this.updateConfig(config);
+        if (state) {
+            this.setState(state);
+        } else {
+            this.resetState();
+        }
     }
 
     /**
@@ -968,6 +1018,7 @@ export class GridInterface<T> {
         }
 
         this.options = { ...this.options, ...options };
+        this.givenConfig = { ...this.givenConfig, ...structuredClone(config) };
         // the totals row is state too (the header menu turns it on and off): only a totalsRow given
         // here changes it
         const totalsRow = 'totalsRow' in config ? withDefaults(this.options).totalsRow : this.gridConfig.totalsRow;
