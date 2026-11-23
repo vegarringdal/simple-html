@@ -586,7 +586,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         for (const name of removed) {
             settings.detailForm.included.delete(name);
         }
-        settings.detailForm.order = settings.detailForm.order.filter((name) => !removed.has(name));
+        settings.detailForm.order = settings.detailForm.order.filter((entry) => typeof entry !== 'string' || !removed.has(entry));
         // a column new in the layout: its header filter's operator and filter as you type, as they are
         for (const name of layoutFields(ctx)) {
             if (!Object.hasOwn(settings.operators, name) && hasOperator(ctx, name)) {

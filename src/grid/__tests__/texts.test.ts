@@ -565,11 +565,17 @@ function showDetailForm({ datasource, gridInterface }: MountedGrid, check: () =>
     // a section (its header is data, in «»), the field of several lines first: picked in the tab, its
     // Min lines and Section collapsed shown
     gridInterface.setState({
-        detailForm: { show: true, fields: ['notes', 'name', 'extra'], fieldOptions: { notes: { section: '«section»' } } }
+        detailForm: { show: true, fields: ['notes', { section: '«section»', panel: true }, 'name', 'extra'] }
     });
     check();
 
     gridInterface.openDetailFormSettings();
+    check();
+    // the section picked: its settings; and a new one added
+    const fieldList = document.querySelector('dialog.column-settings .detail-form-settings-list') as HTMLElement;
+    fieldList.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    check();
+    (document.querySelector('dialog.column-settings .detail-form-settings-add-section') as HTMLElement).click();
     check();
     const platform = vi.spyOn(navigator, 'platform', 'get').mockReturnValue('MacIntel');
     try {

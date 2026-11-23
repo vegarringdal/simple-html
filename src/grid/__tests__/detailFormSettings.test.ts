@@ -2,9 +2,16 @@
 
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DatasourceOptions } from '../../datasource/datasourceOptions';
-import type { DetailForm, GridConfig } from '../gridConfig';
+import type { DetailForm, DetailFormSection, GridConfig } from '../gridConfig';
 import type { GridElement } from '../gridElement';
-import { type DetailFormDraft, setFieldOption, setWidths } from '../gridFunctions/detailFormSettings';
+import {
+    addSection,
+    type DetailFormDraft,
+    removeSection,
+    setFieldOption,
+    setSectionOption,
+    setWidths
+} from '../gridFunctions/detailFormSettings';
 import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
 import { pointerEvent } from './interactionTestHelpers';
 
@@ -513,45 +520,80 @@ describe('grid config dialog - a field dragged by its handle', () => {
     });
 });
 
-describe('the Detail form tab - the settings of the field picked (DetailFormFieldOptions)', () => {
+describe('the Detail form tab - sections and the settings of the entry picked', () => {
     const input = (name: string) => dialog().querySelector(`.detail-form-settings-${name}`) as HTMLInputElement | null;
     const heading = () => dialog().querySelector('.detail-form-settings-field > .column-settings-label')?.textContent?.trim();
 
-    it('expect its heading, Section header, Space above / below; Min lines on a field of several lines only', async () => {
+    it("expect a field's settings: Min lines on a field of several lines only, Space above / below", async () => {
         const { gridInterface } = await mount({ show: true, fields: ['name', 'notes'] });
         gridInterface.openDetailFormSettings();
         expect(picked().dataset.field).toBe('name');
         expect(heading()).toBe('Settings of Name in the form');
-        expect([
-            !!input('section'),
-            !!input('collapsed'),
-            !!input('minRows'),
-            !!input('paddingTop'),
-            !!input('paddingBottom')
-        ]).toEqual([true, false, false, true, true]);
+        expect([!!input('minRows'), !!input('paddingTop'), !!input('paddingBottom'), !!input('section-name')]).toEqual([
+            false,
+            true,
+            true,
+            false
+        ]);
         press(list(), 'ArrowDown');
         expect(heading()).toBe('Settings of Notes in the form');
         expect(input('minRows')?.placeholder).toBe('3');
-    });
-
-    it('expect a section, collapsed, min lines and room to be applied to the state, a badge in the list', async () => {
-        const { gridInterface } = await mount({ show: true, fields: ['name', 'notes'] });
-        gridInterface.openDetailFormSettings();
-        press(list(), 'ArrowDown');
-        setValue(input('section') as HTMLInputElement, '  More  ');
-        // Section collapsed comes with a header
-        (input('collapsed') as HTMLInputElement).click();
         setValue(input('minRows') as HTMLInputElement, '5');
         setValue(input('paddingTop') as HTMLInputElement, '10.4');
         setValue(input('paddingBottom') as HTMLInputElement, 'x');
-        expect(optionTexts()[1]).toBe('[x] Notes Text Several lines Hidden More');
         button('Apply').click();
-        expect(gridInterface.getState().detailForm.fieldOptions).toEqual({
-            notes: { section: 'More', collapsed: true, minRows: 5, paddingTop: 10 }
-        });
+        expect(gridInterface.getState().detailForm.fieldOptions).toEqual({ notes: { minRows: 5, paddingTop: 10 } });
     });
 
-    it('expect the options of a field taken out of the form left out on Apply, kept in the draft', async () => {
+    it('expect Add section under the entry picked, picked, its settings; fields moved under it are in it', async () => {
+        const { gridInterface } = await mount({ show: true, fields: ['name', 'notes'] });
+        gridInterface.openDetailFormSettings();
+        button('Add section').click();
+        expect(optionTexts().slice(0, 3)).toEqual([
+            '[x] Name Text',
+            '[ ] Section Section',
+            '[x] Notes Text Several lines Hidden'
+        ]);
+        expect(picked().dataset.section).toBe('Section');
+        expect(heading()).toBe('Settings of the section Section');
+        setValue(input('section-name') as HTMLInputElement, '  Address ');
+        (input('panel') as HTMLInputElement).click();
+        (input('collapsed') as HTMLInputElement).click();
+        setValue(input('sectionPaddingTop') as HTMLInputElement, '8');
+        expect(optionTexts()[1]).toBe('[ ] Address Section Panel');
+        // a section is no field: Space does not take it out, it has no box
+        press(list(), ' ');
+        expect(options()[1].hasAttribute('aria-checked')).toBe(false);
+        // City under it: Alt+ArrowUp from below it, then put in the form
+        press(list(), 'End');
+        while (picked().dataset.field !== 'city') {
+            press(list(), 'ArrowUp');
+        }
+        press(list(), ' ');
+        for (let i = 0; i < 10 && options()[2].dataset.field !== 'city'; i++) {
+            press(list(), 'ArrowUp', { altKey: true });
+        }
+        button('Apply').click();
+        expect(gridInterface.getState().detailForm.fields).toEqual([
+            'name',
+            { section: 'Address', panel: true, collapsed: true, paddingTop: 8 },
+            'city',
+            'notes'
+        ]);
+    });
+
+    it('expect Remove section to take it out, its fields staying where they were', async () => {
+        const { gridInterface } = await mount({ show: true, fields: ['name', { section: 'S' }, 'notes'] });
+        gridInterface.openDetailFormSettings();
+        press(list(), 'ArrowDown');
+        expect(picked().dataset.section).toBe('S');
+        button('Remove section').click();
+        expect(picked().dataset.field).toBe('notes');
+        button('Apply').click();
+        expect(gridInterface.getState().detailForm.fields).toEqual(['name', 'notes']);
+    });
+
+    it("expect a field's options taken out of the form left out on Apply", async () => {
         const { gridInterface } = await mount({ show: true, fields: ['name', 'notes'], fieldOptions: { notes: { minRows: 4 } } });
         gridInterface.openDetailFormSettings();
         press(list(), 'ArrowDown');
@@ -561,18 +603,27 @@ describe('the Detail form tab - the settings of the field picked (DetailFormFiel
         expect(gridInterface.getState().detailForm).toEqual({ show: true, fields: ['name'], width: 300 });
     });
 
-    it('expect setFieldOption to clear what is empty or does not fit, and a field with none to have no entry', () => {
-        const draft = { options: {} } as DetailFormDraft;
-        setFieldOption(draft, 'a', 'section', 'S');
-        setFieldOption(draft, 'a', 'collapsed', true);
+    it('expect the setters to clear what is empty or does not fit', () => {
+        const draft = { options: {}, order: ['a'], included: new Set(['a']), active: '' } as unknown as DetailFormDraft;
         setFieldOption(draft, 'a', 'minRows', '31');
         setFieldOption(draft, 'a', 'paddingTop', '0');
-        expect(draft.options).toEqual({ a: { section: 'S', collapsed: true } });
+        expect(draft.options).toEqual({});
         setFieldOption(draft, 'a', 'minRows', '1');
-        expect(draft.options.a.minRows).toBe(1);
-        // no header: not collapsed either
-        setFieldOption(draft, 'a', 'section', ' ');
+        expect(draft.options).toEqual({ a: { minRows: 1 } });
         setFieldOption(draft, 'a', 'minRows', '');
         expect(draft.options).toEqual({});
+
+        addSection(draft, 'New');
+        expect(draft.order).toEqual(['a', { section: 'New' }]);
+        const section = draft.order[1] as DetailFormSection;
+        setSectionOption(section, 'section', '   ');
+        setSectionOption(section, 'panel', true);
+        setSectionOption(section, 'paddingBottom', '4');
+        expect(section).toEqual({ section: 'New', panel: true, paddingBottom: 4 });
+        setSectionOption(section, 'panel', false);
+        setSectionOption(section, 'paddingBottom', '');
+        expect(section).toEqual({ section: 'New' });
+        removeSection(draft, section);
+        expect([draft.order, draft.active]).toEqual([['a'], 'a']);
     });
 });

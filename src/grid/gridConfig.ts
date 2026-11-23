@@ -697,8 +697,11 @@ export interface EditPermissions {
 export interface DetailForm {
     /** shows the form */
     show: boolean;
-    /** the fields it shows, in this order: fields of the columns, or any field of the rows */
-    fields: string[];
+    /**
+     * the fields it shows, in this order: fields of the columns, or any field of the rows - and sections
+     * between them ({@link DetailFormSection}): a section has the fields after it, up to the next one
+     */
+    fields: (string | DetailFormSection)[];
     /**
      * its width in px, default 300 - laid out between `minWidth` and `maxWidth`. The user changes it by
      * dragging the form's left edge
@@ -715,26 +718,27 @@ export interface DetailForm {
     /** the most width in px a drag (and `width`) gives the form, default none - the rows keep their room */
     maxWidth?: number;
     /**
-     * the options of the fields of `fields`, under the field's name - a header that starts a section, the
-     * lines of a multiline field, the room above and under it. See {@link DetailFormFieldOptions}.
-     * Default none: a field without an entry is a label and a value
+     * the options of the fields of `fields`, under the field's name - the lines of a multiline field, the
+     * room above and under it. See {@link DetailFormFieldOptions}. Default none: a field without an entry
+     * is a label and a value
      */
     fieldOptions?: Record<string, DetailFormFieldOptions>;
 }
 
 /**
- * The options of one field of the detail form, in `DetailForm.fieldOptions` under the field's name. Every
- * option is optional. The grid config dialog (tab *Detail form*) sets them for the field picked in its list.
+ * A section of the detail form: an entry of `DetailForm.fields` between the field names. It has the
+ * fields after it, up to the next section; the fields before the first section are in none.
  *
- * - **`section`** - a header above the field, with this text: the field and the ones after it, up to the
- *   next field with a `section`, are a section. The header is a button that collapses the section and
- *   expands it again; the fields before the first header are in none.
- * - **`collapsed`** - `true`: the section the header starts is collapsed, its header only. The header's
- *   button changes it, so a saved state keeps what the user made it last. Only with `section`
- * - **`minRows`** - the least lines a field of several lines (`FieldConfig.multiline`, or a value with a
- *   line break) has, 1 to 30, default 3. It grows with its text. Ignored on a field of one line
- * - **`paddingTop`**, **`paddingBottom`** - room in px above and under the field (above its section's
- *   header for a field with `section`), default 0
+ * - **`section`** - its name, in its header. The header is a button that collapses the section and
+ *   expands it again
+ * - **`panel`** - `true`: a panel - a frame around its header and its fields, on a background of its own.
+ *   Default `false`: a header with a line under it
+ * - **`collapsed`** - `true`: collapsed, its header only. The header's button changes it, so a saved state
+ *   keeps what the user made it last
+ * - **`paddingTop`**, **`paddingBottom`** - room in px above and under the section, default 0
+ *
+ * The grid config dialog (tab *Detail form*) adds sections to the list of the fields (*Add section*), they
+ * are moved as the fields are, and sets these for the section picked.
  *
  * @sample detail-form
  * @example
@@ -743,20 +747,54 @@ export interface DetailForm {
  *
  * const detailForm: DetailForm = {
  *     show: true,
- *     fields: ['company', 'country', 'city', 'notes'],
- *     fieldOptions: {
- *         country: { section: 'Address', paddingTop: 8 }, // country and city in a section
- *         notes: { section: 'Notes', collapsed: true, minRows: 6 } // collapsed until its header is pressed
- *     }
+ *     fields: [
+ *         'company',
+ *         { section: 'Address', panel: true, paddingTop: 8 },
+ *         'country',
+ *         'city',
+ *         { section: 'Notes', collapsed: true },
+ *         'notes'
+ *     ],
+ *     fieldOptions: { notes: { minRows: 6 } }
  * };
  * gridInterface.setState({ detailForm });
  * ```
  */
-export interface DetailFormFieldOptions {
-    /** a header above the field that starts a section, with this text - a button that collapses it */
-    section?: string;
-    /** `true`: the section of `section` is collapsed, default `false` */
+export interface DetailFormSection {
+    /** its name, in its header */
+    section: string;
+    /** `true`: a frame around it, on a background of its own - default a header with a line under it */
+    panel?: boolean;
+    /** `true`: collapsed, its header only - default `false` */
     collapsed?: boolean;
+    /** room in px above it, default 0 */
+    paddingTop?: number;
+    /** room in px under it, default 0 */
+    paddingBottom?: number;
+}
+
+/**
+ * The options of one field of the detail form, in `DetailForm.fieldOptions` under the field's name. Every
+ * option is optional. The grid config dialog (tab *Detail form*) sets them for the field picked in its list.
+ *
+ * - **`minRows`** - the least lines a field of several lines (`FieldConfig.multiline`, or a value with a
+ *   line break) has, 1 to 30, default 3. It grows with its text. Ignored on a field of one line
+ * - **`paddingTop`**, **`paddingBottom`** - room in px above and under the field, default 0
+ *
+ * Sections are entries of `DetailForm.fields`, see {@link DetailFormSection}.
+ *
+ * @example
+ * ```ts
+ * import type { DetailForm } from '@simple-html/grid';
+ *
+ * const detailForm: DetailForm = {
+ *     show: true,
+ *     fields: ['company', 'notes'],
+ *     fieldOptions: { company: { paddingBottom: 8 }, notes: { minRows: 6 } }
+ * };
+ * ```
+ */
+export interface DetailFormFieldOptions {
     /** the least lines of a field of several lines, 1 to 30, default 3 */
     minRows?: number;
     /** room in px above the field, default 0 */

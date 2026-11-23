@@ -4907,6 +4907,21 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * tests: configVersion.test.ts (the conversion, the errors, export and import round trip, a v5 config into a
   grid). Docs: grid config guide *Exporting with a version*, MIGRATION.md
 
+### The detail form: sections are rows of the list (user request)
+
+* the user, on the dialog with a section header per field: "it could be useful if we could add section
+  row, so its easy to add/move items into it, maybe called section, and you set if its panel or not, name,
+  padding etc"
+* a section is an entry of `DetailForm.fields` now (`DetailFormSection`), not `fieldOptions.section` of
+  its first field: moving the first field took the header with it. `fieldOptions` keeps `minRows` and the
+  room. Not released, so nothing to convert (the saved grid's version stays 2)
+* detailForm.ts: isDetailFormSection, copyOptions / assertOptions shared by fields and sections,
+  toggleDetailFormSection by the section's index. gridInterface keeps the sections when columns go
+* detailFormSettings.ts: the draft's `order` has the sections as objects (the one picked is that object),
+  addSection / removeSection / setSectionOption, the section's settings under the list. The list's keys,
+  drag and Move up / down work on a section as on a field; Space does nothing on one
+* tests rewritten for it (detailForm.test.ts, detailFormSettings.test.ts, texts.test.ts)
+
 ### The detail form: sections, min lines, room (user request)
 
 * the user: "in multiline, it could be useful to say min rows ... and for all inputs be able to add

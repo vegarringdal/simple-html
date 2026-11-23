@@ -816,15 +816,18 @@ describe('detail form - the splitter of its edge', () => {
     });
 });
 
-describe('detail form - the options of a field (DetailForm.fieldOptions)', () => {
+describe('detail form - sections (DetailFormSection) and the options of a field (DetailForm.fieldOptions)', () => {
     const SECTIONS: DetailForm = {
         show: true,
-        fields: ['name', 'notes', 'born', 'balance'],
-        fieldOptions: {
-            notes: { section: 'More', minRows: 6, paddingTop: 12 },
-            balance: { section: 'Money', collapsed: true, paddingBottom: 8 },
-            name: { paddingTop: 4, paddingBottom: 5 }
-        }
+        fields: [
+            'name',
+            { section: 'More', paddingTop: 12, paddingBottom: 3 },
+            'notes',
+            'born',
+            { section: 'Money', panel: true, collapsed: true },
+            'balance'
+        ],
+        fieldOptions: { notes: { minRows: 6 }, name: { paddingTop: 4, paddingBottom: 5 }, balance: { paddingBottom: 8 } }
     };
     const sections = (element: GridElement) =>
         Array.from(form(element).querySelectorAll<HTMLElement>('.simple-html-grid-detail-form-section'), (section) => {
@@ -832,6 +835,7 @@ describe('detail form - the options of a field (DetailForm.fieldOptions)', () =>
             const group = section.querySelector('[role="group"]') as HTMLElement;
             return {
                 title: header.textContent?.trim(),
+                panel: section.classList.contains('simple-html-grid-detail-form-panel'),
                 expanded: header.getAttribute('aria-expanded'),
                 controls: header.getAttribute('aria-controls') === group.id,
                 named: group.getAttribute('aria-labelledby') === header.id,
@@ -847,9 +851,8 @@ describe('detail form - the options of a field (DetailForm.fieldOptions)', () =>
             (button) => button.textContent?.trim() === title
         ) as HTMLButtonElement;
 
-    it('expect a header per section: its fields up to the next header, the ones before it in none, a collapsed one empty', async () => {
+    it('expect a section per entry: its fields up to the next one, the ones before it in none, a collapsed one empty', async () => {
         const { element } = await mount({ detailForm: SECTIONS });
-        // name before the first header
         const loose = Array.from(
             form(element).querySelectorAll<HTMLElement>(
                 '.simple-html-grid-detail-form-body > .simple-html-grid-detail-form-field'
@@ -857,19 +860,27 @@ describe('detail form - the options of a field (DetailForm.fieldOptions)', () =>
         );
         expect(loose.map((f) => f.dataset.field)).toEqual(['name']);
         expect(sections(element)).toEqual([
-            { title: 'More', expanded: 'true', controls: true, named: true, hidden: false, fields: ['notes', 'born'] },
-            { title: 'Money', expanded: 'false', controls: true, named: true, hidden: true, fields: [] }
+            {
+                title: 'More',
+                panel: false,
+                expanded: 'true',
+                controls: true,
+                named: true,
+                hidden: false,
+                fields: ['notes', 'born']
+            },
+            { title: 'Money', panel: true, expanded: 'false', controls: true, named: true, hidden: true, fields: [] }
         ]);
     });
 
     it('expect the header to collapse and expand its section, kept in the state', async () => {
         const { element, gridInterface } = await mount({ detailForm: SECTIONS });
         header(element, 'More').click();
-        expect(gridInterface.getState().detailForm.fieldOptions?.notes).toEqual({
+        expect(gridInterface.getState().detailForm.fields[1]).toEqual({
             section: 'More',
             collapsed: true,
-            minRows: 6,
-            paddingTop: 12
+            paddingTop: 12,
+            paddingBottom: 3
         });
         expect(sections(element).map((s) => [s.title, s.expanded, s.fields])).toEqual([
             ['More', 'false', []],
@@ -877,14 +888,12 @@ describe('detail form - the options of a field (DetailForm.fieldOptions)', () =>
         ]);
         header(element, 'Money').click();
         expect(sections(element)[1]).toMatchObject({ expanded: 'true', hidden: false, fields: ['balance'] });
-        expect(gridInterface.getState().detailForm.fieldOptions?.balance?.collapsed).toBe(false);
-        // the button is still there, with the focus a click gave it
-        expect(header(element, 'Money')).toBeDefined();
+        expect(gridInterface.getState().detailForm.fields[4]).toEqual({ section: 'Money', panel: true, collapsed: false });
     });
 
     it('expect minRows on a textarea - its rows and the min height - and nothing on a field of one line', async () => {
         const { element } = await mount({ detailForm: SECTIONS });
-        const notes = control(element, 'notes') as unknown as HTMLTextAreaElement;
+        const notes = control(element, 'notes');
         expect(notes.tagName).toBe('TEXTAREA');
         // 3 lines of text + 1 is less than 6
         expect(notes.getAttribute('rows')).toBe('6');
@@ -894,46 +903,51 @@ describe('detail form - the options of a field (DetailForm.fieldOptions)', () =>
         expect(control(plain, 'notes').style.getPropertyValue('--simple-html-grid-detail-form-min-rows')).toBe('');
     });
 
-    it('expect the room above and under a field, above the header for a field that starts a section', async () => {
-        const { element } = await mount({
-            detailForm: {
-                ...SECTIONS,
-                fieldOptions: { ...SECTIONS.fieldOptions, balance: { section: 'Money', paddingBottom: 8 } }
-            }
-        });
+    it('expect the room above and under a field and a section', async () => {
+        const { element } = await mount({ detailForm: SECTIONS });
         const field = (name: string) => form(element).querySelector(`[data-field="${name}"]`) as HTMLElement;
         expect([field('name').style.paddingTop, field('name').style.paddingBottom]).toEqual(['4px', '5px']);
-        expect(field('notes').style.paddingTop).toBe('');
-        expect((form(element).querySelector('[data-section="notes"]') as HTMLElement).style.paddingTop).toBe('12px');
-        expect(field('balance').style.paddingBottom).toBe('8px');
+        const more = form(element).querySelector('.simple-html-grid-detail-form-section') as HTMLElement;
+        expect([more.style.marginTop, more.style.marginBottom]).toEqual(['12px', '3px']);
     });
 
-    it('expect a section of blanks to be none, and the state to keep only what is given', async () => {
-        const { element, gridInterface } = await mount({
+    it('expect the state to keep each field once, each section, and only the options given', async () => {
+        const { gridInterface } = await mount({
             detailForm: {
                 show: true,
-                fields: ['name', 'notes'],
-                fieldOptions: { notes: { section: '  ' }, name: {}, born: { collapsed: true } }
+                fields: ['name', { section: 'A' }, 'name', { section: 'A', panel: undefined }],
+                fieldOptions: { name: {} }
             }
         });
-        expect(sections(element)).toEqual([]);
-        // an empty entry left out, collapsed without a section too
-        expect(gridInterface.getState().detailForm.fieldOptions).toEqual({ notes: { section: '  ' } });
+        expect(gridInterface.getState().detailForm).toEqual({ show: true, fields: ['name', { section: 'A' }, { section: 'A' }] });
     });
 
-    it('expect an option that does not fit to throw a TypeError that says which', async () => {
+    it('expect a column taken out of the config to leave the form, its sections to stay', async () => {
+        const { gridInterface } = await mount({ detailForm: SECTIONS });
+        gridInterface.updateConfig({ columns: {}, layout: { center: [{ fields: ['name'], width: 100 }] } });
+        expect(gridInterface.getState().detailForm.fields).toEqual(SECTIONS.fields);
+    });
+
+    it('expect an entry or an option that does not fit to throw a TypeError that says which', async () => {
         const { gridInterface } = await mount();
-        const set = (fieldOptions: unknown) => () =>
-            gridInterface.setState({ detailForm: { ...FORM, fieldOptions } as DetailForm });
-        expect(set([])).toThrow(/detailForm.fieldOptions is an object/);
-        expect(set({ notes: 'x' })).toThrow(/fieldOptions.notes is an object/);
-        expect(set({ notes: { minRows: 0 } })).toThrow(/notes.minRows is a whole number from 1 to 30/);
-        expect(set({ notes: { minRows: 2.5 } })).toThrow(TypeError);
-        expect(set({ notes: { minRows: 31 } })).toThrow(TypeError);
-        expect(set({ notes: { paddingTop: -1 } })).toThrow(/paddingTop is a number of px, 0 or more/);
-        expect(set({ notes: { section: 5 } })).toThrow(/section is a text/);
-        expect(set({ notes: { collapsed: 'yes' } })).toThrow(/collapsed is true or false/);
-        expect(set({ notes: { rows: 3 } })).toThrow(/notes.rows is no option of a field/);
-        expect(set({ notes: { minRows: 30, paddingTop: 0, paddingBottom: 2.5, section: 'A', collapsed: false } })).not.toThrow();
+        const set = (more: Partial<DetailForm>) => () =>
+            gridInterface.setState({ detailForm: { ...FORM, ...more } as DetailForm });
+        expect(set({ fields: [5] as any })).toThrow(/detailForm.fields\[0\] is a field name or a section/);
+        expect(set({ fields: [{ panel: true }] as any })).toThrow(/fields\[0\].section is the name of the section, a text/);
+        expect(set({ fields: [{ section: 'A', panel: 'yes' }] as any })).toThrow(/fields\[0\].panel is true or false/);
+        expect(set({ fields: [{ section: 'A', minRows: 3 }] as any })).toThrow(/fields\[0\].minRows is no option of a section/);
+        expect(set({ fields: [{ section: 'A', paddingTop: -1 }] as any })).toThrow(/paddingTop is a number of px, 0 or more/);
+        expect(set({ fieldOptions: [] as any })).toThrow(/detailForm.fieldOptions is an object/);
+        expect(set({ fieldOptions: { notes: 'x' } as any })).toThrow(/fieldOptions.notes is an object/);
+        expect(set({ fieldOptions: { notes: { minRows: 0 } } })).toThrow(/notes.minRows is a whole number from 1 to 30/);
+        expect(set({ fieldOptions: { notes: { minRows: 2.5 } } })).toThrow(TypeError);
+        expect(set({ fieldOptions: { notes: { minRows: 31 } } })).toThrow(TypeError);
+        expect(set({ fieldOptions: { notes: { section: 'A' } as any } })).toThrow(/notes.section is no option of a field/);
+        expect(
+            set({
+                fields: ['name', { section: 'A', panel: false, collapsed: false, paddingTop: 0, paddingBottom: 2.5 }],
+                fieldOptions: { notes: { minRows: 30, paddingTop: 0, paddingBottom: 2.5 } }
+            })
+        ).not.toThrow();
     });
 });

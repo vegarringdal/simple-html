@@ -1348,15 +1348,20 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 #### The detail form: sections, lines and room per field (user request)
 
 ##### Added
-- `DetailForm.fieldOptions` (`DetailFormFieldOptions`, under a field's name): `section` - a header above
-  the field that starts a section up to the next header, a button (`aria-expanded`) that collapses it;
-  `collapsed`, kept in the state; `minRows` - the least lines of a field of several lines (1 to 30,
-  default 3); `paddingTop` / `paddingBottom` - room in px. Checked as the rest of the detail form (a
-  `TypeError` that says which). The grid config dialog's tab *Detail form* sets them for the field picked:
-  *Section header above it*, *Section collapsed*, *Min lines*, *Space above / below (px)*; a field with a
-  header has it as a badge in the list. New texts `columnSettings.detailForm.field`, `.section`,
-  `.section.hint`, `.collapsed`, `.minRows`, `.paddingTop`, `.paddingBottom`. New classes
-  `.simple-html-grid-detail-form-section` (`-header`, `-title`, `-fields`, `-collapsed`).
+- **Sections** - entries of `DetailForm.fields` between the field names (`DetailFormSection`):
+  `{ section, panel?, collapsed?, paddingTop?, paddingBottom? }` has the fields after it, up to the next
+  one. Its header is a button (`aria-expanded`) that collapses it, kept in the state; `panel` puts a frame
+  around it. In the grid config dialog's tab *Detail form* a section is a row of the list: *Add section*,
+  moved as the fields are (drag, Alt+↑/↓, Move up / down), its name, *Panel*, *Collapsed*, room and *Remove
+  section* under the list.
+- `DetailForm.fieldOptions` (`DetailFormFieldOptions`, under a field's name): `minRows` - the least lines of
+  a field of several lines (1 to 30, default 3) - and `paddingTop` / `paddingBottom`, room in px. Set for
+  the field picked in the dialog. Both are checked as the rest of the detail form (a `TypeError` that says
+  which).
+- New texts `columnSettings.detailForm.field`, `.sectionSettings`, `.section`, `.section.hint`, `.panel`,
+  `.collapsed`, `.minRows`, `.paddingTop`, `.paddingBottom`, `.addSection`, `.removeSection`, `.newSection`,
+  `.sectionType`, `.panelBadge`. New classes `.simple-html-grid-detail-form-section` (`-header`, `-title`,
+  `-fields`, `-collapsed`) and `.simple-html-grid-detail-form-panel`.
 
 #### Menus: a line of their own colour
 

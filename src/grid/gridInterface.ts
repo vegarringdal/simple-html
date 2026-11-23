@@ -39,6 +39,7 @@ import type { Grid } from './grid';
 import type {
     ColumnConfig,
     DetailForm,
+    DetailFormSection,
     GridConfig,
     GridLayout,
     GridOptions,
@@ -1285,8 +1286,10 @@ export class GridInterface<T> {
             delete this.headerFilters[name];
         }
         const detailForm = this.gridConfig.detailForm;
-        if (detailForm.fields.some((field) => removed.has(field))) {
-            this.gridConfig.detailForm = { ...detailForm, fields: detailForm.fields.filter((field) => !removed.has(field)) };
+        // its sections stay
+        const kept = (entry: string | DetailFormSection) => typeof entry !== 'string' || !removed.has(entry);
+        if (!detailForm.fields.every(kept)) {
+            this.gridConfig.detailForm = { ...detailForm, fields: detailForm.fields.filter(kept) };
         }
     }
 

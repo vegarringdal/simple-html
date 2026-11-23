@@ -4215,6 +4215,20 @@
     color: var(--simple-html-grid-accent-font-color);
 }
 
+/* a section's row in the list of the fields (DetailFormSection): § and its name in the header's weight, the
+ * rows under it - its fields - follow it */
+.simple-html-grid.filter-editor-content .detail-form-settings-section-option {
+    font-weight: var(--simple-html-grid-font-weight-header);
+    border-top: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+.simple-html-grid.filter-editor-content .detail-form-settings-section-mark {
+    flex: none;
+    width: 13px;
+    text-align: center;
+    color: var(--simple-html-grid-sec-font-color);
+}
+
 .simple-html-grid.filter-editor-content .detail-form-settings-moves {
     display: flex;
     gap: 6px;
@@ -4793,6 +4807,28 @@
 
 .simple-html-grid .simple-html-grid-detail-form-section-fields[hidden] {
     display: none;
+}
+
+/* a panel (DetailFormSection.panel): a frame around its header and its fields - the frame of the form's
+ * inputs, the header inside it */
+.simple-html-grid .simple-html-grid-detail-form-section.simple-html-grid-detail-form-panel {
+    padding: 0 6px 6px;
+    border: 1px solid var(--simple-html-grid-detail-input-border-color);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-panel > .simple-html-grid-detail-form-section-header {
+    /* over the panel's padding, from frame to frame */
+    width: auto;
+    margin: 0 -6px;
+    padding: 0 8px;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-panel.simple-html-grid-detail-form-section-collapsed {
+    padding-bottom: 0;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-panel.simple-html-grid-detail-form-section-collapsed > .simple-html-grid-detail-form-section-header {
+    border-bottom: 0;
 }
 
 .simple-html-grid .simple-html-grid-detail-form-input[readonly] {

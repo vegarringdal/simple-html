@@ -889,12 +889,19 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.detailForm.moveUp` | `Move up` | the button: the field picked one up, in the form too |
 | `columnSettings.detailForm.moveDown` | `Move down` | one down |
 | `columnSettings.detailForm.field` | `Settings of {field} in the form` | the heading of the settings of the field picked, under the list |
-| `columnSettings.detailForm.section` | `Section header above it` | the label of its section's header (`DetailFormFieldOptions.section`) |
-| `columnSettings.detailForm.section.hint` | `Starts a section: this field and the ones after it, up to the next header. Its header collapses it. Empty: none` | under it |
-| `columnSettings.detailForm.collapsed` | `Section collapsed` | the checkbox of `collapsed`, with a header |
 | `columnSettings.detailForm.minRows` | `Min lines` | the least lines of a field of several lines (`minRows`) |
 | `columnSettings.detailForm.paddingTop` | `Space above (px)` | room above the field (`paddingTop`) |
 | `columnSettings.detailForm.paddingBottom` | `Space below (px)` | room under it (`paddingBottom`) |
+| `columnSettings.detailForm.addSection` | `Add section` | the button under the list: a section under the row picked |
+| `columnSettings.detailForm.newSection` | `Section` | the name of a section added |
+| `columnSettings.detailForm.sectionType` | `Section` | in the list: the type of a section's row |
+| `columnSettings.detailForm.panelBadge` | `Panel` | in the list: a section that is a panel |
+| `columnSettings.detailForm.sectionSettings` | `Settings of the section {section}` | the heading of the settings of the section picked |
+| `columnSettings.detailForm.section` | `Name` | the label of its name |
+| `columnSettings.detailForm.section.hint` | `The fields under it in the list, up to the next section, are in it. Its header collapses it` | under it |
+| `columnSettings.detailForm.panel` | `Panel: a frame around it` | the checkbox of `panel` |
+| `columnSettings.detailForm.collapsed` | `Collapsed` | the checkbox of `collapsed` |
+| `columnSettings.detailForm.removeSection` | `Remove section` | the button: the section out of the form, its fields stay |
 | `columnSettings.detailForm.reset` | `Reset form` | the button at the footer's left on the Detail form tab: the detail form the grid starts with |
 | `columnSettings.detailForm.reset.tooltip` | `The detail form the grid starts with` | its tooltip |
 

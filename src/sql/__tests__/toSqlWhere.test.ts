@@ -324,7 +324,7 @@ describe('text', () => {
     });
 });
 
-describe('the escape `\`: `\_`, `\%`, `\*` and `\\` are characters, the other wildcards stay wildcards', () => {
+describe('the escape `\\`: `\\_`, `\\%`, `\\*` and `\\\\` are characters, the other wildcards stay wildcards', () => {
     it("expect each dialect's pattern: the escaped character plain, the wildcard next to it its own", () => {
         // S\_\_den*: S, two plain `_`, den, then any text
         const value = 'S\\_\\_den*';
