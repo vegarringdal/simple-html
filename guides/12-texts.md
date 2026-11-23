@@ -715,6 +715,13 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.rules.add` | `Add rule` | the button that adds a rule at the end |
 | `columnSettings.rules.rule` | `Rule {number}` | the name of a rule for a screen reader, `{number}` its place: 1 is the first |
 | `columnSettings.rules.checked` | `Checked` | the value of a rule of a boolean column: a checkbox |
+| `columnSettings.rules.date.compare` | `Compare with` | a rule on a date: the picker of what it compares with, its name |
+| `columnSettings.rules.date.typed` | `A date or period typed` | in it: the value typed - else a quick date (`filter.dates.*`) |
+| `columnSettings.rules.date.placeholder` | `Date, 2026-W47, 2026-11, 2026 Q4, 2026` | the placeholder of a date rule's value |
+| `columnSettings.rules.week` | `Weeks` | the picker of the weeks of a rule on a date (`week`), its name |
+| `columnSettings.rules.week.column` | `As the column: {week}` | no `week`: the column's - `{week}` the name of the one it takes |
+| `columnSettings.rules.week.iso` | `ISO - Monday` | `week: 'iso'` |
+| `columnSettings.rules.week.us` | `US - Sunday` | `week: 'us'` |
 | `columnSettings.rules.textColor` | `Text colour` | the label of a rule's text colours, a row of swatches |
 | `columnSettings.rules.background` | `Background` | the label of its backgrounds |
 | `columnSettings.rules.bold` | `Bold` | the checkbox: the text is bold |

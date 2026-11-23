@@ -2,12 +2,21 @@ import type { Datasource } from '../datasource/dataSource';
 import type { Entity } from '../datasource/entity';
 import type { FieldType } from '../datasource/field';
 import { Filter, isIgnoredCondition } from '../datasource/filter';
-import { type FilterCondition, type FilterOperator, isFilterOperator, operatorsFor } from '../datasource/filterExpression';
+import {
+    type FilterCondition,
+    type FilterExpression,
+    type FilterOperator,
+    isFilterGroup,
+    isFilterOperator,
+    operatorsFor
+} from '../datasource/filterExpression';
 import { type Formatter, parseFilterText } from '../datasource/formatter';
 import { objectFilter } from '../datasource/objectFilter';
 import { fillText, TEXTS } from '../texts';
 import { formulaTypeOf } from './calculatedColumns';
-import type { ColumnFormat } from './columnFormat';
+import { type ColumnFormat, type FormatTexts, formatTexts } from './columnFormat';
+import { type DatePreset, datePresetDays, isDatePreset, weekStartOf } from './datePresets';
+import { type DatePeriod, type OpenDatePeriod, parseDateAs, periodConditions } from './filterAsShown';
 import { compileFormula, type FormulaProblem, formulaProblemText } from './formula';
 import type { ColumnConfig } from './gridConfig';
 import { columnOperators, isAlwaysCaseSensitive } from './gridFunctions/columnFilterOptions';
@@ -144,7 +153,18 @@ export interface RuleCondition {
     operator: FilterOperator;
     /** the value as typed in the field's header filter, `[from, to]` for `BETWEEN`, none for `IS_BLANK` / `IS_NOT_BLANK` */
     value?: string | [string, string];
+    /** a date field: a quick date as the value - the days of `thisWeek` ... - see {@link ColorRule} `datePreset` */
+    datePreset?: DatePreset;
+    /** a date field: the weeks of `value` (`2026-W47`) and of `datePreset` - see {@link ColorRule} `week` */
+    week?: RuleWeek;
 }
+
+/**
+ * The weeks of a colour rule on a date (`ColorRule.week`):
+ * - `'iso'` - ISO 8601: a week starts on Monday, week 1 has the year's first Thursday
+ * - `'us'` - a week starts on Sunday, week 1 has January 1 (Excel's `WEEKNUM`)
+ */
+export type RuleWeek = 'iso' | 'us';
 
 /**
  * A colour rule of a column, `ColumnFormat.rules`: when its condition is true for a row, the cell has
@@ -157,6 +177,15 @@ export interface RuleCondition {
  *   `'2026-11-22'` - read with the field's formatter (a number, a date), a text with its wildcards (`*`,
  *   `%`, `_`), case ignored unless the column has `filterCaseSensitive`. A lookup column (`editor`)
  *   compares the label its cells show. 0 is blank, as in the filter.
+ *
+ *   **A date** (`date`, `datetime`) takes a period as the value - a week `'2026-W47'`, a month `'2026-11'`,
+ *   a quarter `'2026 Q4'`, a year `'2026'` - or a quick date, `datePreset` (`'thisWeek'`, `'lastMonth'`,
+ *   `'next7Days'`, `'overdue'` ...: its days today) instead of `value`. `EQUAL` is in the period,
+ *   `NOT_EQUAL_TO` not in it (or blank), `LESS_THAN` before it, `LESS_THAN_OR_EQUAL_TO` to its end,
+ *   `GREATER_THAN` after it, `GREATER_THAN_OR_EQUAL_TO` from its start, `BETWEEN` from the start of the
+ *   one to the end of the other (a `value` only). **`week`** says what a week is, for `'2026-W47'` and for
+ *   the quick dates of a week: `'iso'` (Monday, ISO 8601 numbers) or `'us'` (Sunday, week 1 has January 1).
+ *   Left out: the column's `weekUs` / `weekIso` format, else the date picker's `weekStart` (Sunday: `'us'`).
  * - **Conditions**, `conditions` and `combine`: conditions on fields of the row, each tested as its
  *   field's header filter tests it - see {@link RuleCondition}. `combine: 'AND'` (the default) colours
  *   when all of them are true, `'OR'` when one is.
@@ -173,6 +202,9 @@ export interface RuleCondition {
  * | `{ conditions: [{ field: 'status', operator: 'EQUAL', value: 'late' }, { field: 'balance', operator: 'GREATER_THAN', value: '0' }], background: 'red' }` | late and owing |
  * | `{ conditions: [...], combine: 'OR', color: 'blue' }` | one of the conditions |
  * | `{ expression: 'DAYS({due}, TODAY()) > 7', background: '#fde68a' }` | more than a week late, a custom background |
+ * | `{ operator: 'EQUAL', datePreset: 'thisWeek', week: 'us', background: 'green' }` | a date this week, Sunday to Saturday |
+ * | `{ operator: 'LESS_THAN', datePreset: 'thisWeek', week: 'iso', color: 'red' }` | before this week's Monday |
+ * | `{ operator: 'EQUAL', value: '2026-W47', week: 'iso', bold: true }` | in ISO week 47 of 2026 |
  *
  * Checked when the grid is made, or `updateConfig()` or `setState()` is given it - a `TypeError` for: no
  * kind or two of them, an `operator` the field's type does not offer, `IN` / `NOT_IN` (a rule compares
@@ -220,6 +252,13 @@ export interface ColorRule {
      * end `''` is open. Left out for `IS_BLANK` / `IS_NOT_BLANK`, they take none
      */
     value?: string | [string, string];
+    /**
+     * the kind *Value* on a date: a quick date as the value - its days today, `'thisWeek'`, `'lastMonth'`,
+     * `'overdue'` ... - compared with `operator` (not `BETWEEN`, no `value`)
+     */
+    datePreset?: DatePreset;
+    /** the kind *Value* on a date: the weeks of `value` (`'2026-W47'`) and `datePreset`, see {@link RuleWeek} */
+    week?: RuleWeek;
     /** the kind *Conditions*: conditions on fields of the row, one at least, see {@link RuleCondition} */
     conditions?: RuleCondition[];
     /** with `conditions`: `'AND'` (the default) all of them are true, `'OR'` one of them is */
@@ -241,6 +280,8 @@ export type RuleKind = 'value' | 'conditions' | 'formula';
 const RULE_KEYS: readonly (keyof ColorRule)[] = [
     'operator',
     'value',
+    'datePreset',
+    'week',
     'conditions',
     'combine',
     'expression',
@@ -250,7 +291,7 @@ const RULE_KEYS: readonly (keyof ColorRule)[] = [
 ];
 
 /** the keys of a condition */
-const CONDITION_KEYS: readonly (keyof RuleCondition)[] = ['field', 'operator', 'value'];
+const CONDITION_KEYS: readonly (keyof RuleCondition)[] = ['field', 'operator', 'value', 'datePreset', 'week'];
 
 /** the most conditions a rule may have */
 export const MAX_RULE_CONDITIONS = 20;
@@ -379,8 +420,8 @@ export function ruleTakesValue(operator: FilterOperator): boolean {
 const isText = (value: unknown): value is string => typeof value === 'string' && value.trim() !== '';
 
 /** true when an operator that compares has no value to compare with: `''`, a BETWEEN with neither end */
-function lacksValue(operator: FilterOperator, value: ColorRule['value']): boolean {
-    if (!ruleTakesValue(operator)) {
+function lacksValue(operator: FilterOperator, value: ColorRule['value'], datePreset?: DatePreset): boolean {
+    if (!ruleTakesValue(operator) || datePreset !== undefined) {
         return false;
     }
     const ends = operator === 'BETWEEN' && Array.isArray(value) ? value : [value];
@@ -408,12 +449,12 @@ export function colorRuleProblem(rule: ColorRule): 'value' | 'conditions' | 'exp
             if (!rule.conditions?.length) {
                 return 'conditions';
             }
-            if (rule.conditions.some((condition) => lacksValue(condition.operator, condition.value))) {
+            if (rule.conditions.some((condition) => lacksValue(condition.operator, condition.value, condition.datePreset))) {
                 return 'value';
             }
             break;
         default:
-            if (rule.operator && lacksValue(rule.operator, rule.value)) {
+            if (rule.operator && lacksValue(rule.operator, rule.value, rule.datePreset)) {
                 return 'value';
             }
     }
@@ -458,7 +499,72 @@ const quoted = (list: readonly string[]) => list.map((each) => `'${each}'`).join
  * a value as the operator takes it
  * @param at how the message names the rule or condition
  */
-function assertOperatorAndValue(operator: unknown, value: unknown, type: FieldType, lookup: boolean, at: string): void {
+/** the operators a quick date (`datePreset`) is compared with: not BETWEEN, it is the period already */
+const DATE_PRESET_OPERATORS: readonly FilterOperator[] = [
+    'EQUAL',
+    'NOT_EQUAL_TO',
+    'LESS_THAN',
+    'LESS_THAN_OR_EQUAL_TO',
+    'GREATER_THAN',
+    'GREATER_THAN_OR_EQUAL_TO'
+];
+
+/**
+ * @internal
+ * true for the operators a rule compares a quick date with (`datePreset`): not BETWEEN, IS_BLANK, IS_NOT_BLANK
+ */
+export function takesDatePreset(operator: FilterOperator): boolean {
+    return DATE_PRESET_OPERATORS.includes(operator);
+}
+
+/**
+ * Checks the date parts of a rule or a condition: `datePreset` a quick date, on a date field, with an
+ * operator that compares and no value; `week` `'iso'` or `'us'`, on a date field
+ */
+function assertDateParts(
+    parts: { operator?: unknown; value?: unknown; datePreset?: unknown; week?: unknown },
+    type: FieldType,
+    lookup: boolean,
+    at: string
+) {
+    const isDate = (type === 'date' || type === 'datetime') && !lookup;
+    if (parts.week !== undefined) {
+        if (parts.week !== 'iso' && parts.week !== 'us') {
+            throw new TypeError(`${at}.week is ${JSON.stringify(parts.week)}, it is 'iso' (Monday) or 'us' (Sunday)`);
+        }
+        if (!isDate) {
+            throw new TypeError(`${at}.week is for a date column, this one is ${lookup ? 'a lookup column' : type}`);
+        }
+    }
+    if (parts.datePreset === undefined) {
+        return;
+    }
+    if (!isDatePreset(parts.datePreset)) {
+        throw new TypeError(
+            `${at}.datePreset is ${JSON.stringify(parts.datePreset)?.slice(0, 70)}, it is a quick date: 'today', 'thisWeek', 'lastMonth' ...`
+        );
+    }
+    if (!isDate) {
+        throw new TypeError(`${at}.datePreset is for a date column, this one is ${lookup ? 'a lookup column' : type}`);
+    }
+    if (!isFilterOperator(parts.operator) || !takesDatePreset(parts.operator)) {
+        throw new TypeError(
+            `${at}.operator is ${JSON.stringify(parts.operator)}, a datePreset takes ${quoted(DATE_PRESET_OPERATORS)}`
+        );
+    }
+    if (parts.value !== undefined) {
+        throw new TypeError(`${at} has a value and a datePreset: the quick date is the value`);
+    }
+}
+
+function assertOperatorAndValue(
+    operator: unknown,
+    value: unknown,
+    type: FieldType,
+    lookup: boolean,
+    at: string,
+    datePreset?: unknown
+): void {
     const operators = ruleOperatorsFor(lookup ? 'text' : type);
     if (!isFilterOperator(operator) || !operators.includes(operator)) {
         const why =
@@ -468,6 +574,10 @@ function assertOperatorAndValue(operator: unknown, value: unknown, type: FieldTy
                   ? ': a lookup column compares its labels, it takes'
                   : `, a ${type} column takes`;
         throw new TypeError(`${at}.operator is ${JSON.stringify(operator)}${why} ${quoted(operators)}`);
+    }
+    if (datePreset !== undefined) {
+        // the quick date is the value: assertDateParts
+        return;
     }
     if (!ruleTakesValue(operator)) {
         if (value !== undefined) {
@@ -533,7 +643,7 @@ export function assertColorRules(
                 throw new TypeError(`${at} has '${key.slice(0, 70)}', a rule has ${RULE_KEYS.join(', ')}`);
             }
         }
-        const { operator, value, conditions, combine, expression, color, background, bold } = rule;
+        const { operator, value, datePreset, week, conditions, combine, expression, color, background, bold } = rule;
         const kinds = [operator !== undefined, conditions !== undefined, expression !== undefined].filter(Boolean).length;
         if (kinds !== 1) {
             throw new TypeError(
@@ -541,9 +651,12 @@ export function assertColorRules(
             );
         }
         if (operator !== undefined) {
-            assertOperatorAndValue(operator, value, type, lookup, at);
-        } else if (value !== undefined) {
-            throw new TypeError(`${at} has a value without an operator: the value is the operator's`);
+            assertOperatorAndValue(operator, value, type, lookup, at, datePreset);
+            assertDateParts(rule, type, lookup, at);
+        } else if (value !== undefined || datePreset !== undefined || week !== undefined) {
+            throw new TypeError(
+                `${at} has a ${value !== undefined ? 'value' : datePreset !== undefined ? 'datePreset' : 'week'} without an operator: it is the operator's`
+            );
         }
         if (conditions !== undefined) {
             if (!Array.isArray(conditions) || !conditions.length || conditions.length > MAX_RULE_CONDITIONS) {
@@ -567,7 +680,15 @@ export function assertColorRules(
                         `${where}.field is ${JSON.stringify(condition.field)?.slice(0, 70)}, it is a field of the grid: a column, a field of the datasource, a calculated column`
                     );
                 }
-                assertOperatorAndValue(condition.operator, condition.value, known.type, known.lookup, where);
+                assertOperatorAndValue(
+                    condition.operator,
+                    condition.value,
+                    known.type,
+                    known.lookup,
+                    where,
+                    condition.datePreset
+                );
+                assertDateParts(condition, known.type, known.lookup, where);
             });
         } else if (combine !== undefined) {
             throw new TypeError(`${at} has combine without conditions`);
@@ -637,25 +758,122 @@ function ruleValue(text: string, type: FieldType, formatter: Formatter): string 
 
 /**
  * @internal
+ * What a rule on a date reads its periods with: how a week and a quarter are written (formatTexts), the
+ * weeks it takes when the rule says none, today - the day of a quick date
+ */
+export interface RuleDates {
+    texts: FormatTexts;
+    week: RuleWeek;
+    today: Date;
+}
+
+/** a day as a period: from its 00:00 to the next day's */
+function dayOf(date: Date): DatePeriod {
+    const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    return { start, next: new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1) };
+}
+
+/**
+ * A rule's value on a date as a period, when it is one: a week (`2026-W47`, of the rule's weeks), a month
+ * (`2026-11`), a quarter (`2026 Q4`), a year (`2026`) - a week and a quarter also as the grid's texts write
+ * them (`format.weekIso` ...). null for anything else - a date, read by the field's formatter as before
+ */
+function typedPeriod(text: string, week: RuleWeek, texts: FormatTexts, today: Date): DatePeriod | null {
+    // as the grid writes a week and a quarter (`uke 47 2026`), and as the texts of the library do
+    // (`2026-W47`, `2026 Q4`): a saved rule means the same in every language
+    for (const written of [texts, STANDARD_TEXTS]) {
+        for (const format of [week === 'us' ? 'weekUs' : 'weekIso', 'month', 'quarter', 'year'] as const) {
+            const period = parseDateAs(text, format, written, today);
+            if (period) {
+                return period;
+            }
+        }
+    }
+    return null;
+}
+
+/** how the library's own texts write a week and a quarter: `2026-W47`, `2026 Q4` */
+const STANDARD_TEXTS = formatTexts();
+
+/**
+ * The condition of a rule on a date with a period: its quick date's days today (`datePreset`, the week
+ * from the rule's first day), or a value that is a period (typedPeriod) - an end of a BETWEEN that is a
+ * date is its day (its second, on a datetime). undefined when it has neither: the value is a date, the
+ * field's formatter reads it. null when there is nothing to compare with
+ */
+function dateRuleCondition(
+    rule: { operator?: FilterOperator; value?: ColorRule['value']; datePreset?: DatePreset; week?: RuleWeek },
+    field: string,
+    type: FieldType,
+    formatter: Formatter,
+    dates: RuleDates
+): FilterExpression | null | undefined {
+    const { operator } = rule;
+    if (!operator || !ruleTakesValue(operator)) {
+        return undefined;
+    }
+    const week = rule.week ?? dates.week;
+    const one = (expressions: FilterExpression[]) => expressions[0] ?? null;
+    if (rule.datePreset) {
+        const [from, to] = datePresetDays(rule.datePreset, dates.today, week === 'us' ? 0 : 1);
+        const period: OpenDatePeriod = { start: from, next: dayOf(to).next };
+        return takesDatePreset(operator) ? one(periodConditions(field, operator, period, period, type)) : null;
+    }
+    const ends = operator === 'BETWEEN' ? (Array.isArray(rule.value) ? rule.value : []) : [rule.value];
+    const periods = ends.map((end) => (typeof end === 'string' ? typedPeriod(end, week, dates.texts, dates.today) : null));
+    if (!periods.some(Boolean)) {
+        return undefined;
+    }
+    // a BETWEEN of a period and a date: the date's day, its second on a datetime
+    const asPeriod = (end: unknown, period: DatePeriod | null): DatePeriod | null => {
+        if (period) {
+            return period;
+        }
+        const value = typeof end === 'string' ? ruleValue(end, type, formatter) : null;
+        if (!(value instanceof Date)) {
+            return null;
+        }
+        return type === 'datetime' ? { start: value, next: new Date(value.getTime() + 1000) } : dayOf(value);
+    };
+    const from = asPeriod(ends[0], periods[0]);
+    const to = operator === 'BETWEEN' ? asPeriod(ends[1], periods[1]) : from;
+    return one(periodConditions(field, operator, from, to, type));
+}
+
+/**
+ * @internal
  * The condition a rule (or a condition of one) tests a value with: what the field's header filter makes
- * of the same operator and text - see ruleValue. A BETWEEN's ends each, an end `''` is open (null). null
- * when it has no value to compare with: none, an end of neither, a value the formatter can not read (an
- * invalid date) - it matches no cell
- * @param rule its operator and value
+ * of the same operator and text - see ruleValue. A BETWEEN's ends each, an end `''` is open (null). On a
+ * date (with `dates`) a period - a week, a month, a quarter, a year, a quick date - is its days
+ * (dateRuleCondition): an OR group for NOT_EQUAL_TO. null when it has no value to compare with: none, an
+ * end of neither, a value the formatter can not read (an invalid date) - it matches no cell
+ * @param rule its operator and value - on a date its quick date and its weeks
  * @param field the field the condition is on
  * @param type the type it compares as: the field's, `'text'` for the label of a lookup column
  * @param formatter the field's formatter (`datasource.getField(field).formatter`)
  * @param caseSensitive true when a text compares with its case (the column's `filterCaseSensitive`)
+ * @param dates what a date's periods are read with - left out, a date's value is a date only
  */
 export function ruleCondition(
-    rule: { operator?: FilterOperator; value?: ColorRule['value'] },
+    rule: { operator?: FilterOperator; value?: ColorRule['value']; datePreset?: DatePreset; week?: RuleWeek },
     field: string,
     type: FieldType,
     formatter: Formatter,
-    caseSensitive: boolean
-): FilterCondition | null {
+    caseSensitive: boolean,
+    dates?: RuleDates
+): FilterExpression | null {
     const { operator } = rule;
     if (!operator) {
+        return null;
+    }
+    if (dates && (type === 'date' || type === 'datetime')) {
+        const periods = dateRuleCondition(rule, field, type, formatter, dates);
+        if (periods !== undefined) {
+            return periods;
+        }
+    }
+    if (rule.datePreset) {
+        // a quick date without what it is read with
         return null;
     }
     const options = caseSensitive ? { caseSensitive: true } : {};
@@ -680,12 +898,37 @@ const RULE_FILTER = new Filter();
  * types), the type and formatter of the values, the case, the lookup of a lookup column
  */
 interface RuleContext {
+    /** what a date's periods are read with, see RuleDates */
+    dates: RuleDates;
     datasource: Datasource<any>;
     field: string;
     type: FieldType;
     formatter: Formatter;
     caseSensitive: boolean;
     lookup: LookupColumn | undefined;
+}
+
+/**
+ * @internal
+ * The weeks a rule on a field takes when it says none (`ColorRule.week`): the column's week format
+ * (`weekUs`, `weekIso`), else the date picker's first day - Sunday `'us'`, any other `'iso'`
+ */
+export function defaultRuleWeek(gridInterface: GridInterface<any>, field: string): RuleWeek {
+    const config = gridInterface.__getGridConfig();
+    const shown = config.columns[field]?.format?.date;
+    if (shown === 'weekUs' || shown === 'weekIso') {
+        return shown === 'weekUs' ? 'us' : 'iso';
+    }
+    return weekStartOf(config.datePickerConfig) === 0 ? 'us' : 'iso';
+}
+
+/**
+ * @internal
+ * What a rule on a date of a field reads its periods with, today (RuleDates)
+ */
+export function ruleDatesOf(gridInterface: GridInterface<any>, field: string): RuleDates {
+    const texts = formatTexts(gridInterface.__getGridConfig().texts);
+    return { texts, week: defaultRuleWeek(gridInterface, field), today: new Date() };
 }
 
 /** what a condition on a field is tested with, see RuleContext */
@@ -695,6 +938,7 @@ function contextOf(gridInterface: GridInterface<any>, field: string): RuleContex
     const own = datasource.getField(field);
     const type = lookup ? 'text' : own.type;
     return {
+        dates: ruleDatesOf(gridInterface, field),
         datasource,
         field,
         type,
@@ -719,7 +963,8 @@ function conditionMatches(
     if (lookup && rule.operator && ruleTakesValue(rule.operator)) {
         const condition = ruleCondition(rule, 'label', 'text', context.formatter, caseSensitive);
         const picked = lookup.lookup.rowOf(row[field]);
-        if (!condition || !picked) {
+        // a label is a text: one condition, never a group
+        if (!condition || isFilterGroup(condition) || !picked) {
             return false;
         }
         const label = { label: lookup.lookup.labelOf(picked) };
@@ -731,7 +976,7 @@ function conditionMatches(
             caseSensitive
         });
     }
-    const condition = ruleCondition(rule, field, context.type, context.formatter, context.caseSensitive);
+    const condition = ruleCondition(rule, field, context.type, context.formatter, context.caseSensitive, context.dates);
     return !!condition && RULE_FILTER.filter([row], condition, datasource).length === 1;
 }
 

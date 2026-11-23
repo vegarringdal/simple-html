@@ -435,6 +435,77 @@ describe('column settings - colour rules: editing', () => {
     });
 });
 
+describe('column settings - colour rules on a date: Compare with and Weeks', () => {
+    /** the name a picker shows */
+    const shown = (part: string) => byId(part).querySelector('.filter-editor-pick-text')?.textContent?.trim();
+
+    it('expect a quick date and the weeks picked into the rule, its operators those that compare', async () => {
+        const { gridInterface } = await mount();
+        gridInterface.openColumnSettings('born');
+        byId('rules-add').click();
+        expect([shown('rule-0-compare'), shown('rule-0-week')]).toEqual([
+            'A date or period typed',
+            'As the column: ISO - Monday'
+        ]);
+
+        byId('rule-0-compare').click();
+        menuEntry('filter.dates.thisWeek').click();
+        // the quick date is the value: no input
+        expect(byId('rule-0-value')).toBeNull();
+        byId('rule-0-week').click();
+        menuEntry('columnSettings.rules.week.us').click();
+        expect([shown('rule-0-compare'), shown('rule-0-week')]).toEqual(['This week', 'US - Sunday']);
+        // the operators: not Between, not the blanks
+        byId('rule-0-operator').click();
+        const offered = openMenus().at(-1)?.querySelectorAll('[role^="menuitem"]');
+        const names = Array.from(offered ?? [], (item) => item.textContent?.trim());
+        expect(names.some((name) => /between|blank/i.test(name ?? ''))).toBe(false);
+        gridInterface.closeMenu();
+
+        apply().click();
+        expect(gridInterface.getState().formats.born?.rules?.[0]).toMatchObject({
+            operator: 'EQUAL',
+            datePreset: 'thisWeek',
+            week: 'us'
+        });
+        expect(gridInterface.getState().formats.born?.rules?.[0]).not.toHaveProperty('value');
+    });
+
+    it('expect a typed period read, A date or period typed back to an empty value, Between dropping the quick date', async () => {
+        const { gridInterface } = await mount();
+        gridInterface.openColumnSettings('born');
+        byId('rules-add').click();
+        type('rule-0-value', '2026-W47');
+        expect(problems()).toEqual([]);
+        byId('rule-0-compare').click();
+        menuEntry('filter.dates.overdue').click();
+        byId('rule-0-compare').click();
+        menuEntry('columnSettings.rules.date.typed').click();
+        expect(byId<HTMLInputElement>('rule-0-value').value).toBe('');
+        // a quick date is Equal - in it -, another operator keeps it, another quick date keeps the operator
+        byId('rule-0-compare').click();
+        menuEntry('filter.dates.lastMonth').click();
+        pickOperator(0, 'LESS_THAN');
+        byId('rule-0-compare').click();
+        menuEntry('filter.dates.thisMonth').click();
+        apply().click();
+        expect(gridInterface.getState().formats.born?.rules?.[0]).toMatchObject({
+            operator: 'LESS_THAN',
+            datePreset: 'thisMonth'
+        });
+    });
+
+    it('expect no date pickers on another column, nor for Is blank', async () => {
+        const { gridInterface } = await mount();
+        gridInterface.openColumnSettings('balance');
+        expect(byId('rule-0-compare')).toBeNull();
+        gridInterface.openColumnSettings('born');
+        byId('rules-add').click();
+        pickOperator(0, 'IS_BLANK');
+        expect(byId('rule-0-compare')).toBeNull();
+    });
+});
+
 describe('column settings - colour rules: the preview', () => {
     it('expect the preview in the colours of the rule its row matches, the draft before Apply', async () => {
         const { datasource, gridInterface } = await mount();

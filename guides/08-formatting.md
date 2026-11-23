@@ -873,6 +873,8 @@ const config: GridConfig = {
 | --- | --- |
 | `operator` | how the value is compared: an operator of the column's type - `EQUAL`, `NOT_EQUAL_TO`, `CONTAINS`, `BEGIN_WITH`, `LESS_THAN`, `GREATER_THAN_OR_EQUAL_TO`, `BETWEEN`, `IS_BLANK`, `IS_NOT_BLANK` ... ([Operators](06-filtering.md#operators)). Not `IN` / `NOT_IN`: a rule compares one value, give each value a rule |
 | `value` | what it is compared with, text as it is typed in the header filter: `'100'`, `'late'`, `'2026-11-22'`, `'true'` / `'false'` for a checkbox column. `[from, to]` for `BETWEEN`. Left out for `IS_BLANK` / `IS_NOT_BLANK` |
+| `datePreset` | a date column: a quick date in place of `value` - `'today'`, `'thisWeek'`, `'lastWeek'`, `'thisMonth'`, `'lastMonth'`, `'thisQuarter'`, `'lastQuarter'`, `'thisYear'`, `'lastYear'`, `'last7Days'`, `'last30Days'`, `'next7Days'`, `'overdue'` - its days today. Not with `BETWEEN` |
+| `week` | a date column: `'iso'` (Monday, ISO 8601 numbers) or `'us'` (Sunday, week 1 has January 1) - the weeks of a `value` like `'2026-W47'` and of a quick date's week. Left out: the column's `weekIso` / `weekUs` format, else the date picker's `weekStart` |
 | `conditions` | the kind *Conditions*, in place of `operator`: 1 to 20 of `{ field, operator, value? }` - a field of the grid, an operator of its type, a value as typed in its header filter |
 | `combine` | with `conditions`: `'AND'` (the default) all of them, `'OR'` one of them |
 | `expression` | the kind *Formula*, in place of `operator`: a formula that is true or false |
@@ -886,6 +888,46 @@ const config: GridConfig = {
   `2026-11-22`, the day of a date), a Between's two ends each. Then the datasource's own filter tests
   it: `≥ 100` or *Contains* `late` keeps the cells the header filter would keep, and 0 is blank as there
   ([0 is blank](06-filtering.md#0-is-blank)) - a blank number is 0, `< 1` colours it.
+- **A date takes a period, as the header filter of a column shown as weeks or months does** - and a
+  quick date, as its filter menu offers them:
+
+  ```ts
+  import type { ColorRule } from '@simple-html/grid';
+
+  const rules: ColorRule[] = [
+      // a due date this week: Sunday to Saturday
+      { operator: 'EQUAL', datePreset: 'thisWeek', week: 'us', background: 'green' },
+      // before this week's Monday
+      { operator: 'LESS_THAN', datePreset: 'thisWeek', week: 'iso', color: 'red', bold: true },
+      // ISO week 47 of 2026, Monday 16 to Sunday 22 November
+      { operator: 'EQUAL', value: '2026-W47', week: 'iso', background: 'yellow' },
+      // November, the fourth quarter, from week 40 to the end of November
+      { operator: 'EQUAL', value: '2026-11', background: 'blue' },
+      { operator: 'EQUAL', value: '2026 Q4', background: 'teal' },
+      { operator: 'BETWEEN', value: ['2026-W40', '2026-11'], background: 'purple' }
+  ];
+  ```
+
+  | operator | on a period (a week, a month, a quick date ...) |
+  | --- | --- |
+  | `EQUAL` | in it |
+  | `NOT_EQUAL_TO` | not in it, or blank |
+  | `LESS_THAN` / `LESS_THAN_OR_EQUAL_TO` | before its first day / to its last |
+  | `GREATER_THAN` / `GREATER_THAN_OR_EQUAL_TO` | after its last day / from its first |
+  | `BETWEEN` | from the first day of the one to the last of the other (typed values; an end may be a day) |
+
+  A week, a month (`2026-11`), a quarter (`2026 Q4`) and a year (`2026`) are read whatever the column
+  shows; a week and a quarter also as the grid's texts write them (`format.weekIso`, `format.quarter`:
+  `uke 47 2026` in Norwegian) - `2026-W47` is read in every language, a saved rule means the same. A day
+  is a day, as before. On a `datetime` a period ends at 23:59:59 of its last day. **ISO or US weeks**:
+  `week: 'iso'` - Monday to Sunday, week 1 has the year's first Thursday; `'us'` - Sunday to Saturday,
+  week 1 has January 1 (Excel's `WEEKNUM`). A rule without `week` takes the column's week format
+  (`weekIso`, `weekUs`), else the date picker's first day (`datePickerConfig.weekStart`: Sunday is US).
+  **A quick date is today's**: the cells are rendered with today's days; the grid renders them again on
+  a new day when the window gets the focus back, or the page is shown again
+  (`refreshDatePresets()`). In the dialog: *Compare with* - *A date or period typed* or a quick date
+  (picked after a typed value it is Equal, in it) - and *Weeks*: as the column, *ISO - Monday*,
+  *US - Sunday*. A condition on a date field (*Conditions*) takes both too.
 - **A lookup column** (`editor`) compares the label its cells show, with a text's operators - as its
   header filter does; a value no row of the lookup has matches no rule that compares. Is Blank / Is Not
   Blank look at the value.
@@ -916,7 +958,8 @@ const config: GridConfig = {
   background. A selected row keeps its colour in the other cells; the rule's background is the cell's,
   over it. The focus outline, the marker of an edited cell and of more lines are on top. Bold stays.
 - **Checked** as the rest of a format: no kind of condition or two, an operator the type does not
-  have, `IN` / `NOT_IN`, a rule without the value its operator needs, a condition on a field the grid
+  have, `IN` / `NOT_IN`, a rule without the value its operator needs, a `datePreset` or `week` on a
+  column that is no date, a `datePreset` with a value or with `BETWEEN`, a condition on a field the grid
   does not know, a formula with a problem or that is not true / false, one that colours nothing, a
   colour that is neither of the palette nor `#rrggbb` throw a `TypeError` when the grid is made, or
   `updateConfig()` or `setState()` is given it.

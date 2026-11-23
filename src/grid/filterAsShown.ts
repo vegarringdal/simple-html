@@ -534,28 +534,61 @@ export function dateConditions(
     const period = (end: unknown) => (end instanceof Date ? periodOf(end, format, texts, today) : null);
     if (operator === 'BETWEEN') {
         const [from, to] = Array.isArray(value) ? value.map(period) : [period(value), period(value)];
-        return from || to ? [where(field, 'BETWEEN', [from?.start ?? null, to ? lastOf(to, type) : null])] : [];
+        return periodConditions(field, operator, from, to, type);
     }
     const shown = period(value);
-    if (!shown) {
+    return periodConditions(field, operator, shown, shown, type);
+}
+
+/**
+ * A period of days whose first day may be open: Overdue - every day before today - has none. As
+ * DatePeriod, from `start` (included, null: open) to `next` (excluded)
+ */
+export interface OpenDatePeriod {
+    start: Date | null;
+    next: Date;
+}
+
+/**
+ * The conditions of an operator on a period - the table of dateConditions. `from` is the period of the
+ * value, `to` too but for `BETWEEN` (the period of its To). A period with an open start (OpenDatePeriod):
+ * `EQUAL` is to its end, `NOT_EQUAL_TO` after it or blank, `LESS_THAN` and `GREATER_THAN_OR_EQUAL_TO`
+ * nothing to compare with - [] - and the others as with a start
+ * @param type the field's type: `date` or `datetime` - the last moment of the period, see lastOf
+ * @returns the conditions for the top of a filter, [] for none: no period, or nothing to compare with
+ */
+export function periodConditions(
+    field: string,
+    operator: FilterOperator,
+    from: OpenDatePeriod | null,
+    to: OpenDatePeriod | null,
+    type: FieldType
+): FilterExpression[] {
+    const lastOfOpen = (period: OpenDatePeriod) => lastOf(period as DatePeriod, type);
+    if (operator === 'BETWEEN') {
+        return from || to ? [where(field, 'BETWEEN', [from?.start ?? null, to ? lastOfOpen(to) : null])] : [];
+    }
+    if (!from) {
         return [];
     }
-    const { start } = shown;
-    const last = lastOf(shown, type);
-    if (last.getTime() === start.getTime()) {
+    const { start } = from;
+    const last = lastOfOpen(from);
+    if (start && last.getTime() === start.getTime()) {
         return [where(field, operator, start)];
     }
     switch (operator) {
         case 'EQUAL':
             return [where(field, 'BETWEEN', [start, last])];
         case 'NOT_EQUAL_TO':
-            return [or(where(field, 'LESS_THAN', start), where(field, 'GREATER_THAN', last), where(field, 'IS_BLANK'))];
+            return start
+                ? [or(where(field, 'LESS_THAN', start), where(field, 'GREATER_THAN', last), where(field, 'IS_BLANK'))]
+                : [or(where(field, 'GREATER_THAN', last), where(field, 'IS_BLANK'))];
         case 'LESS_THAN_OR_EQUAL_TO':
         case 'GREATER_THAN':
             return [where(field, operator, last)];
         default:
-            // LESS_THAN, GREATER_THAN_OR_EQUAL_TO
-            return [where(field, operator, start)];
+            // LESS_THAN, GREATER_THAN_OR_EQUAL_TO: from the start, none when it is open
+            return start ? [where(field, operator, start)] : [];
     }
 }
 

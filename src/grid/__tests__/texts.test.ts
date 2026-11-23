@@ -428,6 +428,14 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
     byId('rules-add').click();
     type('rule-0-value', '«x»');
     check();
+    // its weeks: the menu, US picked; Compare with: its menu - the quick dates
+    byId('rule-0-week').click();
+    check();
+    (document.querySelector('[data-menu-id="columnSettings.rules.week.us"]') as HTMLElement).click();
+    byId('rule-0-compare').click();
+    check();
+    (document.querySelector('[data-menu-id="filter.dates.thisWeek"]') as HTMLElement).click();
+    check();
     option('«Active»').click();
     byId('rules-add').click();
     check();

@@ -4892,6 +4892,22 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * "Run workflow" shows for a workflow on the default branch only: next.yml has to be on master too, as
   release.yml and beta.yml (see *Questions for the user*)
 
+### Colour rules on a date: periods, quick dates, ISO / US weeks (user request)
+
+* the user: "in column color, on date, we should be able to set condition based on week etc like in
+  filter. But also important that week can be select based on US (sunday?) and ISO (monday?)"
+* colorRules.ts: `datePreset` and `week` on a rule and a condition; dateRuleCondition reads a period
+  (typedPeriod: the week of the rule's weeks, month, quarter, year - the grid's texts and the library's,
+  so a saved rule reads the same in every language) or a quick date's days (datePresetDays with Monday /
+  Sunday) and makes the conditions with periodConditions - split out of filterAsShown's dateConditions,
+  which uses it too (an open start for Overdue). ruleCondition returns a FilterExpression now (an OR group
+  for NOT_EQUAL_TO). defaultRuleWeek: the column's week format, else the date picker's weekStart
+* gridInterface.refreshDatePresets(): a new day renders the cells when a rule has a quick date
+* the dialog (columnSettingsRules.ts dateTemplate): Compare with, Weeks; a quick date picked after a typed
+  value is Equal (the column's default ≥ was the typed value's); the operator menu leaves out Between
+* tests: colorRuleDates.test.ts (today faked: ISO and US weeks, every operator, datetime, Overdue, typed
+  periods, Norwegian texts, the defaults, TypeErrors, the new day), columnSettingsRules.test.ts, texts
+
 ### A saved grid has a version (user request)
 
 * the user: "when we export gridConfig, we need to include version number, if no version number is used,

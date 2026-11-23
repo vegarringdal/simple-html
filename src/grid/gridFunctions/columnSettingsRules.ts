@@ -15,17 +15,22 @@ import {
     type RuleCondition,
     type RuleFieldOf,
     type RuleKind,
+    type RuleWeek,
     ruleCondition,
+    ruleDatesOf,
     ruleKind,
     ruleOperatorsOf,
-    ruleTakesValue
+    ruleTakesValue,
+    takesDatePreset
 } from '../colorRules';
+import { DATE_PRESETS, type DatePreset } from '../datePresets';
 import { compileFormula, formulaProblemText } from '../formula';
 import type { Grid } from '../grid';
 import type { MenuItem } from '../gridMenus';
 import { isHexColor, TEXT_CONTRAST, textContrast } from '../ruleColors';
 import { defaultHeaderOperator, headerFilterType } from './columnFilterOptions';
 import { contextMenuAttributes } from './contextMenuAttributes';
+import { DATE_PRESET_TEXTS } from './datePresetFilter';
 import { getColumnLabel } from './getColumnLabel';
 import { gridText } from './gridText';
 import { HEADER_OPERATOR_TEXTS } from './headerOperatorMenu';
@@ -40,6 +45,11 @@ import { HEADER_OPERATOR_TEXTS } from './headerOperatorMenu';
  *   - *Value*: the operator - a picker of the operators the column's filter offers, not IN / NOT_IN,
  *     named as the header filter's menu names them - and the value typed as in the header filter: two
  *     (From, To) for Between, none for Is Blank / Is Not Blank, a checkbox *Checked* for a boolean column.
+ *     A date column (and a condition on one) has two pickers more (dateTemplate): *Compare with* - *A date
+ *     or period typed* (`2026-W47`, `2026-11` ... in the input) or a quick date (`datePreset`: This week,
+ *     Last month, Overdue ...; picked after a typed value it is Equal - in it - then the operators that
+ *     compare, not Between) - and *Weeks*: as the column,
+ *     ISO (Monday) or US (Sunday) - `week`.
  *   - *Conditions*: a line for each condition - a picker of its field (the columns and the calculated
  *     columns, with a search), its operator and its value as for a Value on that field, Remove - then *Add
  *     condition*; with two or more, *All of them* / *Any of them* over them.
@@ -158,11 +168,23 @@ function tidyRule(rule: ColorRule): ColorRule {
     if (rule.value !== undefined) {
         tidy.value = rule.value;
     }
+    if (rule.datePreset !== undefined) {
+        tidy.datePreset = rule.datePreset;
+    }
+    if (rule.week !== undefined) {
+        tidy.week = rule.week;
+    }
     if (rule.conditions !== undefined) {
         tidy.conditions = rule.conditions.map((condition) => {
             const each: RuleCondition = { field: condition.field, operator: condition.operator };
             if (condition.value !== undefined) {
                 each.value = condition.value;
+            }
+            if (condition.datePreset !== undefined) {
+                each.datePreset = condition.datePreset;
+            }
+            if (condition.week !== undefined) {
+                each.week = condition.week;
             }
             return each;
         });
@@ -346,20 +368,32 @@ export function colorRuleSettings(ctx: Grid, settings: RuleSettings): TemplateRe
      */
     const setKind = (index: number, kind: RuleKind) =>
         change(index, (rule) => {
-            const own = rule.operator
-                ? { field, operator: rule.operator, value: rule.value }
+            const own: RuleCondition | undefined = rule.operator
+                ? { field, operator: rule.operator, value: rule.value, datePreset: rule.datePreset, week: rule.week }
                 : rule.conditions?.find((condition) => condition.field === field);
             delete rule.operator;
             delete rule.value;
+            delete rule.datePreset;
+            delete rule.week;
             delete rule.conditions;
             delete rule.combine;
             delete rule.expression;
+            // the date parts go with the value
+            const dateParts = (target: { datePreset?: DatePreset; week?: RuleWeek }) => {
+                if (own?.datePreset !== undefined) {
+                    target.datePreset = own.datePreset;
+                }
+                if (own?.week !== undefined) {
+                    target.week = own.week;
+                }
+            };
             if (kind === 'value') {
                 rule.operator = own?.operator ?? startOperator(field);
                 const value = own ? own.value : startValue(field, rule.operator);
                 if (value !== undefined) {
                     rule.value = value;
                 }
+                dateParts(rule);
             } else if (kind === 'conditions') {
                 const operator = own?.operator ?? startOperator(field);
                 const condition: RuleCondition = { field, operator };
@@ -367,6 +401,7 @@ export function colorRuleSettings(ctx: Grid, settings: RuleSettings): TemplateRe
                 if (value !== undefined) {
                     condition.value = value;
                 }
+                dateParts(condition);
                 rule.conditions = [condition];
             } else {
                 rule.expression = '';
@@ -384,7 +419,13 @@ export function colorRuleSettings(ctx: Grid, settings: RuleSettings): TemplateRe
      * @param picked the operator now
      * @param pick sets the one picked
      */
-    const operatorPicker = (id: string, on: string, picked: FilterOperator, pick: (operator: FilterOperator) => void) => {
+    const operatorPicker = (
+        id: string,
+        on: string,
+        picked: FilterOperator,
+        pick: (operator: FilterOperator) => void,
+        datePreset?: DatePreset
+    ) => {
         const operatorLabel = text('filterEditor.label.operator');
         return html`<button
             type="button"
@@ -394,7 +435,9 @@ export function colorRuleSettings(ctx: Grid, settings: RuleSettings): TemplateRe
             aria-label=${`${operatorLabel}: ${operatorName(picked)}`}
             data-tooltip=${operatorLabel}
             @click=${(event: MouseEvent) => {
-                const items = offeredFor(on).map(
+                // a quick date: the operators that compare with it
+                const offered = offeredFor(on).filter((operator) => !datePreset || takesDatePreset(operator));
+                const items = offered.map(
                     (operator): MenuItem => ({
                         id: RULE_OPERATOR_TEXTS[operator] ?? `filterEditor.operator.${operator}`,
                         label: operatorName(operator),
@@ -455,7 +498,7 @@ export function colorRuleSettings(ctx: Grid, settings: RuleSettings): TemplateRe
      * @param set writes the new value
      */
     const valueInputs = (
-        condition: { operator?: FilterOperator; value?: ColorRule['value'] },
+        condition: { operator?: FilterOperator; value?: ColorRule['value']; datePreset?: DatePreset },
         part: string,
         on: string,
         describedBy: string,
@@ -463,6 +506,10 @@ export function colorRuleSettings(ctx: Grid, settings: RuleSettings): TemplateRe
         set: (value: ColorRule['value']) => void
     ) => {
         if (!condition.operator || !ruleTakesValue(condition.operator)) {
+            return nothing;
+        }
+        if (condition.datePreset) {
+            // the quick date is the value
             return nothing;
         }
         if (typeOf(on) === 'boolean') {
@@ -483,7 +530,7 @@ export function colorRuleSettings(ctx: Grid, settings: RuleSettings): TemplateRe
                 spellcheck="false"
                 autocomplete="off"
                 aria-label=${label}
-                placeholder=${label}
+                placeholder=${isDate(on) ? text('columnSettings.rules.date.placeholder') : label}
                 aria-describedby=${describedBy}
                 aria-invalid=${invalid ? 'true' : 'false'}
                 .value=${live(value)}
@@ -505,6 +552,107 @@ export function colorRuleSettings(ctx: Grid, settings: RuleSettings): TemplateRe
         </span>`;
     };
 
+    /** true for a field a rule compares as a date: a date or datetime, not a lookup column */
+    const isDate = (on: string) => {
+        const type = typeOf(on);
+        return type === 'date' || type === 'datetime';
+    };
+
+    /**
+     * The date parts of a rule or condition on a date field: *Compare with* - a date or period typed, or a
+     * quick date - and *Weeks* - as the column, ISO, US. Nothing on another field
+     * @param part the part of the ids of its pickers
+     * @param edit changes the rule or condition, written
+     */
+    const dateTemplate = (
+        target: { operator?: FilterOperator; datePreset?: DatePreset; week?: RuleWeek },
+        part: string,
+        on: string,
+        edit: (
+            apply: (next: {
+                operator?: FilterOperator;
+                value?: ColorRule['value'];
+                datePreset?: DatePreset;
+                week?: RuleWeek;
+            }) => void
+        ) => void
+    ) => {
+        if (!isDate(on) || !target.operator || !ruleTakesValue(target.operator)) {
+            return nothing;
+        }
+        const compareLabel = text('columnSettings.rules.date.compare');
+        const typed = text('columnSettings.rules.date.typed');
+        const presetName = (preset: DatePreset) => text(DATE_PRESET_TEXTS[preset]);
+        const shownValue = target.datePreset ? presetName(target.datePreset) : typed;
+        const weekLabel = text('columnSettings.rules.week');
+        const columnWeek = ruleDatesOf(gridInterface, on).week;
+        const weekName = (week: RuleWeek | undefined) =>
+            week
+                ? text(`columnSettings.rules.week.${week}`)
+                : text('columnSettings.rules.week.column', { week: text(`columnSettings.rules.week.${columnWeek}`) });
+        const picker = (id: string, label: string, shown: string, items: () => MenuItem[]) =>
+            html`<button
+                type="button"
+                id=${idOf(id)}
+                class="filter-editor-pick column-settings-rule-date"
+                aria-haspopup="menu"
+                aria-label=${`${label}: ${shown}`}
+                data-tooltip=${label}
+                @click=${(event: MouseEvent) => gridInterface.openMenu(event.currentTarget as HTMLElement, items())}
+            >
+                <span class="filter-editor-pick-text">${shown}</span>
+            </button>`;
+        const compare = picker(`${part}-compare`, compareLabel, shownValue, () => [
+            {
+                id: 'columnSettings.rules.date.typed',
+                label: typed,
+                selected: () => !target.datePreset,
+                action: () =>
+                    edit((next) => {
+                        if (next.datePreset) {
+                            delete next.datePreset;
+                            next.value = '';
+                        }
+                    })
+            },
+            ...DATE_PRESETS.map(
+                (preset): MenuItem => ({
+                    id: DATE_PRESET_TEXTS[preset],
+                    label: presetName(preset),
+                    selected: () => target.datePreset === preset,
+                    action: () =>
+                        edit((next) => {
+                            // from a value typed: in the period - the column's operator (≥ on a date) is
+                            // the typed value's; from another quick date the operator stays
+                            if (!next.datePreset || !next.operator || !takesDatePreset(next.operator)) {
+                                next.operator = 'EQUAL';
+                            }
+                            next.datePreset = preset;
+                            delete next.value;
+                        })
+                })
+            )
+        ]);
+        const weeks = picker(`${part}-week`, weekLabel, weekName(target.week), () =>
+            ([undefined, 'iso', 'us'] as const).map(
+                (week): MenuItem => ({
+                    id: week ? `columnSettings.rules.week.${week}` : 'columnSettings.rules.week.column',
+                    label: weekName(week),
+                    selected: () => target.week === week,
+                    action: () =>
+                        edit((next) => {
+                            if (week) {
+                                next.week = week;
+                            } else {
+                                delete next.week;
+                            }
+                        })
+                })
+            )
+        );
+        return html`<div class="column-settings-input-row column-settings-rule-dates">${compare} ${weeks}</div>`;
+    };
+
     /** the operator of a rule or condition picked: its value kept as the filter editor keeps one */
     const withOperator = (
         target: { operator?: FilterOperator; value?: ColorRule['value'] },
@@ -517,6 +665,12 @@ export function colorRuleSettings(ctx: Grid, settings: RuleSettings): TemplateRe
                 ? 'true'
                 : valueFor(target, operator);
         target.operator = operator;
+        const preset = target as { datePreset?: DatePreset };
+        if (preset.datePreset && takesDatePreset(operator)) {
+            // the quick date stays the value
+            return;
+        }
+        delete preset.datePreset;
         if (value === undefined) {
             delete target.value;
         } else {
@@ -525,15 +679,18 @@ export function colorRuleSettings(ctx: Grid, settings: RuleSettings): TemplateRe
     };
 
     /** a value the field does not read (a date of another format): said, it holds nothing back */
-    const unreadOf = (condition: { operator?: FilterOperator; value?: ColorRule['value'] }, on: string) => {
+    const unreadOf = (
+        condition: { operator?: FilterOperator; value?: ColorRule['value']; datePreset?: DatePreset; week?: RuleWeek },
+        on: string
+    ) => {
         const formatter = gridInterface.getDatasource().getField(on).formatter;
-        if (!condition.operator || !ruleTakesValue(condition.operator)) {
+        if (!condition.operator || !ruleTakesValue(condition.operator) || condition.datePreset) {
             return null;
         }
         const values = Array.isArray(condition.value)
             ? condition.value.filter((end) => end.trim() !== '').join('..')
             : (condition.value ?? '');
-        if (values.trim() === '' || ruleCondition(condition, on, typeOf(on), formatter, false)) {
+        if (values.trim() === '' || ruleCondition(condition, on, typeOf(on), formatter, false, ruleDatesOf(gridInterface, on))) {
             return null;
         }
         return values;
@@ -630,6 +787,8 @@ export function colorRuleSettings(ctx: Grid, settings: RuleSettings): TemplateRe
                                     // a field of another type, or an operator it does not offer: as a new
                                     // condition on it - its header filter's operator, no value yet
                                     if (typeChanged || !offeredFor(picked).includes(next.operator)) {
+                                        delete next.datePreset;
+                                        delete next.week;
                                         next.operator = startOperator(picked);
                                         const value = startValue(picked, next.operator);
                                         if (value === undefined) {
@@ -648,14 +807,19 @@ export function colorRuleSettings(ctx: Grid, settings: RuleSettings): TemplateRe
                 >
                     <span class="filter-editor-pick-text">${shown}</span>
                 </button>
-                ${operatorPicker(idOf(`${part}-operator`), condition.field, condition.operator, (operator) =>
-                    edit((next) => withOperator(next, condition.field, operator))
+                ${operatorPicker(
+                    idOf(`${part}-operator`),
+                    condition.field,
+                    condition.operator,
+                    (operator) => edit((next) => withOperator(next, condition.field, operator)),
+                    condition.datePreset
                 )}
                 ${valueInputs(condition, part, condition.field, problemId, invalid, (value) =>
                     edit((next) => {
                         next.value = value;
                     })
                 )}
+                ${dateTemplate(condition, part, condition.field, (apply) => edit((next) => apply(next)))}
                 <span class="column-settings-rule-buttons">
                     ${iconButton(idOf(`${part}-remove`), 'columnSettings.rules.condition.remove', '✕', false, () => {
                         change(index, (next) => {
@@ -755,15 +919,20 @@ export function colorRuleSettings(ctx: Grid, settings: RuleSettings): TemplateRe
         const condition =
             kind === 'value'
                 ? html`<div class="column-settings-rule-condition">
-                      ${operatorPicker(idOf(`rule-${index}-operator`), field, rule.operator as FilterOperator, (operator) =>
-                          change(index, (next) => withOperator(next, field, operator))
+                      ${operatorPicker(
+                          idOf(`rule-${index}-operator`),
+                          field,
+                          rule.operator as FilterOperator,
+                          (operator) => change(index, (next) => withOperator(next, field, operator)),
+                          rule.datePreset
                       )}
                       ${valueInputs(rule, `rule-${index}`, field, problemId, problem !== null, (value) =>
                           change(index, (next) => {
                               next.value = value;
                           })
                       )}
-                  </div>`
+                  </div>
+                  ${dateTemplate(rule, `rule-${index}`, field, (apply) => change(index, (next) => apply(next)))}`
                 : kind === 'conditions'
                   ? conditionsTemplate(rule, index, problemId, problem !== null)
                   : formulaTemplate(rule, index, problemId, problem !== null);

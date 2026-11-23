@@ -1332,6 +1332,22 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Colour rules on a date: weeks, months, quick dates - ISO or US weeks (user request)
+
+##### Added
+- A colour rule on a date (`ColorRule`, a condition of one too) takes a **period** as its value - a week
+  `'2026-W47'`, a month `'2026-11'`, a quarter `'2026 Q4'`, a year `'2026'` - and a **quick date**,
+  `datePreset` (`'thisWeek'`, `'lastMonth'`, `'next7Days'`, `'overdue'` ...: its days today) in place of
+  the value. `EQUAL` is in it, `LESS_THAN` before it, `NOT_EQUAL_TO` not in it (or blank) ... as the header
+  filter of a column shown as weeks.
+- **`week: 'iso' | 'us'`**: Monday and ISO 8601 numbers, or Sunday and week 1 with January 1 - for a typed
+  week and a quick date's week. Left out: the column's `weekIso` / `weekUs` format, else the date picker's
+  `weekStart`. `RuleWeek` is the type.
+- The dialog: *Compare with* (a date or period typed, or a quick date) and *Weeks* (as the column, ISO -
+  Monday, US - Sunday) on a rule or a condition on a date. New texts `columnSettings.rules.date.compare`,
+  `.date.typed`, `.date.placeholder`, `columnSettings.rules.week`, `.week.column`, `.week.iso`, `.week.us`.
+- `refreshDatePresets()` renders the cells again on a new day when a colour rule has a quick date.
+
 #### A saved grid has a version: `exportConfig()` / `importConfig()` (user request)
 
 ##### Added

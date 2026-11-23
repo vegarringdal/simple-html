@@ -5,7 +5,7 @@ import { declarations, readCss } from '../../__tests__/themeCss';
 import { Datasource } from '../../datasource/dataSource';
 import type { DatasourceOptions } from '../../datasource/datasourceOptions';
 import { type Entity, isGroupRow } from '../../datasource/entity';
-import { type FilterOperator, where } from '../../datasource/filterExpression';
+import { type FilterCondition, type FilterOperator, where } from '../../datasource/filterExpression';
 import { registerCellRenderer } from '../cellRendererRegistry';
 import {
     assertColorRules,
@@ -363,30 +363,63 @@ describe('colour rules - the condition', () => {
             operator: 'CONTAINS',
             value: ' an '
         });
-        expect(ruleCondition({ operator: 'LESS_THAN', value: ' 1.5 ' }, 'age', 'number', formatter('age'), false)?.value).toBe(
-            1.5
-        );
         expect(
-            ruleCondition({ operator: 'EQUAL', value: '2026-11-22' }, 'born', 'date', formatter('born'), false)?.value
+            (
+                ruleCondition(
+                    { operator: 'LESS_THAN', value: ' 1.5 ' },
+                    'age',
+                    'number',
+                    formatter('age'),
+                    false
+                ) as FilterCondition | null
+            )?.value
+        ).toBe(1.5);
+        expect(
+            (
+                ruleCondition(
+                    { operator: 'EQUAL', value: '2026-11-22' },
+                    'born',
+                    'date',
+                    formatter('born'),
+                    false
+                ) as FilterCondition | null
+            )?.value
         ).toEqual(new Date(2026, 10, 22));
-        expect(ruleCondition({ operator: 'EQUAL', value: 'true' }, 'active', 'boolean', formatter('active'), false)?.value).toBe(
-            true
-        );
+        expect(
+            (
+                ruleCondition(
+                    { operator: 'EQUAL', value: 'true' },
+                    'active',
+                    'boolean',
+                    formatter('active'),
+                    false
+                ) as FilterCondition | null
+            )?.value
+        ).toBe(true);
         expect(ruleCondition({ operator: 'EQUAL', value: 'yes' }, 'active', 'boolean', formatter('active'), false)).toBeNull();
     });
 
     it('expect a Between of two ends, an empty end open; none without an end; no value for Is Blank; the case', () => {
         expect(
-            ruleCondition({ operator: 'BETWEEN', value: ['10', ''] }, 'age', 'number', formatter('age'), false)?.value
+            (
+                ruleCondition(
+                    { operator: 'BETWEEN', value: ['10', ''] },
+                    'age',
+                    'number',
+                    formatter('age'),
+                    false
+                ) as FilterCondition | null
+            )?.value
         ).toEqual([10, null]);
         expect(ruleCondition({ operator: 'BETWEEN', value: ['', ''] }, 'age', 'number', formatter('age'), false)).toBeNull();
         expect(ruleCondition({ operator: 'IS_BLANK' }, 'age', 'number', formatter('age'), false)).toEqual({
             field: 'age',
             operator: 'IS_BLANK'
         });
-        expect(ruleCondition({ operator: 'EQUAL', value: 'a' }, 'name', 'text', formatter('name'), true)?.caseSensitive).toBe(
-            true
-        );
+        expect(
+            (ruleCondition({ operator: 'EQUAL', value: 'a' }, 'name', 'text', formatter('name'), true) as FilterCondition | null)
+                ?.caseSensitive
+        ).toBe(true);
     });
 
     it('expect the operators of a type without IN and NOT_IN', () => {
@@ -652,7 +685,7 @@ describe('colour rules - what a rule takes (TypeError)', () => {
         );
         expect(check(['red'])).toThrow(/rules\[0\] is "red", it is a rule/);
         expect(check([{ operator: 'EQUAL', value: '1', colour: 'red' }])).toThrow(
-            /rules\[0\] has 'colour', a rule has operator, value, conditions, combine, expression, color, background, bold/
+            /rules\[0\] has 'colour', a rule has operator, value, datePreset, week, conditions, combine, expression, color, background, bold/
         );
         expect(check([])).not.toThrow();
     });

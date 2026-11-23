@@ -854,7 +854,8 @@ export class GridInterface<T> {
     /**
      * Computes the quick date filters of the header filters from today again (`HeaderFilter.datePreset`:
      * Today, This week ... picked in a date column's filter menu) and filters the rows again when their
-     * days changed - the day changed since they filtered. Nothing when none changed.
+     * days changed - the day changed since they filtered. Nothing when none changed. On a new day the cells
+     * of a column with a colour rule on a quick date (`ColorRule.datePreset`) are rendered again too.
      *
      * The grid calls it when the window gets the focus back and when the page is shown again: the user
      * back the next morning sees today's rows. A grid that is looked at over midnight without either - a
@@ -876,6 +877,14 @@ export class GridInterface<T> {
      * ```
      */
     public refreshDatePresets() {
+        // colour rules with a quick date: their days are today's when the cells are rendered - again, a new day
+        const day = new Date().toDateString();
+        if (day !== this.rulesDay) {
+            this.rulesDay = day;
+            if (this.hasDatePresetRules()) {
+                this.refresh();
+            }
+        }
         const fields = Object.keys(this.headerFilters).filter((field) => this.headerFilters[field].datePreset);
         if (!fields.length) {
             return;
@@ -886,6 +895,16 @@ export class GridInterface<T> {
         if (fields.some((field) => !sameConditions(columnConditions(before, field), columnConditions(after, field)))) {
             datasource.filter(after);
         }
+    }
+
+    /** the day the colour rules were last rendered for, see refreshDatePresets(): a new day renders them again */
+    private rulesDay = new Date().toDateString();
+
+    /** true when a column has a colour rule with a quick date (`datePreset`), its own or in a condition */
+    private hasDatePresetRules(): boolean {
+        return Object.values(this.gridConfig.columns).some((column) =>
+            column?.format?.rules?.some((rule) => rule.datePreset || rule.conditions?.some((condition) => condition.datePreset))
+        );
     }
 
     /**
