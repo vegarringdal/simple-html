@@ -4788,6 +4788,35 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 
 Checked against the code on 2026-11-21: what was fixed is in *Candidates checked (2026-11-21)* above.
 
+### Questions for the user (2026-11-23)
+
+* **The start page of the docs site**: the Feature overview (`#guide/features`) is the start page now, it was
+  Getting started (`samples/demo/index.ts`, `fromHash()`). Keep it?
+* **Read only of the developer**: in the grid config dialog the user can uncheck *Read only* of a column the
+  config has as `readonly: true` (`ColumnFormat.readonly: false` wins over `ColumnConfig.readonly`). Lock the
+  developer's `readonly: true` against that, as `GridConfig.edit` is locked (not in the state)?
+* **The totals row bold**: the values of a group row are in the weight of the cells now, the totals row keeps
+  its bold, as the totals of a spreadsheet. Keep that, or the cells' weight there too?
+* **The amber of the traffic lights** (icon sets, `--simple-html-grid-icon-amber-color`): `#92400e` in light
+  mode looks brown beside the red - it is that dark to keep 3:1 on selected rows and the palette's
+  backgrounds. An outlined icon would allow a brighter fill: worth it?
+* **The publish workflows on master**: copy `.github/workflows/release.yml` and `beta.yml` onto master, so
+  GitHub shows their "Run workflow" buttons? (Nothing is pushed to master without asking.)
+* **actions/checkout and actions/setup-node v4 → v7**: the Node 20 deprecation warning of the runs - bump
+  them?
+* **The old worktrees**: about 35 merged worktrees in `.claude/worktrees/` - `git worktree remove --force
+  <path>` for each, by the user (removal commands are blocked for Claude)
+
+### On hold
+
+* **Validation rules in the grid config dialog** (required, min / max, length, a pattern, a formula of the
+  safe expression language): the user - "kinda like color expressions ... lets put this on hold for now"
+
+### Not wanted
+
+* **A server-side row model** (rows loaded page by page from a backend, filtered and sorted there): the user
+  does not want it - `toSqlWhere()` stays a helper for the user's own backend
+
 ### Bugs
 
 * **The row numbers and Cmd**: Ctrl+click toggles a row, Cmd+click does not (`highlightRow` reads
