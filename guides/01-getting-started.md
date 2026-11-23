@@ -198,6 +198,8 @@ element is put back.
 
 ## Where to go next
 
+- [Feature overview](00-features.md) - everything the grid can do, each feature linked to its guide and a
+  sample
 - [Grid config](02-grid-config.md) - columns, layout, every option, the hooks and saving the config
 - [State](03-state.md) - save and restore what the user changed: sorting, filters, column order
 - [Datasource](04-datasource.md) - data in and out, keys, fields, selection

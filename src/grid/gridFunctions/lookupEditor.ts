@@ -573,9 +573,9 @@ function openGrid(
  * The config of a dropdown grid made for a lookup: its `config`, or one column of the label (the value
  * and the label when they differ) - with the options of a picker for what it leaves out: no grouping
  * panel, no footer, no column numbers, no row state, no operator indicators (`filterOperatorIndicator`,
- * a picker has no menus), no settings button (`settingsButton`), and the header filters of its text columns search
- * anywhere in the text (CONTAINS, when the column offers it). A number column keeps its default, it has
- * no CONTAINS
+ * a picker has no menus), no settings button (`settingsButton`), no keyboard shortcuts help (`shortcutHelp`),
+ * and the header filters of its text columns search anywhere in the text (CONTAINS, when the column offers
+ * it). A number column keeps its default, it has no CONTAINS
  */
 function dropdownConfig(lookup: RegisteredLookup): GridConfig {
     const given: Partial<GridConfig> = lookup.config ?? {};
@@ -606,6 +606,8 @@ function dropdownConfig(lookup: RegisteredLookup): GridConfig {
         // no menus in a picker (see the contextmenu below): no operator choice either, and no settings
         filterOperatorIndicator: false,
         settingsButton: false,
+        // the help of the keys is the grid's the cell is in
+        shortcutHelp: false,
         ...given,
         columns,
         layout

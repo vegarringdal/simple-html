@@ -18,6 +18,7 @@ import { rebuildTopPanel } from './gridFunctions/rebuildTopPanel';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
 import { cancelRowsRender } from './gridFunctions/renderChangedRows';
 import { closeFilterEditor } from './gridFunctions/renderFilterEditor';
+import { closeShortcutHelp } from './gridFunctions/shortcutHelp';
 import type { MenuTree } from './gridFunctions/showMenu';
 import { closeTextEditor, type TextEditor } from './gridFunctions/textEditor';
 import { hideTooltip } from './gridFunctions/tooltip';
@@ -97,6 +98,8 @@ export class Grid {
     public filterEditor?: HTMLDialogElement | null;
     // the grid config dialog, modal too: see columnSettings.ts. Null when it is closed
     public columnSettings?: HTMLDialogElement | null;
+    // the keyboard shortcuts help, modal too: see shortcutHelp.ts. Null when it is closed
+    public shortcutHelp?: HTMLDialogElement | null;
     // the detail form, a panel at the right of the rows: see detailForm.ts. Made by createDom
     public detailForm: HTMLElement | null = null;
     // the column chooser, a popover that stays open while columns are dragged from it
@@ -232,6 +235,7 @@ export class Grid {
         removeContextMenu(this);
         closeFilterEditor(this);
         closeColumnSettings(this);
+        closeShortcutHelp(this);
         this.columnChooserMenu?.remove();
         this.columnChooserMenu = null;
         // shown for a cell of this grid maybe: it is not in the element either

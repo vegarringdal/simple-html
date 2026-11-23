@@ -4125,6 +4125,233 @@ rebuildHeaderColumns for the middle section too (scrollHandlers.test.ts has it).
 * browser: the shared sidebar-toggle-check.js expects about 30 rows (28 to 31) where it expected more than 30
   (backup `.before-full-30`): 15/15; full-grid 11/11, sample-height 5/5, detail-form 91/91, color-rules 90/90
 
+### The multiline editor: a ✕ (user request)
+
+* the user, a phone screenshot of the editor with "Ctrl+Enter to save, Esc to cancel" under it: "multiline box,
+  add also a close x bottom right in footer panel, useful for mouse/touch" - a finger has neither key
+* textEditor.ts: the hint is in a footer row with a ✕ button at its right (`.simple-html-grid-text-editor-close`,
+  20px, the touch row height on a finger): it saves and closes as a click beside the editor does, the focus
+  back in the cell - its mousedown is prevented so the focus stays in the text (Safari does not focus a
+  clicked button, and a phone's keyboard does not flicker). A readonly editor's ✕ is "Close". The editor
+  attaches the tooltips (the ✕'s), hides one on close. Texts `cell.multiline.close`, `.closeReadonly`
+* multiline.test.ts +2; guide 05 (the editor's table), 12
+* browser: new `text-editor-close-check.js` 10/10 (a phone: tap to open, the 28px ✕ at the bottom right, a
+  tap saves and closes; wide dark with the mouse: saved, the focus back in the cell); multiline-lines,
+  keyboard, custom-cells as before
+### Docs site: a feature overview (user request)
+
+* the user: "Maybe docs should have a feature table / tables / list?". What the grid can do was spread over 22
+  guides and 35 samples; nothing said it at a glance - for a developer weighing the grid, or a power user
+* new `guides/00-features.md`, *Feature overview*: 19 tables by area (data and setup, columns and layout,
+  display and formatting, filtering, sorting and grouping, selection and clipboard, editing, find, detail form,
+  grid config dialog, menus, export, state, live data, theming, texts and translation, accessibility, touch,
+  SQL helpers), each `Feature | What it does | See`: one plain line per feature, and links to the guide's
+  heading and the sample (every sample is linked). Then the keyboard shortcuts used most, `Keys | What they
+  do`, linked to the full list in guide 14. Only what is there: each line checked against the guides and the
+  samples (a row menu filter has Replace / Add, not "leave out"; CSV separators `,` `;` tab). Calculated
+  columns are left out (built in parallel, the user adds them)
+* a guide, so `check:docs` checks its links and headings and the site renders it as the others; in the
+  sidebar a section of its own, **Features**, between Status and Developer Guide (index.ts: the guide
+  `features` goes there, the rest to the Developer Guide). Being the first guide it is the **start page** of
+  the site (no hash) - was Getting started. Getting started's *Where to go next* links it
+* index.css: `.doc table` is `display: block; overflow-x: auto` - a table wider than the page scrolls in its own
+  box instead of the whole article sideways (a phone, the option tables of guide 02). The overview's tables
+  (`.doc[data-guide='features']`, the attribute set by renderGuidePage) are as wide as the page with the same
+  fixed columns, so the 19 read as one list; narrower columns under 600px so they fit a 390px phone
+* README: a *Features* section, 15 highlights, linking the overview on the site and the file
+* tests: site.test.ts expects the sections Status, Features, Developer Guide ...; the start page
+  `#guide/features`; new test of the overview (its own section, the tables and their columns, every link to a
+  page of the site, more than 25 samples linked). 3851 tests, 164 files
+* browser (Chromium 1148, port 8095): new `features-page-check.js` 21/21 - the sidebar, the start page, the
+  same column widths in every table, light and dark colours, all 143 links (108 guide headings found and
+  scrolled to, 35 samples open with a grid), a phone: no sideways scroll, no text out of a cell, guide 02's
+  tables scroll in their own box. Screenshots looked at (desktop and phone, light and dark). Shared:
+  sidebar-toggle 15/15, sample-height 5/5; full-grid 10/11 - it opened `#guide/02-grid-config`, no route,
+  which showed the start page; the copy in this worktree's `.claude/browser-checks/scripts/` opens
+  `#guide/grid-config` (backup `.before-features`): 11/11
+* not done, candidates: a check that every sample is in the overview (it would fail the merge of a new
+  sample until its line is written); the User Guide page is still the TODO
+### Keyboard shortcuts help (user request)
+
+* the user: a help overlay of the grid's keyboard shortcuts, opened from the keyboard (`?` when not typing,
+  maybe F1 or Ctrl+/) and from the UI
+* the keys: `?` where the key types nothing - a readonly cell, a checkbox, a column header, a row number, a
+  button of the grid - and Ctrl+/ (Cmd+/) anywhere in the grid, also while typing in a cell, a header
+  filter or the find bar (as Google Sheets and Docs). One keydown listener on the grid element, next to
+  Find's (createDom): it leaves a key that is used already (a character typed in a lookup cell opens its
+  list, in a custom cell its editor - canceled) and the keys of an IME. "Types nothing": not an input or a
+  textarea that is not readonly, not contenteditable; the element is the first of the event's path (a
+  shadow root). F1 was left out: Chrome's help on Windows, and nothing it adds to Ctrl+/
+* the UI: *Keyboard shortcuts…* in the header menu after *Column settings…* (`header.shortcuts`, its hint
+  Ctrl+/ - ⌘/ on a Mac). Not in the footer (no more stops of Tab there, another task works on it) and not
+  in the grid config dialog (a dialog from a dialog)
+* `GridConfig.shortcutHelp` (default `true`): `false` turns the keys and the menu entry off;
+  `gridInterface.openShortcutHelp()` opens it from code always. A lookup's dropdown grid has it `false`
+* the dialog (shortcutHelp.ts): a modal `<dialog>` of the filter editor's kind (dialogFrame.ts: moved,
+  resized, Esc, the focus back), a search (the column chooser's look), a hint (the arrows are the caret's,
+  Alt moves between the cells), a table per group - its caption the title, the keys a row header of
+  `<kbd>`s, what they do a cell. Opened by a key the focus is in the search; by a click on the dialog (a
+  phone's keyboard). The search keeps the entries whose text, keys or group have the text, else a status
+  says none does
+* the list (shortcutList.ts): 9 groups, 52 entries - moving around, selecting cells, in a cell, changing
+  values, copy and paste, find, filters / headers / groups, menus, dialogs and this help. Each key was
+  checked against its handler (cellRowKeyNavigation, jumpKeys, rangeSelection, renderRowCell, customCell,
+  textEditor, lookupEditor, undoRedoKey, fillDown, rangeClipboard, deleteRows, columnNumbers, findBar,
+  renderHeaderFilter, cellFilterKeyNavigation, headerLabelKeydown, renderRowGroup, showMenu,
+  addMenuListeners, gridConfigTabs, detailFormSettings, renderFilterEditor). Not listed because the grid
+  has no such key: Ctrl+A, Ctrl+X (the input's own cut), Shift+Space / Ctrl+Space. An entry can be left
+  out where its keys do nothing: `editable` (a readonly grid), `operatorIndicator`, `shortcutHelp`,
+  `notMac` (Alt+C)
+* platform: on a Mac ⌘ ⌥ ⇧, in a Mac's order and without the `+` (⇧⌘Z) - keyText.ts's `.mac` texts.
+  The key names are texts (`shortcuts.key.*`, Strg / Entf for a translation); a letter, F2 and the arrows
+  are shown as they are
+* one list for the dialog and the docs: guide 14's *Every key of the help* is made from it
+  (`src/grid/__tests__/shortcutDocs.ts` prints it), a test checks the guide has it as it is, and that every
+  key of the list is in the guide's keyboard section (where each key is described, and tested)
+* texts: 90 `shortcuts.*` and `header.shortcuts(.hint, .hint.mac)` - guide 12 (*Keyboard shortcuts help*,
+  the `.mac` list), Norwegian in the translation sample. css: the dialog and the key caps with the existing
+  variables (no theme change), square, a phone's width
+* docs: guide 14 (*The keyboard shortcuts help*, `?` / Ctrl+/ in the cell table, the help in *The rest* and
+  in *What a screen reader gets*), 02 (options), 10 (`header.shortcuts`), 12; JSDoc of `shortcutHelp`,
+  `openShortcutHelp()`, MENU_IDS.header
+* tests: new shortcutHelp.test.ts (27: the keys and where they type, Ctrl+/ / Cmd+/, a lookup cell, Alt and
+  AltGr, a used key, `shortcutHelp: false` and updateConfig; the dialog, a readonly grid,
+  filterOperatorIndicator, the focus, the search, a Mac, translated key names, closing, one dialog, a menu
+  closed, the grid leaving the page, before the grid is on the page; the header menu entry; the list's
+  texts, its keys, a Mac's order, the guide's table, the guide's keyboard section); texts.test (the help
+  shown, on a Mac too - a key cap that is a letter or F2 is no text), gridMenus, lookups, configJson.
+  3877 tests, 165 files
+* **found on the way, fixed - the ✕ of the dialogs on a touch screen**: the resize handle of the top right
+  corner is 20px there (`pointer: coarse`) and covered the middle of the ✕ - a tap resized the dialog
+  instead of closing it, in the filter editor and the grid config dialog too. The ✕ is over the handles
+  now (`z-index: 4`, grid.css)
+* browser (Chromium 1148, port 8096): new `shortcut-help-check.js` 41/41 - `?` typed in an editable cell,
+  a header filter and the find bar is typed; Ctrl+/ from a cell opens it, the focus in the search, Esc
+  back to the cell; a readonly grid: `?` on a cell and on a column header opens it (the `?` not typed in
+  the search), no *Changing values*; the search (`undo`, `zzz` and its status); the header menu entry
+  (the focus on the dialog), the ✕; `shortcutHelp: false`; light, dark, TreDeSpace light and dark - in the
+  window, square, the text 9.7:1 and more, the keys 7:1 and more, their frame 3:1; a Mac user agent (⌘Y /
+  ⇧⌘Z, ⌥⇧Home, no Alt+C, Cmd+/, the menu's ⌘/); a phone (390px wide, the list scrolls, nothing sideways, a
+  tap on the ✕ closes it). The screenshots looked at. Shared checks: keyboard 53/53, find 68/68, touch
+  61/61, full-grid 11/11. The new script is in this worktree's `.claude/browser-checks/scripts/`
+* not done, candidates: F1 (Chrome's help on Windows); a "?" button of its own somewhere (the footer, the
+  grid config dialog); a key that leaves out the entries of a cell the grid does not have (no lookup
+  column: no lookup keys) - the list is per grid config, not per column; Shift+F10 is shown on a Mac too,
+  where browsers may send no context menu for it (not tried on a Mac)
+### Calculated columns, colour rules on several fields / formulas / more colours (user request)
+
+The user: "be able to add dynamic column in column config would also be nice, very useful when we get to
+conditional formatting with background color etc", for the colour rules "maybe if based on multiple column
+values etc", "color rules we need to be able to set more colours, maybe color picker? also expression based on
+other columns values etc", and "important that expressions is injection proof, so no one can hack / script
+injection".
+
+* **The formula language** (new `src/grid/formula.ts`): a tokenizer, a recursive descent parser into a fixed
+  set of node kinds (number, text, boolean, field, negate, not, binary, call), a type check, and an
+  evaluator that switches on the kind - no `eval`, `new Function`, timers, regexes / css / html from input.
+  Grammar: `OR` < `AND` < `NOT` < one comparison (`= <> < <= > >=`, no `a < b < c`) < `&` < `+ -` < `* /` <
+  unary `- +` < primary (number with `.`, text in `"` / `'` with the quote doubled, `TRUE` / `FALSE`,
+  `{field}`, `NAME(args)`, brackets). Keywords and functions in any case. Functions (a `Map`, so
+  `constructor` / `toString` are none): IF (lazy), ROUND (halves away from 0, n -10..10), ABS, MIN / MAX
+  (numbers or dates, blanks skipped), TODAY, DAYS (calendar days, DST-safe), YEAR, MONTH, CONCAT, COALESCE,
+  ISBLANK. Types number / text / date (a datetime is a date) / boolean, checked before it runs: field types
+  from the datasource (an unlisted field is text). Blanks: null in arithmetic and functions -> null, a
+  comparison false (`=` true for two blanks), AND / OR / NOT / IF take blank as false, `&` takes ''.
+  Texts compare without case (`localeCompare`, sensitivity accent), dates on the day; a computed number keeps
+  15 significant digits (`0.1 + 0.2` is 0.3). A row where it can not be computed (divide by 0, a value not of
+  its field's type, Infinity, a text over 10 000) gives a problem of the row -> a blank cell, never a throw.
+  Limits: 1000 characters, 500 parts, 32 levels. Every problem has a text id
+  (`columnSettings.formula.problem.*`) with its position / part / types
+* **The values** (new `src/datasource/calculatedField.ts`, entityHandler.ts, dataContainer.ts, dataSource.ts):
+  chosen over storing values on the rows - the container keeps a Map of calculated fields, the row proxy's get
+  trap answers a read of one with `value(row)`, the set trap ignores it. So it is never an edit (not dirty, not
+  in getChanges / JSON / Object.keys, not sent), always current after edits, undo / redo, upsert, live data,
+  resetData - nothing to invalidate - and every reader (filter, sort, group, aggregate, cells, copy, CSV /
+  Excel, Find, detail form) reads it as a field. `getField()` / `getFormatter()` / `__getFieldConfig()` know
+  its type and label. The kept aggregates: a calculated field's change count moves with the fields it uses
+  (transitively) and when it is set, a TODAY() one also when the day changes; `rows-changed` names it with
+  the field. A listed field name or `__` is refused (TypeError); a datasource on the container can not list
+  a calculated name. The fast path of the get trap stays a `size` check when there are none
+* **The grid** (new `src/grid/calculatedColumns.ts`, gridInterface.ts, gridConfig.ts, new
+  gridFunctions/calculatedState.ts): `CalculatedColumn { formula, label?, type? }`, `CalculatedType`;
+  `GridConfig.calculatedColumns`, `GridState.calculatedColumns` (getState / setState / resetState /
+  initialState / updateConfig). Compiled together: a column can read another, a cycle (direct or long) is a
+  problem. Registered on the datasource before the formats / aggregates / filter options are checked (the
+  constructor, updateConfig, applyState), taken back when one of those throws, and on destroy() (only the
+  ones this grid set). Names: `^[A-Za-z][A-Za-z0-9_]{0,63}$`, not an Object.prototype name, not a listed
+  field or an own field of a row; 50 at most. A removed one leaves the layout, sort, grouping, filter
+  (`filterWithout`), header filters, detail form, its format and aggregates; the column chooser hides it
+  (`__isGoneCalculated`). New ones get a `columns` entry; the datasource parts are applied again when they
+  change. Read only in `__isCellReadonly` (one early return)
+* **Colour rules** (colorRules.ts): `ColorRule.operator` optional; three kinds - Value (as before, saved
+  states unchanged), Conditions (`conditions: RuleCondition[]` of `{ field, operator, value? }`, `combine:
+  'AND' | 'OR'`, each tested with the context of its field: type, formatter, lookup label, case), Formula
+  (`expression`, must be boolean, compiled once per grid and cached until the fields change -
+  `__ruleFormulaMatches`). Checks: one kind, conditions 1..20 on known fields (`RuleFieldOf`), operator of
+  the field's type, the formula's problem, `combine` only with conditions. A rule colouring the whole row:
+  not done (see below)
+* **More colours, custom colours** (grid.css, theme-tredespace.css by a forked agent; ruleColors.ts): 14
+  palette colours (amber, lime, teal, cyan, indigo, pink, brown new, the 7 old unchanged, every contrast pair
+  of the theme tests kept in both themes); `RuleColor = PaletteColor | '#rrggbb'` (strict regex). A custom
+  colour is a custom property set with `style.setProperty()` (showCellColor, `styleMap` in the detail form and
+  the preview): `--simple-html-grid-rule-bg`, `--simple-html-grid-rule-text-light` / `-dark`, classes
+  `-text-custom` / `-bg-custom`. A custom background without a text colour gets black or white (higher
+  contrast); a custom text colour is as picked in light and lightened (HSL) in dark until 4.5:1 on #5a6370
+  (the lightest dark row); on a custom background as picked. The dialog warns under 4.5:1 (light rows or
+  the custom background). theme.test.ts knows the three cell properties
+* **The dialog** (columnSettings.ts, columnSettingsRules.ts): *Add calculated column* under the list (calc_n,
+  *Calculated n*, the focus in its formula); a calculated column's section in place of the label: field name
+  (while new: rename, problems name / taken), label (drops a format label), formula with `{ }` (the
+  formula fields), *Gives: Type*, the value in the preview row, its problems at once (Error badge, Apply
+  held; a row problem is said, not held), *Remove calculated column*, *Apply first* while its type is not
+  applied (its type-specific settings wait - the format / filter / rule helpers read the datasource's type).
+  Apply: `setState({ formats, calculatedColumns, layout })` - a new one at the end of center (100px); the
+  removed ones' formats and detail form fields dropped; Reset column / Reset all include them. Rules: a kind
+  radio group on the rule's first line with Move up / down / Remove; Conditions lines (field picker - the
+  field menu with search -, operator, value, ✕; a field of another type takes its default operator),
+  Add condition, All / Any picker over two or more; Formula input with `{ }` and the result in the preview row;
+  the colour picker after the swatches (a `+` box until picked, the picked frame then). Problems use the
+  draft's calculated columns (a rule on a removed one is an Error)
+* **Security**: the hostile list - no code execution (source scanned in the test), Map function lookup, no
+  member access, fields only known ones and own properties (`readerOf`), `__` refused, limits, no recursion
+  (cycles refused before a row is read), results are data (lit text bindings / `.value`), strict names and
+  colours, a TypeError before anything changes. CSV: calculated values pass `escapeFormulas` (on by default)
+  as any text; Excel writes inline strings only; the clipboard does not escape (as documented before)
+* `toSqlWhere` unchanged: a condition on a calculated column throws its existing TypeError (`filter.children[0].field
+  "total" is not one of the columns`); guide 22 *Calculated columns* says so, with a generated column / view
+  and a `withoutFields` helper for a browser-only filter
+* texts: 75 new (`columnSettings.calculated.*`, `columnSettings.formula.*`, the kinds / conditions / combine /
+  formula / custom / contrast of the rules, 7 colour names, `columnSettings.badge.calculated`), guide 12's
+  table, Norwegian in the translation sample. The texts walk shows them all (a calculated column with every
+  problem, the kinds of a rule); its checker leaves the formula language's words and the walk's field names
+  alone; its timeout 90s (it ran near 30s before)
+* docs: new guide 23 *Calculated columns* (config, the formulas, functions, types, blanks, comparisons,
+  how the values are provided, state, the dialog, rules on several fields, SQL, Security); 02 (the label
+  order, *Calculated columns*), 03 (*Calculated columns in the state*), 08 (the dialog's list, *Colour rules*:
+  kinds, parts, conditions, palette of 14, custom colours, checks), 13 (14 colours by the fork; custom
+  colours: the properties, the classes, the picker), 22. JSDoc of every new public type; index.ts exports
+  `CalculatedColumn`, `CalculatedType`, `RuleColor`, `RuleCondition`; typings consumer
+* sample: new *Calculated columns* (Formatting): Total, Days late, a rule on two fields, a formula rule
+  with a custom colour, totals; not in the full grid sample (its description would grow)
+* tests: formula (22), formulaHostile (13: the source, eval / Function spies, prototype names, payloads and
+  a seeded fuzz of 3000 formulas with a row that records its reads, markup in a cell, hostile names,
+  colours, cycles), calculatedFields (12, datasource), calculatedColumns (21, grid), colorRuleKinds (16),
+  columnSettingsCalculated (12, dialog); updated colorRules, columnSettingsRules, gridState, texts walk,
+  theme tests. 3881 tests, 169 files
+* browser (Chromium 1148, port 8093): new `calculated-column-check.js` 61/61 in four looks + a phone (the
+  sample's values, sort by the label, the header filter, an edit, the multi-field and the formula rule with
+  its custom colour readable, the dialog: three columns - `{ }`, IF, DAYS(TODAY()) - an invalid one, a
+  division by 0, Apply, a Conditions rule and a Formula rule with the colour picker made in the dialog, the
+  state JSON round trip, no rounded corners). Shared: column-settings 144/144, column-settings-edit 9/9,
+  full-grid 11/11, detail-form 91/91, filter-as-shown 61/61, find-case-sql 62/62; color-rules 98/98 with a
+  copy in this worktree (the Tab order: the rule's buttons are on its first line now, the colour picker is a
+  stop after the swatches); column-settings-more 133/149 - its failures test the row placeholder
+  (`placeholderRowLabel`) of the parallel placeholder work, its `.before-row-placeholder` copy 141/141
+* not done, candidates: a rule that colours the whole row (a row class from the rules: every cell's render
+  would test every column's row rules - kept out, the `rowClass` hook does it in code); the type-specific
+  settings of a new calculated column before Apply (the format / filter helpers read the datasource);
+  renaming an applied calculated column; more functions (DAY, WEEKDAY, text functions, a date + days);
+  a calculated value in a lookup's label; a backend computing it (the SQL guide shows a generated column)
 ### Quick dates: Today, This week, Last month ... one click on a date column (user request)
 
 The user: one click for the date ranges filtered on all day in an ERP - Today, Yesterday, This week, Last

@@ -4,7 +4,7 @@ import '../../src/date.css';
 // the second theme of the grid, on with data-grid-theme="tredespace" on the body (theme.ts)
 import '../../src/theme-tredespace.css';
 import api from 'docs:api';
-import guides from 'docs:guides';
+import guides, { type Guide } from 'docs:guides';
 import status from 'docs:status';
 import {
     buildLine,
@@ -25,7 +25,8 @@ initTheme();
  * The docs site: a sidebar with the guides, the samples and the API, and the page picked in it.
  * Every page has its own link (hash routing, so it works as static files on github pages):
  * - #status/work-in-progress   what is still open, from V6_PLAN.md and IMPORVEMENT.md (status.js)
- * - #guide/<id>    a guide, guides/NN-<id>.md, #guide/<id>/<section> goes to one of its headings
+ * - #guide/<id>    a guide, guides/NN-<id>.md, #guide/<id>/<section> goes to one of its headings. The
+ *                  feature overview, #guide/features, is the start page
  * - #sample/<id>   a sample, samples/demo/samples
  * - #api/<name>    an export of the library, #api/<name>.<member> goes to one of its members
  * The links of the samples app before it was the docs site, #<sample id>, still work.
@@ -100,7 +101,7 @@ interface Page {
 const pages = new Map<string, Page>();
 
 /**
- * Developer Guide, User Guide, Samples, API: a part of the sidebar that folds, with a link to each page in it. The items of
+ * Features, Developer Guide, User Guide, Samples, API: a part of the sidebar that folds, with a link to each page in it. The items of
  * a group (the samples' "Getting started", "Datasource" ...) are a part of their own in it that folds
  * too. Everything starts folded; the parts around the page shown unfold (see show)
  */
@@ -144,16 +145,24 @@ function navSection(
 navSection('Status', [
     { route: 'status/work-in-progress', label: 'Work in progress', render: (main) => renderStatusPage(main, status) }
 ]);
+
+// the link and the page of a guide
+const guideItem = (guide: Guide) => ({
+    route: `guide/${guide.id}`,
+    label: guide.title,
+    render: (main: HTMLElement) => renderGuidePage(main, guide)
+});
+// the feature overview, guides/00-features.md: a guide, in a section of its own above the others. The first
+// guide, so it is the start page
+const FEATURES_GUIDE = 'features';
+const featureGuides = guides.filter((guide) => guide.id === FEATURES_GUIDE);
+const developerGuides = guides.filter((guide) => guide.id !== FEATURES_GUIDE);
+if (featureGuides.length) {
+    navSection('Features', featureGuides.map(guideItem));
+}
 // the guides for developers; the user guide for the people using a grid comes when the features are done
-if (guides.length) {
-    navSection(
-        'Developer Guide',
-        guides.map((guide) => ({
-            route: `guide/${guide.id}`,
-            label: guide.title,
-            render: (main) => renderGuidePage(main, guide)
-        }))
-    );
+if (developerGuides.length) {
+    navSection('Developer Guide', developerGuides.map(guideItem));
 }
 navSection('User Guide', [{ route: 'user-guide/todo', label: 'TODO', render: (main) => renderUserGuidePage(main) }]);
 navSection(

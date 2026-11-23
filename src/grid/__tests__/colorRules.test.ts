@@ -14,6 +14,7 @@ import {
     colorRuleClasses,
     colorRuleOf,
     colorRuleProblem,
+    PALETTE_COLORS,
     ruleCondition,
     ruleOperatorsFor
 } from '../colorRules';
@@ -651,7 +652,7 @@ describe('colour rules - what a rule takes (TypeError)', () => {
         );
         expect(check(['red'])).toThrow(/rules\[0\] is "red", it is a rule/);
         expect(check([{ operator: 'EQUAL', value: '1', colour: 'red' }])).toThrow(
-            /rules\[0\] has 'colour', a rule has operator, value, color, background, bold/
+            /rules\[0\] has 'colour', a rule has operator, value, conditions, combine, expression, color, background, bold/
         );
         expect(check([])).not.toThrow();
     });
@@ -686,11 +687,24 @@ describe('colour rules - what a rule takes (TypeError)', () => {
         expect(check([{ operator: 'BETWEEN', value: ['', '5'], color: 'red' }])).not.toThrow();
     });
 
-    it('expect a colour of the palette - no hex - bold true or false, and something to colour', () => {
-        expect(check([{ operator: 'IS_BLANK', color: '#ff0000' }])).toThrow(
-            /rules\[0\]\.color is "#ff0000", it is a colour of the palette: 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'grey' - no hex colours/
+    it('expect a colour of the palette or #rrggbb - nothing else reaches css - bold true or false, and something to colour', () => {
+        expect(check([{ operator: 'IS_BLANK', color: '#ff0000', background: '#00FF7f' }])).not.toThrow();
+        expect(check([{ operator: 'IS_BLANK', color: 'pink', background: 'teal' }])).not.toThrow();
+        expect(check([{ operator: 'IS_BLANK', color: '#ff00' }])).toThrow(
+            /rules\[0\]\.color is "#ff00", it is a colour of the palette \('red', 'orange', 'amber', 'yellow', 'lime', 'green', 'teal', 'cyan', 'blue', 'indigo', 'purple', 'pink', 'brown', 'grey'\) or a custom colour '#rrggbb'/
         );
-        expect(check([{ operator: 'IS_BLANK', background: 'pink' }])).toThrow(/rules\[0\]\.background is "pink"/);
+        for (const hostile of [
+            'magenta',
+            '#gg0000',
+            '#ff0000ff',
+            'red;background:url(x)',
+            '#ff0000;',
+            ' #ff0000',
+            'var(--x)',
+            'url(javascript:alert(1))'
+        ]) {
+            expect(check([{ operator: 'IS_BLANK', background: hostile }]), hostile).toThrow(/rules\[0\]\.background is/);
+        }
         expect(check([{ operator: 'IS_BLANK', bold: 'yes' }])).toThrow(/rules\[0\]\.bold is "yes", it is true or false/);
         expect(check([{ operator: 'IS_BLANK' }])).toThrow(
             /rules\[0\] colours nothing: give it a color, a background or bold: true/
@@ -709,8 +723,8 @@ describe('colour rules - what a rule takes (TypeError)', () => {
         ).toThrow(/setState: formats\.age\.rules\[0\]\.operator is "CONTAINS"/);
         expect(gridInterface.getState().formats).toEqual(before);
         await expect(
-            mountGrid(config({ age: { rules: [{ operator: 'IS_BLANK', color: 'pink' as never }] } }), rows(), fields())
-        ).rejects.toThrow(/GridConfig: columns\.age\.format\.rules\[0\]\.color is "pink"/);
+            mountGrid(config({ age: { rules: [{ operator: 'IS_BLANK', color: 'magenta' as never }] } }), rows(), fields())
+        ).rejects.toThrow(/GridConfig: columns\.age\.format\.rules\[0\]\.color is "magenta"/);
         // a lookup column takes rules
         expect(() =>
             gridInterface.setState({ formats: { code: { rules: [{ operator: 'EQUAL', value: 'one', color: 'red' }] } } })
@@ -729,7 +743,7 @@ describe('colour rules - grid.css', () => {
     const WINS = ':not(.simple-html-cell-error, .simple-html-cell-find-match)';
 
     it("expect each colour's text and background from the palette's variables - not on an error or a match of Find", () => {
-        for (const colour of ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'grey']) {
+        for (const colour of PALETTE_COLORS) {
             expect(rule(`.simple-html-grid .simple-html-grid-cell-text-${colour}${WINS}`)).toEqual([
                 ['color', `var(--simple-html-grid-palette-${colour}-color)`]
             ]);
@@ -737,6 +751,13 @@ describe('colour rules - grid.css', () => {
                 ['background-color', `var(--simple-html-grid-palette-${colour}-bg-color)`]
             ]);
         }
+        // a custom colour: the custom properties the grid sets on the cell, the text in light and dark
+        expect(rule(`.simple-html-grid .simple-html-grid-cell-text-custom${WINS}`)).toEqual([
+            ['color', 'light-dark(var(--simple-html-grid-rule-text-light), var(--simple-html-grid-rule-text-dark))']
+        ]);
+        expect(rule(`.simple-html-grid .simple-html-grid-cell-bg-custom${WINS}`)).toEqual([
+            ['background-color', 'var(--simple-html-grid-rule-bg)']
+        ]);
     });
 
     it("expect the text of a cell - its input, lines, custom cell, link - to take the cell's colour, bold to be the headers' weight", () => {

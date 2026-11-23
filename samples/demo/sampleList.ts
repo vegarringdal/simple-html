@@ -3,6 +3,8 @@ import { aggregates } from './samples/aggregates';
 import aggregatesSource from './samples/aggregates.ts?raw';
 import { basicGrid } from './samples/basicGrid';
 import basicGridSource from './samples/basicGrid.ts?raw';
+import { calculatedColumns } from './samples/calculatedColumns';
+import calculatedColumnsSource from './samples/calculatedColumns.ts?raw';
 import { cellStyling } from './samples/cellStyling';
 import cellStylingSource from './samples/cellStyling.ts?raw';
 import { columnLayout } from './samples/columnLayout';
@@ -113,6 +115,7 @@ export const SAMPLES: Sample[] = [
     { ...formatters, source: formattersSource },
     { ...customFormatter, source: customFormatterSource },
     { ...cellStyling, source: cellStylingSource },
+    { ...calculatedColumns, source: calculatedColumnsSource },
     // events
     { ...events, source: eventsSource },
     { ...filterOperatorHeader, source: filterOperatorHeaderSource },

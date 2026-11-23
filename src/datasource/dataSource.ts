@@ -2,6 +2,7 @@ import { Emitter, type EventHandler } from '../emitter';
 import { findText, getText } from '../texts';
 import { AGGREGATE_FUNCTIONS, type AggregateFunction, aggregateRows, groupDataRows, isAggregateFunction } from './aggregate';
 import { assertOptions } from './assertOptions';
+import type { CalculatedField } from './calculatedField';
 import type { Changes } from './changes';
 import { DataContainer } from './dataContainer';
 import type { DatasourceEvents } from './datasourceEvents';
@@ -411,6 +412,18 @@ export class Datasource<T = any> {
      * ```
      */
     public getField(name: string): Field {
+        const calculated = this.__dataContainer.__getCalculatedField(name);
+        if (calculated) {
+            // a calculated column of a grid: its type and label, no rules - it is not edited
+            return {
+                name,
+                type: calculated.type,
+                label: calculated.label,
+                formatter: this.__formatters[calculated.type],
+                validate: NO_RULES,
+                multiline: false
+            };
+        }
         const config = this.__fields.get(name);
         return {
             name,
@@ -446,6 +459,11 @@ export class Datasource<T = any> {
      * ```
      */
     public getFormatter(field: string, type?: FieldType): Formatter {
+        const calculated = this.__dataContainer.__getCalculatedField(field);
+        if (calculated) {
+            // the default formatter of its type
+            return this.__formatters[type ?? calculated.type];
+        }
         const config = this.__fields.get(field);
         const fieldType = config?.type ?? 'text';
         if (type && type !== fieldType) {
@@ -469,7 +487,47 @@ export class Datasource<T = any> {
      * listed. The grid uses it for a label that was really given
      */
     public __getFieldConfig(name: string): FieldConfig | undefined {
+        const calculated = this.__dataContainer.__getCalculatedField(name);
+        return calculated ? { type: calculated.type, label: calculated.label } : this.__fields.get(name);
+    }
+
+    /**
+     * @internal
+     * the field as `fields` of this datasource gave it, undefined when it is not listed there - a
+     * calculated field is not
+     */
+    public __getListedField(name: string): FieldConfig | undefined {
         return this.__fields.get(name);
+    }
+
+    /**
+     * @internal
+     * true when this datasource or another one on its container lists the field in its `fields`: a
+     * calculated field can not have its name
+     */
+    public __isListedField(name: string): boolean {
+        return this.__dataContainer.__isListedField(name);
+    }
+
+    /**
+     * @internal
+     * Sets a calculated field of the rows - a calculated column of the grid - or takes it out (null): a
+     * read of it on a row is its value in the row, computed then, nothing is stored on the row (see
+     * CalculatedField). It is the container's: every datasource on the container has it. `getField()`
+     * gives its type and label. The rows are not filtered or sorted again here, the grid does that
+     * @throws a `TypeError` for a field listed in `fields` here or in another datasource on the container,
+     * and a name that starts with `__`
+     */
+    public __setCalculatedField(name: string, field: CalculatedField | null): void {
+        this.__dataContainer.__setCalculatedField(name, field);
+    }
+
+    /**
+     * @internal
+     * the calculated field of the name (`__setCalculatedField()`), undefined when there is none
+     */
+    public __getCalculatedField(name: string): CalculatedField | undefined {
+        return this.__dataContainer.__getCalculatedField(name);
     }
 
     /**

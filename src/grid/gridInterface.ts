@@ -1,5 +1,6 @@
 import { AGGREGATE_FUNCTIONS, type AggregateFunction, isAggregateFunction } from '../datasource/aggregate';
 import { assertOptions } from '../datasource/assertOptions';
+import type { CalculatedField } from '../datasource/calculatedField';
 import type { Datasource, EntityUnion } from '../datasource/dataSource';
 import type { DatasourceEvents } from '../datasource/datasourceEvents';
 import { type Entity, isGroupRow } from '../datasource/entity';
@@ -8,9 +9,18 @@ import { type FilterExpression, type FilterOperator, operatorsFor, where } from 
 import type { Formatter } from '../datasource/formatter';
 import { Emitter, type EventHandler } from '../emitter';
 import { assertTexts } from '../texts';
+import {
+    assertCalculatedColumns,
+    type CalculatedColumn,
+    calculatedFields,
+    calculatedLabel,
+    compileCalculatedColumns,
+    readerOf
+} from './calculatedColumns';
 import type { CellRange } from './cellRange';
 import { getCellRenderer } from './cellRendererRegistry';
 import { cellFieldText, type FieldText, fieldTextOf, type LinkResult, linkOf, templateFormatter } from './cellTemplate';
+import type { RuleFieldOf } from './colorRules';
 import {
     assertColumnFormat,
     type ColumnFormat,
@@ -23,6 +33,7 @@ import {
 import type { CsvOptions } from './csv';
 import { DATE_PRESETS, type DatePreset, datePresetRange, isDatePreset, takesDatePresets, weekStartOf } from './datePresets';
 import type { FindResult } from './findResult';
+import { compileFormula, type Formula } from './formula';
 import type { Grid } from './grid';
 import type {
     ColumnConfig,
@@ -38,6 +49,7 @@ import type {
 } from './gridConfig';
 import type { GridEvents } from './gridEvents';
 import { aggregateRowHeights, normalizeAggregates } from './gridFunctions/aggregates';
+import { filterWithout, layoutWithout } from './gridFunctions/calculatedState';
 import { assertRanges, layoutKey, type RangeState, rangeState, sameRanges } from './gridFunctions/cellRanges';
 import { headerOperators, isHeaderOperator } from './gridFunctions/columnFilterOptions';
 import { renderColumnNumbers } from './gridFunctions/columnNumbers';
@@ -64,12 +76,14 @@ import { downloadGridExcel, gridExcel } from './gridFunctions/gridExcel';
 import { type LookupColumn, lookupColumnsOf } from './gridFunctions/lookupColumn';
 import { TOOLTIP_LINES } from './gridFunctions/multilineText';
 import { openFilterEditor } from './gridFunctions/openFilterEditor';
+import { prettyPrintString } from './gridFunctions/prettyPrintString';
 import { focusedCell, pointOf, renderRangeClasses } from './gridFunctions/rangeSelection';
 import { rebuildFooter, renderFooter } from './gridFunctions/rebuildFooter';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
 import { requestRowsRender } from './gridFunctions/renderChangedRows';
 import { fitRowLinesOf, layoutColumns, MULTILINE_LINE_HEIGHT, rowHeightOf } from './gridFunctions/rowHeights';
 import { ROW_STATUS_WIDTH } from './gridFunctions/rowStatus';
+import { openShortcutHelp } from './gridFunctions/shortcutHelp';
 import { placeAt, showMenu } from './gridFunctions/showMenu';
 import { closeTextEditor } from './gridFunctions/textEditor';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
@@ -191,6 +205,33 @@ export class GridInterface<T> {
     private sortValues = new Map<string, (value: unknown) => string>();
 
     /**
+     * the calculated columns of the state, by field (GridState.calculatedColumns): the grid's own copy
+     */
+    private calculated: Record<string, CalculatedColumn> = {};
+
+    /** the config's calculated columns: what resetState() goes back to, see GridState.calculatedColumns */
+    private configCalculated: Record<string, CalculatedColumn> = {};
+
+    /**
+     * the calculated fields this interface gave the datasource (__setCalculatedField), by field: kept to
+     * take them back - not what another grid on the same datasource gave it since
+     */
+    private calculatedFieldsSet = new Map<string, CalculatedField>();
+
+    /**
+     * every field that was a calculated column of this grid (the config's too): one that is not anymore
+     * is no field of the rows - its column options stay, the column chooser does not list it
+     */
+    private everCalculated = new Set<string>();
+
+    /**
+     * the formulas of the formula colour rules (`ColorRule.expression`), read once each: null for one with
+     * a problem or that is not true / false. Read again when the fields can be others - new calculated
+     * columns, new columns
+     */
+    private ruleFormulas = new Map<string, Formula | null>();
+
+    /**
      * Most of the time {@link createGrid} makes the interface. Make it yourself for a
      * `<simple-html-grid>` element you place on your own, and connect it with
      * `element.connectInterface()`.
@@ -231,17 +272,39 @@ export class GridInterface<T> {
         assertConfigTexts(gridConfig);
         assertTooltipLines(gridConfig);
         assertLineHeight(gridConfig);
-        assertAggregates(gridConfig, datasource);
-        assertFormats(gridConfig, datasource);
-        assertRenderers(gridConfig);
-        assertFilterOptions(gridConfig, datasource);
         assertConfigDetailForm(gridConfig);
         assertEditPermissions(gridConfig.edit);
-        this.lookupColumns = lookupColumnsOf(gridConfig.columns, datasource);
         this.dataSource = datasource;
+        // the calculated columns first: the checks of the formats, the aggregates and the filters read
+        // their types from the datasource
+        const fieldType = this.calculatedFieldType(gridConfig.columns ?? {}, gridConfig.layout);
+        if (gridConfig.calculatedColumns !== undefined) {
+            assertCalculatedColumns(gridConfig.calculatedColumns, fieldType, this.isTakenName, 'GridConfig: calculatedColumns');
+        }
+        if (gridConfig.initialState?.calculatedColumns !== undefined) {
+            assertCalculatedColumns(
+                gridConfig.initialState.calculatedColumns,
+                fieldType,
+                this.isTakenName,
+                'GridConfig: initialState.calculatedColumns'
+            );
+        }
+        const startCalculated = structuredClone(gridConfig.initialState?.calculatedColumns ?? gridConfig.calculatedColumns ?? {});
+        this.registerCalculated(startCalculated, fieldType);
+        try {
+            assertAggregates(gridConfig, datasource);
+            assertFormats(gridConfig, datasource, this.ruleFieldOf(gridConfig.columns ?? {}, gridConfig.layout));
+            assertRenderers(gridConfig);
+            assertFilterOptions(gridConfig, datasource);
+            this.lookupColumns = lookupColumnsOf(gridConfig.columns, datasource);
+        } catch (error) {
+            // the datasource is left as it was
+            this.registerCalculated({}, fieldType);
+            throw error;
+        }
         this.hooks = { ...hooks };
 
-        const { columns, layout, initialState, ...options } = gridConfig;
+        const { columns, layout, initialState, calculatedColumns, ...options } = gridConfig;
         this.options = options;
         this.gridConfig = {
             ...withDefaults(options),
@@ -254,6 +317,10 @@ export class GridInterface<T> {
         this.configFormats = formatsOfColumns(this.gridConfig.columns);
         // structuredClone, not JSON: it keeps the Dates of a filter
         this.initialState = structuredClone(initialState ?? {});
+        this.configCalculated = structuredClone(calculatedColumns ?? {});
+        for (const name of [...Object.keys(this.configCalculated), ...Object.keys(startCalculated)]) {
+            this.everCalculated.add(name);
+        }
 
         // before the start state is applied: it can sort on a lookup column
         this.setSortValues();
@@ -294,7 +361,8 @@ export class GridInterface<T> {
             aggregates: aggregatesOfColumns(this.gridConfig.columns),
             totalsRow: this.gridConfig.totalsRow,
             formats: formatsOfColumns(this.gridConfig.columns),
-            detailForm: copyDetailForm(this.gridConfig.detailForm)
+            detailForm: copyDetailForm(this.gridConfig.detailForm),
+            calculatedColumns: structuredClone(this.calculated)
         };
     }
 
@@ -422,7 +490,8 @@ export class GridInterface<T> {
             totalsRow: initialState.totalsRow ?? this.options.totalsRow ?? false,
             formats: initialState.formats ?? structuredClone(this.configFormats),
             // applyState checks it and keeps a copy
-            detailForm: initialState.detailForm ?? this.options.detailForm ?? noDetailForm()
+            detailForm: initialState.detailForm ?? this.options.detailForm ?? noDetailForm(),
+            calculatedColumns: initialState.calculatedColumns ?? structuredClone(this.configCalculated)
         };
     }
 
@@ -482,15 +551,39 @@ export class GridInterface<T> {
         assertConfigTexts(config);
         assertTooltipLines(config);
         assertLineHeight(config);
-        assertAggregates(config, this.dataSource);
-        assertFormats(config, this.dataSource);
-        assertRenderers(config);
-        assertFilterOptions(config, this.dataSource);
         assertConfigDetailForm(config);
         assertEditPermissions(config.edit);
-        // checked before anything changes, like the rest
-        const lookupColumns = 'columns' in config ? lookupColumnsOf(config.columns, this.dataSource) : null;
-        const { columns, layout, initialState, ...options } = config;
+        // the calculated columns first, as in the constructor: the checks below read their types. Taken
+        // back when one of them throws
+        let calculatedNext: Record<string, CalculatedColumn> | undefined;
+        const fieldType = this.calculatedFieldType(
+            config.columns ?? this.gridConfig.columns,
+            config.layout ?? this.gridConfig.layout
+        );
+        if ('calculatedColumns' in config) {
+            calculatedNext = structuredClone(config.calculatedColumns ?? {});
+            assertCalculatedColumns(calculatedNext, fieldType, this.isTakenName, 'GridConfig: calculatedColumns');
+            this.registerCalculated(calculatedNext, fieldType);
+        }
+        let lookupColumns: Map<string, LookupColumn> | null;
+        try {
+            assertAggregates(config, this.dataSource);
+            assertFormats(
+                config,
+                this.dataSource,
+                this.ruleFieldOf(config.columns ?? this.gridConfig.columns, config.layout ?? this.gridConfig.layout)
+            );
+            assertRenderers(config);
+            assertFilterOptions(config, this.dataSource);
+            // checked before anything changes, like the rest
+            lookupColumns = 'columns' in config ? lookupColumnsOf(config.columns, this.dataSource) : null;
+        } catch (error) {
+            if (calculatedNext) {
+                this.registerCalculated(this.calculated, fieldType);
+            }
+            throw error;
+        }
+        const { columns, layout, initialState, calculatedColumns, ...options } = config;
 
         // other edit permissions: what is open was opened under the old ones - a menu, the date picker, the
         // editor of a multiline cell, a lookup's list - and could still write into a row they lock now.
@@ -513,6 +606,8 @@ export class GridInterface<T> {
         // `in`, so that `columns: undefined` gives every column the defaults, as it does for an option.
         // Their aggregates are the ones resetState() goes back to from now on
         if ('columns' in config) {
+            // a formula of a colour rule can read other columns now
+            this.ruleFormulas.clear();
             this.gridConfig.columns = structuredClone(columns ?? {});
             this.configAggregates = aggregatesOfColumns(this.gridConfig.columns);
             this.configFormats = formatsOfColumns(this.gridConfig.columns);
@@ -531,15 +626,20 @@ export class GridInterface<T> {
         if ('initialState' in config) {
             this.initialState = structuredClone(initialState ?? {});
         }
+        // shown now, as a layout, and what resetState() goes back to
+        const next: Partial<GridState> = {};
+        if (calculatedNext) {
+            this.configCalculated = structuredClone(calculatedNext);
+            next.calculatedColumns = calculatedNext;
+        }
 
         // a grid always has a layout, `layout: undefined` keeps it
         if (layout) {
             this.configLayout = copyLayout(layout);
-            this.applyState({ layout: copyLayout(layout) });
-        } else {
-            // rebuilds once, the state stays as it is
-            this.applyState({});
+            next.layout = copyLayout(layout);
         }
+        // rebuilds once, the rest of the state stays as it is
+        this.applyState(next);
     }
 
     /**
@@ -580,15 +680,38 @@ export class GridInterface<T> {
      * (shift+click sort, drag/drop, resizing)
      */
     private applyState(state: Partial<GridState>) {
-        // checked before anything changes: a wrong one throws and leaves the grid as it is
-        if (state.aggregates) {
-            assertAggregates({ columns: columnsWithAggregates(state.aggregates) }, this.dataSource, 'setState: aggregates');
+        // checked before anything changes: a wrong one throws and leaves the grid as it is. The calculated
+        // columns are given to the datasource first, the aggregates and formats are checked with their
+        // types - and taken back when one of them throws
+        const calculatedBefore = this.calculated;
+        const calculated = state.calculatedColumns;
+        const fieldType = this.calculatedFieldType(this.gridConfig.columns, state.layout ?? this.gridConfig.layout);
+        if (calculated !== undefined) {
+            assertCalculatedColumns(calculated, fieldType, this.isTakenName, 'setState: calculatedColumns');
+            this.registerCalculated(calculated, fieldType);
         }
-        if (state.formats) {
-            this.assertStateFormats(state.formats);
+        try {
+            if (state.aggregates) {
+                assertAggregates({ columns: columnsWithAggregates(state.aggregates) }, this.dataSource, 'setState: aggregates');
+            }
+            if (state.formats) {
+                this.assertStateFormats(state.formats);
+            }
+            if (state.detailForm !== undefined) {
+                assertDetailForm(state.detailForm, 'setState: detailForm');
+            }
+        } catch (error) {
+            if (calculated !== undefined) {
+                this.registerCalculated(calculatedBefore, fieldType);
+            }
+            throw error;
         }
-        if (state.detailForm !== undefined) {
-            assertDetailForm(state.detailForm, 'setState: detailForm');
+        // the calculated columns the grid had and has not anymore: no field of the rows now
+        const removed = new Set(
+            calculated === undefined ? [] : Object.keys(calculatedBefore).filter((name) => !Object.hasOwn(calculated, name))
+        );
+        if (calculated !== undefined) {
+            this.calculated = calculated;
         }
         this.suppressEvents = true;
 
@@ -649,13 +772,20 @@ export class GridInterface<T> {
             }
         }
 
-        const datasourceParts = state.filter !== undefined || state.sorting || state.grouping || state.expandedGroups;
+        if (calculated !== undefined) {
+            this.applyCalculatedColumns(removed);
+        }
+
+        // new calculated columns: the rows are filtered, sorted and grouped on their values again
+        const datasourceParts =
+            calculated !== undefined || state.filter !== undefined || state.sorting || state.grouping || state.expandedGroups;
         if (datasourceParts) {
-            // what is not given: the datasource's own, it replaces these when it is given new ones
+            // what is not given: the datasource's own, it replaces these when it is given new ones. A
+            // calculated column that is gone is taken out of them
             const datasource = this.getDatasource();
-            const filter = state.filter !== undefined ? state.filter : datasource.getFilter();
-            const sorting = state.sorting ?? datasource.getLastSorting();
-            const grouping = state.grouping ?? datasource.getGrouping();
+            const filter = filterWithout(state.filter !== undefined ? state.filter : datasource.getFilter(), removed);
+            const sorting = (state.sorting ?? datasource.getLastSorting()).filter((sort) => !removed.has(sort.attribute));
+            const grouping = (state.grouping ?? datasource.getGrouping()).filter((group) => !removed.has(group.attribute));
             const expandedGroups = state.expandedGroups ?? datasource.getExpanded();
 
             if (!sorting.length) {
@@ -692,6 +822,181 @@ export class GridInterface<T> {
         } else {
             this.__dataSourceUpdated();
         }
+    }
+
+    /**
+     * The calculated columns of the state are new (applyState): each has an entry in `columns` (the
+     * column chooser lists it); one that is gone leaves the layout, the header filters and the detail
+     * form, and its format and aggregates - its entry stays, for the options of the config, the column
+     * chooser does not list it (__isGoneCalculated)
+     * @param removed the calculated columns the grid had and has not anymore
+     */
+    private applyCalculatedColumns(removed: ReadonlySet<string>) {
+        const columns = this.gridConfig.columns;
+        for (const name of Object.keys(this.calculated)) {
+            columns[name] ??= {};
+        }
+        if (!removed.size) {
+            return;
+        }
+        this.gridConfig.layout = layoutWithout(this.gridConfig.layout, removed);
+        for (const name of removed) {
+            if (columns[name]) {
+                delete columns[name].format;
+                delete columns[name].aggregate;
+            }
+            delete this.headerFilters[name];
+        }
+        const detailForm = this.gridConfig.detailForm;
+        if (detailForm.fields.some((field) => removed.has(field))) {
+            this.gridConfig.detailForm = { ...detailForm, fields: detailForm.fields.filter((field) => !removed.has(field)) };
+        }
+    }
+
+    /**
+     * Gives the datasource a calculated field for each calculated column (CalculatedField) and takes back
+     * the ones this grid gave it that are not among them - not what another grid gave it since. A column
+     * whose formula has a problem gets none (the checks keep such a column out of the state)
+     * @param fieldType the type of a field that is not calculated, see calculatedFieldType
+     */
+    private registerCalculated(columns: Record<string, CalculatedColumn>, fieldType: (field: string) => FieldType | undefined) {
+        const compiled = compileCalculatedColumns(columns, fieldType);
+        const fields = calculatedFields(compiled, (name) => calculatedLabel(columns[name], name, prettyPrintString));
+        for (const [name, field] of this.calculatedFieldsSet) {
+            if (!fields.has(name) && this.dataSource.__getCalculatedField(name) === field) {
+                this.dataSource.__setCalculatedField(name, null);
+            }
+        }
+        for (const [name, field] of fields) {
+            this.dataSource.__setCalculatedField(name, field);
+            this.everCalculated.add(name);
+        }
+        this.calculatedFieldsSet = fields;
+        // a formula of a colour rule reads the calculated columns: read them again
+        this.ruleFormulas.clear();
+    }
+
+    /**
+     * What a colour rule's condition or formula knows of a field (RuleFieldOf): a field of the datasource,
+     * a calculated column, a column of the config or the layout - its type in the datasource, and whether
+     * it is a lookup column (`editor`). undefined for another field, and for a calculated column that is
+     * gone
+     * @param columns the columns of the config
+     * @param layout the layout
+     */
+    private ruleFieldOf(columns: Record<string, ColumnConfig>, layout: GridLayout): RuleFieldOf {
+        const fieldType = this.calculatedFieldType(columns, layout);
+        return (field) => {
+            // the calculated columns given to the datasource: the state's, or the new ones while they are checked
+            const known = this.calculatedFieldsSet.has(field) || fieldType(field) !== undefined;
+            return known
+                ? { type: this.dataSource.getField(field).type, lookup: columns[field]?.editor !== undefined }
+                : undefined;
+        };
+    }
+
+    /**
+     * @internal
+     * What a colour rule's condition or formula knows of a field now, see ruleFieldOf - for the grid config
+     * dialog
+     */
+    public __ruleFieldOf(): RuleFieldOf {
+        return this.ruleFieldOf(this.gridConfig.columns, this.gridConfig.layout);
+    }
+
+    /**
+     * @internal
+     * true when the formula of a colour rule (`ColorRule.expression`) is true in the row. A formula with a
+     * problem, or that is not true / false, is never true - nor is it in a row where it can not be
+     * computed. Never throws
+     */
+    public __ruleFormulaMatches(expression: string, row: Entity): boolean {
+        let formula = this.ruleFormulas.get(expression);
+        if (formula === undefined) {
+            const fieldOf = this.__ruleFieldOf();
+            const compiled = compileFormula(expression, (field) => {
+                const known = fieldOf(field);
+                return known ? { type: known.type === 'datetime' ? 'date' : known.type } : undefined;
+            });
+            formula = 'formula' in compiled && compiled.formula.type === 'boolean' ? compiled.formula : null;
+            this.ruleFormulas.set(expression, formula);
+        }
+        if (!formula) {
+            return false;
+        }
+        const result = formula.evaluate(readerOf(row, this.calculatedFieldsSet));
+        return 'value' in result && result.value === true;
+    }
+
+    /**
+     * The type a formula reads a field that is not calculated with (compileCalculatedColumns): the
+     * datasource's `fields`, else text for a field of a column or of the layout. undefined for a field
+     * the grid does not know - and for a calculated column that is gone
+     * @param columns the columns of the config
+     * @param layout the layout
+     */
+    private calculatedFieldType(
+        columns: Record<string, ColumnConfig>,
+        layout: GridLayout
+    ): (field: string) => FieldType | undefined {
+        const inLayout = new Set(
+            [...(layout.left ?? []), ...(layout.center ?? []), ...(layout.right ?? [])].flatMap((column) => column.fields ?? [])
+        );
+        return (field) => {
+            const listed = this.dataSource.__getListedField(field);
+            if (listed) {
+                return listed.type ?? 'text';
+            }
+            if (this.everCalculated.has(field)) {
+                return undefined;
+            }
+            return Object.hasOwn(columns, field) || inLayout.has(field) ? 'text' : undefined;
+        };
+    }
+
+    /**
+     * true for a name a calculated column can not have: a field of the datasource (its `fields`, on its
+     * container too) or of its rows (an own property of a row) - the column would hide its values
+     */
+    private isTakenName = (name: string): boolean =>
+        this.dataSource.__isListedField(name) || this.dataSource.getAllData().some((row) => Object.hasOwn(row, name));
+
+    /**
+     * @internal
+     * true for a field that is a calculated column of the state (GridState.calculatedColumns)
+     */
+    public __isCalculated(field: string): boolean {
+        return Object.hasOwn(this.calculated, field);
+    }
+
+    /**
+     * @internal
+     * true for a field that was a calculated column and is not anymore: no field of the rows, the column
+     * chooser does not list it
+     */
+    public __isGoneCalculated(field: string): boolean {
+        return this.everCalculated.has(field) && !this.__isCalculated(field);
+    }
+
+    /**
+     * @internal
+     * The calculated columns the grid starts with - `initialState.calculatedColumns`, else the config's:
+     * what resetState() goes back to, and the grid config dialog's "Reset all". A copy
+     */
+    public __getStartCalculated(): Record<string, CalculatedColumn> {
+        return structuredClone(this.initialState.calculatedColumns ?? this.configCalculated);
+    }
+
+    /**
+     * @internal
+     * For the grid config dialog: the type a formula reads a field that is not calculated with, and
+     * whether a name is taken - as setState() checks them
+     */
+    public __calculatedNames(): { fieldType: (field: string) => FieldType | undefined; isTaken: (name: string) => boolean } {
+        return {
+            fieldType: this.calculatedFieldType(this.gridConfig.columns, this.gridConfig.layout),
+            isTaken: this.isTakenName
+        };
     }
 
     /**
@@ -802,8 +1107,10 @@ export class GridInterface<T> {
         // the element was not in the dom (then nothing calls it), or shows another interface now
         this.__disconnectGrid();
         this.events.clear();
-        // the datasource can be shown in another grid: it sorts its fields on their values again
+        // the datasource can be shown in another grid: it sorts its fields on their values again, and
+        // has no calculated fields of this grid
         this.clearSortValues();
+        this.registerCalculated({}, () => undefined);
     }
 
     /**
@@ -1137,6 +1444,30 @@ export class GridInterface<T> {
     public openDetailFormSettings() {
         if (this.grid) {
             openColumnSettings(this.grid, undefined, 'detailForm');
+        }
+    }
+
+    /**
+     * Opens the keyboard shortcuts help: a dialog that lists the keys of the grid in groups, with a
+     * search - as `?` (where it types nothing) and Ctrl+/ in the grid do, and *Keyboard shortcuts…* in
+     * the header menu. The keys as the platform names them, ⌘ on a Mac; a key that does nothing in this
+     * grid is left out - the editing keys of a readonly grid. For a help button of your own: it opens the
+     * help also with `GridConfig.shortcutHelp: false`, which turns the grid's own ways to open it off.
+     *
+     * A modal `<dialog>`, as the filter editor: the focus moves into it - into its search when a key
+     * opened it - Esc closes it, the focus goes back to where it was; the user drags it by its title bar
+     * and resizes it from every edge and corner. Its texts are `shortcuts.*`.
+     *
+     * Does nothing while the grid is not on the page.
+     *
+     * @example
+     * ```ts
+     * document.getElementById('keys-help')!.onclick = () => gridInterface.openShortcutHelp();
+     * ```
+     */
+    public openShortcutHelp() {
+        if (this.grid) {
+            openShortcutHelp(this.grid);
         }
     }
 
@@ -2276,14 +2607,15 @@ export class GridInterface<T> {
 
     /**
      * @internal
-     * Is the cell readonly: on a row the edit permissions (`GridConfig.edit`) do not let the user change,
-     * every cell is - whatever the hook says. Else the `isReadonly` hook decides, and when it gives no
+     * Is the cell readonly: a calculated column's always; on a row the edit permissions (`GridConfig.edit`)
+     * do not let the user change, every cell is - whatever the hook says. Else the `isReadonly` hook decides, and when it gives no
      * answer (anything but `true` / `false`) the column's `readonly` option. The grid's own `readonly`
      * is not part of it, the callers check that first
      * @param row a row of the datasource, so one of its `EntityUnion<T>` rows
      */
     public __isCellReadonly(row: Entity, field: string): boolean {
-        if (!mayChangeRow(this.gridConfig.edit, row)) {
+        // a calculated column is computed, never edited; a row the edit permissions lock, every cell
+        if (this.__isCalculated(field) || !mayChangeRow(this.gridConfig.edit, row)) {
             return true;
         }
         // the user's (format.readonly) over the column's
@@ -2441,9 +2773,17 @@ export class GridInterface<T> {
         if (typeof formats !== 'object' || formats === null || Array.isArray(formats)) {
             throw new TypeError(`setState: formats is an object of formats by field, got ${JSON.stringify(formats)}`);
         }
+        const fieldOf = this.__ruleFieldOf();
         for (const [field, format] of Object.entries(formats)) {
             const lookup = this.gridConfig.columns[field]?.editor !== undefined;
-            assertColumnFormat(format, field, this.dataSource.getField(field).type, lookup, `setState: formats.${field}`);
+            assertColumnFormat(
+                format,
+                field,
+                this.dataSource.getField(field).type,
+                lookup,
+                `setState: formats.${field}`,
+                fieldOf
+            );
         }
     }
 
@@ -2683,6 +3023,7 @@ function withDefaults(options: GridOptions): ParsedGridOptions {
         copyHeaders: options.copyHeaders ?? true,
         filterOperatorIndicator: options.filterOperatorIndicator ?? true,
         settingsButton: options.settingsButton ?? true,
+        shortcutHelp: options.shortcutHelp ?? true,
         placeholderRowCurrentEntityOnly: options.placeholderRowCurrentEntityOnly ?? true,
         groupAggregates: options.groupAggregates ?? true,
         totalsRow: options.totalsRow ?? false,
@@ -2852,13 +3193,20 @@ function assertAggregates(config: Partial<GridConfig>, datasource: Datasource<an
  * a number part for a number field, of the values they take, and none on a lookup column
  * @throws a `TypeError` naming the column and what it takes
  */
-function assertFormats(config: Partial<GridConfig>, datasource: Datasource<any>) {
+function assertFormats(config: Partial<GridConfig>, datasource: Datasource<any>, fieldOf: RuleFieldOf) {
     for (const [field, column] of Object.entries(config.columns ?? {})) {
         if (!column || typeof column !== 'object') {
             continue;
         }
         const type = datasource.getField(field).type;
-        assertColumnFormat(column.format, field, type, column.editor !== undefined, `GridConfig: columns.${field}.format`);
+        assertColumnFormat(
+            column.format,
+            field,
+            type,
+            column.editor !== undefined,
+            `GridConfig: columns.${field}.format`,
+            fieldOf
+        );
     }
 }
 

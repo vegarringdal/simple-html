@@ -129,6 +129,11 @@ grid "Grid"  aria-rowcount=503  aria-colcount=10
   own for a screen reader, the count says where you are; with "Filter rows" on the footer's row count
   (a status) says how many rows are left.
 
+- **The keyboard shortcuts help** (`?`, Ctrl+/, see [below](#the-keyboard-shortcuts-help)): a modal
+  dialog named by its title, *Keyboard shortcuts*, with a search - a textbox named *Search*, described
+  by the hint under it - and a table per group of keys, its caption the title of the group: each row
+  has the keys as its row header and what they do as its cell. "No key matches the search" is a status.
+
 The rows and the columns are virtual: only the rows on screen (and a few more) are in the dom, and
 of the middle section only the columns on screen. That is what `aria-rowindex` and `aria-colindex`
 are for, the screen reader knows where it is without having every row.
@@ -193,6 +198,7 @@ Ctrl is Cmd on a Mac, Alt is Option.
 | F3 / Shift+F3 | while the find bar is open: the next / previous match. Anywhere in the grid |
 | Ctrl+D (Cmd+D) | fill down: each range gets the values of its top row, a range of one row or the cell alone the row above. See [Selection and clipboard](17-selection-and-clipboard.md#fill-down) |
 | Ctrl+Z, Ctrl+Y / Ctrl+Shift+Z | in an editable grid: undo, redo - and the focus goes to the cell it changed, scrolled to. While the cell is typed in Ctrl+Z is the input's own. See [Undo and redo](05-editing.md#undo-and-redo) |
+| ?, Ctrl+/ (Cmd+/) | the keyboard shortcuts help, see [below](#the-keyboard-shortcuts-help): `?` where it types nothing - a readonly cell, a checkbox, a lookup or custom cell that can not be edited - Ctrl+/ also while typing in a cell. Anywhere in the grid: a header filter, a column header, a row number, the find bar too. Not with `shortcutHelp: false` |
 
 The grid scrolls to the cell the focus goes to. Moving to another cell (Tab, Alt+arrows, Enter, the keys
 that jump) clears the ranges of cells, and so does typing in a cell. The focus is moved 100ms after Tab,
@@ -315,6 +321,7 @@ of Tab: a click puts it there, and selects columns (Ctrl+click, Shift+click, see
 | the list of the columns in the column settings | ArrowDown / ArrowUp, Home / End, PageDown / PageUp, a letter | picks the next / previous / first / last column, ten further, the next one whose label starts with the letter |
 | the swatches of a colour rule | ArrowRight / ArrowDown, ArrowLeft / ArrowUp | picks the next / previous colour (the browser's radio buttons): one stop of Tab, the colour picked |
 | the find bar | Enter, F3, Esc | the next match, closes it: see [below](#the-find-bar) |
+| the keyboard shortcuts help | Tab, typing, Esc | a modal dialog: Tab goes through its ✕ and its search, typing in the search keeps the keys that have the text. Esc closes it, the focus goes back to where it was. See [below](#the-keyboard-shortcuts-help) |
 
 ### The list of a lookup column
 
@@ -373,6 +380,144 @@ hint under it (`Ctrl+Enter to save, Esc to cancel`, `Esc to close` when it is re
 The keys of an input method (IME) are its own while it composes: Enter and Esc go to it. The other
 keys are the textarea's own: the arrows move the caret, Ctrl+Z is the textarea's undo while it is open.
 A readonly editor (a readonly grid or cell) shows the text, nothing can be typed in it.
+
+## The keyboard shortcuts help
+
+The keys above, in short: a dialog that lists them in groups, with a search. `?` opens it where the key
+types nothing - a readonly cell, a checkbox, a column header, a row number, a button of the grid - and
+Ctrl+/ (Cmd+/) anywhere in the grid, also while typing in a cell or a header filter. The header menu has
+*Keyboard shortcuts…* (`header.shortcuts`, its hint Ctrl+/), and `gridInterface.openShortcutHelp()` opens
+it from a button of your own. `shortcutHelp: false` turns the keys and the menu entry off - for an app
+with a help of its own, or one that uses the keys itself; `openShortcutHelp()` still opens it:
+
+```ts
+import { createGrid, type GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    layout: { center: [{ fields: ['name'], width: 150 }] },
+    shortcutHelp: false
+};
+const gridInterface = createGrid(host, { config, datasource });
+document.getElementById('keys-help')!.onclick = () => gridInterface.openShortcutHelp();
+```
+
+- **A modal dialog** of the grid's look, as the filter editor: named by its title, *Keyboard shortcuts*,
+  moved by its title bar and resized from every edge and corner. Esc or its ✕ closes it, the focus goes
+  back to where it was. Opened by a key the focus is in its search, to type in at once; opened with a
+  click (the header menu, a button) on the dialog, as the other dialogs - a focused input would open the
+  keyboard of a phone. On a phone it is as wide as the window, and its list scrolls.
+- **The keys as the platform names them**: on a Mac ⌘ for Ctrl, ⌥ for Alt and ⇧ for Shift, in the order
+  of a Mac's menus and without the `+` - ⇧⌘Z. The names of the keys are texts too (`shortcuts.key.*`): a
+  translation can name them as its keyboards do, Strg, Entf. A letter, F2 and the arrows are shown as
+  they are.
+- **Only the keys that do something in the grid**: a readonly grid leaves out the keys of an editable
+  grid (the column *shown* below), a Mac leaves out Alt+C, `filterOperatorIndicator: false` F4 of a
+  header filter, `shortcutHelp: false` the keys of the help itself.
+- **The search** keeps the keys whose text, keys or group have what is typed, in any case: `undo`,
+  `ctrl`, `f3`. When none has it, the dialog says so.
+- **Its texts** are `shortcuts.*`, see [Texts](12-texts.md#keyboard-shortcuts-help).
+
+### Every key of the help
+
+The help's list, with the English texts. Each key is in the tables of [The keyboard](#the-keyboard) above,
+described in full there. The docs and the dialog have one list: a test checks this one is the help's.
+
+#### Moving around
+
+| keys | does | shown |
+| --- | --- | --- |
+| Tab / Shift+Tab | The next / previous cell | |
+| Alt+ArrowLeft / Alt+ArrowRight | The cell to the left / right | |
+| Alt+ArrowUp / Alt+ArrowDown | The cell above / below | |
+| Enter | The cell below, from a cell that can be edited | an editable grid |
+| Alt+Home / Alt+End | The first / last cell of the row | |
+| Ctrl+Home / Ctrl+End | The first / last cell of the grid | |
+| PageUp / PageDown | A page of rows up / down | |
+| Alt+PageUp / Alt+PageDown | A page of columns left / right | |
+| Ctrl+ArrowUp / Ctrl+ArrowDown | The edge of the data in the column, up / down | |
+
+#### Selecting cells
+
+| keys | does | shown |
+| --- | --- | --- |
+| Alt+Shift+arrows | A range of cells, one cell further each time | |
+| Shift+PageUp / Shift+PageDown | The range a page up / down | |
+| Alt+Shift+Home / Alt+Shift+End | The range to the first / last cell of the row | |
+| Ctrl+Shift+Home / Ctrl+Shift+End | The range to the first / last cell of the grid | |
+| Ctrl+Shift+ArrowUp / Ctrl+Shift+ArrowDown | The range to the edge of the data, up / down | |
+| Esc | No range of cells any more | |
+
+#### In a cell
+
+| keys | does | shown |
+| --- | --- | --- |
+| Enter / F2 | Open the editor of a cell of several lines, or of a custom cell | |
+| Ctrl+Enter | In the editor of several lines: save the text | an editable grid |
+| Esc | Close an editor or the list of a lookup cell, nothing saved | |
+| Alt+ArrowDown / F4 | Open the list of a lookup cell | an editable grid |
+| Space | Check or uncheck a checkbox | an editable grid |
+| Alt+Enter | Open the link of a link cell | |
+
+#### Changing values
+
+| keys | does | shown |
+| --- | --- | --- |
+| Ctrl+Z | Undo, the focus to the cell it changed | an editable grid |
+| Ctrl+Y / Ctrl+Shift+Z | Redo | an editable grid |
+| Ctrl+D | Fill down: the values of the row above, or of the top row of the range | an editable grid |
+| Delete / Backspace | Empty the cells of a range | an editable grid |
+| Delete / Backspace | On a row number: mark its row for deletion, or the selected rows | an editable grid |
+
+#### Copy and paste
+
+| keys | does | shown |
+| --- | --- | --- |
+| Ctrl+C | Copy the range of cells, or the value of the cell | |
+| Ctrl+V | Paste cells copied here or in a spreadsheet | an editable grid |
+| Ctrl+C | On a column number: copy the selected columns | |
+
+#### Find
+
+| keys | does | shown |
+| --- | --- | --- |
+| Ctrl+F | Open the find bar | |
+| Enter / F3 | The next match | |
+| Shift+Enter / Shift+F3 | The previous match | |
+| Alt+C | Match case on or off | not on a Mac |
+| Esc | Close the find bar | |
+
+#### Filters, headers and groups
+
+| keys | does | shown |
+| --- | --- | --- |
+| Enter | In a header filter: filter | |
+| F4 | In a header filter: choose the operator | with `filterOperatorIndicator` |
+| Alt+ArrowUp | From a header filter: up to its column header | |
+| Enter / Space | On a column header: sort, again the other way | |
+| Shift+Enter / Shift+Space | On a column header: add the column to the sort | |
+| Enter / Space | On a group row: expand or collapse it | |
+
+#### Menus
+
+| keys | does | shown |
+| --- | --- | --- |
+| Shift+F10 / the menu key | The menu of the cell, header, filter or number with the focus | |
+| ArrowDown / ArrowUp | The next / previous item | |
+| Enter / Space | Use the item, or open its submenu | |
+| ArrowRight / ArrowLeft | Open / close a submenu | |
+| Esc | Close the menu | |
+
+#### Dialogs and this help
+
+| keys | does | shown |
+| --- | --- | --- |
+| ? | This help, where the key types nothing | with `shortcutHelp` |
+| Ctrl+/ | This help, also while typing in a cell | with `shortcutHelp` |
+| Esc | Close a dialog | |
+| Ctrl+Z / Ctrl+Y | In the filter editor: undo / redo | |
+| ArrowLeft / ArrowRight | In the grid config dialog: the tab before / after | |
+| Alt+ArrowUp / Alt+ArrowDown | The fields of the detail form: move the field up / down | |
+| Space | The fields of the detail form: in the form or out | |
 
 ## Focus
 

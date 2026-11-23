@@ -1177,6 +1177,7 @@ describe('menus - the default menus, short', () => {
             'header.size',
             'header.format',
             'header.settings',
+            'header.shortcuts',
             'header.aggregate',
             'header.grouping'
         ]);

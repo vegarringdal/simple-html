@@ -151,7 +151,7 @@ A column's header shows the first of:
 1. the label the user gave it in the grid config dialog or with the ✎ of the column chooser: `format.label`,
    state (`GridState.formats`)
 2. its `label` in `columns`
-3. the field's `label` in the datasource's `fields`
+3. the field's `label` in the datasource's `fields` - for a calculated column its `label`
 4. the field name, with the first letter in upper case and `_` as a space: `first_name` shows as
    `First Name`, but `firstName` as `Firstname`. Give such a field a label.
 
@@ -184,6 +184,24 @@ Every option of a `ColumnConfig` is optional.
 `focusButton` takes `'ALWAYS'`, `'SHOW_IF_GRID_NOT_READONLY'` or
 `'SHOW_IF_GRID_AND_CELL_NOT_READONLY'`.
 
+### Calculated columns
+
+`calculatedColumns` adds columns whose value a formula computes from the row - a field of their own,
+put in the `layout` as any field, with `columns` options as any column:
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    calculatedColumns: { total: { formula: '{price} * {qty}', label: 'Total' } },
+    columns: { total: { aggregate: 'sum', format: { number: { decimals: 2 } } } },
+    layout: { center: [{ fields: ['price'], width: 80 }, { fields: ['qty'], width: 60 }, { fields: ['total'], width: 90 }] }
+};
+```
+
+They are read only, part of the state (`GridState.calculatedColumns`), and the user adds and changes
+them in the grid config dialog. See [Calculated columns](23-calculated-columns.md).
+
 ```sample required-placeholders
 ```
 
@@ -206,6 +224,7 @@ Every option is optional.
 | `filterOperatorIndicator` | `true` | shows the operator of each header filter as a small symbol in its cell (`=`, `≥`, `*a*` ...): on the right of a text filter, on the left of a number or date filter. A click (F4 in the filter) opens the operator choice. Not on a boolean column nor on a column under 60px. See [Filtering](06-filtering.md#the-operator-in-the-cell) |
 | `filterOnType` | `false` | every header filter filters as you type, after a short pause - the default of the columns, a column's `filterOnType` wins. See [Filtering](06-filtering.md#filter-as-you-type) |
 | `settingsButton` | `true` | a gear at the right end of the footer, the last stop of Tab there: it opens the grid config dialog - the display formats, a text column's template and link, the detail form, saved in the state. `false` hides the gear only: *Column settings…* stays in the header menu (`header.settings`, the `menus` hook takes it out) and `openColumnSettings()` opens the dialog. Not in a footer of no height. See [The grid config dialog](08-formatting.md#the-grid-config-dialog) |
+| `shortcutHelp` | `true` | the keyboard shortcuts help: `?` where the key types nothing (a readonly cell, a column header) and Ctrl+/ anywhere in the grid open it, the header menu has *Keyboard shortcuts…* (`header.shortcuts`). `false` turns the keys and the entry off, `openShortcutHelp()` still opens the help. See [The keyboard shortcuts help](14-accessibility.md#the-keyboard-shortcuts-help) |
 | `dimRepeatedValues` | `false` | dims a cell that has the same value as the row above. The row menu can toggle it |
 | `rowStatus` | `true` | shows the state of each row on its row number: new, edited, marked for deletion, an error. The row numbers are 14px wider for the icon. See [Showing the row state](05-editing.md#showing-the-row-state) |
 | `copyHeaders` | `true` | a copy of more than one cell starts with a line of the column labels (Word and Excel show the headers); pasted into the grid that line is skipped. See [Selection and clipboard](17-selection-and-clipboard.md) |

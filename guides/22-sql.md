@@ -389,6 +389,60 @@ without a field or an operator (null, `''`), one without the value it needs (nul
 `Date`) and no `valueField`, a `BETWEEN` with both ends blank, an empty group. A field that is not in
 `columns` throws also then.
 
+## Calculated columns
+
+A [calculated column](23-calculated-columns.md) (`GridState.calculatedColumns`) is computed in the
+browser, from the row: the database has no column of it. A filter on one - its header filter, a rule of
+the filter editor - is a condition like any other in `datasource.getFilter()`, on a field that is in no
+`columns` of yours. `toSqlWhere()` refuses it, as any field it does not know, with a `TypeError` that
+names it - answer it with a 400:
+
+```ts
+import { toSqlWhere } from '@simple-html/grid/sql';
+
+const filter = { group: 'AND', children: [{ field: 'total', operator: 'GREATER_THAN', value: 100 }] };
+try {
+    toSqlWhere(filter, { dialect: 'postgres', columns: { price: { column: 'price', type: 'number' } } });
+} catch (error) {
+    // TypeError: toSqlWhere: filter.children[0].field "total" is not one of the columns
+}
+```
+
+It is never left out: that would load more rows than the user filtered for. Two ways to filter on it in
+a backend:
+
+- **Let the database compute it too.** A generated column, or a column of a view, with the same
+  expression - `total numeric GENERATED ALWAYS AS (price * qty) STORED` on PostgreSQL, `AS (price * qty)`
+  on SQL Server, Oracle and SQLite - listed in `columns` with its type:
+  `columns: { total: { column: 'total', type: 'number' } }`. Keep the two the same: the grid's blanks
+  and `DAYS()` are the grid's, see [the formulas](23-calculated-columns.md#the-formulas).
+- **Filter it in the browser only.** Send the filter without the conditions on the calculated columns,
+  and let the grid filter the rows that came back - `datasource.filter()` with the whole filter:
+
+```ts
+import type { FilterExpression } from '@simple-html/grid';
+
+/** the filter without the conditions on these fields, null when nothing is left */
+function withoutFields(filter: FilterExpression | null, fields: ReadonlySet<string>): FilterExpression | null {
+    if (!filter) {
+        return null;
+    }
+    if ('children' in filter) {
+        const children = filter.children
+            .map((child) => withoutFields(child, fields))
+            .filter((child): child is FilterExpression => child !== null);
+        return children.length ? { ...filter, children } : null;
+    }
+    return fields.has(filter.field) || (filter.valueField !== undefined && fields.has(filter.valueField)) ? null : filter;
+}
+
+const calculated = new Set(Object.keys(gridInterface.getState().calculatedColumns));
+const forTheBackend = withoutFields(datasource.getFilter(), calculated);
+```
+
+  Take care with OR: without its conditions on a calculated column, an OR group lets more rows
+  through - which is what the browser then filters, but more rows travel.
+
 ## Find's filter
 
 Find (Ctrl+F in the grid) has a toggle *Filter rows*: only the rows with a cell that shows the text.
