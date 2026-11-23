@@ -76,6 +76,7 @@ import { updateMainElementSizes } from './gridFunctions/updateMainElementSizes';
 import { updateVerticalScrollHeight } from './gridFunctions/updateVerticalScrollHeight';
 import type { CellClass, GridHooks } from './gridHooks';
 import type { MenuContext, MenuEntry, MenuPosition } from './gridMenus';
+import { assertViews, type GridView, newViewId, startViews, viewStateText, writeStoredViews } from './gridView';
 import type { ExcelOptions } from './xlsx';
 
 /**
@@ -190,6 +191,24 @@ export class GridInterface<T> {
     private sortValues = new Map<string, (value: unknown) => string>();
 
     /**
+     * the named views, see getViews(): copies of what was given (GridConfig.views, the storage,
+     * setViews()). The grid changes them: saveView(), renameView() ...
+     */
+    private views: GridView[] = [];
+
+    /**
+     * the id of the view shown, see getCurrentView(). null: none, "Standard" - the config's state
+     */
+    private currentViewId: string | null = null;
+
+    /**
+     * the state as text (viewStateText) right after the view shown - or Standard - was applied or saved:
+     * what isViewModified() compares the state with. null when it is not known - the view shown was
+     * deleted, the state shown is no view's: modified
+     */
+    private viewBaseline: string | null = null;
+
+    /**
      * Most of the time {@link createGrid} makes the interface. Make it yourself for a
      * `<simple-html-grid>` element you place on your own, and connect it with
      * `element.connectInterface()`.
@@ -236,6 +255,7 @@ export class GridInterface<T> {
         assertFilterOptions(gridConfig, datasource);
         assertConfigDetailForm(gridConfig);
         assertEditPermissions(gridConfig.edit);
+        assertConfigViews(gridConfig);
         this.lookupColumns = lookupColumnsOf(gridConfig.columns, datasource);
         this.dataSource = datasource;
         this.hooks = { ...hooks };
@@ -256,7 +276,9 @@ export class GridInterface<T> {
 
         // before the start state is applied: it can sort on a lookup column
         this.setSortValues();
-        this.applyState(this.getStartState());
+        // the views of the config and the storage: the default one is the state the grid starts in
+        this.views = startViews(gridConfig.views, gridConfig.viewsStorageKey);
+        this.applyStartView();
     }
 
     /**
@@ -345,6 +367,10 @@ export class GridInterface<T> {
      * no grouping, no filter, no header filters. A `layout` or `initialState` given to
      * {@link updateConfig} since is the one it goes back to.
      *
+     * It is the view "Standard" of the views menu: no named view is shown after it
+     * ({@link getCurrentView} is null) - also when the grid started in a default view
+     * (`GridView.default`). `applyView(id)` goes back to a view.
+     *
      * @sample grid-state
      * @example
      * ```ts
@@ -364,6 +390,342 @@ export class GridInterface<T> {
      */
     public resetState() {
         this.applyState(this.getStartState());
+        this.showView(null);
+    }
+
+    /**
+     * The named views, in their order: the views of the config and the storage (`GridConfig.views`,
+     * `viewsStorageKey`), with what the user saved, renamed and deleted since - or the list given to
+     * {@link setViews}. See {@link GridView}. Copies: changing them changes nothing in the grid.
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * gridInterface.getViews().map((view) => view.name); // ['Late deliveries', 'My open orders']
+     * ```
+     */
+    public getViews(): GridView[] {
+        return structuredClone(this.views);
+    }
+
+    /**
+     * Replaces the list of named views: loaded from a backend, say. The view shown stays shown when the
+     * list has its id, else none is ("Standard", marked as changed: the state shown is the old view's) -
+     * nothing is applied, the grid shows what it showed. Written to localStorage with
+     * `GridConfig.viewsStorageKey`. Sends no `views-change`: you gave the list.
+     *
+     * The grid keeps a copy, the list passed in is not changed later.
+     *
+     * @param views the views, see {@link GridView}
+     * @throws a `TypeError` when `views` is no list of views - an id or a name that is no text, a state
+     * that is no object, two views of one id, two defaults - before anything changes
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * import type { GridView } from '@simple-html/grid';
+     *
+     * const response = await fetch('/api/settings/orders-grid-views');
+     * const views: GridView[] = await response.json();
+     * gridInterface.setViews(views);
+     * ```
+     */
+    public setViews(views: GridView[]) {
+        assertViews(views, 'setViews()');
+        this.views = structuredClone(views);
+        if (this.currentViewId !== null && !this.views.some((view) => view.id === this.currentViewId)) {
+            this.currentViewId = null;
+            this.viewBaseline = null;
+        }
+        this.viewsChanged(false);
+    }
+
+    /**
+     * The named view the grid shows: the one applied last (the views menu, {@link applyView}, the
+     * default view when the grid was made) or saved last. A copy, null when none is - "Standard" in the
+     * views menu, the config's state: after {@link resetState}, and when the view shown was deleted.
+     *
+     * A change of the state after it - a filter, a column resized, `setState()` - keeps it the view shown:
+     * {@link isViewModified} says the state is not the view's any more.
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * const view = gridInterface.getCurrentView();
+     * console.log(view ? `${view.name}${gridInterface.isViewModified() ? ' *' : ''}` : 'Standard');
+     * ```
+     */
+    public getCurrentView(): GridView | null {
+        const view = this.views.find((each) => each.id === this.currentViewId);
+        return view ? structuredClone(view) : null;
+    }
+
+    /**
+     * `true` when the state changed since the view shown was applied or saved - or, with none shown,
+     * since the grid started in the config's state or went back to it: the `*` after the name on the
+     * views button. A filter, a column moved or resized, a sort, a format, `setState()` ... - the state
+     * compared as JSON, with the expanded groups left out (opening a group changes no view). The
+     * current row, the scroll position and Find are no state.
+     *
+     * Going back: `applyView(id)` the view again, `resetState()` with none shown. `true` too when the
+     * view shown was deleted: the state is no view's.
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * gridInterface.applyView('late');
+     * gridInterface.isViewModified(); // false
+     * gridInterface.setState({ sorting: [{ attribute: 'company', ascending: true }] });
+     * gridInterface.isViewModified(); // true
+     * ```
+     */
+    public isViewModified(): boolean {
+        return this.viewBaseline === null || viewStateText(this.getState()) !== this.viewBaseline;
+    }
+
+    /**
+     * Shows a named view: applies its state, and it is the view shown ({@link getCurrentView}) - as a
+     * click on it in the views menu. What its `state` leaves out is the state the grid starts in
+     * (`GridConfig.initialState` and the config's `layout`): a view is all of the state, not a change of
+     * the state shown. Applied again, it takes back what changed since.
+     *
+     * `null` is "Standard": the config's state, as {@link resetState}.
+     *
+     * @param id the view's `id`, see {@link getViews}
+     * @throws a `TypeError` when no view has the id, and when its state does not fit the grid - aggregates
+     * or a display format of a field that is not of their type, a detail form that is none - as
+     * `setState()` throws, before anything changes
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * gridInterface.applyView('late'); // the view "Late deliveries"
+     * gridInterface.applyView(null); // Standard: the config's state
+     * ```
+     */
+    public applyView(id: string | null) {
+        if (id === null) {
+            this.resetState();
+            return;
+        }
+        const view = this.viewOf(id, 'applyView()');
+        this.applyState({ ...this.getStartState(), ...structuredClone(view.state) });
+        this.showView(id);
+    }
+
+    /**
+     * Saves the state now over the view shown - *Save* in the views menu - and sends `views-change`. Its
+     * name, id and default stay as they are; it is not modified any more.
+     *
+     * @returns the view saved, a copy
+     * @throws a `TypeError` when no view is shown ("Standard", the config's state: {@link saveViewAs}
+     * makes a view of it) and when the view shown is `readonly`
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * gridInterface.applyView('mine');
+     * gridInterface.setState({ sorting: [{ attribute: 'dueDate', ascending: true }] });
+     * gridInterface.saveView(); // "My open orders" sorted on the due date from now on
+     * ```
+     */
+    public saveView(): GridView {
+        if (this.currentViewId === null) {
+            throw new TypeError("saveView(): no view is shown - Standard is the config's state, saveViewAs() makes a view of it");
+        }
+        const view = this.ownView(this.currentViewId, 'saveView()');
+        const state = this.getState();
+        view.state = state;
+        this.viewBaseline = viewStateText(state);
+        this.viewsChanged(true);
+        return structuredClone(view);
+    }
+
+    /**
+     * Saves the state now as a new view, at the end of the list - *Save as new view…* in the views menu -
+     * and sends `views-change`. It is the view shown from then on. Its id is made by the grid (`view-`
+     * and a random part), see the view returned.
+     *
+     * The name can be one another view has, the views menu does not let the user give one.
+     *
+     * @param name the view's name, its spaces at the ends taken off
+     * @returns the view saved, a copy
+     * @throws a `TypeError` when `name` is no text, or only spaces
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * const view = gridInterface.saveViewAs('Late deliveries');
+     * view.id; // 'view-mi3x0h2k-4fz9qa', for applyView(), renameView() ...
+     * ```
+     */
+    public saveViewAs(name: string): GridView {
+        const view: GridView = { id: newViewId(this.views), name: viewName(name, 'saveViewAs()'), state: this.getState() };
+        this.views.push(view);
+        this.showView(view.id, false);
+        this.viewsChanged(true);
+        return structuredClone(view);
+    }
+
+    /**
+     * Gives a view another name - *Rename…* in the views menu - and sends `views-change`.
+     *
+     * @param id the view's `id`
+     * @param name its new name, its spaces at the ends taken off. It can be one another view has
+     * @throws a `TypeError` when no view has the id, when the view is `readonly`, and when `name` is no
+     * text, or only spaces
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * gridInterface.renameView('mine', 'My orders');
+     * ```
+     */
+    public renameView(id: string, name: string) {
+        const view = this.ownView(id, 'renameView()');
+        view.name = viewName(name, 'renameView()');
+        this.viewsChanged(true);
+    }
+
+    /**
+     * Deletes a view - *Delete* in the views menu - and sends `views-change`. The view shown deleted, the
+     * grid shows what it showed: no view is shown then ("Standard", marked as changed), and *Save as new
+     * view…* still makes a view of it.
+     *
+     * @param id the view's `id`
+     * @throws a `TypeError` when no view has the id, and when the view is `readonly`
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * gridInterface.deleteView('mine');
+     * ```
+     */
+    public deleteView(id: string) {
+        const view = this.ownView(id, 'deleteView()');
+        this.views = this.views.filter((each) => each !== view);
+        if (this.currentViewId === id) {
+            this.currentViewId = null;
+            this.viewBaseline = null;
+        }
+        this.viewsChanged(true);
+    }
+
+    /**
+     * Makes a view the default - the one the grid applies when it is made (`GridView.default`), *Default
+     * view* in the views menu - and sends `views-change`. One at a time: the default before is not any
+     * more. A readonly view can be the default. Nothing is applied now.
+     *
+     * @param id the view's `id`, null for none: the grid starts in the config's state ("Standard")
+     * @throws a `TypeError` when no view has the id
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * gridInterface.setDefaultView('late'); // the next time the grid is made it shows "Late deliveries"
+     * gridInterface.setDefaultView(null); // the config's state
+     * ```
+     */
+    public setDefaultView(id: string | null) {
+        if (id !== null) {
+            this.viewOf(id, 'setDefaultView()');
+        }
+        for (const view of this.views) {
+            if (view.id === id) {
+                view.default = true;
+            } else {
+                delete view.default;
+            }
+        }
+        this.viewsChanged(true);
+    }
+
+    /**
+     * The state the grid starts in: the default view (`GridView.default`) applied on top of the start
+     * state (getStartState), else the start state. A default view that can not be applied - stored by a
+     * version of the app of before, say - is passed by with a warning: the grid starts all the same
+     */
+    private applyStartView() {
+        const view = this.views.find((each) => each.default);
+        if (view) {
+            try {
+                this.applyState({ ...this.getStartState(), ...structuredClone(view.state) });
+                this.showView(view.id, false);
+                return;
+            } catch (error) {
+                console.warn(
+                    `GridConfig.views: the default view '${view.name}' could not be applied, the grid starts without it`,
+                    error
+                );
+            }
+        }
+        this.applyState(this.getStartState());
+        this.showView(null, false);
+    }
+
+    /**
+     * Makes `id` the view shown, the state now its own (not modified) - after it was applied or saved -
+     * and renders the views button again: the rebuild of applyState() showed the view before
+     * @param render false when the caller renders it (viewsChanged) or the grid is being made
+     */
+    private showView(id: string | null, render = true) {
+        this.currentViewId = id;
+        this.viewBaseline = viewStateText(this.getState());
+        if (render) {
+            this.__refreshViewsButton();
+        }
+    }
+
+    /**
+     * The view of the id, the grid's own object
+     * @param where the caller, for the message
+     * @throws a `TypeError` when no view has the id
+     */
+    private viewOf(id: string, where: string): GridView {
+        const view = this.views.find((each) => each.id === id);
+        if (!view) {
+            throw new TypeError(`${where}: no view has the id '${id}'`);
+        }
+        return view;
+    }
+
+    /**
+     * The view of the id, to change: not a readonly one
+     * @throws a `TypeError` when no view has the id, and when it is readonly
+     */
+    private ownView(id: string, where: string): GridView {
+        const view = this.viewOf(id, where);
+        if (view.readonly) {
+            throw new TypeError(`${where}: the view '${view.name}' is readonly - saveViewAs() makes a view of the user's of it`);
+        }
+        return view;
+    }
+
+    /**
+     * After the list of views changed: it is written to localStorage (GridConfig.viewsStorageKey), sent
+     * with `views-change` when it was the user's change - not the list given by the app - and the views
+     * button shows it
+     */
+    private viewsChanged(send: boolean) {
+        if (this.options.viewsStorageKey) {
+            writeStoredViews(this.options.viewsStorageKey, this.views);
+        }
+        if (send) {
+            this.__callSubscribers('views-change', { views: this.getViews() });
+        }
+        this.__refreshViewsButton();
+    }
+
+    /**
+     * @internal
+     * Renders the footer again when it shows the views button: its name and its `*` follow the state.
+     * A rebuild renders it anyway; this is for a change of the state that does not rebuild - the width
+     * of the detail form dragged, filter as you type turned on - and for a change of the views
+     */
+    public __refreshViewsButton() {
+        if (this.grid?.domCreated && this.gridConfig.viewsButton) {
+            renderFooter(this.grid);
+        }
     }
 
     /**
@@ -409,6 +771,10 @@ export class GridInterface<T> {
      *   `updateConfig({ edit: { delete: false } })` allows adding and changing. The cells follow at
      *   once; an open menu, date picker, lookup list or editor of a multiline cell is closed - what was
      *   typed in the editor is not saved. See {@link EditPermissions}.
+     * - **`views` and `viewsStorageKey` make the list of views again**, as when the grid is made: the
+     *   config's and the stored ones. Nothing is applied; the view shown stays shown when the list still
+     *   has it. See {@link GridView}. With no view shown ("Standard") and the state the config's, the
+     *   grid still shows the config's state after a new `layout` or `columns`: not marked as changed.
      *
      * The rest of the state - sorting, grouping, filter, header filters - is kept, and so are the
      * handlers subscribed with {@link on}. The object passed in is not changed, the grid copies
@@ -450,9 +816,13 @@ export class GridInterface<T> {
         assertFilterOptions(config, this.dataSource);
         assertConfigDetailForm(config);
         assertEditPermissions(config.edit);
+        assertConfigViews(config);
         // checked before anything changes, like the rest
         const lookupColumns = 'columns' in config ? lookupColumnsOf(config.columns, this.dataSource) : null;
         const { columns, layout, initialState, ...options } = config;
+        // Standard (no view shown) as the config's state stays unchanged: the config's layout or columns
+        // are what it shows from now on, see isViewModified
+        const keepStandard = this.currentViewId === null && !this.isViewModified();
 
         // other edit permissions: what is open was opened under the old ones - a menu, the date picker, the
         // editor of a multiline cell, a lookup's list - and could still write into a row they lock now.
@@ -493,6 +863,15 @@ export class GridInterface<T> {
         if ('initialState' in config) {
             this.initialState = structuredClone(initialState ?? {});
         }
+        // the views made again, as when the grid was made: the config's and the stored ones. The view
+        // shown stays shown when it is still there
+        if ('views' in config || 'viewsStorageKey' in config) {
+            this.views = startViews(this.options.views, this.options.viewsStorageKey);
+            if (this.currentViewId !== null && !this.views.some((view) => view.id === this.currentViewId)) {
+                this.currentViewId = null;
+                this.viewBaseline = null;
+            }
+        }
 
         // a grid always has a layout, `layout: undefined` keeps it
         if (layout) {
@@ -501,6 +880,9 @@ export class GridInterface<T> {
         } else {
             // rebuilds once, the state stays as it is
             this.applyState({});
+        }
+        if (keepStandard) {
+            this.showView(null);
         }
     }
 
@@ -1943,6 +2325,8 @@ export class GridInterface<T> {
             headerFilter?.caseSensitive === true,
             headerFilter?.filterOnType
         );
+        // no rebuild may follow: the views button shows the change
+        this.__refreshViewsButton();
     }
 
     /**
@@ -1952,6 +2336,8 @@ export class GridInterface<T> {
     public __setHeaderFilterCaseSensitive(field: string, caseSensitive: boolean) {
         const headerFilter = this.headerFilters[field];
         this.storeHeaderFilter(field, headerFilter?.value, headerFilter?.operator, caseSensitive, headerFilter?.filterOnType);
+        // no rebuild may follow: the views button shows the change
+        this.__refreshViewsButton();
     }
 
     /**
@@ -1968,6 +2354,8 @@ export class GridInterface<T> {
             headerFilter?.caseSensitive === true,
             filterOnType
         );
+        // no rebuild may follow: the views button shows the change
+        this.__refreshViewsButton();
     }
 
     /**
@@ -2569,6 +2957,8 @@ function withDefaults(options: GridOptions): ParsedGridOptions {
         copyHeaders: options.copyHeaders ?? true,
         filterOperatorIndicator: options.filterOperatorIndicator ?? true,
         settingsButton: options.settingsButton ?? true,
+        // shown when the grid has views to keep
+        viewsButton: options.viewsButton ?? (options.views !== undefined || options.viewsStorageKey !== undefined),
         placeholderRowCurrentEntityOnly: options.placeholderRowCurrentEntityOnly ?? true,
         groupAggregates: options.groupAggregates ?? true,
         totalsRow: options.totalsRow ?? false,
@@ -2700,6 +3090,34 @@ function assertConfigDetailForm(config: Partial<GridConfig>) {
     if (config.detailForm !== undefined) {
         assertDetailForm(config.detailForm, 'GridConfig: detailForm');
     }
+}
+
+/**
+ * `views` is a list of {@link GridView}s (see assertViews) and `viewsStorageKey` a text: TypeScript does
+ * not catch a config from plain JavaScript or JSON. Left out or undefined is none
+ * @throws a `TypeError` that says what is wrong
+ */
+function assertConfigViews(config: Partial<GridConfig>) {
+    if (config.views !== undefined) {
+        assertViews(config.views, 'GridConfig.views');
+    }
+    if (config.viewsStorageKey !== undefined && (typeof config.viewsStorageKey !== 'string' || config.viewsStorageKey === '')) {
+        throw new TypeError(
+            `GridConfig.viewsStorageKey is the key of localStorage, a text, got ${JSON.stringify(config.viewsStorageKey)}`
+        );
+    }
+}
+
+/**
+ * The name of a view: the text with its spaces at the ends taken off
+ * @param where the caller, for the message
+ * @throws a `TypeError` when it is no text, or only spaces
+ */
+function viewName(name: unknown, where: string): string {
+    if (typeof name !== 'string' || name.trim() === '') {
+        throw new TypeError(`${where}: the name of a view is a text, not empty - got ${JSON.stringify(name)}`);
+    }
+    return name.trim();
 }
 
 /**

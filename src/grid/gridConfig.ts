@@ -5,6 +5,7 @@ import type { SortArgument } from '../datasource/sortArgument';
 import type { IDateConfig } from '../date/interfaces';
 import type { Texts } from '../texts';
 import type { ColumnFormat } from './columnFormat';
+import type { GridView } from './gridView';
 
 /**
  * The grid's config: the options of each column (`columns`), where the columns go (`layout`), sizes
@@ -195,6 +196,74 @@ export type GridConfig = {
      * a button of your own. See the formatting guide, "The grid config dialog"
      */
     settingsButton?: boolean;
+    /**
+     * The named views the grid starts with, see {@link GridView}: "My open orders", "Late deliveries" -
+     * each a snapshot of the state under a name. The user switches between them with the views button
+     * at the left end of the footer (`viewsButton`), and saves, renames and deletes their own there. A
+     * view with `readonly: true` is yours - shared by the company, say - the user can apply it and save
+     * it as a view of their own, not change it. The view with `default: true` is applied when the grid is
+     * made, on top of `initialState`.
+     *
+     * The grid keeps the list (`gridInterface.getViews()`) and sends `views-change` with it when the user
+     * changes it: store it there - in a backend, say - and give it back here next time. Or let the grid
+     * keep it in the browser, `viewsStorageKey`. Given, the views button is shown.
+     *
+     * `updateConfig({ views })` makes the list again, as when the grid is made (with the stored views of
+     * `viewsStorageKey`); `setViews()` replaces it. A list that is not one of views - an id or a name
+     * that is no text, a state that is no object, two views of one id, two defaults - throws a
+     * `TypeError` when the grid is made or `updateConfig()` is given it.
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * import { type GridConfig, where } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     layout: { center: [{ fields: ['company'], width: 150 }, { fields: ['country'], width: 120 }] },
+     *     views: [
+     *         {
+     *             id: 'norway',
+     *             name: 'Norway',
+     *             state: { filter: where('country', 'EQUAL', 'Norway'), headerFilters: { country: { value: 'Norway' } } },
+     *             readonly: true
+     *         }
+     *     ],
+     *     // the user's own views are kept in localStorage, the shared one above comes from here every time
+     *     viewsStorageKey: 'orders-grid-views'
+     * };
+     * ```
+     */
+    views?: GridView[];
+    /**
+     * Keeps the user's views in the browser's localStorage under this key, the ready way to keep them
+     * when there is no backend for them: read when the grid is made, written every time the list
+     * changes. Stored are the views that are not `readonly` and which view is the default; the readonly
+     * views come from `views` every time. Once the user has saved one, the stored views are the user's -
+     * a view of `views` that is not readonly and was deleted stays deleted.
+     *
+     * The browser can refuse - blocked storage, a private window that keeps nothing: the grid starts
+     * with `views`, and a view saved stays until the page is left (a warning in the console). Something
+     * stored that is no list of views is passed by. Given, the views button is shown.
+     *
+     * Put a version in the key and change it when the columns of the config change much: a view keeps
+     * the layout it was saved with, see the state guide.
+     *
+     * @sample views
+     */
+    viewsStorageKey?: string;
+    /**
+     * shows the views button at the left end of the footer, on the line of the filter: the name of the
+     * view shown - "Standard" when none is (the config's state) - with a `*` after it when the state
+     * changed since it was applied or saved. A click opens the views menu: the views to switch to, and
+     * Save, Save as new view…, Revert, Rename…, Delete and Default view. Default `true` when `views` or
+     * `viewsStorageKey` is given, else `false`. Not in a footer of no height (`footerHeight: 0`).
+     *
+     * `false` hides it: the views and `gridInterface.applyView()`, `saveViewAs()` ... still work, for a
+     * views control of your own
+     *
+     * @sample views
+     */
+    viewsButton?: boolean;
     /**
      * the whole grid is readonly, default `true`: no cell can be edited, and the row menu has no paste
      * or clear. Set `false` to edit; the column's `readonly` and the `isReadonly` hook
@@ -1140,6 +1209,7 @@ export type ParsedGridOptions = GridOptions &
             | 'copyHeaders'
             | 'filterOperatorIndicator'
             | 'settingsButton'
+            | 'viewsButton'
             | 'placeholderRowCurrentEntityOnly'
             | 'groupAggregates'
             | 'totalsRow'

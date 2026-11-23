@@ -55,6 +55,7 @@ import {
     type GridLayout,
     type GridMenus,
     type GridState,
+    type GridView,
     type GroupArgument,
     type GroupRow,
     type HeaderFilter,
@@ -547,6 +548,27 @@ gridInterface.setState({ filter: null, headerFilters: {} });
 const savedState: Partial<GridState> = JSON.parse('{}');
 gridInterface.setState(savedState);
 gridInterface.resetState();
+// named views: snapshots of the state under a name, plain JSON
+const namedViews: GridView[] = [{ id: 'late', name: 'Late', state: { sorting: [] }, readonly: true, default: false }];
+gridInterface.setViews(namedViews);
+const allViews: GridView[] = gridInterface.getViews();
+const shownView: GridView | null = gridInterface.getCurrentView();
+const viewChanged: boolean = gridInterface.isViewModified();
+gridInterface.applyView('late');
+gridInterface.applyView(null);
+const newView: GridView = gridInterface.saveViewAs('Mine');
+const savedOver: GridView = gridInterface.saveView();
+gridInterface.renameView(newView.id, 'My view');
+gridInterface.setDefaultView(newView.id);
+gridInterface.setDefaultView(null);
+gridInterface.deleteView(newView.id);
+gridInterface.on('views-change', (data) => {
+    const list: GridView[] = data.views;
+    console.log(list.length);
+});
+const viewsConfig: GridConfig = { layout: { center: [] }, views: namedViews, viewsStorageKey: 'orders', viewsButton: true };
+const viewIsData: HasFunction<GridView> extends false ? true : never = true;
+console.log(allViews, shownView, viewChanged, savedOver, viewsConfig, viewIsData);
 // @ts-expect-error saveConfig is gone: getState()
 gridInterface.saveConfig();
 // @ts-expect-error loadConfig is gone: setState()

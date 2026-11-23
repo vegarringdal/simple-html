@@ -84,6 +84,8 @@ function config(readonly: boolean): GridConfig {
     const column = (field: string, width = 100): LayoutColumn => ({ fields: [field], width });
     return {
         readonly,
+        // named views: the button at the footer's left end, the user's views kept in localStorage
+        viewsStorageKey: 'simple-html-demo-full-grid-views',
         columns: {
             id: { readonly: true },
             company: { label: 'Company' },

@@ -12,6 +12,7 @@ import { gridText } from './gridText';
 import { activeCellOfMenu } from './lastPress';
 import { openFilterEditor } from './openFilterEditor';
 import { selectionSummary } from './selectionSummary';
+import { viewsButtonTemplate } from './viewsMenu';
 
 /**
  * The footer runs inside every rebuild, so it must never throw - if it does, the rows are not
@@ -178,6 +179,36 @@ function fitSummary(footer: HTMLElement) {
     }
 }
 
+// the space in px between the views button and the filter's row - which has 6px of its own before Clear
+const VIEWS_GAP = 4;
+
+// the least width in px of the name on a cut views button: two letters and the ellipsis, else none
+const MIN_VIEW_NAME = 16;
+
+/**
+ * The name on the views button (viewsMenu.ts) is cut where the filter's row starts - Clear and the chips,
+ * or "No filter" - so the button is never painted over them on a narrow grid: the filter goes first. Its
+ * `*` and chevron stay, in the room the footer keeps at its left end (has-views); its tooltip has the
+ * whole name. renderFooter gives it its width from the css back before it paints, as the summary's
+ */
+function fitViews(footer: HTMLElement) {
+    const row = footer.querySelector('.footer-filter');
+    const views = footer.querySelector<HTMLElement>('.footer-views');
+    if (!row || !views) {
+        return;
+    }
+    const rowLeft = row.getBoundingClientRect().left;
+    const viewsRect = views.getBoundingClientRect();
+    if (viewsRect.right + VIEWS_GAP > rowLeft) {
+        views.style.maxWidth = `${Math.max(0, rowLeft - VIEWS_GAP - viewsRect.left)}px`;
+        // a sliver of the name is no name: the * and the chevron alone then
+        const name = views.querySelector<HTMLElement>('.footer-views-name');
+        if (name && name.getBoundingClientRect().width < MIN_VIEW_NAME) {
+            name.style.display = 'none';
+        }
+    }
+}
+
 /**
  * The totals row and the footer, for a rebuild
  */
@@ -202,7 +233,12 @@ export function rebuildFooter(ctx: Grid) {
  * filter's row - the last stop of Tab in the footer. It opens the grid config dialog
  * (columnSettings.ts) on the column of the cell that had the focus. With it the footer keeps its room on
  * both sides (`has-settings`): the filter's row stays in the middle and never reaches under it, the
- * summary of the selected cells ends left of it
+ * summary of the selected cells ends left of it.
+ *
+ * The views button (`GridConfig.viewsButton`, viewsMenu.ts) is at the left end on that line, the first
+ * stop of Tab in the footer: the name of the view shown, a click opens the views menu. With it the
+ * footer keeps the same room on both sides (`has-views`), and its name is cut where the filter's row
+ * starts (fitViews)
  */
 export function renderFooter(ctx: Grid) {
     const footer = getElementByClassName(ctx.element, 'simple-html-grid-footer');
@@ -253,6 +289,16 @@ export function renderFooter(ctx: Grid) {
     const shownSummary = footer.querySelector<HTMLElement>('.footer-summary');
     if (shownSummary) {
         shownSummary.style.maxWidth = '';
+    }
+    // the views button at the left end, null when it is not shown. Kept by lit too: fitViews cuts it below
+    const viewsButton = viewsButtonTemplate(ctx, scrollbarHeight);
+    const shownViews = footer.querySelector<HTMLElement>('.footer-views');
+    if (shownViews) {
+        shownViews.style.maxWidth = '';
+        const shownName = shownViews.querySelector<HTMLElement>('.footer-views-name');
+        if (shownName) {
+            shownName.style.display = '';
+        }
     }
 
     // `collapse` replaces the chips with a single summary box - used both when there are more
@@ -338,9 +384,10 @@ export function renderFooter(ctx: Grid) {
         render(
             html`
                 <div
-                    class="footer-inner ${filtered ? 'has-filter' : ''} ${hasRow && !filtered ? 'no-filter' : ''} ${settings ? 'has-settings' : ''}"
+                    class="footer-inner ${filtered ? 'has-filter' : ''} ${hasRow && !filtered ? 'no-filter' : ''} ${settings ? 'has-settings' : ''} ${viewsButton ? 'has-views' : ''}"
                     style=${hasRow ? `padding-top:${scrollbarHeight}px;` : ''}
                 >
+                    ${viewsButton}
                     <span
                         class="footer-count"
                         role="status"
@@ -366,4 +413,5 @@ export function renderFooter(ctx: Grid) {
         }
     }
     fitSummary(footer);
+    fitViews(footer);
 }

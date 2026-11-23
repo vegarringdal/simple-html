@@ -242,6 +242,23 @@ gridInterface.on('find-filter-change', ({ filter }) => {
 });
 ```
 
+### `views-change`
+
+`views-change` is sent when the list of named views changes: the user saved a view (over the one shown,
+or as a new one), renamed or deleted one, or picked the default view - in the views menu of the footer,
+or your code called `saveView()`, `saveViewAs()`, `renameView()`, `deleteView()` or `setDefaultView()`.
+The payload is `{ views }`, what `getViews()` gives: store it, and give it back as `GridConfig.views`
+next time. Not sent by `setViews()` and `updateConfig({ views })` - you gave the list - nor when the
+user only switches views. See [Views](03-state.md#views).
+
+```ts
+gridInterface.on('views-change', ({ views }) => {
+    // the readonly views are yours, they come from the config every time
+    const own = views.filter((view) => !view.readonly);
+    localStorage.setItem('orders-grid-views', JSON.stringify(own));
+});
+```
+
 ### `grid-connected`
 
 `grid-connected` is sent when a grid element connects to the interface: `connectInterface()`, or

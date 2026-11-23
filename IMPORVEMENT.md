@@ -4125,6 +4125,81 @@ rebuildHeaderColumns for the middle section too (scrollHandlers.test.ts has it).
 * browser: the shared sidebar-toggle-check.js expects about 30 rows (28 to 31) where it expected more than 30
   (backup `.before-full-30`): 15/15; full-grid 11/11, sample-height 5/5, detail-form 91/91, color-rules 90/90
 
+### Named views (user request)
+
+* the user: saved views like "My open orders" / "Late deliveries" to switch between, the state of the grid
+  under a name - with Save / Save as / Revert / Rename / Delete / Set as default and a "modified" marker
+* **a view is plain JSON**, `GridView { id, name, state, readonly?, default? }` (new `src/grid/gridView.ts`,
+  exported type). `state` is what `getState()` gives; applied, what it leaves out is the config's state
+  (`getStartState()`: `initialState` + `layout`) - a view is all of the state, not a change of the one shown,
+  and a view saved before a part was added to the state (calculated columns ...) gets the config's
+* **API** on `GridInterface`: `getViews()`, `setViews(views)`, `getCurrentView()` (null = "Standard", the
+  config's state), `isViewModified()`, `applyView(id | null)` (null = `resetState()`), `saveView()` (over the
+  view shown), `saveViewAs(name)`, `renameView(id, name)`, `deleteView(id)`, `setDefaultView(id | null)`.
+  Event `views-change { views }` on every change of the list by the user or those calls - not by `setViews()`
+  / `updateConfig({ views })` (the app gave the list: no save loop), nor on a switch
+* **config**: `views` (the list the grid starts with), `viewsStorageKey` (the opt-in localStorage helper,
+  try/catch, a warning when it can not write; stored: the views that are not readonly + the default's id -
+  readonly views come from the config every time, once the user saved some the stored list is the user's),
+  `viewsButton` (default: true when `views` or `viewsStorageKey` is given - a grid without them looks as
+  before). `TypeError`s for a list that is no list of views (ids unique, one default at most) and a key that is
+  no text; a stored list that is broken is passed by, a default view that can not be applied too (a warning,
+  the grid starts in the config's state)
+* **modified**: the state as JSON with the keys sorted (`viewStateText`), compared with a snapshot taken
+  right after the view was applied or saved - a snapshot, not the stored `state`, so the normalising of
+  `applyState()` (Dates, the order of the header filters, defaults filled in) is no change. Left out:
+  `expandedGroups` (opening a group is no change of the view; the view still keeps them) and layout columns
+  without fields (`__parseConfig` drops them). The footer computes it on render; the few state changes that do
+  not rebuild call `__refreshViewsButton()`: an operator picked, Match case, filter as you type, the detail
+  form's width dragged (detailFormResize.ts)
+* **interplay** (decided): `setState()` from code and the grid config dialog's Apply mark the view changed
+  (it stays the view shown); `resetState()` is Standard - no view, also when the grid started in a default
+  view; the default view is applied on top of `initialState` when the grid is made; deleting the view shown
+  keeps the state (Standard, marked changed - *Save as new view…* gets it back, so no confirmation);
+  `updateConfig()` keeps an unchanged Standard unchanged (a new layout or columns is the config's state);
+  `updateConfig({ views | viewsStorageKey })` makes the list again as at start, `setViews()` replaces it
+* **UI: a button at the left end of the footer** (`viewsMenu.ts`), on the line of the filter's row - the left
+  end was empty, the gear is at the right end. Chosen over the grouping panel (often hidden, `panelHeight`, and
+  the group chips fill it) and over a tab of the grid config dialog (two clicks to switch, and other work
+  changes that dialog). It shows the view's name, a `*` in the edited-cell colour when changed, a chevron;
+  `aria-label`/tooltip "View: My open orders (changed)"; the first stop of Tab in the footer. The filter goes
+  first on a narrow grid: the footer keeps 36px on both sides (`has-views`) and the name is cut where the
+  filter's row starts (`fitViews`, as `fitSummary`) down to the `*` and the chevron - a sliver of a name is
+  hidden. The menu (showMenu, the grid's keyboard): Standard and the views with ✓ - one click to switch, hints
+  *default* / *shared* - then Save, Save as new view…, Revert changes, Rename…, Delete, Default view (a ✓
+  toggle); greyed out where they do not apply. A second click on the button closes it. The name is asked in a
+  menu block at the button (input with the focus, a line saying what is wrong - empty, a name another view has
+  in any case - Cancel / Save, Enter, Esc). Not part of the `menus` hook: `viewsButton: false` + the API for a
+  control of your own. Existing colour variables only (no new ones, no TreDeSpace entry needed), square
+* texts `views.*` (17, guide 12 table, Norwegian in the translation sample)
+* docs: guide 03 new *Views* (the button, where they are kept, applying / saving / modified and the
+  interplay), 02 (options), 09 (`views-change`), 10 (*The views menu*), 12 (texts); JSDoc with examples on
+  every new member; the typings consumer. New sample *Named views* (`samples/demo/samples/views.ts`, group
+  Config, two shared readonly views + `viewsStorageKey`, the API from buttons); the full grid sample has
+  `viewsStorageKey` (description unchanged)
+* tests: new gridViews.test.ts (35: the helpers - assertViews, ids, the state text, storage read / write /
+  throwing, the start list, the name problems; the API - save as, modified and back, two views switched, a view
+  of a few parts, groups opened, save / rename / delete / default and their TypeErrors, the default view on
+  start and a broken one, setViews, updateConfig; localStorage across two grids; the button - when shown, the
+  name / `*` / aria-label, without a rebuild, the first Tab stop, the menu's entries and greyed ones, every
+  command, the name asked, Rename, the grid's texts). texts.test.ts shows the button, the menu and the name
+  (its describe's timeout 30s -> 60s: 15-25s alone, 40s in the whole run on a loaded machine). 3885 tests,
+  165 files (was 3850, 164); tsc, biome, check:typings, check:docs, typecheck, build, build:demo pass
+* not done, candidates: a views hook in `GridMenus`; sharing a view of the user's with others (the app's,
+  from `views-change`); a confirmation for Delete
+* browser (Chromium 1148, port 8091): new `views-check.js` 46/46 (in this worktree's
+  `.claude/browser-checks/scripts/`) - two views saved with other filters and columns (a column resized with
+  the mouse marks Standard changed), switched, the `*` and "(changed)", Save, Revert changes, Rename…,
+  Default view, a reload keeps them and opens in the default, Delete keeps the state; the keyboard (Enter /
+  Space on the button, the arrows, Enter applies and gives the focus back, Esc, a letter, the first Tab
+  stop); the name asked (focus, empty, taken, Enter); the button on the line of "No filter", clear of it and
+  of the chips; contrast 4.5:1 and the `*` 3:1 in light, dark, TreDeSpace light and dark; a phone (Pixel 7):
+  the button cut to its `*` and chevron beside two chips, the menu and the name in the window; the full grid
+  sample with three chips. Screenshots looked at (light, dark, both TreDeSpace, phone, full grid): first
+  version on the phone showed a sliver of the name ("/*") - the button's padding and the footer's room made
+  wider and a name under 16px hidden. Shared checks, unchanged: footer-no-filter 53/53, footer-summary
+  11/11, keyboard 53/53, full-grid 11/11, column-settings 144/144, detail-form 91/91
+
 ## Considered, not done
 
 ## Candidates / not started

@@ -490,6 +490,28 @@ const DEFAULTS = {
     'footer.operator.IS_BLANK': 'is blank',
     'footer.operator.IS_NOT_BLANK': 'is not blank',
 
+    // the named views (GridConfig.views): the button at the footer's left end - the view shown, {name}
+    // its name, "Standard" when none is (the config's state), "(changed)" when the state changed since -
+    // and its menu: the views, the hints of the default view and of a readonly one, the commands
+    'views.standard': 'Standard',
+    'views.button': 'View: {name}',
+    'views.button.modified': 'View: {name} (changed)',
+    'views.default.hint': 'default',
+    'views.shared.hint': 'shared',
+    'views.save': 'Save',
+    'views.saveAs': 'Save as new view…',
+    'views.revert': 'Revert changes',
+    'views.rename': 'Rename…',
+    'views.delete': 'Delete',
+    'views.setDefault': 'Default view',
+    // the name asked for by Save as new view… and Rename…, what is wrong with it, the buttons
+    'views.name': 'Name of the view',
+    'views.name.empty': 'Give the view a name',
+    'views.name.taken': 'Another view has this name',
+    'views.name.cancel': 'Cancel',
+    'views.name.save': 'Save',
+    'views.name.rename': 'Rename',
+
     // the aggregates of the columns (ColumnConfig.aggregate): the label in front of the value in a group
     // row and in the totals row, and the label of the totals row
     'aggregate.sum': 'Sum',
@@ -716,6 +738,7 @@ export type Texts = { [id in TextId]?: string } & { [id: string]: string };
  * | `columnChooser.*` | the column chooser |
  * | `filterEditor.*` | the filter editor, its field and operator menus. `filterEditor.operator.<FilterOperator>`: the names of the operators |
  * | `footer.*` | the footer: the row count, the filter chips, the "No filter" button. `footer.operator.<FilterOperator>`: the short names of the operators (`=`, `contains`) |
+ * | `views.*` | the named views (`GridConfig.views`): the views button at the footer's left end, its menu and the name asked for by *Save as new view…* and *Rename…* |
  * | `aggregate.*` | the aggregates of the columns: the label in front of a value in the group rows and the totals row (`aggregate.<AggregateFunction>`), and the label of the totals row |
  * | `format.*` | the display formats of the columns (`ColumnConfig.format`): `format.locale` the language of the names of a date, a BCP 47 tag for `Intl.DateTimeFormat` (`'en-US'`; not shown, `'nb-NO'` shows `søndag 22. november 2026`), and how a week and a quarter are written |
  * | `grid.*` | labels for screen readers |

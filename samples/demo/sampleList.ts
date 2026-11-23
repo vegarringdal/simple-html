@@ -69,6 +69,8 @@ import { translation } from './samples/translation';
 import translationSource from './samples/translation.ts?raw';
 import { validation } from './samples/validation';
 import validationSource from './samples/validation.ts?raw';
+import { views } from './samples/views';
+import viewsSource from './samples/views.ts?raw';
 
 /**
  * a sample and the text of its file: the source the site shows with the running sample
@@ -118,6 +120,7 @@ export const SAMPLES: Sample[] = [
     { ...filterOperatorHeader, source: filterOperatorHeaderSource },
     // config
     { ...gridState, source: gridStateSource },
+    { ...views, source: viewsSource },
     { ...tooltips, source: tooltipsSource },
     { ...translation, source: translationSource },
     { ...theming, source: themingSource },

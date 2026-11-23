@@ -89,6 +89,7 @@ export {
     type MenuSeparator,
     type MenuSubmenu
 } from './grid/gridMenus';
+export type { GridView } from './grid/gridView';
 export { type Lookup, type LookupFromDatasource, type LookupFromGridInterface, registerLookup } from './grid/lookup';
 export type { ExcelOptions } from './grid/xlsx';
 export { setTexts, TEXTS, type TextId, type Texts } from './texts';

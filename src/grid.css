@@ -2464,6 +2464,65 @@
     margin-top: 2px;
 }
 
+/**
+ * The name of a view, asked for by Save as new view… and Rename… of the views menu (viewsMenu.ts): a
+ * block of a menu of its own - its label, the input framed as the range block's, a line that says what
+ * is wrong with the name, Cancel and Save / Rename
+ */
+.simple-html-grid .simple-html-grid-view-name {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    box-sizing: border-box;
+    width: 260px;
+    max-width: calc(100vw - 8px);
+    padding: 6px 8px 8px;
+}
+
+.simple-html-grid .simple-html-grid-view-name .simple-html-grid-view-name-label {
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+.simple-html-grid .simple-html-grid-view-name .simple-html-grid-view-name-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 24px;
+    margin: 0;
+    padding: 0 6px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    text-align: left;
+}
+
+/* the line under the input: no name yet in the quiet colour of a hint, a name taken as a warning. Its
+ * height kept, the buttons do not move when it comes and goes */
+.simple-html-grid .simple-html-grid-view-name .simple-html-grid-view-name-problem {
+    min-height: 1.4em;
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+.simple-html-grid .simple-html-grid-view-name .simple-html-grid-view-name-taken {
+    color: var(--simple-html-grid-warning-font-color);
+}
+
+.simple-html-grid .simple-html-grid-view-name .simple-html-grid-view-name-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+/* Save while the name is not fine: greyed out, aria-disabled - it keeps the focus */
+.simple-html-grid .simple-html-grid-view-name .simple-html-grid-button[aria-disabled='true'] {
+    filter: opacity(0.5);
+    cursor: default;
+}
+
 .simple-html-draggable-element {
     pointer-events: none;
 }
@@ -2582,6 +2641,78 @@
 
 .simple-html-grid .footer-inner.has-settings .footer-summary {
     right: 36px;
+}
+
+/* the views button (GridConfig.viewsButton, viewsMenu.ts): at the left end of the footer, on the line of
+ * the filter's row (its top is set to the horizontal scrollbar's band), as the gear is at the right. The
+ * area is that line, the button in its middle, square and framed as "No filter": the name of the view
+ * shown, a * when it changed, a chevron. The name is cut with an ellipsis where the filter's row starts
+ * (fitViews in rebuildFooter.ts), the * and the chevron stay. With it the footer keeps 36px on both sides
+ * (has-views) - room for a button cut to its * and chevron - and the filter's row stays in the middle. The
+ * same size on a touch screen, as the footer's other buttons */
+.simple-html-grid .footer-views {
+    position: absolute;
+    left: 4px;
+    bottom: 4px;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    max-width: 40%;
+    pointer-events: none;
+}
+
+.simple-html-grid .footer-views-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 1px 4px;
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: inherit;
+    font-size: inherit;
+    line-height: 1.5;
+    white-space: nowrap;
+    overflow: hidden;
+    cursor: pointer;
+    pointer-events: all;
+}
+
+.simple-html-grid .footer-views-button:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid .footer-views-button:active {
+    background-color: var(--simple-html-grid-main-bg-color);
+}
+
+.simple-html-grid .footer-views-name {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* changed since the view was applied or saved: a * in the colour of an edited cell's marker */
+.simple-html-grid .footer-views-modified {
+    flex: none;
+    color: var(--simple-html-grid-edited-color);
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+/* the chevron points down: the button opens a list, as a select does */
+.simple-html-grid .footer-views-button .simple-html-grid-chevron-icon {
+    transform: rotate(90deg);
+}
+
+.simple-html-grid .footer-inner.has-views {
+    padding-left: 36px;
+    padding-right: 36px;
 }
 
 /* "changed rows only" (datasource.filterChangedOnly()): a chip of its own in front of the filter's,

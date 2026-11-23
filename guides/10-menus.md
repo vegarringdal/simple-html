@@ -71,6 +71,28 @@ the order of the labels:
   names the column follow, `getState()` keeps it, `resetState()` takes it away. The ✎ is a button named
   *Rename Firm*, a stop of Tab after the search.
 
+### The views menu
+
+The views button at the left end of the footer (`GridConfig.viewsButton`, shown with `views` or
+`viewsStorageKey`) opens the views menu above it - a second click closes it. It is a menu of the grid
+as the others: the arrows, Home and End, the first letter of an entry, Enter and Esc work the same, and
+opened from the keyboard (Enter or Space on the button) the focus is on its first entry:
+
+- **Standard and the views**, a ✓ on the one shown: a click applies it, one click to switch. The hint
+  *default* is on the view the grid starts in (Standard when no view is), *shared* on a readonly view.
+- **Save** saves the state over the view shown, **Save as new view…** makes a new view of it, **Revert
+  changes** applies the view shown again. Save is greyed out while nothing changed, and on Standard and a
+  readonly view; Revert changes while nothing changed.
+- **Rename…** and **Delete** the view shown - greyed out on Standard and a readonly view - and
+  **Default view**, a toggle with a ✓: the view shown is the one the grid starts in.
+
+*Save as new view…* and *Rename…* ask for the name in a menu of its own at the button: an input with
+the focus, Cancel and Save (Rename). Enter saves, Esc closes it, the focus goes back to the button. A
+name of only spaces, or one another view has (in any case), is not taken: the line under the input
+says why. The views menu is not one of the `menus` hook: hide the button (`viewsButton: false`) and
+build a control of your own on `getViews()`, `applyView()`, `saveViewAs()` ... See
+[Views](03-state.md#views).
+
 ### Submenus
 
 An item with a `›` opens a submenu beside it:

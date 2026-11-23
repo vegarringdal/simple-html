@@ -554,6 +554,31 @@ The short names of the operators, on a chip:
 | `footer.operator.IS_BLANK` | `is blank` |
 | `footer.operator.IS_NOT_BLANK` | `is not blank` |
 
+### Views
+
+The named views (`GridConfig.views`): the views button at the footer's left end, its menu, and the
+name asked for by *Save as new view…* and *Rename…*, see [Views](03-state.md#views).
+
+| id | English | shown |
+| --- | --- | --- |
+| `views.standard` | `Standard` | the name of no view: the config's state - on the button, and first in the menu |
+| `views.button` | `View: {name}` | the name (`aria-label`) and tooltip of the button, `{name}`: the view shown |
+| `views.button.modified` | `View: {name} (changed)` | the same while the state changed since the view was applied or saved: the `*` after the name on the button |
+| `views.default.hint` | `default` | the hint after the view the grid starts in (`GridView.default`), Standard when no view is |
+| `views.shared.hint` | `shared` | the hint after a readonly view (`GridView.readonly`) |
+| `views.save` | `Save` | saves the state over the view shown |
+| `views.saveAs` | `Save as new view…` | saves the state as a new view, asks for its name |
+| `views.revert` | `Revert changes` | applies the view shown again: what changed since is taken back |
+| `views.rename` | `Rename…` | asks for another name for the view shown |
+| `views.delete` | `Delete` | deletes the view shown |
+| `views.setDefault` | `Default view` | a toggle with a ✓: the view shown is the one the grid starts in |
+| `views.name` | `Name of the view` | the label of the input of the name |
+| `views.name.empty` | `Give the view a name` | under the input while it is empty, or only spaces |
+| `views.name.taken` | `Another view has this name` | under the input while another view has the name (in any case) |
+| `views.name.cancel` | `Cancel` | closes it, nothing saved |
+| `views.name.save` | `Save` | saves the new view (*Save as new view…*) |
+| `views.name.rename` | `Rename` | gives the view the name (*Rename…*) |
+
 ### Aggregates
 
 The aggregates of the columns (`ColumnConfig.aggregate`), see [Aggregates](18-aggregates.md). A

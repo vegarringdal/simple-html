@@ -2,6 +2,7 @@
 
 The config is what you write. The state is what the user changes while working with the grid. Read
 it with `getState()`, give it back with `setState()`, and go back to the start with `resetState()`.
+The user can keep several under names and switch between them in the footer: [Views](#views).
 
 ## What the state is
 
@@ -259,3 +260,108 @@ gridInterface.setState({
     headerFilters: { country: { value: 'Norway' } }
 });
 ```
+
+## Views
+
+A view is a snapshot of the state under a name: "My open orders", "Late deliveries". The user saves
+the views they need and switches between them in the footer - the columns, widths, filters, sorting,
+grouping, formats and colour rules, the totals row and the detail form of each come with it. A view is
+plain JSON, a `GridView`:
+
+```ts
+import type { GridView } from '@simple-html/grid';
+
+const view: GridView = {
+    id: 'mine', // unique in the list, never shown
+    name: 'My open orders',
+    state: gridInterface.getState(), // what it applies
+    readonly: false, // true: a view of yours the user can apply, not change
+    default: false // true: the view the grid starts in
+};
+```
+
+```sample views
+```
+
+### The views button
+
+`views` or `viewsStorageKey` in the config shows the views button at the left end of the footer, on
+the line of the filter - the first stop of Tab in the footer. It shows the name of the view shown,
+**Standard** when none is: the config's state (`initialState` and `layout`). A `*` after the name says
+the state changed since the view was applied or saved - a filter, a column moved or resized, a sort; its
+name for a screen reader says it in words, "View: My open orders (changed)". A click opens the views
+menu: the views to switch to - one click - then *Save*, *Save as new view…*, *Revert changes*,
+*Rename…*, *Delete* and *Default view*, see [The views menu](10-menus.md#the-views-menu). On a narrow
+grid the filter goes first: the name is cut where the filter's row starts, its tooltip has all of it.
+`viewsButton: false` hides the button, the API below still works.
+
+### Where the views are kept
+
+The grid keeps the list; where it is stored is the app's choice:
+
+- **localStorage**: `viewsStorageKey: 'orders-grid-views'` - read when the grid is made, written
+  each time the list changes. Stored are the views that are not readonly, and which one is the default.
+  A browser that refuses (blocked storage) gives a warning in the console, the views stay until the
+  page is left.
+- **a backend**: `views-change` sends the list each time the user changes it, give it back as
+  `views` next time - or later with `setViews()`.
+
+```ts
+import { createGrid, type GridConfig, type GridView } from '@simple-html/grid';
+
+declare const config: GridConfig;
+
+const saved: GridView[] = await (await fetch('/api/settings/orders-grid-views')).json();
+const gridInterface = createGrid(host, { config: { ...config, views: saved }, datasource });
+
+gridInterface.on('views-change', async ({ views }) => {
+    await fetch('/api/settings/orders-grid-views', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(views.filter((view) => !view.readonly))
+    });
+});
+```
+
+**Views of yours** go in `views` with `readonly: true`: views the company shares, say. The user
+applies them and can save one as a view of their own (*Save as new view…*), not save over, rename or
+delete it. With `viewsStorageKey` they come from the config every time - change them and every user
+gets the new ones - while the user's own come from the storage once the user has saved one: a view of
+`views` that is not readonly and was deleted stays deleted.
+
+A view keeps the layout it was saved with. When the columns of the config change much, put a version
+in the storage key, as for a saved state (see [Saving it](#saving-it)).
+
+### Applying, saving, modified
+
+```ts
+const late = gridInterface.saveViewAs('Late deliveries'); // the state now, the view shown from now on
+gridInterface.applyView(late.id); // shows it
+gridInterface.getCurrentView()?.name; // 'Late deliveries'
+
+gridInterface.setState({ sorting: [{ attribute: 'dueDate', ascending: true }] });
+gridInterface.isViewModified(); // true: the * on the button
+gridInterface.saveView(); // saved over the view shown
+gridInterface.renameView(late.id, 'Late');
+gridInterface.setDefaultView(late.id); // the grid starts in it next time
+gridInterface.deleteView(late.id);
+gridInterface.applyView(null); // Standard: the config's state, as resetState()
+```
+
+- **A view is all of the state.** Applied, what its `state` leaves out is the config's state - its
+  `initialState` and `layout` - not what was shown before: a view of a filter and a sort only is the
+  config's columns with that filter and sort.
+- **Modified** compares the state as JSON with the one the view was applied or saved with. Opening and
+  closing groups is no change (the expanded groups are left out); the current row, the scroll
+  position and Find are no state. Applying the view again (*Revert changes*) takes the change back.
+- **`setState()` from code is a change** like the user's: the view stays the view shown, marked as
+  changed. The grid config dialog's Apply too.
+- **`resetState()`** goes back to the config's state: Standard, no view shown - also when the grid
+  started in a default view.
+- **The default view** (`default: true`, one at most) is applied when the grid is made, instead of
+  `initialState` alone - on top of it. One that can not be applied (a format that does not fit its
+  field any more) is passed by with a warning in the console: the grid starts in the config's state.
+- **Deleting the view shown** leaves the state as it is: Standard is shown, marked as changed - *Save
+  as new view…* makes it a view again. `setViews()` without the view shown does the same.
+- A readonly view, or no view shown, can not be saved over, renamed or deleted: those throw a
+  `TypeError`, and the menu greys them out. An id no view has throws too.

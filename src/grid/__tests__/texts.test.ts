@@ -416,6 +416,44 @@ function showDetailForm({ datasource, gridInterface }: MountedGrid, check: () =>
 }
 
 /**
+ * The named views: the views button at the footer's left end - Standard, changed - its menu with a
+ * readonly view that is the default (its hints), the name asked for by Save as new view… - none yet, one
+ * another view has - and by Rename…. The names of the views are data, in «»
+ */
+function showViews({ element, gridInterface }: MountedGrid, check: () => void) {
+    const viewsButton = () => element.querySelector('.footer-views-button') as HTMLButtonElement;
+    const nameInput = () => document.querySelector('.simple-html-grid-view-name-input') as HTMLInputElement;
+    const typeName = (name: string) => {
+        nameInput().value = name;
+        nameInput().dispatchEvent(new Event('input', { bubbles: true }));
+    };
+    const before = gridInterface.getState();
+    // the button of Standard and the menu: its entries, the hints of the shared view that is the default
+    gridInterface.updateConfig({ viewsButton: true });
+    gridInterface.setViews([{ id: 'shared', name: '«shared»', state: {}, readonly: true, default: true }]);
+    viewsButton().click();
+    check();
+    gridInterface.closeMenu();
+    // changed: the button's name says so. The name asked for, none yet, then one the shared view has
+    gridInterface.setState({ sorting: [{ attribute: 'age', ascending: false }] });
+    viewsButton().click();
+    menuEntry('views.saveAs').click();
+    check();
+    typeName('«shared»');
+    check();
+    typeName('«mine»');
+    nameInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    // Rename…: its button
+    viewsButton().click();
+    menuEntry('views.rename').click();
+    check();
+    gridInterface.closeMenu();
+    gridInterface.setViews([]);
+    gridInterface.updateConfig({ viewsButton: false });
+    gridInterface.setState(before);
+}
+
+/**
  * Opens every part of the grid that shows a text, and checks each
  */
 async function showEverything({ element, datasource, gridInterface }: MountedGrid, check: (more?: string[]) => void) {
@@ -610,6 +648,8 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     showColumnSettings({ element, datasource, gridInterface }, check);
     // the detail form and its tab of the dialog, see showDetailForm
     showDetailForm({ element, datasource, gridInterface }, check);
+    // the views button and its menu, see showViews
+    showViews({ element, datasource, gridInterface }, check);
 
     // the footer: a chip for each operator, five at a time, an OR group in the first
     datasource.filter(and(...conditions(OPERATORS.slice(0, 3)), or(...conditions(OPERATORS.slice(3, 5)))));
@@ -734,8 +774,9 @@ afterEach(() => {
 });
 
 // showEverything opens every part of the grid one by one (every menu, the editors, the date picker
-// ...): seconds, more on a loaded machine than the 5s vitest gives a test
-describe('texts in the grid - every text replaced', { timeout: 30_000 }, () => {
+// ...): seconds, more on a loaded machine than the 5s vitest gives a test. 15-25s alone here, 40s in the
+// whole run with other work on the machine: 60s
+describe('texts in the grid - every text replaced', { timeout: 60_000 }, () => {
     it('expect every text from setTexts(), none left in English, and every id shown', async () => {
         setTexts(fakeTexts(() => true));
         const { seen, check } = checker();

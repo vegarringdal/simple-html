@@ -442,6 +442,25 @@ const norwegian: Record<TextId, string> = {
     'footer.operator.IS_BLANK': 'er tom',
     'footer.operator.IS_NOT_BLANK': 'er ikke tom',
 
+    // the named views: the button at the footer's left end, its menu, the name of a view
+    'views.standard': 'Standard',
+    'views.button': 'Visning: {name}',
+    'views.button.modified': 'Visning: {name} (endret)',
+    'views.default.hint': 'ved start',
+    'views.shared.hint': 'delt',
+    'views.save': 'Lagre',
+    'views.saveAs': 'Lagre som ny visning…',
+    'views.revert': 'Angre endringer',
+    'views.rename': 'Gi nytt navn…',
+    'views.delete': 'Slett',
+    'views.setDefault': 'Vis ved start',
+    'views.name': 'Navn på visningen',
+    'views.name.empty': 'Gi visningen et navn',
+    'views.name.taken': 'En annen visning har dette navnet',
+    'views.name.cancel': 'Avbryt',
+    'views.name.save': 'Lagre',
+    'views.name.rename': 'Gi nytt navn',
+
     // the aggregates of the columns, in the group rows and the totals row
     'aggregate.sum': 'Sum',
     'aggregate.avg': 'Snitt',
