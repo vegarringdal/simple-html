@@ -4772,6 +4772,16 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
   and the palette's backgrounds) is brown next to red - an outlined icon would allow a brighter fill; the
   footer of the grid config dialog is wider than a phone (its *Apply & close* is cut, before this too)
 
+### The buttons of a dialog wrap on a phone
+
+* three agents saw it in their phone screenshots: the grid config dialog at 390px had Reset column, Reset all,
+  Cancel, Apply and Apply & close on one line, squeezed - "Apply & cl"
+* grid.css: `.filter-editor-footer` (every dialog's footer: the filter editor, the grid config dialog, the
+  import dialog) wraps (`flex-wrap: wrap`): with no room Apply & close goes to a second line, at the right; a
+  wide dialog is as it was. Measured: no button's text cut at 390px in the grid config dialog and the filter
+  editor, the same lines at 1300px; column-settings, filter-ui, detail-form-more, import and data-bars checks
+  as before
+
 ## Considered, not done
 
 ## Candidates / not started

@@ -1332,6 +1332,12 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### The buttons of a dialog wrap on a phone
+
+##### Fixed
+- On a phone (390px) the grid config dialog's buttons were squeezed and *Apply & close* was cut off: a
+  dialog's buttons wrap to a second line when there is no room, the ones at the right stay at the right.
+
 #### Data bars, colour scales and icon sets; colours in the Excel export (user request)
 
 ##### Added

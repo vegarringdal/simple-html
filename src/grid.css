@@ -3056,9 +3056,12 @@
 }
 
 /* Cancel, Apply, Apply & close: the buttons of the value list's look, see .simple-html-grid-button */
+/* the buttons of a dialog: they wrap to a second line on a narrow dialog (a phone) - not squeezed, a text
+ * of a button cut off ("Apply & cl"). The buttons at the right stay at the right of their line */
 .simple-html-grid.filter-editor-content .filter-editor-footer {
     flex: none;
     display: flex;
+    flex-wrap: wrap;
     justify-content: flex-end;
     gap: 6px;
     padding: 8px 12px;
