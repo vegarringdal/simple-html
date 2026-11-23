@@ -4892,6 +4892,24 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * "Run workflow" shows for a workflow on the default branch only: next.yml has to be on master too, as
   release.yml and beta.yml (see *Questions for the user*)
 
+### Text filters: the escape `\` (user request)
+
+* the user: the SQL escapes `!`, "what if we want to search = S__den, or a name containing % or *"; `\`
+  rather than Excel's `~`; `_` as one character stays useful. There was no escape: `literal` (API, Find)
+  takes the whole value as it is, a header filter could not make it, nor mix plain and wildcards
+* textPattern.ts `textPatternParts(value, literal)`: the one reading of a text value - plain text,
+  wildcards, escaped characters (`\*`, `\%`, `\_`, `\\`). A `\` before anything else or at the end is a `\`
+  (`C:\temp`). objectFilter.ts `matchesText` and sql/buildWhere.ts `compareText` both build from it, the
+  escaped character is the dialect's `wildcardLiteral`, as with `literal`. `blankRowMatches` uses
+  objectFilter: no change
+* `escapeTextPattern(text)` exported: the value that finds a text as it is (an app filling a header filter)
+* fixed with it: the row menu's *Filter* on a cell made `EQUAL` without `literal` - a cell `50%` found `500`
+  too. Now `literal: true` on a text field
+* tests: textPattern.test.ts (parts, the grid's rows), toSqlWhere.test.ts (the pattern per dialect),
+  sqlSqlite.test.ts (texts with `\` in the rows, 16 escaped values x 6 operators x case x literal: grid
+  and SQLite select the same rows), sqlInjection.test.ts's real database with `literal`
+* changes the meaning of a saved value with `\*`, `\%`, `\_` or `\\` in it - rare; in the changelog
+
 ## Considered, not done
 
 ## Candidates / not started

@@ -767,7 +767,7 @@ function pasteIntoCells(ctx: Grid, attribute: string, data: string, eventData: R
 
 /**
  * The condition the row menu filters on: the cell's value, IS_BLANK for an empty cell (a blank value
- * is no value, the filter would ignore EQUAL ''). On a column that always matches case
+ * is no value, the filter would ignore EQUAL ''), `literal` for a text. On a column that always matches case
  * (filterCaseSensitive) it matches case: `Ann` does not find `ANN`
  */
 function conditionForCell(ctx: Grid, attribute: string, rowData: Entity) {
@@ -775,7 +775,8 @@ function conditionForCell(ctx: Grid, attribute: string, rowData: Entity) {
     const isBlank = value === null || value === undefined || value === '';
     const type = ctx.gridInterface.getDatasource().getField(attribute).type;
     const caseSensitive = isAlwaysCaseSensitive(ctx.gridInterface.__getGridConfig().columns[attribute], type);
-    return isBlank ? where(attribute, 'IS_BLANK') : where(attribute, 'EQUAL', value, { caseSensitive });
+    // the cell's text as it is: a `%` or `_` in it is no wildcard (`50%` does not find `500`)
+    return isBlank ? where(attribute, 'IS_BLANK') : where(attribute, 'EQUAL', value, { caseSensitive, literal: type === 'text' });
 }
 
 function applyFilter(ctx: Grid, filter: FilterGroup, clearHeaderFilters: boolean) {

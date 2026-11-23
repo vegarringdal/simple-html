@@ -1,6 +1,7 @@
 import { FILTER_OPERATORS, type FilterOperator } from '../datasource/filterExpression';
 import { isBlank } from '../datasource/isBlank';
 import { objectFilter, rangeOperator } from '../datasource/objectFilter';
+import { textPatternParts } from '../datasource/textPattern';
 import type { SqlColumn, SqlColumnType, SqlDateStorage, SqlDialect, SqlLimits, SqlOptions, SqlParam, SqlWhere } from '../sql';
 import { DIALECTS, type Dialect } from './dialects';
 import { show } from './show';
@@ -354,7 +355,7 @@ function compare(
 
 /**
  * Text: the pattern operators with LIKE (GLOB on sqlite) - `*` and `%` are wildcards (any text), `_` one
- * character, the rest is literal; with `literal` all of it is - and the comparisons a text does not offer
+ * character, `\*`, `\%`, `\_` and `\\` the character itself, the rest is literal; with `literal` all of it is - and the comparisons a text does not offer
  * (LESS_THAN ...) code point by code point. Whether a blank row (null, `''`) matches is the grid's answer
  * for `''`
  */
@@ -380,12 +381,18 @@ function compareText(
     const fromStart = operator !== 'CONTAINS' && operator !== 'DOES_NOT_CONTAIN' && operator !== 'END_WITH';
     const toEnd = operator !== 'CONTAINS' && operator !== 'DOES_NOT_CONTAIN' && operator !== 'BEGIN_WITH';
     const any = dialect.anyText;
-    // split on the wildcards, kept: the text between them at the even places, the wildcards at the odd -
-    // characters of the pattern with `literal`
-    const wildcard = (part: string) => (literal ? dialect.wildcardLiteral(part) : part === '_' ? dialect.oneChar : any);
-    const body = text
-        .split(/([*%_])/)
-        .map((part, index) => (index % 2 === 0 ? dialect.patternLiteral(part) : wildcard(part)))
+    // the same parts the grid's filter reads (textPatternParts): the plain text escaped for the dialect,
+    // the wildcards the dialect's own, a `\_` (or every `_` with `literal`) a plain `_` of the pattern
+    const body = textPatternParts(text, literal)
+        .map((part) => {
+            if (part.type === 'text') {
+                return dialect.patternLiteral(part.text);
+            }
+            if (part.type === 'char') {
+                return dialect.wildcardLiteral(part.char);
+            }
+            return part.wildcard === '_' ? dialect.oneChar : any;
+        })
         .join('');
     const pattern = `${fromStart ? '' : any}${body}${toEnd ? '' : any}`;
     const match = dialect.match(column.sql, foldedParam(context, pattern, exact), exact);

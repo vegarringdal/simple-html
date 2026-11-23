@@ -750,15 +750,29 @@ operatorsFor(datasource.getField('name').type); // the operators of the name fie
 `'5'`). Both texts are compared in lower case (`toLowerCase()`), or as they are with
 `caseSensitive: true`. `*` and `%` in the value stand for any text - none too, line breaks too, as
 `%` in SQL `LIKE`; `_` stands for one character, any - a line break too, a letter past U+FFFF (an
-emoji) is one - as `_` in `LIKE`. There is no escape: a `_` in the value can not be literal, it
-matches the `_` too. The rest of the value is taken as it is. **`literal: true`** on the condition takes
-all of the value as it is, `*`, `%` and `_` too: `CONTAINS '50%'` finds `50% off`, not `500` - Find's
-filter for a backend (`getFindFilter()`) has it, the header filters and the filter editor do not make it
-(the filter editor leaves it out of a condition it applies).
+emoji) is one - as `_` in `LIKE`. **`\` makes the next `*`, `%`, `_` or `\` a plain character**; a `\`
+before anything else, or at the end, is a `\` (`C:\temp` is `C:\temp`). The rest of the value is taken
+as it is:
+
+| typed | finds |
+| --- | --- |
+| `S__den` | `S__den`, `Sweden` - each `_` any one character |
+| `S\_\_den` | `S__den` only |
+| `*\%*` (`CONTAINS \%`) | a text with `%` in it |
+| `50\%*` | `50%`, `50% off` - not `500` |
+| `a\*b` | `a*b` only |
+| `a\\*` | starts with `a\` |
+
+`escapeTextPattern(text)` gives the value that finds `text` as it is (`'50% off'` → `'50\% off'`), for a
+header filter an app fills in. **`literal: true`** on the condition takes all of the value as it is,
+`*`, `%`, `_` and `\` too: `CONTAINS '50%'` finds `50% off`, not `500` - Find's filter for a backend
+(`getFindFilter()`) and the row menu's *Filter* on a cell's value have it, the header filters and the
+filter editor do not make it (the filter editor leaves it out of a condition it applies).
 A text of several lines is one text: `BEGIN_WITH` is the start of the whole value, not of a line.
 
 In the SQL, `t` is `LOWER(COALESCE(col, ''))` and `v` the value in lower case with its `*` and `%`
-as `%`, its `_` as it is (and the `\` of `LIKE` escaped, it is no escape here):
+as `%`, its `_` as it is, a `\%`, `\_` or `\*` of it escaped for the database's pattern
+(`ESCAPE '!'`, brackets on SQL Server and in SQLite's `GLOB`) - grid and SQL select the same rows:
 
 | operator | matches | SQL, ignoring case |
 | --- | --- | --- |

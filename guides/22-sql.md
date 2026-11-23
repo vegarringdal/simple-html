@@ -174,7 +174,11 @@ made. `NOT (sql)` of any WHERE selects exactly the other rows.
   literal: the escape, and a `[` or `?` of `GLOB`, are escaped in the parameter.
   `EQUAL` is the whole text, `CONTAINS` `%v%`, `BEGIN_WITH` `v%`, `END_WITH` `%v`; `NOT_EQUAL_TO` and
   `DOES_NOT_CONTAIN` their `NOT`.
-- **`literal: true`** takes `*`, `%` and `_` as characters, as the grid does then: they are escaped
+- **`\` makes the next `*`, `%`, `_` or `\` a character**, as in the grid's filter: `S\_\_den` is
+  `LIKE 's!_!_den' ESCAPE '!'`, `50\%*` is `LIKE '50!%%'`. A `\` before anything else is a `\`. The
+  `\` is the grid's escape, not the database's: what reaches the database is a plain `\` where the
+  value has one (`C:\temp`), never an escape of `LIKE` - `ESCAPE '!'` is always given.
+- **`literal: true`** takes `*`, `%`, `_` and `\` as characters, as the grid does then: they are escaped
   where they are wildcards of the pattern - `!%` and `!_` with `ESCAPE '!'`, `[%]` and `[_]` on SQL
   Server, `[*]` in `GLOB` - and the rest is as above: `CONTAINS '50%'` is `LIKE '%50!%%' ESCAPE '!'`.
   [Find's filter](#finds-filter) has it on its texts.
@@ -192,7 +196,7 @@ made. `NOT (sql)` of any WHERE selects exactly the other rows.
 | one character (`_`) | `_` | `_` | `?` | `_` |
 | literal `!` | `!!` | `!!` | `!` | `!` |
 | literal `[`, `?` | as is | as is | `[[]`, `[?]` | `[[]` |
-| `*`, `%`, `_` with `literal` | `*`, `!%`, `!_` | `*`, `!%`, `!_` | `[*]`, `%`, `_` | `*`, `[%]`, `[_]` |
+| `*`, `%`, `_` with `literal`, or `\*`, `\%`, `\_` | `*`, `!%`, `!_` | `*`, `!%`, `!_` | `[*]`, `%`, `_` | `*`, `[%]`, `[_]` |
 | blank | `col IS NULL OR col = ''` | `col IS NULL` | `col IS NULL OR col = ''` | `col IS NULL OR DATALENGTH(col) = 0` |
 | order | `COLLATE "C"` | binary | `COLLATE BINARY` | `COLLATE Latin1_General_100_BIN2` |
 

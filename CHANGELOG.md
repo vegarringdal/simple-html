@@ -1332,6 +1332,23 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Text filters: `\` escapes a wildcard (user request)
+
+##### Added
+- **`\` makes the next `*`, `%`, `_` or `\` a plain character** in a text filter value - a header filter,
+  the filter editor, `where()`, colour rules: `S\_\_den` finds `S__den` and not `Sweden`, `*\%*` a text
+  with `%`, `50\%*` starts with `50%`. `_`, `*` and `%` without it stay wildcards. A `\` before any other
+  character, or at the end, is a `\` (`C:\temp`). `toSqlWhere()` selects the same rows: the escaped
+  character is plain in each dialect's pattern (`!_`, `[_]`, `[*]`).
+- `escapeTextPattern(text)`: the filter value that finds `text` as it is (`'50% off'` → `'50\% off'`).
+
+##### Changed
+- ⚠️ A saved text filter with `\*`, `\%`, `\_` or `\\` in it means the character now, not a `\` and a
+  wildcard. `literal: true` still takes all of the value as it is, `\` too.
+
+##### Fixed
+- The row menu's *Filter* on a cell's value takes the text as it is (`literal`): a cell `50%` found `500`.
+
 #### A dev build to GitHub Packages, by hand (user request)
 
 ##### Added

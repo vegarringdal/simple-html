@@ -255,7 +255,7 @@ describe('ColumnConfig.filterCaseSensitive - a column that always matches case',
         datasource.filter(null);
         openRowMenu(element, 'city', 1);
         menuEntry('row.filter.replace').click();
-        expect(datasource.getFilter()).toEqual(and(where('city', 'EQUAL', 'OSLO', { caseSensitive: true })));
+        expect(datasource.getFilter()).toEqual(and(where('city', 'EQUAL', 'OSLO', { caseSensitive: true, literal: true })));
         expect(names(datasource)).toEqual(['ANN']);
     });
 
@@ -263,7 +263,7 @@ describe('ColumnConfig.filterCaseSensitive - a column that always matches case',
         const { element, datasource } = await mount();
         openRowMenu(element, 'city', 1);
         menuEntry('row.filter.replace').click();
-        expect(datasource.getFilter()).toEqual(and(where('city', 'EQUAL', 'OSLO')));
+        expect(datasource.getFilter()).toEqual(and(where('city', 'EQUAL', 'OSLO', { literal: true })));
     });
 });
 

@@ -109,7 +109,16 @@ const TEXTS = [
     'ab%cd',
     'o"brien',
     "o'brien",
-    'tab\there'
+    'tab\there',
+    // the escape of the grid, `\` - as a character of the row: before a wildcard, another letter, itself
+    'a\\b',
+    'a\\_b',
+    'a\\\\b',
+    '50\\%',
+    'a\\*b',
+    'C:\\temp',
+    '\\',
+    '\\a'
 ];
 // the other text column: no wildcards, the grid would take them as a pattern of the valueField
 const CODES = [null, '', 'ann', 'ANN', 'Anna', 'b', 'zeta', 'a-b', '0', 'null', ' ann '];
@@ -414,7 +423,14 @@ const ASCII_TEXTS = [
     'o"brien',
     "o'brien",
     'tab\there',
-    'b'
+    'b',
+    // the escape of the grid, `\`: as a character of the row, before a wildcard and before another letter
+    'a\\b',
+    'a\\_b',
+    'a\\\\b',
+    '50\\%',
+    'C:\\temp',
+    '\\'
 ];
 const TEXT_VALUES = [...ASCII_TEXTS, 'æble', 'Æble', 'ØL', 'æ*'];
 const NUMBER_VALUES = [0, 1, -1, 2.5, 5, 10, 3, 100, -0.5, '5', '2.5', ' 5 ', '0', 1e6];
@@ -634,6 +650,42 @@ describe('toSqlWhere on SQLite selects the rows the grid selects', () => {
         }
         expect(mismatches.slice(0, 5)).toEqual([]);
         expect(count).toBeGreaterThan(900);
+    });
+
+    it('expect a value with the escape `\\` - `\\_`, `\\%`, `\\*`, `\\\\` - to select the same rows', () => {
+        const mismatches: Mismatch[] = [];
+        let count = 0;
+        const operators = ['EQUAL', 'NOT_EQUAL_TO', 'CONTAINS', 'DOES_NOT_CONTAIN', 'BEGIN_WITH', 'END_WITH'] as const;
+        const values = [
+            'a\\_b',
+            'a_b',
+            '50\\%',
+            '50\\%*',
+            '\\%',
+            '\\_',
+            '\\*',
+            'a\\*b',
+            'a\\\\b',
+            'a\\\\_b',
+            'a\\b',
+            'C:\\temp',
+            '\\',
+            '\\\\',
+            'a\\\\*',
+            '\\a'
+        ];
+        for (const operator of operators) {
+            for (const caseSensitive of [false, true]) {
+                for (const value of values) {
+                    const extra = caseSensitive ? { caseSensitive: true } : {};
+                    check(data, { field: 'name', operator, value, ...extra }, mismatches);
+                    check(data, { field: 'name', operator, value, literal: true, ...extra }, mismatches);
+                    count += 2;
+                }
+            }
+        }
+        expect(mismatches.slice(0, 5)).toEqual([]);
+        expect(count).toBeGreaterThan(300);
     });
 
     it('expect BETWEEN, IN and NOT_IN to select the same rows, also with blanks and open ends', () => {

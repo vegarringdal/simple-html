@@ -162,7 +162,7 @@ describe('text', () => {
         ];
         // exactly one character: not none, not two
         expect(ids(codes, {}, where('name', 'EQUAL', 'pump-__'))).toEqual(['pump', 'pumpAB', 'emoji']);
-        // a _ in the row is a character too: a _ can not be literal
+        // a _ in the row is a character too: `\_` is a plain one (textPattern.test.ts)
         expect(ids(codes, {}, where('name', 'EQUAL', 'pump_01'))).toEqual(['pump', 'underscore', 'line']);
         expect(ids(codes, {}, where('name', 'BEGIN_WITH', 'p_mp'))).toEqual([
             'pump',

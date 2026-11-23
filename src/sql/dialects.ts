@@ -26,8 +26,9 @@ export interface Dialect {
      */
     patternLiteral(text: string): string;
     /**
-     * one of the grid's wildcards (`*`, `%`, `_`) as a character of the pattern, for a condition that is
-     * `literal` (FilterCondition.literal): escaped where it is a wildcard of the dialect's pattern too
+     * one of the grid's wildcards (`*`, `%`, `_`) as a character of the pattern: escaped with `\` in the
+     * value (`\_`), or every one of a condition that is `literal` (FilterCondition.literal). Escaped where
+     * it is a wildcard of the dialect's pattern too
      */
     wildcardLiteral(wildcard: string): string;
     /**
@@ -91,7 +92,9 @@ function dateValue(milliseconds: number, storage: SqlDateStorage, separator: ' '
 
 // LIKE with ESCAPE '!': `!` escapes `%`, `_` and itself. Oracle allows nothing else after it (ORA-01424).
 // `%` and `_` are wildcards of the grid too, so only `!` is escaped in the text between them - they are
-// escaped on their own when the condition is `literal` (bangWildcard)
+// escaped on their own when they are plain characters, `\%` in the value or `literal` (bangWildcard).
+// The grid's escape `\` is no escape of the pattern: ESCAPE '!' makes `\` a plain character, as it is
+// in the value once the grid has read it (textPatternParts)
 const escapeWithBang = (text: string) => text.replace(/!/g, '!!');
 
 /** a wildcard of the grid as a character of a LIKE pattern with ESCAPE '!': `%` and `_` escaped, `*` is none */

@@ -324,6 +324,29 @@ describe('text', () => {
     });
 });
 
+describe('the escape `\`: `\_`, `\%`, `\*` and `\\` are characters, the other wildcards stay wildcards', () => {
+    it("expect each dialect's pattern: the escaped character plain, the wildcard next to it its own", () => {
+        // S\_\_den*: S, two plain `_`, den, then any text
+        const value = 'S\\_\\_den*';
+        expect(sql(where('name', 'EQUAL', value), 'postgres').params).toEqual(['s!_!_den%']);
+        expect(sql(where('name', 'EQUAL', value), 'oracle').params).toEqual(['s!_!_den%']);
+        expect(sql(where('name', 'EQUAL', value), 'mssql').params).toEqual(['s[_][_]den%']);
+        expect(sql(where('name', 'EQUAL', value), 'sqlite').params).toEqual(['s__den*']);
+    });
+
+    it('expect \\% and \\* plain, \\\\ one backslash, a backslash before another letter a backslash', () => {
+        const value = '50\\%_\\*%\\\\C:\\temp';
+        expect(sql(where('name', 'EQUAL', value), 'postgres').params).toEqual(['50!%_*%\\c:\\temp']);
+        expect(sql(where('name', 'EQUAL', value), 'mssql').params).toEqual(['50[%]_*%\\c:\\temp']);
+        expect(sql(where('name', 'EQUAL', value), 'sqlite').params).toEqual(['50%?[*]*\\c:\\temp']);
+    });
+
+    it('expect literal to take the backslash as it is too', () => {
+        expect(sql(where('name', 'EQUAL', 'a\\_b', { literal: true }), 'postgres').params).toEqual(['a\\!_b']);
+        expect(sql(where('name', 'EQUAL', 'a\\_b', { literal: true }), 'sqlite').params).toEqual(['a\\_b']);
+    });
+});
+
 describe('literal: the wildcards of the grid as characters', () => {
     const literal = { literal: true };
 

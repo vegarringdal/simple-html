@@ -32,6 +32,7 @@ export { NumberFormatterDot } from './datasource/numberFormatterDot';
 export type { SelectionMode } from './datasource/selectionMode';
 export type { SortArgument } from './datasource/sortArgument';
 export { TextFormatter } from './datasource/textFormatter';
+export { escapeTextPattern } from './datasource/textPattern';
 export type {
     ValidationError,
     ValidationOption,

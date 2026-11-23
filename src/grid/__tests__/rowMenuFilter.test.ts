@@ -62,7 +62,7 @@ describe('row menu - replace filter', () => {
 
         menuItem('Replace filter').click();
 
-        expect(datasource.getFilter()).toEqual(and(where('firstname', 'EQUAL', 'first1')));
+        expect(datasource.getFilter()).toEqual(and(where('firstname', 'EQUAL', 'first1', { literal: true })));
     });
 });
 
@@ -73,7 +73,9 @@ describe('row menu - add to filter', () => {
 
         menuItem('Add to filter').click();
 
-        expect(datasource.getFilter()).toEqual(and(where('firstname', 'EQUAL', 'first1'), where('lastname', 'EQUAL', 'last3')));
+        expect(datasource.getFilter()).toEqual(
+            and(where('firstname', 'EQUAL', 'first1', { literal: true }), where('lastname', 'EQUAL', 'last3'))
+        );
     });
 
     it('expect the conditions to be joined with AND', async () => {
@@ -91,7 +93,7 @@ describe('row menu - add to filter', () => {
 
         menuItem('Add to filter').click();
 
-        expect(datasource.getFilter()).toEqual(and(where('firstname', 'EQUAL', 'first3')));
+        expect(datasource.getFilter()).toEqual(and(where('firstname', 'EQUAL', 'first3', { literal: true })));
         expect(datasource.getDataRows()).toHaveLength(1);
     });
 
@@ -101,7 +103,9 @@ describe('row menu - add to filter', () => {
 
         menuItem('Add to filter').click();
 
-        expect(datasource.getFilter()).toEqual(and(where('firstname', 'EQUAL', 'first1'), where('age', 'LESS_THAN', 30)));
+        expect(datasource.getFilter()).toEqual(
+            and(where('firstname', 'EQUAL', 'first1', { literal: true }), where('age', 'LESS_THAN', 30))
+        );
         expect(datasource.getDataRows()).toHaveLength(1);
     });
 
@@ -112,7 +116,7 @@ describe('row menu - add to filter', () => {
 
         menuItem('Add to filter').click();
 
-        expect(datasource.getFilter()).toEqual(and(where('firstname', 'EQUAL', 'first1'), either));
+        expect(datasource.getFilter()).toEqual(and(where('firstname', 'EQUAL', 'first1', { literal: true }), either));
         expect(datasource.getDataRows()).toHaveLength(1);
     });
 });

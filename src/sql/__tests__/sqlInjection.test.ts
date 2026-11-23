@@ -227,11 +227,11 @@ describe('hostile values are parameters, never SQL', () => {
         });
         insert.run(1000, 'innocent');
         HOSTILE.forEach((value, index) => {
-            // the wildcards of the grid are wildcards: those values find more than themselves
-            if (/[*%_]/.test(value)) {
-                return;
-            }
-            const { sql, params } = run({ field: 'name', operator: 'EQUAL', value, caseSensitive: true }, 'sqlite');
+            // literal: the wildcards and the `\` escape of the grid are characters too, every value is only itself
+            const { sql, params } = run(
+                { field: 'name', operator: 'EQUAL', value, caseSensitive: true, literal: true },
+                'sqlite'
+            );
             const ids = db
                 .prepare(`SELECT id FROM t WHERE ${sql}`)
                 .all(...(params as string[]))

@@ -2,6 +2,7 @@ import type { Entity } from './entity';
 import type { FieldType } from './field';
 import type { FilterOperator } from './filterExpression';
 import { isBlank } from './isBlank';
+import { textPatternParts } from './textPattern';
 
 /**
  * @internal
@@ -187,8 +188,9 @@ export function rangeOperator(operator: FilterOperator): FilterOperator {
  * A text condition. The row value as text - a blank (null, undefined) is `''`, anything else
  * `String(value)` - and the value as text, both in lower case unless `caseSensitive`. `*` and `%` in
  * the value are wildcards: any text, none too, line breaks too. `_` is one character, any - as in SQL
- * `LIKE`. The rest of the value is taken as it is, there is no escape; `literal` takes all of it as
- * it is, the wildcards too. The text `LESS_THAN` ... (a text field does not offer them) compare the
+ * `LIKE`. A `\` before `*`, `%`, `_` or `\` makes it a plain character (textPatternParts), the rest
+ * of the value is taken as it is; `literal` takes all of it as it is, the wildcards and `\` too. The
+ * text `LESS_THAN` ... (a text field does not offer them) compare the
  * two texts as JavaScript does, code unit by code unit, without wildcards
  */
 function compareText(
@@ -246,15 +248,24 @@ function hasText(row: string, text: string, fromStart: boolean, toEnd: boolean):
 }
 
 /**
- * true when `row` has `text` in it, `*` and `%` in `text` standing for any text, `_` for one character
+ * true when `row` has `text` in it, `*` and `%` in `text` standing for any text, `_` for one character,
+ * `\*`, `\%`, `\_` and `\\` for the character itself (textPatternParts)
  * (`s`: line breaks too; `u`: a letter past U+FFFF - an emoji - is one character, as in SQL).
  * `fromStart`: at the start of `row`, `toEnd`: at its end - both: the whole of `row`
  */
 function matchesText(row: string, text: string, fromStart: boolean, toEnd: boolean): boolean {
-    const pattern = text
-        .replace(/[.^$+?()[\]{}\\|]/g, '\\$&')
-        .replace(/[*%]/g, '.*')
-        .replace(/_/g, '.');
+    const plain = (characters: string) => characters.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const pattern = textPatternParts(text)
+        .map((part) => {
+            if (part.type === 'text') {
+                return plain(part.text);
+            }
+            if (part.type === 'char') {
+                return plain(part.char);
+            }
+            return part.wildcard === '_' ? '.' : '.*';
+        })
+        .join('');
     return new RegExp(`${fromStart ? '^' : ''}${pattern}${toEnd ? '$' : ''}`, 'su').test(row);
 }
 
