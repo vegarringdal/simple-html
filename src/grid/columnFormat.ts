@@ -20,8 +20,8 @@ import type { ColumnConfig } from './gridConfig';
  * cellTemplate.ts. The address of a link is GridInterface.__getCellLink.
  *
  * The format has the rest of what the user sets for a column in the grid config dialog too: the
- * column's label (`label`, read by getColumnLabel), the placeholder of its header filter (`placeholder`,
- * `placeholderLabel` - headerFilterPlaceholder.ts), a number column's blank / 0 (`numberOverride`,
+ * column's label (`label`, read by getColumnLabel), the placeholder of its empty cells (`placeholderRow`,
+ * `placeholderRowLabel` - rowPlaceholder), a number column's blank / 0 (`numberOverride`,
  * numberOverrideOf in cellText.ts) and the checkboxes of a text or number column (`checkbox`). And its
  * colour rules (`rules`, colorRules.ts): a cell's colours from its value.
  */
@@ -266,10 +266,10 @@ export interface CheckboxFormat {
  * "Templates" and "Links".
  *
  * The rest of what the user sets in the grid config dialog is in the format too, so the state
- * keeps it with the rest: the column's `label` and the `placeholder` of its header filter (any column),
+ * keeps it with the rest: the column's `label` and the placeholder of its empty cells (`placeholderRow`),
  * a number column's `numberOverride` (blank as 0, 0 as blank), and `checkbox` - the cells of a text or
  * number column as checkboxes. Each wins over the column's own option (`ColumnConfig.label`,
- * `placeholderFilter`, `numberOverride`). And `rules`, the colour rules of any column: a cell's text
+ * `placeholderRow`, `numberOverride`). And `rules`, the colour rules of any column: a cell's text
  * colour, background and bold from its value.
  *
  * @example
@@ -284,7 +284,7 @@ export interface CheckboxFormat {
  *         balance: { format: { number: { decimals: 2, thousands: ' ', decimal: ',' } } }, // 1 234 567,89
  *         name: { format: { text: '{name} ({id})' } }, // Ann (12)
  *         company: { format: { link: { url: 'https://duckduckgo.com/?q={company}', newTab: true } } },
- *         stock: { format: { label: 'In stock', placeholderLabel: true, numberOverride: 'ZERO_TO_BLANK' } },
+ *         stock: { format: { label: 'In stock', placeholderRowLabel: true, numberOverride: 'ZERO_TO_BLANK' } },
  *         newsletter: { format: { checkbox: { checked: '1', unchecked: '0' } } }, // '1' is checked
  *         // red text for a negative number, the first rule that matches wins
  *         total: { format: { rules: [{ operator: 'LESS_THAN', value: '0', color: 'red' }] } }
@@ -326,14 +326,14 @@ export interface ColumnFormat {
      */
     label?: string;
     /**
-     * the placeholder of the column's empty header filter, any column but a `boolean` one (its filter is
-     * a checkbox): `'Search the names'`. Wins over `ColumnConfig.placeholderFilter`. Left out: the
-     * column's own placeholder, else the type's (`Text`, `YYYY-MM-DD` ...). Not `''`, not with
-     * `placeholderLabel`
+     * the placeholder of the column's empty cells - the text an empty cell shows greyed, what to type in it
+     * (`'Required'`, `'Name of the customer'`) - any column but a `boolean` one (its cells are checkboxes).
+     * Wins over `ColumnConfig.placeholderRow`; `GridConfig.placeholderRowCurrentEntityOnly` shows it on the
+     * current row only. Left out: the column's own. Not `''`, not with `placeholderRowLabel`
      */
-    placeholder?: string;
-    /** `true`: the placeholder of the column's header filter is the column's label, see `placeholder` */
-    placeholderLabel?: boolean;
+    placeholderRow?: string;
+    /** `true`: the placeholder of the column's empty cells is the column's label, see `placeholderRow` */
+    placeholderRowLabel?: boolean;
     /**
      * what the cells of a `number` column show for a blank and for 0 - the value is not changed:
      * `'BLANK_TO_ZERO'` a blank as `0`, `'ZERO_TO_BLANK'` 0 as an empty cell, `'NONE'` both as they
@@ -385,6 +385,19 @@ export interface ColumnFormat {
      * `readonly`. The `isReadonly` hook still has the last word, it gets this as its `readonly`
      */
     readonly?: boolean;
+}
+
+/**
+ * The placeholder of a column's empty cells: the user's from the grid config dialog - the column's label
+ * (`format.placeholderRowLabel`) or a text (`format.placeholderRow`) - else the column's own
+ * (`ColumnConfig.placeholderRow`), else none (`''`)
+ * @param label the column's label, getColumnLabel
+ */
+export function rowPlaceholder(column: ColumnConfig | undefined, label: string): string {
+    if (column?.format?.placeholderRowLabel) {
+        return label;
+    }
+    return column?.format?.placeholderRow ?? column?.placeholderRow ?? '';
 }
 
 /**
@@ -732,8 +745,8 @@ const FORMAT_KEYS: readonly (keyof ColumnFormat)[] = [
     'text',
     'link',
     'label',
-    'placeholder',
-    'placeholderLabel',
+    'placeholderRow',
+    'placeholderRowLabel',
     'numberOverride',
     'checkbox',
     'filterAsShown',
@@ -777,7 +790,7 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
  * - `text` and `link` for a `text` field: a template that is text, not `''`, without a placeholder of
  *   the grid's own (`{__...}`); a {@link LinkFormat} whose `url` starts with `https://`, `http://`,
  *   `mailto:` or `tel:` or is one placeholder (cellTemplate.ts, urlTemplateProblem)
- * - `label` and `placeholder` text, not `''`; `placeholderLabel` true or false, not with `placeholder`;
+ * - `label` and `placeholderRow` text, not `''`; `placeholderRowLabel` true or false, not with `placeholderRow`;
  *   no placeholder for a `boolean` field (its header filter is a checkbox)
  * - `numberOverride` for a `number` field: `'BLANK_TO_ZERO'`, `'ZERO_TO_BLANK'` or `'NONE'`
  * - `checkbox` for a `text` or `number` field: a {@link CheckboxFormat} (checkboxProblem), not with
@@ -950,7 +963,7 @@ function assertNumberFormat(format: unknown, name: string): void {
  * @throws a `TypeError` naming the part and what it takes
  */
 function assertLabelParts(format: Record<string, unknown>, field: string, type: FieldType, lookup: boolean, name: string): void {
-    const { label, placeholder, placeholderLabel } = format;
+    const { label, placeholderRow: placeholder, placeholderRowLabel: placeholderLabel } = format;
     const isText = (value: unknown) => typeof value === 'string' && value.trim() !== '';
     if (label !== undefined && !isText(label)) {
         throw new TypeError(
@@ -959,20 +972,20 @@ function assertLabelParts(format: Record<string, unknown>, field: string, type: 
     }
     if ((placeholder !== undefined || placeholderLabel !== undefined) && type === 'boolean' && !lookup) {
         throw new TypeError(
-            `${name}.${placeholder !== undefined ? 'placeholder' : 'placeholderLabel'} is for a header filter that is typed in, '${field}' is boolean: its filter is a checkbox`
+            `${name}.${placeholder !== undefined ? 'placeholderRow' : 'placeholderRowLabel'} is for a cell that is typed in, '${field}' is boolean: its cells are checkboxes`
         );
     }
     if (placeholder !== undefined && !isText(placeholder)) {
         throw new TypeError(
-            `${name}.placeholder is ${JSON.stringify(placeholder)}, it is the placeholder of the header filter: text, not '' - left out, the column's own`
+            `${name}.placeholderRow is ${JSON.stringify(placeholder)}, it is the placeholder of the empty cells: text, not '' - left out, the column's own`
         );
     }
     if (placeholderLabel !== undefined && typeof placeholderLabel !== 'boolean') {
-        throw new TypeError(`${name}.placeholderLabel is ${JSON.stringify(placeholderLabel)}, it is true or false`);
+        throw new TypeError(`${name}.placeholderRowLabel is ${JSON.stringify(placeholderLabel)}, it is true or false`);
     }
     if (placeholder !== undefined && placeholderLabel === true) {
         throw new TypeError(
-            `${name} has placeholder and placeholderLabel: true - the placeholder is the text or the label, not both`
+            `${name} has placeholderRow and placeholderRowLabel: true - the placeholder is the text or the label, not both`
         );
     }
 }

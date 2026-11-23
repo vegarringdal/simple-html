@@ -41,8 +41,9 @@ export interface CellRenderContext<T = unknown> {
     /** the cell's type: the field's, or the one `dynamicCellTypeColumn` gives this row */
     type: FieldType;
     /**
-     * the cell can not be edited: the grid is readonly, or the cell is - the column's `readonly`, the
-     * `isReadonly` hook. Do not write the value then
+     * the cell can not be edited: the grid is readonly, the edit permissions lock the row
+     * (`GridConfig.edit`, `change: false`), or the cell is - the column's `readonly`, the `isReadonly`
+     * hook. Do not write the value then
      */
     readonly: boolean;
     /** the index of the row in the displayed rows (`datasource.getRows()`), 0 based - as in the grid's events */

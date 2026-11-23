@@ -16,7 +16,7 @@ import { getHeaderFilterOperator } from './getHeaderFilterOperator';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { headerFilterFormatter, pickerRange } from './headerFilterFormatter';
-import { headerFilterPlaceholder } from './headerFilterPlaceholder';
+import { defaultFilterPlaceholder } from './headerFilterPlaceholder';
 import { keepHeaderFilterFocus } from './headerOperatorMenu';
 
 export function renderHeaderFilter(
@@ -47,15 +47,10 @@ export function renderHeaderFilter(
         // a column that filters as shown reads and writes the text in its display format (`2026-W47`)
         const formatter: Formatter = lookup ? TextFormatter : headerFilterFormatter(ctx, attribute, cellConfig.format);
 
-        // the user's from the column settings (the label, or a text), else the column's own placeholder,
-        // a BETWEEN's "from..to", the formatter's (a date's format, YYYY-MM-DD), the field's type: "Text",
+        // the column's own placeholder, a BETWEEN's "from..to", the formatter's (a date's format,
+        // YYYY-MM-DD, an example of the display format it filters as shown), the field's type: "Text",
         // "Number" (headerFilterPlaceholder.ts). A boolean filter is a checkbox
-        const placeholderFilter = headerFilterPlaceholder(
-            ctx,
-            attribute,
-            cellConfig.format,
-            getHeaderFilterOperator(ctx, attribute)
-        );
+        const placeholderFilter = defaultFilterPlaceholder(ctx, attribute, getHeaderFilterOperator(ctx, attribute));
 
         // what the cell shows, from the state's header filters. ?? and not ||: false and 0 are filters too
         let currentValue: unknown = ctx.gridInterface.__getHeaderFilter(attribute)?.value ?? '';

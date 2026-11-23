@@ -31,9 +31,79 @@ Or turn it on and off while the grid is shown: `gridInterface.updateConfig({ rea
 In an editable grid, a cell is readonly when the `isReadonly(row, field)` hook returns `true`,
 and editable when it returns `false`. When it returns nothing (or there is none), the column's
 `readonly` option decides. See [Grid config](02-grid-config.md#readonly-and-css-classes-from-the-row)
-for `isReadonly`. Readonly cells of an editable grid are shown with stripes.
+for `isReadonly`. Readonly cells of an editable grid are shown with stripes. What the user may do at
+all - add rows, change values, delete rows - is `edit`, see [Edit permissions](#edit-permissions-add-change-delete).
 
 ```sample editing
+```
+
+## Edit permissions: add, change, delete
+
+`readonly: false` lets the user edit, `edit` says what of it they may do: add rows, change values,
+delete rows - any of them. Each is `true` when it is left out:
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    readonly: false,
+    // new rows only: the user adds rows and fills them in, the rows that are there stay as they are
+    edit: { add: true, change: false, delete: false },
+    layout: { center: [{ fields: ['name'], width: 150 }] }
+};
+```
+
+```ts
+declare const user: { isAdmin: boolean };
+
+// after a login check: an admin may delete too
+gridInterface.updateConfig({ edit: { add: true, change: false, delete: user.isAdmin } });
+```
+
+- **A permission is yours, not the user's**: it is not part of the state (`getState()` has none), and
+  no menu or dialog changes it. A column's `readonly` is different: it is a default the user can turn
+  off in the grid config dialog (*Read only*).
+- **`updateConfig({ edit })` replaces all three**: one left out is allowed again. The cells follow at
+  once; what is open - a menu, the date picker, a lookup's list, the editor of a multiline cell - is
+  closed, what was typed in the editor is not saved.
+- **A `TypeError`** for anything but an object of `add`, `change` and `delete`, each `true` or `false`:
+  a misspelt `chnage: false` would leave the user allowed without a word.
+
+| permission | `false` stops | still allowed |
+| --- | --- | --- |
+| `change` | changing a value of a row that was there: typing, the editor of a multiline cell, the date picker, a lookup's list or grid, a checkbox, the editor of a custom cell (its renderer is told `readonly`), paste (Ctrl+V, *Paste ›*), clear (Delete on ranges, *Clear ›*), fill down (Ctrl+D, the fill handle, `fillDown()`), the [detail form](02-grid-config.md#the-detail-form). The cells look as in a readonly grid: no stripes | **a new row** (`__rowState` `'N'`) is filled in as any row while `add` is allowed - who may add a row may fill it in. Once `acceptChanges()` took it in it is a row that was there, locked like the rest |
+| `delete` | marking a row that was there for deletion: *Delete › Row* and *Rows (selected rows)* are greyed out on them - the menu keeps its shape - and Delete on a row number leaves them | taking out **a new row**: it is not on the server, nothing is deleted - it is the undo of an add. *Undo (selected rows)* takes a mark off |
+| `add` | nothing in the grid: the grid has no add of its own. Your add button follows it (below), and with `change: false` too the new rows your code adds can not be filled in | |
+
+With `change` and `add` both `false` no value can change at all: the row menu has no *Paste ›* and
+*Clear ›*, there is no fill handle, and Ctrl+V, Delete and Ctrl+D are the browser's - as in a
+readonly grid. *Delete ›* stays in an editable grid: a new row can always be taken out.
+
+**What every permission leaves**: undo and redo (Ctrl+Z, Ctrl+Y, *Undo / Redo ›*), the reverts
+(*Undo cell edit*, *Undo row edits*, a click on the marker of an edited cell) and taking a deletion
+mark off. They put back what was, they make nothing new - and the history has only what the user was
+allowed to do, and the edits of your code. A permission taken away while the grid is shown leaves the
+history as it is: call `datasource.clearHistory()` with it when a redo must not bring back what was done
+before.
+
+**Your code is not stopped**: the permissions are about the grid's own ways of editing - the user's
+typing, the menus, the keys. A value set from code, `addNewEmpty()`, `markForDeletion()`, `undo()` go
+through as before, so an "Add row" or "Delete" button of your own follows the permissions as you make it.
+`gridInterface.fillDown()` goes through the grid, it follows them:
+
+```ts
+declare const addButton: HTMLButtonElement;
+declare const canAdd: boolean;
+
+gridInterface.updateConfig({ edit: { add: canAdd } });
+addButton.hidden = !canAdd;
+addButton.onclick = () => datasource.addNewEmpty();
+```
+
+The `isReadonly` hook, a column's `readonly` and `allowPasteClearOnly` still make cells readonly where
+a permission allows the change. The hook can not make a cell of a locked row editable.
+
+```sample edit-permissions
 ```
 
 ## How the user edits
@@ -134,6 +204,7 @@ gridInterface.fitRows();
 | Esc | closes without saving, the focus back in the cell |
 | Tab / Shift+Tab | saves and closes, and goes on to the next / previous cell |
 | a click outside it | saves and closes, the focus goes where the click put it |
+| the ✕ at the right of the hint under it | saves and closes, the focus back in the cell - for a mouse and a finger, which has no Ctrl+Enter. In a readonly editor it closes |
 | scrolling the grid (the wheel, a swipe, the scrollbars) | saves and closes |
 
 Opening a menu or another editor saves and closes it too - one is open at a time - and so does
@@ -204,13 +275,14 @@ never saved, there is nothing to send. Unmarked, it is a new row again.
 spreadsheet's row header (Shift+click and Ctrl+click select more). There **Delete** or **Backspace**
 marks the selected rows for deletion - the number's row alone when it is not selected - and Ctrl+Z on
 the number takes it back. In a cell Delete stays the input's own key (or empties a range of cells).
-A row the `isReadonly` hook locks is left out, as below. Only in an editable grid.
+A row the `isReadonly` hook locks is left out, as below, and with `edit: { delete: false }` every row
+but a new one, see [Edit permissions](#edit-permissions-add-change-delete). Only in an editable grid.
 
 In an editable grid the row menu (right click a cell) has a **Delete ›** submenu: *Rows (selected
 rows)* marks the selected rows, *Undo (selected rows)* takes the mark off - shown when a selected row
 is marked. Ctrl+Z takes a delete back too, see [Undo and redo](#undo-and-redo). A row the `isReadonly` hook returns `true` for in every column is locked: the menu does not
 mark it. The columns' `readonly` option does not lock a row, so a grid of readonly columns can still
-delete rows. The entries are `row.delete`, `row.delete.rows` and `row.delete.undo`, change or hide
+delete rows - `edit: { delete: false }` is what stops deleting. The entries are `row.delete`, `row.delete.rows` and `row.delete.undo`, change or hide
 them with the [menus hook](10-menus.md).
 
 - `datasource.acceptChanges()` removes the marked rows once the deletes are saved, see

@@ -4015,6 +4015,229 @@ rebuildHeaderColumns for the middle section too (scrollHandlers.test.ts has it).
   `rowClass` hook does it in code); `fitColumns()` measures the normal weight - a bold cell can be a few px
   wider; a date picker for a rule's date value
 
+### The placeholder of the column settings is the empty cells' (user request)
+
+* the user, after the column settings got a placeholder with "Use the column label": "filter placeholder,
+  that was supposed to be for row..." - the placeholder an empty cell shows (`ColumnConfig.placeholderRow`),
+  not the header filter's
+* columnFormat.ts: `ColumnFormat.placeholder` / `placeholderLabel` are `placeholderRow` / `placeholderRowLabel`
+  (not released yet: renamed, not kept) - over `ColumnConfig.placeholderRow`; `rowPlaceholder(column, label)`
+  in renderRowCell.ts. The header filter has its own again (`defaultFilterPlaceholder`; headerFilterPlaceholder
+  went). The dialog's *Placeholder* (was *Filter placeholder*) shows the column's own `placeholderRow` in its
+  input, not for a checkbox column or one shown as checkboxes
+* tests: columnFormatOptions (the empty cells, every row with `placeholderRowCurrentEntityOnly: false`, the
+  current row only by default, the header filter's own, the TypeError), columnFormat (the checks), columnSettings
+  (the dialog); the typings consumer; guides 02, 03, 08, 12
+* browser: the shared `column-settings-more-check.js` reads the current row's Company input and the header
+  filter's own placeholder (backup `.before-row-placeholder`): 149/149
+### Edit permissions: add, change, delete (user request)
+
+* the user: "also nice if we can set edit only allows new, only delete or only change. or some of them...
+  good way to control outcome, stopping someone"
+* **the option**: `GridConfig.edit?: EditPermissions` - `{ add?, change?, delete? }`, each `true` when it is
+  left out (new exported type `EditPermissions`). Named `edit` because it is the other half of
+  `readonly: false`: readonly turns editing on, `edit` says which of it; `add` / `change` / `delete` are the
+  user's words (new, change, delete) and `add` is `addNewEmpty()`'s. An object, not three flat booleans: the
+  three are one rule set, read and documented together, and `updateConfig({ edit })` replaces it as a whole
+  (one left out is allowed again - said in the JSDoc and guide 02), as `detailForm` and `texts` are
+* **a permission, not state**: not in `GridState` (setState can not take it - a type error in the typings
+  consumer), not in a menu or the grid config dialog. The column's `readonly` is different - the user's
+  *Read only* (`format.readonly`) of the column settings wins over it - so it is documented as a default the
+  user can change, and `edit` as what they can not; the isReadonly hook can not unlock a row it locks either
+* **checked** (`assertEditPermissions`, `TypeError`, the constructor and `updateConfig()` before anything
+  changes): an object, only `add` / `change` / `delete`, each boolean or undefined - a misspelt `chnage:
+  false` or `'false'` would leave the user allowed without a word
+* **one place for the rules** (new editPermissions.ts: `editPermissionsOf`, `mayChangeRow`,
+  `mayChangeValues`, `mayDeleteRow`, `isNewRow`), asked through the GridInterface: `__isCellReadonly(row,
+  field)` is `true` for every cell of a row the permissions lock (before the hook, so every per cell path
+  follows without a change of its own: typing, the text editor, the date picker, lookups, checkboxes, custom
+  cells, paste, clear, fill, the row menu's Paste / Clear entries, the detail form); `__canChangeRow(row)`
+  (readonly grid or a locked row: what renderRowCell and the detail form used `config.readonly` for - the
+  look, no stripes); `__canChangeValues()` (some value can change: the gates of paste, Delete on ranges,
+  Ctrl+D, `fillDown()`, the fill handle, the row menu's Paste › / Clear › - all `config.readonly` before);
+  `__canDeleteRow(row)` (deleteRows.ts `canMarkRow`: the row menu's Delete › Row / Rows and Delete on a row
+  number). Without `edit` every one of them is what `readonly` alone was: no behaviour changed (the 3785
+  tests before passed unchanged)
+* **the rules**: `change: false` locks the rows that were there; **a new row** (`__isNew`) can be changed
+  while `change` or `add` allows it - who may add a row may fill it in; after `acceptChanges()` it is a row
+  that was there. `delete: false` stops marking rows that were there; **a new row can always be taken out**
+  (Delete ›, Delete on its number, Undo row edits) - not on the server, nothing is deleted, the undo of an
+  add. `add: false`: the grid has no add of its own (checked: no menu entry, no key, paste adds no rows) - it
+  is for the app's add button and for new rows the app adds, which can not be filled in with `change: false`
+  too. With `change` and `add` both false nothing can change: no Paste › / Clear ›, no fill handle, Ctrl+V,
+  Delete and Ctrl+D are the browser's, as in a readonly grid
+* **what still works**: undo / redo (the history has only what was allowed and the app's code edits), the
+  reverts (Undo cell edit, Undo row edits, the edited marker's click), taking a deletion mark off - they put
+  back what was. A permission taken away at runtime leaves the history: the docs say to call
+  `clearHistory()` with it when a redo must not bring back what was done before. The app's own code
+  (`addNewEmpty()`, `markForDeletion()`, a value set) is not stopped; `gridInterface.fillDown()` goes through
+  the grid and follows them
+* **the menus**: the cell menu keeps its shape - Paste cell / Clear cell greyed out on a locked row (they
+  were greyed for a readonly cell already), Delete › Row / Rows greyed out on rows that were there; the
+  submenus Paste › and Clear › hidden only where no value can change (as in a readonly grid); Delete › and
+  Undo / Redo › stay in an editable grid. The row number's menu is the same function: Delete › greyed the
+  same way
+* the sample: new *Edit permissions* (`samples/demo/samples/editPermissions.ts`, after Editing & row state):
+  starts as add only, a button per permission as a developer would set them (`updateConfig({ edit })`),
+  *Add new row* disabled when add is off, *Save* (acceptChanges) shows a new row become locked, the detail
+  form beside the rows
+* docs: guide 05 (new *Edit permissions: add, change, delete* - the option, a table of what each stops and
+  what stays, the menus, what still works, the app's code, the hook; *Deleting rows*), 02 (options table,
+  hooks, updateConfig, detail form), 10 (the row menu table, the `visible` note), 17 (paste, fill), 20
+  (lookups), 21 (custom cell `readonly`); JSDoc of `GridConfig.edit`, `EditPermissions` (with examples),
+  `readonly`, `ColumnConfig.readonly`, `DetailForm`, the isReadonly hook, `CellRenderContext.readonly`,
+  `updateConfig()` and the constructor's `@throws`, MENU_IDS.row's table; typings consumer. No new texts
+* tests: new editPermissions.test.ts (64: the rules of all 8 combinations; defaults, the TypeErrors,
+  updateConfig before anything changes and as a whole, not state, the config not changed; `change: false`:
+  inputs, typing, no stripes, checkbox, date picker, multiline editor, lookup button / F4 / Delete, a custom
+  cell's `readonly`, the hook and the user's Read only not unlocking, acceptChanges, updateConfig at runtime
+  (an open editor closed unsaved, an open menu closed; another option leaves them);
+  a pasted block, one value, Delete on ranges, Ctrl+D / `fillDown()`, the fill handle, all the browser's
+  where nothing can change; the row menu's entries, Clear / Paste (selected rows); the detail form and
+  updateConfig; undo / redo of a new row, the reverts of a code edit; `delete: false`: Delete › on cell and
+  row number menus, Rows (selected), Undo (selected), Delete on a row number, Undo row edits on a new row;
+  delete only; add false; every combination in a mounted grid; a readonly grid stays readonly). 3849 tests,
+  164 files (was 3785, 163)
+* browser (Chromium 1148, port 8094): new `edit-permissions-check.js` 57/57, light and dark - a row that was
+  there: real typing, Ctrl+V of a block, Ctrl+D, the detail form write nothing, Paste cell / Clear cell /
+  Delete › Row greyed out, Delete on its number marks nothing; *Add new row*: typed into, Ctrl+D from the
+  row above, Ctrl+V, the detail form, its menu entries usable, Delete on its number takes it out and Ctrl+Z
+  brings it back; the buttons: change on -> typing writes, delete on -> Delete › Row usable, add and change
+  off -> the new row readonly, no Paste › / Clear ›, the add button disabled; Save -> the new row locked.
+  The screenshots looked at: the menu with the greyed Delete entries, the new row typed in, the locked rows
+  as in a readonly grid (no stripes), light and dark. Shared checks: keyboard 53/53, fill 12/12, row-delete
+  6/6, row-number-menu 7/7, detail-form 91/91, custom-cells 39/39, lookup 55/55, full-grid 11/11, touch
+  61/61. The new script is in this worktree's `.claude/browser-checks/scripts/`
+* **`updateConfig({ edit })` closes what is open**: a menu (its entries were worked out under the old
+  permissions - Delete › Row marks without asking again), the date picker, a lookup's list and the editor of
+  a multiline cell (not saved: its row may be locked now). The rebuild does not close them (only a
+  disconnect does). Only for `edit`: `updateConfig({ readonly })` leaves them as before
+* not done, candidates: an add row entry of the grid's own (a row menu entry, a key) - `add` would hide it;
+  a permission per column (`change` for some fields only - the isReadonly hook does it in code);
+  `updateConfig({ readonly: true })` closing the open editors the same way
+
+### Docs site: the full grid sample about 30 rows (user request)
+
+* the user: "full grid sample, show height of grid to around 30 rows". It filled the height the page left
+  (`flex: 1`, no max) - 60 rows in a tall window
+* index.css: `.stage-full .demo-grid-host` is `--demo-grid-max-height` high (30 rows with the default heights;
+  30.6 measured), not flex; the page scrolls in a low window
+* browser: the shared sidebar-toggle-check.js expects about 30 rows (28 to 31) where it expected more than 30
+  (backup `.before-full-30`): 15/15; full-grid 11/11, sample-height 5/5, detail-form 91/91, color-rules 90/90
+
+### The multiline editor: a ✕ (user request)
+
+* the user, a phone screenshot of the editor with "Ctrl+Enter to save, Esc to cancel" under it: "multiline box,
+  add also a close x bottom right in footer panel, useful for mouse/touch" - a finger has neither key
+* textEditor.ts: the hint is in a footer row with a ✕ button at its right (`.simple-html-grid-text-editor-close`,
+  20px, the touch row height on a finger): it saves and closes as a click beside the editor does, the focus
+  back in the cell - its mousedown is prevented so the focus stays in the text (Safari does not focus a
+  clicked button, and a phone's keyboard does not flicker). A readonly editor's ✕ is "Close". The editor
+  attaches the tooltips (the ✕'s), hides one on close. Texts `cell.multiline.close`, `.closeReadonly`
+* multiline.test.ts +2; guide 05 (the editor's table), 12
+* browser: new `text-editor-close-check.js` 10/10 (a phone: tap to open, the 28px ✕ at the bottom right, a
+  tap saves and closes; wide dark with the mouse: saved, the focus back in the cell); multiline-lines,
+  keyboard, custom-cells as before
+### Docs site: a feature overview (user request)
+
+* the user: "Maybe docs should have a feature table / tables / list?". What the grid can do was spread over 22
+  guides and 35 samples; nothing said it at a glance - for a developer weighing the grid, or a power user
+* new `guides/00-features.md`, *Feature overview*: 19 tables by area (data and setup, columns and layout,
+  display and formatting, filtering, sorting and grouping, selection and clipboard, editing, find, detail form,
+  grid config dialog, menus, export, state, live data, theming, texts and translation, accessibility, touch,
+  SQL helpers), each `Feature | What it does | See`: one plain line per feature, and links to the guide's
+  heading and the sample (every sample is linked). Then the keyboard shortcuts used most, `Keys | What they
+  do`, linked to the full list in guide 14. Only what is there: each line checked against the guides and the
+  samples (a row menu filter has Replace / Add, not "leave out"; CSV separators `,` `;` tab). Calculated
+  columns are left out (built in parallel, the user adds them)
+* a guide, so `check:docs` checks its links and headings and the site renders it as the others; in the
+  sidebar a section of its own, **Features**, between Status and Developer Guide (index.ts: the guide
+  `features` goes there, the rest to the Developer Guide). Being the first guide it is the **start page** of
+  the site (no hash) - was Getting started. Getting started's *Where to go next* links it
+* index.css: `.doc table` is `display: block; overflow-x: auto` - a table wider than the page scrolls in its own
+  box instead of the whole article sideways (a phone, the option tables of guide 02). The overview's tables
+  (`.doc[data-guide='features']`, the attribute set by renderGuidePage) are as wide as the page with the same
+  fixed columns, so the 19 read as one list; narrower columns under 600px so they fit a 390px phone
+* README: a *Features* section, 15 highlights, linking the overview on the site and the file
+* tests: site.test.ts expects the sections Status, Features, Developer Guide ...; the start page
+  `#guide/features`; new test of the overview (its own section, the tables and their columns, every link to a
+  page of the site, more than 25 samples linked). 3851 tests, 164 files
+* browser (Chromium 1148, port 8095): new `features-page-check.js` 21/21 - the sidebar, the start page, the
+  same column widths in every table, light and dark colours, all 143 links (108 guide headings found and
+  scrolled to, 35 samples open with a grid), a phone: no sideways scroll, no text out of a cell, guide 02's
+  tables scroll in their own box. Screenshots looked at (desktop and phone, light and dark). Shared:
+  sidebar-toggle 15/15, sample-height 5/5; full-grid 10/11 - it opened `#guide/02-grid-config`, no route,
+  which showed the start page; the copy in this worktree's `.claude/browser-checks/scripts/` opens
+  `#guide/grid-config` (backup `.before-features`): 11/11
+* not done, candidates: a check that every sample is in the overview (it would fail the merge of a new
+  sample until its line is written); the User Guide page is still the TODO
+### Keyboard shortcuts help (user request)
+
+* the user: a help overlay of the grid's keyboard shortcuts, opened from the keyboard (`?` when not typing,
+  maybe F1 or Ctrl+/) and from the UI
+* the keys: `?` where the key types nothing - a readonly cell, a checkbox, a column header, a row number, a
+  button of the grid - and Ctrl+/ (Cmd+/) anywhere in the grid, also while typing in a cell, a header
+  filter or the find bar (as Google Sheets and Docs). One keydown listener on the grid element, next to
+  Find's (createDom): it leaves a key that is used already (a character typed in a lookup cell opens its
+  list, in a custom cell its editor - canceled) and the keys of an IME. "Types nothing": not an input or a
+  textarea that is not readonly, not contenteditable; the element is the first of the event's path (a
+  shadow root). F1 was left out: Chrome's help on Windows, and nothing it adds to Ctrl+/
+* the UI: *Keyboard shortcuts…* in the header menu after *Column settings…* (`header.shortcuts`, its hint
+  Ctrl+/ - ⌘/ on a Mac). Not in the footer (no more stops of Tab there, another task works on it) and not
+  in the grid config dialog (a dialog from a dialog)
+* `GridConfig.shortcutHelp` (default `true`): `false` turns the keys and the menu entry off;
+  `gridInterface.openShortcutHelp()` opens it from code always. A lookup's dropdown grid has it `false`
+* the dialog (shortcutHelp.ts): a modal `<dialog>` of the filter editor's kind (dialogFrame.ts: moved,
+  resized, Esc, the focus back), a search (the column chooser's look), a hint (the arrows are the caret's,
+  Alt moves between the cells), a table per group - its caption the title, the keys a row header of
+  `<kbd>`s, what they do a cell. Opened by a key the focus is in the search; by a click on the dialog (a
+  phone's keyboard). The search keeps the entries whose text, keys or group have the text, else a status
+  says none does
+* the list (shortcutList.ts): 9 groups, 52 entries - moving around, selecting cells, in a cell, changing
+  values, copy and paste, find, filters / headers / groups, menus, dialogs and this help. Each key was
+  checked against its handler (cellRowKeyNavigation, jumpKeys, rangeSelection, renderRowCell, customCell,
+  textEditor, lookupEditor, undoRedoKey, fillDown, rangeClipboard, deleteRows, columnNumbers, findBar,
+  renderHeaderFilter, cellFilterKeyNavigation, headerLabelKeydown, renderRowGroup, showMenu,
+  addMenuListeners, gridConfigTabs, detailFormSettings, renderFilterEditor). Not listed because the grid
+  has no such key: Ctrl+A, Ctrl+X (the input's own cut), Shift+Space / Ctrl+Space. An entry can be left
+  out where its keys do nothing: `editable` (a readonly grid), `operatorIndicator`, `shortcutHelp`,
+  `notMac` (Alt+C)
+* platform: on a Mac ⌘ ⌥ ⇧, in a Mac's order and without the `+` (⇧⌘Z) - keyText.ts's `.mac` texts.
+  The key names are texts (`shortcuts.key.*`, Strg / Entf for a translation); a letter, F2 and the arrows
+  are shown as they are
+* one list for the dialog and the docs: guide 14's *Every key of the help* is made from it
+  (`src/grid/__tests__/shortcutDocs.ts` prints it), a test checks the guide has it as it is, and that every
+  key of the list is in the guide's keyboard section (where each key is described, and tested)
+* texts: 90 `shortcuts.*` and `header.shortcuts(.hint, .hint.mac)` - guide 12 (*Keyboard shortcuts help*,
+  the `.mac` list), Norwegian in the translation sample. css: the dialog and the key caps with the existing
+  variables (no theme change), square, a phone's width
+* docs: guide 14 (*The keyboard shortcuts help*, `?` / Ctrl+/ in the cell table, the help in *The rest* and
+  in *What a screen reader gets*), 02 (options), 10 (`header.shortcuts`), 12; JSDoc of `shortcutHelp`,
+  `openShortcutHelp()`, MENU_IDS.header
+* tests: new shortcutHelp.test.ts (27: the keys and where they type, Ctrl+/ / Cmd+/, a lookup cell, Alt and
+  AltGr, a used key, `shortcutHelp: false` and updateConfig; the dialog, a readonly grid,
+  filterOperatorIndicator, the focus, the search, a Mac, translated key names, closing, one dialog, a menu
+  closed, the grid leaving the page, before the grid is on the page; the header menu entry; the list's
+  texts, its keys, a Mac's order, the guide's table, the guide's keyboard section); texts.test (the help
+  shown, on a Mac too - a key cap that is a letter or F2 is no text), gridMenus, lookups, configJson.
+  3877 tests, 165 files
+* **found on the way, fixed - the ✕ of the dialogs on a touch screen**: the resize handle of the top right
+  corner is 20px there (`pointer: coarse`) and covered the middle of the ✕ - a tap resized the dialog
+  instead of closing it, in the filter editor and the grid config dialog too. The ✕ is over the handles
+  now (`z-index: 4`, grid.css)
+* browser (Chromium 1148, port 8096): new `shortcut-help-check.js` 41/41 - `?` typed in an editable cell,
+  a header filter and the find bar is typed; Ctrl+/ from a cell opens it, the focus in the search, Esc
+  back to the cell; a readonly grid: `?` on a cell and on a column header opens it (the `?` not typed in
+  the search), no *Changing values*; the search (`undo`, `zzz` and its status); the header menu entry
+  (the focus on the dialog), the ✕; `shortcutHelp: false`; light, dark, TreDeSpace light and dark - in the
+  window, square, the text 9.7:1 and more, the keys 7:1 and more, their frame 3:1; a Mac user agent (⌘Y /
+  ⇧⌘Z, ⌥⇧Home, no Alt+C, Cmd+/, the menu's ⌘/); a phone (390px wide, the list scrolls, nothing sideways, a
+  tap on the ✕ closes it). The screenshots looked at. Shared checks: keyboard 53/53, find 68/68, touch
+  61/61, full-grid 11/11. The new script is in this worktree's `.claude/browser-checks/scripts/`
+* not done, candidates: F1 (Chrome's help on Windows); a "?" button of its own somewhere (the footer, the
+  grid config dialog); a key that leaves out the entries of a cell the grid does not have (no lookup
+  column: no lookup keys) - the list is per grid config, not per column; Shift+F10 is shown on a Mac too,
+  where browsers may send no context menu for it (not tried on a Mac)
 ### Calculated columns, colour rules on several fields / formulas / more colours (user request)
 
 The user: "be able to add dynamic column in column config would also be nice, very useful when we get to

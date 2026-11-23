@@ -198,8 +198,8 @@ const gridInterface = createGrid(host, { config, datasource, hooks });
 ```
 
 - `defaults` always has every entry of the menu. The ones that do not apply here have a `visible`
-  callback that hides them: paste and clear on a readonly cell, delete in a readonly grid, the
-  operators of another type. A submenu with nothing
+  callback that hides them: paste and clear in a readonly grid (or where the edit permissions let no
+  value change), delete in a readonly grid, the operators of another type. A submenu with nothing
   left to show is hidden too.
 - A section header or a separator is shown as long as it is in the list: hide it together with the
   entries under it.
@@ -335,17 +335,17 @@ the `menus.row` hook still gets them, by their ids. A group row's number has no 
 | `row.copy.row` | Row (selected rows). Greyed out with no row selected | |
 | `row.copy.selectedColumns` | Row (selected rows/col): the selected columns, every column when none is selected. Greyed out with no row selected | |
 | `row.copy.range` | Range: the ranges of cells, as Ctrl+C copies them - see [Selection and clipboard](17-selection-and-clipboard.md#copy). Greyed out without a range | |
-| `row.paste` | Paste › - a submenu | the grid is editable |
-| `row.paste.current` | Paste cell: the cell right clicked. Greyed out when it is readonly | the grid is editable |
-| `row.paste.cell` | Paste cell (selected rows): the column of the selected rows, readonly cells skipped. Greyed out with no row selected | the grid is editable |
-| `row.paste.range` | Paste range: the clipboard as Ctrl+V pastes it with ranges - one value into every cell of them, a block from the top left of the last one. Reads the clipboard with `navigator.clipboard.readText()`, the browser may ask the user first. Greyed out without a range | the grid is editable |
-| `row.clear` | Clear › - a submenu | the grid is editable |
-| `row.clear.current` | Clear cell: empties the cell right clicked. Greyed out when it is readonly | the grid is editable |
-| `row.clear.cell` | Clear cell (selected rows): empties the column of the selected rows, readonly cells skipped. Greyed out with no row selected | the grid is editable |
-| `row.clear.range` | Clear range: every cell of the ranges, as Delete. Greyed out without a range | the grid is editable |
+| `row.paste` | Paste › - a submenu | the grid is editable, and `edit` allows `change` or `add` |
+| `row.paste.current` | Paste cell: the cell right clicked. Greyed out when it is readonly - also on a row the [edit permissions](05-editing.md#edit-permissions-add-change-delete) lock (`change: false`, a row that is not new) | the grid is editable, and `edit` allows `change` or `add` |
+| `row.paste.cell` | Paste cell (selected rows): the column of the selected rows, readonly cells skipped. Greyed out with no row selected | the grid is editable, and `edit` allows `change` or `add` |
+| `row.paste.range` | Paste range: the clipboard as Ctrl+V pastes it with ranges - one value into every cell of them, a block from the top left of the last one. Reads the clipboard with `navigator.clipboard.readText()`, the browser may ask the user first. Greyed out without a range | the grid is editable, and `edit` allows `change` or `add` |
+| `row.clear` | Clear › - a submenu | the grid is editable, and `edit` allows `change` or `add` |
+| `row.clear.current` | Clear cell: empties the cell right clicked. Greyed out when it is readonly, as Paste cell | the grid is editable, and `edit` allows `change` or `add` |
+| `row.clear.cell` | Clear cell (selected rows): empties the column of the selected rows, readonly cells skipped. Greyed out with no row selected | the grid is editable, and `edit` allows `change` or `add` |
+| `row.clear.range` | Clear range: every cell of the ranges, as Delete. Greyed out without a range | the grid is editable, and `edit` allows `change` or `add` |
 | `row.delete` | Delete › - a submenu | the grid is editable |
-| `row.delete.row` | Row: marks the row right clicked for deletion. Greyed out when it is marked, or locked by the `isReadonly` hook | the grid is editable |
-| `row.delete.rows` | Rows (selected rows): marks them for deletion, see [Deleting rows](05-editing.md#deleting-rows). Greyed out when no selected row is left to mark | the grid is editable |
+| `row.delete.row` | Row: marks the row right clicked for deletion. Greyed out when it is marked, when `edit.delete` is `false` and the row is not new - a new row can always be taken out - or locked by the `isReadonly` hook | the grid is editable |
+| `row.delete.rows` | Rows (selected rows): marks them for deletion, see [Deleting rows](05-editing.md#deleting-rows) - with `edit.delete: false` the new ones only. Greyed out when no selected row is left to mark | the grid is editable |
 | `row.delete.undo` | Undo (selected rows): takes the mark off. Greyed out when no selected row is marked | the grid is editable |
 | `row.filter` | Filter › - a submenu | |
 | `row.filter.replace` | Replace filter (all) | |
@@ -432,6 +432,7 @@ the `menus.row` hook still gets them, by their ids. A group row's number has no 
 | `header.format.decimalMark.comma` | Comma | a number field |
 | `header.format.percent` | Percent, a toggle: the number times 100 with ` %` | a number field |
 | `header.settings` | Column settings… - opens the grid config dialog on this column (`gridInterface.openColumnSettings(field)`): its display format, a text column's template and link, see [The grid config dialog](08-formatting.md#the-grid-config-dialog) | |
+| `header.shortcuts` | Keyboard shortcuts… - opens the keyboard shortcuts help (`gridInterface.openShortcutHelp()`), its hint the key that opens it anywhere in the grid: Ctrl+/ (⌘/ on a Mac). See [The keyboard shortcuts help](14-accessibility.md#the-keyboard-shortcuts-help) | `shortcutHelp` (the default) |
 | `header.aggregate` | Aggregate › - a submenu | |
 | `header.aggregate.sum` | Sum - a toggle with a ✓ when on: the column's sum in the group rows and the totals row, see [Aggregates](18-aggregates.md) | a number field |
 | `header.aggregate.avg` | Average, a toggle | a number field |

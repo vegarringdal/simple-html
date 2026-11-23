@@ -27,8 +27,10 @@ import { focusedCell, hasSelectedText, pointOf } from './rangeSelection';
  * - **Clear** (Delete / Backspace in a cell, rangeDeleteKey): every cell of the ranges, when they are
  *   more than one cell
  *
- * What is written skips the cells that can not be edited (the grid's `readonly`, the column's, the
- * `isReadonly` hook), adds no rows, and is written in one run of code: one step of the undo history.
+ * What is written skips the cells that can not be edited (the grid's `readonly`, the edit permissions -
+ * `GridConfig.edit` - the column's, the `isReadonly` hook), adds no rows, and is written in one run of
+ * code: one step of the undo history. Where no value can be changed (a readonly grid, `change` and `add`
+ * both false) paste and Delete are the browser's.
  *
  * The events are on the document, not on the grid: the focus can be on a checkbox, and the browser
  * sends the copy and paste of a focused checkbox to the body (it has no text). Each grid only takes
@@ -70,7 +72,7 @@ function copyEvent(ctx: Grid, event: ClipboardEvent) {
  */
 function pasteEvent(ctx: Grid, event: ClipboardEvent) {
     const focused = focusedCell(ctx);
-    if (event.defaultPrevented || !focused || ctx.gridInterface.__getGridConfig().readonly) {
+    if (event.defaultPrevented || !focused || !ctx.gridInterface.__canChangeValues()) {
         return;
     }
     const block = withoutHeader(ctx, parseTsv(event.clipboardData?.getData('text/plain') ?? ''));
@@ -113,7 +115,7 @@ export function rangeDeleteKey(ctx: Grid, event: KeyboardEvent): boolean {
     if (
         !clearKey ||
         modifier ||
-        ctx.gridInterface.__getGridConfig().readonly ||
+        !ctx.gridInterface.__canChangeValues() ||
         !isMoreThanOneCell(ctx.gridInterface.getRanges()) ||
         hasSelectedText(event.target)
     ) {
@@ -307,7 +309,7 @@ export function pasteText(ctx: Grid, text: string) {
  */
 export function pasteBlock(ctx: Grid, block: string[][], active: CellPoint | null) {
     const gridInterface = ctx.gridInterface;
-    if (gridInterface.__getGridConfig().readonly) {
+    if (!gridInterface.__canChangeValues()) {
         return;
     }
     const datasource = gridInterface.getDatasource();
@@ -385,7 +387,7 @@ function writeCell(ctx: Grid, row: Entity, field: string, text: string) {
  */
 export function clearRangeCells(ctx: Grid) {
     const gridInterface = ctx.gridInterface;
-    if (gridInterface.__getGridConfig().readonly) {
+    if (!gridInterface.__canChangeValues()) {
         return;
     }
     gridInterface.getDatasource().getDataContainer().__history.endTyping();

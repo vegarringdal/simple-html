@@ -1332,6 +1332,62 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Keyboard shortcuts help (user request)
+
+##### Added
+- **`?`** (in the grid where it types nothing: a readonly cell, a checkbox, a header, a row number) and
+  **Ctrl+/** (Cmd+/, anywhere in the grid) open a dialog of every key of the grid: 9 groups, a search, the
+  keys as `<kbd>`, on a Mac as a Mac writes them (⇧⌘Z). Keys the grid does not offer are left out (editing in
+  a readonly grid ...). `gridInterface.openShortcutHelp()`, `GridConfig.shortcutHelp: false` turns the keys
+  and the header menu's *Keyboard shortcuts…* (`header.shortcuts`) off. One list (`shortcutList.ts`) for the
+  dialog and guide 14's tables - a test keeps them equal. Texts `shortcuts.*`, the names of the keys too.
+
+##### Fixed
+- On touch the resize handle at the top right of the dialogs (filter editor, grid config) covered the middle
+  of their ✕: a tap resized the dialog.
+
+#### Docs: a Features overview (user request)
+
+##### Docs
+- **Feature overview** (`guides/00-features.md`, `#guide/features`): what the grid can do in 19 tables - data,
+  columns, display and formatting, filtering, sorting and grouping, selection, editing, find, the detail form,
+  the grid config dialog, menus, export, state, live data, theming, texts, accessibility, touch, SQL - each
+  feature with a line what it does and links to its guide section and sample; the keys at the end. A section
+  of its own in the sidebar, and the site's start page. The README has a Features list.
+- The wide tables of the guides scroll in their own box on a phone, not the whole page.
+
+#### The multiline editor: a ✕ that saves and closes (user request)
+
+##### Added
+- A **✕ at the right of the multiline editor's hint**: it saves and closes, the focus back in the cell - a
+  finger has no Ctrl+Enter. In a readonly editor it closes. Texts `cell.multiline.close` ("Save and close")
+  and `cell.multiline.closeReadonly` ("Close").
+
+#### Docs site: the full grid sample about 30 rows high (user request)
+
+##### Docs
+- The full grid sample is about 30 rows high, as the other samples at most - it filled the window, 60 rows in
+  a tall one.
+
+#### Edit permissions: add, change, delete (user request)
+
+##### Added
+- **`GridConfig.edit`** (`EditPermissions`: `{ add?, change?, delete? }`, each `true` when left out): what an
+  editable grid lets the user do. A developer's setting - not in the state, no menu or dialog can grant it;
+  `updateConfig({ edit })` replaces it (and closes an open editor, menu or picker); a `TypeError` for anything
+  else.
+  - `change: false`: the rows that were there are locked - typing, the multiline editor, the date picker,
+    lookups, checkboxes, custom cells (`readonly`), paste, clear, fill down, the detail form; the `isReadonly`
+    hook and a column's Read only can not unlock them. **A new row stays editable while `add` is allowed**,
+    until `acceptChanges()`.
+  - `delete: false`: Delete › Row / Rows greyed out on existing rows, Delete on a row number leaves them; a new
+    row can still be removed (it was never saved).
+  - `add: false`: the grid has no add-row UI of its own - it is for your own add button, and a new row your
+    code adds is not editable when `change` is false too.
+  - Undo / redo and the reverts keep working; your own code (`addNewEmpty()`, `markForDeletion()`, setting
+    values) is not stopped - `fillDown()` follows the permissions.
+- Sample *Edit permissions*.
+
 #### Colour rules: conditional colours of a column (user request)
 
 ##### Added
@@ -1439,8 +1495,9 @@ rows); the vertical time is rendering every cell of every row on screen, which s
   winning over the column's own option - and a developer can set them in `ColumnConfig.format`:
   - **Label** (`ColumnFormat.label`): the column's label everywhere the grid names it - the header, the
     menus, the filter editor, the footer's chips, the headers of copy, CSV and Excel.
-  - **Filter placeholder** (`placeholder`) or **Use the column label** (`placeholderLabel: true`): the
-    header filter's placeholder, over `placeholderFilter` and Between's "from..to".
+  - **Placeholder** (`placeholderRow`) or **Use the column label** (`placeholderRowLabel: true`): the
+    placeholder of the column's empty cells, over `ColumnConfig.placeholderRow` (on the current row only by
+    default, `placeholderRowCurrentEntityOnly`). The header filter keeps its own placeholder.
   - **Show blank as 0** / **Show 0 as blank** for a number column (`numberOverride`: `'BLANK_TO_ZERO'`,
     `'ZERO_TO_BLANK'`, or `'NONE'` to turn the column's own off).
   - **Show as checkbox** for a text or number column of `1` / `0` (`checkbox: { checked?, unchecked? }`,

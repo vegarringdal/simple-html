@@ -23,6 +23,8 @@ import { dynamicCellTypes } from './samples/dynamicCellTypes';
 import dynamicCellTypesSource from './samples/dynamicCellTypes.ts?raw';
 import { editing } from './samples/editing';
 import editingSource from './samples/editing.ts?raw';
+import { editPermissions } from './samples/editPermissions';
+import editPermissionsSource from './samples/editPermissions.ts?raw';
 import { events } from './samples/events';
 import eventsSource from './samples/events.ts?raw';
 import { exportCsv } from './samples/export';
@@ -96,6 +98,7 @@ export const SAMPLES: Sample[] = [
     { ...rowsData, source: rowsDataSource },
     // editing
     { ...editing, source: editingSource },
+    { ...editPermissions, source: editPermissionsSource },
     { ...saving, source: savingSource },
     { ...validation, source: validationSource },
     { ...multiline, source: multilineSource },

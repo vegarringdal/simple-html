@@ -36,6 +36,7 @@ import {
     DateFormatterYYYYMMDD,
     DateInterface,
     type DetailForm,
+    type EditPermissions,
     type Entity,
     type EventHandler,
     type ExcelOptions,
@@ -977,11 +978,11 @@ const bareLink: ColumnFormat = { link: 'https://x.com' };
 const linkLabel: LinkFormat = { url: 'https://x.com', label: '{name}' };
 console.log(linkColumns, bareLink, linkLabel);
 
-// the rest of the column settings: a label, the header filter's placeholder, blank / 0, checkboxes
+// the rest of the column settings: a label, the empty cells' placeholder, blank / 0, checkboxes
 const yesNo: CheckboxFormat = { checked: 'Y', unchecked: 'N' };
 const settingsColumns: Record<string, ColumnConfig> = {
-    company: { format: { label: 'Firm', placeholderLabel: true } },
-    city: { format: { placeholder: 'Search the cities' } },
+    company: { format: { label: 'Firm', placeholderRowLabel: true } },
+    city: { format: { placeholderRow: 'Name of the city' } },
     discount: { format: { numberOverride: 'NONE' } },
     newsletter: { format: { checkbox: {} } },
     approved: { format: { checkbox: yesNo } }
@@ -1008,6 +1009,18 @@ const expandedText: DetailForm = { show: true, fields: [], expanded: 'yes' };
 // @ts-expect-error the least width is a number of px
 const minWidthText: DetailForm = { show: true, fields: [], minWidth: '200px' };
 console.log(formExpanded, expandedText, minWidthText);
+// the edit permissions: what the user may do in an editable grid, each left out is allowed
+const addOnly: EditPermissions = { add: true, change: false, delete: false };
+const permissionsConfig: GridConfig = { layout, readonly: false, edit: addOnly };
+gridInterface.updateConfig({ edit: { delete: false } });
+gridInterface.updateConfig({ edit: undefined });
+// @ts-expect-error a permission is true or false
+const permissionText: EditPermissions = { delete: 'no' };
+// @ts-expect-error add, change and delete only
+const permissionTypo: EditPermissions = { chnage: false };
+// @ts-expect-error the permissions are no state: the user can not give them to themselves
+gridInterface.setState({ edit: addOnly });
+console.log(permissionsConfig, permissionText, permissionTypo);
 // colour rules: a condition as the header filter has it, a colour of the palette - the first that matches wins
 const negativeRed: ColorRule = { operator: 'LESS_THAN', value: '0', color: 'red' };
 const warmColour: PaletteColor = 'orange';

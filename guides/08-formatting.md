@@ -656,9 +656,11 @@ The Columns tab:
 - **Read only**, every column: its cells can not be edited, also in an editable grid - or, unchecked, a
   column that is `readonly` in the config can. It starts as the column has it. The `isReadonly` hook
   still has the last word.
-- **Filter placeholder**, for every column but a checkbox: the placeholder of the column's header
-  filter - empty is the one it has without, which the input shows - or *Use the column label*: the
-  label is the placeholder, the input is off.
+- **Placeholder**, for every column but a checkbox: the placeholder of the column's empty cells, the
+  text an empty cell shows greyed - empty is the column's own (`placeholderRow`), which the input shows -
+  or *Use the column label*: the label is the placeholder, the input is off. As the column's own it is
+  shown on the current row only, unless `placeholderRowCurrentEntityOnly: false`. The header filter
+  keeps its own placeholder (`placeholderFilter`).
 - **Filter operator**, for every column but a checkbox: the operator of the column's header filter, a
   picker of the operators it offers - the same as Filter › Operator › - with *Default:* and the operator
   the column starts with under it (its `operator`, else the type's: `≥` for a number or date, `=` for a
@@ -721,9 +723,9 @@ import type { GridConfig } from '@simple-html/grid';
 const config: GridConfig = {
     columns: {
         // the header, and wherever the grid names the column: Firm
-        company: { label: 'Company', format: { label: 'Firm', placeholderLabel: true } },
-        // the header filter's placeholder
-        city: { format: { placeholder: 'Search the cities' } },
+        company: { label: 'Company', format: { label: 'Firm', placeholderRowLabel: true } },
+        // the placeholder of an empty cell
+        city: { format: { placeholderRow: 'Name of the city' } },
         // a number column: a blank cell shows 0
         discount: { format: { numberOverride: 'BLANK_TO_ZERO' } },
         // '1' / '0' (text) or 1 / 0 (a number field) as checkboxes
@@ -743,8 +745,8 @@ const config: GridConfig = {
 | part | for | wins over |
 | --- | --- | --- |
 | `label` | any column: the label wherever the grid names the column - the header, the menus, the column chooser, the filter editor, the footer's filter, copy with headers, the headers of the CSV and Excel exports | `ColumnConfig.label` |
-| `placeholder` | any column but a `boolean` one: the placeholder of its empty header filter | `ColumnConfig.placeholderFilter`, and a BETWEEN's `from..to` |
-| `placeholderLabel` | `true`: the placeholder is the column's label - not with `placeholder` | the same |
+| `placeholderRow` | any column but a `boolean` one: the placeholder of its empty cells | `ColumnConfig.placeholderRow` |
+| `placeholderRowLabel` | `true`: the placeholder of the empty cells is the column's label - not with `placeholderRow` | the same |
 | `numberOverride` | a `number` column: `'BLANK_TO_ZERO'`, `'ZERO_TO_BLANK'`, or `'NONE'` - neither | `ColumnConfig.numberOverride`: `'NONE'` turns it off |
 | `checkbox` | a `text` or `number` column: its cells are checkboxes, see below | |
 | `multiline` | a `text` column: `true` text of several lines, `false` one line (a value with a line break is shown as several lines still) - not with `checkbox` | the field's `multiline` (`FieldConfig`) |

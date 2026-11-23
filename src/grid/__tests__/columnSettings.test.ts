@@ -753,11 +753,19 @@ describe('column settings - the label, the placeholder, blank / 0, the checkboxe
         expect(labelCell(element, 'company').textContent?.trim()).toEqual('Company');
     });
 
-    it('expect the placeholder: the one it has in the input, a text, or the label - the input off; none for a checkbox column', async () => {
-        const { element, gridInterface } = await mountGrid(config(), rows(), fields());
+    it('expect the placeholder of the empty cells: the one it has in the input, a text, or the label - the input off; none for a checkbox column', async () => {
+        const { element, gridInterface } = await mountGrid(
+            config({
+                columns: { ...config().columns, name: { label: 'Name', placeholderRow: 'required' } },
+                placeholderRowCurrentEntityOnly: false
+            }),
+            [{ ...rows()[0], name: null }, rows()[1]],
+            fields()
+        );
         gridInterface.openColumnSettings('name');
 
-        expect(input('placeholder')?.placeholder).toEqual('Text');
+        // the column's own placeholderRow
+        expect(input('placeholder')?.placeholder).toEqual('required');
         type('placeholder', 'Search');
         expect(badges()).toEqual(['Placeholder']);
         type('label', 'Who');
@@ -767,11 +775,14 @@ describe('column settings - the label, the placeholder, blank / 0, the checkboxe
         expect(input('placeholder')?.value).toEqual('');
 
         button('Apply').click();
-        expect(formats(gridInterface).name).toEqual({ label: 'Who', placeholderLabel: true });
-        expect(headerFilterInput(element, 'name').placeholder).toEqual('Who');
+        expect(formats(gridInterface).name).toEqual({ label: 'Who', placeholderRowLabel: true });
+        // the empty cell shows it; the header filter keeps its own
+        const nameCell = element.querySelector<HTMLInputElement>('input[data-attribute="name"]');
+        expect(nameCell?.placeholder).toEqual('Who');
+        expect(headerFilterInput(element, 'name').placeholder).toEqual('Text');
         toggle('Use the column label');
         expect(input('placeholder')?.disabled).toBe(false);
-        expect(input('placeholder')?.placeholder).toEqual('Text');
+        expect(input('placeholder')?.placeholder).toEqual('required');
 
         // a checkbox column: its label only
         options()[LAYOUT.indexOf('active')].click();
@@ -780,7 +791,7 @@ describe('column settings - the label, the placeholder, blank / 0, the checkboxe
         expect(dialog().querySelector('.column-settings-none')?.textContent?.trim()).toEqual('A checkbox column has no format');
         // a lookup column: its label and placeholder, no checkboxes
         options()[LAYOUT.indexOf('code')].click();
-        expect(input('placeholder')?.placeholder).toEqual('Text');
+        expect(input('placeholder')?.placeholder).toEqual('');
         expect(checkbox('Show as checkbox')).toBeUndefined();
     });
 
@@ -884,7 +895,7 @@ describe('column settings - the label, the placeholder, blank / 0, the checkboxe
         expect(formats(gridInterface).name).toEqual({ label: 'Person' });
 
         gridInterface.setState({
-            formats: { name: { label: 'Who', placeholder: 'Find' }, company: { checkbox: { checked: 'Y', unchecked: 'N' } } }
+            formats: { name: { label: 'Who', placeholderRow: 'Find' }, company: { checkbox: { checked: 'Y', unchecked: 'N' } } }
         });
         const saved = JSON.parse(JSON.stringify(gridInterface.getState()));
         const other = await mountGrid(config(), rows(), fields());

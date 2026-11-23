@@ -2,7 +2,7 @@ import { html, nothing, render, svg } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import { type Entity, isGroupRow } from '../../datasource/entity';
 import { isMissingValue } from '../../datasource/validatorRegistry';
-import { checkboxValueOf, isCheckedValue } from '../columnFormat';
+import { checkboxValueOf, isCheckedValue, rowPlaceholder } from '../columnFormat';
 import type { Grid } from '../grid';
 import { ariaColIndex, setAria } from './ariaGrid';
 import { asPx } from './asPx';
@@ -149,17 +149,22 @@ export function renderRowCell(
 
         let dimmed = '';
 
-        // the isReadonly hook decides, and when it gives no answer the column's readonly
+        // the grid's readonly for this row: a readonly grid, or a row the edit permissions do not let the
+        // user change (GridConfig.edit: change false, and the row not new - or add false too). Its cells
+        // look as in a readonly grid: no stripes
+        const rowReadonly = !ctx.gridInterface.__canChangeRow(entity);
+        // the isReadonly hook decides, and when it gives no answer the column's readonly. Every cell of
+        // a row the permissions lock
         const cellReadOnly = ctx.gridInterface.__isCellReadonly(entity, attribute);
 
-        if (!config.readonly && cellReadOnly) {
+        if (!rowReadonly && cellReadOnly) {
             dimmed = 'simple-html-readonly';
         }
 
         // the stripes of a required field while its value is missing - what the required rule fails
         // on, 0 included. Only where the user can fill it in
         const required = field.validate.some((rule) => rule.id === 'required');
-        if (!config.readonly && !cellReadOnly && required && isMissingValue(entity?.[attribute])) {
+        if (!rowReadonly && !cellReadOnly && required && isMissingValue(entity?.[attribute])) {
             dimmed = 'simple-html-mandatory';
         }
 
@@ -193,7 +198,7 @@ export function renderRowCell(
         // not be typed in: readonly, a multiline cell (its editor), a lookup's label, paste/clear only
         const editing =
             cell.$focused === true &&
-            !config.readonly &&
+            !rowReadonly &&
             !cellReadOnly &&
             !multiline &&
             !lookupColumn &&
@@ -237,8 +242,8 @@ export function renderRowCell(
                 type: cellConfigType,
                 text: value,
                 formatter,
-                readonly: !!config.readonly || cellReadOnly,
-                editable: !config.readonly && !cellReadOnly && !cellConfig.allowPasteClearOnly,
+                readonly: rowReadonly || cellReadOnly,
+                editable: !rowReadonly && !cellReadOnly && !cellConfig.allowPasteClearOnly,
                 multiline,
                 backgroundClass,
                 hostClass: `${cellClass.input}${repeatedClass}`,
@@ -293,7 +298,7 @@ export function renderRowCell(
                             triggerScrollEvent(ctx);
                         }}
                         @change=${(e: any) => {
-                            if (!cellReadOnly && !config.readonly) {
+                            if (!cellReadOnly && !rowReadonly) {
                                 if (cellConfig.allowPasteClearOnly) {
                                     // nothing
                                 } else if (checkboxFormat) {
@@ -326,7 +331,7 @@ export function renderRowCell(
                     case 'SHOW_IF_GRID_NOT_READONLY':
                         return !config.readonly;
                     case 'SHOW_IF_GRID_AND_CELL_NOT_READONLY':
-                        return !config.readonly && !cellReadOnly;
+                        return !rowReadonly && !cellReadOnly;
                     case 'ALWAYS':
                         return true;
                     default:
@@ -335,7 +340,7 @@ export function renderRowCell(
             };
 
             // the text editor of a multiline cell: readonly where the cell can not be typed in
-            const editable = !config.readonly && !cellReadOnly && !cellConfig.allowPasteClearOnly;
+            const editable = !rowReadonly && !cellReadOnly && !cellConfig.allowPasteClearOnly;
             const openEditor = (typed?: string) =>
                 openTextEditor(
                     ctx,
@@ -356,7 +361,7 @@ export function renderRowCell(
 
             // a lookup column: the input is readonly, its editor (a list or a grid under the cell) picks
             // the value - where the cell can be edited. Its button is at the right of the cell
-            const lookupEditable = !!lookupColumn && !config.readonly && !cellReadOnly;
+            const lookupEditable = !!lookupColumn && !rowReadonly && !cellReadOnly;
             const lookupPopup = lookupColumn?.editor.type === 'grid' ? 'grid' : 'listbox';
             const openLookup = (search?: string) => {
                 if (!lookupColumn) {
@@ -399,10 +404,10 @@ export function renderRowCell(
                         style=${`${cellConfigType === 'number' && !lookupColumn ? 'text-align: right;' : ''}width:100%;height:100%;${firstLinePadding}`}
                         .value=${live(inputText)}
                         class=${`simple-html-grid-cell-input cellpos-${colType}-${row}-${column}-${celno}  ${cellClass.input}${repeatedClass}${more ? ' simple-html-grid-cell-multiline' : ''}${lookupEditable ? ' simple-html-grid-cell-lookup' : ''}`}
-                        .readOnly=${multiline || !!lookupColumn || !!config.readonly || cellReadOnly}
+                        .readOnly=${multiline || !!lookupColumn || rowReadonly || cellReadOnly}
                         aria-describedby=${more ? moreId : nothing}
                         aria-haspopup=${lookupEditable ? lookupPopup : nothing}
-                        placeholder=${showPlaceHolder ? cellConfig.placeholderRow : ''}
+                        placeholder=${showPlaceHolder ? rowPlaceholder(cellConfig, label) : ''}
                         @contextmenu=${(e: MouseEvent) => {
                             e.preventDefault();
                             contextmenuRow(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
@@ -416,7 +421,7 @@ export function renderRowCell(
                             ctx.gridInterface.getDatasource().setRowAsCurrentEntity(row);
                             triggerScrollEvent(ctx);
                             // not for a Ctrl/Cmd+click: it adds a range of cells
-                            if (!cellReadOnly && !config.readonly && !e.ctrlKey && !e.metaKey) {
+                            if (!cellReadOnly && !rowReadonly && !e.ctrlKey && !e.metaKey) {
                                 setTimeout(() => {
                                     if (cellConfigType === 'date' || cellConfigType === 'datetime') {
                                         const current = entity[attribute];
@@ -625,7 +630,7 @@ export function renderRowCell(
                             }
 
                             let overrideKey = '';
-                            if (!config.readonly && !cellReadOnly && e.code === 'Enter') {
+                            if (!rowReadonly && !cellReadOnly && e.code === 'Enter') {
                                 overrideKey = 'ArrowDown';
                             }
 
@@ -642,7 +647,7 @@ export function renderRowCell(
                                 return;
                             }
 
-                            if (!config.readonly && !cellReadOnly) {
+                            if (!rowReadonly && !cellReadOnly) {
                                 // typing ends the ranges of cells, as moving to another cell does
                                 ctx.gridInterface.clearRanges();
                                 typeValue(e.target.value);
@@ -658,7 +663,7 @@ export function renderRowCell(
                                 return;
                             }
 
-                            if (!config.readonly && !cellReadOnly) {
+                            if (!rowReadonly && !cellReadOnly) {
                                 typeValue(e.target.value);
                                 showEdit();
                             }

@@ -60,7 +60,6 @@ import { getLayoutFields } from './getLayoutFields';
 import { configTabs, type GridConfigTab, tabId, tabPanelId } from './gridConfigTabs';
 import { gridText } from './gridText';
 import { refilterChangedFormats } from './headerFilterFormatter';
-import { defaultFilterPlaceholder, headerFilterPlaceholder } from './headerFilterPlaceholder';
 import { HEADER_OPERATOR_TEXTS, setHeaderFilterOperator } from './headerOperatorMenu';
 import { prettyPrintString } from './prettyPrintString';
 import { removeContextMenu } from './removeContextMenu';
@@ -96,9 +95,9 @@ import { attachTooltips, hideTooltip, tooltipsEnabled } from './tooltip';
  *   text and a number column can be shown as checkboxes (`ColumnFormat.checkbox`): Show as checkbox, the
  *   checked and the unchecked value - while it is on, their template, link, format and blank / 0 are
  *   gone, a checkbox shows no text. A template's ⟨{ }⟩ button puts a field in it at the caret, from a menu
- *   of the fields of the columns and the row. Then, for every column but a checkbox, the header filter:
- *   its placeholder (a text, or Use the column label - `placeholder`, `placeholderLabel`), its
- *   operator - a picker of the operators it offers, the column's default said under it - and Filter as
+ *   of the fields of the columns and the row. The placeholder of its empty cells (a text, or Use the
+ *   column label - `placeholderRow`, `placeholderRowLabel`). Then, for every column but a checkbox, the
+ *   header filter: its operator - a picker of the operators it offers, the column's default said under it - and Filter as
  *   you type (`GridState.headerFilters[field].filterOnType`, filterOnType.ts). Then its colour rules
  *   (`ColumnFormat.rules`, columnSettingsRules.ts), any column. Under it the preview: what the cell shows
  *   in the current row (else the first) in the colours of its rule, the link and its address, and why a
@@ -605,7 +604,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         if (set?.label !== undefined) {
             marks.push('columnSettings.badge.label');
         }
-        if (set?.placeholder !== undefined || set?.placeholderLabel) {
+        if (set?.placeholderRow !== undefined || set?.placeholderRowLabel) {
             marks.push('columnSettings.badge.placeholder');
         }
         if (set?.multiline) {
@@ -992,41 +991,41 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         </div>`;
 
     /**
-     * The placeholder of the column's header filter: a text (`ColumnFormat.placeholder`, empty the one it
-     * has without - shown in the input), or Use the column label (`placeholderLabel`) - the input is off
-     * then, and shows the label. Every column but a checkbox one, as the operator
+     * The placeholder of the column's empty cells (the user: the placeholder "was supposed to be for row"):
+     * a text (`ColumnFormat.placeholderRow`, empty the column's own `placeholderRow` - shown in the input), or
+     * Use the column label (`placeholderRowLabel`) - the input is off then, and shows the label. Every
+     * column but a checkbox one: a column of checkboxes has no empty text to show
      */
     const placeholderSettings = () => {
-        const operator = settings.operators[field];
-        if (!operator) {
+        if (kind === 'boolean' || format?.checkbox) {
             return nothing;
         }
-        const useLabel = format?.placeholderLabel === true;
+        const useLabel = format?.placeholderRowLabel === true;
+        const own = gridInterface.__getGridConfig().columns[field]?.placeholderRow ?? '';
         return html`<div class="column-settings-field">
             ${textInput(
                 'placeholder',
                 'columnSettings.placeholder',
-                useLabel ? '' : (format?.placeholder ?? ''),
-                useLabel
-                    ? headerFilterPlaceholder(ctx, field, format, operator)
-                    : defaultFilterPlaceholder(ctx, field, operator, format ?? {}),
+                useLabel ? '' : (format?.placeholderRow ?? ''),
+                // the draft's label before it is applied
+                useLabel ? format?.label || getConfigColumnLabel(ctx, field) : own,
                 (value) =>
                     change((next) => {
                         if (value.trim() === '') {
-                            delete next.placeholder;
+                            delete next.placeholderRow;
                         } else {
-                            next.placeholder = value;
+                            next.placeholderRow = value;
                         }
                     }),
                 useLabel
             )}
             ${checkbox('columnSettings.placeholderLabel', useLabel, (on) =>
                 change((next) => {
-                    delete next.placeholder;
+                    delete next.placeholderRow;
                     if (on) {
-                        next.placeholderLabel = true;
+                        next.placeholderRowLabel = true;
                     } else {
-                        delete next.placeholderLabel;
+                        delete next.placeholderRowLabel;
                     }
                 })
             )}

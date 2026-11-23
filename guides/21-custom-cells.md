@@ -73,7 +73,7 @@ A new `CellRenderContext` every call:
 | `value` | `row[field]` |
 | `text` | the text the default cell would show: the value through the field's formatter, with `numberOverride` |
 | `type` | the cell's type: the field's, or the one `dynamicCellTypeColumn` gives this row |
-| `readonly` | the cell can not be edited: the grid is readonly, the column is, or the `isReadonly` hook says so |
+| `readonly` | the cell can not be edited: the grid is readonly, the [edit permissions](05-editing.md#edit-permissions-add-change-delete) lock the row, the column is, or the `isReadonly` hook says so |
 | `rowIndex` | the row's index in the displayed rows (`datasource.getRows()`), as in the grid's events |
 | `gridInterface` | the grid: the registry is for the page, so this is how a renderer knows its grid |
 

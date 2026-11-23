@@ -166,14 +166,14 @@ Every option of a `ColumnConfig` is optional.
 | --- | --- |
 | `label` | the header text. The user's label from the column settings (`format.label`) wins |
 | `readonly` | the cell can not be edited, also when the grid can. Shown with stripes |
-| `placeholderRow` | text shown in an empty cell, by default on the current row only (`placeholderRowCurrentEntityOnly`) |
-| `placeholderFilter` | text shown in the empty header filter. Default: the formatter's placeholder (`YYYY-MM-DD` for dates), else the field's type - `Text` or `Number` (texts `filter.placeholder.*`). The user's from the column settings (`format.placeholder`, `format.placeholderLabel`) wins |
+| `placeholderRow` | text shown in an empty cell, by default on the current row only (`placeholderRowCurrentEntityOnly`). The user's from the grid config dialog (`format.placeholderRow`, or the label with `format.placeholderRowLabel`) wins |
+| `placeholderFilter` | text shown in the empty header filter. Default: the formatter's placeholder (`YYYY-MM-DD` for dates), else the field's type - `Text` or `Number` (texts `filter.placeholder.*`) |
 | `operator` | the operator the header filter starts with. Default `EQUAL` for text (the whole text: `ann` does not find `Anna`), `GREATER_THAN_OR_EQUAL_TO` for a number or date. One of the column's operators the header filter's input takes - not `IN`, `NOT_IN`, `IS_BLANK`, `IS_NOT_BLANK` - else a `TypeError`. See [Filtering](06-filtering.md#header-filters) |
 | `filterOperators` | the operators the column offers in the header filter's menu and the filter editor, e.g. `['CONTAINS', 'BEGIN_WITH', 'IS_BLANK']`: some of its type's (`operatorsFor(type)`), with one the header filter takes. Default: all of its type's. A `TypeError` for an operator of another type. See [Filtering](06-filtering.md#the-operators-a-column-offers) |
 | `filterCaseSensitive` | `true`: the grid's conditions on the column match case - the header filter, its value list, the row menu's filter and the filter editor. Its Match case is on and can not be turned off. Text columns only, else a `TypeError`. See [Filtering](06-filtering.md#match-case) |
 | `filterOnType` | `true`: the header filter filters as you type, after a short pause - no Enter needed. Left out, the grid's `filterOnType`. The user turns it on and off (the operator choice, the filter menu, the grid config dialog). Not a boolean column. See [Filtering](06-filtering.md#filter-as-you-type) |
 | `numberOverride` | number fields only: `'ZERO_TO_BLANK'` shows 0 as an empty cell, `'BLANK_TO_ZERO'` shows an empty cell as 0. The value is not changed. The user's from the column settings (`format.numberOverride`) wins |
-| `format` | how the cells show the value, a display format: `{ date: 'norwegian' }` (22.11.2026), `{ date: 'weekIso' }` (2026-W47) for a date or datetime field, `{ number: { decimals: 2, thousands: ' ', decimal: ',' } }` (1 234 567,89) for a number field; for a text field a template of its text and a link, `{ text: '{name} ({id})', link: { url: 'https://crm.example.com/customer/{id}', newTab: true } }`. Only the text shown: editing, filtering, sorting and copy keep to the field's formatter - but the header filter takes a date or number format's text as the cells show it, `2026-W47` is the week (`filterAsShown`, see [Filter as shown](08-formatting.md#filter-as-shown)). Where the grid starts - the user picks another in the header menu (Format ›) or the grid config dialog, it is state (`GridState.formats`). It has the rest of the column settings too: `label`, `placeholder` / `placeholderLabel`, `numberOverride`, `checkbox` (a text or number column of `1` / `0` as checkboxes), `multiline`, `readonly` and `rules`, the colour rules of any column (`[{ operator: 'LESS_THAN', value: '0', color: 'red' }]`). A `TypeError` for a format that does not fit the field, and for a link of another scheme than https, http, mailto, tel. See [Display formats](08-formatting.md#display-formats), [Templates and links](08-formatting.md#templates-and-links) [Label, placeholder, blank / 0, checkboxes, multiline, read only](08-formatting.md#label-placeholder-blank--0-checkboxes-multiline-read-only) and [Colour rules](08-formatting.md#colour-rules) |
+| `format` | how the cells show the value, a display format: `{ date: 'norwegian' }` (22.11.2026), `{ date: 'weekIso' }` (2026-W47) for a date or datetime field, `{ number: { decimals: 2, thousands: ' ', decimal: ',' } }` (1 234 567,89) for a number field; for a text field a template of its text and a link, `{ text: '{name} ({id})', link: { url: 'https://crm.example.com/customer/{id}', newTab: true } }`. Only the text shown: editing, filtering, sorting and copy keep to the field's formatter - but the header filter takes a date or number format's text as the cells show it, `2026-W47` is the week (`filterAsShown`, see [Filter as shown](08-formatting.md#filter-as-shown)). Where the grid starts - the user picks another in the header menu (Format ›) or the grid config dialog, it is state (`GridState.formats`). It has the rest of the column settings too: `label`, `placeholderRow` / `placeholderRowLabel`, `numberOverride`, `checkbox` (a text or number column of `1` / `0` as checkboxes), `multiline`, `readonly` and `rules`, the colour rules of any column (`[{ operator: 'LESS_THAN', value: '0', color: 'red' }]`). A `TypeError` for a format that does not fit the field, and for a link of another scheme than https, http, mailto, tel. See [Display formats](08-formatting.md#display-formats), [Templates and links](08-formatting.md#templates-and-links) [Label, placeholder, blank / 0, checkboxes, multiline, read only](08-formatting.md#label-placeholder-blank--0-checkboxes-multiline-read-only) and [Colour rules](08-formatting.md#colour-rules) |
 | `allowPasteClearOnly` | typing in the cell does nothing, paste and clear from the row menu work. For a field you set from a dropdown of your own |
 | `editor` | the value is picked from a list: `{ type: 'select' \| 'grid', lookup: '<id>', set? }`, a select or a dropdown grid of a lookup registered with `registerLookup()`. The cell shows the label. See [Lookups](20-lookups.md) |
 | `focusButton` | shows a `...` button in the focused cell, see [Events](09-events.md#cell-events). Not with `editor`, it has its own button |
@@ -211,6 +211,7 @@ Every option is optional.
 | option | default | what it does |
 | --- | --- | --- |
 | `readonly` | `true` | the whole grid is readonly. Set `false` to edit, see [Editing](05-editing.md) |
+| `edit` | all allowed | what the user may do in an editable grid: `{ add, change, delete }`, each `true` or `false` - `{ add: true, change: false, delete: false }` lets them add rows and fill them in, and leaves the rows that are there as they are. A permission of yours: not state, no menu or dialog changes it. A `TypeError` for anything else. See [Edit permissions](05-editing.md#edit-permissions-add-change-delete) |
 | `cellHeight` | `22` | height of a cell in px |
 | `multilineLineHeight` | `15` | the height in px of a line of text after the first in a multiline cell of a row made taller (`fitRows()`), and in its editor. A whole number of 1 or more, see [Column widths and row heights](#column-widths-and-row-heights) |
 | `cellHeaderLabelHeight` | `cellHeight` | height of a header label cell, make it taller for labels that wrap |
@@ -222,6 +223,7 @@ Every option is optional.
 | `filterOperatorIndicator` | `true` | shows the operator of each header filter as a small symbol in its cell (`=`, `≥`, `*a*` ...): on the right of a text filter, on the left of a number or date filter. A click (F4 in the filter) opens the operator choice. Not on a boolean column nor on a column under 60px. See [Filtering](06-filtering.md#the-operator-in-the-cell) |
 | `filterOnType` | `false` | every header filter filters as you type, after a short pause - the default of the columns, a column's `filterOnType` wins. See [Filtering](06-filtering.md#filter-as-you-type) |
 | `settingsButton` | `true` | a gear at the right end of the footer, the last stop of Tab there: it opens the grid config dialog - the display formats, a text column's template and link, the detail form, saved in the state. `false` hides the gear only: *Column settings…* stays in the header menu (`header.settings`, the `menus` hook takes it out) and `openColumnSettings()` opens the dialog. Not in a footer of no height. See [The grid config dialog](08-formatting.md#the-grid-config-dialog) |
+| `shortcutHelp` | `true` | the keyboard shortcuts help: `?` where the key types nothing (a readonly cell, a column header) and Ctrl+/ anywhere in the grid open it, the header menu has *Keyboard shortcuts…* (`header.shortcuts`). `false` turns the keys and the entry off, `openShortcutHelp()` still opens the help. See [The keyboard shortcuts help](14-accessibility.md#the-keyboard-shortcuts-help) |
 | `dimRepeatedValues` | `false` | dims a cell that has the same value as the row above. The row menu can toggle it |
 | `rowStatus` | `true` | shows the state of each row on its row number: new, edited, marked for deletion, an error. The row numbers are 14px wider for the icon. See [Showing the row state](05-editing.md#showing-the-row-state) |
 | `copyHeaders` | `true` | a copy of more than one cell starts with a line of the column labels (Word and Excel show the headers); pasted into the grid that line is skipped. See [Selection and clipboard](17-selection-and-clipboard.md) |
@@ -290,7 +292,7 @@ const config: GridConfig = {
   lines. A boolean is a checkbox. A row with a link has the link under the value. A value has the
   colours of its column's [colour rule](08-formatting.md#colour-rules), as its cell has them.
 - **Editing**: in an editable grid a field is edited as its cell is - the same readonly rules
-  (`readonly`, `ColumnConfig.readonly`, the `isReadonly` hook, `allowPasteClearOnly`), the value
+  (`readonly`, `edit`, `ColumnConfig.readonly`, the `isReadonly` hook, `allowPasteClearOnly`), the value
   parsed by the field's formatter (a field with the focus shows its `formatForEdit`), validated, its
   errors under it. What is typed in a field is one step of the undo history; Ctrl+Z in a field undoes
   the last step. A lookup column is shown, not edited in the form: its cell picks the value.
@@ -357,7 +359,9 @@ and field. Keep them fast.
 
 - `isReadonly(row, field, readonlyByConfig)` returns `true` (readonly) or `false` (editable).
   `null` or `undefined` leaves it to the column's `readonly` option, which is passed in as
-  `readonlyByConfig`. A readonly grid (`readonly: true`) stays readonly, whatever it returns.
+  `readonlyByConfig`. A readonly grid (`readonly: true`) stays readonly, whatever it returns - and so
+  does a row the [edit permissions](05-editing.md#edit-permissions-add-change-delete) lock
+  (`change: false`, a row that is not new).
 - `cellClass(row, field)` returns `{ input, background }`: classes for the cell's `<input>` (the
   text) and for the element behind it (the background). Both are optional, `null` adds nothing.
 
@@ -455,6 +459,9 @@ gridInterface.updateConfig({ tooltips: undefined }); // back to the default
 - `layout` is shown at once and replaces the column order, pinning and widths the user made. It is
   also the layout `resetState()` goes back to from then on. `layout: undefined` is ignored.
 - `initialState` changes nothing now, it is what the next `resetState()` goes back to.
+- `edit` replaces the permissions as a whole: `updateConfig({ edit: { delete: false } })` allows adding
+  and changing again. An open menu or editor is closed, what was typed in the editor not saved. See
+  [Edit permissions](05-editing.md#edit-permissions-add-change-delete).
 - The sorting, grouping, filter and header filters stay as they are, and so do the handlers you
   subscribed with `on()` and the hooks. Change a hook with [`updateHooks()`](#changing-the-hooks-updatehooks).
 

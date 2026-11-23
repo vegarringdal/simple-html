@@ -379,8 +379,8 @@ describe('display formats - the value of a cell', () => {
         expect(hasDisplayFormat({ link: { url: '{website}' } })).toBe(true);
         // the rest of the column settings: a format of its own too
         expect(hasDisplayFormat({ label: 'Who' })).toBe(true);
-        expect(hasDisplayFormat({ placeholder: 'Search' })).toBe(true);
-        expect(hasDisplayFormat({ placeholderLabel: false })).toBe(true);
+        expect(hasDisplayFormat({ placeholderRow: 'Required' })).toBe(true);
+        expect(hasDisplayFormat({ placeholderRowLabel: false })).toBe(true);
         expect(hasDisplayFormat({ numberOverride: 'NONE' })).toBe(true);
         expect(hasDisplayFormat({ checkbox: {} })).toBe(true);
     });
@@ -483,7 +483,7 @@ describe('display formats - the check of a format', () => {
         expect(check([], 'date')).toThrow(TypeError);
         expect(check({ color: 'red' }, 'text')).toThrow(
             new TypeError(
-                "GridConfig: columns.field.format has 'color', a format has date, number, text, link, label, placeholder, placeholderLabel, numberOverride, checkbox, filterAsShown, multiline, readonly, rules"
+                "GridConfig: columns.field.format has 'color', a format has date, number, text, link, label, placeholderRow, placeholderRowLabel, numberOverride, checkbox, filterAsShown, multiline, readonly, rules"
             )
         );
     });
@@ -587,26 +587,26 @@ describe('display formats - the check of a format', () => {
         for (const type of ['text', 'number', 'date', 'datetime', 'boolean'] as const) {
             expect(check({ label: 'Who' }, type), type).not.toThrow();
         }
-        expect(check({ placeholder: 'Search', placeholderLabel: false }, 'number')).not.toThrow();
-        expect(check({ placeholderLabel: true }, 'date')).not.toThrow();
+        expect(check({ placeholderRow: 'Required', placeholderRowLabel: false }, 'number')).not.toThrow();
+        expect(check({ placeholderRowLabel: true }, 'date')).not.toThrow();
         // a lookup column takes them: they are no format of its cells
-        expect(check({ label: 'Code', placeholder: 'A code', numberOverride: undefined }, 'number', true)).not.toThrow();
+        expect(check({ label: 'Code', placeholderRow: 'A code', numberOverride: undefined }, 'number', true)).not.toThrow();
         expect(check({ label: '' }, 'text')).toThrow(/format.label is "", it is the column's label: text, not ''/);
         expect(check({ label: '  ' }, 'text')).toThrow(TypeError);
         expect(check({ label: 12 }, 'text')).toThrow(/format.label is 12/);
-        expect(check({ placeholder: '' }, 'text')).toThrow(
-            /format.placeholder is "", it is the placeholder of the header filter/
+        expect(check({ placeholderRow: '' }, 'text')).toThrow(
+            /format.placeholderRow is "", it is the placeholder of the empty cells/
         );
-        expect(check({ placeholderLabel: 'yes' }, 'text')).toThrow(/format.placeholderLabel is "yes", it is true or false/);
-        expect(check({ placeholder: 'Search', placeholderLabel: true }, 'text')).toThrow(
-            /has placeholder and placeholderLabel: true - the placeholder is the text or the label, not both/
+        expect(check({ placeholderRowLabel: 'yes' }, 'text')).toThrow(/format.placeholderRowLabel is "yes", it is true or false/);
+        expect(check({ placeholderRow: 'Search', placeholderRowLabel: true }, 'text')).toThrow(
+            /has placeholderRow and placeholderRowLabel: true - the placeholder is the text or the label, not both/
         );
-        expect(check({ placeholder: 'Yes' }, 'boolean')).toThrow(
-            /format.placeholder is for a header filter that is typed in, 'field' is boolean: its filter is a checkbox/
+        expect(check({ placeholderRow: 'Yes' }, 'boolean')).toThrow(
+            /format.placeholderRow is for a cell that is typed in, 'field' is boolean: its cells are checkboxes/
         );
-        expect(check({ placeholderLabel: true }, 'boolean')).toThrow(/format.placeholderLabel is for a header filter/);
-        // a lookup column on a boolean field filters on its labels, typed
-        expect(check({ placeholderLabel: true }, 'boolean', true)).not.toThrow();
+        expect(check({ placeholderRowLabel: true }, 'boolean')).toThrow(/format.placeholderRowLabel is for a cell/);
+        // a lookup column on a boolean field shows its labels, typed
+        expect(check({ placeholderRowLabel: true }, 'boolean', true)).not.toThrow();
     });
 
     it('expect numberOverride on a number field, of the three values; not on a lookup column', () => {

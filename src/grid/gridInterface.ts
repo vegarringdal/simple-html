@@ -55,6 +55,13 @@ import { renderColumnNumbers } from './gridFunctions/columnNumbers';
 import { type ColumnSelection, clickColumn, NO_COLUMNS, numberedColumns } from './gridFunctions/columnSelection';
 import { openColumnSettings } from './gridFunctions/columnSettings';
 import { assertDetailForm, copyDetailForm, noDetailForm } from './gridFunctions/detailForm';
+import {
+    assertEditPermissions,
+    editPermissionsOf,
+    mayChangeRow,
+    mayChangeValues,
+    mayDeleteRow
+} from './gridFunctions/editPermissions';
 import { fillDown } from './gridFunctions/fillDown';
 import { columnConditions, sameConditions } from './gridFunctions/filterCallback';
 import { closeFind, findDataChanged, findStep, getFindFilter, getFindResult, openFind } from './gridFunctions/findBar';
@@ -75,7 +82,9 @@ import { removeContextMenu } from './gridFunctions/removeContextMenu';
 import { requestRowsRender } from './gridFunctions/renderChangedRows';
 import { fitRowLinesOf, layoutColumns, MULTILINE_LINE_HEIGHT, rowHeightOf } from './gridFunctions/rowHeights';
 import { ROW_STATUS_WIDTH } from './gridFunctions/rowStatus';
+import { openShortcutHelp } from './gridFunctions/shortcutHelp';
 import { placeAt, showMenu } from './gridFunctions/showMenu';
+import { closeTextEditor } from './gridFunctions/textEditor';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
 import { updateMainElementSizes } from './gridFunctions/updateMainElementSizes';
 import { updateVerticalScrollHeight } from './gridFunctions/updateVerticalScrollHeight';
@@ -239,8 +248,9 @@ export class GridInterface<T> {
      * `format` does not fit its field (see {@link ColumnFormat}), a column's `editor` is wrong - its
      * lookup not registered, see {@link ColumnEditor} - a column's `renderer` is not the id of a
      * registered cell renderer, or is given with an `editor`, or a column's `filterOperators`,
-     * `operator` or `filterCaseSensitive` does not fit its type, see {@link ColumnConfig} - and when
-     * `detailForm` is not a {@link DetailForm}
+     * `operator` or `filterCaseSensitive` does not fit its type, see {@link ColumnConfig} - when
+     * `detailForm` is not a {@link DetailForm}, and when `edit` is not an object of the permissions
+     * `add`, `change` and `delete`, each true or false (see {@link EditPermissions})
      *
      * @example
      * ```ts
@@ -262,6 +272,7 @@ export class GridInterface<T> {
         assertTooltipLines(gridConfig);
         assertLineHeight(gridConfig);
         assertConfigDetailForm(gridConfig);
+        assertEditPermissions(gridConfig.edit);
         this.dataSource = datasource;
         // the calculated columns first: the checks of the formats, the aggregates and the filters read
         // their types from the datasource
@@ -463,6 +474,10 @@ export class GridInterface<T> {
      * - **`texts` replaces the grid's texts as a whole**, the ids are not merged: an id left out shows
      *   the page's text again (`setTexts()`). A menu or the filter editor shows them the next time it
      *   opens.
+     * - **`edit` replaces the permissions as a whole**: a permission left out is allowed again -
+     *   `updateConfig({ edit: { delete: false } })` allows adding and changing. The cells follow at
+     *   once; an open menu, date picker, lookup list or editor of a multiline cell is closed - what was
+     *   typed in the editor is not saved. See {@link EditPermissions}.
      *
      * The rest of the state - sorting, grouping, filter, header filters - is kept, and so are the
      * handlers subscribed with {@link on}. The object passed in is not changed, the grid copies
@@ -476,13 +491,15 @@ export class GridInterface<T> {
      * not fit its field (see {@link ColumnFormat}), a column's `editor` is wrong - its lookup not
      * registered, see {@link ColumnEditor} - a column's `renderer` is not the id of a registered cell
      * renderer, or is given with an `editor`, or a column's `filterOperators`, `operator` or
-     * `filterCaseSensitive` does not fit its type, see {@link ColumnConfig} - and when `detailForm` is
-     * not a {@link DetailForm}
+     * `filterCaseSensitive` does not fit its type, see {@link ColumnConfig} - when `detailForm` is
+     * not a {@link DetailForm}, and when `edit` is not an object of the permissions `add`, `change` and
+     * `delete`, each true or false (see {@link EditPermissions})
      *
      * @sample misc-options
      * @example
      * ```ts
      * gridInterface.updateConfig({ readonly: false }); // editing on
+     * gridInterface.updateConfig({ edit: { add: true, change: false, delete: false } }); // new rows only
      * gridInterface.updateConfig({ hideFilter: true, cellHeight: 30 });
      * gridInterface.updateConfig({ tooltips: undefined }); // back to the default, true
      *
@@ -497,6 +514,7 @@ export class GridInterface<T> {
         assertTooltipLines(config);
         assertLineHeight(config);
         assertConfigDetailForm(config);
+        assertEditPermissions(config.edit);
         // the calculated columns first, as in the constructor: the checks below read their types. Taken
         // back when one of them throws
         let calculatedNext: Record<string, CalculatedColumn> | undefined;
@@ -528,6 +546,15 @@ export class GridInterface<T> {
             throw error;
         }
         const { columns, layout, initialState, calculatedColumns, ...options } = config;
+
+        // other edit permissions: what is open was opened under the old ones - a menu, the date picker, the
+        // editor of a multiline cell, a lookup's list - and could still write into a row they lock now.
+        // Closed, what was typed in the editor not saved
+        if ('edit' in config && this.grid) {
+            closeTextEditor(this.grid, false);
+            this.grid.lookupEditor?.close(false);
+            removeContextMenu(this.grid);
+        }
 
         this.options = { ...this.options, ...options };
         // the totals row is state too (the header menu turns it on and off): only a totalsRow given
@@ -1370,6 +1397,30 @@ export class GridInterface<T> {
     public openDetailFormSettings() {
         if (this.grid) {
             openColumnSettings(this.grid, undefined, 'detailForm');
+        }
+    }
+
+    /**
+     * Opens the keyboard shortcuts help: a dialog that lists the keys of the grid in groups, with a
+     * search - as `?` (where it types nothing) and Ctrl+/ in the grid do, and *Keyboard shortcuts…* in
+     * the header menu. The keys as the platform names them, ⌘ on a Mac; a key that does nothing in this
+     * grid is left out - the editing keys of a readonly grid. For a help button of your own: it opens the
+     * help also with `GridConfig.shortcutHelp: false`, which turns the grid's own ways to open it off.
+     *
+     * A modal `<dialog>`, as the filter editor: the focus moves into it - into its search when a key
+     * opened it - Esc closes it, the focus goes back to where it was; the user drags it by its title bar
+     * and resizes it from every edge and corner. Its texts are `shortcuts.*`.
+     *
+     * Does nothing while the grid is not on the page.
+     *
+     * @example
+     * ```ts
+     * document.getElementById('keys-help')!.onclick = () => gridInterface.openShortcutHelp();
+     * ```
+     */
+    public openShortcutHelp() {
+        if (this.grid) {
+            openShortcutHelp(this.grid);
         }
     }
 
@@ -2442,20 +2493,54 @@ export class GridInterface<T> {
 
     /**
      * @internal
-     * Is the cell readonly: the `isReadonly` hook decides, and when it gives no answer (anything but
-     * `true` / `false`) the column's `readonly` option. The grid's own `readonly` is not part of it,
-     * the callers check that first
+     * Is the cell readonly: a calculated column's always; on a row the edit permissions (`GridConfig.edit`)
+     * do not let the user change, every cell is - whatever the hook says. Else the `isReadonly` hook decides, and when it gives no
+     * answer (anything but `true` / `false`) the column's `readonly` option. The grid's own `readonly`
+     * is not part of it, the callers check that first
      * @param row a row of the datasource, so one of its `EntityUnion<T>` rows
      */
     public __isCellReadonly(row: Entity, field: string): boolean {
-        // a calculated column is computed, never edited
-        if (this.__isCalculated(field)) {
+        // a calculated column is computed, never edited; a row the edit permissions lock, every cell
+        if (this.__isCalculated(field) || !mayChangeRow(this.gridConfig.edit, row)) {
             return true;
         }
         // the user's (format.readonly) over the column's
         const readonlyByConfig = readonlyOf(this.gridConfig.columns[field]);
         const readonly = this.hooks.isReadonly?.(row as EntityUnion<T>, field, readonlyByConfig);
         return typeof readonly === 'boolean' ? readonly : readonlyByConfig;
+    }
+
+    /**
+     * @internal
+     * Can the user change the values of the row: the grid is editable (`readonly: false`) and the edit
+     * permissions allow it - `change`, or `add` for a new row (editPermissions.ts). The grid's `readonly`
+     * for one row: what the cells of a row the user may not change look like. A cell can still be
+     * readonly on its own, see __isCellReadonly
+     * @param row a data row of the datasource
+     */
+    public __canChangeRow(row: Entity): boolean {
+        return !this.gridConfig.readonly && mayChangeRow(this.gridConfig.edit, row);
+    }
+
+    /**
+     * @internal
+     * Can the user change some values: the grid is editable and `change` or `add` is allowed. The paste,
+     * clear and fill of the grid start with it - nothing to do when no row can be changed, the keys are
+     * the browser's as in a readonly grid - and check each cell after (__isCellReadonly)
+     */
+    public __canChangeValues(): boolean {
+        return !this.gridConfig.readonly && mayChangeValues(this.gridConfig.edit);
+    }
+
+    /**
+     * @internal
+     * Can the user mark the row for deletion: the grid is editable and `delete` is allowed, or the row is
+     * new - taking out a row that is not saved deletes nothing (editPermissions.ts). The isReadonly hook
+     * can lock it too, see isLockedByHook in deleteRows.ts
+     * @param row a data row of the datasource
+     */
+    public __canDeleteRow(row: Entity): boolean {
+        return !this.gridConfig.readonly && mayDeleteRow(this.gridConfig.edit, row);
     }
 
     /**
@@ -2824,10 +2909,12 @@ function withDefaults(options: GridOptions): ParsedGridOptions {
         copyHeaders: options.copyHeaders ?? true,
         filterOperatorIndicator: options.filterOperatorIndicator ?? true,
         settingsButton: options.settingsButton ?? true,
+        shortcutHelp: options.shortcutHelp ?? true,
         placeholderRowCurrentEntityOnly: options.placeholderRowCurrentEntityOnly ?? true,
         groupAggregates: options.groupAggregates ?? true,
         totalsRow: options.totalsRow ?? false,
-        detailForm: options.detailForm ? copyDetailForm(options.detailForm) : noDetailForm()
+        detailForm: options.detailForm ? copyDetailForm(options.detailForm) : noDetailForm(),
+        edit: editPermissionsOf(options.edit)
     };
 }
 

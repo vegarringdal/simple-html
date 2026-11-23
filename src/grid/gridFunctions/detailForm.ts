@@ -431,8 +431,9 @@ function fieldTemplate(ctx: Grid, config: ParsedGridConfig, row: Entity, field: 
     const cell = cellTextOf(ctx, field)(row);
     // the cell's formatter: formatForEdit and parse are the field's, of the cell's type
     const formatter = gridInterface.__getCellFormatter(field, cell.type, row);
+    // the grid's readonly for the row: a readonly grid, or a row the edit permissions lock (GridConfig.edit)
     const readonly =
-        !!config.readonly ||
+        !gridInterface.__canChangeRow(row) ||
         !!lookup ||
         !!config.columns[field]?.allowPasteClearOnly ||
         gridInterface.__isCellReadonly(row, field);

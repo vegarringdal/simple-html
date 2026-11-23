@@ -224,11 +224,60 @@ export type GridConfig = {
      */
     settingsButton?: boolean;
     /**
+     * the keyboard shortcuts help, default `true`: a dialog that lists the keys of the grid in groups -
+     * moving around, selecting, editing, find, the menus - with a search, the keys as the platform names
+     * them (⌘ on a Mac). The user opens it with `?` where the key types nothing (a readonly cell, a
+     * checkbox, a column header, a row number), Ctrl+/ (Cmd+/) anywhere in the grid - also while typing in
+     * a cell - and *Keyboard shortcuts…* in the header menu (`header.shortcuts`). Its texts are
+     * `shortcuts.*`, see the texts guide.
+     *
+     * `false` turns its keys and the menu entry off - for an app with a help of its own, or one that uses
+     * the keys itself. `gridInterface.openShortcutHelp()` still opens it. A lookup's dropdown grid has it
+     * `false`. See the accessibility guide, "The keyboard shortcuts help"
+     *
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     layout: { center: [{ fields: ['name'], width: 150 }] },
+     *     shortcutHelp: false // the app's own help button calls gridInterface.openShortcutHelp()
+     * };
+     * ```
+     */
+    shortcutHelp?: boolean;
+    /**
      * the whole grid is readonly, default `true`: no cell can be edited, and the row menu has no paste
      * or clear. Set `false` to edit; the column's `readonly` and the `isReadonly` hook
-     * ({@link GridHooks}) can still make cells readonly
+     * ({@link GridHooks}) can still make cells readonly, and `edit` says which of adding, changing and
+     * deleting rows the user may do
      */
     readonly?: boolean;
+    /**
+     * What the user may do in an editable grid (`readonly: false`): add rows, change values, delete
+     * rows - any of them, default all three. A permission you give, not the user's: it is not part of
+     * the state, and no menu or dialog changes it. `updateConfig({ edit })` changes it while the grid
+     * is shown - after a login check, say - and closes an open menu or editor. See
+     * {@link EditPermissions} for what each one stops.
+     *
+     * Anything but an object of `add`, `change` and `delete`, each `true`, `false` or left out, throws a
+     * `TypeError` when the grid is made or `updateConfig()` is given it: a misspelt permission would
+     * leave the user allowed without a word.
+     *
+     * @sample edit-permissions
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * // the user adds rows and fills them in, the rows that were there stay as they are
+     * const config: GridConfig = {
+     *     readonly: false,
+     *     edit: { add: true, change: false, delete: false },
+     *     layout: { center: [{ fields: ['name'], width: 150 }] }
+     * };
+     * ```
+     */
+    edit?: EditPermissions;
     /**
      * closes the open menu (the right click menus, `openMenu()`, the date picker ...) when the grid is
      * scrolled, default false. Leave it off where scrolling happens by accident, on a small touch screen
@@ -448,6 +497,71 @@ export type GridConfig = {
 };
 
 /**
+ * What the user may do in an editable grid, `GridConfig.edit`: each permission `true` (the default) or
+ * `false`. They are about the grid's own ways of editing - the user's typing, the menus, the keys. Code
+ * of yours that sets a value, `datasource.addNewEmpty()`, `markForDeletion()` ... is not stopped: an
+ * "Add row" or "Delete" button of your own follows these as you make it. `gridInterface.fillDown()`
+ * goes through the grid, it follows them.
+ *
+ * - **`change: false`** - the values of the rows that were there can not be changed: no typing, no
+ *   editor (text, date picker, lookup list or grid, a custom cell's), no checkbox, no paste, no clear, no
+ *   fill down (Ctrl+D, the fill handle), nothing in the detail form. The cells look as in a readonly
+ *   grid - no stripes. **A new row** (added and not saved yet, `__rowState` `'N'`) can be filled in when
+ *   `add` is allowed: who may add a row may fill it in. Once `acceptChanges()` takes it in, it is a row
+ *   that was there.
+ * - **`delete: false`** - the rows that were there can not be marked for deletion: the row menu's
+ *   *Delete ›* entries are greyed out on them, Delete on a row number leaves them. A new row can still
+ *   be taken out: it is not on the server, nothing is deleted - it is the undo of an add.
+ * - **`add: false`** - the grid has no way of its own to add a row, so this is for your add button,
+ *   and for the new rows your code adds: with `change: false` too they can not be filled in.
+ *
+ * **What still works**, whatever they say: undo and redo (Ctrl+Z, the row menu) - the history has only
+ * what the user was allowed to do, and your code's edits; the reverts (*Undo cell edit*, *Undo row
+ * edits*, a click on the marker of an edited cell); taking the deletion mark off. They put back what
+ * was, they make nothing new. A permission taken away while the grid is shown leaves the history as it
+ * is: call `datasource.clearHistory()` too when a redo must not bring back what was done before.
+ *
+ * The column's `readonly`, the `isReadonly` hook and `allowPasteClearOnly` still make cells readonly
+ * where a permission allows the change. Unlike them, the hook can not make a cell editable that a
+ * permission locks - and the user can not either: a column's readonly is a default the user changes
+ * in the grid config dialog (*Read only*), the permissions are not in it.
+ *
+ * @sample edit-permissions
+ * @example
+ * ```ts
+ * import type { EditPermissions } from '@simple-html/grid';
+ *
+ * declare const user: { canDelete: boolean };
+ *
+ * // values and new rows, deleting for some users only
+ * const edit: EditPermissions = { delete: user.canDelete };
+ * gridInterface.updateConfig({ readonly: false, edit });
+ *
+ * // look, and delete rows - nothing else
+ * gridInterface.updateConfig({ edit: { add: false, change: false, delete: true } });
+ *
+ * gridInterface.updateConfig({ edit: undefined }); // all three again
+ * ```
+ */
+export interface EditPermissions {
+    /**
+     * the user may add rows, default `true`. The grid adds none itself: this is for your add button.
+     * While it is allowed a new row can be filled in with `change: false`
+     */
+    add?: boolean;
+    /**
+     * the user may change the values of the rows that were there, default `true`: typing, the editors,
+     * paste, clear, fill down, the detail form. A new row follows `add`
+     */
+    change?: boolean;
+    /**
+     * the user may mark the rows that were there for deletion, default `true`: the row menu's *Delete ›*,
+     * Delete on a row number. A new row can always be taken out
+     */
+    delete?: boolean;
+}
+
+/**
  * The detail form: a panel inside the grid, at the right of the rows, with the current row
  * (`datasource.currentEntity`) as a form - a label and a value for each field of `fields`, in that
  * order. `GridConfig.detailForm` is the one the grid starts with, `GridState.detailForm` the one it
@@ -457,7 +571,7 @@ export type GridConfig = {
  *   several lines (`FieldConfig.multiline`, or a value with a line break) has a tall field with all of
  *   it. A row with a link (`ColumnFormat.link`) has the link beside the value.
  * - **Editing**: in an editable grid a field is edited as its cell is - the same readonly rules
- *   (`readonly`, `ColumnConfig.readonly`, the `isReadonly` hook, `allowPasteClearOnly`), the value
+ *   (`readonly`, `edit`, `ColumnConfig.readonly`, the `isReadonly` hook, `allowPasteClearOnly`), the value
  *   parsed by the field's formatter and validated, the errors under the field, and what is typed in a
  *   field is one step of the undo history. A lookup column (`ColumnConfig.editor`) is shown, not edited:
  *   its cell picks the value.
@@ -598,14 +712,14 @@ export type ColumnConfig = {
      */
     label?: string;
     /**
-     * shown in an empty cell, see `GridConfig.placeholderRowCurrentEntityOnly`
+     * shown in an empty cell, see `GridConfig.placeholderRowCurrentEntityOnly`. The user's from the grid
+     * config dialog (`format.placeholderRow`, or the column's label with `format.placeholderRowLabel`) wins
      *
      * @sample required-placeholders
      */
     placeholderRow?: string;
     /**
      * shown in the empty header filter. Default: the formatter's placeholder (date fields), else the field's type: `Text` or `Number` (texts `filter.placeholder.*`).
-     * The user's from the grid config dialog (`format.placeholder`, `format.placeholderLabel`) wins
      *
      * @sample required-placeholders
      */
@@ -707,7 +821,8 @@ export type ColumnConfig = {
     /**
      * makes the column's cells readonly while the grid is editable (`GridConfig.readonly: false`). The
      * grid draws red stripes behind them. The `isReadonly` hook ({@link GridHooks}) can decide per row
-     * instead. The user's from the grid config dialog (`format.readonly`, Read only) wins
+     * instead. The user's from the grid config dialog (`format.readonly`, Read only) wins - so it is a
+     * default the user can change, `GridConfig.edit` ({@link EditPermissions}) is what they may not
      */
     readonly?: boolean;
 
@@ -820,8 +935,8 @@ export type ColumnConfig = {
      * and a link, see {@link LinkFormat} (`{ link: { url: 'mailto:{email}' } }`). Left out: the field's
      * formatter.
      *
-     * The rest of what the grid config dialog sets is here too: `label`, the header filter's
-     * `placeholder` / `placeholderLabel`, a number column's `numberOverride`, and `checkbox` - the cells
+     * The rest of what the grid config dialog sets is here too: `label`, the empty cells'
+     * `placeholderRow` / `placeholderRowLabel`, a number column's `numberOverride`, and `checkbox` - the cells
      * of a text or number column as checkboxes, see {@link CheckboxFormat}
      * (`{ checkbox: { checked: '1', unchecked: '0' } }`).
      *
@@ -1084,12 +1199,16 @@ export type ParsedGridOptions = GridOptions &
             | 'copyHeaders'
             | 'filterOperatorIndicator'
             | 'settingsButton'
+            | 'shortcutHelp'
             | 'placeholderRowCurrentEntityOnly'
             | 'groupAggregates'
             | 'totalsRow'
             | 'detailForm'
         >
-    >;
+    > & {
+        /** every permission filled in: `true` when it is not given */
+        edit: Required<EditPermissions>;
+    };
 
 /**
  * @internal

@@ -72,15 +72,47 @@ describe('docs site', { timeout: 30_000 }, () => {
         const sections = [...document.querySelectorAll('.nav-section-title')].map((el) => el.textContent);
         expect(sections).toEqual(
             guideFiles.length
-                ? ['Status', 'Developer Guide', 'User Guide', 'Samples', 'API']
+                ? ['Status', 'Features', 'Developer Guide', 'User Guide', 'Samples', 'API']
                 : ['Status', 'User Guide', 'Samples', 'API']
         );
 
         expect(routesOf('#sample/').length).toBeGreaterThan(0);
         expect(routesOf('#api/').length).toBeGreaterThan(0);
-        // no hash: the start page, the first guide - the work in progress page is first in the sidebar
+        // no hash: the start page, the first guide - the feature overview. The work in progress page is
+        // first in the sidebar
         expect(location.hash).toBe(routesOf('#guide/')[0] ?? routesOf('#')[0]);
+        expect(location.hash).toBe('#guide/features');
         expect(document.querySelector('.nav-item.active')?.getAttribute('href')).toBe(location.hash);
+    });
+
+    it('renders the feature overview in a section of its own: tables of features, linked to the guides and samples', async () => {
+        const linksOf = (title: string) =>
+            [...document.querySelectorAll('.nav-section')]
+                .filter((section) => section.querySelector('.nav-section-title')?.textContent === title)
+                .flatMap((section) => [...section.querySelectorAll('.nav-item')].map((link) => link.getAttribute('href')));
+        expect(linksOf('Features')).toEqual(['#guide/features']);
+        expect(linksOf('Developer Guide')).not.toContain('#guide/features');
+        expect(linksOf('Developer Guide')[0]).toBe('#guide/getting-started');
+
+        await open('#guide/features');
+        expect(text('.doc h1')).toBe('Feature overview');
+        expect(document.querySelector('.doc')?.getAttribute('data-guide')).toBe('features');
+        const tables = [...document.querySelectorAll('.doc table')];
+        expect(tables.length).toBeGreaterThan(15);
+        // the tables of features have the same three columns, the keyboard shortcuts two
+        const headers = tables.map((table) => [...table.querySelectorAll('th')].map((th) => th.textContent).join(' | '));
+        expect(headers.filter((header) => header !== 'Feature | What it does | See')).toEqual(['Keys | What they do']);
+
+        // every link of a table goes to a page of the site: a guide (#guide/<id>/<heading>) or a sample
+        const routes = new Set(routesOf('#'));
+        const hrefs = [...document.querySelectorAll('.doc td a')].map((link) => link.getAttribute('href') || '');
+        expect(hrefs.length).toBeGreaterThan(100);
+        for (const href of hrefs) {
+            const route = /^#guide\/[a-z0-9-]+/.exec(href)?.[0] ?? href;
+            expect(routes.has(route), `${href} goes to no page of the site`).toBe(true);
+        }
+        // a sample for most features
+        expect(new Set(hrefs.filter((href) => href.startsWith('#sample/'))).size).toBeGreaterThan(25);
     });
 
     it('shows the branch and the commit the site is built from, at the top of the sidebar', () => {

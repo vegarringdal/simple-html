@@ -10,6 +10,7 @@ import { contextMenuColumnChooser } from './contextMenuColumnChooser';
 import { formatSubmenu } from './formatSubmenu';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { shortcutHelpEntry } from './shortcutHelp';
 import { placeUnderCell, showMenu } from './showMenu';
 
 /**
@@ -48,7 +49,8 @@ export function contextmenuLabel(
 /**
  * The header menu's default entries, new objects every call: pin (a submenu), hide, remove sorting,
  * the column chooser, then the submenus size, format (formatSubmenu.ts), the grid config dialog
- * (columnSettings.ts), the submenus aggregate and grouping. The ids are documented in MENU_IDS.header
+ * (columnSettings.ts), the keyboard shortcuts help (shortcutHelp.ts), the submenus aggregate and grouping.
+ * The ids are documented in MENU_IDS.header
  */
 function headerMenuEntries(
     ctx: Grid,
@@ -216,6 +218,7 @@ function headerMenuEntries(
         },
         formatSubmenu(ctx, attribute),
         columnSettingsEntry(ctx, attribute),
+        shortcutHelpEntry(ctx),
         aggregateSubmenu(ctx, attribute),
         {
             type: 'submenu',
