@@ -169,6 +169,7 @@ On a Mac, Ctrl is Cmd and Alt is Option.
 | --- | --- | --- |
 | Save and restore | What the user changed - column order and widths, sorting, grouping, filters, formats, aggregates, the detail form - as plain data to store and give back | [guide](03-state.md#getstate-setstate-and-resetstate) · [sample](#sample/grid-state) |
 | Start and reset | The state a grid starts in, and a reset back to it | [guide](03-state.md#the-state-the-grid-starts-in) · [sample](#sample/grid-state) |
+| Named views | "My open orders", "Late deliveries": save views of the grid and switch with one click in the footer - Save, Save as, Revert, Rename, Delete, a default view; shared views of yours; kept in the browser or your backend | [guide](03-state.md#views) · [sample](#sample/views) |
 
 ## Live data
 

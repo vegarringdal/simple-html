@@ -107,7 +107,8 @@ describe('gridView - the helpers', () => {
                 aggregates: {},
                 totalsRow: false,
                 formats: {},
-                detailForm: { show: false, fields: [] }
+                detailForm: { show: false, fields: [] },
+                calculatedColumns: {}
             }) as GridState;
         const column = { fields: ['name'], width: 100 };
 

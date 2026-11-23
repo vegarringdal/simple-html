@@ -1332,6 +1332,18 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Named views (user request)
+
+##### Added
+- **Views**: snapshots of the state under a name - "My open orders" - the user switches between with the
+  **views button** at the left end of the footer: its name (*Standard* for the config's state), a `*` while
+  the state changed since it was applied or saved, a click opens the views menu - the views, then Save, Save
+  as new view…, Revert changes, Rename…, Delete, Default view. `GridView { id, name, state, readonly?,
+  default? }`; `getViews()`, `setViews()`, `getCurrentView()`, `isViewModified()`, `applyView()`, `saveView()`,
+  `saveViewAs()`, `renameView()`, `deleteView()`, `setDefaultView()`; the event `views-change` to store them;
+  `GridConfig.views` (a `readonly` one is shared: applied, saved as one's own, not changed),
+  `viewsStorageKey` (kept in localStorage), `viewsButton`. Sample *Named views*.
+
 #### Quick dates in the filter menu (user request)
 
 ##### Added
