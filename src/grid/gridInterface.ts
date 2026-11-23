@@ -60,6 +60,8 @@ import { getLayoutFields } from './gridFunctions/getLayoutFields';
 import { getTextWidth } from './gridFunctions/getTextWidth';
 import { downloadGridCsv, gridCsv } from './gridFunctions/gridCsv';
 import { downloadGridExcel, gridExcel } from './gridFunctions/gridExcel';
+import { openImportDialog } from './gridFunctions/importDialog';
+import { assertImportOptions, type ImportOptions, type ImportResult, importRows } from './gridFunctions/importRows';
 import { type LookupColumn, lookupColumnsOf } from './gridFunctions/lookupColumn';
 import { TOOLTIP_LINES } from './gridFunctions/multilineText';
 import { openFilterEditor } from './gridFunctions/openFilterEditor';
@@ -77,6 +79,7 @@ import { updateVerticalScrollHeight } from './gridFunctions/updateVerticalScroll
 import type { CellClass, GridHooks } from './gridHooks';
 import type { MenuContext, MenuEntry, MenuPosition } from './gridMenus';
 import type { ExcelOptions } from './xlsx';
+import type { ImportCell } from './xlsxRead';
 
 /**
  * The grid: its config, its datasource and its state. What you call to work with a grid - read and
@@ -1680,6 +1683,101 @@ export class GridInterface<T> {
     }
 
     /**
+     * Opens the import dialog: rows from a CSV or Excel (.xlsx) file, or pasted from a spreadsheet,
+     * become new rows. The user picks or drops a file - or pastes rows (Ctrl+V) - sees the first rows with
+     * a field picked over each column (matched by the header's names, else by position), the problems
+     * found (a value that is not a number, a date ..., a validation rule broken), and imports them: new
+     * rows, one step of the undo history. See the import guide.
+     *
+     * The grid's own menus open it with `GridConfig.importMenu`; call this from a button of your own, or
+     * with a file of your own drop zone. A modal `<dialog>`, as the filter editor.
+     *
+     * Does nothing while the grid is not on the page, in a readonly grid and when the user may not add
+     * rows (`GridConfig.edit.add`).
+     *
+     * @param source the rows to start with: a file (any `Blob`: a CSV file or an .xlsx workbook), or text
+     * (CSV or tab separated, as a spreadsheet copies it). Left out, the user picks a file
+     *
+     * @sample import
+     * @example
+     * ```ts
+     * document.getElementById('import')!.onclick = () => gridInterface.openImport();
+     *
+     * // a file dropped on a zone of your own
+     * const zone = document.getElementById('drop-zone')!;
+     * zone.ondragover = (event) => event.preventDefault();
+     * zone.ondrop = (event) => {
+     *     event.preventDefault();
+     *     const file = event.dataTransfer?.files[0];
+     *     if (file) {
+     *         gridInterface.openImport(file);
+     *     }
+     * };
+     * ```
+     */
+    public openImport(source?: Blob | string) {
+        if (source !== undefined && typeof source !== 'string' && !(source instanceof Blob)) {
+            throw new TypeError(`openImport(): source is a File, a Blob or text, not ${JSON.stringify(source)}`);
+        }
+        if (this.grid) {
+            openImportDialog(this.grid, source);
+        }
+    }
+
+    /**
+     * Adds rows of cells as new rows - what the import dialog does, from code: rows read from a file
+     * ({@link readImportFile}), from the clipboard, from an API. Each column goes to a field (`fields`, or
+     * the names of a header row, or by position), each value is read as the user types it - through the
+     * field's formatter, a number with its separators, a date - and the rows are validated. See
+     * {@link ImportOptions}.
+     *
+     * - The rows are new rows (`getChanges().newEntities`), added at once at the end (`datasource.addNewRows()`)
+     *   and the first one selected: the grid scrolls to it. A row with nothing in it is left out
+     * - **One step of the undo history**: undo takes the rows out again - marks them for deletion, as
+     *   Delete takes out a new row, so they are in none of the lists of `getChanges()` - redo brings them
+     *   back
+     * - **Problems**: a value that is not of its field's type (`abc` for a number) leaves the field
+     *   empty and is put in the row's error (`__rowError`, shown on its row number, replaced by
+     *   `setErrors()`); a validation rule broken shows on the cell. `invalidRows: 'skip'` leaves those
+     *   rows out. Every problem is in the result
+     *
+     * Code is not stopped by the grid's `readonly` or the edit permissions (as `addNewEmpty()` is not):
+     * check them yourself when the rows come from the user. Works without the grid on the page too.
+     *
+     * @param rows the rows, a cell for each column: text, a number, a boolean, a `Date` or `null` - as
+     * {@link readImportFile} gives them
+     * @param options the header, the fields, how numbers and dates are written, the rows with problems
+     * @returns the new rows, the problems found and how many rows were skipped
+     *
+     * @sample import
+     * @example
+     * ```ts
+     * // the first row names the columns
+     * const result = gridInterface.importRows(
+     *     [
+     *         ['Name', 'Age'],
+     *         ['Ann', '36'],
+     *         ['Bob', 'abc']
+     *     ],
+     *     { header: true }
+     * );
+     * result.rows.length; // 2
+     * result.problems; // [{ row: 2, field: 'age', value: 'abc', kind: 'value', message: 'Not a number: abc' }]
+     *
+     * // no header: the columns by position
+     * gridInterface.importRows([['Cid', 41]], { fields: ['name', 'age'] });
+     * ```
+     */
+    public importRows(rows: ImportCell[][], options: ImportOptions = {}): ImportResult<T> {
+        assertOptions('importRows', options, "importRows(rows, { header: true, fields: ['name', 'age'] })");
+        if (!Array.isArray(rows) || !rows.every(Array.isArray)) {
+            throw new TypeError('importRows(): rows is an array of rows, each an array of cells');
+        }
+        assertImportOptions(options);
+        return importRows(this, rows, options);
+    }
+
+    /**
      * Opens a menu of your own, in the grid's menu style: a value picker for a cell, the actions of a
      * button, a second grid as a dropdown ({@link MenuBlock}). See {@link MenuEntry} for what it can
      * show, submenus too ({@link MenuSubmenu}). To change the grid's own right click menus, use the
@@ -2209,6 +2307,23 @@ export class GridInterface<T> {
      */
     public __canDeleteRow(row: Entity): boolean {
         return !this.gridConfig.readonly && mayDeleteRow(this.gridConfig.edit, row);
+    }
+
+    /**
+     * @internal
+     * Can the user add rows: the grid is editable and `edit.add` allows it. The import dialog opens only
+     * then (openImport(), the menus' import entries)
+     */
+    public __canAddRows(): boolean {
+        return !this.gridConfig.readonly && this.gridConfig.edit.add;
+    }
+
+    /**
+     * @internal
+     * Are the import entries of the grid's menus shown: `GridConfig.importMenu`, and the user can add rows
+     */
+    public __showImportMenu(): boolean {
+        return this.gridConfig.importMenu === true && this.__canAddRows();
     }
 
     /**

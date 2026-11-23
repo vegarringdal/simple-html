@@ -5,6 +5,7 @@ import { closeColumnSettings } from './gridFunctions/columnSettings';
 import { createDom } from './gridFunctions/createDom';
 import { releaseAllRenderers } from './gridFunctions/customCell';
 import { closeFind, type FindBar, findDataChanged } from './gridFunctions/findBar';
+import { closeImportDialog } from './gridFunctions/importDialog';
 import { initResizerEvent } from './gridFunctions/initResizerEvent';
 import type { LastPress } from './gridFunctions/lastPress';
 import { closeLookupEditor, type LookupEditor } from './gridFunctions/lookupEditor';
@@ -96,6 +97,8 @@ export class Grid {
     public filterEditor?: HTMLDialogElement | null;
     // the grid config dialog, modal too: see columnSettings.ts. Null when it is closed
     public columnSettings?: HTMLDialogElement | null;
+    // the import dialog, modal too: see importDialog.ts. Null when it is closed
+    public importDialog?: HTMLDialogElement | null;
     // the detail form, a panel at the right of the rows: see detailForm.ts. Made by createDom
     public detailForm: HTMLElement | null = null;
     // the column chooser, a popover that stays open while columns are dragged from it
@@ -227,6 +230,7 @@ export class Grid {
         removeContextMenu(this);
         closeFilterEditor(this);
         closeColumnSettings(this);
+        closeImportDialog(this);
         this.columnChooserMenu?.remove();
         this.columnChooserMenu = null;
         // shown for a cell of this grid maybe: it is not in the element either

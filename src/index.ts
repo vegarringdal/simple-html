@@ -75,6 +75,7 @@ export { GridElement } from './grid/gridElement';
 export type { GridCellEventData, GridEvents } from './grid/gridEvents';
 export type { ColType } from './grid/gridFunctions/colType';
 export type { HTMLCellElement } from './grid/gridFunctions/HTMLCellElement';
+export type { ImportOptions, ImportProblem, ImportResult } from './grid/gridFunctions/importRows';
 export type { CellClass, GridHooks } from './grid/gridHooks';
 export { GridInterface } from './grid/gridInterface';
 export {
@@ -89,6 +90,9 @@ export {
     type MenuSeparator,
     type MenuSubmenu
 } from './grid/gridMenus';
+export { type ImportTable, type ReadImportFileOptions, readImportFile } from './grid/importFile';
+export { IMPORT_LIMITS, ImportFileError, type ImportFileProblem } from './grid/importLimits';
 export { type Lookup, type LookupFromDatasource, type LookupFromGridInterface, registerLookup } from './grid/lookup';
 export type { ExcelOptions } from './grid/xlsx';
+export type { ImportCell } from './grid/xlsxRead';
 export { setTexts, TEXTS, type TextId, type Texts } from './texts';

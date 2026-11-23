@@ -2,12 +2,14 @@
  * CSV text from plain inputs: no grid, no datasource, no DOM. The grid's `getCsv()` and `downloadCsv()`
  * pick the rows, the fields and the texts (see gridFunctions/gridCsv.ts) and build the file with this.
  * The clipboard of the cell ranges (gridFunctions/rangeClipboard.ts) writes tab separated text with it,
- * and reads it back with parseTsv().
+ * and reads it back with parseTsv(). The import reads CSV files with parseCsv() and detectSeparator().
  *
  * The format is RFC 4180 (https://www.rfc-editor.org/rfc/rfc4180): a line per record, ended with CRLF;
  * a field is put in double quotes when it holds the separator, a double quote, CR or LF, and a double
  * quote in it is doubled. Spaces are part of a field, they are kept as they are.
  */
+
+import { IMPORT_LIMITS, ImportFileError, type ImportLimits } from './importLimits';
 
 /**
  * The separators {@link CsvOptions} can use: `','` (RFC 4180), `';'` (what Excel expects in a locale
@@ -243,6 +245,77 @@ export function buildCsv(header: string[] | null, rows: string[][], options: { s
  * parseTsv('"two\nlines"\t"say ""hi"""'); // [['two\nlines', 'say "hi"']]
  */
 export function parseTsv(text: string): string[][] {
+    return parseFields(text, '\t', null);
+}
+
+/**
+ * CSV text as rows of fields, RFC 4180 as Excel, Google Sheets and the grid write it - the import reads
+ * a .csv file with it (importFile.ts). parseTsv() with another separator, and:
+ *
+ * - a UTF-8 byte order mark first (U+FEFF, what downloadCsv() and Excel write) is left out
+ * - a field in double quotes can hold the separator, line breaks (CRLF, LF and CR are kept as they are)
+ *   and `""` for a `"`; a quote in a field that does not start with one is a character like the others
+ * - spaces are part of a field, kept as they are; every field is text - `=1+1` is the text `=1+1`
+ * - one line end at the very end is not a row, an empty line is a row of one empty field
+ *
+ * The text of a file a user picked can be anything: the rows, the fields of a row and the fields in all
+ * are counted while reading, and it stops at the limits (IMPORT_LIMITS) - a file of a million empty
+ * lines is not turned into a million rows first.
+ *
+ * @param separator between the fields, see {@link detectSeparator}
+ * @param limits the most rows, columns and fields (`cells`) it reads, IMPORT_LIMITS by default
+ * @throws an `ImportFileError` (`'tooLarge'`) past a limit
+ *
+ * @example
+ * parseCsv('name;age\r\n"Ann; Oslo";36\r\n', ';'); // [['name', 'age'], ['Ann; Oslo', '36']]
+ */
+export function parseCsv(
+    text: string,
+    separator: CsvSeparator,
+    limits: Pick<ImportLimits, 'rows' | 'columns' | 'cells'> = IMPORT_LIMITS
+): string[][] {
+    return parseFields(text.startsWith(CSV_BOM) ? text.slice(1) : text, separator, limits);
+}
+
+/**
+ * The separator of CSV text: the one of `,` `;` and tab that splits the first lines (up to 64 KB) into
+ * the same number of fields, more than one. The candidate that does it for the most lines wins, then the
+ * one with the most fields - a `;` file with decimal commas (`Ann;12,5`) has as many fields on every line
+ * with `;`, a different number with `,`. A tie goes to tab, then `;`. `','` when none splits a line: a
+ * file of one column.
+ *
+ * @example
+ * detectSeparator('name;age\nAnn;12,5\n'); // ';'
+ * detectSeparator('name,age\nAnn,36\n'); // ','
+ */
+export function detectSeparator(text: string): CsvSeparator {
+    // the first 64 KB, without the line that may be cut off at the end
+    const sample = text.length > 65_536 ? text.slice(0, text.lastIndexOf('\n', 65_536) + 1 || 65_536) : text;
+    let best: { separator: CsvSeparator; lines: number; fields: number } = { separator: ',', lines: 0, fields: 1 };
+    for (const separator of ['\t', ';', ','] as const) {
+        const rows = parseFields(sample.startsWith(CSV_BOM) ? sample.slice(1) : sample, separator, null).slice(0, 50);
+        const fields = rows[0]?.length ?? 0;
+        if (fields < 2) {
+            continue;
+        }
+        const lines = rows.filter((row) => row.length === fields).length;
+        if (lines > best.lines || (lines === best.lines && fields > best.fields)) {
+            best = { separator, lines, fields };
+        }
+    }
+    return best.separator;
+}
+
+/**
+ * The reader of parseTsv() and parseCsv(): see parseTsv for the rules. Fast on large text: the runs of
+ * plain characters are sliced out, not added one by one
+ * @param limits stops at them, null for none (the clipboard)
+ */
+function parseFields(
+    text: string,
+    separator: string,
+    limits: Pick<ImportLimits, 'rows' | 'columns' | 'cells'> | null
+): string[][] {
     // without the line end at the end
     let end = text.length;
     if (text.endsWith('\r\n')) {
@@ -254,38 +327,59 @@ export function parseTsv(text: string): string[][] {
         return [];
     }
 
+    const separatorCode = separator.charCodeAt(0);
+    const tooLarge = (what: string) => {
+        throw new ImportFileError('tooLarge', `The text has more than ${what}`);
+    };
     const rows: string[][] = [];
     let row: string[] = [];
+    let cells = 0;
     let i = 0;
     while (true) {
         let cell = '';
         if (text[i] === '"') {
             i++;
             while (i < end) {
-                if (text[i] === '"') {
-                    if (text[i + 1] === '"') {
-                        cell = `${cell}"`;
-                        i = i + 2;
-                        continue;
-                    }
-                    i++;
+                const quote = text.indexOf('"', i);
+                if (quote === -1 || quote >= end) {
+                    cell = cell + text.slice(i, end);
+                    i = end;
                     break;
                 }
-                cell = cell + text[i];
-                i++;
+                cell = cell + text.slice(i, quote);
+                if (text[quote + 1] === '"') {
+                    cell = `${cell}"`;
+                    i = quote + 2;
+                    continue;
+                }
+                i = quote + 1;
+                break;
             }
         }
-        while (i < end && text[i] !== '\t' && text[i] !== '\r' && text[i] !== '\n') {
-            cell = cell + text[i];
-            i++;
+        // up to the separator or a line end
+        let stop = i;
+        while (stop < end) {
+            const code = text.charCodeAt(stop);
+            if (code === separatorCode || code === 13 || code === 10) {
+                break;
+            }
+            stop++;
+        }
+        if (stop > i) {
+            cell = cell + text.slice(i, stop);
+            i = stop;
         }
         row.push(cell);
+        cells++;
+        if (limits && (cells > limits.cells || row.length > limits.columns)) {
+            tooLarge(cells > limits.cells ? `${limits.cells} fields` : `${limits.columns} fields on a line`);
+        }
 
         if (i >= end) {
             rows.push(row);
             return rows;
         }
-        if (text[i] === '\t') {
+        if (text.charCodeAt(i) === separatorCode) {
             i++;
             continue;
         }
@@ -293,5 +387,8 @@ export function parseTsv(text: string): string[][] {
         i = i + (text[i] === '\r' && text[i + 1] === '\n' ? 2 : 1);
         rows.push(row);
         row = [];
+        if (limits && rows.length >= limits.rows) {
+            tooLarge(`${limits.rows} lines`);
+        }
     }
 }

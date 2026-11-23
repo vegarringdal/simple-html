@@ -113,7 +113,8 @@ describe('menus - the built-in ids', () => {
     });
 
     it('expect the defaults of an editable number cell to show every row entry', async () => {
-        const { element, datasource, gridInterface } = await mountGrid({ ...simpleConfig(), readonly: false });
+        // importMenu: Paste › As new rows…
+        const { element, datasource, gridInterface } = await mountGrid({ ...simpleConfig(), readonly: false, importMenu: true });
         // undo is only shown when a selected row is marked for deletion
         datasource.getSelection().selectRowRange(0, 1);
         datasource.markForDeletion(datasource.getDataRows()[0]);
@@ -525,8 +526,9 @@ describe('menus - the menus hook', () => {
 
         gridInterface.updateHooks({ menus: undefined });
         openLabelMenu(element, 'age');
-        // a number column: Format › has the number formats, not the date formats and their lines
-        const dateOnly = ['header.format.timeSeparator', 'header.format.partSeparator'];
+        // a number column: Format › has the number formats, not the date formats and their lines. A readonly
+        // grid has no Import rows…
+        const dateOnly = ['header.format.timeSeparator', 'header.format.partSeparator', 'header.import'];
         expect(menuTreeIds()).toEqual(
             MENU_IDS.header.filter(
                 (id) => id !== 'header.column.unpin' && !id.startsWith('header.format.date.') && !dateOnly.includes(id)

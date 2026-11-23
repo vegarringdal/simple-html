@@ -16,6 +16,8 @@ import type { GridConfig } from '../gridConfig';
 import { MAX_OPTIONS } from '../gridFunctions/lookupEditor';
 import { GridInterface } from '../gridInterface';
 import { registerLookup } from '../lookup';
+import { buildXlsx } from '../xlsx';
+import { zip } from '../zip';
 import { type MountedGrid, mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
 import {
     headerFilterInput,
@@ -134,6 +136,8 @@ registerCellRenderer('texts-test', (host) => ({
 
 const config = (texts?: Texts): GridConfig => ({
     readonly: false,
+    // the import entries of the menus: Paste › As new rows…, Import rows…
+    importMenu: true,
     layout: {
         // pinned left: its header menu has "Unpin", the others "Pin left"
         left: [{ fields: ['name'], width: 100 }],
@@ -418,6 +422,98 @@ function showDetailForm({ datasource, gridInterface }: MountedGrid, check: () =>
 /**
  * Opens every part of the grid that shows a text, and checks each
  */
+/**
+ * The import dialog: empty, a clipboard without rows, rows pasted with a header - the options of a number
+ * and a date field, each problem, more problems than it lists, the rows with problems - without a header,
+ * no field picked; a workbook of two sheets, the first empty; a file being read and each file it does not
+ * read. Then the rows imported: the row error of a value not read
+ */
+async function showImport({ datasource, gridInterface }: MountedGrid, check: (more?: string[]) => void) {
+    const dialog = () => document.querySelector('.import-dialog') as HTMLDialogElement;
+    const settle = () => sleep(30);
+    const pick = (select: HTMLSelectElement, value: string) => {
+        select.value = value;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+
+    gridInterface.openImport();
+    check();
+    gridInterface.openImport('');
+    check();
+    // a header and no rows: the count without problems
+    gridInterface.openImport('«Name»');
+    check();
+
+    // a header that names the fields, a value of each kind that is not read, rules broken: more problems
+    // than it lists
+    const bad = Array.from({ length: 6 }, (_, i) => `«n${i}»\t«a»\t«b»\t«c»\t«x»`);
+    gridInterface.openImport(['«Name»\t«Age»\t«Born»\t«Active»\t«Notes»', ...bad, '«ann»\t20\t2026-01-05\t1\t«x»'].join('\n'));
+    check();
+    // without a header: by position, the columns by their number
+    const header = dialog().querySelector('.import-options input[type="checkbox"]') as HTMLInputElement;
+    header.checked = false;
+    header.dispatchEvent(new Event('change'));
+    check();
+    // no field picked
+    for (const select of dialog().querySelectorAll<HTMLSelectElement>('.import-field')) {
+        pick(select, '');
+    }
+    check();
+    header.checked = true;
+    header.dispatchEvent(new Event('change'));
+
+    // imported: a row error for the values not read, on the row number
+    (dialog().querySelector('.import-button') as HTMLButtonElement).click();
+    const imported = datasource.getAllData().filter((row) => row.__rowState === 'N' && row.__rowError);
+    gridInterface.refresh();
+    check(imported.map((row) => String(row.__rowError)));
+    datasource.undo();
+    // the import scrolled to its first row: back to the top, where the steps after look
+    datasource.selectFirst();
+    datasource.deselectAll();
+
+    // a workbook of two sheets, the first one empty: its sheet picker, no rows
+    const xml = '<?xml version="1.0" encoding="UTF-8"?>';
+    const ns = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"';
+    const rel = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+    const workbook = await zip(
+        Object.entries({
+            'xl/workbook.xml': `${xml}<workbook ${ns} xmlns:r="${rel}"><sheets><sheet name="«one»" sheetId="1" r:id="r1"/><sheet name="«two»" sheetId="2" r:id="r2"/></sheets></workbook>`,
+            'xl/_rels/workbook.xml.rels': `${xml}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="r1" Type="${rel}/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="r2" Type="${rel}/worksheet" Target="worksheets/sheet2.xml"/></Relationships>`,
+            'xl/worksheets/sheet1.xml': `${xml}<worksheet ${ns}><sheetData/></worksheet>`,
+            'xl/worksheets/sheet2.xml': `${xml}<worksheet ${ns}><sheetData/></worksheet>`
+        }).map(([name, text]) => ({ name, data: new TextEncoder().encode(text) }))
+    );
+    gridInterface.openImport(new File([workbook], '«two sheets»'));
+    // being read
+    check();
+    await settle();
+    check();
+
+    // the files it does not read
+    for (const file of [
+        new Blob([new Uint8Array([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1])]),
+        new Blob([new Uint8Array([0x50, 0x4b, 0x03, 0x04])]),
+        new Blob([new Uint8Array(20 * 1024 * 1024 + 1)])
+    ]) {
+        gridInterface.openImport(file);
+        await settle();
+        check();
+    }
+    const deflated = await buildXlsx({ name: 'S', columns: [{ label: 'A' }], rows: [['x'.repeat(500)]] });
+    vi.stubGlobal('DecompressionStream', undefined);
+    try {
+        gridInterface.openImport(new Blob([deflated]));
+        await settle();
+        check();
+    } finally {
+        vi.unstubAllGlobals();
+    }
+    gridInterface.openImport();
+    dialog().close();
+    dialog()?.dispatchEvent(new Event('close'));
+}
+
 async function showEverything({ element, datasource, gridInterface }: MountedGrid, check: (more?: string[]) => void) {
     // the grid, its footer with the filter. The notes have a marker for a screen reader
     check();
@@ -610,6 +706,8 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     showColumnSettings({ element, datasource, gridInterface }, check);
     // the detail form and its tab of the dialog, see showDetailForm
     showDetailForm({ element, datasource, gridInterface }, check);
+    // the import dialog, see showImport
+    await showImport({ element, datasource, gridInterface }, check);
 
     // the footer: a chip for each operator, five at a time, an OR group in the first
     datasource.filter(and(...conditions(OPERATORS.slice(0, 3)), or(...conditions(OPERATORS.slice(3, 5)))));

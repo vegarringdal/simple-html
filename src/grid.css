@@ -3795,6 +3795,155 @@
 }
 
 /**
+ * The import dialog (importDialog.ts): a dialog of the filter editor's look - its title bar, body,
+ * footer and resize handles. Its body under each other: where the rows come from, the drop zone, the
+ * options, the first rows with a field picker over each column (they scroll sideways in their box), the
+ * count and the problems. Square, the grid's colours only
+ */
+.simple-html-grid.filter-editor-content.import-dialog {
+    width: 720px;
+}
+
+.simple-html-grid.filter-editor-content .import-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Choose file… and the file's name */
+.simple-html-grid.filter-editor-content .import-source {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+}
+
+.simple-html-grid.filter-editor-content .import-source-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+/* where a file can be dropped: a dashed frame, lit while a file is dragged over the dialog */
+.simple-html-grid.filter-editor-content .import-drop {
+    padding: 8px;
+    border: 1px dashed var(--simple-html-grid-control-border-color);
+    color: var(--simple-html-grid-sec-font-color);
+    text-align: center;
+}
+
+.simple-html-grid.filter-editor-content.import-dropping .import-drop {
+    border-style: solid;
+    border-color: var(--simple-html-grid-accent-color);
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+    color: var(--simple-html-grid-main-font-color);
+}
+
+.simple-html-grid.filter-editor-content .import-hint {
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+/* what is wrong with the file, no field picked: in words, a line in the error colour in front */
+.simple-html-grid.filter-editor-content .import-error {
+    padding-left: 6px;
+    border-left: 2px solid var(--simple-html-grid-error-color);
+    color: var(--simple-html-grid-danger-font-color);
+}
+
+/* the header, the separator, the sheet, the decimal mark, the dates, the rows with problems: side by side,
+ * on more lines where the dialog is narrow */
+.simple-html-grid.filter-editor-content .import-options {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 14px;
+}
+
+.simple-html-grid.filter-editor-content .import-option {
+    display: flex;
+    align-self: center;
+    align-items: center;
+    gap: 6px;
+}
+
+.simple-html-grid.filter-editor-content .import-option-label {
+    white-space: nowrap;
+}
+
+.simple-html-grid.filter-editor-content .import-select {
+    width: auto;
+    max-width: 220px;
+    padding: 0 2px;
+}
+
+/* the first rows: a table that scrolls in its box, sideways too */
+.simple-html-grid.filter-editor-content .import-preview {
+    max-height: 260px;
+    overflow: auto;
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+    background-color: var(--simple-html-grid-sec-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .import-table {
+    border-collapse: collapse;
+}
+
+.simple-html-grid.filter-editor-content .import-table :is(th, td) {
+    max-width: 200px;
+    padding: 2px 6px;
+    overflow: hidden;
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* the field pickers, over the columns */
+.simple-html-grid.filter-editor-content .import-table thead tr:first-child th {
+    padding: 3px;
+    background-color: var(--simple-html-grid-main-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .import-field {
+    min-width: 90px;
+    max-width: 190px;
+}
+
+/* the header row of the file: its names, quiet - it is not imported */
+.simple-html-grid.filter-editor-content .import-header-row th {
+    color: var(--simple-html-grid-sec-font-color);
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+/* a column that is skipped: its values quiet */
+.simple-html-grid.filter-editor-content .import-table td.import-skipped {
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+/* a value that is not of its field's type, or breaks a rule: the cell's error look, its message the tooltip */
+.simple-html-grid.filter-editor-content .import-table td.import-cell-problem {
+    background-color: var(--simple-html-grid-error-bg-color);
+    box-shadow: inset 0 0 0 1px var(--simple-html-grid-error-color);
+}
+
+.simple-html-grid.filter-editor-content .import-summary {
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+/* the problems in words: the danger colour, a line in the error colour in front */
+.simple-html-grid.filter-editor-content .import-problems {
+    margin: 0;
+    padding: 0 0 0 6px;
+    border-left: 2px solid var(--simple-html-grid-error-color);
+    color: var(--simple-html-grid-danger-font-color);
+    list-style: none;
+}
+
+.simple-html-grid.filter-editor-content .import-problems .import-more {
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+/**
  * A drag handle - six dots - of a row that can be dragged: a field of the Detail form tab (at its
  * right) and of the column chooser (at its left), the same look in both. The quiet text colour, a grab
  * cursor; it does not take the width of the text around it

@@ -1603,6 +1603,62 @@ export class Datasource<T = any> {
     }
 
     /**
+     * Adds several new rows at the end at once, as {@link addNewEmpty} adds one: each is listed in
+     * `getChanges().newEntities`, its `__rowState` is `'N'`, and gets a generated key. The grid's import
+     * (`gridInterface.importRows()`, the import dialog) adds its rows with it. Much faster than
+     * `addNewEmpty()` in a loop: the rows are sorted and grouped once, not once per row.
+     *
+     * - The rows are shown at the end, also when the rows are sorted or filtered (as `addNewEmpty()`
+     *   shows its row) - until the next sort or filter puts them in place. When grouped they are put in
+     *   their groups, and the group of the first one is expanded.
+     * - Not validated, as a new row from `addNewEmpty()`: call `validate(rows)` to check them.
+     * - Adding them is not a step of the undo history, as `addNewEmpty()`.
+     *
+     * Sends `collection-changed` (`{ added: true }`) once, nothing for no rows.
+     *
+     * @param rows the values of the new rows. The objects themselves become the rows
+     * @param options.scrollTo `false` to leave the selection as it is, default `true`: the first new row
+     * is selected and made current, and the grid scrolls to it
+     * @returns the new rows, as the datasource keeps them
+     * @throws a `TypeError` when `rows` is not an array
+     *
+     * @sample editing
+     * @example
+     * ```ts
+     * const added = datasource.addNewRows([{ company: 'NEW 1' }, { company: 'NEW 2' }]);
+     * datasource.validate(added);
+     * ```
+     */
+    public addNewRows(rows: Partial<T>[], options: { scrollTo?: boolean } = {}): EntityUnion<T>[] {
+        assertOptions('addNewRows', options, 'addNewRows(rows, { scrollTo: false })');
+        if (!Array.isArray(rows)) {
+            throw new TypeError(`addNewRows(): rows is an array of rows, not ${JSON.stringify(rows)}`);
+        }
+        const { scrollTo = true } = options;
+        if (!rows.length) {
+            return [];
+        }
+        const added = this.__dataContainer.setData(rows, { add: true, isNew: true });
+
+        if (this.__grouping.getGrouping().length) {
+            // into their groups, as addNewEmpty(): the group of the first one expanded so it is seen
+            this.__collectionFiltered = this.__collectionFiltered.concat(added);
+            this.__internalUpdate(false);
+            this.__collectionDisplayed = this.__grouping.expandToEntity(added[0]);
+        } else {
+            this.__internalUpdate(false);
+            // after the update, as addNewEmpty(): the rows go at the end, not where the sort puts them
+            this.__collectionFiltered = this.__collectionFiltered.concat(added);
+            this.__collectionDisplayed = this.__collectionDisplayed.concat(added);
+        }
+        this.__callSubscribers('collection-changed', { added: true });
+        if (scrollTo) {
+            this.__selectAndNotify(this.__collectionDisplayed.indexOf(added[0]), 'select-last');
+        }
+        return added as EntityUnion<T>[];
+    }
+
+    /**
      * The sort that is set: the fields and directions, the first decides. When grouped, the grouped
      * fields come first. `[]` when the rows are not sorted. It is what `GridState.sorting` holds.
      *

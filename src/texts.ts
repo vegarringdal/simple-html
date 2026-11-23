@@ -30,6 +30,7 @@ const DEFAULTS = {
     'row.paste.cell': 'Paste cell',
     'row.paste.cell.hint': 'selected rows',
     'row.paste.range': 'Paste range',
+    'row.paste.newRows': 'As new rows…',
     'row.clear': 'Clear',
     'row.clear.current': 'Clear cell',
     'row.clear.cell': 'Clear cell',
@@ -144,6 +145,7 @@ const DEFAULTS = {
     'header.format.decimalMark.comma': 'Comma',
     'header.format.percent': 'Percent',
     'header.settings': 'Column settings…',
+    'header.import': 'Import rows…',
     'header.grouping': 'Grouping',
     'header.grouping.expandAll': 'Expand all',
     'header.grouping.collapseAll': 'Collapse all',
@@ -444,6 +446,64 @@ const DEFAULTS = {
     'detailForm.collapse': 'Collapse the details',
     'detailForm.expand': 'Expand the details',
     'detailForm.resize': 'Width of the details',
+
+    // the import dialog (GridConfig.importMenu, gridInterface.openImport()): its title bar, where the rows
+    // come from and what is wrong with a file - {size} MB, {rows}, {columns} and {cells} are the limits
+    'import.title': 'Import rows',
+    'import.title.tooltip': 'Drag to move the dialog',
+    'import.close.tooltip': 'Close without importing',
+    'import.chooseFile': 'Choose file…',
+    'import.hint': 'Drop a CSV or Excel (.xlsx) file here, or paste rows copied from a spreadsheet',
+    'import.clipboard': 'Pasted rows',
+    'import.reading': 'Reading the file…',
+    'import.error.tooLarge':
+        'The file is too large to import: at most {size} MB, {rows} rows, {columns} columns and {cells} cells',
+    'import.error.xls': 'An Excel 97-2003 file (.xls), or one protected by a password, can not be read: save it as .xlsx or CSV',
+    'import.error.broken': 'The file can not be read: it is not CSV or an Excel workbook (.xlsx), or it is damaged',
+    'import.error.unsupported': 'This browser can not read Excel files: save the file as CSV',
+    'import.error.clipboard': 'No rows on the clipboard: copy them in a spreadsheet, then paste them here',
+    // the options: the header, the separator of CSV - {separator} the one found - the sheet of a workbook,
+    // the decimal mark when a number field is picked, the order of dates with / when a date field is
+    'import.header': 'First row is a header',
+    'import.separator': 'Separator',
+    'import.separator.auto': 'Found: {separator}',
+    'import.separator.comma': 'Comma',
+    'import.separator.semicolon': 'Semicolon',
+    'import.separator.tab': 'Tab',
+    'import.sheet': 'Sheet',
+    'import.decimalMark': 'Decimal mark',
+    'import.decimalMark.auto': 'As the columns',
+    'import.decimalMark.dot': 'Dot: 1,234.5',
+    'import.decimalMark.comma': 'Comma: 1 234,5',
+    'import.dateOrder': 'Dates with /',
+    'import.dateOrder.DMY': 'Day first: 31/12/2026',
+    'import.dateOrder.MDY': 'Month first: 12/31/2026',
+    // the columns: how they were matched - {field} the label of the first column's field - a column without
+    // a header ({number} from 1), the name of its field picker ({column} the column), the picker's Skip
+    'import.byName': 'The first row names the columns: they are matched to the fields by name',
+    'import.byPosition': 'The columns are matched to the fields by position, from {field}',
+    'import.column': 'Column {number}',
+    'import.field': 'Field of {column}',
+    'import.skip': 'Skip',
+    // the rows read and their problems: {row} the row of the file, from 1; {field} the column's label;
+    // {text} the value as the file has it
+    'import.count': '{rows} rows',
+    'import.count.problems': '{rows} rows, {problems} with problems',
+    'import.problem': 'Row {row}, {field}: {message}',
+    'import.problems.more': '{count} more',
+    'import.problem.number': 'Not a number: {text}',
+    'import.problem.date': 'Not a date: {text}',
+    'import.problem.boolean': 'Not true or false: {text}',
+    'import.invalidRows': 'Rows with problems',
+    'import.invalidRows.import': 'Import them, marked',
+    'import.invalidRows.skip': 'Skip them',
+    'import.noFields': 'Pick a field for at least one column',
+    'import.noRows': 'No rows to import',
+    'import.cancel': 'Cancel',
+    'import.import': 'Import {rows} rows',
+    // the error of a new row with values that could not be read, on its row number: {problems} the columns
+    // and what was wrong
+    'import.rowError': 'Not imported: {problems}',
 
     // the footer: the row count and the filter as chips
     'footer.rowCount': '{shown}/{total}',

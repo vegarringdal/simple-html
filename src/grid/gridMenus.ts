@@ -442,6 +442,8 @@ export interface GridMenus {
  * | `row.paste.current` | Paste cell - the cell right clicked. Greyed out when it is readonly - also on a row `edit` does not let the user change (`change: false`, a row that is not new) | the grid is editable, and `edit` allows `change` or `add` |
  * | `row.paste.cell` | Paste cell (selected rows) - the column of the selected rows, the readonly cells skipped. Greyed out with no row selected | the grid is editable, and `edit` allows `change` or `add` |
  * | `row.paste.range` | Paste range - the clipboard as Ctrl+V pastes it with ranges: one value into every cell of them, a block from the top left of the last one. Greyed out without a range | the grid is editable, and `edit` allows `change` or `add` |
+ * | `row.paste.newRowsSeparator` | a line | `GridConfig.importMenu`, the grid is editable and `edit` allows `add` |
+ * | `row.paste.newRows` | As new rows… - the import dialog with the rows on the clipboard (`gridInterface.openImport(text)`): their columns from this cell's column on, or by the names of a header row; new rows on Import | `GridConfig.importMenu`, the grid is editable and `edit` allows `add` |
  * | `row.clear` | Clear › - a submenu | the grid is editable, and `edit` allows `change` or `add` |
  * | `row.clear.current` | Clear cell - empties the cell right clicked (`null`, also a number field: emptying the cell by typing stores 0). Greyed out when it is readonly, as Paste cell | the grid is editable, and `edit` allows `change` or `add` |
  * | `row.clear.cell` | Clear cell (selected rows) - empties the column of the selected rows, the readonly cells skipped. Greyed out with no row selected | the grid is editable, and `edit` allows `change` or `add` |
@@ -501,6 +503,7 @@ export interface GridMenus {
  * | `header.format.decimalMark` | Decimal mark › - Dot, Comma (`.dot`, `.comma`). The character of the thousands separator greyed out | a number field |
  * | `header.format.percent` | Percent, a toggle: the number times 100 with ` %` | a number field |
  * | `header.settings` | Column settings… - the grid config dialog on this column (`gridInterface.openColumnSettings(field)`): its display format, a text column's template and link | |
+ * | `header.import` | Import rows… - the import dialog (`gridInterface.openImport()`): a CSV or Excel file, or rows pasted from a spreadsheet, as new rows | `GridConfig.importMenu`, the grid is editable and `edit` allows `add` |
  * | `header.aggregate` | Aggregate › - a submenu | |
  * | `header.aggregate.sum` | Sum - a toggle with a ✓ when on: the column's sum in the group rows and the totals row (`GridState.aggregates`) | a number field |
  * | `header.aggregate.avg` | Average, a toggle | a number field |
@@ -609,6 +612,8 @@ export const MENU_IDS = {
         'row.paste.current',
         'row.paste.cell',
         'row.paste.range',
+        'row.paste.newRowsSeparator',
+        'row.paste.newRows',
         'row.clear',
         'row.clear.current',
         'row.clear.cell',
@@ -700,6 +705,7 @@ export const MENU_IDS = {
         'header.format.decimalMark.comma',
         'header.format.percent',
         'header.settings',
+        'header.import',
         'header.aggregate',
         'header.aggregate.sum',
         'header.aggregate.avg',

@@ -4125,6 +4125,129 @@ rebuildHeaderColumns for the middle section too (scrollHandlers.test.ts has it).
 * browser: the shared sidebar-toggle-check.js expects about 30 rows (28 to 31) where it expected more than 30
   (backup `.before-full-30`): 15/15; full-grid 11/11, sample-height 5/5, detail-form 91/91, color-rules 90/90
 
+### Import: CSV and Excel files, paste rows as new rows (user request)
+
+* the user: paste rows copied in Excel / Google Sheets as new rows (a paste wrote into existing cells only),
+  and import a CSV or .xlsx file with a column mapping step, the problems summarized, undoable, permissions
+* **the UX: one dialog for every source** (`gridFunctions/importDialog.ts`, the filter editor's frame):
+  *Choose file…*, a file dropped on it, rows pasted into it (Ctrl+V). The first rows in a table with a field
+  picker (a native `<select>`, *Skip*) over each column; *First row is a header* (found: the first row names
+  a field), the separator (found, or picked), the sheet of a workbook, the decimal mark when a number field
+  is picked, the order of dates with `/` when a date field is. A line says how the columns were matched (by
+  name / by position from a field), the count, the first 8 problems in words (*Row 3, Age: Not a number:
+  abc*) and the cells marked (the error tint, the message as tooltip); *Rows with problems*: import them,
+  marked / skip them. *Import N rows* adds and closes. Why one dialog for paste too: a block of many rows is
+  a bulk add - the user sees where each column goes before anything is added (a header named by Excel goes
+  by name, a block without one by position from the clicked cell), and the same problems list; Ctrl+V into
+  a cell stays as it was (no rows added past the last row - mixing writes and adds would surprise)
+* **the entries**: `GridConfig.importMenu` (default `false`: a bulk add is for the app to allow) - the row
+  menu's Paste › *As new rows…* (`row.paste.newRows`, after a line `row.paste.newRowsSeparator`): the
+  clipboard (`readText()`; refused or empty -> the dialog asks for a paste into it), columns from the right
+  clicked cell's column; the header menu's *Import rows…* (`header.import`) - a grid without rows has no
+  cell to right click. Both only in an editable grid with `edit.add` (`__canAddRows()`, `__showImportMenu()`).
+  Not on a row number's menu (kept lean, as Paste › is not there)
+* **the API**: `gridInterface.openImport(source?: Blob | string)` (a file of the app's own drop zone, or
+  text; nothing in a readonly grid or without `add`, as the menus), `gridInterface.importRows(rows,
+  options): ImportResult` (`ImportOptions`: `header`, `fields` by position with `null` to skip,
+  `decimalMark`, `dateOrder`, `invalidRows: 'import' | 'skip'`; checked - an option it does not know throws),
+  `readImportFile(file, { sheet, separator }): Promise<ImportTable>`, `ImportFileError` (`problem`:
+  `tooLarge` / `xls` / `broken` / `unsupported`), `IMPORT_LIMITS`, types `ImportCell`, `ImportProblem`
+  (`{ row, field, value, kind: 'value' | 'rule', message }`). Code is not stopped by readonly or the
+  permissions (as `addNewEmpty()` is not), said in the JSDoc. Datasource: `addNewRows(rows, { scrollTo })` -
+  many new rows at once (addNewEmpty in a loop sorts once per row), the rows at the end, grouped into their
+  groups with the first one's group expanded, the first selected
+* **the columns**: by name - a header cell that is a column's label as shown, a field name or a datasource
+  label, any case, spaces collapsed; a field once (a second column of it skipped); by position - the layout
+  from the start field. Importable: the datasource's fields but a readonly column; the pickers list the
+  layout, then the other config columns. The isReadonly hook is not asked (it decides about rows there are;
+  documented). A lookup column takes the label (writeCellValue, its `set` fields too)
+* **the values, as typing reads them** (`readCell`): through the field's formatter, with what a file has:
+  numbers with spaces / `'` / the other mark between groups of three (`1 234,5`, `1.234,5`, `1,234.5`), the
+  decimal mark per column from its formatter (`format(1.5)` has a comma -> `,`), and the other mark once and
+  not between groups is the decimal mark (`12,5` with a decimal dot, as typing reads it); dates ISO (an
+  offset / Z is an instant - the raw CSV export round trips), `31.12.2026`, `/` in the order picked, a time
+  after; another form by the formatter only when it writes the date back as the text (`20.11.26` would else
+  be 1926); booleans true/false/1/0 and the formatter's own words. A value not read is never guessed from a
+  part: the field is empty, a `'value'` problem. Text is kept as it is: `=1+1` stays text (CSV injection),
+  the CSV export's `'` too
+* **the problems**: the validation is dry run before anything is added - `DataContainer.__checkRow(values)`
+  runs the container's rules on a plain object (a required field the file does not have is a problem of
+  every row); after the add `datasource.validate(added)` shows the errors on the cells. The values not read
+  go into the new row's `__rowError` (*Not imported: Age: Not a number: abc*): its row number shows them -
+  the "imported and marked" the user asked for. It is the row error of a server (`setErrors()` replaces it,
+  `acceptChanges()` clears it) - said in the guide; the cells can not carry an error that is not a rule's
+* **undo as one step**: the history never adds or removes a row - an added row is recorded as its deletion
+  mark taken off (`DataContainer.__recordAdded`, `before: true, after: false`): undo marks the imported rows
+  for deletion - a new row marked is in no list of `getChanges()`, as Delete takes out a new row - redo takes
+  the marks off. An edit after it is a step of its own
+* **CSV** (`csv.ts`): `parseCsv(text, separator, limits)` and `detectSeparator()` - the separator that
+  splits the first lines (64 KB) into the same number of fields, more than one, the most lines, then the
+  most fields, ties tab > `;` > `,`. parseTsv shares the reader, rewritten to slice runs instead of adding
+  characters one by one (100 000 lines well under a second); the BOM left out. Encodings (`importFile.ts`):
+  UTF-8 (BOM or not), UTF-16 LE/BE by their BOM (Excel's Unicode text), else Windows-1252 (Excel's "CSV" in
+  Norwegian - æøå); a NUL is no text (a binary file is `broken`)
+* **.xlsx** (`unzip.ts`, `xlsxRead.ts`): the other half of zip.ts / xlsx.ts. The end record searched past a
+  comment, the central directory, the local headers - every offset checked; stored and deflated
+  (`DecompressionStream('deflate-raw')`, no dependency - Node 24 has it, the tests run it for real); the
+  size and CRC-32 checked. Parts by `_rels/.rels` -> the workbook -> its rels (case-insensitive names,
+  relative and absolute targets, `..`); the worksheets in tab order (a hidden one too, a chart sheet not);
+  shared strings with rich text (the phonetic guide left out), inline strings, `str`, `b`, `e` (the text),
+  `d` (ISO); numbers, and a `Date` for a date style - the built-in ids (14-22, 27-36, 45-47, 50-58) or a
+  format code with d/m/y/h/s outside quotes, escapes, brackets (`[h]` counts), `_x` / `*x` - the 1900 system
+  with Lotus' leap day and the 1904 one, local time; `_xHHHH_` decoded (the writer escapes `_` that way);
+  a prefixed namespace (`x:`) read (children by localName); rows without `r` follow the one before, gaps of
+  rows kept as `[]` so `rows[4]` is Excel's row 5 (the problems say the row the user sees in Excel). Each
+  sheet read once, on demand (the sheet picker)
+* **a hostile file**: `IMPORT_LIMITS` - 20 MB file (checked before reading), 100 MB unzipped for all parts
+  read together, 100 000 rows, 1 000 columns, 1 000 000 cells. A zip bomb: a part larger than the budget is
+  refused by its declared size before inflating, the inflating stops at the declared size (a lying ZIP is
+  never held), the CRC must match; encrypted, ZIP64, other methods refused; a `<!DOCTYPE` refused before
+  `DOMParser` (billion laughs), not well-formed XML is broken; a cell at `XFD1048576` stops at the limits
+  before any array is made; the CSV reader counts while reading (a million empty lines stops at 100 000).
+  Nothing of the file is markup: lit text bindings only. `.xls` (and password protected .xlsx, both compound
+  files) said in words; `.ods` is a ZIP without a workbook: broken
+* texts: 48 new ids (`row.paste.newRows`, `header.import`, `import.*`), in guide 12 (a new *Import dialog*
+  table) and Norwegian in the Translation sample; the texts test shows the dialog in every state (empty, the
+  clipboard without rows, a header without rows, pasted rows with each problem and more than it lists, no
+  header, no field picked, a workbook of two sheets with an empty first, reading, each file error, the row
+  error after the import). css: `.import-*` under `.filter-editor-content`, the existing colour variables
+  only (no new ones: no TreDeSpace change), square, the selects 24px on touch too
+* docs: new guide 23-import.md (turning it on, the dialog, the columns, the values table, the rows added,
+  from code, the files, a file is not trusted); 17 (*Paste as new rows*), 10 and MENU_IDS (the ids), 02
+  (`importMenu`), 05 (`addNewRows()`), 15 (a link). Sample *Import CSV and Excel* (`#sample/import`, group
+  Export): `importMenu: true`, buttons for the dialog, a sample CSV as Norwegian Excel saves it (`;`, decimal
+  commas, dates with dots, rows with problems, a formula) and an .xlsx made at run time with `getExcel()` of
+  a grid interface not on the page (no static assets: the demo has no public folder) - each opened in the
+  dialog or downloaded to try Choose file / drop, and "Copy two rows (as Excel does)" for Paste › As new rows
+* tests: csvParse (RFC 4180 edge cases, buildCsv round trip per separator, the limits, detectSeparator),
+  xlsxRead (the writer's file back: every type, stored and deflated, every day of a summer-time year; shared
+  strings, rich text, prefixes, styles, 1904, gaps, sheets; excelDate, isDateFormatCode; the zip bomb, a
+  lying size, CRC, garbage DEFLATE, ZIP64, encryption, no workbook, broken XML, DOCTYPE, the row/column/cell
+  limits, no DecompressionStream), importFile (encodings, xls, NUL, size, sheets; getExcel() / getCsv() of a
+  grid imported into another give the same values), importRows (matching, numbers, dates, booleans, plan,
+  problems, undo/redo, skip, lookups, options checks, permissions of the menus), importDialog (pasted rows,
+  picking by hand, header toggle, skip, hints, separator, files dropped / picked, two sheets, file errors,
+  the menus, disconnect), addNewRows (datasource). gridMenus.test: `importMenu: true` for every row entry,
+  `header.import` hidden in a readonly grid. 3951 tests, 170 files (was 3850, 164)
+* browser (Chromium 1148, port 8094): new `import-check.js` 83/83 - light, dark and TreDeSpace dark: a TSV
+  clipboard (CRLF after each row) through Paste › As new rows… (by position from the clicked column, the
+  problem listed and marked, Import -> values parsed with a decimal comma and dates with dots, the row
+  error on the row number, Ctrl+Z takes both out, Ctrl+Y back), a CSV through Import rows… and setInputFiles
+  (header by name, separator found, four kinds of problem, a field skipped by hand, the problem rows
+  skipped), an .xlsx of the grid's own export (typed), a dropped File (DataTransfer), Esc; a phone (390px):
+  the dialog fits, the buttons 24px. Screenshots looked at: the dialog with pasted rows, the CSV with its
+  problems, the workbook, the grid after (the + and ! on the row numbers), the phone. Shared: fill 12/12,
+  keyboard 53/53, edit-permissions 57/57, row-number-menu 7/7, full-grid 11/11, menus-regression 25/25 -
+  none needed a change. The script is in this worktree's `.claude/browser-checks/scripts/`
+* a dialog opened before its rows are read grows with them: it is moved up after a render to stay in the
+  window (seen in the phone screenshot)
+* not done, candidates: a sheet's merged cells and the formats of a number written as text in a cell are
+  not read; the CSV decoder guesses Windows-1252 for anything that is not UTF-8 (a Mac Roman or Shift-JIS
+  file shows garbled); limits are not an option of `readImportFile()` / the dialog; an `import` grid event
+  with the result (the datasource's `collection-changed` says rows were added); "1 rows" (no plural texts);
+  the dialog previews the first 8 rows, a problem further down is listed (first 8) but not shown in the
+  table; Ctrl+V into the last row could add the rows past it; the isReadonly hook asked for the new rows
+
 ## Considered, not done
 
 ## Candidates / not started

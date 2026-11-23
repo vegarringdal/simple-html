@@ -39,6 +39,8 @@ import { fullGrid } from './samples/fullGrid';
 import fullGridSource from './samples/fullGrid.ts?raw';
 import { gridState } from './samples/gridState';
 import gridStateSource from './samples/gridState.ts?raw';
+import { importRows } from './samples/importRows';
+import importRowsSource from './samples/importRows.ts?raw';
 import { liveData } from './samples/liveData';
 import liveDataSource from './samples/liveData.ts?raw';
 import { lookups } from './samples/lookups';
@@ -124,6 +126,7 @@ export const SAMPLES: Sample[] = [
     { ...miscConfig, source: miscConfigSource },
     // export
     { ...exportCsv, source: exportCsvSource },
+    { ...importRows, source: importRowsSource },
     // live data
     { ...liveData, source: liveDataSource }
 ];

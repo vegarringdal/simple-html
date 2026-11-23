@@ -384,8 +384,8 @@ What is skipped:
   the rows that are not new). A readonly grid pastes nothing, nor does one where no
   value can change (`change` and `add` both `false`) - Ctrl+V is the browser's there
 - **group rows**: the next row of the block goes to the next data row
-- **rows past the last displayed row**: a paste adds no rows. Paste fewer, or add rows first
-  (`addNewEmpty()`)
+- **rows past the last displayed row**: a paste adds no rows. Paste fewer, add rows first
+  (`addNewEmpty()`), or paste them as new rows (below)
 - **fields past the last field of the layout**
 
 The validation runs on every cell written, as for an edit: the errors show on the cells and the row
@@ -395,6 +395,18 @@ row menu's *Paste cell*): the rows changed are in `rows-changed`.
 The row menu has *Paste: Paste range* while there are ranges: it pastes as Ctrl+V does with ranges.
 It reads the clipboard with `navigator.clipboard.readText()`, which the browser may ask the user to
 allow first (Ctrl+V needs no permission).
+
+### Paste as new rows
+
+Rows copied in Excel or Google Sheets can be added as new rows: with `importMenu` in the config, the row
+menu's Paste › has *As new rows…*. It opens the [import dialog](23-import.md) with the rows on the
+clipboard - their columns from the right clicked cell's column on, as a paste of a block, or by name when
+the first line names the columns (the dialog says which, and a picker over each column changes it). The
+values are read as typing reads them, the problems are listed before anything is added, and *Import* adds
+the rows as new rows: one step of the undo history. Only where the user may add rows (`edit.add`).
+
+The rows can also be pasted into the dialog itself (Ctrl+V), when the browser does not give the
+clipboard to `readText()`.
 
 ## Delete
 

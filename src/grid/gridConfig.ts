@@ -196,6 +196,29 @@ export type GridConfig = {
      */
     settingsButton?: boolean;
     /**
+     * The import entries of the grid's menus, default `false`: *Import rows…* in the header menu
+     * (`header.import`) and *As new rows…* in the row menu's Paste › (`row.paste.newRows`). Both open the
+     * import dialog - a CSV or Excel file picked or dropped, or rows pasted from a spreadsheet become new
+     * rows, see the import guide. Shown in an editable grid (`readonly: false`) where the user may add rows
+     * (`edit.add`).
+     *
+     * Off by default: a user adding many rows at once is for the app to allow. Without it
+     * `gridInterface.openImport()` opens the dialog from a button of your own, under the same rules.
+     *
+     * @sample import
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     readonly: false,
+     *     importMenu: true,
+     *     layout: { center: [{ fields: ['name'], width: 150 }, { fields: ['born'], width: 110 }] }
+     * };
+     * ```
+     */
+    importMenu?: boolean;
+    /**
      * the whole grid is readonly, default `true`: no cell can be edited, and the row menu has no paste
      * or clear. Set `false` to edit; the column's `readonly` and the `isReadonly` hook
      * ({@link GridHooks}) can still make cells readonly, and `edit` says which of adding, changing and

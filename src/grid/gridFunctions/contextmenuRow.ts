@@ -12,6 +12,7 @@ import { getLayoutFields } from './getLayoutFields';
 import { cellText } from './gridCsv';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { openImportDialog } from './importDialog';
 import { keyText } from './keyText';
 import { activeCellOfMenu } from './lastPress';
 import { writeCellValue } from './lookupColumn';
@@ -118,6 +119,8 @@ function rowMenuEntries(
     const noRanges = () => gridInterface.getRanges().length === 0;
     // a cell, not a row number: see the top
     const onCell = () => attribute !== '';
+    // the import entries: GridConfig.importMenu, where the user may add rows
+    const importMenu = () => gridInterface.__showImportMenu();
 
     // a group row has no value of its own to filter on
     const filterOnValue = () => !isGroupRow(rowData);
@@ -173,6 +176,15 @@ function rowMenuEntries(
                             pasteText(ctx, await navigator.clipboard.readText());
                         }
                     }
+                },
+                // GridConfig.importMenu: the rows on the clipboard as new rows, in the import dialog - their
+                // columns from this cell's column on, or by the names of a header row
+                { type: 'separator', id: 'row.paste.newRowsSeparator', visible: importMenu },
+                {
+                    id: 'row.paste.newRows',
+                    label: text('row.paste.newRows'),
+                    visible: importMenu,
+                    action: async () => openImportDialog(ctx, await clipboardText(), attribute)
                 }
             ]
         },
@@ -801,4 +813,16 @@ function addToFilter(ctx: Grid, attribute: string, rowData: Entity) {
     // the existing conditions are kept, header filters included, so the header inputs
     // keep their text
     applyFilter(ctx, and(conditionForCell(ctx, attribute, rowData), ...existing), false);
+}
+
+/**
+ * The text on the clipboard, for Paste › As new rows…: `''` when the browser does not give it (no
+ * `readText()`, the user said no) - the import dialog then asks for a paste into it
+ */
+async function clipboardText(): Promise<string> {
+    try {
+        return (await navigator.clipboard?.readText?.()) ?? '';
+    } catch {
+        return '';
+    }
 }
