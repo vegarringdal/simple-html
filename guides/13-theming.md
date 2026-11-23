@@ -93,6 +93,7 @@ a screen shows it.
 | links (a link column, the column settings' preview) | blue-800, blue-100 | `#1e40af` | `#dbeafe` |
 | the colour rules' text colours | red, blue, indigo, purple, pink 800, orange, amber, yellow, lime, green, teal, cyan 900, slate-700 in light; their 300 in dark. Brown, which Tailwind does not have: orange's hue with less chroma | `#9f0712` ... | `#ffa2a2` ... |
 | the colour rules' backgrounds | red, orange, yellow, lime, green, teal, sky, indigo, purple, pink 200, amber and cyan 300 (apart from yellow and blue) and slate-300 in light; their 950, slate-800 in dark. Blue is sky: blue-200 and blue-950 are the selected rows | `#ffc9c9` ... | `#460809` ... |
+| the icons of an icon set: green, amber, red | green-800, amber-800, red-700 in light; their 300 in dark | `#166534` `#92400e` `#b91c1c` | `#7bf1a8` `#ffd230` `#ffa2a2` |
 | text on Apply | slate-950 (its picked day) | `#f1f5f9` | `#080f21` |
 | frames of the controls of the value list and the filter editor | slate-500 | `#64748b` | `#62748e` |
 | a range's tint | blue-500 at 15% (its info chip) | | |
@@ -449,6 +450,46 @@ The swatches of the grid config dialog are `column-settings-swatch` radio button
 palette's variables; the colour picker of a custom colour is `column-settings-swatch-custom`, an
 `<input type="color">` in a box of the swatches' frame (a `+` until a colour is picked).
 
+## Data bars, colour scales and icons
+
+The [data bars](08-formatting.md#data-bars) and [colour scales](08-formatting.md#colour-scales) of a
+number column are drawn in the **backgrounds of the palette**, `--simple-html-grid-palette-<colour>-bg-color`:
+the grid's text reads on every one of them, and on the mix of two of them a scale gives a cell, light
+and dark, in both themes - the theme tests compute it. A theme that changes the palette changes them
+too. They have no variables of their own but the icons':
+
+- `--simple-html-grid-icon-green-color`, `--simple-html-grid-icon-amber-color`,
+  `--simple-html-grid-icon-red-color` - the icons of an [icon set](08-formatting.md#icon-sets): the high,
+  the middle and the low one. Marks, at least 3:1 to the rows, the selected rows (under a range's tint
+  too) and every background of the palette. Tailwind's green-800, amber-800 and red-700 in light, green
+  and amber 300 and red-200 in dark (red-300 is under 3:1 to a range's tint on the light dark row) -
+  TreDeSpace's are the same in light and its 300 in dark
+
+**A custom colour** of a bar or a scale is a tint of it, computed by the grid: a fifth of the colour and
+the rest white in light mode, black in dark mode - so the text reads on it whatever colour is picked (its
+channels are 0.8 or more in light, 0.2 or less in dark).
+
+The grid sets them on the cell element as custom properties, with `style.setProperty()` - their values a
+palette variable or a custom colour's two tints in `light-dark()`, built from a palette name or a checked
+`#rrggbb` only:
+
+| class | custom properties | |
+| --- | --- | --- |
+| `simple-html-grid-cell-bar` | `--simple-html-grid-bar-start`, `--simple-html-grid-bar-end` (`12.5%`), `--simple-html-grid-bar-color` | the bar: a background image of the cell from start to end, under a range's tint (`--simple-html-grid-cell-bar-image`), over a rule's background. Square |
+| `simple-html-grid-cell-scale` | `--simple-html-grid-scale-from`, `--simple-html-grid-scale-to`, `--simple-html-grid-scale-at` (`37.5%`) | the scale: the cell's background, `color-mix(in srgb, to at, from)`. A rule's background wins: such a cell does not get the class |
+
+The icon is `simple-html-grid-cell-icon` (and `-before` / `-after`, `-green` / `-amber` / `-red`), a 12px
+svg at the left or the right of the cell, its input `simple-html-grid-cell-with-icon-before` (or
+`-after`) with room for it. A cell with a validation error or a match of Find shows as without a bar
+and a scale, as without a rule's colours; the icon stays.
+
+```css
+/* bars a little stronger in light: the backgrounds of the palette stay as they are */
+.simple-html-grid .simple-html-grid-cell-bar {
+    --simple-html-grid-bar-color: light-dark(#93c5fd, #1e3a8a);
+}
+```
+
 ## The variables of the grid
 
 On `.simple-html-grid`, in `grid.css`.
@@ -519,6 +560,9 @@ On `.simple-html-grid`, in `grid.css`.
 | `--simple-html-grid-palette-pink-bg-color` | pink | `#fbcfe8` | `#831843` |
 | `--simple-html-grid-palette-brown-bg-color` | brown | `#e8d5c4` | `#4a2c1a` |
 | `--simple-html-grid-palette-grey-bg-color` | grey | `#d1d5db` | `#2b3544` |
+| `--simple-html-grid-icon-green-color` | the high icon of an icon set (`ColumnFormat.icons`): ▲, a green light, ✓. At least 3:1 to the rows, the selected rows and the palette's backgrounds | `#166534` | `#86efac` |
+| `--simple-html-grid-icon-amber-color` | the middle icon: ►, an amber light, ! | `#92400e` | `#fcd34d` |
+| `--simple-html-grid-icon-red-color` | the low icon: ▼, a red light, ✕ | `#b91c1c` | `#fecaca` |
 | `--simple-html-grid-totals-bg-color` | the totals row under the rows (`totalsRow`), see [Aggregates](18-aggregates.md) | `#e8edf3` | `#2a3441` |
 | `--simple-html-grid-totals-font-color` | the text of the totals row | `#1f2328` | `#f9fafb` |
 | `--simple-html-grid-aggregate-label-color` | the label in front of an aggregate (`Sum`) in a group row and the totals row. At least 4.5:1 to both | `#57606a` | `#c9d1d9` |

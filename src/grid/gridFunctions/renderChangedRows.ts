@@ -1,4 +1,5 @@
 import { type Entity, isGroupRow } from '../../datasource/entity';
+import { hasValueFill, shownRange } from '../dataBars';
 import type { Grid } from '../grid';
 import { renderTotalsRow, showsGroupAggregates } from './aggregates';
 import type { ColType, RowCache } from './colType';
@@ -102,13 +103,27 @@ function renderInFrame(ctx: Grid) {
  * (`ColumnConfig.aggregate`) can change with any row: every group row on screen is rendered, and the
  * totals row. Cheap, the datasource computes the aggregates of a group again only when a row changed.
  * What moves rows - filter, sort, group, rows added or removed - renders every row on screen: a
- * rebuild, or after an upsert GridInterface.updateAfterMerge.
+ * rebuild, or after an upsert GridInterface.updateAfterMerge. So does a change that moves the range of a
+ * data bar, a colour scale or an icon set (`ColumnFormat.bar`, `scale`, `icons`): their cells are drawn
+ * from it - the first change after the grid is made too, the range it had is not known.
  */
 export function renderChangedRows(ctx: Grid) {
     const changed = ctx.changedRows;
     ctx.changedRows = new Set();
     // connected but not in the dom yet: it renders everything when it is put there
     if (!ctx.domCreated || !changed.size) {
+        return;
+    }
+
+    // a data bar, a colour scale or an icon set whose range moved - a new largest value: every cell of
+    // its column is drawn in another place, not only the changed rows'. Every row on screen then
+    const ranges = valueRangesKey(ctx);
+    const rangesMoved = ranges !== '' && ranges !== ctx.valueRanges;
+    ctx.valueRanges = ranges;
+    if (rangesMoved) {
+        triggerScrollEvent(ctx);
+        renderTotalsRow(ctx);
+        renderSummary(ctx);
         return;
     }
 
@@ -165,6 +180,23 @@ export function renderChangedRows(ctx: Grid) {
     if (shown && changed.has(shown as Entity)) {
         renderDetailForm(ctx);
     }
+}
+
+/**
+ * The ranges of the columns with a data bar, a colour scale or an icon set (dataBars.ts), as a text -
+ * `total:0:950|kpi1:-3:12`: the datasource's min and max of the rows the filter lets through, which it
+ * keeps, so this is cheap. '' when no column has one
+ */
+function valueRangesKey(ctx: Grid): string {
+    const datasource = ctx.gridInterface.getDatasource();
+    const parts: string[] = [];
+    for (const [field, column] of Object.entries(ctx.gridInterface.__getGridConfig().columns)) {
+        if (hasValueFill(column?.format)) {
+            const range = shownRange(datasource, field);
+            parts.push(`${field}:${range?.min}:${range?.max}`);
+        }
+    }
+    return parts.join('|');
 }
 
 /**

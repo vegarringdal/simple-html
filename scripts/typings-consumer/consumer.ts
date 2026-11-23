@@ -20,6 +20,7 @@ import {
     type Changes,
     type CheckboxFormat,
     type ColorRule,
+    type ColorScaleFormat,
     type ColumnConfig,
     type ColumnEditor,
     type ColumnFormat,
@@ -27,6 +28,7 @@ import {
     type CsvOptions,
     type CsvSeparator,
     createGrid,
+    type DataBarFormat,
     DataContainer,
     Datasource,
     type DatasourceEvents,
@@ -61,6 +63,8 @@ import {
     type GroupRow,
     type HeaderFilter,
     type HTMLCellElement,
+    type IconSetFormat,
+    type IconSetName,
     type IDateConfig,
     isGroupRow,
     type LayoutColumn,
@@ -1068,6 +1072,24 @@ const formulaNumber: CalculatedColumn = { formula: 2 };
 // @ts-expect-error a type of the language: number, text, date, boolean
 const datetimeType: CalculatedColumn = { formula: 'TODAY()', type: 'datetime' };
 console.log(calculatedConfig, formulaNumber, datetimeType);
+
+// data bars, colour scales and icon sets of a number column, and the colours of the Excel export
+const salesBar: DataBarFormat = { color: 'green', min: 0 };
+const heat: ColorScaleFormat = { minColor: 'red', midColor: 'yellow', maxColor: '#22c55e', mid: 50 };
+const lights: IconSetName = 'traffic';
+const stock: IconSetFormat = { set: lights, thresholds: [10, 50], unit: 'number', reverse: false, position: 'after' };
+const fillColumns: Record<string, ColumnConfig> = { sales: { format: { bar: salesBar, scale: heat, icons: stock } } };
+gridInterface.setState({ formats: { sales: { icons: { set: 'arrows' } } } });
+const plainExcel: ExcelOptions = { colors: false };
+// @ts-expect-error a scale has two colours at least
+const oneColour: ColorScaleFormat = { minColor: 'red' };
+// @ts-expect-error the icon sets: arrows, traffic, flags, symbols
+const stars: IconSetFormat = { set: 'stars' };
+// @ts-expect-error two thresholds
+const threeThresholds: IconSetFormat = { set: 'arrows', thresholds: [1, 2, 3] };
+// @ts-expect-error colors is true or false
+const someColours: ExcelOptions = { colors: 'rules' };
+console.log(fillColumns, plainExcel, oneColour, stars, threeThresholds, someColours);
 
 // the sql entry, through the package's "exports" (bundler resolution here, node16 in tsconfig.sql.json):
 // a filter of the grid is a filter toSqlWhere takes

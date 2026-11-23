@@ -35,6 +35,7 @@ import {
     isCheckedValue,
     UNCHECKED_VALUE
 } from '../columnFormat';
+import { shownRange } from '../dataBars';
 import { canFilterAsShown, filtersAsShown } from '../filterAsShown';
 import { type FormulaType, type FormulaValue, formulaProblemText } from '../formula';
 import type { Grid } from '../grid';
@@ -42,6 +43,7 @@ import type { GridState } from '../gridConfig';
 import type { MenuItem } from '../gridMenus';
 import { numberOverrideOf, overrideNumberText, zeroText } from './cellText';
 import { defaultHeaderOperator, headerFilterType, headerOperators } from './columnFilterOptions';
+import { previewFill, valueFillProblems, valueFillSettings } from './columnSettingsBars';
 import { colorRuleSettings, colorRulesHaveProblem } from './columnSettingsRules';
 import { contextMenuAttributes } from './contextMenuAttributes';
 import {
@@ -51,7 +53,7 @@ import {
     detailFormResetButton,
     detailFormTabPanel
 } from './detailFormSettings';
-import { moveDialog, resizeHandles, showDialog } from './dialogFrame';
+import { keepDialogInView, moveDialog, resizeHandles, showDialog } from './dialogFrame';
 import { defaultFilterOnType, isFilterOnType, setFilterOnType } from './filterOnType';
 import { formatSubmenu, NUMBER_SAMPLE, PERCENT_SAMPLE } from './formatSubmenu';
 import { getColumnLabel, getConfigColumnLabel } from './getColumnLabel';
@@ -99,9 +101,11 @@ import { attachTooltips, hideTooltip, tooltipsEnabled } from './tooltip';
  *   column label - `placeholderRow`, `placeholderRowLabel`). Then, for every column but a checkbox, the
  *   header filter: its operator - a picker of the operators it offers, the column's default said under it - and Filter as
  *   you type (`GridState.headerFilters[field].filterOnType`, filterOnType.ts). Then its colour rules
- *   (`ColumnFormat.rules`, columnSettingsRules.ts), any column. Under it the preview: what the cell shows
- *   in the current row (else the first) in the colours of its rule, the link and its address, and why a
- *   row has no link.
+ *   (`ColumnFormat.rules`, columnSettingsRules.ts), any column. A number column's data bar, colour scale
+ *   and icon set under them (`ColumnFormat.bar`, `scale`, `icons`, columnSettingsBars.ts), with five cells
+ *   of the column's range drawn as they will be. Under it the preview: what the cell shows
+ *   in the current row (else the first) in the colours of its rule - its bar, scale and icon - the link
+ *   and its address, and why a row has no link.
  * - **The footer**: Reset column and Reset all go back to the formats the grid starts with (the config's
  *   `ColumnConfig.format`, or `initialState.formats` - the label, the placeholder, blank / 0 and the
  *   checkboxes are in them) and the column's default operator and filter as you type, Cancel closes,
@@ -153,6 +157,11 @@ interface ColumnSettings {
     added: string[];
     /** the field name typed for an added calculated column that is no name it can have yet, by its field */
     typedNames: Record<string, string>;
+    /**
+     * the numbers typed for the data bars, colour scales and icon sets (columnSettingsBars.ts), as text by
+     * `<field>|<part>`: kept while they are typed - `1,` is on its way to `1,5` - until Apply or a reset
+     */
+    typedNumbers: Record<string, string>;
 }
 
 /** a problem of a template, a text of the grid and its values */
@@ -207,7 +216,8 @@ export function openColumnSettings(ctx: Grid, field?: string, tab: GridConfigTab
         detailForm: detailFormDraft(ctx, ctx.gridInterface.getState().detailForm),
         calculated: ctx.gridInterface.getState().calculatedColumns,
         added: [],
-        typedNames: {}
+        typedNames: {},
+        typedNumbers: {}
     });
 }
 
@@ -508,6 +518,11 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                     (fields.includes(name) && checkboxProblems(settings.formats[name], kindOfColumn(name)).length) ||
                     (fields.includes(name) && colorRulesHaveProblem(settings.formats[name]?.rules, fieldOf)))
         ),
+        // a number typed for a bar, a scale or the icons that is no number, a min not below the max ...
+        ...fields.filter(
+            (name) =>
+                !removedCalculated.has(name) && valueFillProblems(name, settings.formats[name], settings.typedNumbers).length > 0
+        ),
         ...Object.keys(settings.calculated).filter((name) => calculatedProblem(name) !== null)
     ]);
 
@@ -545,6 +560,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         gridInterface.setState(next);
         settings.added = [];
         settings.typedNames = {};
+        settings.typedNumbers = {};
         // the detail form of the draft without the removed ones, as setState took them out
         for (const name of removed) {
             settings.detailForm.included.delete(name);
@@ -615,6 +631,15 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         }
         if (set?.rules?.length) {
             marks.push('columnSettings.badge.rules');
+        }
+        if (set?.bar) {
+            marks.push('columnSettings.badge.bar');
+        }
+        if (set?.scale) {
+            marks.push('columnSettings.badge.scale');
+        }
+        if (set?.icons) {
+            marks.push('columnSettings.badge.icons');
         }
         return marks;
     };
@@ -1136,6 +1161,23 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         });
 
     /**
+     * The data bar, colour scale and icon set of a number column (ColumnFormat.bar, scale, icons):
+     * columnSettingsBars.ts. Not for a column shown as checkboxes, it shows no number
+     */
+    const barSettings = () =>
+        kind === 'number' && !format?.checkbox
+            ? valueFillSettings(ctx, {
+                  field,
+                  format,
+                  change,
+                  typed: settings.typedNumbers,
+                  idOf: (part) => idOf(ctx, part),
+                  formatNumber: (value) => gridInterface.__getCellFormatter(field, undefined, undefined, format).format(value),
+                  shown: shownRange(datasource, field)
+              })
+            : nothing;
+
+    /**
      * A calculated column of the draft (GridState.calculatedColumns): at the top of its settings, in place
      * of the label - its field name (a new one only, until Apply), its label, its formula with the `{ }`
      * button and the type it gives, its value in the row of the preview, its problem, Remove
@@ -1298,10 +1340,15 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         const row = at ? previewOf(at.row) : null;
         // the colours of the rule that matches the row's value (the dialog's rules), as the cell will have them
         const rule = row ? colorRuleOf(gridInterface, field, row, format) : null;
-        const colors = colorRuleClasses(rule)
+        // a number column's bar, scale colour and icon (ColumnFormat.bar, scale, icons) too
+        const fill =
+            row && kind === 'number' && !format?.checkbox
+                ? previewFill(ctx, row[field], format, rule, shownRange(datasource, field), idOf(ctx, 'preview-icon'))
+                : null;
+        const colors = `${colorRuleClasses(rule)
             .map((name) => ` ${name}`)
-            .join('');
-        const style = styleMap(colorRuleStyle(rule));
+            .join('')}${fill ? `${fill.classes}${fill.iconClass}` : ''}`;
+        const style = styleMap({ ...colorRuleStyle(rule), ...(fill?.style ?? {}) });
         const lookupColumn = gridInterface.__getLookupColumn(field);
         if (row && (format?.checkbox || kind === 'boolean')) {
             // a checkbox, checked as the cell will be
@@ -1331,7 +1378,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
             const href = link && 'href' in link ? link.href : null;
             const problems = formatProblems(format).length ? [] : rowProblems(ctx, field, format, at.row, link);
             content = html`<div class=${`column-settings-preview-cell${colors}`} style=${style}>
-                    ${
+                    ${fill?.icon ?? nothing}${
                         // the link as the cell has it, in a new tab: the dialog stays
                         href
                             ? html`<a class="column-settings-preview-link" href=${href} target="_blank" rel="noopener noreferrer">${shown}</a>`
@@ -1508,7 +1555,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                         pending(field)
                             ? nothing
                             : html`${settingsOf()} ${isDraftCalculated(field) ? nothing : editingSettings()} ${placeholderSettings()}
-                              ${operatorSettings()} ${ruleSettings()} ${preview()}`
+                              ${operatorSettings()} ${ruleSettings()} ${barSettings()} ${preview()}`
                     }
                 </div>
             </div>
@@ -1530,6 +1577,12 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                             if (startColumn && isDraftCalculated(field)) {
                                 settings.calculated[field] = startColumn;
                             }
+                            // the numbers typed for its bar, scale and icons: the format's again
+                            for (const key of Object.keys(settings.typedNumbers)) {
+                                if (key.startsWith(`${field}|`)) {
+                                    delete settings.typedNumbers[key];
+                                }
+                            }
                             setFormat(field, structuredClone(start[field]));
                         }}
                     >
@@ -1545,6 +1598,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                             settings.calculated = gridInterface.__getStartCalculated();
                             settings.added = [];
                             settings.typedNames = {};
+                            settings.typedNumbers = {};
                             for (const name of Object.keys(settings.operators)) {
                                 settings.operators[name] = startOperator(ctx, name);
                                 settings.filterOnType[name] = defaultFilterOnType(ctx, name);
@@ -1585,6 +1639,9 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
     if (opening) {
         showDialog(dialog);
         dialog.querySelector(`#${idOf(ctx, `option-${fields.indexOf(field)}`)}`)?.scrollIntoView({ block: 'nearest' });
+    } else {
+        // grown - a data bar, a colour rule turned on: its buttons stay in the window
+        keepDialogInView(dialog);
     }
     // the control that had the focus is gone (the address of a link turned off): the dialog gets it
     if (!dialog.contains(document.activeElement)) {

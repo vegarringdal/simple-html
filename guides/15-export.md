@@ -5,8 +5,8 @@ the rows the filter lets through, in the sort order, the columns of the layout i
 a header of the column labels.
 
 - **Excel**: `getExcel()` gives the file as a `Blob`, `downloadExcel()` saves it. The cells are
-  typed - numbers, dates, booleans, text - so Excel can sum, sort and filter them. The row menu
-  exports Excel.
+  typed - numbers, dates, booleans, text - so Excel can sum, sort and filter them, in the columns'
+  number formats and colours. The row menu exports Excel.
 - **CSV**: `getCsv()` gives the text, `downloadCsv()` saves it. Each value as the cell shows it. In
   the API only, not in the row menu.
 
@@ -205,8 +205,32 @@ A link column ([Templates and links](08-formatting.md#templates-and-links)) is w
 copy and the CSV export write it: no `HYPERLINK` formula, no hyperlink, not the text of its template -
 `Acme Corp`, not `Acme Corp (12)`.
 
-The [colour rules](08-formatting.md#colour-rules) of a column are not written: the cells of the sheet
-have no fill or font colour, the CSV has none at all.
+### Colours
+
+The colours of the columns are in the file, as the grid shows them in its **light look** - the default
+theme's palette (a sheet has no dark mode, nor the page's theme):
+
+| in the grid | in Excel |
+| --- | --- |
+| a [colour rule](08-formatting.md#colour-rules): text colour, background, bold | the cell's own font colour, fill and bold - fixed: the rule that matched when the file was made. A rule can be a formula over the row or a condition on other fields, Excel could not test it again |
+| a [data bar](08-formatting.md#data-bars) | Excel's own data bar (conditional formatting): from the column's smallest value or 0 to its largest (`MIN(0,MIN(...))`, `MAX(0,MAX(...))`), or the fixed `min` / `max`. Excel draws it as a gradient to white, in a stronger colour than the grid's tint; a negative value's bar is not drawn left of an axis |
+| a [colour scale](08-formatting.md#colour-scales) | Excel's own colour scale, the same two or three colours at the lowest value, the middle and the highest (or the fixed values). Not on the cells whose rule has a background: it wins, as in the grid |
+| an [icon set](08-formatting.md#icon-sets) | Excel's own: `3Arrows`, `3TrafficLights1`, `3Flags`, `3Symbols2` - the thresholds in percent or as numbers, reversed with `reverse` |
+
+- **Excel computes** the bars, scales and icons from the values, over the column's rows in the sheet -
+  and again when a value is changed in Excel. Their thresholds are numbers and formulas of the column's
+  cells the grid writes, never text of a cell.
+- **A custom colour** is as picked for a rule; a scale's is its tint in light, as the grid shows it.
+- **The number formats** of the columns' display formats are written too, colours or not - see
+  [Display formats in Excel](#display-formats-in-excel).
+- **`colors: false`** writes the values without any of them - no fill, no font colour, no conditional
+  formatting:
+
+```ts
+await gridInterface.downloadExcel('plain.xlsx', { colors: false });
+```
+
+The CSV has no colours at all: it is text.
 
 ### The Excel options
 
@@ -220,6 +244,7 @@ with a `TypeError`.
 | `rows` | `'all'` | `'all'`: the rows the filter lets through, sorted. `'selected'`: the selected rows. `'range'`: the rows of the selected range of cells. See [the rows](#the-rows) |
 | `fields` | the layout (`'range'`: the range's) | the fields, in order, see [the columns](#the-columns-and-their-labels) |
 | `sheetName` | `'Sheet1'` | the name of the sheet |
+| `colors` | `true` | the colours of the columns: the rules' as the cells' own, the bars, scales and icons as Excel's conditional formatting. `false`: none, see [Colours](#colours) |
 
 ```ts
 import type { ExcelOptions } from '@simple-html/grid';

@@ -67,6 +67,9 @@ export class Grid {
     public rowsFrame: number | null = null;
     public renderAllInFrame = false;
     public renderAllOnFocusOut = false;
+    // the ranges of the data bars, colour scales and icon sets when rows last changed, see
+    // renderChangedRows: a change that moves one renders every row on screen. null before the first
+    public valueRanges: string | null = null;
 
     public rows: Map<string, HTMLElement> = new Map();
     public columns: Map<string, HTMLElement> = new Map();

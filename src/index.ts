@@ -60,6 +60,7 @@ export type { ColorRule, PaletteColor, RuleColor, RuleCondition } from './grid/c
 export type { CheckboxFormat, ColumnFormat, DateFormat, LinkFormat, NumberFormat } from './grid/columnFormat';
 export { type CreateGridOptions, createGrid } from './grid/createGrid';
 export type { CsvOptions, CsvSeparator } from './grid/csv';
+export type { ColorScaleFormat, DataBarFormat, IconSetFormat, IconSetName } from './grid/dataBars';
 export type { FindResult } from './grid/findResult';
 export type {
     ColumnConfig,

@@ -3,9 +3,11 @@ import { live } from 'lit-html/directives/live.js';
 import { type Entity, isGroupRow } from '../../datasource/entity';
 import { isMissingValue } from '../../datasource/validatorRegistry';
 import { checkboxValueOf, isCheckedValue, rowPlaceholder } from '../columnFormat';
+import { iconLevelOf, shownRange } from '../dataBars';
 import type { Grid } from '../grid';
 import { ariaColIndex, setAria } from './ariaGrid';
 import { asPx } from './asPx';
+import { cellIconTemplate, iconInputClass } from './cellIcon';
 import { cellRowKeyNavigationCellRowHandler } from './cellRowKeyNavigationCellRowHandler';
 import { numberOverrideOf, overrideNumberText, zeroText } from './cellText';
 import type { ColType } from './colType';
@@ -359,6 +361,15 @@ export function renderRowCell(
             // reader. An id per cell on screen: the row is the displayed row
             const moreId = `${ctx.ariaIdPrefix}-more-${colType}-${row}-${column}-${celno}`;
 
+            // the icon of an icon set of a number column (ColumnFormat.icons, cellIcon.ts): by the value's
+            // place in the range of the rows the filter lets through (the datasource keeps it). It
+            // describes the input too, the level in words
+            const icons =
+                fieldType === 'number' && cellConfigType === 'number' && !lookupColumn ? cellConfig.format?.icons : undefined;
+            const iconLevel = icons ? iconLevelOf(entity?.[attribute], icons, shownRange(datasource, attribute)) : null;
+            const iconId = `${ctx.ariaIdPrefix}-icon-${colType}-${row}-${column}-${celno}`;
+            const describedBy = [more ? moreId : '', iconLevel ? iconId : ''].filter((id) => id).join(' ');
+
             // a lookup column: the input is readonly, its editor (a list or a grid under the cell) picks
             // the value - where the cell can be edited. Its button is at the right of the cell
             const lookupEditable = !!lookupColumn && !rowReadonly && !cellReadOnly;
@@ -403,9 +414,9 @@ export function renderRowCell(
                         data-repeated-value=${repeated ? 'true' : 'false'}
                         style=${`${cellConfigType === 'number' && !lookupColumn ? 'text-align: right;' : ''}width:100%;height:100%;${firstLinePadding}`}
                         .value=${live(inputText)}
-                        class=${`simple-html-grid-cell-input cellpos-${colType}-${row}-${column}-${celno}  ${cellClass.input}${repeatedClass}${more ? ' simple-html-grid-cell-multiline' : ''}${lookupEditable ? ' simple-html-grid-cell-lookup' : ''}`}
+                        class=${`simple-html-grid-cell-input cellpos-${colType}-${row}-${column}-${celno}  ${cellClass.input}${repeatedClass}${more ? ' simple-html-grid-cell-multiline' : ''}${lookupEditable ? ' simple-html-grid-cell-lookup' : ''}${icons && iconLevel ? ` ${iconInputClass(icons)}` : ''}`}
                         .readOnly=${multiline || !!lookupColumn || rowReadonly || cellReadOnly}
-                        aria-describedby=${more ? moreId : nothing}
+                        aria-describedby=${describedBy || nothing}
                         aria-haspopup=${lookupEditable ? lookupPopup : nothing}
                         placeholder=${showPlaceHolder ? rowPlaceholder(cellConfig, label) : ''}
                         @contextmenu=${(e: MouseEvent) => {
@@ -698,6 +709,19 @@ export function renderRowCell(
                               >
                                   ${LOOKUP_ICON}
                               </button>`
+                            : nothing
+                    }
+                    ${
+                        // on the first line of a cell taller than a line, with the text: its middle (12px
+                        // high) on the line's
+                        icons && iconLevel
+                            ? cellIconTemplate(
+                                  ctx,
+                                  iconLevel,
+                                  icons,
+                                  iconId,
+                                  lines > 1 ? Math.round(config.cellHeight / 2 - 6) : undefined
+                              )
                             : nothing
                     }
                     ${

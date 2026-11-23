@@ -46,6 +46,19 @@ export function showDialog(dialog: HTMLDialogElement) {
 }
 
 /**
+ * Keeps a dialog in the window as what is in it grows - a part of the grid config dialog turned on: the
+ * height follows the content up to the window's (max-height), the top stays where it was, so its bottom
+ * and its buttons would go out of the window. Its top is moved up as far as it takes, not above the
+ * window's. After a render of what is in it
+ */
+export function keepDialogInView(dialog: HTMLElement) {
+    const rect = dialog.getBoundingClientRect();
+    if (rect.bottom > window.innerHeight && rect.top > 0) {
+        dialog.style.top = asPx(Math.max(0, Math.round(window.innerHeight - rect.height)));
+    }
+}
+
+/**
  * grab areas for resizing, one per edge and one per corner: css `resize` only gives the bottom right
  * corner, so these are wired up by hand. At the end of the dialog's template
  */

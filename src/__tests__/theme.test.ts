@@ -77,7 +77,19 @@ const DATE_LIGHT: Record<string, string> = {
 
 // the custom properties the grid sets on a cell itself, not variables of the theme: a custom colour of a
 // colour rule (`#rrggbb`, ruleColors.ts), checked and set with style.setProperty()
-const CELL_PROPERTIES = ['--simple-html-grid-rule-text-light', '--simple-html-grid-rule-text-dark', '--simple-html-grid-rule-bg'];
+const CELL_PROPERTIES = [
+    '--simple-html-grid-rule-text-light',
+    '--simple-html-grid-rule-text-dark',
+    '--simple-html-grid-rule-bg',
+    // a data bar and a colour scale (dataBars.ts): where the bar is, its colour, the two colours of the scale
+    '--simple-html-grid-bar-start',
+    '--simple-html-grid-bar-end',
+    '--simple-html-grid-bar-color',
+    '--simple-html-grid-cell-bar-image',
+    '--simple-html-grid-scale-from',
+    '--simple-html-grid-scale-to',
+    '--simple-html-grid-scale-at'
+];
 
 // the variables that are one plain colour, the same in light and dark
 const SAME_IN_DARK = ['--simple-html-grid-scrollbar-shadow-color', '--simple-html-grid-readonly-stripe-color'];

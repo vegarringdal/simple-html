@@ -315,6 +315,25 @@ const PALETTE_PAIRS: ContrastPair[] = [
 ];
 
 /**
+ * The icons of an icon set (ColumnFormat.icons): marks, 3:1 to the rows, the selected rows - under a
+ * range's tint too - and every background of the palette (a rule's, a scale's, a bar's)
+ */
+const ICON_PAIRS: ContrastPair[] = ['grid-icon-green-color', 'grid-icon-amber-color', 'grid-icon-red-color'].flatMap((icon) =>
+    on(icon, 3, [
+        ...ROWS_AND_SELECTED,
+        ...under('grid-range-bg-color', ROWS_AND_SELECTED),
+        ...PALETTE_BACKGROUNDS,
+        ...under('grid-range-bg-color', PALETTE_BACKGROUNDS)
+    ])
+);
+
+/** @internal the colour names of the palette, for the tests of the data bars and colour scales */
+export const PALETTE_NAMES: readonly string[] = PALETTE;
+
+/** @internal color-mix(in srgb, a share, b), for the tests of the colour scales */
+export const mixColours = (a: Rgba, b: Rgba, share: number): Rgba => mix(a, b, share);
+
+/**
  * The contrasts of the grid and the date picker - what the theming guide promises for the default
  * theme (theme.test.ts, IMPORVEMENT.md "contrast"), every theme keeps them, light and dark
  */
@@ -388,7 +407,9 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
     ...on('date-selected-border', 3, ['date-main-bg-color', 'date-main-bg-selected', 'date-in-range-bg-color']),
     ...on('date-today-color', 3, ['date-main-bg-color', 'date-main-bg-selected', 'date-in-range-bg-color']),
     // the palette of the colour rules: the text colours, the backgrounds
-    ...PALETTE_PAIRS
+    ...PALETTE_PAIRS,
+    // the icons of an icon set
+    ...ICON_PAIRS
 ];
 
 /**

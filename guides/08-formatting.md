@@ -15,8 +15,10 @@ How a column *shows* its values - a date as `22.11.2026` or as the week `2026-W4
 [Display formats](#display-formats). A text column can show a template of the row's fields,
 `{firstname} {lastname}`, and be a link, `https://crm.example.com/customer/{id}` or `mailto:{email}`:
 see [Templates and links](#templates-and-links). A cell can take a colour from its value - red text
-below 0, an orange background for `waiting`: see [Colour rules](#colour-rules). The user sets all of
-them in the [grid config dialog](#the-grid-config-dialog), the gear in the footer.
+below 0, an orange background for `waiting`: see [Colour rules](#colour-rules). A number column can draw
+a bar, a colour scale or an icon by the value's place among its numbers, as a spreadsheet's conditional
+formatting: see [Data bars](#data-bars), [Colour scales](#colour-scales) and [Icon sets](#icon-sets). The
+user sets all of them in the [grid config dialog](#the-grid-config-dialog), the gear in the footer.
 
 ## What a formatter does
 
@@ -624,7 +626,7 @@ The Columns tab:
 
 - **The columns** of the layout are at the left, in their order, each with its label, its type and
   what it has set - *Calculated*, *Format*, *Text*, *Link*, *Checkbox*, *Blank / 0*, *Label*, *Placeholder*,
-  *Multiline*, *Read only*, *Colours*, or *Error*. The arrows, Home, End, PageUp / PageDown and a letter pick one, a
+  *Multiline*, *Read only*, *Colours*, *Bar*, *Scale*, *Icons*, or *Error*. The arrows, Home, End, PageUp / PageDown and a letter pick one, a
   click too.
 - **Add calculated column**, under the list: a column whose value a formula computes from the row. A
   calculated column has its field name, label and formula at the top of its settings, the type it gives
@@ -685,13 +687,20 @@ The Columns tab:
   not know, with a formula that has a problem or is not true / false, or with nothing to colour, is a
   problem; a value the column does not read (a date of another format) and a custom text colour under
   4.5:1 are said, they hold nothing back.
+- **Data bars, scales, icons**, a number column not shown as checkboxes: *Data bar*, *Colour scale* and
+  *Icons*, a checkbox each - on, its settings in a box under it: the colour swatches (of the palette's
+  backgrounds, a custom colour), *Min*, *Midpoint* and *Max* (empty: *Automatic*, from the rows), the
+  *Icon set* (radio buttons that show its icons), *Middle from* and *High from*, *Thresholds* in *% of
+  the range* or *Values*, where the *Icon* goes and *Reverse*. Under them five cells from the lowest
+  value of the rows to the highest, drawn as the column will be. See [Data bars](#data-bars) and
+  [Bars, scales, icons and the colour rules](#bars-scales-icons-and-the-colour-rules).
 - **The preview** shows what the cell shows in the current row (else the first row shown), in the
-  colours of the rule its value matches: the text, the link - a click opens it in a new tab - and its
+  colours of the rule its value matches - with its bar, scale colour and icon: the text, the link - a click opens it in a new tab - and its
   address, and why the row has no link (a field that is empty in it, an address that is not allowed, a
   field that does not exist). A checkbox and a lookup column have one when they have rules.
 - **A problem of a template** is shown under it at once: no address, one that does not start with its
   scheme, `javascript:` and the other schemes that are not allowed, a field of the grid's own - and so
-  is a problem of the checkbox values and of a colour rule. The column is marked *Error*, and Apply
+  is a problem of the checkbox values, of a colour rule and of the numbers of a bar, a scale or the icons. The column is marked *Error*, and Apply
   does nothing until it is fixed.
 - **Apply** sets the formats of the state, `setState({ formats })`: `getState()` has them - to save
   them, see [Saving it](03-state.md#saving-it). A filter operator that changed is switched as Operator ›
@@ -883,8 +892,9 @@ const config: GridConfig = {
 - **Where**: every cell of the column - an input, a multiline cell, a link (the rule's text colour in
   place of the link's, still underlined), a template, a custom cell (its text takes the colour; a
   renderer that sets a colour of its own keeps it), a checkbox (its background). The values of the
-  [detail form](02-grid-config.md#the-detail-form) and the dialog's preview have them too. Not the
-  CSV and Excel exports - they write the values - nor a group row or the totals row.
+  [detail form](02-grid-config.md#the-detail-form) and the dialog's preview have them too. The Excel
+  export writes them as the cells' own colours ([Excel, colours](15-export.md#colours)); not the CSV -
+  text has no colours - nor a group row or the totals row.
 - **What wins over a rule**: a cell with a validation error and a match of Find show as without it -
   their tint and the grid's text - so they stand out; a range's tint is laid over the rule's
   background. A selected row keeps its colour in the other cells; the rule's background is the cell's,
@@ -896,6 +906,170 @@ const config: GridConfig = {
   `updateConfig()` or `setState()` is given it.
 - **It is state** with the rest of the column's format: Apply in the dialog, `getState()`, a state
   saved as JSON (the value is text, a date too), Reset column / Reset all to the config's.
+
+## Data bars
+
+A number column can draw a bar in each cell, as long as the value's place among the column's numbers -
+a spreadsheet's data bar. The number stays where it is, over a light tint of the bar's colour (a dark one
+in dark mode), so it reads as without the bar.
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    columns: {
+        // from the smallest number of the rows to the largest, and 0: a bar starts at 0
+        sales: { format: { bar: { color: 'green' } } },
+        // a fixed range: 50 is half a cell, a value over 100 a whole one
+        progress: { format: { bar: { color: '#0f766e', min: 0, max: 100 } } }
+    },
+    layout: {
+        center: [
+            { fields: ['sales'], width: 100 },
+            { fields: ['progress'], width: 100 }
+        ]
+    }
+};
+```
+
+| part of `bar` | |
+| --- | --- |
+| `color` | a colour of the [palette](#colour-rules) - its background - or a custom colour `'#rrggbb'`, drawn as a tint of it. Left out: `'blue'` |
+| `min` | the value of the bar's low end. Left out: the smallest value of the rows, or 0 when that is above 0 |
+| `max` | the value of a whole bar. Left out: the largest value of the rows, or 0 when that is below 0 |
+
+- **The range** is the rows the filter lets through - grouped, every one of them, the rows of collapsed
+  groups too, as the [totals row](18-aggregates.md) counts them. A filter changes it, so does an edit
+  of the largest value: every cell on screen is drawn again. The datasource keeps the smallest and the
+  largest value (`datasource.aggregate(field, 'min')`) until a value of the field changes or other rows
+  are filtered: 100 000 rows are read once, not for every cell.
+- **0 is in the range** when it is left out: a bar starts at 0. With negative values the axis is where 0
+  is, a negative value's bar goes to the left of it, a positive one's to the right. A fixed range without
+  0 (`min: 900`) starts at its low end. A value out of a fixed range is drawn as its end.
+- **No bar** for a cell without a number, a group row and the totals row.
+- **A calculated column** of numbers can have one too ([Calculated columns](23-calculated-columns.md)).
+- **Square**, as everything of the grid: no rounded corners.
+
+## Colour scales
+
+A colour scale gives the cell's background a colour by the value's place from the smallest number to the
+largest: two colours mixed (`minColor`, `maxColor`), or three with a midpoint (`midColor`) - red, yellow,
+green as a spreadsheet's heat map.
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    columns: {
+        // red for the smallest number of the rows, yellow halfway, green for the largest
+        margin: { format: { scale: { minColor: 'red', midColor: 'yellow', maxColor: 'green' } } },
+        // a fixed range and the midpoint at 80
+        load: { format: { scale: { minColor: 'grey', midColor: 'amber', maxColor: 'red', min: 0, mid: 80, max: 100 } } }
+    },
+    layout: {
+        center: [
+            { fields: ['margin'], width: 100 },
+            { fields: ['load'], width: 100 }
+        ]
+    }
+};
+```
+
+| part of `scale` | |
+| --- | --- |
+| `minColor` | the colour of the smallest value: a colour of the palette - its background - or `'#rrggbb'` |
+| `midColor` | the colour of the midpoint: three colours. Left out: two |
+| `maxColor` | the colour of the largest value |
+| `min`, `max` | the values of `minColor` and `maxColor`. Left out: the smallest and the largest value of the rows the filter lets through |
+| `mid` | with `midColor`, the value of the midpoint. Left out: halfway between `min` and `max` |
+
+- **The colours are the palette's backgrounds**, mixed in the cell (`color-mix()`): light tints in light
+  mode, dark ones in dark mode, in both themes. The grid's text reads on every one of them and on their
+  mixes - the theme tests compute it. **A custom colour** is a tint of it: a fifth of the colour and the
+  rest white in light mode, black in dark mode - whatever colour is picked, the text reads on it.
+- **The range** is the one of the [data bars](#data-bars) - the rows the filter lets through, kept by the
+  datasource - without 0 in it. A range of one value has the middle: the midpoint's colour, or halfway.
+
+## Icon sets
+
+An icon before the value (or after it) by two thresholds: from the second the high icon, from the first
+the middle one, under it the low one - in percent of the range from the smallest number of the rows to the
+largest, or as numbers.
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    columns: {
+        // ▲ from 67 % of the range, ► from 33 %, ▼ under
+        growth: { format: { icons: { set: 'arrows' } } },
+        // a green light from 50 in stock, amber from 10, red under - after the number
+        stock: { format: { icons: { set: 'traffic', thresholds: [10, 50], unit: 'number', position: 'after' } } },
+        // the other way round: a high cost has the red cross
+        cost: { format: { icons: { set: 'symbols', reverse: true } } }
+    },
+    layout: {
+        center: [
+            { fields: ['growth'], width: 100 },
+            { fields: ['stock'], width: 100 },
+            { fields: ['cost'], width: 100 }
+        ]
+    }
+};
+```
+
+| set | high | middle | low |
+| --- | --- | --- | --- |
+| `'arrows'` | ▲ green | ► amber | ▼ red |
+| `'traffic'` | ● green | ● amber | ● red |
+| `'flags'` | ⚑ green | ⚑ amber | ⚑ red |
+| `'symbols'` | ✓ green | ! amber | ✕ red |
+
+| part of `icons` | |
+| --- | --- |
+| `set` | the icons, above |
+| `thresholds` | `[middle, high]`: from the first the middle icon, from the second the high one (`>=`, as a spreadsheet's). Left out: `[33, 67]`, the thirds |
+| `unit` | `'percent'` (the default): the thresholds are percent of the range, 0 to 100. `'number'`: values of the column |
+| `reverse` | `true`: the icons the other way round - the high values have the low icon, for a column where lower is better |
+| `position` | `'before'` (the default): at the left of the cell; `'after'`: at its right. The number moves clear of it |
+
+- **Svg icons** in the theme's icon colours, `--simple-html-grid-icon-green-color`, `-amber-` and `-red-`:
+  3:1 or more to the rows, the selected rows and the palette's backgrounds, light and dark, in both themes
+  ([Theming](13-theming.md#data-bars-colour-scales-and-icons)). The shapes differ too - but the traffic
+  lights and the flags, said in words for a screen reader.
+- **For a screen reader** the cell says the level after its value: *High*, *Middle* or *Low* (the texts
+  `cell.icon.*`), the description of its input.
+- **The range** is the one of the [data bars](#data-bars), without 0.
+- **Not in a custom cell** (`ColumnConfig.renderer`): the renderer draws the cell. A bar and a scale are
+  the cell's background, a custom cell has them.
+
+## Bars, scales, icons and the colour rules
+
+A column can have colour rules, a data bar, a colour scale and an icon set together. What wins:
+
+- **A rule's background wins over the scale**: a cell whose rule has a background has the rule's - the
+  rule is the exception the user asked for. A rule's text colour and bold show over the scale.
+- **The bar is drawn over a rule's background** and the scale's colour, under a range's tint: both are
+  seen. The grid's text and the palette's text colours read on all of them.
+- **The icons show with any rule.**
+- **An error and a match of Find** show as without a bar and a scale - as without a rule's colours - so
+  they stand out. The icons stay.
+- **The detail form** shows a value in its rule's colours, without a bar, a scale or an icon.
+
+In the grid config dialog a number column has *Data bars, scales, icons* under its colour rules: a
+checkbox each, the colour swatches, Min / Max (empty: *Automatic*), the icon set, the thresholds and what
+they are, Reverse and where the icon goes - and five cells from the lowest value of the rows to the
+highest, drawn as the column will be. A number typed that is no number, a min not below the max, a
+midpoint out of them or thresholds the wrong way round are said at once: Apply waits.
+
+They are **state** with the rest of the column's format (`getState().formats`), and **checked** as it is -
+a `TypeError` when the grid is made, or `updateConfig()` or `setState()` is given one that does not fit: a
+column that is not a number column (a lookup column neither), a part with `checkbox`, a key it does not
+know, a colour that is neither of the palette nor `#rrggbb`, a number that is not finite, a min not below
+the max, a `mid` without `midColor` or out of the range, thresholds that are not two numbers - the first
+above the second, out of 0 to 100 in percent - and a `set`, `unit` or `position` it does not have.
+
+The [Excel export](15-export.md#colours) writes them as Excel's own conditional formatting.
 
 ## The type from another field
 

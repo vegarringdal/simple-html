@@ -119,6 +119,11 @@
     --simple-html-grid-palette-pink-bg-color: light-dark(oklch(89.9% 0.061 343.231), oklch(28.4% 0.109 3.907));
     --simple-html-grid-palette-brown-bg-color: light-dark(oklch(87% 0.04 60), oklch(27% 0.045 45));
     --simple-html-grid-palette-grey-bg-color: light-dark(oklch(86.9% 0.022 252.894), oklch(27.9% 0.041 260.031));
+    /* the icons of an icon set (ColumnFormat.icons): green-800, amber-800 and red-700 in light, their 300 in
+       dark - as grid.css's, 3:1 to the rows, the selected rows and the palette's backgrounds */
+    --simple-html-grid-icon-green-color: light-dark(#166534, oklch(87.1% 0.15 154.449));
+    --simple-html-grid-icon-amber-color: light-dark(#92400e, oklch(87.9% 0.169 91.605));
+    --simple-html-grid-icon-red-color: light-dark(#b91c1c, oklch(80.8% 0.114 19.571));
     /* the totals row: slate-800 as the library's title bars, its text slate-100 (--dock-text-hi) */
     --simple-html-grid-totals-bg-color: light-dark(#e2e8f0, #283548);
     --simple-html-grid-totals-font-color: light-dark(#0f172a, oklch(96.8% 0.007 247.896));

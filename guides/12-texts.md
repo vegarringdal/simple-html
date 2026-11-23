@@ -703,6 +703,43 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.rules.problem.value` | `Write the value to compare with` | a rule's operator compares, its value is empty (a Between: both) |
 | `columnSettings.rules.problem.style` | `Pick a text colour, a background or bold` | a rule that colours nothing |
 | `columnSettings.rules.unread` | `The column does not read {value}: the rule colours no cell` | `{value}`: a value the field's formatter does not read - a date of another format. Apply is not held back |
+| `columnSettings.bars` | `Data bars, scales, icons` | the heading of a number column's data bar, colour scale and icon set, and their name for a screen reader. The swatches have the names of the rules' colours (`columnSettings.rules.color.*`) |
+| `columnSettings.bars.hint` | `By the value's place among the numbers of the rows the filter lets through. A colour rule's background wins over a scale` | under it |
+| `columnSettings.bars.bar` | `Data bar` | the checkbox that turns the bar on, and the name of its group |
+| `columnSettings.bars.color` | `Colour` | the label of the bar's swatches |
+| `columnSettings.bars.min` | `Min` | the label of the low end's number, of the bar and of the scale |
+| `columnSettings.bars.mid` | `Midpoint` | the scale's midpoint |
+| `columnSettings.bars.max` | `Max` | the high end's |
+| `columnSettings.bars.automatic` | `Automatic` | the placeholder of an empty Min, Midpoint, Max: from the rows |
+| `columnSettings.bars.scale` | `Colour scale` | the checkbox that turns the scale on, and the name of its group |
+| `columnSettings.bars.minColor` | `Lowest` | the label of the swatches of the lowest value's colour |
+| `columnSettings.bars.midColor` | `Middle` | the midpoint's colour, *None* for two colours |
+| `columnSettings.bars.maxColor` | `Highest` | the highest value's |
+| `columnSettings.bars.icons` | `Icons` | the checkbox that turns the icons on, and the name of their group |
+| `columnSettings.bars.set` | `Icon set` | the label of the choice of the icons |
+| `columnSettings.bars.set.arrows` | `Arrows` | the names of the sets: their radio buttons' names and tooltips, the buttons show the icons |
+| `columnSettings.bars.set.traffic` | `Traffic lights` | |
+| `columnSettings.bars.set.flags` | `Flags` | |
+| `columnSettings.bars.set.symbols` | `Symbols` | |
+| `columnSettings.bars.thresholdMiddle` | `Middle from` | the first threshold: from it the middle icon |
+| `columnSettings.bars.thresholdHigh` | `High from` | the second: from it the high icon |
+| `columnSettings.bars.unit` | `Thresholds` | the label of the choice of what the thresholds are |
+| `columnSettings.bars.unit.percent` | `% of the range` | percent of the range from the smallest number of the rows to the largest |
+| `columnSettings.bars.unit.number` | `Values` | values of the column |
+| `columnSettings.bars.position` | `Icon` | the label of the choice of where the icon is |
+| `columnSettings.bars.position.before` | `Before the value` | at the cell's left |
+| `columnSettings.bars.position.after` | `After the value` | at its right |
+| `columnSettings.bars.reverse` | `Reverse: the low values get the high icon` | the checkbox of `reverse` |
+| `columnSettings.bars.samples` | `Lowest to highest of the rows, {min} to {max}` | the title of the five cells of the preview, `{min}` and `{max}` as the cells show them |
+| `columnSettings.bars.noNumbers` | `No numbers in the rows: nothing to draw yet` | in place of them, when no row has a number |
+| `columnSettings.bars.problem.notNumber` | `{value} is no number` | a Min, Max, Midpoint or threshold typed that is no number - `.` or `,` is the decimal mark, no thousands separator. Apply waits |
+| `columnSettings.bars.problem.minMax` | `The min is not below the max` | a bar's or a scale's |
+| `columnSettings.bars.problem.mid` | `The midpoint is not between the min and the max` | |
+| `columnSettings.bars.problem.thresholds` | `The first threshold is above the second` | |
+| `columnSettings.bars.problem.percent` | `In % of the range the thresholds are 0 to 100` | |
+| `columnSettings.badge.bar` | `Bar` | in the list of the columns: the column has a data bar |
+| `columnSettings.badge.scale` | `Scale` | a colour scale |
+| `columnSettings.badge.icons` | `Icons` | an icon set |
 | `columnSettings.calculated` | `Calculated column` | the heading of a calculated column's settings, at the top of its settings |
 | `columnSettings.calculated.add` | `Add calculated column` | the button under the list of the columns |
 | `columnSettings.calculated.add.tooltip` | `A column computed from the other fields of the row` | its tooltip |
@@ -1005,6 +1042,9 @@ opens over it, see [Editing](05-editing.md#multiline-text).
 
 | id | English | shown |
 | --- | --- | --- |
+| `cell.icon.high` | `High` | for a screen reader: the icon of an icon set (`ColumnFormat.icons`) of a value from the second threshold, said after the value. Hidden on screen, the cell has the icon |
+| `cell.icon.middle` | `Middle` | from the first threshold |
+| `cell.icon.low` | `Low` | below it |
 | `cell.multiline.more` | `More lines, Enter shows all` | for a screen reader: the description of a cell that shows the first of its lines. Hidden on screen, the cell has a marker |
 | `cell.multiline.moreLines` | `… {count} more lines` | the last line of the cell's tooltip when its text has more lines than the tooltip shows (`multilineTooltipLines`). `{count}`: how many are not shown, 2 or more - one line more is shown instead |
 | `cell.multiline.hint` | `Ctrl+Enter to save, Esc to cancel` | under the textarea of the editor. Cmd+Enter saves too |

@@ -4353,6 +4353,124 @@ injection".
   renaming an applied calculated column; more functions (DAY, WEEKDAY, text functions, a date + days);
   a calculated value in a lookup's label; a backend computing it (the SQL guide shows a generated column)
 
+### Data bars, colour scales, icon sets - and colours in the Excel export (user request)
+
+From the list of missing features the user picked "6. Data bars, colour scales and icon sets, as in Excel's
+conditional formatting" and "7. Colours in the Excel export (the rules and formats don't carry over today)".
+
+* **The model** (new `src/grid/dataBars.ts`, columnFormat.ts): three parts of `ColumnFormat` for a number
+  column (a calculated one too) - `bar?: DataBarFormat { color?, min?, max? }`, `scale?: ColorScaleFormat
+  { minColor, midColor?, maxColor, min?, mid?, max? }`, `icons?: IconSetFormat { set, thresholds?, unit?,
+  reverse?, position? }` with `IconSetName` `'arrows' | 'traffic' | 'flags' | 'symbols'`. Exported from the
+  package. Checked by `assertValueFills` (from assertColumnFormat, so config, updateConfig and setState):
+  number field only, not a lookup column, not with `checkbox`, known keys, colours of the palette or
+  `#rrggbb`, finite numbers (NaN / Infinity named as such), min below max, `mid` only with `midColor` and
+  between, two thresholds in order (0..100 in percent), the set / unit / position values. State with the
+  rest of the format
+* **The range**: `shownRange()` = `datasource.aggregate(field, 'min' / 'max')` over the filtered rows - the
+  datasource already keeps them until the field's change count moves or other rows are filtered, a
+  calculated field's change count moves with the fields it uses. So a render of the cells on screen reads
+  100 000 rows once (a test counts the reads: 200 000 for the min and the max on the first render, only
+  the visible cells on a refresh, 100 000 again after a filter). Grouped: every row the filter lets through,
+  collapsed groups too (as the totals row) - expanding a group does not move the bars. Group rows / totals
+  row: none. A data bar's range has 0 in it when left out (`min(0, smallest)`, `max(0, largest)`): the axis
+  is where 0 is, a negative value's bar goes left of it; a fixed range without 0 starts at its end. A scale
+  and percent thresholds use the plain smallest..largest; the scale's midpoint is halfway (not the 50th
+  percentile - no sort needed); a range of one value is the middle
+* **Drawing** (showCellColor.ts, grid.css): classes `simple-html-grid-cell-bar` / `-scale` and custom
+  properties set with `style.setProperty()` - `--simple-html-grid-bar-start/end` (`12.5%`), `-bar-color`,
+  `--simple-html-grid-scale-from/to/at`. Their colour values are only `var(--simple-html-grid-palette-<name>
+  -bg-color)` or `light-dark(#tint, #tint)` built from a checked `#rrggbb` (`fillValue`). The bar is a
+  `linear-gradient` background image held in `--simple-html-grid-cell-bar-image`: the generic rule puts it
+  on every cell, the range's rule lays its tint over it (the range tint and the bar were both
+  `background-image`); a find match / an error hide it as they hide a rule's colours. The scale is
+  `color-mix(in srgb, to at%, from)` as the background colour. No rounded corners
+* **Colours readable**: a bar and a scale use the palette's backgrounds (the grid's text is 4.5:1 on them
+  already); a custom colour is a tint - a fifth of it, the rest white in light, black in dark (`lightTint`,
+  `darkTint`, ruleColors.ts). A quarter failed: TreDeSpace's pink text was 4.30:1 on black's tint. Chosen over
+  black / white text per cell, because a bar covers part of the text only and a scale may mix a palette
+  colour (a css variable js does not know) with a custom one. The theme tests compute: the text 4.5:1 on
+  every mix of two palette backgrounds at 0/25/50/75/100 %, a rule's palette text colour on neighbour
+  mixes, the text and every palette text colour on the tints of the corners of the colour cube and greys,
+  the icons 3:1 on them, palette + custom mixes - both themes, light and dark
+* **Precedence with the rules**: a rule's background wins over the scale (no scale class on that cell); a
+  rule's text colour and bold show over a scale; a bar is drawn over a rule's background; icons show with
+  any rule
+* **Icons** (new gridFunctions/cellIcon.ts, renderRowCell.ts): a 12px svg (filled paths: ▲ ► ▼, ●, ⚑, ✓ ! ✕)
+  left or right in the cell, over the input (1001), the input's padding 19px on that side. Three new theme
+  variables `--simple-html-grid-icon-green/amber/red-color` (default: green-800 #166534, amber-800 #92400e,
+  red-700 #b91c1c; dark #86efac, #fcd34d and red-200 #fecaca - red-300 was 2.93:1 on a range's tint over the
+  #5a6370 row; TreDeSpace the same light, its 300s dark), 3:1 pairs in CONTRAST_PAIRS. Level by `(value -
+  min) * 100 >= p * (max - min)` (67 of 0..100 is high, not lost to 0.67*100). `reverse` swaps the icon
+  (shape and colour), as Excel's. A screen reader: visually hidden *High* / *Middle* / *Low* (`cell.icon.*`),
+  the input's `aria-describedby` (with the multiline marker's id when both). Not in a custom cell
+* **An edit that moves the range** (renderChangedRows.ts, grid.ts `valueRanges`): the ranges of the columns
+  with bars / scales / icons as a key; when it changed since the last changed-rows render, every row on screen
+  renders (triggerScrollEvent), not only the changed one. The first change after the grid is made renders
+  all once (the range before is not known)
+* **The dialog** (new gridFunctions/columnSettingsBars.ts, columnSettings.ts): *Data bars, scales, icons*
+  under the colour rules, number columns not shown as checkboxes. A checkbox each - on starts a blue bar,
+  red - yellow - green, the arrows; swatches of the palette's backgrounds (the rules' swatches row was made a
+  shared `colorSwatches()` - the rules' DOM is the same), Min / Midpoint / Max (empty *Automatic*), the set as
+  radio buttons showing its icons, *Middle from* / *High from* (placeholders 33 / 67), % of the range /
+  Values, before / after, Reverse. Numbers typed as text (`.` or `,`, no thousands): kept in
+  `ColumnSettings.typedNumbers` while typed so `1,` is not rewritten; a text that is no number, min not below
+  max, a midpoint out, thresholds reversed or out of 0..100 are problems (column Error, Apply waits). Five
+  sample cells from the smallest to the largest value of the rows (`column-settings-bars-sample`, not the
+  preview's class: a check reads the first preview cell) and the row's preview get the bar, scale and icon.
+  Badges *Bar*, *Scale*, *Icons*. Reset column / Reset all / Apply clear the typed numbers.
+  `keepDialogInView` (dialogFrame.ts): the dialog's height follows its content up to the window but its top
+  stayed - turning the three parts on pushed the footer 63px below the window; after a render the top moves
+  up as far as it takes
+* **Excel** (xlsx.ts, gridExcel.ts): `XlsxCell` may be `{ value, style: { color?, fill?, bold? } }`; Styles
+  writes fonts (bold / colour), solid fills and cellXfs each once (`applyFont` / `applyFill`), a styled blank
+  as `<c r s/>`. `XlsxSheet.conditionalFormats`: `<conditionalFormatting>` after the autoFilter (CT_Worksheet
+  order), a `cfRule` each with priorities 1.., `dataBar minLength="0" maxLength="100"` (Excel's default is
+  10..90 %), `colorScale` (cfvos then colours), `iconSet` (`3Arrows`, `3TrafficLights1`, `3Flags`,
+  `3Symbols2`, first cfvo percent 0, `reverse="1"`). Thresholds: Excel's `min` / `max` / `percent 50` when on
+  every row, else formulas over the whole column (`MIN($C$2:$C$101)`) so the range stays the column's; the
+  bar's ends `MIN(0,MIN(...))` / `MAX(0,MAX(...))`. No dxfs (not needed). The grid side: the rules -
+  `colorRuleOf` once per row of a column with rules - as static font / fill / bold in the light palette
+  (`LIGHT_PALETTE`, ruleColors.ts, a theme test compares it with grid.css), a custom background's black /
+  white text as the grid makes it; a scale's sqref leaves out the rows whose rule has a background; scale
+  colours = palette backgrounds / light tints; a bar's colour halfway between the palette's text and
+  background (Excel fades it to white; blue gives #6694ce ≈ Excel's own #638ec6), a custom one as picked.
+  `ExcelOptions.colors` (default true, false = values and number formats only, a TypeError for a
+  non-boolean). The number formats were there already (display format decimals / thousands / percent,
+  dates). Excel's 2007-style bars have no axis: a negative value is not drawn left of 0 there (said in the
+  guide). CSV: no colours (said)
+* **Read back with openpyxl 3.1.5** (a scratch venv, not in the repo): the sample's download loads without a
+  warning, 17 rules with their cfvos / colours / priorities, the negative balance's font `FF90101A`, the
+  waiting status's solid fill `FFFED7AA`
+* **Texts**: 34 `columnSettings.bars.*`, 3 badges, 3 `cell.icon.*`; guide 12's table, Norwegian in the
+  translation sample, the texts walk shows them all (the problems one by one, the no-numbers hint)
+* **Docs**: guide 08 - *Data bars*, *Colour scales*, *Icon sets*, *Bars, scales, icons and the colour rules*,
+  the dialog's list, the rules' Excel line; 15 - *Colours* (a table of what is a fill and what is Excel's
+  own), the option; 13 - *Data bars, colour scales and icons* (the properties, the classes, the tints) and
+  the 3 variables in both tables; 00-features - Data bars, Colour scales, Icon sets, Colours in Excel. JSDoc
+  of the new types with examples; typings consumer
+* **Sample**: the full grid - Balance a blue bar (negatives left of 0, its red rule over it), the months a
+  red - yellow - green heat map, KPI 1 arrows; the description the same length (724 characters)
+* **Tests**: dataBars (29: ranges, bars, scales, levels, icons, fills, tints, the TypeErrors, the dialog's
+  numbers and problems), dataBarsGrid (15: cells, a filter, scrolling, a range-moving edit, typing, a custom
+  cell, groups, a calculated column, rules, icons and their description, state, 100 000 rows read once),
+  columnSettingsBars (7), dataBarsExcel (12: styles.xml, cfRules, partial rows, sqref, the grid's colours,
+  colors: false), themeDataBars (17), the icon pairs in CONTRAST_PAIRS, texts walk, the format keys message.
+  4056 tests, 176 files
+* **Browser** (Chromium 1148, port 8093): new `data-bars-check.js` 75/75 in four looks + a phone (the
+  sample's bars / scales / icons, the dialog by mouse with its five cells and a problem, Apply, every cell's
+  gradient stops vs its value, the scale's colour vs the palette mix, the icon's level, a header filter, three
+  scroll positions, the number 4.5:1 and the icons 3:1, the Excel download unzipped: 17 cfRules, priorities,
+  formulas, the rules' font and fill, a negative balance's font; colors: false; the phone's cells and the
+  dialog without a sideways scroll). Shared: color-rules 98/98, column-settings 144/144 (4 failed until the
+  samples left the preview's class), column-settings-more 149/149, calculated-column 61/61, full-grid 11/11,
+  detail-form 91/91
+* **Not done, candidates**: Excel 2010's data bars (`x14` extension: an axis for negatives, solid fill) -
+  2007 bars only; bars / icons in the detail form's values; a percentile midpoint; more icon sets (4 / 5
+  arrows, stars, ratings); the traffic lights' amber in light (#92400e, dark for 3:1 on the selected rows
+  and the palette's backgrounds) is brown next to red - an outlined icon would allow a brighter fill; the
+  footer of the grid config dialog is wider than a phone (its *Apply & close* is cut, before this too)
+
 ## Considered, not done
 
 ## Candidates / not started

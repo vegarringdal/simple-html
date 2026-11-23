@@ -3,6 +3,7 @@ import type { Formatter } from '../datasource/formatter';
 import { fillText, getText, type Texts } from '../texts';
 import { LINK_PROTOCOLS, templateProblem, urlTemplateProblem } from './cellTemplate';
 import { assertColorRules, type ColorRule, type RuleFieldOf } from './colorRules';
+import { assertValueFills, type ColorScaleFormat, type DataBarFormat, type IconSetFormat } from './dataBars';
 import type { ColumnConfig } from './gridConfig';
 
 /**
@@ -23,7 +24,9 @@ import type { ColumnConfig } from './gridConfig';
  * column's label (`label`, read by getColumnLabel), the placeholder of its empty cells (`placeholderRow`,
  * `placeholderRowLabel` - rowPlaceholder), a number column's blank / 0 (`numberOverride`,
  * numberOverrideOf in cellText.ts) and the checkboxes of a text or number column (`checkbox`). And its
- * colour rules (`rules`, colorRules.ts): a cell's colours from its value.
+ * colour rules (`rules`, colorRules.ts): a cell's colours from its value. And a number column's data bar,
+ * colour scale and icon set (`bar`, `scale`, `icons`, dataBars.ts): from the value's place among the
+ * column's numbers.
  */
 
 /**
@@ -259,7 +262,7 @@ export interface CheckboxFormat {
  * (its `formatForEdit`), a header filter is typed as the cells show it (`filterAsShown`, a date or
  * number format; else as the field's formatter reads it), sorting and grouping use the value, the group rows' names, copy and the CSV export the field's formatter. The
  * Excel export writes the value, with an Excel number format like the display format where Excel has
- * one.
+ * one - and the colours of the rules, the bars, the scales and the icons (`ExcelOptions.colors`).
  *
  * The templates of a text column - `text` and `link.url` - are text with `{field}` placeholders, not
  * code: a saved state can come from anywhere, nothing in a format is run. See the formatting guide,
@@ -270,7 +273,8 @@ export interface CheckboxFormat {
  * a number column's `numberOverride` (blank as 0, 0 as blank), and `checkbox` - the cells of a text or
  * number column as checkboxes. Each wins over the column's own option (`ColumnConfig.label`,
  * `placeholderRow`, `numberOverride`). And `rules`, the colour rules of any column: a cell's text
- * colour, background and bold from its value.
+ * colour, background and bold from its value. And for a number column a data bar (`bar`), a colour scale
+ * (`scale`) and an icon set (`icons`), as a spreadsheet's conditional formatting.
  *
  * @example
  * ```ts
@@ -287,7 +291,10 @@ export interface CheckboxFormat {
  *         stock: { format: { label: 'In stock', placeholderRowLabel: true, numberOverride: 'ZERO_TO_BLANK' } },
  *         newsletter: { format: { checkbox: { checked: '1', unchecked: '0' } } }, // '1' is checked
  *         // red text for a negative number, the first rule that matches wins
- *         total: { format: { rules: [{ operator: 'LESS_THAN', value: '0', color: 'red' }] } }
+ *         total: { format: { rules: [{ operator: 'LESS_THAN', value: '0', color: 'red' }] } },
+ *         // a data bar, a colour scale, an icon set: by the value's place among the column's numbers
+ *         sales: { format: { bar: { color: 'green' }, icons: { set: 'arrows' } } },
+ *         margin: { format: { scale: { minColor: 'red', midColor: 'yellow', maxColor: 'green' } } }
  *     },
  *     layout: {
  *         center: [
@@ -298,7 +305,9 @@ export interface CheckboxFormat {
  *             { fields: ['company'], width: 150 },
  *             { fields: ['stock'], width: 80 },
  *             { fields: ['newsletter'], width: 80 },
- *             { fields: ['total'], width: 100 }
+ *             { fields: ['total'], width: 100 },
+ *             { fields: ['sales'], width: 100 },
+ *             { fields: ['margin'], width: 100 }
  *         ]
  *     }
  * };
@@ -353,6 +362,23 @@ export interface ColumnFormat {
      * `[{ operator: 'LESS_THAN', value: '0', color: 'red' }]`. Left out: the grid's colours
      */
     rules?: ColorRule[];
+    /**
+     * a data bar in the cells of a `number` column: as long as the value's place in the range of the
+     * column's numbers, see {@link DataBarFormat}: `{ color: 'green' }`. Drawn over a rule's background.
+     * Left out: none. Not with `checkbox`
+     */
+    bar?: DataBarFormat;
+    /**
+     * a colour scale of a `number` column: the cell's background by the value's place from the smallest
+     * number to the largest, see {@link ColorScaleFormat}: `{ minColor: 'red', midColor: 'yellow',
+     * maxColor: 'green' }`. A rule's background wins over it. Left out: none. Not with `checkbox`
+     */
+    scale?: ColorScaleFormat;
+    /**
+     * an icon before (or after) the value of a `number` column, by thresholds, see {@link IconSetFormat}:
+     * `{ set: 'arrows' }`. Shows with the rules' colours. Left out: none. Not with `checkbox`
+     */
+    icons?: IconSetFormat;
     /**
      * the header filter of a column with a `date` or `number` format takes the text as the cells show it,
      * see the filtering guide, "Filter as shown". Left out (or `true`): on - `2026-W47` typed in a column
@@ -752,7 +778,10 @@ const FORMAT_KEYS: readonly (keyof ColumnFormat)[] = [
     'filterAsShown',
     'multiline',
     'readonly',
-    'rules'
+    'rules',
+    'bar',
+    'scale',
+    'icons'
 ];
 
 /**
@@ -797,6 +826,7 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
  *   `text`, `link`, `number` or `numberOverride`
  * - `multiline` true or false, for a `text` field, not with `checkbox`; `readonly` true or false, any
  * - `rules` for any column: a list of {@link ColorRule}s, see assertColorRules
+ * - `bar`, `scale` and `icons` for a `number` field, not with `checkbox`: see assertValueFills
  * - a lookup column (`editor`: its cells show a label) takes `label`, the placeholder, `readonly` and `rules` only
  * @param name how the message names it: `GridConfig: columns.born.format`, `setState: formats.born`
  * @param fieldOf the fields a colour rule's condition or formula can name (see assertColorRules). Left
@@ -849,6 +879,7 @@ export function assertColumnFormat(
     if (format.rules !== undefined) {
         assertColorRules(format.rules, type, lookup, `${name}.rules`, fieldOf);
     }
+    assertValueFills(format, field, type, lookup, name);
     if (numberOverride !== undefined) {
         if (type !== 'number') {
             throw new TypeError(`${name}.numberOverride is for a number field, '${field}' is ${type}`);

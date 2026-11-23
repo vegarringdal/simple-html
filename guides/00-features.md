@@ -42,6 +42,9 @@ On a Mac, Ctrl is Cmd and Alt is Option.
 | Display formats | Show a date as Norwegian, US, a week or the days until; a number with decimals and a thousands separator. The value stays as it is | [guide](08-formatting.md#display-formats) · [sample](#sample/full-grid) |
 | Templates and links | A text column shows a template of fields - `{name} ({id})` - and links to a web address, an email or a phone number | [guide](08-formatting.md#templates-and-links) · [sample](#sample/full-grid) |
 | Colour rules | Colour a cell from its value - a negative balance in red, waiting orders on orange - from 14 colours or any colour picked; or from other fields of the row, or a formula. No code | [guide](08-formatting.md#colour-rules) · [sample](#sample/full-grid) |
+| Data bars | A bar in a number cell as long as the value's place among the column's numbers, negative values left of 0, as Excel's | [guide](08-formatting.md#data-bars) · [sample](#sample/full-grid) |
+| Colour scales | A heat map: the cell's background from red to yellow to green - two or three colours - by the value | [guide](08-formatting.md#colour-scales) · [sample](#sample/full-grid) |
+| Icon sets | Arrows, traffic lights, flags or ✓ ! ✕ before the value by thresholds, said in words to a screen reader | [guide](08-formatting.md#icon-sets) · [sample](#sample/full-grid) |
 | Calculated columns | A column computed from other fields with a safe formula - `{price} * {qty}`, `IF(...)`, `DAYS({due}, TODAY())` - sorted, filtered, grouped and exported as any column, never saved | [guide](23-calculated-columns.md) · [sample](#sample/calculated-columns) |
 | Labels and placeholders | Rename a column; show a hint in an empty cell or an empty header filter | [guide](08-formatting.md#label-placeholder-blank--0-checkboxes-multiline-read-only) · [sample](#sample/required-placeholders) |
 | Checkboxes | Yes/no fields are checkboxes; so can a column of `1` / `0` or `Y` / `N` be | [guide](08-formatting.md#checkboxes) · [sample](#sample/full-grid) |
@@ -157,6 +160,7 @@ On a Mac, Ctrl is Cmd and Alt is Option.
 | Feature | What it does | See |
 | --- | --- | --- |
 | Excel | An .xlsx file of real numbers and dates, the header row frozen with Excel's filter, the columns as wide as in the grid | [guide](15-export.md#excel) · [sample](#sample/export) |
+| Colours in Excel | The colour rules as the cells' colours, the data bars, colour scales and icon sets as Excel's own conditional formatting, the number formats too | [guide](15-export.md#colours) · [sample](#sample/full-grid) |
 | CSV | Text for any program: the values as shown or as they are, a comma, a semicolon or a tab between them | [guide](15-export.md#csv) · [sample](#sample/export) |
 | Safe for spreadsheets | Text starting with `=`, `+`, `-` or `@` is written so a spreadsheet does not run it as a formula | [guide](15-export.md#formulas-csv-injection) · [sample](#sample/export) |
 | From the menu | Right click a cell: Export › Excel, all rows or the selected rows | [guide](15-export.md#from-the-row-menu) · [sample](#sample/export) |

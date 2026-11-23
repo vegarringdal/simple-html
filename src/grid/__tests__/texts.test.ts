@@ -357,6 +357,33 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
     // Read only: its badge
     toggleText('columnSettings.readonly');
     check();
+    // a data bar, a colour scale and icons: their parts, the five cells of the preview - with the icons'
+    // words for a screen reader - and the badges. Then each problem of their numbers, the other choices
+    toggleText('columnSettings.bars.bar');
+    toggleText('columnSettings.bars.scale');
+    toggleText('columnSettings.bars.icons');
+    check();
+    type('bars-bar-min', '«x»');
+    check();
+    type('bars-bar-min', '500');
+    type('bars-bar-max', '1');
+    type('bars-scale-max', '50');
+    type('bars-scale-mid', '1000');
+    type('bars-icons-low', '80');
+    type('bars-icons-high', '20');
+    check();
+    type('bars-icons-high', '200');
+    check();
+    for (const part of ['bars-unit-number', 'bars-position-after', 'bars-set-traffic']) {
+        const radio = input(part);
+        radio.checked = true;
+        radio.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    toggleText('columnSettings.bars.reverse');
+    check();
+    toggleText('columnSettings.bars.bar');
+    toggleText('columnSettings.bars.scale');
+    toggleText('columnSettings.bars.icons');
     // shown as checkboxes: the two values, their hint, each problem of them
     toggle(0);
     check();
@@ -509,6 +536,10 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
     datasource.currentEntity = null;
     datasource.filter(where('age', 'GREATER_THAN', 100_000));
     gridInterface.openColumnSettings('name');
+    check();
+    // a data bar of a column without numbers in the rows: nothing to draw
+    option('«Age»').click();
+    toggleText('columnSettings.bars.bar');
     check();
     datasource.filter(null);
     (dialog().querySelector('.filter-editor-close') as HTMLElement).click();

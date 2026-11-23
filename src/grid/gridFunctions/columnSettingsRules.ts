@@ -202,6 +202,81 @@ function valueFor(rule: { value?: ColorRule['value'] }, operator: FilterOperator
 }
 
 /**
+ * What a row of swatches picks, see colorSwatches
+ */
+export interface SwatchOptions {
+    /** the name of its radio buttons, an id of the dialog's */
+    name: string;
+    /** the id of its label */
+    labelId: string;
+    /** the id of its colour picker */
+    customId: string;
+    /** its label: Text colour, Background, Colour */
+    label: string;
+    /** `'text'`: the swatches are the palette's text colours, `'bg'` its backgrounds */
+    look: 'text' | 'bg';
+    /** true: None first, no colour */
+    none: boolean;
+    /** the colour picked, undefined for none */
+    picked: RuleColor | undefined;
+    /** writes the colour picked: undefined for None */
+    set: (color: RuleColor | undefined) => void;
+}
+
+/**
+ * A row of swatches, its label before it: a radio group of None (when it has one) and the palette, each a
+ * square of its colour named by it - one stop of Tab, the arrows pick (the browser's radio buttons) - and
+ * after it the colour picker of a custom colour (`<input type="color">`, its own stop of Tab): picked, the
+ * swatches have none checked. For a rule's text colour and background, and the colours of a data bar and
+ * a colour scale (columnSettingsBars.ts)
+ */
+export function colorSwatches(ctx: Grid, options: SwatchOptions): TemplateResult {
+    const { name, labelId, customId, label, look, none, picked, set } = options;
+    const text = (id: TextId) => gridText(ctx, id);
+    const swatch = (color: PaletteColor | undefined) => {
+        const swatchLabel = text(color ? COLOR_TEXTS[color] : 'columnSettings.rules.none');
+        const swatchLook = color ? `column-settings-swatch-${look}-${color}` : 'column-settings-swatch-none';
+        return html`<input
+            type="radio"
+            class=${`column-settings-swatch ${swatchLook}`}
+            name=${name}
+            aria-label=${swatchLabel}
+            data-tooltip=${swatchLabel}
+            data-color=${color ?? ''}
+            .checked=${live(picked === color)}
+            @change=${() => set(color)}
+        />`;
+    };
+    const custom = isHexColor(picked);
+    const customLabel = text('columnSettings.rules.custom');
+    return html`<div class="column-settings-rule-style">
+        <span class="column-settings-rule-style-label" id=${labelId}>${label}</span>
+        <div class="column-settings-swatches">
+            <span class="column-settings-swatch-group" role="radiogroup" aria-labelledby=${labelId}>
+                ${none ? swatch(undefined) : nothing} ${PALETTE_COLORS.map((color) => swatch(color))}
+            </span>
+            <span class="column-settings-swatch-custom-box" data-tooltip=${customLabel}>
+                <span aria-hidden="true">+</span>
+                <input
+                    type="color"
+                    id=${customId}
+                    class=${`column-settings-swatch-custom${custom ? ' column-settings-swatch-custom-picked' : ''}`}
+                    aria-label=${`${customLabel}${custom ? `: ${picked}` : ''}`}
+                    .value=${live(custom ? picked.toLowerCase() : '#000000')}
+                    @input=${(event: Event) => {
+                        const value = (event.target as HTMLInputElement).value;
+                        // the browser gives #rrggbb; anything else is not set
+                        if (isHexColor(value)) {
+                            set(value);
+                        }
+                    }}
+                />
+            </span>
+        </div>
+    </div>`;
+}
+
+/**
  * The section: its heading and hint, the rules, Add rule
  */
 export function colorRuleSettings(ctx: Grid, settings: RuleSettings): TemplateResult {
@@ -352,69 +427,25 @@ export function colorRuleSettings(ctx: Grid, settings: RuleSettings): TemplateRe
             ${glyph}
         </button>`;
 
-    /**
-     * A row of swatches: a radio group of None and the palette, each a square of its colour named by it -
-     * one stop of Tab, the arrows pick (the browser's radio buttons) - and after it the colour picker of a
-     * custom colour (`<input type="color">`, its own stop of Tab): picked, the swatches have none checked
-     * @param kind `color` the text colour, `background`
-     */
-    const swatches = (index: number, kind: 'color' | 'background', picked: RuleColor | undefined) => {
-        const labelId = idOf(`rule-${index}-${kind}-label`);
-        const name = idOf(`rule-${index}-${kind}`);
-        const set = (color: RuleColor | undefined) =>
-            change(index, (rule) => {
-                if (color) {
-                    rule[kind] = color;
-                } else {
-                    delete rule[kind];
-                }
-            });
-        const swatch = (color: PaletteColor | undefined) => {
-            const label = text(color ? COLOR_TEXTS[color] : 'columnSettings.rules.none');
-            const look = color
-                ? `column-settings-swatch-${kind === 'color' ? 'text' : 'bg'}-${color}`
-                : 'column-settings-swatch-none';
-            return html`<input
-                type="radio"
-                class=${`column-settings-swatch ${look}`}
-                name=${name}
-                aria-label=${label}
-                data-tooltip=${label}
-                data-color=${color ?? ''}
-                .checked=${live(picked === color)}
-                @change=${() => set(color)}
-            />`;
-        };
-        const custom = isHexColor(picked);
-        const customLabel = text('columnSettings.rules.custom');
-        return html`<div class="column-settings-rule-style">
-            <span class="column-settings-rule-style-label" id=${labelId}
-                >${text(kind === 'color' ? 'columnSettings.rules.textColor' : 'columnSettings.rules.background')}</span
-            >
-            <div class="column-settings-swatches">
-                <span class="column-settings-swatch-group" role="radiogroup" aria-labelledby=${labelId}>
-                    ${swatch(undefined)} ${PALETTE_COLORS.map((color) => swatch(color))}
-                </span>
-                <span class="column-settings-swatch-custom-box" data-tooltip=${customLabel}>
-                    <span aria-hidden="true">+</span>
-                    <input
-                        type="color"
-                        id=${idOf(`rule-${index}-${kind}-custom`)}
-                        class=${`column-settings-swatch-custom${custom ? ' column-settings-swatch-custom-picked' : ''}`}
-                        aria-label=${`${customLabel}${custom ? `: ${picked}` : ''}`}
-                        .value=${live(custom ? picked.toLowerCase() : '#000000')}
-                        @input=${(event: Event) => {
-                            const value = (event.target as HTMLInputElement).value;
-                            // the browser gives #rrggbb; anything else is not set
-                            if (isHexColor(value)) {
-                                set(value);
-                            }
-                        }}
-                    />
-                </span>
-            </div>
-        </div>`;
-    };
+    /** the swatches of a rule's text colour or background, see colorSwatches */
+    const swatches = (index: number, kind: 'color' | 'background', picked: RuleColor | undefined) =>
+        colorSwatches(ctx, {
+            name: idOf(`rule-${index}-${kind}`),
+            labelId: idOf(`rule-${index}-${kind}-label`),
+            customId: idOf(`rule-${index}-${kind}-custom`),
+            label: text(kind === 'color' ? 'columnSettings.rules.textColor' : 'columnSettings.rules.background'),
+            look: kind === 'color' ? 'text' : 'bg',
+            none: true,
+            picked,
+            set: (color) =>
+                change(index, (rule) => {
+                    if (color) {
+                        rule[kind] = color;
+                    } else {
+                        delete rule[kind];
+                    }
+                })
+        });
 
     /**
      * The value of a condition: an input of the text as it is typed in the header filter - From and To for

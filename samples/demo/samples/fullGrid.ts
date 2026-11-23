@@ -110,12 +110,22 @@ function config(readonly: boolean): GridConfig {
                 format: { rules: [{ operator: 'EQUAL', value: 'waiting', background: 'orange' }] }
             },
             age: { aggregate: 'avg' },
-            balance: { aggregate: ['sum', 'avg'], format: { rules: [{ operator: 'LESS_THAN', value: '0', color: 'red' }] } },
+            // a data bar too: the negative balances to the left of 0
+            balance: {
+                aggregate: ['sum', 'avg'],
+                format: { rules: [{ operator: 'LESS_THAN', value: '0', color: 'red' }], bar: { color: 'blue' } }
+            },
             // display formats: what the cells show, the value stays - right click a column label, Format ›
             credit: { format: { number: { decimals: 2, thousands: ' ', decimal: ',' } } },
             dueDate: { format: { date: 'weekIso' } },
             updated: { format: { date: 'norwegianTime' } },
             total: { readonly: true, aggregate: 'sum' },
+            // a colour scale and icons, as the bar of Balance: by the value's place among the column's numbers
+            // (the rows the filter lets through) - the grid config's Data bars, scales, icons change them
+            ...Object.fromEntries(
+                MONTHS.map((month) => [month, { format: { scale: { minColor: 'red', midColor: 'yellow', maxColor: 'green' } } }])
+            ),
+            kpi1: { format: { icons: { set: 'arrows' } } },
             notes: { label: 'Notes' }
         },
         layout: {
@@ -218,7 +228,7 @@ export const fullGrid: DemoSample = {
     group: 'Getting started',
     fullPage: true,
     description:
-        "50 columns of every kind - text, numbers (money edited as the plain number), dates, a date and time, checkboxes, a lookup, a badge, multiline notes, monthly sales with aggregates - pinned left and right. Credit, Due Date and Updated have display formats (header menu, Format ›). City shows a template, Fruit, Email and Phone are links, Newsletter is 1 / 0 as text, Balance and Status have colour rules: change them with the gear at the footer's right end, the grid config - a label, a placeholder, blank / 0, checkboxes, colours; its tab Detail form shows the current row. Save formats keeps them. Add 5 000 rows, edit, group, filter, sort, select ranges, export to Excel, Ctrl+F, Ctrl+D, Ctrl+Z, right click for menus.",
+        "50 columns of every kind - text, numbers (money edited as the plain number), dates, a date and time, checkboxes, a lookup, a badge, multiline notes, monthly sales as a heat map - pinned left and right. Credit, Due Date and Updated have display formats (header menu, Format ›). City shows a template, Fruit, Email and Phone are links, Newsletter is 1 / 0 as text, Balance and Status have colours: change them with the gear at the footer's right end, the grid config - a label, a placeholder, blank / 0, checkboxes, colours; its tab Detail form shows the current row. Save formats keeps them. Add 5 000 rows, edit, group, filter, sort, select ranges, export to Excel, Ctrl+F, Ctrl+D, Ctrl+Z, right click for menus.",
     run(stage) {
         const style = document.createElement('style');
         style.textContent = STYLE;

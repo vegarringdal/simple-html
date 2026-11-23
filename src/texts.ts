@@ -415,6 +415,47 @@ const DEFAULTS = {
     'columnSettings.rules.problem.value': 'Write the value to compare with',
     'columnSettings.rules.problem.style': 'Pick a text colour, a background or bold',
     'columnSettings.rules.unread': 'The column does not read {value}: the rule colours no cell',
+    // the data bar, colour scale and icon set of a number column (ColumnFormat.bar, scale, icons): the
+    // section under the colour rules. The colours of the swatches are columnSettings.rules.color.*; {value}
+    // a text typed, {min} and {max} the smallest and the largest number of the rows as the cells show them
+    'columnSettings.bars': 'Data bars, scales, icons',
+    'columnSettings.bars.hint':
+        "By the value's place among the numbers of the rows the filter lets through. A colour rule's background wins over a scale",
+    'columnSettings.bars.bar': 'Data bar',
+    'columnSettings.bars.color': 'Colour',
+    'columnSettings.bars.min': 'Min',
+    'columnSettings.bars.mid': 'Midpoint',
+    'columnSettings.bars.max': 'Max',
+    'columnSettings.bars.automatic': 'Automatic',
+    'columnSettings.bars.scale': 'Colour scale',
+    'columnSettings.bars.minColor': 'Lowest',
+    'columnSettings.bars.midColor': 'Middle',
+    'columnSettings.bars.maxColor': 'Highest',
+    'columnSettings.bars.icons': 'Icons',
+    'columnSettings.bars.set': 'Icon set',
+    'columnSettings.bars.set.arrows': 'Arrows',
+    'columnSettings.bars.set.traffic': 'Traffic lights',
+    'columnSettings.bars.set.flags': 'Flags',
+    'columnSettings.bars.set.symbols': 'Symbols',
+    'columnSettings.bars.thresholdMiddle': 'Middle from',
+    'columnSettings.bars.thresholdHigh': 'High from',
+    'columnSettings.bars.unit': 'Thresholds',
+    'columnSettings.bars.unit.percent': '% of the range',
+    'columnSettings.bars.unit.number': 'Values',
+    'columnSettings.bars.position': 'Icon',
+    'columnSettings.bars.position.before': 'Before the value',
+    'columnSettings.bars.position.after': 'After the value',
+    'columnSettings.bars.reverse': 'Reverse: the low values get the high icon',
+    'columnSettings.bars.samples': 'Lowest to highest of the rows, {min} to {max}',
+    'columnSettings.bars.noNumbers': 'No numbers in the rows: nothing to draw yet',
+    'columnSettings.bars.problem.notNumber': '{value} is no number',
+    'columnSettings.bars.problem.minMax': 'The min is not below the max',
+    'columnSettings.bars.problem.mid': 'The midpoint is not between the min and the max',
+    'columnSettings.bars.problem.thresholds': 'The first threshold is above the second',
+    'columnSettings.bars.problem.percent': 'In % of the range the thresholds are 0 to 100',
+    'columnSettings.badge.bar': 'Bar',
+    'columnSettings.badge.scale': 'Scale',
+    'columnSettings.badge.icons': 'Icons',
     // a calculated column (GridState.calculatedColumns): its settings at the top of the column's, the
     // button under the list of the columns. {number} the column's number, 1 the first; {type} the name of
     // a type (columnSettings.type.*), {value} the value in the row of the preview
@@ -761,6 +802,10 @@ const DEFAULTS = {
     // there is more, for a screen reader, the last line of its tooltip when it has more lines than it
     // shows (GridConfig.multilineTooltipLines), and the hint of the editor over the cell
     'cell.multiline.more': 'More lines, Enter shows all',
+    // the icon of an icon set (ColumnFormat.icons) for a screen reader: the level of the value, after it
+    'cell.icon.high': 'High',
+    'cell.icon.middle': 'Middle',
+    'cell.icon.low': 'Low',
     'cell.multiline.moreLines': '… {count} more lines',
     'cell.multiline.hint': 'Ctrl+Enter to save, Esc to cancel',
     'cell.multiline.hint.mac': '⌘Enter to save, Esc to cancel',

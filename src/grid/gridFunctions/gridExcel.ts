@@ -3,17 +3,24 @@ import { DateFormatterDDMMYYYY } from '../../datasource/DateFormatterDDMMYYYY';
 import { DateFormatterDDMMYYYYTHHMMSS } from '../../datasource/DateFormatterDDMMYYYYTHHMMSS';
 import type { Entity } from '../../datasource/entity';
 import type { Formatter } from '../../datasource/formatter';
+import { type ColorRule, colorRuleOf, type RuleColor } from '../colorRules';
 import { type DateFormat, hasValueFormat, type NumberFormat } from '../columnFormat';
+import { DEFAULT_BAR_COLOR, DEFAULT_THRESHOLDS, type IconSetName } from '../dataBars';
 import type { GridInterface } from '../gridInterface';
+import { isHexColor, LIGHT_PALETTE, lightTint, mixColors, readableOn } from '../ruleColors';
 import {
     assertSheetName,
     buildXlsx,
     type ExcelOptions,
     excelSerial,
     XLSX_MIME,
-    type XlsxCell,
+    type XlsxConditionalFormat,
     type XlsxDateOrder,
-    type XlsxSheet
+    type XlsxIconSet,
+    type XlsxSheet,
+    type XlsxStyle,
+    type XlsxThreshold,
+    type XlsxValue
 } from '../xlsx';
 import { rangeBlock } from './cellRanges';
 import { numberOverrideOf } from './cellText';
@@ -29,6 +36,11 @@ import { cellText, downloadBlob, show } from './gridCsv';
  *
  * The rows and fields are picked as for the CSV export (gridCsv.ts), the values are not the texts
  * the cells show but the values themselves, typed: see {@link excelCell}.
+ *
+ * The colours (`colors`, on by default), in the default theme's light look (ruleColors.ts,
+ * LIGHT_PALETTE): a colour rule's text colour, background and bold as the cell's own style (excelRuleStyle -
+ * a rule can be a formula over the row, Excel could not test it); a data bar, a colour scale and an icon set
+ * as Excel's own conditional formatting of the column (valueFillFormats), drawn by Excel from the values.
  */
 
 /**
@@ -39,7 +51,7 @@ type ExcelMethod = 'getExcel' | 'downloadExcel';
 /**
  * every key of ExcelOptions, for the check of an options object from plain JavaScript
  */
-const OPTION_KEYS: readonly (keyof ExcelOptions)[] = ['rows', 'fields', 'sheetName'];
+const OPTION_KEYS: readonly (keyof ExcelOptions)[] = ['rows', 'fields', 'sheetName', 'colors'];
 
 /**
  * The .xlsx file of the grid's rows as a Blob, see {@link ExcelOptions}. The rows and their values
@@ -75,7 +87,7 @@ export async function downloadGridExcel(gridInterface: GridInterface<any>, filen
  */
 export function gridSheet(gridInterface: GridInterface<any>, method: ExcelMethod, options: ExcelOptions): XlsxSheet {
     assertExcelOptions(method, options);
-    const { rows = 'all', sheetName = 'Sheet1' } = options;
+    const { rows = 'all', sheetName = 'Sheet1', colors = true } = options;
     const datasource = gridInterface.getDatasource();
 
     // 'range': the cells of the range made last, as the CSV export takes them; no range is no fields
@@ -94,7 +106,148 @@ export function gridSheet(gridInterface: GridInterface<any>, method: ExcelMethod
         rows === 'range' ? block.rows : rows === 'selected' ? datasource.getSelectedRows() : datasource.getDataRows();
 
     const cellOf = fields.map((field) => excelCell(gridInterface, field));
-    return { name: sheetName, columns, rows: dataRows.map((row) => cellOf.map((cell) => cell(row))) };
+    // the colour rule of each cell of a column with rules, once: its style, and whether a scale is on it
+    const configColumns = gridInterface.__getGridConfig().columns;
+    const rulesOf = fields.map((field) =>
+        colors && configColumns[field]?.format?.rules?.length
+            ? dataRows.map((row) => colorRuleOf(gridInterface, field, row))
+            : null
+    );
+    const sheetRows = dataRows.map((row, r) =>
+        cellOf.map((cell, i) => {
+            const value = cell(row);
+            const style = excelRuleStyle(rulesOf[i]?.[r] ?? null);
+            return style ? { value, style } : value;
+        })
+    );
+    const conditionalFormats = colors ? fields.flatMap((field, i) => valueFillFormats(gridInterface, field, i, rulesOf[i])) : [];
+    return { name: sheetName, columns, rows: sheetRows, conditionalFormats };
+}
+
+/**
+ * A colour of the grid as Excel writes it: a colour of the palette in the default theme's light look -
+ * the text colour or the background - a custom colour as it is
+ */
+function excelColor(color: RuleColor, part: 'color' | 'background'): string {
+    return isHexColor(color) ? color.toLowerCase() : LIGHT_PALETTE[color][part];
+}
+
+/**
+ * The style of a cell from its colour rule, as the grid shows it in light: the rule's text colour - black
+ * or white on a custom background without one, as the grid makes it - its background and bold. null for
+ * no rule
+ */
+export function excelRuleStyle(rule: ColorRule | null): XlsxStyle | null {
+    if (!rule) {
+        return null;
+    }
+    const style: XlsxStyle = {};
+    if (rule.background) {
+        style.fill = excelColor(rule.background, 'background');
+    }
+    if (rule.color) {
+        style.color = excelColor(rule.color, 'color');
+    } else if (isHexColor(rule.background)) {
+        style.color = readableOn(rule.background);
+    }
+    if (rule.bold) {
+        style.bold = true;
+    }
+    return style;
+}
+
+/** the icon sets of Excel of the grid's: the same icons, Excel's symbols without a circle */
+const EXCEL_ICON_SETS: Readonly<Record<IconSetName, XlsxIconSet>> = {
+    arrows: '3Arrows',
+    traffic: '3TrafficLights1',
+    flags: '3Flags',
+    symbols: '3Symbols2'
+};
+
+/**
+ * The colour of a colour scale in Excel: a colour of the palette its background in light, a custom colour
+ * its tint in light - what the grid shows, Excel's black text reads on it
+ */
+function excelScaleColor(color: RuleColor): string {
+    return isHexColor(color) ? lightTint(color) : LIGHT_PALETTE[color].background;
+}
+
+/**
+ * The colour of a data bar in Excel, which draws it as a gradient to white: a colour of the palette
+ * halfway between its text colour and its background in light - a stronger colour than the grid's tint,
+ * as Excel's own bars - a custom colour as it is
+ */
+function excelBarColor(color: RuleColor): string {
+    return isHexColor(color) ? color.toLowerCase() : mixColors(LIGHT_PALETTE[color].color, LIGHT_PALETTE[color].background, 0.5);
+}
+
+/** a value of the format as Excel's threshold: the number, else Excel's own */
+const fixedOr = (value: number | undefined, otherwise: XlsxThreshold): XlsxThreshold =>
+    value === undefined ? otherwise : { type: 'number', value };
+
+/**
+ * Excel's own conditional formatting of a number column's data bar, colour scale and icon set
+ * (`ColumnFormat.bar`, `scale`, `icons`), as the grid draws them - Excel computes them from the column's
+ * values:
+ * - the bar from `min` to `max`, left out the column's smallest and largest value with 0
+ *   (`MIN(0,MIN(...))`). Excel's bar starts at the low end: a negative value is not drawn left of an axis
+ * - the scale's colours at `min`, `mid` and `max`, left out the smallest, halfway and the largest. Not on
+ *   the cells whose colour rule has a background: it wins, as in the grid
+ * - the icons from the thresholds, percent of the range or numbers, reversed with `reverse`
+ * @param rules the colour rule of each row, null for a column without rules
+ */
+function valueFillFormats(
+    gridInterface: GridInterface<any>,
+    field: string,
+    column: number,
+    rules: (ColorRule | null)[] | null
+): XlsxConditionalFormat[] {
+    const format = gridInterface.__getGridConfig().columns[field]?.format;
+    if (
+        gridInterface.getDatasource().getField(field).type !== 'number' ||
+        gridInterface.__getLookupColumn(field) ||
+        format?.checkbox
+    ) {
+        return [];
+    }
+    const formats: XlsxConditionalFormat[] = [];
+    const { bar, scale, icons } = format ?? {};
+    if (bar) {
+        formats.push({
+            kind: 'dataBar',
+            column,
+            min: fixedOr(bar.min, { type: 'lowestOrZero' }),
+            max: fixedOr(bar.max, { type: 'highestOrZero' }),
+            color: excelBarColor(bar.color ?? DEFAULT_BAR_COLOR)
+        });
+    }
+    if (scale) {
+        const stops = [{ at: fixedOr(scale.min, { type: 'lowest' }), color: excelScaleColor(scale.minColor) }];
+        if (scale.midColor) {
+            stops.push({ at: fixedOr(scale.mid, { type: 'middle' }), color: excelScaleColor(scale.midColor) });
+        }
+        stops.push({ at: fixedOr(scale.max, { type: 'highest' }), color: excelScaleColor(scale.maxColor) });
+        const each: XlsxConditionalFormat = { kind: 'colorScale', column, stops };
+        if (rules?.some((rule) => rule?.background)) {
+            each.rows = rules.flatMap((rule, row) => (rule?.background ? [] : [row]));
+        }
+        formats.push(each);
+    }
+    if (icons) {
+        const [low, high] = icons.thresholds ?? DEFAULT_THRESHOLDS;
+        const type = icons.unit === 'number' ? 'number' : 'percent';
+        formats.push({
+            kind: 'iconSet',
+            column,
+            set: EXCEL_ICON_SETS[icons.set],
+            thresholds: [
+                { type, value: low },
+                { type, value: high }
+            ],
+            reverse: icons.reverse === true
+        });
+    }
+    return formats;
 }
 
 /**
@@ -119,7 +272,7 @@ export function gridSheet(gridInterface: GridInterface<any>, method: ExcelMethod
  * a blank, `ZERO_TO_BLANK` no cell for 0. A lookup column (`ColumnConfig.editor`) is the label its cell
  * shows, text - also for a number field.
  */
-function excelCell(gridInterface: GridInterface<any>, field: string): (row: Entity) => XlsxCell {
+function excelCell(gridInterface: GridInterface<any>, field: string): (row: Entity) => XlsxValue {
     // the text the cell shows, for a value that is not of the cell's type
     const shownText = cellText(gridInterface, field, true);
     if (gridInterface.__getLookupColumn(field)) {
@@ -140,7 +293,7 @@ function excelCell(gridInterface: GridInterface<any>, field: string): (row: Enti
     const format = column?.format && hasValueFormat(column.format) ? column.format : undefined;
     const numberFormat = format?.number ? excelNumberFormat(format.number) : undefined;
     const dateFormat = format?.date ? excelDateFormat(format.date) : undefined;
-    const number = (value: number): XlsxCell => (numberFormat ? { number: value, format: numberFormat } : value);
+    const number = (value: number): XlsxValue => (numberFormat ? { number: value, format: numberFormat } : value);
 
     return (row) => {
         const type = dynamic ? getCellType({ gridInterface }, field, row) : fieldType;
@@ -257,7 +410,7 @@ function assertExcelOptions(method: ExcelMethod, options: unknown): asserts opti
             throw new TypeError(`${method}(): unknown option '${key}'${why}, the options are ${OPTION_KEYS.join(', ')}`);
         }
     }
-    const { rows, fields, sheetName } = options as ExcelOptions;
+    const { rows, fields, sheetName, colors } = options as ExcelOptions;
     if (rows !== undefined && rows !== 'all' && rows !== 'selected' && rows !== 'range') {
         throw new TypeError(`${method}(): rows is 'all', 'selected' or 'range', got ${show(rows)}`);
     }
@@ -266,5 +419,8 @@ function assertExcelOptions(method: ExcelMethod, options: unknown): asserts opti
     }
     if (sheetName !== undefined) {
         assertSheetName(sheetName, `${method}()`);
+    }
+    if (colors !== undefined && typeof colors !== 'boolean') {
+        throw new TypeError(`${method}(): colors is true or false, got ${show(colors)}`);
     }
 }

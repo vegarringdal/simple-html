@@ -111,6 +111,13 @@
     --simple-html-grid-palette-pink-bg-color: light-dark(#fbcfe8, #831843);
     --simple-html-grid-palette-brown-bg-color: light-dark(#e8d5c4, #4a2c1a);
     --simple-html-grid-palette-grey-bg-color: light-dark(#d1d5db, #2b3544);
+    /* the icons of an icon set (ColumnFormat.icons): green, amber and red - the high, the middle and the low
+       icon. Marks, at least 3:1 to the rows, the selected rows - under a range's tint too - and every
+       background of the palette. Tailwind's green-800, amber-800 and red-700 in light; green and amber 300
+       and red-200 in dark - red-300 is under 3:1 to a range's tint on the lighter dark row */
+    --simple-html-grid-icon-green-color: light-dark(#166534, #86efac);
+    --simple-html-grid-icon-amber-color: light-dark(#92400e, #fcd34d);
+    --simple-html-grid-icon-red-color: light-dark(#b91c1c, #fecaca);
     /* the totals row under the rows (GridConfig.totalsRow): its background and its text */
     --simple-html-grid-totals-bg-color: light-dark(#e8edf3, #2a3441);
     --simple-html-grid-totals-font-color: light-dark(#1f2328, #f9fafb);
@@ -830,8 +837,11 @@
  * that are an edge of the range (the -top, -bottom, -left and -right classes). The line is a layer
  * over the cell the pointer goes through, under the input (1000): the input is transparent
  */
+/* over a data bar (dataBars.ts): its image under the tint */
 .simple-html-grid .simple-html-grid-col-cell.simple-html-cell-in-range {
-    background-image: linear-gradient(var(--simple-html-grid-range-bg-color), var(--simple-html-grid-range-bg-color));
+    background-image:
+        linear-gradient(var(--simple-html-grid-range-bg-color), var(--simple-html-grid-range-bg-color)),
+        var(--simple-html-grid-cell-bar-image, none);
 }
 
 .simple-html-grid .simple-html-grid-col-cell.simple-html-cell-in-range::after {
@@ -3725,6 +3735,87 @@
     flex: 1 1 200px;
 }
 
+/**
+ * The data bar, colour scale and icons of a number column (columnSettingsBars.ts): a checkbox each, the
+ * settings of one that is on in a box of the dialog's lines - its swatches as a rule's, its numbers on a
+ * line (they wrap when the dialog is narrow). Under them five cells of the column's range as the cells
+ * will be: as wide as a narrow column, the number at the right, the icon in its room
+ */
+.simple-html-grid.filter-editor-content .column-settings-bars {
+    gap: 6px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-bars-part {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px;
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-bars-numbers {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 12px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-bars-number {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-bars-number > .filter-editor-value {
+    flex: none;
+    width: 80px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-bars-choice {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 10px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-bars-set-icons {
+    display: inline-flex;
+    gap: 2px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-bars-samples {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-bars-sample-row {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-bars-sample {
+    position: relative;
+    box-sizing: border-box;
+    width: 84px;
+    padding: 2px 4px;
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+    overflow: hidden;
+    white-space: nowrap;
+    text-align: right;
+}
+
+/* a preview cell with an icon - the row's, the five of the section: the icon's room, as in a cell */
+.simple-html-grid.filter-editor-content .column-settings-preview-icon-before {
+    position: relative;
+    padding-left: 19px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-preview-icon-after {
+    position: relative;
+    padding-right: 19px;
+}
+
 /* the list of the columns with Add calculated column under it */
 .simple-html-grid.filter-editor-content .column-settings-columns {
     flex: 1 1 200px;
@@ -4570,6 +4661,97 @@
 
 .simple-html-grid .simple-html-grid-cell-bg-custom:not(.simple-html-cell-error, .simple-html-cell-find-match) {
     background-color: var(--simple-html-grid-rule-bg);
+}
+
+/**
+ * The data bar and the colour scale of a number column (ColumnFormat.bar, scale - dataBars.ts), on the cell
+ * element (showCellColor.ts) and the cells of the dialog's preview. The colours are custom properties of
+ * the cell: a palette background's variable, or a custom colour's tints as light-dark() - built from a
+ * palette name or a checked #rrggbb only. The grid's text reads on every one of them.
+ *
+ * The bar is a background image of the cell from --simple-html-grid-bar-start to -end, over the cell's
+ * background (a rule's) and under a range's tint: the image is the custom property
+ * --simple-html-grid-cell-bar-image, the range's rule lays its tint over it. No rounded corners. The
+ * scale is the cell's background, a mix of two colours (color-mix in srgb), a rule's background wins over
+ * it (the grid gives such a cell none). An error and a match of Find show as without them, as without a
+ * rule's colours
+ */
+.simple-html-grid .simple-html-grid-cell-bar:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    --simple-html-grid-cell-bar-image: linear-gradient(
+        to right,
+        transparent var(--simple-html-grid-bar-start),
+        var(--simple-html-grid-bar-color) var(--simple-html-grid-bar-start),
+        var(--simple-html-grid-bar-color) var(--simple-html-grid-bar-end),
+        transparent var(--simple-html-grid-bar-end)
+    );
+}
+
+.simple-html-grid .simple-html-grid-col-cell,
+.simple-html-grid .column-settings-preview-cell,
+.simple-html-grid .column-settings-bars-sample {
+    background-image: var(--simple-html-grid-cell-bar-image, none);
+}
+
+.simple-html-grid .simple-html-grid-cell-scale:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: color-mix(
+        in srgb,
+        var(--simple-html-grid-scale-to) var(--simple-html-grid-scale-at),
+        var(--simple-html-grid-scale-from)
+    );
+}
+
+/**
+ * The icon of an icon set (ColumnFormat.icons, cellIcon.ts): 12px at the left of the cell, or its right,
+ * in the middle of its line - over the input (1000) as the marker of a multiline cell, the pointer goes
+ * through it. The input's text stops before it. In the theme's icon colours
+ */
+.simple-html-grid .simple-html-grid-cell-icon {
+    position: absolute;
+    top: calc(50% - 6px);
+    width: 12px;
+    height: 12px;
+    z-index: 1001;
+    pointer-events: none;
+}
+
+.simple-html-grid .simple-html-grid-cell-icon-before {
+    left: 4px;
+}
+
+.simple-html-grid .simple-html-grid-cell-icon-after {
+    right: 4px;
+}
+
+/* the focus button (30px) is at the right edge while the cell has the focus: the icon left of it */
+.simple-html-grid .simple-html-grid-col-cell:has(.simple-html-grid-focus-button) .simple-html-grid-cell-icon-after {
+    right: 34px;
+}
+
+.simple-html-grid .simple-html-grid-cell-icon-svg {
+    display: block;
+    width: 12px;
+    height: 12px;
+    fill: currentColor;
+}
+
+.simple-html-grid .simple-html-grid-cell-icon-green {
+    color: var(--simple-html-grid-icon-green-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-icon-amber {
+    color: var(--simple-html-grid-icon-amber-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-icon-red {
+    color: var(--simple-html-grid-icon-red-color);
+}
+
+.simple-html-grid .simple-html-grid-col-cell input.simple-html-grid-cell-with-icon-before {
+    padding-left: 19px;
+}
+
+.simple-html-grid .simple-html-grid-col-cell input.simple-html-grid-cell-with-icon-after {
+    padding-right: 19px;
 }
 
 /* the text of a cell takes the cell's colour: its input, the lines under it, a custom cell's host, a link -

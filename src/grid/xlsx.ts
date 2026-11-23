@@ -14,8 +14,8 @@ import { type ZipOptions, zip } from './zip';
  * | `_rels/.rels` | the package's relationship to the workbook |
  * | `xl/workbook.xml` | the sheet, and the `_xlnm._FilterDatabase` name of its autofilter |
  * | `xl/_rels/workbook.xml.rels` | the workbook's relationships to the sheet and the styles |
- * | `xl/worksheets/sheet1.xml` | the cells, column widths, the frozen header row, the autofilter |
- * | `xl/styles.xml` | the fonts and number formats the cells use |
+ * | `xl/worksheets/sheet1.xml` | the cells, column widths, the frozen header row, the autofilter, the conditional formatting |
+ * | `xl/styles.xml` | the fonts, fills and number formats the cells use |
  *
  * `docProps/` (title, author ...) is optional in a package and left out.
  *
@@ -26,6 +26,12 @@ import { type ZipOptions, zip } from './zip';
  * Excel serial date with a date format, a boolean a boolean cell, text an inline string. Text is
  * never a formula in this format (a formula is an `<f>` element, which is never written), so a
  * value a user typed, `=HYPERLINK(...)`, is shown as the text it is.
+ *
+ * A cell can have a style (XlsxStyled): a text colour, a fill and bold - the colour rules of the grid,
+ * static. And a column Excel's own conditional formatting (XlsxConditionalFormat): a data bar, a colour
+ * scale or an icon set, which Excel draws from the values - its range is the column's numbers, computed
+ * by Excel (`<cfvo type="min">`, or a formula over the column), so it follows an edit in Excel. Its
+ * thresholds are only numbers and formulas of cell references this file makes, never text of the cells.
  */
 
 /**
@@ -37,6 +43,7 @@ import { type ZipOptions, zip } from './zip';
  * | `rows` | `'all'` | `'all'`: every row the filter lets through, in the sort order. `'selected'`: the selected rows. `'range'`: the rows of the selected range of cells |
  * | `fields` | the layout (`'range'`: the range's) | the fields to export, in order |
  * | `sheetName` | `'Sheet1'` | the name of the sheet |
+ * | `colors` | `true` | the colours of the columns: the colour rules' as the cells' own, the data bars, colour scales and icon sets as Excel's conditional formatting. `false`: none |
  *
  * The file always has the header row (the column labels, bold), frozen, with an autofilter over it
  * and every row, and is always a flat list: a row per data row, no group rows, no outline, no totals.
@@ -54,6 +61,9 @@ import { type ZipOptions, zip } from './zip';
  *
  * // the cells the user selected (the last range), with a header row of their columns
  * await gridInterface.downloadExcel('range.xlsx', { rows: 'range' });
+ *
+ * // the values without the colours of the grid
+ * await gridInterface.downloadExcel('plain.xlsx', { colors: false });
  * ```
  */
 export interface ExcelOptions {
@@ -89,6 +99,20 @@ export interface ExcelOptions {
      * throws a `TypeError`.
      */
     sheetName?: string;
+
+    /**
+     * The colours of the columns, default `true` - as the grid shows them in its light look (a sheet has
+     * no dark mode):
+     * - the **colour rules** (`ColumnFormat.rules`): the text colour, background and bold of the rule that
+     *   matches a cell, as the cell's own style - fixed, Excel does not test the rule again
+     * - a **data bar**, a **colour scale** and an **icon set** of a number column (`ColumnFormat.bar`,
+     *   `scale`, `icons`): Excel's own conditional formatting, Excel draws them from the values - and
+     *   again when they change in Excel. A rule's background wins over a scale, as in the grid: the scale
+     *   is not on those cells
+     *
+     * `false`: the values only. The number formats of the columns are written either way.
+     */
+    colors?: boolean;
 }
 
 /**
@@ -135,7 +159,65 @@ export interface XlsxNumber {
  * - a string: text, with wrapped lines when it has a line break. `''` is no cell
  * - `null`: no cell
  */
-export type XlsxCell = string | number | boolean | XlsxDate | XlsxNumber | null;
+export type XlsxValue = string | number | boolean | XlsxDate | XlsxNumber | null;
+
+/**
+ * The look of a cell: a colour rule of the grid, as a static style of the cell. The colours are
+ * `#rrggbb`; a part left out is Excel's default (black text, no fill, not bold)
+ */
+export interface XlsxStyle {
+    /** the text colour */
+    color?: string;
+    /** the background, a solid fill */
+    fill?: string;
+    /** bold text */
+    bold?: boolean;
+}
+
+/**
+ * A cell with a style: its value (null: an empty cell with the style - a rule on blank cells) and its look
+ */
+export interface XlsxStyled {
+    value: XlsxValue;
+    style: XlsxStyle;
+}
+
+/**
+ * A cell of a row: a value ({@link XlsxValue}), or a value with a style ({@link XlsxStyled})
+ */
+export type XlsxCell = XlsxValue | XlsxStyled;
+
+/**
+ * An end or a threshold of a conditional format, computed by Excel from the column's numbers:
+ * - `lowest`, `highest`: the smallest and the largest value of its cells
+ * - `lowestOrZero`, `highestOrZero`: the same, or 0 when that is nearer to 0 - a data bar starts at 0
+ * - `middle`: halfway between the lowest and the highest
+ * - `number`: a value; `percent`: percent of the range from the lowest to the highest
+ */
+export type XlsxThreshold =
+    | { type: 'lowest' | 'highest' | 'lowestOrZero' | 'highestOrZero' | 'middle' }
+    | { type: 'number' | 'percent'; value: number };
+
+/**
+ * The icon sets of Excel this file writes: ST_IconSetType of ECMA-376
+ */
+export type XlsxIconSet = '3Arrows' | '3TrafficLights1' | '3Flags' | '3Symbols2';
+
+/**
+ * Excel's own conditional formatting of a column: Excel draws it from the values of the cells, and draws
+ * it again when they change in Excel.
+ * - `dataBar`: a bar from `min` to `max` in `color` (Excel draws it as a gradient to white)
+ * - `colorScale`: two or three colours at their thresholds
+ * - `iconSet`: three icons, from the thresholds `[middle, high]` (`>=`), the other way round with `reverse`
+ *
+ * `rows`: the rows it is on, by their place in `XlsxSheet.rows` - left out, every row. Its thresholds are
+ * computed over every row of the column either way
+ */
+export type XlsxConditionalFormat = { column: number; rows?: number[] } & (
+    | { kind: 'dataBar'; min: XlsxThreshold; max: XlsxThreshold; color: string }
+    | { kind: 'colorScale'; stops: { at: XlsxThreshold; color: string }[] }
+    | { kind: 'iconSet'; set: XlsxIconSet; thresholds: [XlsxThreshold, XlsxThreshold]; reverse: boolean }
+);
 
 /**
  * A column of the sheet.
@@ -157,6 +239,8 @@ export interface XlsxSheet {
     columns: XlsxColumn[];
     /** the rows under the header row, a cell for each column */
     rows: XlsxCell[][];
+    /** Excel's own conditional formatting of columns, see {@link XlsxConditionalFormat}. Left out: none */
+    conditionalFormats?: XlsxConditionalFormat[];
 }
 
 /**
@@ -380,52 +464,89 @@ export function cellText(text: string): { xml: string; wrap: boolean } {
 }
 
 /**
+ * A colour of styles.xml and the conditional formatting: `#rrggbb` as Excel's ARGB, `FFRRGGBB` - opaque.
+ * Only `#` and six hex digits are written, anything else is black
+ */
+function argb(color: string): string {
+    return /^#[0-9a-fA-F]{6}$/.test(color) ? `FF${color.slice(1).toUpperCase()}` : 'FF000000';
+}
+
+/**
+ * What a cell format is made of: bold, wrapped lines, a number format code (General without), a text
+ * colour and a fill (`#rrggbb`, none without)
+ */
+interface CellFormat {
+    bold: boolean;
+    wrap: boolean;
+    formatCode?: string;
+    color?: string;
+    fill?: string;
+}
+
+/**
  * The cell formats (`cellXfs` of styles.xml) the sheet uses, numbered as the cells' `s` refers to them.
- * 0 is the default: Calibri 11, General.
+ * 0 is the default: Calibri 11, General. The fonts (bold, a colour), the fills (a solid colour) and the
+ * number formats are each written once, the cell formats refer to them by their place.
  */
 class Styles {
     /** the custom number formats, the first is id 164: the ids below are Excel's built-in formats */
     private numberFormats: string[] = [];
+    /** the fonts by `bold|colour`: 0 the default, 1 bold - the header row's */
+    private fonts: string[] = ['false|', 'true|'];
+    /** the fills by colour: 0 and 1 are Excel's own (none and gray125), a colour from 2 */
+    private fills: string[] = ['', ''];
     /** the cell formats, by a key of what they are */
-    private formats = new Map<string, number>([['false|false|0', 0]]);
-    private xfs: { bold: boolean; wrap: boolean; numFmtId: number }[] = [{ bold: false, wrap: false, numFmtId: 0 }];
+    private formats = new Map<string, number>([['0|false|0|0', 0]]);
+    private xfs: { fontId: number; wrap: boolean; numFmtId: number; fillId: number }[] = [
+        { fontId: 0, wrap: false, numFmtId: 0, fillId: 0 }
+    ];
 
-    /**
-     * the index of the cell format: bold (font 1) or not, wrapped lines, and a number format code
-     * (`yyyy-mm-dd`), General without
-     */
-    index(bold: boolean, wrap: boolean, formatCode?: string): number {
-        let numFmtId = 0;
-        if (formatCode) {
-            let i = this.numberFormats.indexOf(formatCode);
-            if (i === -1) {
-                i = this.numberFormats.push(formatCode) - 1;
-            }
-            numFmtId = 164 + i;
-        }
-        const key = `${bold}|${wrap}|${numFmtId}`;
+    /** the place of a value in a list, added at the end when it is not in it */
+    private static placeOf(list: string[], value: string): number {
+        const i = list.indexOf(value);
+        return i === -1 ? list.push(value) - 1 : i;
+    }
+
+    /** the index of the cell format of a cell: see CellFormat */
+    index(format: CellFormat): number {
+        const { bold, wrap, formatCode, color, fill } = format;
+        const numFmtId = formatCode ? 164 + Styles.placeOf(this.numberFormats, formatCode) : 0;
+        const fontId = Styles.placeOf(this.fonts, `${bold}|${color ? argb(color) : ''}`);
+        const fillId = fill ? Styles.placeOf(this.fills, argb(fill)) : 0;
+        const key = `${fontId}|${wrap}|${numFmtId}|${fillId}`;
         let index = this.formats.get(key);
         if (index === undefined) {
-            index = this.xfs.push({ bold, wrap, numFmtId }) - 1;
+            index = this.xfs.push({ fontId, wrap, numFmtId, fillId }) - 1;
             this.formats.set(key, index);
         }
         return index;
     }
 
     /**
-     * styles.xml. Excel keeps the first two fills for itself (none and gray125), they are there.
+     * styles.xml, its parts in the order of CT_Stylesheet: numFmts, fonts, fills, borders, cellStyleXfs,
+     * cellXfs, cellStyles. Excel keeps the first two fills for itself (none and gray125), they are there.
+     * A font's parts in Excel's order: b, sz, color, name, family
      */
     xml(): string {
-        const font = (bold: boolean) => `<font>${bold ? '<b/>' : ''}<sz val="11"/><name val="Calibri"/><family val="2"/></font>`;
+        const font = (key: string) => {
+            const [bold, color] = key.split('|');
+            return `<font>${bold === 'true' ? '<b/>' : ''}<sz val="11"/>${color ? `<color rgb="${color}"/>` : ''}<name val="Calibri"/><family val="2"/></font>`;
+        };
+        const fill = (color: string, i: number) =>
+            i === 0
+                ? '<fill><patternFill patternType="none"/></fill>'
+                : i === 1
+                  ? '<fill><patternFill patternType="gray125"/></fill>'
+                  : `<fill><patternFill patternType="solid"><fgColor rgb="${color}"/><bgColor indexed="64"/></patternFill></fill>`;
         const numFmts = this.numberFormats.length
             ? `<numFmts count="${this.numberFormats.length}">${this.numberFormats
                   .map((code, i) => `<numFmt numFmtId="${164 + i}" formatCode="${xmlEscape(code)}"/>`)
                   .join('')}</numFmts>`
             : '';
         const xfs = this.xfs
-            .map(({ bold, wrap, numFmtId }) => {
-                const apply = `${numFmtId ? ' applyNumberFormat="1"' : ''}${bold ? ' applyFont="1"' : ''}${wrap ? ' applyAlignment="1"' : ''}`;
-                const attributes = `numFmtId="${numFmtId}" fontId="${bold ? 1 : 0}" fillId="0" borderId="0" xfId="0"${apply}`;
+            .map(({ fontId, wrap, numFmtId, fillId }) => {
+                const apply = `${numFmtId ? ' applyNumberFormat="1"' : ''}${fontId ? ' applyFont="1"' : ''}${fillId ? ' applyFill="1"' : ''}${wrap ? ' applyAlignment="1"' : ''}`;
+                const attributes = `numFmtId="${numFmtId}" fontId="${fontId}" fillId="${fillId}" borderId="0" xfId="0"${apply}`;
                 return wrap ? `<xf ${attributes}><alignment wrapText="1"/></xf>` : `<xf ${attributes}/>`;
             })
             .join('');
@@ -433,8 +554,8 @@ class Styles {
             XML_DECLARATION +
             `<styleSheet xmlns="${NS_MAIN}">` +
             numFmts +
-            `<fonts count="2">${font(false)}${font(true)}</fonts>` +
-            '<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>' +
+            `<fonts count="${this.fonts.length}">${this.fonts.map(font).join('')}</fonts>` +
+            `<fills count="${this.fills.length}">${this.fills.map(fill).join('')}</fills>` +
             '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>' +
             '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
             `<cellXfs count="${this.xfs.length}">${xfs}</cellXfs>` +
@@ -455,17 +576,22 @@ function dateFormatCode(time: boolean, order: XlsxDateOrder): string {
 }
 
 /**
- * The XML of a cell, `''` for none (a blank)
+ * The XML of a cell, `''` for none (a blank without a style)
  * @param bold the header row's bold font
  */
-function cellXml(value: XlsxCell, reference: string, styles: Styles, bold: boolean): string {
-    if (value === null || value === undefined || value === '') {
-        return '';
-    }
+function cellXml(cell: XlsxCell, reference: string, styles: Styles, bold: boolean): string {
+    const styled = typeof cell === 'object' && cell !== null && 'style' in cell ? cell : null;
+    const value = styled ? styled.value : (cell as XlsxValue);
+    const look = styled?.style ?? {};
     const style = (wrap: boolean, formatCode?: string) => {
-        const index = styles.index(bold, wrap, formatCode);
+        const index = styles.index({ bold: bold || look.bold === true, wrap, formatCode, color: look.color, fill: look.fill });
         return index ? ` s="${index}"` : '';
     };
+    if (value === null || value === undefined || value === '') {
+        // a blank with a style - a rule's fill on an empty cell - is a cell without a value
+        const blank = styled ? style(false) : '';
+        return blank ? `<c r="${reference}"${blank}/>` : '';
+    }
 
     if (typeof value === 'number' && Number.isFinite(value)) {
         // String() writes the shortest text that reads back as the same number: an xsd:double
@@ -490,14 +616,14 @@ function cellXml(value: XlsxCell, reference: string, styles: Styles, bold: boole
     // text, and a number that is not finite
     const text = cellText(String(value));
     if (text.xml === '') {
-        return '';
+        return styled && style(false) ? `<c r="${reference}"${style(false)}/>` : '';
     }
     return `<c r="${reference}"${style(text.wrap)} t="inlineStr"><is><t xml:space="preserve">${text.xml}</t></is></c>`;
 }
 
 /**
  * xl/worksheets/sheet1.xml. The elements in the order of the schema (CT_Worksheet): dimension,
- * sheetViews, cols, sheetData, autoFilter.
+ * sheetViews, cols, sheetData, autoFilter, conditionalFormatting.
  */
 function worksheetXml(sheet: XlsxSheet, styles: Styles): string {
     const columnCount = sheet.columns.length;
@@ -538,8 +664,109 @@ function worksheetXml(sheet: XlsxSheet, styles: Styles): string {
         (cols ? `<cols>${cols}</cols>` : '') +
         `<sheetData>${rows.join('')}</sheetData>` +
         (columnCount ? `<autoFilter ref="${range}"/>` : '') +
+        conditionalFormattingXml(sheet) +
         '</worksheet>'
     );
+}
+
+/**
+ * The cells of a column's rows as Excel's list of ranges (ST_Sqref): the rows next to each other as one
+ * range, `C2:C9 C12:C20`. Row 0 of the sheet's rows is Excel's row 2, under the header
+ * @param rows the places of the rows in XlsxSheet.rows, ascending
+ */
+export function sqrefOf(column: number, rows: readonly number[]): string {
+    const ranges: string[] = [];
+    let start = -1;
+    for (let i = 0; i < rows.length; i++) {
+        if (start === -1) {
+            start = rows[i];
+        }
+        if (rows[i + 1] !== rows[i] + 1) {
+            const [from, to] = [cellReference(column, start + 2), cellReference(column, rows[i] + 2)];
+            ranges.push(from === to ? from : `${from}:${to}`);
+            start = -1;
+        }
+    }
+    return ranges.join(' ');
+}
+
+/**
+ * A threshold as a `<cfvo>`: a number or percent as it is (a finite number - else 0), the lowest and the
+ * highest as Excel's `min` / `max` when the format is on every row of the column, else - and for the
+ * ones with 0 and the middle - a formula over the column's cells (`MIN($C$2:$C$101)`): the range is the
+ * column's, not only the rows the format is on
+ * @param all the format is on every row: `min`, `max` and `percent` are of the column
+ * @param cells the column's cells, absolute: `$C$2:$C$101`
+ */
+function cfvoXml(threshold: XlsxThreshold, all: boolean, cells: string): string {
+    const number = (value: number) => (Number.isFinite(value) ? String(value) : '0');
+    const formula = (text: string) => `<cfvo type="formula" val="${xmlEscape(text)}"/>`;
+    switch (threshold.type) {
+        case 'number':
+            return `<cfvo type="num" val="${number(threshold.value)}"/>`;
+        case 'percent':
+            return `<cfvo type="percent" val="${number(threshold.value)}"/>`;
+        case 'lowest':
+            return all ? '<cfvo type="min"/>' : formula(`MIN(${cells})`);
+        case 'highest':
+            return all ? '<cfvo type="max"/>' : formula(`MAX(${cells})`);
+        case 'lowestOrZero':
+            return formula(`MIN(0,MIN(${cells}))`);
+        case 'highestOrZero':
+            return formula(`MAX(0,MAX(${cells}))`);
+        case 'middle':
+            return all ? '<cfvo type="percent" val="50"/>' : formula(`(MIN(${cells})+MAX(${cells}))/2`);
+    }
+}
+
+/**
+ * The `<conditionalFormatting>` elements of the sheet, one per format, after the autofilter - each a
+ * `<cfRule>` of its kind, the priorities 1, 2 ... in their order. None for a sheet without rows, and for a
+ * format on no row
+ */
+function conditionalFormattingXml(sheet: XlsxSheet): string {
+    const formats = sheet.conditionalFormats ?? [];
+    if (!sheet.rows.length) {
+        return '';
+    }
+    let priority = 0;
+    return formats
+        .map((format) => {
+            if (format.column < 0 || format.column >= sheet.columns.length) {
+                return '';
+            }
+            const every = sheet.rows.map((_, i) => i);
+            const rows = format.rows ?? every;
+            if (!rows.length) {
+                return '';
+            }
+            const all = rows.length === every.length;
+            const name = columnName(format.column);
+            const cells = `$${name}$2:$${name}$${sheet.rows.length + 1}`;
+            const cfvo = (threshold: XlsxThreshold) => cfvoXml(threshold, all, cells);
+            let rule: string;
+            priority++;
+            if (format.kind === 'dataBar') {
+                // minLength 0 and maxLength 100: the bar as long as the value's place, as in the grid (Excel's
+                // default is 10 to 90 %)
+                rule =
+                    `<cfRule type="dataBar" priority="${priority}"><dataBar minLength="0" maxLength="100">` +
+                    `${cfvo(format.min)}${cfvo(format.max)}<color rgb="${argb(format.color)}"/></dataBar></cfRule>`;
+            } else if (format.kind === 'colorScale') {
+                rule =
+                    `<cfRule type="colorScale" priority="${priority}"><colorScale>` +
+                    format.stops.map((stop) => cfvo(stop.at)).join('') +
+                    format.stops.map((stop) => `<color rgb="${argb(stop.color)}"/>`).join('') +
+                    '</colorScale></cfRule>';
+            } else {
+                // the first icon from the low end, then from each threshold (gte: >=, the default)
+                rule =
+                    `<cfRule type="iconSet" priority="${priority}"><iconSet iconSet="${format.set}"${format.reverse ? ' reverse="1"' : ''}>` +
+                    `<cfvo type="percent" val="0"/>${cfvo(format.thresholds[0])}${cfvo(format.thresholds[1])}</iconSet></cfRule>`;
+            }
+            return `<conditionalFormatting sqref="${sqrefOf(format.column, rows)}">${rule}</conditionalFormatting>`;
+        })
+        .join('');
 }
 
 /**

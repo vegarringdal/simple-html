@@ -1876,7 +1876,7 @@ export class GridInterface<T> {
      * (bold, frozen, with an autofilter over it and every row), then a row per data row. By default
      * every row the filter lets through, in the sort order, and the columns of the layout in the
      * order the user sees them, as wide as in the grid. See {@link ExcelOptions} for what can be
-     * changed: the selected rows, the selected range of cells, the fields, the sheet name.
+     * changed: the selected rows, the selected range of cells, the fields, the sheet name, the colours.
      *
      * - **Typed cells**, so Excel can sum, sort and filter: a number field gives numbers, a date or
      *   datetime field Excel dates (the local date and time the grid shows), a boolean field TRUE /
@@ -1888,6 +1888,9 @@ export class GridInterface<T> {
      *   grid until they are saved, they are exported too.
      * - **No formulas**: text is never a formula in an .xlsx file, a value a user typed
      *   (`=HYPERLINK(...)`) shows as the text it is.
+     * - **The colours and formats of the columns**: a display format as an Excel number format, a colour
+     *   rule's text colour, background and bold as the cell's own, a data bar, colour scale and icon set
+     *   as Excel's own conditional formatting - in the light look. `colors: false` leaves the colours out.
      * - **The values when called**: the rows and values are read before the promise is returned, the
      *   file is zipped after (with the browser's `CompressionStream`, so this is async).
      *
@@ -1911,6 +1914,9 @@ export class GridInterface<T> {
      *
      * // the cells the user selected (the last range of cells)
      * const cells = await gridInterface.getExcel({ rows: 'range' });
+     *
+     * // the values without the grid's colours
+     * const plain = await gridInterface.getExcel({ colors: false });
      * ```
      */
     public getExcel(options: ExcelOptions = {}): Promise<Blob> {

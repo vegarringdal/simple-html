@@ -483,7 +483,7 @@ describe('display formats - the check of a format', () => {
         expect(check([], 'date')).toThrow(TypeError);
         expect(check({ color: 'red' }, 'text')).toThrow(
             new TypeError(
-                "GridConfig: columns.field.format has 'color', a format has date, number, text, link, label, placeholderRow, placeholderRowLabel, numberOverride, checkbox, filterAsShown, multiline, readonly, rules"
+                "GridConfig: columns.field.format has 'color', a format has date, number, text, link, label, placeholderRow, placeholderRowLabel, numberOverride, checkbox, filterAsShown, multiline, readonly, rules, bar, scale, icons"
             )
         );
     });
