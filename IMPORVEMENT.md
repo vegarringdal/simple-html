@@ -4125,6 +4125,52 @@ rebuildHeaderColumns for the middle section too (scrollHandlers.test.ts has it).
 * browser: the shared sidebar-toggle-check.js expects about 30 rows (28 to 31) where it expected more than 30
   (backup `.before-full-30`): 15/15; full-grid 11/11, sample-height 5/5, detail-form 91/91, color-rules 90/90
 
+### The multiline editor: a ✕ (user request)
+
+* the user, a phone screenshot of the editor with "Ctrl+Enter to save, Esc to cancel" under it: "multiline box,
+  add also a close x bottom right in footer panel, useful for mouse/touch" - a finger has neither key
+* textEditor.ts: the hint is in a footer row with a ✕ button at its right (`.simple-html-grid-text-editor-close`,
+  20px, the touch row height on a finger): it saves and closes as a click beside the editor does, the focus
+  back in the cell - its mousedown is prevented so the focus stays in the text (Safari does not focus a
+  clicked button, and a phone's keyboard does not flicker). A readonly editor's ✕ is "Close". The editor
+  attaches the tooltips (the ✕'s), hides one on close. Texts `cell.multiline.close`, `.closeReadonly`
+* multiline.test.ts +2; guide 05 (the editor's table), 12
+* browser: new `text-editor-close-check.js` 10/10 (a phone: tap to open, the 28px ✕ at the bottom right, a
+  tap saves and closes; wide dark with the mouse: saved, the focus back in the cell); multiline-lines,
+  keyboard, custom-cells as before
+### Docs site: a feature overview (user request)
+
+* the user: "Maybe docs should have a feature table / tables / list?". What the grid can do was spread over 22
+  guides and 35 samples; nothing said it at a glance - for a developer weighing the grid, or a power user
+* new `guides/00-features.md`, *Feature overview*: 19 tables by area (data and setup, columns and layout,
+  display and formatting, filtering, sorting and grouping, selection and clipboard, editing, find, detail form,
+  grid config dialog, menus, export, state, live data, theming, texts and translation, accessibility, touch,
+  SQL helpers), each `Feature | What it does | See`: one plain line per feature, and links to the guide's
+  heading and the sample (every sample is linked). Then the keyboard shortcuts used most, `Keys | What they
+  do`, linked to the full list in guide 14. Only what is there: each line checked against the guides and the
+  samples (a row menu filter has Replace / Add, not "leave out"; CSV separators `,` `;` tab). Calculated
+  columns are left out (built in parallel, the user adds them)
+* a guide, so `check:docs` checks its links and headings and the site renders it as the others; in the
+  sidebar a section of its own, **Features**, between Status and Developer Guide (index.ts: the guide
+  `features` goes there, the rest to the Developer Guide). Being the first guide it is the **start page** of
+  the site (no hash) - was Getting started. Getting started's *Where to go next* links it
+* index.css: `.doc table` is `display: block; overflow-x: auto` - a table wider than the page scrolls in its own
+  box instead of the whole article sideways (a phone, the option tables of guide 02). The overview's tables
+  (`.doc[data-guide='features']`, the attribute set by renderGuidePage) are as wide as the page with the same
+  fixed columns, so the 19 read as one list; narrower columns under 600px so they fit a 390px phone
+* README: a *Features* section, 15 highlights, linking the overview on the site and the file
+* tests: site.test.ts expects the sections Status, Features, Developer Guide ...; the start page
+  `#guide/features`; new test of the overview (its own section, the tables and their columns, every link to a
+  page of the site, more than 25 samples linked). 3851 tests, 164 files
+* browser (Chromium 1148, port 8095): new `features-page-check.js` 21/21 - the sidebar, the start page, the
+  same column widths in every table, light and dark colours, all 143 links (108 guide headings found and
+  scrolled to, 35 samples open with a grid), a phone: no sideways scroll, no text out of a cell, guide 02's
+  tables scroll in their own box. Screenshots looked at (desktop and phone, light and dark). Shared:
+  sidebar-toggle 15/15, sample-height 5/5; full-grid 10/11 - it opened `#guide/02-grid-config`, no route,
+  which showed the start page; the copy in this worktree's `.claude/browser-checks/scripts/` opens
+  `#guide/grid-config` (backup `.before-features`): 11/11
+* not done, candidates: a check that every sample is in the overview (it would fail the merge of a new
+  sample until its line is written); the User Guide page is still the TODO
 ### Keyboard shortcuts help (user request)
 
 * the user: a help overlay of the grid's keyboard shortcuts, opened from the keyboard (`?` when not typing,

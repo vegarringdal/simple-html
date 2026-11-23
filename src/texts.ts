@@ -681,6 +681,9 @@ const DEFAULTS = {
     'cell.multiline.hint': 'Ctrl+Enter to save, Esc to cancel',
     'cell.multiline.hint.mac': '⌘Enter to save, Esc to cancel',
     'cell.multiline.hintReadonly': 'Esc to close',
+    // the ✕ at the right of the hint of the multiline editor: saves and closes it - only closes a readonly one
+    'cell.multiline.close': 'Save and close',
+    'cell.multiline.closeReadonly': 'Close',
     // a lookup column (ColumnConfig.editor): the button of the cell, for a screen reader, and the select
     // under the cell - the placeholder of its search, no match, a long list cut off
     'lookup.open': 'Open the list',

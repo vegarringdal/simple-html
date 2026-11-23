@@ -1268,11 +1268,53 @@
     resize: none;
 }
 
-.simple-html-grid .simple-html-grid-text-editor-hint {
-    padding: 1px 4px;
+.simple-html-grid .simple-html-grid-text-editor-footer {
+    display: flex;
+    align-items: center;
     border-top: 1px solid var(--simple-html-grid-main-bg-border);
     color: var(--simple-html-grid-main-font-color);
     background-color: var(--simple-html-grid-main-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-text-editor-hint {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 1px 4px;
+}
+
+/* the ✕ at the right of the hint: saves and closes - a finger has no Ctrl+Enter. Square, no frame until
+   the pointer is on it */
+.simple-html-grid .simple-html-grid-text-editor-close {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    margin: 0 1px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 0;
+    font: inherit;
+    line-height: 1;
+    color: inherit;
+    background: transparent;
+    cursor: pointer;
+}
+
+.simple-html-grid .simple-html-grid-text-editor-close:hover {
+    border-color: var(--simple-html-grid-control-border-color);
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid .simple-html-grid-text-editor-close:focus-visible {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: -2px;
+}
+
+/* a finger: a target of a touch row's height */
+@media (pointer: coarse) {
+    .simple-html-grid .simple-html-grid-text-editor-close {
+        width: var(--simple-html-grid-touch-row-height);
+        height: var(--simple-html-grid-touch-row-height);
+    }
 }
 
 /**

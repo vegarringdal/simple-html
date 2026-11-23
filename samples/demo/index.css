@@ -678,7 +678,11 @@ body.sidebar-hidden .main {
     border-radius: 4px;
 }
 
+/* block: a table wider than the page - a phone, a table of options - scrolls sideways in its own box, the
+   page does not. Its cells wrap first, the table in it is no wider than the page while its text can wrap */
 .doc table {
+    display: block;
+    overflow-x: auto;
     border-collapse: collapse;
     margin: 12px 0;
     font-size: 13px;
@@ -694,6 +698,47 @@ body.sidebar-hidden .main {
 
 .doc th {
     background: var(--demo-panel);
+}
+
+/* the feature overview (guides/00-features.md): every table as wide as the page, with the same columns -
+   Feature | What it does | See - so the tables read as one list. "guide · sample" on one line */
+.doc[data-guide='features'] table {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+}
+
+.doc[data-guide='features'] th:nth-child(1) {
+    width: 25%;
+}
+
+.doc[data-guide='features'] th:nth-child(3) {
+    width: 10.5em;
+}
+
+/* the keyboard shortcuts, Keys | What they do: room for Ctrl+ArrowDown */
+.doc[data-guide='features'] th:first-child:nth-last-child(2) {
+    width: 30%;
+}
+
+/* a phone: "guide ·" over "sample", the feature names and the keys a bit more room */
+@media (max-width: 600px) {
+    .doc[data-guide='features'] th,
+    .doc[data-guide='features'] td {
+        padding: 5px 6px;
+    }
+
+    .doc[data-guide='features'] th:nth-child(1) {
+        width: 28%;
+    }
+
+    .doc[data-guide='features'] th:nth-child(3) {
+        width: 5.2em;
+    }
+
+    .doc[data-guide='features'] th:first-child:nth-last-child(2) {
+        width: 45%;
+    }
 }
 
 .doc blockquote {
