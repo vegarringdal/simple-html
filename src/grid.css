@@ -2917,6 +2917,13 @@
     background-color: var(--simple-html-grid-main-bg-selected-even);
 }
 
+/* the ✕ over the resize handle of the top right corner: a tap on it closes the dialog. On a touch screen
+ * the handle is 20px (below) and covered the middle of the ✕ - a finger resized the dialog instead */
+.simple-html-grid.filter-editor-content .filter-editor-close {
+    position: relative;
+    z-index: 4;
+}
+
 /* the groups: they scroll when the dialog is as high as the window, or made smaller */
 .simple-html-grid.filter-editor-content .filter-editor-body {
     flex: 1 1 auto;
@@ -3820,6 +3827,97 @@
     width: 6px;
     height: 10px;
     fill: currentColor;
+}
+
+/**
+ * The keyboard shortcuts help (shortcutHelp.ts): a dialog of the filter editor's look - it has the class
+ * filter-editor-content too, its title bar, body and resize handles are the filter editor's. Under the
+ * title bar the search (framed as the column chooser's) and a hint, then the groups of keys that scroll: a
+ * table each, its title the caption, a row per entry - the keys in boxes (<kbd>), what they do. The
+ * colours are the dialog's own variables, no theme needs more. Square, as the rest of the grid. On a phone
+ * it is as wide as the window, the keys wrap between the alternatives
+ */
+.simple-html-grid.filter-editor-content.shortcut-help {
+    width: 560px;
+}
+
+.simple-html-grid.filter-editor-content .shortcut-help-top {
+    flex: none;
+    padding: 8px 12px 0;
+}
+
+/* the search: the column chooser's, as wide as the dialog */
+.simple-html-grid.filter-editor-content .shortcut-help-top .simple-html-grid-chooser-search {
+    margin: 0;
+}
+
+.simple-html-grid.filter-editor-content .shortcut-help-hint,
+.simple-html-grid.filter-editor-content .shortcut-help-none {
+    margin-top: 6px;
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+/* no room while the search has matches: the status is empty. Shown still, a screen reader reads it out
+ * when it gets its text */
+.simple-html-grid.filter-editor-content .shortcut-help-none:empty {
+    margin-top: 0;
+}
+
+.simple-html-grid.filter-editor-content .shortcut-help-group {
+    width: 100%;
+    margin: 0 0 10px;
+    border-collapse: collapse;
+}
+
+.simple-html-grid.filter-editor-content .shortcut-help-group caption {
+    padding: 2px 0 4px;
+    text-align: left;
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+.simple-html-grid.filter-editor-content .shortcut-help-group th,
+.simple-html-grid.filter-editor-content .shortcut-help-group td {
+    padding: 3px 0;
+    border-top: 1px solid var(--simple-html-grid-main-bg-border);
+    text-align: left;
+    vertical-align: top;
+    font-weight: var(--simple-html-grid-font-weight);
+}
+
+/* the keys: the first column, what they do beside them */
+.simple-html-grid.filter-editor-content .shortcut-help-group th {
+    width: 45%;
+    padding-right: 12px;
+}
+
+/* a combination of keys stays on one line */
+.simple-html-grid.filter-editor-content .shortcut-help-keys {
+    font: inherit;
+    white-space: nowrap;
+}
+
+/* a key: a box framed as the controls, its lower edge thicker - a key cap */
+.simple-html-grid.filter-editor-content .shortcut-help-keys kbd {
+    display: inline-block;
+    box-sizing: border-box;
+    min-width: 18px;
+    margin: 1px;
+    padding: 0 4px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-bottom-width: 2px;
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    line-height: 15px;
+    text-align: center;
+}
+
+/* the / between the keys that do the same */
+.simple-html-grid.filter-editor-content .shortcut-help-or {
+    color: var(--simple-html-grid-sec-font-color);
 }
 
 /**

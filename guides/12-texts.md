@@ -107,7 +107,9 @@ The ids are grouped by area, the area first. Within an area:
   The grid takes both keys everywhere (Ctrl+Z and Cmd+Z), the texts say what a user there presses.
   Translate both: a `.mac` text left out shows its English default on a Mac. They are
   `row.edit.undo.hint`, `row.edit.redo.hint`, `find.previous.tooltip`, `find.matchCase.tooltip`,
-  `cell.multiline.hint`, `filterEditor.undo.tooltip` and `filterEditor.redo.tooltip`.
+  `cell.multiline.hint`, `filterEditor.undo.tooltip`, `filterEditor.redo.tooltip`,
+  `header.shortcuts.hint`, `shortcuts.hint` and the modifiers of the keyboard shortcuts help,
+  `shortcuts.key.ctrl`, `shortcuts.key.alt` and `shortcuts.key.shift`.
 
 ### The names of the months and days
 
@@ -324,6 +326,9 @@ Right click on a header label.
 | `header.format.decimalMark.comma` | `Comma` | `1,5` |
 | `header.format.percent` | `Percent` | turns percent on or off: 0.256 is `25.6 %` |
 | `header.settings` | `Column settings…` | opens the grid config dialog on the column, see [Grid config dialog](#grid-config-dialog) |
+| `header.shortcuts` | `Keyboard shortcuts…` | opens the keyboard shortcuts help, see [Keyboard shortcuts help](#keyboard-shortcuts-help) |
+| `header.shortcuts.hint` | `Ctrl+/` | its hint: the key that opens the help anywhere in the grid |
+| `header.shortcuts.hint.mac` | `⌘/` | its hint on a Mac |
 | `header.aggregate` | `Aggregate` | the aggregate submenu |
 | `header.aggregate.sum` | `Sum` | turns the column's sum on or off |
 | `header.aggregate.avg` | `Average` | turns its average on or off |
@@ -788,6 +793,102 @@ The find bar of Ctrl+F in the grid, see [Find](19-find.md).
 | `find.next.tooltip` | `Next match (Enter)` | its tooltip |
 | `find.close` | `Close` | the `✕` button, closes the find bar |
 | `find.close.tooltip` | `Close (Esc)` | its tooltip |
+
+### Keyboard shortcuts help
+
+The keyboard shortcuts help - `?` and Ctrl+/ in the grid, *Keyboard shortcuts…* in the header menu - see
+[The keyboard shortcuts help](14-accessibility.md#the-keyboard-shortcuts-help). Its title bar, its search
+and the hint under it, then the names of the keys: a key with a name of its own has a text, a letter, a
+function key (F2) and the arrows are shown as they are. The modifiers have a text for a Mac. Then each
+group of keys: its title, and what each of its keys does.
+
+| id | English | shown |
+| --- | --- | --- |
+| `shortcuts.title` | `Keyboard shortcuts` | its title, its name for a screen reader |
+| `shortcuts.title.tooltip` | `Drag to move the dialog` | the tooltip of its title |
+| `shortcuts.close` | `Close` | the `✕` button: its name for a screen reader and its tooltip |
+| `shortcuts.search` | `Search` | the placeholder of the search, and its name for a screen reader |
+| `shortcuts.none` | `No key matches the search` | under the search when no key has what is typed in it, a status |
+| `shortcuts.hint` | `The arrows, Home and End move the caret in a cell. With Alt they move between the cells` | under the search, its description for a screen reader |
+| `shortcuts.hint.mac` | `The arrows, Home and End move the caret in a cell. With ⌥ they move between the cells` | the same on a Mac |
+| `shortcuts.key.ctrl` | `Ctrl` | the key Ctrl - the grid takes Cmd for it too |
+| `shortcuts.key.ctrl.mac` | `⌘` | the key Ctrl on a Mac: Cmd |
+| `shortcuts.key.alt` | `Alt` | the key Alt |
+| `shortcuts.key.alt.mac` | `⌥` | the key Alt on a Mac: Option |
+| `shortcuts.key.shift` | `Shift` | the key Shift |
+| `shortcuts.key.shift.mac` | `⇧` | the key Shift on a Mac |
+| `shortcuts.key.enter` | `Enter` | the key Enter |
+| `shortcuts.key.esc` | `Esc` | the key Esc |
+| `shortcuts.key.tab` | `Tab` | the key Tab |
+| `shortcuts.key.space` | `Space` | the space bar |
+| `shortcuts.key.home` | `Home` | the key Home |
+| `shortcuts.key.end` | `End` | the key End |
+| `shortcuts.key.pageUp` | `Page Up` | the key PageUp |
+| `shortcuts.key.pageDown` | `Page Down` | the key PageDown |
+| `shortcuts.key.delete` | `Delete` | the key Delete |
+| `shortcuts.key.backspace` | `Backspace` | the key Backspace |
+| `shortcuts.key.menu` | `Menu` | the key the menu key |
+| `shortcuts.group.move` | `Moving around` | the title of a group of keys, the caption of its table |
+| `shortcuts.move.tab` | `The next / previous cell` | what Tab / Shift+Tab do |
+| `shortcuts.move.sideways` | `The cell to the left / right` | what Alt+ArrowLeft / Alt+ArrowRight do |
+| `shortcuts.move.upDown` | `The cell above / below` | what Alt+ArrowUp / Alt+ArrowDown do |
+| `shortcuts.move.enter` | `The cell below, from a cell that can be edited` | what Enter does |
+| `shortcuts.move.row` | `The first / last cell of the row` | what Alt+Home / Alt+End do |
+| `shortcuts.move.grid` | `The first / last cell of the grid` | what Ctrl+Home / Ctrl+End do |
+| `shortcuts.move.page` | `A page of rows up / down` | what PageUp / PageDown do |
+| `shortcuts.move.columns` | `A page of columns left / right` | what Alt+PageUp / Alt+PageDown do |
+| `shortcuts.move.edge` | `The edge of the data in the column, up / down` | what Ctrl+ArrowUp / Ctrl+ArrowDown do |
+| `shortcuts.group.select` | `Selecting cells` | the title of a group of keys, the caption of its table |
+| `shortcuts.select.cell` | `A range of cells, one cell further each time` | what Alt+Shift+Arrows does |
+| `shortcuts.select.page` | `The range a page up / down` | what Shift+PageUp / Shift+PageDown do |
+| `shortcuts.select.row` | `The range to the first / last cell of the row` | what Alt+Shift+Home / Alt+Shift+End do |
+| `shortcuts.select.grid` | `The range to the first / last cell of the grid` | what Ctrl+Shift+Home / Ctrl+Shift+End do |
+| `shortcuts.select.edge` | `The range to the edge of the data, up / down` | what Ctrl+Shift+ArrowUp / Ctrl+Shift+ArrowDown do |
+| `shortcuts.select.clear` | `No range of cells any more` | what Esc does |
+| `shortcuts.group.cell` | `In a cell` | the title of a group of keys, the caption of its table |
+| `shortcuts.cell.editor` | `Open the editor of a cell of several lines, or of a custom cell` | what Enter / F2 do |
+| `shortcuts.cell.save` | `In the editor of several lines: save the text` | what Ctrl+Enter does |
+| `shortcuts.cell.cancel` | `Close an editor or the list of a lookup cell, nothing saved` | what Esc does |
+| `shortcuts.cell.list` | `Open the list of a lookup cell` | what Alt+ArrowDown / F4 do |
+| `shortcuts.cell.check` | `Check or uncheck a checkbox` | what Space does |
+| `shortcuts.cell.link` | `Open the link of a link cell` | what Alt+Enter does |
+| `shortcuts.group.edit` | `Changing values` | the title of a group of keys, the caption of its table |
+| `shortcuts.edit.undo` | `Undo, the focus to the cell it changed` | what Ctrl+Z does |
+| `shortcuts.edit.redo` | `Redo` | what Ctrl+Y / Ctrl+Shift+Z do |
+| `shortcuts.edit.fillDown` | `Fill down: the values of the row above, or of the top row of the range` | what Ctrl+D does |
+| `shortcuts.edit.clear` | `Empty the cells of a range` | what Delete / Backspace do |
+| `shortcuts.edit.deleteRows` | `On a row number: mark its row for deletion, or the selected rows` | what Delete / Backspace do |
+| `shortcuts.group.clipboard` | `Copy and paste` | the title of a group of keys, the caption of its table |
+| `shortcuts.clipboard.copy` | `Copy the range of cells, or the value of the cell` | what Ctrl+C does |
+| `shortcuts.clipboard.paste` | `Paste cells copied here or in a spreadsheet` | what Ctrl+V does |
+| `shortcuts.clipboard.columns` | `On a column number: copy the selected columns` | what Ctrl+C does |
+| `shortcuts.group.find` | `Find` | the title of a group of keys, the caption of its table |
+| `shortcuts.find.open` | `Open the find bar` | what Ctrl+F does |
+| `shortcuts.find.next` | `The next match` | what Enter / F3 do |
+| `shortcuts.find.previous` | `The previous match` | what Shift+Enter / Shift+F3 do |
+| `shortcuts.find.matchCase` | `Match case on or off` | what Alt+C does |
+| `shortcuts.find.close` | `Close the find bar` | what Esc does |
+| `shortcuts.group.header` | `Filters, headers and groups` | the title of a group of keys, the caption of its table |
+| `shortcuts.header.filter` | `In a header filter: filter` | what Enter does |
+| `shortcuts.header.operator` | `In a header filter: choose the operator` | what F4 does |
+| `shortcuts.header.label` | `From a header filter: up to its column header` | what Alt+ArrowUp does |
+| `shortcuts.header.sort` | `On a column header: sort, again the other way` | what Enter / Space do |
+| `shortcuts.header.addSort` | `On a column header: add the column to the sort` | what Shift+Enter / Shift+Space do |
+| `shortcuts.header.group` | `On a group row: expand or collapse it` | what Enter / Space do |
+| `shortcuts.group.menus` | `Menus` | the title of a group of keys, the caption of its table |
+| `shortcuts.menus.open` | `The menu of the cell, header, filter or number with the focus` | what Shift+F10 / the menu key do |
+| `shortcuts.menus.move` | `The next / previous item` | what ArrowDown / ArrowUp do |
+| `shortcuts.menus.use` | `Use the item, or open its submenu` | what Enter / Space do |
+| `shortcuts.menus.submenu` | `Open / close a submenu` | what ArrowRight / ArrowLeft do |
+| `shortcuts.menus.close` | `Close the menu` | what Esc does |
+| `shortcuts.group.dialogs` | `Dialogs and this help` | the title of a group of keys, the caption of its table |
+| `shortcuts.dialogs.help` | `This help, where the key types nothing` | what ? does |
+| `shortcuts.dialogs.helpAnywhere` | `This help, also while typing in a cell` | what Ctrl+/ does |
+| `shortcuts.dialogs.close` | `Close a dialog` | what Esc does |
+| `shortcuts.dialogs.undo` | `In the filter editor: undo / redo` | what Ctrl+Z / Ctrl+Y do |
+| `shortcuts.dialogs.tabs` | `In the grid config dialog: the tab before / after` | what ArrowLeft / ArrowRight do |
+| `shortcuts.dialogs.moveField` | `The fields of the detail form: move the field up / down` | what Alt+ArrowUp / Alt+ArrowDown do |
+| `shortcuts.dialogs.toggleField` | `The fields of the detail form: in the form or out` | what Space does |
 
 ### Screen readers
 

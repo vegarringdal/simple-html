@@ -69,6 +69,7 @@ import { removeContextMenu } from './gridFunctions/removeContextMenu';
 import { requestRowsRender } from './gridFunctions/renderChangedRows';
 import { fitRowLinesOf, layoutColumns, MULTILINE_LINE_HEIGHT, rowHeightOf } from './gridFunctions/rowHeights';
 import { ROW_STATUS_WIDTH } from './gridFunctions/rowStatus';
+import { openShortcutHelp } from './gridFunctions/shortcutHelp';
 import { placeAt, showMenu } from './gridFunctions/showMenu';
 import { closeTextEditor } from './gridFunctions/textEditor';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
@@ -1090,6 +1091,30 @@ export class GridInterface<T> {
     public openDetailFormSettings() {
         if (this.grid) {
             openColumnSettings(this.grid, undefined, 'detailForm');
+        }
+    }
+
+    /**
+     * Opens the keyboard shortcuts help: a dialog that lists the keys of the grid in groups, with a
+     * search - as `?` (where it types nothing) and Ctrl+/ in the grid do, and *Keyboard shortcuts…* in
+     * the header menu. The keys as the platform names them, ⌘ on a Mac; a key that does nothing in this
+     * grid is left out - the editing keys of a readonly grid. For a help button of your own: it opens the
+     * help also with `GridConfig.shortcutHelp: false`, which turns the grid's own ways to open it off.
+     *
+     * A modal `<dialog>`, as the filter editor: the focus moves into it - into its search when a key
+     * opened it - Esc closes it, the focus goes back to where it was; the user drags it by its title bar
+     * and resizes it from every edge and corner. Its texts are `shortcuts.*`.
+     *
+     * Does nothing while the grid is not on the page.
+     *
+     * @example
+     * ```ts
+     * document.getElementById('keys-help')!.onclick = () => gridInterface.openShortcutHelp();
+     * ```
+     */
+    public openShortcutHelp() {
+        if (this.grid) {
+            openShortcutHelp(this.grid);
         }
     }
 
@@ -2569,6 +2594,7 @@ function withDefaults(options: GridOptions): ParsedGridOptions {
         copyHeaders: options.copyHeaders ?? true,
         filterOperatorIndicator: options.filterOperatorIndicator ?? true,
         settingsButton: options.settingsButton ?? true,
+        shortcutHelp: options.shortcutHelp ?? true,
         placeholderRowCurrentEntityOnly: options.placeholderRowCurrentEntityOnly ?? true,
         groupAggregates: options.groupAggregates ?? true,
         totalsRow: options.totalsRow ?? false,

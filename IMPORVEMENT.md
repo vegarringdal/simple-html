@@ -4125,6 +4125,74 @@ rebuildHeaderColumns for the middle section too (scrollHandlers.test.ts has it).
 * browser: the shared sidebar-toggle-check.js expects about 30 rows (28 to 31) where it expected more than 30
   (backup `.before-full-30`): 15/15; full-grid 11/11, sample-height 5/5, detail-form 91/91, color-rules 90/90
 
+### Keyboard shortcuts help (user request)
+
+* the user: a help overlay of the grid's keyboard shortcuts, opened from the keyboard (`?` when not typing,
+  maybe F1 or Ctrl+/) and from the UI
+* the keys: `?` where the key types nothing - a readonly cell, a checkbox, a column header, a row number, a
+  button of the grid - and Ctrl+/ (Cmd+/) anywhere in the grid, also while typing in a cell, a header
+  filter or the find bar (as Google Sheets and Docs). One keydown listener on the grid element, next to
+  Find's (createDom): it leaves a key that is used already (a character typed in a lookup cell opens its
+  list, in a custom cell its editor - canceled) and the keys of an IME. "Types nothing": not an input or a
+  textarea that is not readonly, not contenteditable; the element is the first of the event's path (a
+  shadow root). F1 was left out: Chrome's help on Windows, and nothing it adds to Ctrl+/
+* the UI: *Keyboard shortcuts…* in the header menu after *Column settings…* (`header.shortcuts`, its hint
+  Ctrl+/ - ⌘/ on a Mac). Not in the footer (no more stops of Tab there, another task works on it) and not
+  in the grid config dialog (a dialog from a dialog)
+* `GridConfig.shortcutHelp` (default `true`): `false` turns the keys and the menu entry off;
+  `gridInterface.openShortcutHelp()` opens it from code always. A lookup's dropdown grid has it `false`
+* the dialog (shortcutHelp.ts): a modal `<dialog>` of the filter editor's kind (dialogFrame.ts: moved,
+  resized, Esc, the focus back), a search (the column chooser's look), a hint (the arrows are the caret's,
+  Alt moves between the cells), a table per group - its caption the title, the keys a row header of
+  `<kbd>`s, what they do a cell. Opened by a key the focus is in the search; by a click on the dialog (a
+  phone's keyboard). The search keeps the entries whose text, keys or group have the text, else a status
+  says none does
+* the list (shortcutList.ts): 9 groups, 52 entries - moving around, selecting cells, in a cell, changing
+  values, copy and paste, find, filters / headers / groups, menus, dialogs and this help. Each key was
+  checked against its handler (cellRowKeyNavigation, jumpKeys, rangeSelection, renderRowCell, customCell,
+  textEditor, lookupEditor, undoRedoKey, fillDown, rangeClipboard, deleteRows, columnNumbers, findBar,
+  renderHeaderFilter, cellFilterKeyNavigation, headerLabelKeydown, renderRowGroup, showMenu,
+  addMenuListeners, gridConfigTabs, detailFormSettings, renderFilterEditor). Not listed because the grid
+  has no such key: Ctrl+A, Ctrl+X (the input's own cut), Shift+Space / Ctrl+Space. An entry can be left
+  out where its keys do nothing: `editable` (a readonly grid), `operatorIndicator`, `shortcutHelp`,
+  `notMac` (Alt+C)
+* platform: on a Mac ⌘ ⌥ ⇧, in a Mac's order and without the `+` (⇧⌘Z) - keyText.ts's `.mac` texts.
+  The key names are texts (`shortcuts.key.*`, Strg / Entf for a translation); a letter, F2 and the arrows
+  are shown as they are
+* one list for the dialog and the docs: guide 14's *Every key of the help* is made from it
+  (`src/grid/__tests__/shortcutDocs.ts` prints it), a test checks the guide has it as it is, and that every
+  key of the list is in the guide's keyboard section (where each key is described, and tested)
+* texts: 90 `shortcuts.*` and `header.shortcuts(.hint, .hint.mac)` - guide 12 (*Keyboard shortcuts help*,
+  the `.mac` list), Norwegian in the translation sample. css: the dialog and the key caps with the existing
+  variables (no theme change), square, a phone's width
+* docs: guide 14 (*The keyboard shortcuts help*, `?` / Ctrl+/ in the cell table, the help in *The rest* and
+  in *What a screen reader gets*), 02 (options), 10 (`header.shortcuts`), 12; JSDoc of `shortcutHelp`,
+  `openShortcutHelp()`, MENU_IDS.header
+* tests: new shortcutHelp.test.ts (27: the keys and where they type, Ctrl+/ / Cmd+/, a lookup cell, Alt and
+  AltGr, a used key, `shortcutHelp: false` and updateConfig; the dialog, a readonly grid,
+  filterOperatorIndicator, the focus, the search, a Mac, translated key names, closing, one dialog, a menu
+  closed, the grid leaving the page, before the grid is on the page; the header menu entry; the list's
+  texts, its keys, a Mac's order, the guide's table, the guide's keyboard section); texts.test (the help
+  shown, on a Mac too - a key cap that is a letter or F2 is no text), gridMenus, lookups, configJson.
+  3877 tests, 165 files
+* **found on the way, fixed - the ✕ of the dialogs on a touch screen**: the resize handle of the top right
+  corner is 20px there (`pointer: coarse`) and covered the middle of the ✕ - a tap resized the dialog
+  instead of closing it, in the filter editor and the grid config dialog too. The ✕ is over the handles
+  now (`z-index: 4`, grid.css)
+* browser (Chromium 1148, port 8096): new `shortcut-help-check.js` 41/41 - `?` typed in an editable cell,
+  a header filter and the find bar is typed; Ctrl+/ from a cell opens it, the focus in the search, Esc
+  back to the cell; a readonly grid: `?` on a cell and on a column header opens it (the `?` not typed in
+  the search), no *Changing values*; the search (`undo`, `zzz` and its status); the header menu entry
+  (the focus on the dialog), the ✕; `shortcutHelp: false`; light, dark, TreDeSpace light and dark - in the
+  window, square, the text 9.7:1 and more, the keys 7:1 and more, their frame 3:1; a Mac user agent (⌘Y /
+  ⇧⌘Z, ⌥⇧Home, no Alt+C, Cmd+/, the menu's ⌘/); a phone (390px wide, the list scrolls, nothing sideways, a
+  tap on the ✕ closes it). The screenshots looked at. Shared checks: keyboard 53/53, find 68/68, touch
+  61/61, full-grid 11/11. The new script is in this worktree's `.claude/browser-checks/scripts/`
+* not done, candidates: F1 (Chrome's help on Windows); a "?" button of its own somewhere (the footer, the
+  grid config dialog); a key that leaves out the entries of a cell the grid does not have (no lookup
+  column: no lookup keys) - the list is per grid config, not per column; Shift+F10 is shown on a Mac too,
+  where browsers may send no context menu for it (not tried on a Mac)
+
 ## Considered, not done
 
 ## Candidates / not started

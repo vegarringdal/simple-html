@@ -15,7 +15,13 @@ const MAC_TEXTS = {
     'cell.multiline.hint': 'cell.multiline.hint.mac',
     'filterEditor.undo.tooltip': 'filterEditor.undo.tooltip.mac',
     'filterEditor.redo.tooltip': 'filterEditor.redo.tooltip.mac',
-    'columnSettings.detailForm.fields.hint': 'columnSettings.detailForm.fields.hint.mac'
+    'columnSettings.detailForm.fields.hint': 'columnSettings.detailForm.fields.hint.mac',
+    // the keyboard shortcuts help (shortcutHelp.ts): its menu entry, its hint and the names of the modifiers
+    'header.shortcuts.hint': 'header.shortcuts.hint.mac',
+    'shortcuts.hint': 'shortcuts.hint.mac',
+    'shortcuts.key.ctrl': 'shortcuts.key.ctrl.mac',
+    'shortcuts.key.alt': 'shortcuts.key.alt.mac',
+    'shortcuts.key.shift': 'shortcuts.key.shift.mac'
 } as const satisfies Partial<Record<TextId, TextId>>;
 
 /** a text that names a key, see MAC_TEXTS */

@@ -193,7 +193,10 @@ const fields = {
 function shownTexts(node: Node = document.body, texts: string[] = []): string[] {
     if (node.nodeType === Node.TEXT_NODE) {
         const text = node.textContent?.trim();
-        if (text) {
+        // a key of the keyboard shortcuts help that is a letter or a function key (Ctrl+C, F2) is shown as
+        // it is: the key, no text. The keys with a name have a text (shortcuts.key.*)
+        const keyCap = !!node.parentElement?.closest('kbd') && /^(F\d{1,2}|[A-Z])$/.test(text ?? '');
+        if (text && !keyCap) {
             texts.push(text);
         }
     }
@@ -432,6 +435,16 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     check();
     gridInterface.closeFind();
 
+    // the keyboard shortcuts help: its groups and keys, then a search that finds nothing. And the header
+    // menu's entry, its hint
+    gridInterface.openShortcutHelp();
+    check();
+    const shortcutSearch = document.querySelector('.shortcut-help-search') as HTMLInputElement;
+    shortcutSearch.value = 'zzz';
+    shortcutSearch.dispatchEvent(new Event('input', { bubbles: true }));
+    check();
+    (document.querySelector('dialog.shortcut-help .filter-editor-close') as HTMLElement).click();
+
     // the editor of the notes, and read-only in a readonly grid
     const notes = element.querySelector('input[data-attribute="notes"]') as HTMLInputElement;
     const pressKey = (target: Element, key: string) =>
@@ -479,7 +492,8 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     gridInterface.clearRanges();
 
     // on a Mac: the texts that name a key, `<id>.mac` - the hints of undo and redo, the find bar's
-    // previous, the hint of the editor of the notes, the tooltips of the filter editor's undo and redo
+    // previous, the hint of the editor of the notes, the tooltips of the filter editor's undo and redo,
+    // the modifiers of the keyboard shortcuts help and the hint of its menu entry
     const platform = vi.spyOn(navigator, 'platform', 'get').mockReturnValue('MacIntel');
     try {
         openRowMenu(element, 'age', 0);
@@ -494,6 +508,13 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
         gridInterface.openFilterEditor();
         check();
         clickIcon('«filterEditor.closeButton.tooltip»');
+        // the keyboard shortcuts help: the modifiers and its hint, and the hint of its menu entry
+        gridInterface.openShortcutHelp();
+        check();
+        (document.querySelector('dialog.shortcut-help .filter-editor-close') as HTMLElement).click();
+        openLabelMenu(element, 'age');
+        check();
+        gridInterface.closeMenu();
     } finally {
         platform.mockRestore();
     }

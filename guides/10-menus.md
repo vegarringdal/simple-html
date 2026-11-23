@@ -432,6 +432,7 @@ the `menus.row` hook still gets them, by their ids. A group row's number has no 
 | `header.format.decimalMark.comma` | Comma | a number field |
 | `header.format.percent` | Percent, a toggle: the number times 100 with ` %` | a number field |
 | `header.settings` | Column settings… - opens the grid config dialog on this column (`gridInterface.openColumnSettings(field)`): its display format, a text column's template and link, see [The grid config dialog](08-formatting.md#the-grid-config-dialog) | |
+| `header.shortcuts` | Keyboard shortcuts… - opens the keyboard shortcuts help (`gridInterface.openShortcutHelp()`), its hint the key that opens it anywhere in the grid: Ctrl+/ (⌘/ on a Mac). See [The keyboard shortcuts help](14-accessibility.md#the-keyboard-shortcuts-help) | `shortcutHelp` (the default) |
 | `header.aggregate` | Aggregate › - a submenu | |
 | `header.aggregate.sum` | Sum - a toggle with a ✓ when on: the column's sum in the group rows and the totals row, see [Aggregates](18-aggregates.md) | a number field |
 | `header.aggregate.avg` | Average, a toggle | a number field |

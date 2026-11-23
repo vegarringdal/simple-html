@@ -196,6 +196,29 @@ export type GridConfig = {
      */
     settingsButton?: boolean;
     /**
+     * the keyboard shortcuts help, default `true`: a dialog that lists the keys of the grid in groups -
+     * moving around, selecting, editing, find, the menus - with a search, the keys as the platform names
+     * them (⌘ on a Mac). The user opens it with `?` where the key types nothing (a readonly cell, a
+     * checkbox, a column header, a row number), Ctrl+/ (Cmd+/) anywhere in the grid - also while typing in
+     * a cell - and *Keyboard shortcuts…* in the header menu (`header.shortcuts`). Its texts are
+     * `shortcuts.*`, see the texts guide.
+     *
+     * `false` turns its keys and the menu entry off - for an app with a help of its own, or one that uses
+     * the keys itself. `gridInterface.openShortcutHelp()` still opens it. A lookup's dropdown grid has it
+     * `false`. See the accessibility guide, "The keyboard shortcuts help"
+     *
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     layout: { center: [{ fields: ['name'], width: 150 }] },
+     *     shortcutHelp: false // the app's own help button calls gridInterface.openShortcutHelp()
+     * };
+     * ```
+     */
+    shortcutHelp?: boolean;
+    /**
      * the whole grid is readonly, default `true`: no cell can be edited, and the row menu has no paste
      * or clear. Set `false` to edit; the column's `readonly` and the `isReadonly` hook
      * ({@link GridHooks}) can still make cells readonly, and `edit` says which of adding, changing and
@@ -1140,6 +1163,7 @@ export type ParsedGridOptions = GridOptions &
             | 'copyHeaders'
             | 'filterOperatorIndicator'
             | 'settingsButton'
+            | 'shortcutHelp'
             | 'placeholderRowCurrentEntityOnly'
             | 'groupAggregates'
             | 'totalsRow'
