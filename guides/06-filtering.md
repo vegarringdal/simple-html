@@ -166,6 +166,14 @@ In the grid:
   the value list, the row menu's "Filter:" and the filter editor. Its Match case is shown on, greyed
   out, with the hint *(always)*; the filter editor's toggle too. For a text column (and a lookup column),
   `true` on another type throws a `TypeError` when the grid is made.
+- **Aa in the header**: a header filter that matches case - `filterCaseSensitive`, or Match case on -
+  shows **Aa** before its operator, `Aa =`, in the link colour, so it is seen before anything is typed;
+  its name for a screen reader says "match case" (`filter.indicator.matchCase`). The operator choice (a
+  click on it, or F4) has **Match case** at its end, under *Filter as you type*. The column's header
+  filter needs its operator indicator for it (`filterOperatorIndicator`, a column of 60px or more).
+- **The grid config dialog**, tab *Header filter* of a text column: a *Match case* checkbox under *Filter
+  as you type* - Apply sets it as the menu does; checked and greyed out when the column always matches
+  case, its hint saying why. Reset column turns it off (on for `filterCaseSensitive`).
 - **Aa** in the filter editor, on each condition of a text field: pressed (filled) while it matches
   case, see [the filter editor](#the-filter-editor).
 - The footer shows **Aa** after the value of a chip that matches case, `getFilterString()` keeps the

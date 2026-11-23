@@ -383,6 +383,9 @@ const DEFAULTS = {
     // every column but a checkbox, beside its operator: the header filter filters while the user types
     'columnSettings.filterOnType': 'Filter as you type',
     'columnSettings.filterOnType.hint': 'After a short pause, no Enter needed',
+    'columnSettings.matchCase': 'Match case',
+    'columnSettings.matchCase.hint': 'Ann does not find ANN - the header shows Aa beside the operator',
+    'columnSettings.matchCase.always': 'Always for this column: filterCaseSensitive in its config',
     // every column: its colour rules (ColumnFormat.rules). A rule's operators have the header filter's
     // names (filter.operator.*, filter.filter.isBlank / isNotBlank), its label and value inputs the filter
     // editor's (filterEditor.label.*). {number} is the rule's place, 1 the first; {value} the value as typed
@@ -780,6 +783,8 @@ const DEFAULTS = {
     // screen reader, its tooltip - {operator} is the operator as Operator › names it - and the symbol of
     // each operator
     'filter.indicator': 'Operator: {operator}',
+    'filter.indicator.case': 'Aa',
+    'filter.indicator.matchCase': '{operator}, match case',
     'filter.indicator.tooltip': 'Operator: {operator} (F4)',
     'filter.indicator.EQUAL': '=',
     'filter.indicator.NOT_EQUAL_TO': '≠',

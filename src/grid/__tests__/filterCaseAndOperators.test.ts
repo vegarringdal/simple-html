@@ -678,3 +678,88 @@ describe('filter editor - Match case (Aa) and the operators of the field', () =>
         expect(document.querySelector('simple-html-date')).not.toBeNull();
     });
 });
+
+describe('Match case shown in the header (Aa), in the operator choice and the dialog', () => {
+    /** the operator indicator of a column's header filter, and its input */
+    const indicatorOf = (element: HTMLElement, field: string) =>
+        headerFilterInput(element as never, field).parentElement?.querySelector(
+            '.simple-html-grid-filter-operator'
+        ) as HTMLElement;
+    const shown = (element: HTMLElement, field: string) => {
+        const indicator = indicatorOf(element, field);
+        return {
+            aa: indicator.querySelector('.simple-html-grid-filter-case')?.textContent ?? null,
+            name: indicator.getAttribute('aria-label'),
+            wide: indicator.classList.contains('simple-html-grid-filter-operator-case'),
+            room: headerFilterInput(element as never, field).classList.contains('simple-html-grid-cell-filter-input-case')
+        };
+    };
+
+    it("expect Aa beside the operator of a column that always matches case, its name saying so, the input's room", async () => {
+        const { element } = await mount({ city: { filterCaseSensitive: true } });
+        expect(shown(element, 'city')).toEqual({ aa: 'Aa', name: 'Operator: Equal, match case', wide: true, room: true });
+        expect(shown(element, 'name')).toEqual({ aa: null, name: 'Operator: Equal', wide: false, room: false });
+        // not on a number column, case is a text's
+        expect(indicatorOf(element, 'age').querySelector('.simple-html-grid-filter-case')).toBeNull();
+    });
+
+    it('expect Match case at the end of the operator choice: on - Aa, the filter matches case - and off again', async () => {
+        const { element, datasource, gridInterface } = await mount();
+        typeInHeaderFilter(element, 'name', 'Ann');
+        expect(names(datasource)).toEqual(['Ann', 'ANN']);
+
+        indicatorOf(element, 'name').click();
+        menuEntry('filter.matchCase').click();
+        expect(names(datasource)).toEqual(['Ann']);
+        expect(gridInterface.getState().headerFilters.name?.caseSensitive).toBe(true);
+        expect(shown(element, 'name').aa).toBe('Aa');
+
+        indicatorOf(element, 'name').click();
+        expect(menuEntry('filter.matchCase').getAttribute('aria-checked')).toBe('true');
+        menuEntry('filter.matchCase').click();
+        expect(names(datasource)).toEqual(['Ann', 'ANN']);
+        expect(shown(element, 'name').aa).toBeNull();
+    });
+
+    it("expect the dialog's Header filter tab to have Match case: Apply sets it, greyed out when always, Reset column off", async () => {
+        const { element, datasource, gridInterface } = await mount({ city: { filterCaseSensitive: true } });
+        typeInHeaderFilter(element, 'name', 'Ann');
+        const dialog = () => document.querySelector('dialog.column-settings') as HTMLDialogElement;
+        const box = () => dialog().querySelector('.column-settings-match-case') as HTMLInputElement | null;
+        const apply = () =>
+            (
+                Array.from(dialog().querySelectorAll('button')).find(
+                    (b) => b.textContent?.trim() === 'Apply'
+                ) as HTMLButtonElement
+            ).click();
+
+        gridInterface.openColumnSettings('name');
+        expect(box()?.checked).toBe(false);
+        box()?.click();
+        apply();
+        expect(names(datasource)).toEqual(['Ann']);
+        expect(shown(element, 'name').aa).toBe('Aa');
+
+        // always: checked, can not change; its hint says why
+        gridInterface.openColumnSettings('city');
+        expect([box()?.checked, box()?.disabled]).toEqual([true, true]);
+        expect(dialog().querySelector('#' + box()?.getAttribute('aria-describedby'))?.textContent).toContain(
+            'filterCaseSensitive'
+        );
+        // a number column has none
+        gridInterface.openColumnSettings('age');
+        expect(box()).toBeNull();
+
+        // Reset column: as the column starts - off
+        gridInterface.openColumnSettings('name');
+        expect(box()?.checked).toBe(true);
+        (
+            Array.from(dialog().querySelectorAll('button')).find(
+                (b) => b.textContent?.trim() === 'Reset column'
+            ) as HTMLButtonElement
+        ).click();
+        expect(box()?.checked).toBe(false);
+        apply();
+        expect(names(datasource)).toEqual(['Ann', 'ANN']);
+    });
+});

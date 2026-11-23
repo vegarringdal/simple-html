@@ -1426,6 +1426,26 @@
     user-select: none;
 }
 
+/* a header filter that matches case (filterCaseSensitive, Match case): Aa before the symbol, in the
+   accent colour - wider, and the input keeps that much clear */
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-filter-operator.simple-html-grid-filter-operator-case {
+    width: 3.4em;
+    gap: 3px;
+}
+
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-filter-case {
+    font-weight: var(--simple-html-grid-font-weight-header);
+    color: var(--simple-html-grid-link-color);
+}
+
+.simple-html-grid .simple-html-grid-col-cell input.simple-html-grid-cell-filter-input-operator-right.simple-html-grid-cell-filter-input-case {
+    padding-right: calc(3.4em + 5px);
+}
+
+.simple-html-grid .simple-html-grid-col-cell input.simple-html-grid-cell-filter-input-operator-left.simple-html-grid-cell-filter-input-case {
+    padding-left: calc(3.4em + 5px);
+}
+
 .simple-html-grid .simple-html-grid-col-cell .simple-html-grid-filter-operator-right {
     right: 2px;
 }

@@ -346,6 +346,9 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
     // Multiline: its badge
     toggleText('columnSettings.multiline');
     check();
+    // a column that always matches case (filterCaseSensitive): its Match case greyed out, its hint
+    option('«Country»').click();
+    check();
     // a number column: its format picker and the menu of the formats - one picked, the badge
     option('«Age»').click();
     check();

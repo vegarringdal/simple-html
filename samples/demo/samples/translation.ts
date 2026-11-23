@@ -348,6 +348,9 @@ const norwegian: Record<TextId, string> = {
     'columnSettings.operator.hint': 'Standard: {operator}',
     'columnSettings.filterOnType': 'Filtrer mens du skriver',
     'columnSettings.filterOnType.hint': 'Etter en kort pause, uten Enter',
+    'columnSettings.matchCase': 'Skill mellom store og små bokstaver',
+    'columnSettings.matchCase.hint': 'Ann finner ikke ANN - kolonneoverskriften viser Aa ved operatoren',
+    'columnSettings.matchCase.always': 'Alltid for denne kolonnen: filterCaseSensitive i oppsettet',
     'columnSettings.rules': 'Fargeregler',
     'columnSettings.rules.hint': 'Den første regelen som passer, farger cellen. Verdien sammenlignes som i kolonnefilteret',
     'columnSettings.rules.empty': 'Ingen regler',
@@ -697,6 +700,8 @@ const norwegian: Record<TextId, string> = {
     'filter.placeholder.daysUntil': 'Dager fra i dag',
     // the operator beside a header filter: its name, its tooltip, the symbols
     'filter.indicator': 'Operator: {operator}',
+    'filter.indicator.case': 'Aa',
+    'filter.indicator.matchCase': '{operator}, skiller store og små bokstaver',
     'filter.indicator.tooltip': 'Operator: {operator} (F4)',
     'filter.indicator.EQUAL': '=',
     'filter.indicator.NOT_EQUAL_TO': '≠',

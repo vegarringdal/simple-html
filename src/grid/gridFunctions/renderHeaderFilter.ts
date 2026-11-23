@@ -175,6 +175,10 @@ export function renderHeaderFilter(
                 let inputClass = `simple-html-grid-cell-filter-input filter-cellpos-${colType}-${row}-${column}-${celno}`;
                 if (indicator) {
                     inputClass += ` simple-html-grid-cell-filter-input-operator-${indicator.side}`;
+                    // Aa beside the symbol: a wider indicator, more room kept clear
+                    if (indicator.matchCase) {
+                        inputClass += ' simple-html-grid-cell-filter-input-case';
+                    }
                 }
 
                 render(

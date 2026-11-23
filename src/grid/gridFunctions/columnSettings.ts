@@ -42,10 +42,11 @@ import type { Grid } from '../grid';
 import type { GridState } from '../gridConfig';
 import type { MenuItem } from '../gridMenus';
 import { numberOverrideOf, overrideNumberText, zeroText } from './cellText';
-import { defaultHeaderOperator, headerFilterType, headerOperators } from './columnFilterOptions';
+import { defaultHeaderOperator, headerFilterType, headerOperators, isAlwaysCaseSensitive } from './columnFilterOptions';
 import { previewFill, valueFillProblems, valueFillSettings } from './columnSettingsBars';
 import { colorRuleSettings, colorRulesHaveProblem } from './columnSettingsRules';
 import { contextMenuAttributes } from './contextMenuAttributes';
+import { setHeaderFilterCaseSensitive } from './contextmenuFilter';
 import {
     applyDetailForm,
     type DetailFormDraft,
@@ -57,7 +58,7 @@ import { keepDialogInView, moveDialog, resizeHandles, showDialog } from './dialo
 import { defaultFilterOnType, isFilterOnType, setFilterOnType } from './filterOnType';
 import { formatSubmenu, NUMBER_SAMPLE, PERCENT_SAMPLE } from './formatSubmenu';
 import { getColumnLabel, getConfigColumnLabel } from './getColumnLabel';
-import { getHeaderFilterOperator } from './getHeaderFilterOperator';
+import { getHeaderFilterOperator, isHeaderFilterCaseSensitive } from './getHeaderFilterOperator';
 import { getLayoutFields } from './getLayoutFields';
 import { configTabs, type GridConfigTab, tabId, tabList, tabPanelId } from './gridConfigTabs';
 import { gridText } from './gridText';
@@ -147,6 +148,11 @@ interface ColumnSettings {
      * opened (isFilterOnType). A checkbox column is left out, as for `operators`
      */
     filterOnType: Record<string, boolean>;
+    /**
+     * Match case of each text column's header filter (isHeaderFilterCaseSensitive): the one in use when it
+     * opened. A column that always matches case (`filterCaseSensitive`) is in it, `true` - it can not change
+     */
+    caseSensitive: Record<string, boolean>;
     /** the column shown on the right */
     field: string;
     /** the tab shown: the columns' settings, or the detail form's */
@@ -230,6 +236,9 @@ export function openColumnSettings(ctx: Grid, field?: string, tab: GridConfigTab
         ),
         filterOnType: Object.fromEntries(
             fields.filter((name) => hasOperator(ctx, name)).map((name) => [name, isFilterOnType(ctx, name)])
+        ),
+        caseSensitive: Object.fromEntries(
+            fields.filter((name) => takesMatchCase(ctx, name)).map((name) => [name, isHeaderFilterCaseSensitive(ctx, name)])
         ),
         field: field !== undefined && fields.includes(field) ? field : fields[0],
         tab,
@@ -593,6 +602,9 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                 settings.operators[name] = getHeaderFilterOperator(ctx, name);
                 settings.filterOnType[name] = isFilterOnType(ctx, name);
             }
+            if (!Object.hasOwn(settings.caseSensitive, name) && takesMatchCase(ctx, name)) {
+                settings.caseSensitive[name] = isHeaderFilterCaseSensitive(ctx, name);
+            }
         }
         // a header filter whose column reads its text in another way now (filter as shown): it runs again
         refilterChangedFormats(ctx, before);
@@ -607,6 +619,12 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         for (const [name, on] of Object.entries(settings.filterOnType)) {
             if (on !== isFilterOnType(ctx, name)) {
                 setFilterOnType(ctx, name, on);
+            }
+        }
+        // Match case: state, as the toggle of the filter menu sets it - the filter runs again with it
+        for (const [name, on] of Object.entries(settings.caseSensitive)) {
+            if (on !== isHeaderFilterCaseSensitive(ctx, name)) {
+                setHeaderFilterCaseSensitive(ctx, name, on);
             }
         }
         // the Detail form tab's
@@ -926,6 +944,40 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
     };
 
     /**
+     * Under Filter as you type, on a text column: Match case - `Ann` does not find `ANN`. Checked and
+     * greyed out when the column always matches case (`filterCaseSensitive`), its hint says so. Apply sets
+     * it as the filter menu's toggle does; the header shows Aa beside the operator while it is on
+     */
+    const matchCaseSettings = () => {
+        if (!Object.hasOwn(settings.caseSensitive, field)) {
+            return nothing;
+        }
+        const always = isAlwaysCaseSensitive(
+            gridInterface.__getGridConfig().columns[field],
+            headerFilterType(gridInterface, field)
+        );
+        const hintId = idOf(ctx, 'match-case-hint');
+        return html`<div class="column-settings-field">
+            <label class="column-settings-check">
+                <input
+                    type="checkbox"
+                    class="column-settings-match-case"
+                    aria-describedby=${hintId}
+                    .checked=${live(settings.caseSensitive[field] === true)}
+                    ?disabled=${always}
+                    @change=${(event: Event) => {
+                        settings.caseSensitive[field] = (event.target as HTMLInputElement).checked;
+                        update();
+                    }}
+                /><span>${text('columnSettings.matchCase')}</span>
+            </label>
+            <div class="column-settings-hint" id=${hintId}>
+                ${text(always ? 'columnSettings.matchCase.always' : 'columnSettings.matchCase.hint')}
+            </div>
+        </div>`;
+    };
+
+    /**
      * The operator of the column's header filter: a picker of the operators the column offers (Operator ›),
      * the one picked checked; just its name when the column offers one. The column's default under it,
      * Filter as you type after it
@@ -954,7 +1006,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                     <div class="column-settings-input-row">${name(operator)}</div>
                     ${hint}
                 </div>
-                ${filterOnTypeSettings()}`;
+                ${filterOnTypeSettings()} ${matchCaseSettings()}`;
         }
         return html`<div class="column-settings-field">
             <span class="column-settings-label">${label}</span>
@@ -986,7 +1038,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
             </div>
             ${hint}
         </div>
-        ${filterOnTypeSettings()}`;
+        ${filterOnTypeSettings()} ${matchCaseSettings()}`;
     };
 
     /**
@@ -1656,6 +1708,9 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                                 settings.operators[field] = startOperator(ctx, field);
                                 settings.filterOnType[field] = defaultFilterOnType(ctx, field);
                             }
+                            if (Object.hasOwn(settings.caseSensitive, field)) {
+                                settings.caseSensitive[field] = startCaseSensitive(ctx, field);
+                            }
                             // a calculated column the grid starts with: its formula and label too
                             const startColumn = gridInterface.__getStartCalculated()[field];
                             if (startColumn && isDraftCalculated(field)) {
@@ -1686,6 +1741,9 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                             for (const name of Object.keys(settings.operators)) {
                                 settings.operators[name] = startOperator(ctx, name);
                                 settings.filterOnType[name] = defaultFilterOnType(ctx, name);
+                            }
+                            for (const name of Object.keys(settings.caseSensitive)) {
+                                settings.caseSensitive[name] = startCaseSensitive(ctx, name);
                             }
                             update();
                         }}
@@ -1757,4 +1815,20 @@ function createDialog(ctx: Grid): HTMLDialogElement {
     document.body.appendChild(dialog);
     ctx.columnSettings = dialog;
     return dialog;
+}
+
+/**
+ * true for a column whose header filter has Match case: a text column (a lookup column too) with an
+ * operator - the dialog's checkbox
+ */
+function takesMatchCase(ctx: Grid, field: string): boolean {
+    return hasOperator(ctx, field) && headerFilterType(ctx.gridInterface, field) === 'text';
+}
+
+/**
+ * Match case as the column starts, as startOperator is the column's operator: on for a column that always
+ * matches case (`filterCaseSensitive`), else off - Reset column and Reset all
+ */
+function startCaseSensitive(ctx: Grid, field: string): boolean {
+    return isAlwaysCaseSensitive(ctx.gridInterface.__getGridConfig().columns[field], headerFilterType(ctx.gridInterface, field));
 }

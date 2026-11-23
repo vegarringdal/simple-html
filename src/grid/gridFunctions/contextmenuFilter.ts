@@ -5,7 +5,7 @@ import { and, type FilterExpression, type FilterOperator, isFilterGroup, where }
 import { isBlank } from '../../datasource/isBlank';
 import type { TextId } from '../../texts';
 import type { Grid } from '../grid';
-import type { MenuBlock, MenuContext, MenuEntry } from '../gridMenus';
+import type { MenuBlock, MenuContext, MenuEntry, MenuItem } from '../gridMenus';
 import { clearAllColumnFilters } from './clearAllColumnFilters';
 import type { ColType } from './colType';
 import { columnOperators, headerFilterType, headerOperators, isAlwaysCaseSensitive } from './columnFilterOptions';
@@ -79,19 +79,6 @@ function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
 
     // the operator picked before (state), else the column's, else the type's default: the range block's
     const current = getHeaderFilterOperator(ctx, attribute);
-    // "Match case": always for a filterCaseSensitive column, the toggle can not turn it off
-    const caseSensitive = isHeaderFilterCaseSensitive(ctx, attribute);
-    const alwaysCaseSensitive = isAlwaysCaseSensitive(column, type);
-
-    /**
-     * "Match case" is state too, the filter runs again with it: as picking an operator does
-     * (setHeaderFilterOperator)
-     */
-    const setCaseSensitive = () => {
-        ctx.gridInterface.__setHeaderFilterCaseSensitive(attribute, !caseSensitive);
-        filterCallback(ctx, ctx.gridInterface.__getHeaderFilter(attribute)?.value ?? null, attribute);
-    };
-
     const text = (id: TextId) => gridText(ctx, id);
 
     // every one of them, shown when the column offers it - not on a boolean column: its header filter is
@@ -111,17 +98,8 @@ function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
                     // the operator in use has a check mark. Left out with none shown: a boolean's
                     entries: operatorItems
                 },
-                {
-                    // a toggle with a check mark, for a text column. On and greyed out when the column
-                    // always matches case (filterCaseSensitive), with the hint "always"
-                    id: 'filter.matchCase',
-                    label: text('filter.matchCase'),
-                    hint: alwaysCaseSensitive ? text('filter.matchCase.hint') : undefined,
-                    visible: () => type === 'text',
-                    selected: () => caseSensitive,
-                    disabled: () => alwaysCaseSensitive,
-                    action: setCaseSensitive
-                },
+                // a toggle with a check mark, for a text column - the operator choice has it too
+                matchCaseItem(ctx, attribute),
                 // a toggle with a check mark, not on a boolean column (its checkbox filters on a click)
                 filterOnTypeItem(ctx, attribute),
                 {
@@ -749,4 +727,41 @@ function withoutField(filter: FilterExpression | null, field: string): FilterExp
         }
     }
     return { group: filter.group, children };
+}
+
+/**
+ * "Match case" of a column's header filter, a toggle with a check mark - the filter menu's Filter › and
+ * the operator choice of the header (filterOperatorIndicator.ts) have it. For a text column (a lookup
+ * column too). On and greyed out when the column always matches case (`filterCaseSensitive`), with the
+ * hint "always"
+ */
+export function matchCaseItem(ctx: Grid, attribute: string): MenuItem {
+    const type = headerFilterType(ctx.gridInterface, attribute);
+    const always = isAlwaysCaseSensitive(ctx.gridInterface.__getGridConfig().columns[attribute], type);
+    const on = isHeaderFilterCaseSensitive(ctx, attribute);
+    return {
+        id: 'filter.matchCase',
+        label: gridText(ctx, 'filter.matchCase'),
+        hint: always ? gridText(ctx, 'filter.matchCase.hint') : undefined,
+        visible: () => type === 'text',
+        selected: () => on,
+        disabled: () => always,
+        action: () => setHeaderFilterCaseSensitive(ctx, attribute, !on)
+    };
+}
+
+/**
+ * "Match case" of a column's header filter on or off: state (`GridState.headerFilters[field].caseSensitive`),
+ * and the filter runs again with it - as picking an operator does. The header shows it (Aa beside the
+ * operator). Nothing on a column that always matches case
+ */
+export function setHeaderFilterCaseSensitive(ctx: Grid, attribute: string, on: boolean) {
+    const type = headerFilterType(ctx.gridInterface, attribute);
+    if (isAlwaysCaseSensitive(ctx.gridInterface.__getGridConfig().columns[attribute], type)) {
+        return;
+    }
+    ctx.gridInterface.__setHeaderFilterCaseSensitive(attribute, on);
+    filterCallback(ctx, ctx.gridInterface.__getHeaderFilter(attribute)?.value ?? null, attribute);
+    // the header shows it: Aa beside the operator
+    rebuildHeaderColumns(ctx);
 }

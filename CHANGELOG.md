@@ -1332,6 +1332,20 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Match case seen in the header, set in the dialog (user request)
+
+##### Added
+- A header filter that matches case - `ColumnConfig.filterCaseSensitive`, or Match case on - shows **Aa**
+  before its operator in the header (`Aa =`), its name for a screen reader "…, match case". New texts
+  `filter.indicator.case`, `filter.indicator.matchCase`; classes `.simple-html-grid-filter-case`,
+  `.simple-html-grid-filter-operator-case`.
+- The operator choice of the header filter (a click on the operator, F4) has *Match case* at its end.
+- The grid config dialog's *Header filter* tab: a *Match case* checkbox for a text column (greyed out when
+  the config says always). New texts `columnSettings.matchCase`, `.matchCase.hint`, `.matchCase.always`.
+
+##### Fixed
+- Turning Match case on or off renders the header again (it shows it now).
+
 #### The header over the rows on a phone (user request)
 
 ##### Fixed

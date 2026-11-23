@@ -709,6 +709,9 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.operator.hint` | `Default: {operator}` | under it: the operator the column starts with, its name |
 | `columnSettings.filterOnType` | `Filter as you type` | the checkbox after the operator, every column but a checkbox |
 | `columnSettings.filterOnType.hint` | `After a short pause, no Enter needed` | under it |
+| `columnSettings.matchCase` | `Match case` | the dialog's checkbox of a text column's header filter |
+| `columnSettings.matchCase.hint` | `Ann does not find ANN - the header shows Aa beside the operator` | under it |
+| `columnSettings.matchCase.always` | `Always for this column: filterCaseSensitive in its config` | under it when the column always matches case |
 | `columnSettings.rules` | `Colour rules` | the heading of the column's colour rules, every column, and their name for a screen reader. A rule's operator picker has the header filter's names of the operators (`filter.operator.*`, `filter.filter.isBlank`, `filter.filter.isNotBlank`), its label and the value inputs the filter editor's (`filterEditor.label.*`) |
 | `columnSettings.rules.hint` | `The first rule that matches colours the cell. The value is compared as the header filter compares it` | under it |
 | `columnSettings.rules.empty` | `No rules` | a column without rules |
@@ -1006,6 +1009,8 @@ longer one is cut off.
 | id | English | shown |
 | --- | --- | --- |
 | `filter.indicator` | `Operator: {operator}` | the indicator's name for a screen reader, and the description of the header filter's input; the tooltip of one that can not be clicked (a column with one operator) |
+| `filter.indicator.case` | `Aa` | in the header, before the operator of a header filter that matches case |
+| `filter.indicator.matchCase` | `{operator}, match case` | the operator's name in `filter.indicator` when it matches case |
 | `filter.indicator.tooltip` | `Operator: {operator} (F4)` | the tooltip of the indicator: a click, or F4 in the filter, opens the operator choice |
 | `filter.indicator.EQUAL` | `=` | Equal |
 | `filter.indicator.NOT_EQUAL_TO` | `≠` | Not Equal |

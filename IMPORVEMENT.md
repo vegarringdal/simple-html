@@ -4892,6 +4892,23 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * "Run workflow" shows for a workflow on the default branch only: next.yml has to be on master too, as
   release.yml and beta.yml (see *Questions for the user*)
 
+### Match case seen in the header (user request)
+
+* the user: "Important we also have a getFilter, in case we want to send it to backend, then generate sql
+  string. Also need to be able to set in config if filter is case sensitive. Dunno how we will show that
+  in header so its obvious"
+* there already: `datasource.getFilter()` (the filter as JSON) and `toSqlWhere()` of
+  `@simple-html/grid/sql` - it keeps `caseSensitive` (no LOWER()); `ColumnConfig.filterCaseSensitive`. New:
+  seeing it
+* filterOperatorIndicator.ts: `Aa` before the symbol while isHeaderFilterCaseSensitive, a wider indicator
+  and input padding (`-case` classes), the name "…, match case"; the operator choice ends with Match case.
+  contextmenuFilter.ts: matchCaseItem / setHeaderFilterCaseSensitive shared - the setter now rebuilds the
+  header (it did not: nothing showed it before). columnSettings.ts: the `caseSensitive` draft, its checkbox,
+  Apply, Reset column / all (startCaseSensitive: the config's, as startOperator)
+* not shown without the operator indicator (`filterOperatorIndicator: false`, a column under 60px)
+* tests: filterCaseAndOperators.test.ts (Aa, its name, the choice, the dialog), the choice's entries in
+  filterOperatorIndicator / filterOnType tests, texts
+
 ### The header over the rows on a phone (user request)
 
 * the user, a screenshot from Brave on Android: "header/row is not in sync, header prob need a block same

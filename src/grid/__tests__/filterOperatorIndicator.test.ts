@@ -88,6 +88,8 @@ const RANGE_CHOICE = [
 ];
 /** the end of every choice, under the operators: a line and the toggle of filter as you type (filterOnType.ts) */
 const CHOICE_END = ['filter.filterOnTypeSeparator', 'filter.filterOnType'];
+/** a text column's choice ends with Match case too */
+const TEXT_CHOICE_END = [...CHOICE_END, 'filter.matchCase'];
 
 const names = (element: GridElement) =>
     ((element as any).grid.gridInterface.getDatasource() as Datasource).getDataRows().map((row) => row.name);
@@ -231,7 +233,7 @@ describe('operator indicator - a click opens the operator choice', () => {
         const { element } = await mount({}, { name: { operator: 'CONTAINS' } });
         (indicatorOf(element, 'name') as HTMLElement).click();
         expect(openMenus()).toHaveLength(1);
-        expect(menuIds()).toEqual([...TEXT_CHOICE, ...CHOICE_END]);
+        expect(menuIds()).toEqual([...TEXT_CHOICE, ...TEXT_CHOICE_END]);
         expect(checkedIds()).toEqual(['filter.operator.contains']);
 
         (indicatorOf(element, 'born') as HTMLElement).click();
@@ -322,7 +324,7 @@ describe('operator indicator - a click opens the operator choice', () => {
         const indicator = indicatorOf(element, 'name') as HTMLElement;
         indicator.dispatchEvent(new PointerEvent('click', { bubbles: true, cancelable: true, pointerType: 'touch' }));
         expect(openMenus()).toHaveLength(1);
-        expect(menuIds()).toEqual([...TEXT_CHOICE, ...CHOICE_END]);
+        expect(menuIds()).toEqual([...TEXT_CHOICE, ...TEXT_CHOICE_END]);
         expect(document.activeElement).not.toBe(headerFilterInput(element, 'name'));
     });
 
@@ -475,7 +477,7 @@ describe('operator indicator - turned off, and narrow columns', () => {
         name.focus();
         expect(key(name, 'F4').defaultPrevented).toBe(true);
         expect(openMenus()).toHaveLength(1);
-        expect(menuIds()).toEqual([...TEXT_CHOICE, ...CHOICE_END]);
+        expect(menuIds()).toEqual([...TEXT_CHOICE, ...TEXT_CHOICE_END]);
         // placed under the cell: its rect was measured
         expect(place).toHaveBeenCalled();
     });

@@ -1,4 +1,4 @@
-import { html, type TemplateResult } from 'lit-html';
+import { html, nothing, type TemplateResult } from 'lit-html';
 import type { FilterOperator } from '../../datasource/filterExpression';
 import type { TextId } from '../../texts';
 import type { Grid } from '../grid';
@@ -6,8 +6,9 @@ import type { MenuContext, MenuEntry } from '../gridMenus';
 import { sectionColumns } from './cellRowKeyNavigationCellRowHandler';
 import type { ColType } from './colType';
 import { headerFilterType, headerOperators } from './columnFilterOptions';
+import { matchCaseItem } from './contextmenuFilter';
 import { filterOnTypeItem } from './filterOnType';
-import { getHeaderFilterOperator } from './getHeaderFilterOperator';
+import { getHeaderFilterOperator, isHeaderFilterCaseSensitive } from './getHeaderFilterOperator';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 import { HEADER_OPERATOR_TEXTS, headerOperatorItems } from './headerOperatorMenu';
@@ -23,7 +24,10 @@ import { placeAt, showMenu } from './showMenu';
  *
  * A click or a tap on it opens the operator choice under it: the items of the filter menu's
  * Filter › Operator ›, the operator in use checked, and picking one does what Operator › does
- * (headerOperatorMenu.ts) - then, under a line, the toggle "Filter as you type" (filterOnType.ts). F4
+ * (headerOperatorMenu.ts) - then, under a line, the toggles "Filter as you type" (filterOnType.ts) and,
+ * on a text column, "Match case" (matchCaseItem). A header filter that matches case - the column's
+ * `filterCaseSensitive`, or Match case on - shows **Aa** before the symbol (`filter.indicator.case`), and
+ * its name says so (`filter.indicator.matchCase`): it is seen before anything is typed. F4
  * in the header filter opens it too. A column that offers one operator only shows it, but it can not be
  * clicked: there is nothing to choose.
  */
@@ -62,6 +66,8 @@ export interface OperatorIndicator {
     id: string;
     /** the button - a span for a column with one operator - to render after the input */
     template: TemplateResult;
+    /** true when the header filter matches case: `Aa` before the symbol, the indicator is wider */
+    matchCase: boolean;
 }
 
 /**
@@ -96,9 +102,21 @@ export function operatorIndicator(
     // a number's value is on the right, a date is typed from the left - but it reads "≥ 2026-01-01"
     const side = type === 'text' ? 'right' : 'left';
     const id = `${cell.id}-operator`;
-    const className = `simple-html-grid-filter-operator simple-html-grid-filter-operator-${side}`;
-    // its name for a screen reader: the operator as Operator › names it
-    const name = gridText(ctx, 'filter.indicator', { operator: operatorName(ctx, operator) });
+    // matching case (ColumnConfig.filterCaseSensitive, or Match case on): Aa before the symbol
+    const matchCase = type === 'text' && isHeaderFilterCaseSensitive(ctx, attribute);
+    const className = `simple-html-grid-filter-operator simple-html-grid-filter-operator-${side}${
+        matchCase ? ' simple-html-grid-filter-operator-case' : ''
+    }`;
+    // its name for a screen reader: the operator as Operator › names it - and that it matches case
+    const operatorText = matchCase
+        ? gridText(ctx, 'filter.indicator.matchCase', { operator: operatorName(ctx, operator) })
+        : operatorName(ctx, operator);
+    const name = gridText(ctx, 'filter.indicator', { operator: operatorText });
+    const content = html`${
+        matchCase
+            ? html`<span class="simple-html-grid-filter-case" aria-hidden="true">${gridText(ctx, 'filter.indicator.case')}</span>`
+            : nothing
+    }${gridText(ctx, symbol)}`;
 
     if (!canChooseOperator(ctx, attribute)) {
         // nothing to choose: the symbol, its name as its tooltip. Hidden from a screen reader, the input
@@ -106,8 +124,9 @@ export function operatorIndicator(
         return {
             side,
             id,
+            matchCase,
             template: html`<span class=${className} id=${id} title=${name} aria-label=${name} aria-hidden="true"
-                >${gridText(ctx, symbol)}</span
+                >${content}</span
             >`
         };
     }
@@ -115,6 +134,7 @@ export function operatorIndicator(
     return {
         side,
         id,
+        matchCase,
         template: html`<button
             type="button"
             class=${className}
@@ -122,7 +142,7 @@ export function operatorIndicator(
             tabindex="-1"
             aria-haspopup="menu"
             aria-label=${name}
-            title=${gridText(ctx, 'filter.indicator.tooltip', { operator: operatorName(ctx, operator) })}
+            title=${gridText(ctx, 'filter.indicator.tooltip', { operator: operatorText })}
             @mousedown=${(event: MouseEvent) => {
                 // the focus stays where it is, the click below puts it in the input
                 event.preventDefault();
@@ -140,7 +160,7 @@ export function operatorIndicator(
                 openOperatorChoice(ctx, cell, attribute, event.currentTarget as HTMLElement);
             }}
         >
-            ${gridText(ctx, symbol)}
+            ${content}
         </button>`
     };
 }
@@ -177,7 +197,9 @@ export function openOperatorChoice(ctx: Grid, cell: HTMLCellElement, attribute: 
     const entries: MenuEntry[] = [
         ...headerOperatorItems(ctx, attribute),
         { type: 'separator', id: 'filter.filterOnTypeSeparator' },
-        filterOnTypeItem(ctx, attribute)
+        filterOnTypeItem(ctx, attribute),
+        // a text column: Match case, as Filter › has it
+        matchCaseItem(ctx, attribute)
     ];
     showMenu(ctx, entries, context, placeAt(anchor));
 }

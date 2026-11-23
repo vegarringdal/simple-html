@@ -265,7 +265,7 @@ describe('filter as you type - on and off', () => {
     it('expect the toggle at the bottom of the operator choice, under a line: a ✓ while it is on, state', async () => {
         const { element, datasource, gridInterface } = await mount({});
         indicator(element, 'name').click();
-        expect(menuIds().slice(-2)).toEqual(['filter.filterOnTypeSeparator', 'filter.filterOnType']);
+        expect(menuIds().slice(-3)).toEqual(['filter.filterOnTypeSeparator', 'filter.filterOnType', 'filter.matchCase']);
         const item = menuEntry('filter.filterOnType');
         expect(item.textContent?.trim()).toContain('Filter as you type');
         expect(item.getAttribute('aria-checked')).toEqual('false');
