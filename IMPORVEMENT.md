@@ -4352,6 +4352,307 @@ injection".
   settings of a new calculated column before Apply (the format / filter helpers read the datasource);
   renaming an applied calculated column; more functions (DAY, WEEKDAY, text functions, a date + days);
   a calculated value in a lookup's label; a backend computing it (the SQL guide shows a generated column)
+### Quick dates: Today, This week, Last month ... one click on a date column (user request)
+
+The user: one click for the date ranges filtered on all day in an ERP - Today, Yesterday, This week, Last
+week, This month, Last month, This quarter, Last quarter, This year, Last year, Last 7 days, Last 30 days,
+Next 7 days, maybe Overdue - on date and datetime columns.
+
+* **where**: a block of buttons, `filter.dates`, under the range block of a date column's filter menu, as
+  wide (220px), two columns - this one and the one before side by side - 24px buttons (on touch too: the
+  block stays compact, 7 rows). One click filters and closes the menu, no Apply: it is no draft. Chosen over
+  a submenu (`Filter › Dates ›`): seen at once, one tap on a phone (a submenu is two), and it is next to the
+  range block that makes the other ranges. The one in use filled with the accent colour (`aria-current`), the
+  tooltip of a button its days as the field writes a date (`2026-11-16 – 2026-11-22`, a datetime's seconds,
+  Overdue `Before 2026-11-22`). Keyboard: one stop of Tab after the range block (a roving tabindex: the one
+  in use, else the first), ArrowLeft / ArrowRight / ArrowUp / ArrowDown in the two columns, Home / End,
+  Enter / Space. A `role="group"` named *Quick dates*
+* **the days** (new `src/grid/datePresets.ts`, pure): `datePresetDays(preset, now, weekStart)` - new Dates
+  made from year / month / day (`new Date(y, m, d)`: a summer time change is no hour off). The week starts on
+  the date picker's `datePickerConfig.weekStart` (`weekStartOf`, Monday by default - ISO; 0 Sunday), so This
+  week is the week the picker shows. Last / Next 7 days and Last 30 days count today in (today and the 6 days
+  before / after) - documented in the guide's table. Overdue is `[null, yesterday]`: an open start, blanks
+  never match. `datePresetRange` makes a datetime's To 23:59:59, as the range picker does
+* **relative, stored as itself**: `HeaderFilter.datePreset` (`GridState.headerFilters[field]`) with the
+  operator `BETWEEN` and the `[from, to]` computed last; the datasource's filter is a plain `BETWEEN` of the
+  days (withColumnConditions in filterCallback.ts: the column's top level conditions replaced, as typing
+  does). So `getFilter()`, `getFilterString()`, the filter editor and `toSqlWhere()` see dates, never the
+  preset. Computed again from today: when picked; when a state with it is set - applyState stores it and
+  replaces the column's conditions in the state's `filter` (or the grid's when the state has none), so
+  `setState(saved)` on another day filters on that day, and `{ value: null, datePreset: 'today' }` alone
+  filters; `initialState`, `resetState()`; Enter on its name; and `gridInterface.refreshDatePresets()`
+  (public: filters again only when the days changed), which the grid calls on the window's `focus` and on
+  `visibilitychange` to visible (listeners on the window and the document, aborted when the grid leaves the
+  page - `Grid.datePresetListenersAbort`). A page looked at over midnight without either needs the app's
+  timer: the JSDoc has one. A preset a column can not take (no date column, no `BETWEEN`, an unknown id) is
+  dropped from a state, the rest of the header filter kept
+* **the operator** is set to `BETWEEN` (a preset is a range; `filter-operator-change` when it was another).
+  Considered: leaving the user's operator and showing a symbol of its own - the cell, the range block, the
+  date pickers and filterCallback all read the operator, a stale one beside a `[from, to]` would need special
+  cases everywhere. Clearing the column afterwards leaves Between picked, as the range block's Between does
+* **what shows it**: the cell its name (renderHeaderFilter; the indicator `a..b`), the footer's chip
+  `Order date = This month` - getFilterTree's condition nodes now have `field` (FilterConditionNode, public,
+  additive) so the footer knows the column: a `BETWEEN` of the top AND group on a column with a preset; the
+  range block its days in From / To; the button filled
+* **what ends it**: a new value (`__setHeaderFilterValue` drops it): a date typed or picked, Clear Filter,
+  Blank ›, a filter replaced as a whole (the row menu's Replace filter, Clear); another operator (filterCallback runs the value with
+  it: This week with ≥ is ≥ Monday). Kept: picking Between again, filter as you type, a display format
+  changed (refilterChangedFormats runs filterCallback with the value - datePresetToRun runs the preset
+  again), the range block's Apply with nothing changed, the filter editor's Apply when the column's
+  conditions are as they were (`__clearChangedHeaderFilters`). Changed in the editor, it is dropped - the
+  editor shows and edits the dates, documented. The name typed in the cell (`today`, `LAST WEEK`) is the
+  quick date - the cell shows the name, so whatever it shows filters again the same way
+* **a display format plays no part**: This month on a column shown as weeks is the month (dateConditions is
+  not used), the tooltips are written with the field's formatter for the same reason
+* **which a column offers**: `ColumnConfig.datePresets` - a list in its order, `false` / `[]` none; left out
+  every one but Overdue (`DEFAULT_DATE_PRESETS`; "before today" means something on a due date, not a
+  birthday). Exported `DATE_PRESETS` (frozen, every id in the menu's order) and the type `DatePreset`.
+  assertDatePresets (gridInterface.ts, in assertFilterOptions): a list of ids or false, a date or datetime
+  column, `BETWEEN` among its operators - a `TypeError` naming the column. Like `filterOperators` it limits
+  what the user picks, not a state
+* texts `filter.dates` (the group), `filter.dates.<id>` (14 names), `filter.dates.range` (`{from} – {to}`),
+  `filter.dates.before` (`Before {date}`); the Norwegian sample (I dag, I går, Denne uken, Forrige uke, Denne
+  måneden, Forrige måned, Dette kvartalet, Forrige kvartal, I år, I fjor, Siste 7 dager, Siste 30 dager,
+  Neste 7 dager, Forfalt; Hurtigvalg av datoer, Før {date}). css: grid.css only, the existing variables (no
+  new colour, nothing for TreDeSpace), no border-radius
+* samples: Full grid's Due date offers every quick date (Overdue too); Filtering has a button that sets
+  This month from code, its description mentions them
+* docs: guide 06 (a new *Quick dates*: the table of days, relative, plain filter, what shows / ends it, the
+  keyboard, `datePresets`; the filter menu, the footer), 03 (*Quick dates in the state*), 02 (the column
+  option), 10 (`filter.dates`, the keyboard), 12 (*The quick dates* table), 22 (*A quick date*: the WHERE of
+  Today, This month, Overdue); JSDoc of `DatePreset`, `DATE_PRESETS`, `ColumnConfig.datePresets`,
+  `HeaderFilter.datePreset`, `GridState.headerFilters`, `refreshDatePresets()`, MENU_IDS, MenuBlock,
+  FilterConditionNode.field; typings consumer (the ids, `datePresets`, the state, refresh; a wrong id, `true`
+  and DATE_PRESETS.push rejected)
+* tests: new src/grid/__tests__/datePresets.test.ts (41): every preset on Sunday 2026-11-22; 00:00 days; ISO
+  vs Sunday (and Saturday) week starts; the new year; month and quarter ends; leap years (2028-02-29); a week
+  over summer time; date vs datetime ranges; ids / defaults; weekStartOf; with a faked clock in the grid: the
+  block where it shows, the names, datePresets order / false / [], no BETWEEN, the tooltips, weekStart 0,
+  each preset's rows on a date and on a datetime column, cell / indicator / chip / state / plain filter, the
+  menu again (filled, the stop of Tab, the range block's days), other columns kept, the event once, the
+  keyboard, a menus hook; Enter on the name and the name typed, a date typed, another operator / Between
+  again, Clear and Is blank, the range block's Apply unchanged / changed, filter as you type and a format
+  change, the filter editor's keep / drop; a state through JSON set ten days later (December), headerFilters
+  alone, initialState and resetState on another day, presets a column can not take dropped,
+  refreshDatePresets (nothing on the same day, a spy), the window's focus and visibilitychange - none after
+  the grid left the page, toSqlWhere of This month (date), Today (datetime), Overdue; the config check. Passes
+  in Oslo, New York and Tokyo time. Changed on purpose: filterRangeBlock (the date menu has `filter.dates`,
+  MENU_IDS' last three), gridMenus (text and number menus without `filter.dates`), texts walk (Updated offers
+  every quick date, its menu and a picked one shown; the test formatter's placeholder is data; the TypeError
+  test's datasource has the fields), filterString / filterExpression / filterOperatorsByType (the tree's
+  `field`). 3850 -> 3891 tests, 165 files
+* browser (Chromium 1148, `page.clock` fixed to Sunday 2026-11-22): new `date-presets-check.js` 69/69 - the
+  Full grid light and dark (1300x1100): the block under the range block, 13 / 14 buttons, two columns, 24px,
+  square, in the window; the tooltip; each preset on Orderdate against the rows counted in the page (0 to
+  5000), menu closed, cell, chip, state; the indicator; reopened filled with the range block's days; Updated
+  (datetime) Last 7 days, To 23:59:59; Duedate (weekIso) This month is the month (269 rows, not the 366 of
+  its weeks), Overdue without blanks; `2026-W47` typed replaces it, `last month` typed is Last month; the
+  keyboard (Shift+F10, Tab, arrows, Enter, the outline); the state through JSON on 2 December is December; the
+  window's focus on the 23rd moves Today. A phone (390x844, touch, the Filtering sample): in the window, 24px,
+  a tap filters. No page errors. Shared checks against it: date-range 168/168, filter-as-shown 61/61,
+  operator-indicator 79/79, touch 61/61; range-block 79/81 - it expected the date column's menu to end with
+  the range block: the copy in this worktree's scripts expects `filter.dates` after it, 81/81; filter-ui
+  115/117 - not this change: its Filter › list predates Filter as you type (`filter.filterOnType`). Script
+  and screenshots in this worktree's `.claude/browser-checks/` (`shots/date-presets/`)
+* not done: a "Tomorrow" / "Next week" / "Next month" (easy to add: an id, its days, a text); quick dates in
+  the column settings dialog; a grid-wide default (`GridConfig.datePresets`); Year to date; refreshing on a
+  timer of the grid's own at midnight
+### Named views (user request)
+
+* the user: saved views like "My open orders" / "Late deliveries" to switch between, the state of the grid
+  under a name - with Save / Save as / Revert / Rename / Delete / Set as default and a "modified" marker
+* **a view is plain JSON**, `GridView { id, name, state, readonly?, default? }` (new `src/grid/gridView.ts`,
+  exported type). `state` is what `getState()` gives; applied, what it leaves out is the config's state
+  (`getStartState()`: `initialState` + `layout`) - a view is all of the state, not a change of the one shown,
+  and a view saved before a part was added to the state (calculated columns ...) gets the config's
+* **API** on `GridInterface`: `getViews()`, `setViews(views)`, `getCurrentView()` (null = "Standard", the
+  config's state), `isViewModified()`, `applyView(id | null)` (null = `resetState()`), `saveView()` (over the
+  view shown), `saveViewAs(name)`, `renameView(id, name)`, `deleteView(id)`, `setDefaultView(id | null)`.
+  Event `views-change { views }` on every change of the list by the user or those calls - not by `setViews()`
+  / `updateConfig({ views })` (the app gave the list: no save loop), nor on a switch
+* **config**: `views` (the list the grid starts with), `viewsStorageKey` (the opt-in localStorage helper,
+  try/catch, a warning when it can not write; stored: the views that are not readonly + the default's id -
+  readonly views come from the config every time, once the user saved some the stored list is the user's),
+  `viewsButton` (default: true when `views` or `viewsStorageKey` is given - a grid without them looks as
+  before). `TypeError`s for a list that is no list of views (ids unique, one default at most) and a key that is
+  no text; a stored list that is broken is passed by, a default view that can not be applied too (a warning,
+  the grid starts in the config's state)
+* **modified**: the state as JSON with the keys sorted (`viewStateText`), compared with a snapshot taken
+  right after the view was applied or saved - a snapshot, not the stored `state`, so the normalising of
+  `applyState()` (Dates, the order of the header filters, defaults filled in) is no change. Left out:
+  `expandedGroups` (opening a group is no change of the view; the view still keeps them) and layout columns
+  without fields (`__parseConfig` drops them). The footer computes it on render; the few state changes that do
+  not rebuild call `__refreshViewsButton()`: an operator picked, Match case, filter as you type, the detail
+  form's width dragged (detailFormResize.ts)
+* **interplay** (decided): `setState()` from code and the grid config dialog's Apply mark the view changed
+  (it stays the view shown); `resetState()` is Standard - no view, also when the grid started in a default
+  view; the default view is applied on top of `initialState` when the grid is made; deleting the view shown
+  keeps the state (Standard, marked changed - *Save as new view…* gets it back, so no confirmation);
+  `updateConfig()` keeps an unchanged Standard unchanged (a new layout or columns is the config's state);
+  `updateConfig({ views | viewsStorageKey })` makes the list again as at start, `setViews()` replaces it
+* **UI: a button at the left end of the footer** (`viewsMenu.ts`), on the line of the filter's row - the left
+  end was empty, the gear is at the right end. Chosen over the grouping panel (often hidden, `panelHeight`, and
+  the group chips fill it) and over a tab of the grid config dialog (two clicks to switch, and other work
+  changes that dialog). It shows the view's name, a `*` in the edited-cell colour when changed, a chevron;
+  `aria-label`/tooltip "View: My open orders (changed)"; the first stop of Tab in the footer. The filter goes
+  first on a narrow grid: the footer keeps 36px on both sides (`has-views`) and the name is cut where the
+  filter's row starts (`fitViews`, as `fitSummary`) down to the `*` and the chevron - a sliver of a name is
+  hidden. The menu (showMenu, the grid's keyboard): Standard and the views with ✓ - one click to switch, hints
+  *default* / *shared* - then Save, Save as new view…, Revert changes, Rename…, Delete, Default view (a ✓
+  toggle); greyed out where they do not apply. A second click on the button closes it. The name is asked in a
+  menu block at the button (input with the focus, a line saying what is wrong - empty, a name another view has
+  in any case - Cancel / Save, Enter, Esc). Not part of the `menus` hook: `viewsButton: false` + the API for a
+  control of your own. Existing colour variables only (no new ones, no TreDeSpace entry needed), square
+* texts `views.*` (17, guide 12 table, Norwegian in the translation sample)
+* docs: guide 03 new *Views* (the button, where they are kept, applying / saving / modified and the
+  interplay), 02 (options), 09 (`views-change`), 10 (*The views menu*), 12 (texts); JSDoc with examples on
+  every new member; the typings consumer. New sample *Named views* (`samples/demo/samples/views.ts`, group
+  Config, two shared readonly views + `viewsStorageKey`, the API from buttons); the full grid sample has
+  `viewsStorageKey` (description unchanged)
+* tests: new gridViews.test.ts (35: the helpers - assertViews, ids, the state text, storage read / write /
+  throwing, the start list, the name problems; the API - save as, modified and back, two views switched, a view
+  of a few parts, groups opened, save / rename / delete / default and their TypeErrors, the default view on
+  start and a broken one, setViews, updateConfig; localStorage across two grids; the button - when shown, the
+  name / `*` / aria-label, without a rebuild, the first Tab stop, the menu's entries and greyed ones, every
+  command, the name asked, Rename, the grid's texts). texts.test.ts shows the button, the menu and the name
+  (its describe's timeout 30s -> 60s: 15-25s alone, 40s in the whole run on a loaded machine). 3885 tests,
+  165 files (was 3850, 164); tsc, biome, check:typings, check:docs, typecheck, build, build:demo pass
+* not done, candidates: a views hook in `GridMenus`; sharing a view of the user's with others (the app's,
+  from `views-change`); a confirmation for Delete
+* browser (Chromium 1148, port 8091): new `views-check.js` 46/46 (in this worktree's
+  `.claude/browser-checks/scripts/`) - two views saved with other filters and columns (a column resized with
+  the mouse marks Standard changed), switched, the `*` and "(changed)", Save, Revert changes, Rename…,
+  Default view, a reload keeps them and opens in the default, Delete keeps the state; the keyboard (Enter /
+  Space on the button, the arrows, Enter applies and gives the focus back, Esc, a letter, the first Tab
+  stop); the name asked (focus, empty, taken, Enter); the button on the line of "No filter", clear of it and
+  of the chips; contrast 4.5:1 and the `*` 3:1 in light, dark, TreDeSpace light and dark; a phone (Pixel 7):
+  the button cut to its `*` and chevron beside two chips, the menu and the name in the window; the full grid
+  sample with three chips. Screenshots looked at (light, dark, both TreDeSpace, phone, full grid): first
+  version on the phone showed a sliver of the name ("/*") - the button's padding and the footer's room made
+  wider and a name under 16px hidden. Shared checks, unchanged: footer-no-filter 53/53, footer-summary
+  11/11, keyboard 53/53, full-grid 11/11, column-settings 144/144, detail-form 91/91
+### Import: CSV and Excel files, paste rows as new rows (user request)
+
+* the user: paste rows copied in Excel / Google Sheets as new rows (a paste wrote into existing cells only),
+  and import a CSV or .xlsx file with a column mapping step, the problems summarized, undoable, permissions
+* **the UX: one dialog for every source** (`gridFunctions/importDialog.ts`, the filter editor's frame):
+  *Choose file…*, a file dropped on it, rows pasted into it (Ctrl+V). The first rows in a table with a field
+  picker (a native `<select>`, *Skip*) over each column; *First row is a header* (found: the first row names
+  a field), the separator (found, or picked), the sheet of a workbook, the decimal mark when a number field
+  is picked, the order of dates with `/` when a date field is. A line says how the columns were matched (by
+  name / by position from a field), the count, the first 8 problems in words (*Row 3, Age: Not a number:
+  abc*) and the cells marked (the error tint, the message as tooltip); *Rows with problems*: import them,
+  marked / skip them. *Import N rows* adds and closes. Why one dialog for paste too: a block of many rows is
+  a bulk add - the user sees where each column goes before anything is added (a header named by Excel goes
+  by name, a block without one by position from the clicked cell), and the same problems list; Ctrl+V into
+  a cell stays as it was (no rows added past the last row - mixing writes and adds would surprise)
+* **the entries**: `GridConfig.importMenu` (default `false`: a bulk add is for the app to allow) - the row
+  menu's Paste › *As new rows…* (`row.paste.newRows`, after a line `row.paste.newRowsSeparator`): the
+  clipboard (`readText()`; refused or empty -> the dialog asks for a paste into it), columns from the right
+  clicked cell's column; the header menu's *Import rows…* (`header.import`) - a grid without rows has no
+  cell to right click. Both only in an editable grid with `edit.add` (`__canAddRows()`, `__showImportMenu()`).
+  Not on a row number's menu (kept lean, as Paste › is not there)
+* **the API**: `gridInterface.openImport(source?: Blob | string)` (a file of the app's own drop zone, or
+  text; nothing in a readonly grid or without `add`, as the menus), `gridInterface.importRows(rows,
+  options): ImportResult` (`ImportOptions`: `header`, `fields` by position with `null` to skip,
+  `decimalMark`, `dateOrder`, `invalidRows: 'import' | 'skip'`; checked - an option it does not know throws),
+  `readImportFile(file, { sheet, separator }): Promise<ImportTable>`, `ImportFileError` (`problem`:
+  `tooLarge` / `xls` / `broken` / `unsupported`), `IMPORT_LIMITS`, types `ImportCell`, `ImportProblem`
+  (`{ row, field, value, kind: 'value' | 'rule', message }`). Code is not stopped by readonly or the
+  permissions (as `addNewEmpty()` is not), said in the JSDoc. Datasource: `addNewRows(rows, { scrollTo })` -
+  many new rows at once (addNewEmpty in a loop sorts once per row), the rows at the end, grouped into their
+  groups with the first one's group expanded, the first selected
+* **the columns**: by name - a header cell that is a column's label as shown, a field name or a datasource
+  label, any case, spaces collapsed; a field once (a second column of it skipped); by position - the layout
+  from the start field. Importable: the datasource's fields but a readonly column; the pickers list the
+  layout, then the other config columns. The isReadonly hook is not asked (it decides about rows there are;
+  documented). A lookup column takes the label (writeCellValue, its `set` fields too)
+* **the values, as typing reads them** (`readCell`): through the field's formatter, with what a file has:
+  numbers with spaces / `'` / the other mark between groups of three (`1 234,5`, `1.234,5`, `1,234.5`), the
+  decimal mark per column from its formatter (`format(1.5)` has a comma -> `,`), and the other mark once and
+  not between groups is the decimal mark (`12,5` with a decimal dot, as typing reads it); dates ISO (an
+  offset / Z is an instant - the raw CSV export round trips), `31.12.2026`, `/` in the order picked, a time
+  after; another form by the formatter only when it writes the date back as the text (`20.11.26` would else
+  be 1926); booleans true/false/1/0 and the formatter's own words. A value not read is never guessed from a
+  part: the field is empty, a `'value'` problem. Text is kept as it is: `=1+1` stays text (CSV injection),
+  the CSV export's `'` too
+* **the problems**: the validation is dry run before anything is added - `DataContainer.__checkRow(values)`
+  runs the container's rules on a plain object (a required field the file does not have is a problem of
+  every row); after the add `datasource.validate(added)` shows the errors on the cells. The values not read
+  go into the new row's `__rowError` (*Not imported: Age: Not a number: abc*): its row number shows them -
+  the "imported and marked" the user asked for. It is the row error of a server (`setErrors()` replaces it,
+  `acceptChanges()` clears it) - said in the guide; the cells can not carry an error that is not a rule's
+* **undo as one step**: the history never adds or removes a row - an added row is recorded as its deletion
+  mark taken off (`DataContainer.__recordAdded`, `before: true, after: false`): undo marks the imported rows
+  for deletion - a new row marked is in no list of `getChanges()`, as Delete takes out a new row - redo takes
+  the marks off. An edit after it is a step of its own
+* **CSV** (`csv.ts`): `parseCsv(text, separator, limits)` and `detectSeparator()` - the separator that
+  splits the first lines (64 KB) into the same number of fields, more than one, the most lines, then the
+  most fields, ties tab > `;` > `,`. parseTsv shares the reader, rewritten to slice runs instead of adding
+  characters one by one (100 000 lines well under a second); the BOM left out. Encodings (`importFile.ts`):
+  UTF-8 (BOM or not), UTF-16 LE/BE by their BOM (Excel's Unicode text), else Windows-1252 (Excel's "CSV" in
+  Norwegian - æøå); a NUL is no text (a binary file is `broken`)
+* **.xlsx** (`unzip.ts`, `xlsxRead.ts`): the other half of zip.ts / xlsx.ts. The end record searched past a
+  comment, the central directory, the local headers - every offset checked; stored and deflated
+  (`DecompressionStream('deflate-raw')`, no dependency - Node 24 has it, the tests run it for real); the
+  size and CRC-32 checked. Parts by `_rels/.rels` -> the workbook -> its rels (case-insensitive names,
+  relative and absolute targets, `..`); the worksheets in tab order (a hidden one too, a chart sheet not);
+  shared strings with rich text (the phonetic guide left out), inline strings, `str`, `b`, `e` (the text),
+  `d` (ISO); numbers, and a `Date` for a date style - the built-in ids (14-22, 27-36, 45-47, 50-58) or a
+  format code with d/m/y/h/s outside quotes, escapes, brackets (`[h]` counts), `_x` / `*x` - the 1900 system
+  with Lotus' leap day and the 1904 one, local time; `_xHHHH_` decoded (the writer escapes `_` that way);
+  a prefixed namespace (`x:`) read (children by localName); rows without `r` follow the one before, gaps of
+  rows kept as `[]` so `rows[4]` is Excel's row 5 (the problems say the row the user sees in Excel). Each
+  sheet read once, on demand (the sheet picker)
+* **a hostile file**: `IMPORT_LIMITS` - 20 MB file (checked before reading), 100 MB unzipped for all parts
+  read together, 100 000 rows, 1 000 columns, 1 000 000 cells. A zip bomb: a part larger than the budget is
+  refused by its declared size before inflating, the inflating stops at the declared size (a lying ZIP is
+  never held), the CRC must match; encrypted, ZIP64, other methods refused; a `<!DOCTYPE` refused before
+  `DOMParser` (billion laughs), not well-formed XML is broken; a cell at `XFD1048576` stops at the limits
+  before any array is made; the CSV reader counts while reading (a million empty lines stops at 100 000).
+  Nothing of the file is markup: lit text bindings only. `.xls` (and password protected .xlsx, both compound
+  files) said in words; `.ods` is a ZIP without a workbook: broken
+* texts: 48 new ids (`row.paste.newRows`, `header.import`, `import.*`), in guide 12 (a new *Import dialog*
+  table) and Norwegian in the Translation sample; the texts test shows the dialog in every state (empty, the
+  clipboard without rows, a header without rows, pasted rows with each problem and more than it lists, no
+  header, no field picked, a workbook of two sheets with an empty first, reading, each file error, the row
+  error after the import). css: `.import-*` under `.filter-editor-content`, the existing colour variables
+  only (no new ones: no TreDeSpace change), square, the selects 24px on touch too
+* docs: new guide 23-import.md (turning it on, the dialog, the columns, the values table, the rows added,
+  from code, the files, a file is not trusted); 17 (*Paste as new rows*), 10 and MENU_IDS (the ids), 02
+  (`importMenu`), 05 (`addNewRows()`), 15 (a link). Sample *Import CSV and Excel* (`#sample/import`, group
+  Export): `importMenu: true`, buttons for the dialog, a sample CSV as Norwegian Excel saves it (`;`, decimal
+  commas, dates with dots, rows with problems, a formula) and an .xlsx made at run time with `getExcel()` of
+  a grid interface not on the page (no static assets: the demo has no public folder) - each opened in the
+  dialog or downloaded to try Choose file / drop, and "Copy two rows (as Excel does)" for Paste › As new rows
+* tests: csvParse (RFC 4180 edge cases, buildCsv round trip per separator, the limits, detectSeparator),
+  xlsxRead (the writer's file back: every type, stored and deflated, every day of a summer-time year; shared
+  strings, rich text, prefixes, styles, 1904, gaps, sheets; excelDate, isDateFormatCode; the zip bomb, a
+  lying size, CRC, garbage DEFLATE, ZIP64, encryption, no workbook, broken XML, DOCTYPE, the row/column/cell
+  limits, no DecompressionStream), importFile (encodings, xls, NUL, size, sheets; getExcel() / getCsv() of a
+  grid imported into another give the same values), importRows (matching, numbers, dates, booleans, plan,
+  problems, undo/redo, skip, lookups, options checks, permissions of the menus), importDialog (pasted rows,
+  picking by hand, header toggle, skip, hints, separator, files dropped / picked, two sheets, file errors,
+  the menus, disconnect), addNewRows (datasource). gridMenus.test: `importMenu: true` for every row entry,
+  `header.import` hidden in a readonly grid. 3951 tests, 170 files (was 3850, 164)
+* browser (Chromium 1148, port 8094): new `import-check.js` 83/83 - light, dark and TreDeSpace dark: a TSV
+  clipboard (CRLF after each row) through Paste › As new rows… (by position from the clicked column, the
+  problem listed and marked, Import -> values parsed with a decimal comma and dates with dots, the row
+  error on the row number, Ctrl+Z takes both out, Ctrl+Y back), a CSV through Import rows… and setInputFiles
+  (header by name, separator found, four kinds of problem, a field skipped by hand, the problem rows
+  skipped), an .xlsx of the grid's own export (typed), a dropped File (DataTransfer), Esc; a phone (390px):
+  the dialog fits, the buttons 24px. Screenshots looked at: the dialog with pasted rows, the CSV with its
+  problems, the workbook, the grid after (the + and ! on the row numbers), the phone. Shared: fill 12/12,
+  keyboard 53/53, edit-permissions 57/57, row-number-menu 7/7, full-grid 11/11, menus-regression 25/25 -
+  none needed a change. The script is in this worktree's `.claude/browser-checks/scripts/`
+* a dialog opened before its rows are read grows with them: it is moved up after a render to stay in the
+  window (seen in the phone screenshot)
+* not done, candidates: a sheet's merged cells and the formats of a number written as text in a cell are
+  not read; the CSV decoder guesses Windows-1252 for anything that is not UTF-8 (a Mac Roman or Shift-JIS
+  file shows garbled); limits are not an option of `readImportFile()` / the dialog; an `import` grid event
+  with the result (the datasource's `collection-changed` says rows were added); "1 rows" (no plural texts);
+  the dialog previews the first 8 rows, a problem further down is listed (first 8) but not shown in the
+  table; Ctrl+V into the last row could add the rows past it; the isReadonly hook asked for the new rows
 
 ### Data bars, colour scales, icon sets - and colours in the Excel export (user request)
 

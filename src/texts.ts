@@ -30,6 +30,7 @@ const DEFAULTS = {
     'row.paste.cell': 'Paste cell',
     'row.paste.cell.hint': 'selected rows',
     'row.paste.range': 'Paste range',
+    'row.paste.newRows': 'As new rows…',
     'row.clear': 'Clear',
     'row.clear.current': 'Clear cell',
     'row.clear.cell': 'Clear cell',
@@ -148,6 +149,7 @@ const DEFAULTS = {
     'header.shortcuts': 'Keyboard shortcuts…',
     'header.shortcuts.hint': 'Ctrl+/',
     'header.shortcuts.hint.mac': '⌘/',
+    'header.import': 'Import rows…',
     'header.grouping': 'Grouping',
     'header.grouping.expandAll': 'Expand all',
     'header.grouping.collapseAll': 'Collapse all',
@@ -199,6 +201,27 @@ const DEFAULTS = {
     'filter.range.to': 'To',
     'filter.range.run': 'Apply',
     'filter.range.cancel': 'Cancel',
+    // the quick dates of a date or datetime column, 'filter.dates': a button each, one click filters
+    // (ColumnConfig.datePresets). The name of the group for a screen reader, the name of each - shown in
+    // the header filter cell and the footer's chip while it filters - and the tooltip of a button: the
+    // days it filters on, {from} and {to} as the field shows a date; {date} today for Overdue
+    'filter.dates': 'Quick dates',
+    'filter.dates.today': 'Today',
+    'filter.dates.yesterday': 'Yesterday',
+    'filter.dates.thisWeek': 'This week',
+    'filter.dates.lastWeek': 'Last week',
+    'filter.dates.thisMonth': 'This month',
+    'filter.dates.lastMonth': 'Last month',
+    'filter.dates.thisQuarter': 'This quarter',
+    'filter.dates.lastQuarter': 'Last quarter',
+    'filter.dates.thisYear': 'This year',
+    'filter.dates.lastYear': 'Last year',
+    'filter.dates.last7Days': 'Last 7 days',
+    'filter.dates.last30Days': 'Last 30 days',
+    'filter.dates.next7Days': 'Next 7 days',
+    'filter.dates.overdue': 'Overdue',
+    'filter.dates.range': '{from} – {to}',
+    'filter.dates.before': 'Before {date}',
 
     // the column menu, right click on a column number (under the header filters): MENU_IDS.column
     'column.copy.column': 'Copy column',
@@ -574,6 +597,64 @@ const DEFAULTS = {
     'detailForm.expand': 'Expand the details',
     'detailForm.resize': 'Width of the details',
 
+    // the import dialog (GridConfig.importMenu, gridInterface.openImport()): its title bar, where the rows
+    // come from and what is wrong with a file - {size} MB, {rows}, {columns} and {cells} are the limits
+    'import.title': 'Import rows',
+    'import.title.tooltip': 'Drag to move the dialog',
+    'import.close.tooltip': 'Close without importing',
+    'import.chooseFile': 'Choose file…',
+    'import.hint': 'Drop a CSV or Excel (.xlsx) file here, or paste rows copied from a spreadsheet',
+    'import.clipboard': 'Pasted rows',
+    'import.reading': 'Reading the file…',
+    'import.error.tooLarge':
+        'The file is too large to import: at most {size} MB, {rows} rows, {columns} columns and {cells} cells',
+    'import.error.xls': 'An Excel 97-2003 file (.xls), or one protected by a password, can not be read: save it as .xlsx or CSV',
+    'import.error.broken': 'The file can not be read: it is not CSV or an Excel workbook (.xlsx), or it is damaged',
+    'import.error.unsupported': 'This browser can not read Excel files: save the file as CSV',
+    'import.error.clipboard': 'No rows on the clipboard: copy them in a spreadsheet, then paste them here',
+    // the options: the header, the separator of CSV - {separator} the one found - the sheet of a workbook,
+    // the decimal mark when a number field is picked, the order of dates with / when a date field is
+    'import.header': 'First row is a header',
+    'import.separator': 'Separator',
+    'import.separator.auto': 'Found: {separator}',
+    'import.separator.comma': 'Comma',
+    'import.separator.semicolon': 'Semicolon',
+    'import.separator.tab': 'Tab',
+    'import.sheet': 'Sheet',
+    'import.decimalMark': 'Decimal mark',
+    'import.decimalMark.auto': 'As the columns',
+    'import.decimalMark.dot': 'Dot: 1,234.5',
+    'import.decimalMark.comma': 'Comma: 1 234,5',
+    'import.dateOrder': 'Dates with /',
+    'import.dateOrder.DMY': 'Day first: 31/12/2026',
+    'import.dateOrder.MDY': 'Month first: 12/31/2026',
+    // the columns: how they were matched - {field} the label of the first column's field - a column without
+    // a header ({number} from 1), the name of its field picker ({column} the column), the picker's Skip
+    'import.byName': 'The first row names the columns: they are matched to the fields by name',
+    'import.byPosition': 'The columns are matched to the fields by position, from {field}',
+    'import.column': 'Column {number}',
+    'import.field': 'Field of {column}',
+    'import.skip': 'Skip',
+    // the rows read and their problems: {row} the row of the file, from 1; {field} the column's label;
+    // {text} the value as the file has it
+    'import.count': '{rows} rows',
+    'import.count.problems': '{rows} rows, {problems} with problems',
+    'import.problem': 'Row {row}, {field}: {message}',
+    'import.problems.more': '{count} more',
+    'import.problem.number': 'Not a number: {text}',
+    'import.problem.date': 'Not a date: {text}',
+    'import.problem.boolean': 'Not true or false: {text}',
+    'import.invalidRows': 'Rows with problems',
+    'import.invalidRows.import': 'Import them, marked',
+    'import.invalidRows.skip': 'Skip them',
+    'import.noFields': 'Pick a field for at least one column',
+    'import.noRows': 'No rows to import',
+    'import.cancel': 'Cancel',
+    'import.import': 'Import {rows} rows',
+    // the error of a new row with values that could not be read, on its row number: {problems} the columns
+    // and what was wrong
+    'import.rowError': 'Not imported: {problems}',
+
     // the footer: the row count and the filter as chips
     'footer.rowCount': '{shown}/{total}',
     'footer.clear': '✕ Clear',
@@ -618,6 +699,28 @@ const DEFAULTS = {
     'footer.operator.NOT_IN': 'not in',
     'footer.operator.IS_BLANK': 'is blank',
     'footer.operator.IS_NOT_BLANK': 'is not blank',
+
+    // the named views (GridConfig.views): the button at the footer's left end - the view shown, {name}
+    // its name, "Standard" when none is (the config's state), "(changed)" when the state changed since -
+    // and its menu: the views, the hints of the default view and of a readonly one, the commands
+    'views.standard': 'Standard',
+    'views.button': 'View: {name}',
+    'views.button.modified': 'View: {name} (changed)',
+    'views.default.hint': 'default',
+    'views.shared.hint': 'shared',
+    'views.save': 'Save',
+    'views.saveAs': 'Save as new view…',
+    'views.revert': 'Revert changes',
+    'views.rename': 'Rename…',
+    'views.delete': 'Delete',
+    'views.setDefault': 'Default view',
+    // the name asked for by Save as new view… and Rename…, what is wrong with it, the buttons
+    'views.name': 'Name of the view',
+    'views.name.empty': 'Give the view a name',
+    'views.name.taken': 'Another view has this name',
+    'views.name.cancel': 'Cancel',
+    'views.name.save': 'Save',
+    'views.name.rename': 'Rename',
 
     // the aggregates of the columns (ColumnConfig.aggregate): the label in front of the value in a group
     // row and in the totals row, and the label of the totals row
@@ -939,10 +1042,11 @@ export type Texts = { [id in TextId]?: string } & { [id: string]: string };
  *
  * | ids | where |
  * | --- | --- |
- * | `row.*`, `header.*`, `filter.*`, `column.*` | the right click menus: the ids of {@link MENU_IDS}. A hint (the text in parentheses) is `<id>.hint`. `filter.values.*`: the value list of the filter menu, `filter.range.*` its range block |
+ * | `row.*`, `header.*`, `filter.*`, `column.*` | the right click menus: the ids of {@link MENU_IDS}. A hint (the text in parentheses) is `<id>.hint`. `filter.values.*`: the value list of the filter menu, `filter.range.*` its range block, `filter.dates.*` its quick dates |
  * | `columnChooser.*` | the column chooser |
  * | `filterEditor.*` | the filter editor, its field and operator menus. `filterEditor.operator.<FilterOperator>`: the names of the operators |
  * | `footer.*` | the footer: the row count, the filter chips, the "No filter" button. `footer.operator.<FilterOperator>`: the short names of the operators (`=`, `contains`) |
+ * | `views.*` | the named views (`GridConfig.views`): the views button at the footer's left end, its menu and the name asked for by *Save as new view…* and *Rename…* |
  * | `aggregate.*` | the aggregates of the columns: the label in front of a value in the group rows and the totals row (`aggregate.<AggregateFunction>`), and the label of the totals row |
  * | `format.*` | the display formats of the columns (`ColumnConfig.format`): `format.locale` the language of the names of a date, a BCP 47 tag for `Intl.DateTimeFormat` (`'en-US'`; not shown, `'nb-NO'` shows `søndag 22. november 2026`), and how a week and a quarter are written |
  * | `grid.*` | labels for screen readers |

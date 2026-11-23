@@ -220,6 +220,7 @@ Right click on a cell or a row number.
 | `row.paste.cell` | `Paste cell` | pastes into the column of the selected rows |
 | `row.paste.cell.hint` | `selected rows` | its hint |
 | `row.paste.range` | `Paste range` | pastes the clipboard into the ranges of cells, as Ctrl+V |
+| `row.paste.newRows` | `As new rows…` | opens the import dialog with the rows on the clipboard (`GridConfig.importMenu`), see [Import dialog](#import-dialog) |
 | `row.clear` | `Clear` | the clear submenu, an editable grid |
 | `row.clear.current` | `Clear cell` | empties the cell right clicked |
 | `row.clear.cell` | `Clear cell` | empties the column of the selected rows |
@@ -329,6 +330,7 @@ Right click on a header label.
 | `header.shortcuts` | `Keyboard shortcuts…` | opens the keyboard shortcuts help, see [Keyboard shortcuts help](#keyboard-shortcuts-help) |
 | `header.shortcuts.hint` | `Ctrl+/` | its hint: the key that opens the help anywhere in the grid |
 | `header.shortcuts.hint.mac` | `⌘/` | its hint on a Mac |
+| `header.import` | `Import rows…` | opens the import dialog (`GridConfig.importMenu`), see [Import dialog](#import-dialog) |
 | `header.aggregate` | `Aggregate` | the aggregate submenu |
 | `header.aggregate.sum` | `Sum` | turns the column's sum on or off |
 | `header.aggregate.avg` | `Average` | turns its average on or off |
@@ -405,6 +407,34 @@ texts - and the text `filter.operator.between`. Each is named by the text of its
 | `filter.range.to` | `To` | the label of the second input, with Between |
 | `filter.range.run` | `Apply` | the button that filters, as typing in the header filter |
 | `filter.range.cancel` | `Cancel` | the button that closes the menu without filtering |
+
+### The quick dates
+
+The part of the filter menu of a date or datetime column under the range block: a button for each
+quick date (`ColumnConfig.datePresets`). A quick date's name is shown on its button, in the header
+filter cell while it filters - typed there, it is that quick date - and on the footer's chip
+(`Order date = This month`). The tooltip of a button is its days, written as the field shows a date:
+`{from}` and `{to}`, the day alone when they are one.
+
+| id | English | shown |
+| --- | --- | --- |
+| `filter.dates` | `Quick dates` | the name of the buttons together, for a screen reader |
+| `filter.dates.today` | `Today` | today |
+| `filter.dates.yesterday` | `Yesterday` | yesterday |
+| `filter.dates.thisWeek` | `This week` | the week of today, from the date picker's first day of the week (Monday) |
+| `filter.dates.lastWeek` | `Last week` | the week before |
+| `filter.dates.thisMonth` | `This month` | this month |
+| `filter.dates.lastMonth` | `Last month` | the month before |
+| `filter.dates.thisQuarter` | `This quarter` | this quarter |
+| `filter.dates.lastQuarter` | `Last quarter` | the quarter before |
+| `filter.dates.thisYear` | `This year` | this year |
+| `filter.dates.lastYear` | `Last year` | last year |
+| `filter.dates.last7Days` | `Last 7 days` | today and the 6 days before |
+| `filter.dates.last30Days` | `Last 30 days` | today and the 29 days before |
+| `filter.dates.next7Days` | `Next 7 days` | today and the 6 days after |
+| `filter.dates.overdue` | `Overdue` | every day before today - only on a column that lists it in `datePresets` |
+| `filter.dates.range` | `{from} – {to}` | the tooltip of a button: its first and last day (a datetime's first and last second) |
+| `filter.dates.before` | `Before {date}` | the tooltip of Overdue, `{date}` today |
 
 ### Column menu
 
@@ -558,6 +588,31 @@ The short names of the operators, on a chip:
 | `footer.operator.NOT_IN` | `not in` |
 | `footer.operator.IS_BLANK` | `is blank` |
 | `footer.operator.IS_NOT_BLANK` | `is not blank` |
+
+### Views
+
+The named views (`GridConfig.views`): the views button at the footer's left end, its menu, and the
+name asked for by *Save as new view…* and *Rename…*, see [Views](03-state.md#views).
+
+| id | English | shown |
+| --- | --- | --- |
+| `views.standard` | `Standard` | the name of no view: the config's state - on the button, and first in the menu |
+| `views.button` | `View: {name}` | the name (`aria-label`) and tooltip of the button, `{name}`: the view shown |
+| `views.button.modified` | `View: {name} (changed)` | the same while the state changed since the view was applied or saved: the `*` after the name on the button |
+| `views.default.hint` | `default` | the hint after the view the grid starts in (`GridView.default`), Standard when no view is |
+| `views.shared.hint` | `shared` | the hint after a readonly view (`GridView.readonly`) |
+| `views.save` | `Save` | saves the state over the view shown |
+| `views.saveAs` | `Save as new view…` | saves the state as a new view, asks for its name |
+| `views.revert` | `Revert changes` | applies the view shown again: what changed since is taken back |
+| `views.rename` | `Rename…` | asks for another name for the view shown |
+| `views.delete` | `Delete` | deletes the view shown |
+| `views.setDefault` | `Default view` | a toggle with a ✓: the view shown is the one the grid starts in |
+| `views.name` | `Name of the view` | the label of the input of the name |
+| `views.name.empty` | `Give the view a name` | under the input while it is empty, or only spaces |
+| `views.name.taken` | `Another view has this name` | under the input while another view has the name (in any case) |
+| `views.name.cancel` | `Cancel` | closes it, nothing saved |
+| `views.name.save` | `Save` | saves the new view (*Save as new view…*) |
+| `views.name.rename` | `Rename` | gives the view the name (*Rename…*) |
 
 ### Aggregates
 
@@ -846,6 +901,62 @@ row numbers show it.
 | `detailForm.collapse` | `Collapse the details` | the tooltip of the button of its title while it is expanded |
 | `detailForm.expand` | `Expand the details` | the same while it is collapsed |
 | `detailForm.resize` | `Width of the details` | the splitter of its left edge: its name for a screen reader |
+
+### Import dialog
+
+The import dialog (`gridInterface.openImport()`, the menus' entries with `GridConfig.importMenu`), see
+[Import](24-import.md). `{size}`, `{rows}`, `{columns}` and `{cells}` in the error of a file too large are
+the limits (`IMPORT_LIMITS`); `{row}` is the row of the file, from 1; `{field}` the label of a column;
+`{text}` a value as the file has it.
+
+| id | English | shown |
+| --- | --- | --- |
+| `import.title` | `Import rows` | its title, its name for a screen reader |
+| `import.title.tooltip` | `Drag to move the dialog` | the title's tooltip |
+| `import.close.tooltip` | `Close without importing` | the ✕: its tooltip and its name |
+| `import.chooseFile` | `Choose file…` | the button that opens the file picker |
+| `import.hint` | `Drop a CSV or Excel (.xlsx) file here, or paste rows copied from a spreadsheet` | the drop zone |
+| `import.clipboard` | `Pasted rows` | where the rows came from, for pasted rows (a file has its name) |
+| `import.reading` | `Reading the file…` | while a file is read |
+| `import.error.tooLarge` | `The file is too large to import: at most {size} MB, {rows} rows, {columns} columns and {cells} cells` | a file over a limit |
+| `import.error.xls` | `An Excel 97-2003 file (.xls), or one protected by a password, can not be read: save it as .xlsx or CSV` | an .xls file |
+| `import.error.broken` | `The file can not be read: it is not CSV or an Excel workbook (.xlsx), or it is damaged` | a file that is neither, or damaged |
+| `import.error.unsupported` | `This browser can not read Excel files: save the file as CSV` | an .xlsx file in a browser without `DecompressionStream` |
+| `import.error.clipboard` | `No rows on the clipboard: copy them in a spreadsheet, then paste them here` | *As new rows…* without rows on the clipboard, or a clipboard the browser does not give |
+| `import.header` | `First row is a header` | the option: the first row names the columns |
+| `import.separator` | `Separator` | the option of a CSV file |
+| `import.separator.auto` | `Found: {separator}` | the separator found, `{separator}` its name below |
+| `import.separator.comma` | `Comma` | a separator |
+| `import.separator.semicolon` | `Semicolon` | a separator |
+| `import.separator.tab` | `Tab` | a separator |
+| `import.sheet` | `Sheet` | the option of a workbook of more sheets |
+| `import.decimalMark` | `Decimal mark` | the option when a number field is picked |
+| `import.decimalMark.auto` | `As the columns` | each number column's own decimal mark |
+| `import.decimalMark.dot` | `Dot: 1,234.5` | a decimal mark |
+| `import.decimalMark.comma` | `Comma: 1 234,5` | a decimal mark |
+| `import.dateOrder` | `Dates with /` | the option when a date field is picked |
+| `import.dateOrder.DMY` | `Day first: 31/12/2026` | an order |
+| `import.dateOrder.MDY` | `Month first: 12/31/2026` | an order |
+| `import.byName` | `The first row names the columns: they are matched to the fields by name` | over the table, with a header that names fields |
+| `import.byPosition` | `The columns are matched to the fields by position, from {field}` | over the table, without |
+| `import.column` | `Column {number}` | a column without a header, `{number}` from 1 |
+| `import.field` | `Field of {column}` | the name of a column's field picker for a screen reader |
+| `import.skip` | `Skip` | the picker's entry for a column not imported |
+| `import.count` | `{rows} rows` | the rows to import |
+| `import.count.problems` | `{rows} rows, {problems} with problems` | the same, with the rows that have problems |
+| `import.problem` | `Row {row}, {field}: {message}` | a problem in the list |
+| `import.problems.more` | `{count} more` | after the problems listed |
+| `import.problem.number` | `Not a number: {text}` | a value of a number field that is not read |
+| `import.problem.date` | `Not a date: {text}` | the same for a date field |
+| `import.problem.boolean` | `Not true or false: {text}` | the same for a checkbox |
+| `import.invalidRows` | `Rows with problems` | the option of the rows with problems |
+| `import.invalidRows.import` | `Import them, marked` | they are imported |
+| `import.invalidRows.skip` | `Skip them` | they are not |
+| `import.noFields` | `Pick a field for at least one column` | no column has a field |
+| `import.noRows` | `No rows to import` | an empty sheet |
+| `import.cancel` | `Cancel` | the button that closes it |
+| `import.import` | `Import {rows} rows` | the button that imports |
+| `import.rowError` | `Not imported: {problems}` | the row error of a new row with values that were not read, on its row number |
 
 ### Header filters
 

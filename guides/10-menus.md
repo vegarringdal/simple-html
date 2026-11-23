@@ -71,6 +71,28 @@ the order of the labels:
   names the column follow, `getState()` keeps it, `resetState()` takes it away. The ✎ is a button named
   *Rename Firm*, a stop of Tab after the search.
 
+### The views menu
+
+The views button at the left end of the footer (`GridConfig.viewsButton`, shown with `views` or
+`viewsStorageKey`) opens the views menu above it - a second click closes it. It is a menu of the grid
+as the others: the arrows, Home and End, the first letter of an entry, Enter and Esc work the same, and
+opened from the keyboard (Enter or Space on the button) the focus is on its first entry:
+
+- **Standard and the views**, a ✓ on the one shown: a click applies it, one click to switch. The hint
+  *default* is on the view the grid starts in (Standard when no view is), *shared* on a readonly view.
+- **Save** saves the state over the view shown, **Save as new view…** makes a new view of it, **Revert
+  changes** applies the view shown again. Save is greyed out while nothing changed, and on Standard and a
+  readonly view; Revert changes while nothing changed.
+- **Rename…** and **Delete** the view shown - greyed out on Standard and a readonly view - and
+  **Default view**, a toggle with a ✓: the view shown is the one the grid starts in.
+
+*Save as new view…* and *Rename…* ask for the name in a menu of its own at the button: an input with
+the focus, Cancel and Save (Rename). Enter saves, Esc closes it, the focus goes back to the button. A
+name of only spaces, or one another view has (in any case), is not taken: the line under the input
+says why. The views menu is not one of the `menus` hook: hide the button (`viewsButton: false`) and
+build a control of your own on `getViews()`, `applyView()`, `saveViewAs()` ... See
+[Views](03-state.md#views).
+
 ### Submenus
 
 An item with a `›` opens a submenu beside it:
@@ -128,7 +150,7 @@ The menus follow the WAI-ARIA [menu pattern](https://www.w3.org/WAI/ARIA/apg/pat
 | ArrowRight | opens the submenu of the item, the focus on its first item |
 | ArrowLeft | closes the submenu, the focus back on its item |
 | Esc | in a submenu: closes it, the focus back on its item. In the menu: closes it, the focus goes back where it was |
-| Tab, Shift+Tab | closes the menu, the focus goes back where it was. In a menu with a block - the filter menu's value list or range block - Tab is the browser's: it goes on into the block's inputs, and Shift+Tab back to the item the keyboard was on |
+| Tab, Shift+Tab | closes the menu, the focus goes back where it was. In a menu with a block - the filter menu's value list, range block or quick dates - Tab is the browser's: it goes on into the block's inputs, and Shift+Tab back to the item the keyboard was on |
 
 For a screen reader the menu is a `menu`, an item a `menuitem` - a `menuitemcheckbox` with
 `aria-checked` when it has a `selected` callback (the aggregates, the dimmed values, the operator in
@@ -138,7 +160,9 @@ the checkboxes, *Cancel* and *Apply* are stops of Tab; ArrowDown / ArrowUp move 
 box and the checkboxes, Enter in them applies, see [The value list](06-filtering.md#the-value-list). In
 the range block the operators are a radio group - one stop of Tab, the arrows pick another one - then
 the input (From and To), *Cancel* and *Apply*; Enter applies, see
-[The range block](06-filtering.md#the-range-block).
+[The range block](06-filtering.md#the-range-block). The quick dates after it are one stop of Tab:
+the arrows move between them (two columns), Enter or Space filters, see
+[Quick dates](06-filtering.md#quick-dates).
 
 ## Changing the grid's menus
 
@@ -339,6 +363,8 @@ the `menus.row` hook still gets them, by their ids. A group row's number has no 
 | `row.paste.current` | Paste cell: the cell right clicked. Greyed out when it is readonly - also on a row the [edit permissions](05-editing.md#edit-permissions-add-change-delete) lock (`change: false`, a row that is not new) | the grid is editable, and `edit` allows `change` or `add` |
 | `row.paste.cell` | Paste cell (selected rows): the column of the selected rows, readonly cells skipped. Greyed out with no row selected | the grid is editable, and `edit` allows `change` or `add` |
 | `row.paste.range` | Paste range: the clipboard as Ctrl+V pastes it with ranges - one value into every cell of them, a block from the top left of the last one. Reads the clipboard with `navigator.clipboard.readText()`, the browser may ask the user first. Greyed out without a range | the grid is editable, and `edit` allows `change` or `add` |
+| `row.paste.newRowsSeparator` | a line | `importMenu`, the grid is editable and `edit` allows `add` |
+| `row.paste.newRows` | As new rows…: the import dialog with the rows on the clipboard (`gridInterface.openImport(text)`) - their columns from this cell's column on, or by the names of a header row - added as new rows on *Import*, see [Import](24-import.md) | `importMenu`, the grid is editable and `edit` allows `add` |
 | `row.clear` | Clear › - a submenu | the grid is editable, and `edit` allows `change` or `add` |
 | `row.clear.current` | Clear cell: empties the cell right clicked. Greyed out when it is readonly, as Paste cell | the grid is editable, and `edit` allows `change` or `add` |
 | `row.clear.cell` | Clear cell (selected rows): empties the column of the selected rows, readonly cells skipped. Greyed out with no row selected | the grid is editable, and `edit` allows `change` or `add` |
@@ -433,6 +459,7 @@ the `menus.row` hook still gets them, by their ids. A group row's number has no 
 | `header.format.percent` | Percent, a toggle: the number times 100 with ` %` | a number field |
 | `header.settings` | Column settings… - opens the grid config dialog on this column (`gridInterface.openColumnSettings(field)`): its display format, a text column's template and link, see [The grid config dialog](08-formatting.md#the-grid-config-dialog) | |
 | `header.shortcuts` | Keyboard shortcuts… - opens the keyboard shortcuts help (`gridInterface.openShortcutHelp()`), its hint the key that opens it anywhere in the grid: Ctrl+/ (⌘/ on a Mac). See [The keyboard shortcuts help](14-accessibility.md#the-keyboard-shortcuts-help) | `shortcutHelp` (the default) |
+| `header.import` | Import rows… - opens the import dialog (`gridInterface.openImport()`): a CSV or Excel file, or rows pasted from a spreadsheet, as new rows, see [Import](24-import.md) | `importMenu`, the grid is editable and `edit` allows `add` |
 | `header.aggregate` | Aggregate › - a submenu | |
 | `header.aggregate.sum` | Sum - a toggle with a ✓ when on: the column's sum in the group rows and the totals row, see [Aggregates](18-aggregates.md) | a number field |
 | `header.aggregate.avg` | Average, a toggle | a number field |
@@ -473,6 +500,7 @@ the `menus.row` hook still gets them, by their ids. A group row's number has no 
 | `filter.filter.advanced` | Advanced Filter…: opens the filter editor | |
 | `filter.values` | the value list: a search box, "Select all" and a checkbox per value, "Cancel" and "Apply". One `MenuBlock`, its texts are `filter.values.*` | a text field, a lookup column - that has `IN` |
 | `filter.range` | the range block: the operators of Operator › as a row of buttons (=, ≠, <, ≤, >, ≥, Between), an input - From and To for Between - "Cancel" and "Apply": as the operator picked in Operator › and the value typed in the header filter. One `MenuBlock`, its texts are `filter.range.*` | a number, date or datetime field, not a lookup column |
+| `filter.dates` | the quick dates, under the range block: a button each - Today, Yesterday, This week ... - one click filters on its days and closes the menu. One `MenuBlock`, its texts are `filter.dates.*`. See [Quick dates](06-filtering.md#quick-dates) | a date or datetime field with `BETWEEN`, `datePresets` not `false` |
 
 See [Filtering](06-filtering.md#the-header-filter-menu) for what the filter menu's entries do.
 

@@ -538,6 +538,7 @@ describe('getFilterString() and getFilterTree()', () => {
     it('expect the tree of a BETWEEN to have the start in value, the end in valueTo', () => {
         expect(build(where('age', 'BETWEEN', [10, 20])).getFilterTree()?.children[0]).toEqual({
             kind: 'condition',
+            field: 'age',
             label: 'Age',
             operator: 'BETWEEN',
             value: '10',

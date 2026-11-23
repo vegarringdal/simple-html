@@ -253,6 +253,14 @@ A new row is listed in `getChanges().newEntities`. When the datasource has a `ke
 of the new row gets a generated negative number. When grouped, the row goes into its group and the
 group is expanded.
 
+Many rows at once: `addNewRows()` - the rows are sorted and grouped once, not once per row. The grid's
+[import](24-import.md) adds its rows with it.
+
+```ts
+const added = datasource.addNewRows([{ company: 'NEW 1' }, { company: 'NEW 2' }]); // the first one selected
+datasource.validate(added); // new rows are not validated until they are edited
+```
+
 ## Deleting rows
 
 Deleting a row marks it, so the delete can be undone:

@@ -12,11 +12,14 @@ import { DateInterface } from '../../date/dateInterface';
 import type { IDateConfig } from '../../date/interfaces';
 import { setTexts, TEXTS, type Texts } from '../../texts';
 import { registerCellRenderer } from '../cellRendererRegistry';
+import { DATE_PRESETS } from '../datePresets';
 import { FUNCTIONS } from '../formula';
 import type { GridConfig } from '../gridConfig';
 import { MAX_OPTIONS } from '../gridFunctions/lookupEditor';
 import { GridInterface } from '../gridInterface';
 import { registerLookup } from '../lookup';
+import { buildXlsx } from '../xlsx';
+import { zip } from '../zip';
 import { type MountedGrid, mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
 import {
     headerFilterInput,
@@ -149,10 +152,12 @@ const rows = () => [
 ];
 
 // the datetime column: the hint of Default in its Format › is its formatter's text - data, like a cell's.
-// Without the T of the built-in one, a letter that is no text
+// Without the T of the built-in one, a letter that is no text. Its placeholder - the range block's input
+// shows it - is data too
 registerFormatter('texts-datetime', {
     ...DateFormatterYYYYMMDDTHHMMSS,
-    format: (value) => DateFormatterYYYYMMDDTHHMMSS.format(value).replace('T', ' ')
+    format: (value) => DateFormatterYYYYMMDDTHHMMSS.format(value).replace('T', ' '),
+    placeholder: '«yyyy»'
 });
 
 // country is a custom cell: the editor of one line opens over it
@@ -164,6 +169,8 @@ registerCellRenderer('texts-test', (host) => ({
 
 const config = (texts?: Texts): GridConfig => ({
     readonly: false,
+    // the import entries of the menus: Paste › As new rows…, Import rows…
+    importMenu: true,
     layout: {
         // pinned left: its header menu has "Unpin", the others "Pin left"
         left: [{ fields: ['name'], width: 100 }],
@@ -184,8 +191,8 @@ const config = (texts?: Texts): GridConfig => ({
         age: { label: '«Age»' },
         // the placeholder of a date filter is the formatter's (YYYY-MM-DD), not a text
         born: { label: '«Born»', placeholderFilter: '«born»' },
-        // a datetime: its Format › has the formats with the time
-        updated: { label: '«Updated»', placeholderFilter: '«updated»' },
+        // a datetime: its Format › has the formats with the time. Every quick date in its filter menu
+        updated: { label: '«Updated»', placeholderFilter: '«updated»', datePresets: [...DATE_PRESETS] },
         active: { label: '«Active»' },
         notes: { label: '«Notes»' },
         code: { label: '«Code»', editor: { type: 'select', lookup: 'texts-codes' } },
@@ -578,8 +585,138 @@ function showDetailForm({ datasource, gridInterface }: MountedGrid, check: () =>
 }
 
 /**
+ * The named views: the views button at the footer's left end - Standard, changed - its menu with a
+ * readonly view that is the default (its hints), the name asked for by Save as new view… - none yet, one
+ * another view has - and by Rename…. The names of the views are data, in «»
+ */
+function showViews({ element, gridInterface }: MountedGrid, check: () => void) {
+    const viewsButton = () => element.querySelector('.footer-views-button') as HTMLButtonElement;
+    const nameInput = () => document.querySelector('.simple-html-grid-view-name-input') as HTMLInputElement;
+    const typeName = (name: string) => {
+        nameInput().value = name;
+        nameInput().dispatchEvent(new Event('input', { bubbles: true }));
+    };
+    const before = gridInterface.getState();
+    // the button of Standard and the menu: its entries, the hints of the shared view that is the default
+    gridInterface.updateConfig({ viewsButton: true });
+    gridInterface.setViews([{ id: 'shared', name: '«shared»', state: {}, readonly: true, default: true }]);
+    viewsButton().click();
+    check();
+    gridInterface.closeMenu();
+    // changed: the button's name says so. The name asked for, none yet, then one the shared view has
+    gridInterface.setState({ sorting: [{ attribute: 'age', ascending: false }] });
+    viewsButton().click();
+    menuEntry('views.saveAs').click();
+    check();
+    typeName('«shared»');
+    check();
+    typeName('«mine»');
+    nameInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    // Rename…: its button
+    viewsButton().click();
+    menuEntry('views.rename').click();
+    check();
+    gridInterface.closeMenu();
+    gridInterface.setViews([]);
+    gridInterface.updateConfig({ viewsButton: false });
+    gridInterface.setState(before);
+}
+
+/**
  * Opens every part of the grid that shows a text, and checks each
  */
+/**
+ * The import dialog: empty, a clipboard without rows, rows pasted with a header - the options of a number
+ * and a date field, each problem, more problems than it lists, the rows with problems - without a header,
+ * no field picked; a workbook of two sheets, the first empty; a file being read and each file it does not
+ * read. Then the rows imported: the row error of a value not read
+ */
+async function showImport({ datasource, gridInterface }: MountedGrid, check: (more?: string[]) => void) {
+    const dialog = () => document.querySelector('.import-dialog') as HTMLDialogElement;
+    const settle = () => sleep(30);
+    const pick = (select: HTMLSelectElement, value: string) => {
+        select.value = value;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+
+    gridInterface.openImport();
+    check();
+    gridInterface.openImport('');
+    check();
+    // a header and no rows: the count without problems
+    gridInterface.openImport('«Name»');
+    check();
+
+    // a header that names the fields, a value of each kind that is not read, rules broken: more problems
+    // than it lists
+    const bad = Array.from({ length: 6 }, (_, i) => `«n${i}»\t«a»\t«b»\t«c»\t«x»`);
+    gridInterface.openImport(['«Name»\t«Age»\t«Born»\t«Active»\t«Notes»', ...bad, '«ann»\t20\t2026-01-05\t1\t«x»'].join('\n'));
+    check();
+    // without a header: by position, the columns by their number
+    const header = dialog().querySelector('.import-options input[type="checkbox"]') as HTMLInputElement;
+    header.checked = false;
+    header.dispatchEvent(new Event('change'));
+    check();
+    // no field picked
+    for (const select of dialog().querySelectorAll<HTMLSelectElement>('.import-field')) {
+        pick(select, '');
+    }
+    check();
+    header.checked = true;
+    header.dispatchEvent(new Event('change'));
+
+    // imported: a row error for the values not read, on the row number
+    (dialog().querySelector('.import-button') as HTMLButtonElement).click();
+    const imported = datasource.getAllData().filter((row) => row.__rowState === 'N' && row.__rowError);
+    gridInterface.refresh();
+    check(imported.map((row) => String(row.__rowError)));
+    datasource.undo();
+    // the import scrolled to its first row: back to the top, where the steps after look
+    datasource.selectFirst();
+    datasource.deselectAll();
+
+    // a workbook of two sheets, the first one empty: its sheet picker, no rows
+    const xml = '<?xml version="1.0" encoding="UTF-8"?>';
+    const ns = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"';
+    const rel = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+    const workbook = await zip(
+        Object.entries({
+            'xl/workbook.xml': `${xml}<workbook ${ns} xmlns:r="${rel}"><sheets><sheet name="«one»" sheetId="1" r:id="r1"/><sheet name="«two»" sheetId="2" r:id="r2"/></sheets></workbook>`,
+            'xl/_rels/workbook.xml.rels': `${xml}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="r1" Type="${rel}/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="r2" Type="${rel}/worksheet" Target="worksheets/sheet2.xml"/></Relationships>`,
+            'xl/worksheets/sheet1.xml': `${xml}<worksheet ${ns}><sheetData/></worksheet>`,
+            'xl/worksheets/sheet2.xml': `${xml}<worksheet ${ns}><sheetData/></worksheet>`
+        }).map(([name, text]) => ({ name, data: new TextEncoder().encode(text) }))
+    );
+    gridInterface.openImport(new File([workbook], '«two sheets»'));
+    // being read
+    check();
+    await settle();
+    check();
+
+    // the files it does not read
+    for (const file of [
+        new Blob([new Uint8Array([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1])]),
+        new Blob([new Uint8Array([0x50, 0x4b, 0x03, 0x04])]),
+        new Blob([new Uint8Array(20 * 1024 * 1024 + 1)])
+    ]) {
+        gridInterface.openImport(file);
+        await settle();
+        check();
+    }
+    const deflated = await buildXlsx({ name: 'S', columns: [{ label: 'A' }], rows: [['x'.repeat(500)]] });
+    vi.stubGlobal('DecompressionStream', undefined);
+    try {
+        gridInterface.openImport(new Blob([deflated]));
+        await settle();
+        check();
+    } finally {
+        vi.unstubAllGlobals();
+    }
+    gridInterface.openImport();
+    dialog().close();
+    dialog()?.dispatchEvent(new Event('close'));
+}
+
 async function showEverything({ element, datasource, gridInterface }: MountedGrid, check: (more?: string[]) => void) {
     // the grid, its footer with the filter. The notes have a marker for a screen reader
     check();
@@ -751,6 +888,14 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     });
     gridInterface.setState({ headerFilters: {} });
 
+    // the quick dates of a datetime column, Overdue too: their names, the group's name and the days of each
+    // (the tooltips, the datetime formatter's digits). One clicked: its name in the cell and on the chip
+    openFilterMenu(element, 'updated');
+    check();
+    (document.querySelector('[data-menu-id="filter.dates"] [data-preset="thisMonth"]') as HTMLElement).click();
+    check();
+    gridInterface.setState({ headerFilters: {}, filter: and(where('age', 'GREATER_THAN', 10)) });
+
     // the filter editor: AND with an OR group, a condition compared with a field not picked yet. A text
     // condition has the Match case toggle, of a column that always matches case its other tooltip, a
     // BETWEEN its inputs from and to
@@ -790,6 +935,10 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     showColumnSettings({ element, datasource, gridInterface }, check);
     // the detail form and its tab of the dialog, see showDetailForm
     showDetailForm({ element, datasource, gridInterface }, check);
+    // the views button and its menu, see showViews
+    showViews({ element, datasource, gridInterface }, check);
+    // the import dialog, see showImport
+    await showImport({ element, datasource, gridInterface }, check);
 
     // the footer: a chip for each operator, five at a time, an OR group in the first
     datasource.filter(and(...conditions(OPERATORS.slice(0, 3)), or(...conditions(OPERATORS.slice(3, 5)))));
@@ -914,7 +1063,7 @@ afterEach(() => {
 });
 
 // showEverything opens every part of the grid one by one (every menu, the editors, the date picker, the
-// calculated columns and the kinds of a colour rule ...): seconds, more on a loaded machine than the 5s
+// calculated columns and the kinds of a colour rule, the views menu ...): seconds, more on a loaded machine than the 5s
 // vitest gives a test - 30s and more with two workers busy
 describe('texts in the grid - every text replaced', { timeout: 90_000 }, () => {
     it('expect every text from setTexts(), none left in English, and every id shown', async () => {
@@ -1007,7 +1156,8 @@ describe('texts in the grid - where a text comes from', () => {
 
 describe('texts in the grid - what GridConfig.texts takes', () => {
     it('expect a TypeError for a text that is not a string, from the constructor and updateConfig()', () => {
-        const datasource = new Datasource();
+        // the fields of the config's columns: its quick dates are for a date column
+        const datasource = new Datasource(fields);
         // a config from JSON can have anything
         expect(() => new GridInterface({ ...config(), texts: JSON.parse('{ "row.copy": null }') }, datasource)).toThrow(
             /'row\.copy'/

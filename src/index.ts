@@ -61,6 +61,7 @@ export type { CheckboxFormat, ColumnFormat, DateFormat, LinkFormat, NumberFormat
 export { type CreateGridOptions, createGrid } from './grid/createGrid';
 export type { CsvOptions, CsvSeparator } from './grid/csv';
 export type { ColorScaleFormat, DataBarFormat, IconSetFormat, IconSetName } from './grid/dataBars';
+export { DATE_PRESETS, type DatePreset } from './grid/datePresets';
 export type { FindResult } from './grid/findResult';
 export type {
     ColumnConfig,
@@ -77,6 +78,7 @@ export { GridElement } from './grid/gridElement';
 export type { GridCellEventData, GridEvents } from './grid/gridEvents';
 export type { ColType } from './grid/gridFunctions/colType';
 export type { HTMLCellElement } from './grid/gridFunctions/HTMLCellElement';
+export type { ImportOptions, ImportProblem, ImportResult } from './grid/gridFunctions/importRows';
 export type { CellClass, GridHooks } from './grid/gridHooks';
 export { GridInterface } from './grid/gridInterface';
 export {
@@ -91,6 +93,10 @@ export {
     type MenuSeparator,
     type MenuSubmenu
 } from './grid/gridMenus';
+export type { GridView } from './grid/gridView';
+export { type ImportTable, type ReadImportFileOptions, readImportFile } from './grid/importFile';
+export { IMPORT_LIMITS, ImportFileError, type ImportFileProblem } from './grid/importLimits';
 export { type Lookup, type LookupFromDatasource, type LookupFromGridInterface, registerLookup } from './grid/lookup';
 export type { ExcelOptions } from './grid/xlsx';
+export type { ImportCell } from './grid/xlsxRead';
 export { setTexts, TEXTS, type TextId, type Texts } from './texts';

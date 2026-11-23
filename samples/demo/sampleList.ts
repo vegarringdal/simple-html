@@ -41,6 +41,8 @@ import { fullGrid } from './samples/fullGrid';
 import fullGridSource from './samples/fullGrid.ts?raw';
 import { gridState } from './samples/gridState';
 import gridStateSource from './samples/gridState.ts?raw';
+import { importRows } from './samples/importRows';
+import importRowsSource from './samples/importRows.ts?raw';
 import { liveData } from './samples/liveData';
 import liveDataSource from './samples/liveData.ts?raw';
 import { lookups } from './samples/lookups';
@@ -71,6 +73,8 @@ import { translation } from './samples/translation';
 import translationSource from './samples/translation.ts?raw';
 import { validation } from './samples/validation';
 import validationSource from './samples/validation.ts?raw';
+import { views } from './samples/views';
+import viewsSource from './samples/views.ts?raw';
 
 /**
  * a sample and the text of its file: the source the site shows with the running sample
@@ -121,12 +125,14 @@ export const SAMPLES: Sample[] = [
     { ...filterOperatorHeader, source: filterOperatorHeaderSource },
     // config
     { ...gridState, source: gridStateSource },
+    { ...views, source: viewsSource },
     { ...tooltips, source: tooltipsSource },
     { ...translation, source: translationSource },
     { ...theming, source: themingSource },
     { ...miscConfig, source: miscConfigSource },
     // export
     { ...exportCsv, source: exportCsvSource },
+    { ...importRows, source: importRowsSource },
     // live data
     { ...liveData, source: liveDataSource }
 ];

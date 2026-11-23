@@ -28,6 +28,7 @@ import {
     type CsvOptions,
     type CsvSeparator,
     createGrid,
+    DATE_PRESETS,
     type DataBarFormat,
     DataContainer,
     Datasource,
@@ -37,6 +38,7 @@ import {
     type DateFormat,
     DateFormatterYYYYMMDD,
     DateInterface,
+    type DatePreset,
     type DetailForm,
     type EditPermissions,
     type Entity,
@@ -59,6 +61,7 @@ import {
     type GridLayout,
     type GridMenus,
     type GridState,
+    type GridView,
     type GroupArgument,
     type GroupRow,
     type HeaderFilter,
@@ -555,6 +558,27 @@ gridInterface.setState({ filter: null, headerFilters: {} });
 const savedState: Partial<GridState> = JSON.parse('{}');
 gridInterface.setState(savedState);
 gridInterface.resetState();
+// named views: snapshots of the state under a name, plain JSON
+const namedViews: GridView[] = [{ id: 'late', name: 'Late', state: { sorting: [] }, readonly: true, default: false }];
+gridInterface.setViews(namedViews);
+const allViews: GridView[] = gridInterface.getViews();
+const shownView: GridView | null = gridInterface.getCurrentView();
+const viewChanged: boolean = gridInterface.isViewModified();
+gridInterface.applyView('late');
+gridInterface.applyView(null);
+const newView: GridView = gridInterface.saveViewAs('Mine');
+const savedOver: GridView = gridInterface.saveView();
+gridInterface.renameView(newView.id, 'My view');
+gridInterface.setDefaultView(newView.id);
+gridInterface.setDefaultView(null);
+gridInterface.deleteView(newView.id);
+gridInterface.on('views-change', (data) => {
+    const list: GridView[] = data.views;
+    console.log(list.length);
+});
+const viewsConfig: GridConfig = { layout: { center: [] }, views: namedViews, viewsStorageKey: 'orders', viewsButton: true };
+const viewIsData: HasFunction<GridView> extends false ? true : never = true;
+console.log(allViews, shownView, viewChanged, savedOver, viewsConfig, viewIsData);
 // @ts-expect-error saveConfig is gone: getState()
 gridInterface.saveConfig();
 // @ts-expect-error loadConfig is gone: setState()
@@ -1072,6 +1096,22 @@ const formulaNumber: CalculatedColumn = { formula: 2 };
 // @ts-expect-error a type of the language: number, text, date, boolean
 const datetimeType: CalculatedColumn = { formula: 'TODAY()', type: 'datetime' };
 console.log(calculatedConfig, formulaNumber, datetimeType);
+// quick dates: the ids a column offers, the one a header filter keeps - relative, computed from today
+const quickDate: DatePreset = 'thisMonth';
+const quickDateColumns: Record<string, ColumnConfig> = {
+    dueDate: { datePresets: [...DATE_PRESETS] },
+    orderDate: { datePresets: ['today', 'last7Days', quickDate] },
+    born: { datePresets: false }
+};
+gridInterface.setState({ headerFilters: { orderDate: { value: null, datePreset: 'overdue' } } });
+gridInterface.refreshDatePresets();
+// @ts-expect-error a quick date the grid does not have
+const tomorrow: DatePreset = 'tomorrow';
+// @ts-expect-error true is no list: every one but Overdue is the default, left out
+const allQuickDates: ColumnConfig = { datePresets: true };
+// @ts-expect-error DATE_PRESETS is read only: copy it
+DATE_PRESETS.push('today');
+console.log(quickDateColumns, tomorrow, allQuickDates);
 
 // data bars, colour scales and icon sets of a number column, and the colours of the Excel export
 const salesBar: DataBarFormat = { color: 'green', min: 0 };

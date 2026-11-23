@@ -1332,6 +1332,47 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Import: rows pasted from Excel, CSV and Excel files (user request)
+
+##### Added
+- **The import dialog**: a CSV or .xlsx file picked or dropped, or rows pasted from Excel / Google Sheets
+  (Ctrl+V in the dialog, or the row menu's Paste › *As new rows…*) become new rows. The first rows with a field
+  picker over each column (matched by name, else by position), *First row is a header*, the separator, the
+  sheet, the decimal mark and the order of dates when they matter; the problems in words ("Row 3, Age: Not a
+  number: abc") and on the cells; rows with problems imported marked or skipped. Values read as typing reads
+  them, plus a file's forms (`1 234,5`, ISO dates); validation is run before anything is added. One undo
+  step. `GridConfig.importMenu` (off by default) shows *Import rows…* in the header menu and *As new rows…*;
+  both need an editable grid and `edit.add`. `gridInterface.openImport()`, `importRows()`, `readImportFile()`,
+  `ImportFileError`, `IMPORT_LIMITS`; `datasource.addNewRows()`. Guide 24 *Import*, sample *Import*.
+- **A file is not trusted**: our own unzip (`DecompressionStream`) and xlsx reader - 20 MB a file, 100 MB
+  unzipped, 100 000 rows, 1 000 columns, 1 000 000 cells; zip bombs, lying sizes, encryption, ZIP64 and
+  `<!DOCTYPE` refused; content shown as text only.
+
+#### Named views (user request)
+
+##### Added
+- **Views**: snapshots of the state under a name - "My open orders" - the user switches between with the
+  **views button** at the left end of the footer: its name (*Standard* for the config's state), a `*` while
+  the state changed since it was applied or saved, a click opens the views menu - the views, then Save, Save
+  as new view…, Revert changes, Rename…, Delete, Default view. `GridView { id, name, state, readonly?,
+  default? }`; `getViews()`, `setViews()`, `getCurrentView()`, `isViewModified()`, `applyView()`, `saveView()`,
+  `saveViewAs()`, `renameView()`, `deleteView()`, `setDefaultView()`; the event `views-change` to store them;
+  `GridConfig.views` (a `readonly` one is shared: applied, saved as one's own, not changed),
+  `viewsStorageKey` (kept in localStorage), `viewsButton`. Sample *Named views*.
+
+#### Quick dates in the filter menu (user request)
+
+##### Added
+- **Quick dates** on date and datetime columns: under the filter menu's range block, one click for Today,
+  Yesterday, This / Last week, This / Last month, This / Last quarter, This / Last year, Last 7 / 30 days,
+  Next 7 days (and Overdue, not offered by default). The header filter keeps the preset
+  (`HeaderFilter.datePreset`) and shows its name, the footer chip too; the datasource holds a plain BETWEEN of
+  the days, so `getFilter()` and `toSqlWhere()` see dates. **Relative**: computed from today again when a
+  state is applied (`setState`, `initialState`, `resetState`) and when the window gets the focus back - a view
+  saved in November means December in December; `gridInterface.refreshDatePresets()` for a page left open.
+  The week starts as the date picker's (`datePickerConfig.weekStart`, Monday by default). Typing a preset's
+  name in the cell applies it. `ColumnConfig.datePresets` (a list, or false), `DATE_PRESETS`, `DatePreset`.
+
 #### Calculated columns; colour rules on several fields, by formula, in any colour (user request)
 
 ##### Added

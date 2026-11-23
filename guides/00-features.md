@@ -65,6 +65,7 @@ On a Mac, Ctrl is Cmd and Alt is Option.
 | Value list | Tick the values to show, as in a spreadsheet, each with its count. A search narrows the list, or filters on the text | [guide](06-filtering.md#the-value-list) · [sample](#sample/filtering) |
 | Range block | For numbers and dates: an operator and a value, or from and to, in one go | [guide](06-filtering.md#the-range-block) · [sample](#sample/filtering) |
 | Date and range pickers | A calendar for a date filter; two months side by side for a range | [guide](06-filtering.md#the-range-picker) · [sample](#sample/filtering) |
+| Quick dates | One click for Today, This week, Last month, This quarter, Last 30 days, Overdue ... - kept as "this month", so a saved view still means this month next month | [guide](06-filtering.md#quick-dates) · [sample](#sample/filtering) |
 | Filter as shown | Type the filter as the cells show it: `2026-W47` is that week, `1 234,5` that number | [guide](06-filtering.md#filter-as-shown) · [sample](#sample/full-grid) |
 | Filter as you type | Filters after a short pause, no Enter needed - per column, turned on by the user or you | [guide](06-filtering.md#filter-as-you-type) · [sample](#sample/filter-operator-header) |
 | Match case | `Oslo` matches `Oslo`, not `OSLO`: upper and lower case as typed | [guide](06-filtering.md#match-case) · [sample](#sample/filtering) |
@@ -165,6 +166,7 @@ On a Mac, Ctrl is Cmd and Alt is Option.
 | Safe for spreadsheets | Text starting with `=`, `+`, `-` or `@` is written so a spreadsheet does not run it as a formula | [guide](15-export.md#formulas-csv-injection) · [sample](#sample/export) |
 | From the menu | Right click a cell: Export › Excel, all rows or the selected rows | [guide](15-export.md#from-the-row-menu) · [sample](#sample/export) |
 | What you see | The rows the filter lets through, sorted, the columns in their order - or the selected rows | [guide](15-export.md#the-rows) · [sample](#sample/export) |
+| Import | Rows pasted from Excel, or a CSV or Excel file, become new rows: see where each column goes, what is wrong, then import - one undo step | [guide](24-import.md) · [sample](#sample/import) |
 
 ## State
 
@@ -172,6 +174,7 @@ On a Mac, Ctrl is Cmd and Alt is Option.
 | --- | --- | --- |
 | Save and restore | What the user changed - column order and widths, sorting, grouping, filters, formats, aggregates, the detail form - as plain data to store and give back | [guide](03-state.md#getstate-setstate-and-resetstate) · [sample](#sample/grid-state) |
 | Start and reset | The state a grid starts in, and a reset back to it | [guide](03-state.md#the-state-the-grid-starts-in) · [sample](#sample/grid-state) |
+| Named views | "My open orders", "Late deliveries": save views of the grid and switch with one click in the footer - Save, Save as, Revert, Rename, Delete, a default view; shared views of yours; kept in the browser or your backend | [guide](03-state.md#views) · [sample](#sample/views) |
 
 ## Live data
 

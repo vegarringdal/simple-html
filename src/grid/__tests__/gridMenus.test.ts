@@ -113,7 +113,8 @@ describe('menus - the built-in ids', () => {
     });
 
     it('expect the defaults of an editable number cell to show every row entry', async () => {
-        const { element, datasource, gridInterface } = await mountGrid({ ...simpleConfig(), readonly: false });
+        // importMenu: Paste › As new rows…
+        const { element, datasource, gridInterface } = await mountGrid({ ...simpleConfig(), readonly: false, importMenu: true });
         // undo is only shown when a selected row is marked for deletion
         datasource.getSelection().selectRowRange(0, 1);
         datasource.markForDeletion(datasource.getDataRows()[0]);
@@ -174,14 +175,15 @@ describe('menus - the built-in ids', () => {
 
         openFilterMenu(element, 'firstname');
 
-        // not the operators of a number, nor its range block
+        // not the operators of a number, nor its range block - nor the quick dates of a date
         const numberOnly = [
             'filter.operator.lessThan',
             'filter.operator.lessThanOrEqualTo',
             'filter.operator.greaterThan',
             'filter.operator.greaterThanOrEqualTo',
             'filter.operator.between',
-            'filter.range'
+            'filter.range',
+            'filter.dates'
         ];
         expect(menuTreeIds()).toEqual(MENU_IDS.filter.filter((id) => !numberOnly.includes(id)));
     });
@@ -191,14 +193,15 @@ describe('menus - the built-in ids', () => {
 
         openFilterMenu(element, 'age');
 
-        // not the operators of a text, Match case and the value list
+        // not the operators of a text, Match case and the value list - nor the quick dates of a date
         const textOnly = [
             'filter.operator.contains',
             'filter.operator.doesNotContain',
             'filter.operator.beginWith',
             'filter.operator.endWith',
             'filter.matchCase',
-            'filter.values'
+            'filter.values',
+            'filter.dates'
         ];
         expect(menuTreeIds()).toEqual(MENU_IDS.filter.filter((id) => !textOnly.includes(id)));
     });
@@ -525,8 +528,9 @@ describe('menus - the menus hook', () => {
 
         gridInterface.updateHooks({ menus: undefined });
         openLabelMenu(element, 'age');
-        // a number column: Format › has the number formats, not the date formats and their lines
-        const dateOnly = ['header.format.timeSeparator', 'header.format.partSeparator'];
+        // a number column: Format › has the number formats, not the date formats and their lines. A readonly
+        // grid has no Import rows…
+        const dateOnly = ['header.format.timeSeparator', 'header.format.partSeparator', 'header.import'];
         expect(menuTreeIds()).toEqual(
             MENU_IDS.header.filter(
                 (id) => id !== 'header.column.unpin' && !id.startsWith('header.format.date.') && !dateOnly.includes(id)

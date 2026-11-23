@@ -66,6 +66,8 @@ export type EntityUnion<T> = Entity & T;
 export interface FilterConditionNode {
     /** always `'condition'` */
     kind: 'condition';
+    /** the field of the condition, its name: `label` is what is shown */
+    field: string;
     /** the field's label, or what the `label` function given to `getFilterTree()` returns */
     label: string;
     /** the operator's name, e.g. `'EQUAL'`, see {@link FilterOperator} */
@@ -1661,6 +1663,62 @@ export class Datasource<T = any> {
     }
 
     /**
+     * Adds several new rows at the end at once, as {@link addNewEmpty} adds one: each is listed in
+     * `getChanges().newEntities`, its `__rowState` is `'N'`, and gets a generated key. The grid's import
+     * (`gridInterface.importRows()`, the import dialog) adds its rows with it. Much faster than
+     * `addNewEmpty()` in a loop: the rows are sorted and grouped once, not once per row.
+     *
+     * - The rows are shown at the end, also when the rows are sorted or filtered (as `addNewEmpty()`
+     *   shows its row) - until the next sort or filter puts them in place. When grouped they are put in
+     *   their groups, and the group of the first one is expanded.
+     * - Not validated, as a new row from `addNewEmpty()`: call `validate(rows)` to check them.
+     * - Adding them is not a step of the undo history, as `addNewEmpty()`.
+     *
+     * Sends `collection-changed` (`{ added: true }`) once, nothing for no rows.
+     *
+     * @param rows the values of the new rows. The objects themselves become the rows
+     * @param options.scrollTo `false` to leave the selection as it is, default `true`: the first new row
+     * is selected and made current, and the grid scrolls to it
+     * @returns the new rows, as the datasource keeps them
+     * @throws a `TypeError` when `rows` is not an array
+     *
+     * @sample editing
+     * @example
+     * ```ts
+     * const added = datasource.addNewRows([{ company: 'NEW 1' }, { company: 'NEW 2' }]);
+     * datasource.validate(added);
+     * ```
+     */
+    public addNewRows(rows: Partial<T>[], options: { scrollTo?: boolean } = {}): EntityUnion<T>[] {
+        assertOptions('addNewRows', options, 'addNewRows(rows, { scrollTo: false })');
+        if (!Array.isArray(rows)) {
+            throw new TypeError(`addNewRows(): rows is an array of rows, not ${JSON.stringify(rows)}`);
+        }
+        const { scrollTo = true } = options;
+        if (!rows.length) {
+            return [];
+        }
+        const added = this.__dataContainer.setData(rows, { add: true, isNew: true });
+
+        if (this.__grouping.getGrouping().length) {
+            // into their groups, as addNewEmpty(): the group of the first one expanded so it is seen
+            this.__collectionFiltered = this.__collectionFiltered.concat(added);
+            this.__internalUpdate(false);
+            this.__collectionDisplayed = this.__grouping.expandToEntity(added[0]);
+        } else {
+            this.__internalUpdate(false);
+            // after the update, as addNewEmpty(): the rows go at the end, not where the sort puts them
+            this.__collectionFiltered = this.__collectionFiltered.concat(added);
+            this.__collectionDisplayed = this.__collectionDisplayed.concat(added);
+        }
+        this.__callSubscribers('collection-changed', { added: true });
+        if (scrollTo) {
+            this.__selectAndNotify(this.__collectionDisplayed.indexOf(added[0]), 'select-last');
+        }
+        return added as EntityUnion<T>[];
+    }
+
+    /**
      * The sort that is set: the fields and directions, the first decides. When grouped, the grouped
      * fields come first. `[]` when the rows are not sorted. It is what `GridState.sorting` holds.
      *
@@ -2869,7 +2927,7 @@ export class Datasource<T = any> {
      *
      * datasource.getFilterTree();
      * // { kind: 'group', group: 'AND', children: [
-     * //     { kind: 'condition', label: 'Age', operator: 'GREATER_THAN', value: '18', hasValue: true, caseSensitive: false }
+     * //     { kind: 'condition', field: 'age', label: 'Age', operator: 'GREATER_THAN', value: '18', hasValue: true, caseSensitive: false }
      * // ] }
      *
      * // the codes of country shown as names
@@ -2877,7 +2935,7 @@ export class Datasource<T = any> {
      * const countryName: Formatter = { ...TextFormatter, format: (value) => names[String(value)] ?? TextFormatter.format(value) };
      * datasource.filter(where('country', 'IN', ['NO', 'SE']));
      * datasource.getFilterTree(undefined, (field) => (field === 'country' ? countryName : undefined));
-     * // ... { kind: 'condition', label: 'country', operator: 'IN', value: 'Norway, Sweden', hasValue: true, caseSensitive: false } ...
+     * // ... { kind: 'condition', field: 'country', label: 'country', operator: 'IN', value: 'Norway, Sweden', hasValue: true, caseSensitive: false } ...
      * ```
      */
     public getFilterTree(
@@ -2910,6 +2968,7 @@ export class Datasource<T = any> {
             const formatter = formatterOf(expression.field);
             const node: FilterConditionNode = {
                 kind: 'condition',
+                field: expression.field,
                 label: label(expression.field),
                 operator: expression.operator,
                 value: '',

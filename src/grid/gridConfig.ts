@@ -6,6 +6,8 @@ import type { IDateConfig } from '../date/interfaces';
 import type { Texts } from '../texts';
 import type { CalculatedColumn } from './calculatedColumns';
 import type { ColumnFormat } from './columnFormat';
+import type { DatePreset } from './datePresets';
+import type { GridView } from './gridView';
 
 /**
  * The grid's config: the options of each column (`columns`), where the columns go (`layout`), sizes
@@ -224,6 +226,74 @@ export type GridConfig = {
      */
     settingsButton?: boolean;
     /**
+     * The named views the grid starts with, see {@link GridView}: "My open orders", "Late deliveries" -
+     * each a snapshot of the state under a name. The user switches between them with the views button
+     * at the left end of the footer (`viewsButton`), and saves, renames and deletes their own there. A
+     * view with `readonly: true` is yours - shared by the company, say - the user can apply it and save
+     * it as a view of their own, not change it. The view with `default: true` is applied when the grid is
+     * made, on top of `initialState`.
+     *
+     * The grid keeps the list (`gridInterface.getViews()`) and sends `views-change` with it when the user
+     * changes it: store it there - in a backend, say - and give it back here next time. Or let the grid
+     * keep it in the browser, `viewsStorageKey`. Given, the views button is shown.
+     *
+     * `updateConfig({ views })` makes the list again, as when the grid is made (with the stored views of
+     * `viewsStorageKey`); `setViews()` replaces it. A list that is not one of views - an id or a name
+     * that is no text, a state that is no object, two views of one id, two defaults - throws a
+     * `TypeError` when the grid is made or `updateConfig()` is given it.
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * import { type GridConfig, where } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     layout: { center: [{ fields: ['company'], width: 150 }, { fields: ['country'], width: 120 }] },
+     *     views: [
+     *         {
+     *             id: 'norway',
+     *             name: 'Norway',
+     *             state: { filter: where('country', 'EQUAL', 'Norway'), headerFilters: { country: { value: 'Norway' } } },
+     *             readonly: true
+     *         }
+     *     ],
+     *     // the user's own views are kept in localStorage, the shared one above comes from here every time
+     *     viewsStorageKey: 'orders-grid-views'
+     * };
+     * ```
+     */
+    views?: GridView[];
+    /**
+     * Keeps the user's views in the browser's localStorage under this key, the ready way to keep them
+     * when there is no backend for them: read when the grid is made, written every time the list
+     * changes. Stored are the views that are not `readonly` and which view is the default; the readonly
+     * views come from `views` every time. Once the user has saved one, the stored views are the user's -
+     * a view of `views` that is not readonly and was deleted stays deleted.
+     *
+     * The browser can refuse - blocked storage, a private window that keeps nothing: the grid starts
+     * with `views`, and a view saved stays until the page is left (a warning in the console). Something
+     * stored that is no list of views is passed by. Given, the views button is shown.
+     *
+     * Put a version in the key and change it when the columns of the config change much: a view keeps
+     * the layout it was saved with, see the state guide.
+     *
+     * @sample views
+     */
+    viewsStorageKey?: string;
+    /**
+     * shows the views button at the left end of the footer, on the line of the filter: the name of the
+     * view shown - "Standard" when none is (the config's state) - with a `*` after it when the state
+     * changed since it was applied or saved. A click opens the views menu: the views to switch to, and
+     * Save, Save as new view…, Revert, Rename…, Delete and Default view. Default `true` when `views` or
+     * `viewsStorageKey` is given, else `false`. Not in a footer of no height (`footerHeight: 0`).
+     *
+     * `false` hides it: the views and `gridInterface.applyView()`, `saveViewAs()` ... still work, for a
+     * views control of your own
+     *
+     * @sample views
+     */
+    viewsButton?: boolean;
+    /**
      * the keyboard shortcuts help, default `true`: a dialog that lists the keys of the grid in groups -
      * moving around, selecting, editing, find, the menus - with a search, the keys as the platform names
      * them (⌘ on a Mac). The user opens it with `?` where the key types nothing (a readonly cell, a
@@ -246,6 +316,29 @@ export type GridConfig = {
      * ```
      */
     shortcutHelp?: boolean;
+    /**
+     * The import entries of the grid's menus, default `false`: *Import rows…* in the header menu
+     * (`header.import`) and *As new rows…* in the row menu's Paste › (`row.paste.newRows`). Both open the
+     * import dialog - a CSV or Excel file picked or dropped, or rows pasted from a spreadsheet become new
+     * rows, see the import guide. Shown in an editable grid (`readonly: false`) where the user may add rows
+     * (`edit.add`).
+     *
+     * Off by default: a user adding many rows at once is for the app to allow. Without it
+     * `gridInterface.openImport()` opens the dialog from a button of your own, under the same rules.
+     *
+     * @sample import
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     readonly: false,
+     *     importMenu: true,
+     *     layout: { center: [{ fields: ['name'], width: 150 }, { fields: ['born'], width: 110 }] }
+     * };
+     * ```
+     */
+    importMenu?: boolean;
     /**
      * the whole grid is readonly, default `true`: no cell can be edited, and the row menu has no paste
      * or clear. Set `false` to edit; the column's `readonly` and the `isReadonly` hook
@@ -808,6 +901,32 @@ export type ColumnConfig = {
      */
     filterOnType?: boolean;
     /**
+     * the quick date filters the column's filter menu offers - *Quick dates*, one click each: Today,
+     * Yesterday, This week, Last week, This month ... in the order given. Left out: every one but
+     * `'overdue'` (see {@link DATE_PRESETS}, {@link DatePreset}). `false` (or `[]`): none, the menu has
+     * no Quick dates.
+     *
+     * For a `date` or `datetime` column whose header filter offers `BETWEEN` (a quick date is a range of
+     * days). A `TypeError` when the grid is made or `updateConfig()` is given the column: an id that is no
+     * quick date, or the option on another type (a lookup column filters as text). It limits what the
+     * user picks: a state from `setState()` can hold any quick date.
+     *
+     * @sample filtering
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     columns: {
+     *         dueDate: { datePresets: ['today', 'next7Days', 'thisMonth', 'overdue'] },
+     *         born: { datePresets: false } // no quick dates
+     *     },
+     *     layout: { center: [{ fields: ['dueDate'], width: 110 }, { fields: ['born'], width: 110 }] }
+     * };
+     * ```
+     */
+    datePresets?: DatePreset[] | false;
+    /**
      * the name of another column whose value in the row is the type of this cell -
      * `'text' | 'number' | 'boolean' | 'date' | 'datetime'`. A number/text/date etc in the same
      * column, for property/value style data. Only for a `text` field (the default), and a value that
@@ -1087,7 +1206,9 @@ export interface GridState {
      * Only the columns that have one of them are listed.
      *
      * The rows are filtered by `filter`: these are what the header shows, the conditions they made are
-     * in `filter` already. A state from `getState()` has both.
+     * in `filter` already. A state from `getState()` has both. The one exception is a quick date
+     * (`datePreset`): it is computed from today when the state is set, and its condition replaces the
+     * column's in `filter` - see `HeaderFilter.datePreset`.
      */
     headerFilters: Record<string, HeaderFilter>;
     /**
@@ -1138,7 +1259,8 @@ export interface GridState {
  *     balance: { value: [1000, 5000], operator: 'BETWEEN' }, // typed as 1000..5000
  *     active: { value: true }, // a boolean column's checkbox
  *     city: { value: 'Os*', filterOnType: true }, // filter as you type turned on
- *     due: { value: new Date(2026, 10, 16), operator: 'EQUAL' } // `2026-W47` typed, the column shown as weekIso
+ *     due: { value: new Date(2026, 10, 16), operator: 'EQUAL' }, // `2026-W47` typed, the column shown as weekIso
+ *     orderDate: { value: null, datePreset: 'thisMonth' } // Quick dates › This month: this month when it is set
  * };
  * ```
  */
@@ -1167,6 +1289,21 @@ export interface HeaderFilter {
      * listed only when the user's differs from it. See `ColumnConfig.filterOnType`
      */
     filterOnType?: boolean;
+    /**
+     * the quick date filter picked in the column's filter menu (*Quick dates*: `'thisMonth'` ...), see
+     * {@link DatePreset}. It is **relative**: the grid computes its days from today whenever it filters -
+     * when it is picked, when a state with it is set (`setState()`, `initialState`, `resetState()`) and
+     * when the window gets the focus back on another day (`gridInterface.refreshDatePresets()`). So a
+     * state saved with This month filters on the month it is set in.
+     *
+     * With it, `operator` is `'BETWEEN'` and `value` the `[from, to]` it was computed to last (a
+     * `datetime`'s To at 23:59:59, an open start null for `'overdue'`): set it with `value: null`, the
+     * grid fills them in. Its condition - a plain `BETWEEN` of those days - replaces the column's in
+     * `GridState.filter` when the state is set: `filter` and `toSqlWhere()` never see the quick date.
+     * The cell shows its name (*This month*). A value typed, picked or cleared replaces it, and so does
+     * another operator. Left out for a column that can not take it (no date column, no `BETWEEN`)
+     */
+    datePreset?: DatePreset;
 }
 
 /**
@@ -1199,6 +1336,7 @@ export type ParsedGridOptions = GridOptions &
             | 'copyHeaders'
             | 'filterOperatorIndicator'
             | 'settingsButton'
+            | 'viewsButton'
             | 'shortcutHelp'
             | 'placeholderRowCurrentEntityOnly'
             | 'groupAggregates'

@@ -10,6 +10,8 @@ import { clearAllColumnFilters } from './clearAllColumnFilters';
 import type { ColType } from './colType';
 import { columnOperators, headerFilterType, headerOperators, isAlwaysCaseSensitive } from './columnFilterOptions';
 import { type DateRange, filterDate, openDateInMenu, openDateRangeInMenu, rangeEndTexts } from './contextmenuDate';
+import { datePresetBlock } from './datePresetBlock';
+import { activeDatePreset } from './datePresetFilter';
 import { DROPDOWN_FILTER_MAX_ROWS, dropDownFilterData, type ValueListEntry } from './dropDownFilterData';
 import { filterCallback } from './filterCallback';
 import { filterOnTypeItem } from './filterOnType';
@@ -61,8 +63,9 @@ export function contextmenuFilter(
  * the submenu operator, "Match case", "Filter as you type" (filterOnType.ts), the submenu blank, clear,
  * clear all, a line, the filter editor -
  * then the main tool, not in a submenu: the value list of a text or lookup column, the range block of a
- * number or date column (each hides itself for the other columns). The entries kept the ids they had
- * before they were in Filter. The ids are documented in MENU_IDS.filter.
+ * number or date column (each hides itself for the other columns) - and under it the quick dates of a
+ * date column (datePresetBlock.ts). The entries kept the ids they had before they were in Filter. The ids
+ * are documented in MENU_IDS.filter.
  *
  * What it offers are the column's operators (columnOperators: the type's, or its `filterOperators`):
  * Operator › and the range block those the header filter's input takes, Blank › IS_BLANK /
@@ -151,7 +154,8 @@ function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
             ]
         },
         valueListBlock(ctx, attribute, offered),
-        rangeBlock(ctx, attribute, type, headerOperators(column, type), current)
+        rangeBlock(ctx, attribute, type, headerOperators(column, type), current),
+        datePresetBlock(ctx, attribute)
     ];
 }
 
@@ -439,6 +443,9 @@ const OPERATOR_SYMBOLS: Partial<Record<FilterOperator, string>> = {
  * on the column, as an empty cell. The placeholder of an input is the formatter's (a date's format, an
  * example of the display format), else "Number".
  *
+ * A quick date (datePresetBlock.ts) opens as its days - Between, From and To. Apply with nothing changed
+ * leaves it as it is, relative; a date changed makes it those dates.
+ *
  * A date or datetime column: a click in the input opens the grid's date picker, From or To of Between the
  * range picker - beside the input, the menu stays open (see openPicker in it). What is picked fills the
  * inputs, a draft as what is typed.
@@ -495,6 +502,8 @@ function rangeBlock(
         operator: current,
         texts: Array.isArray(value) ? [endText(value[0]), endText(value[1])] : [endText(value), '']
     };
+    // what it opened with: Apply with it unchanged keeps a quick date (This month) relative
+    const opened = { operator: state.operator, texts: [...state.texts] };
 
     /**
      * One input for an operator that is not Between: the value is the first text, From when it has one,
@@ -513,6 +522,11 @@ function rangeBlock(
      */
     const apply = () => {
         const [first, second] = state.texts.map((typed) => typed.trim());
+        const untouched = state.operator === opened.operator && state.texts.every((typed, i) => typed === opened.texts[i]);
+        if (untouched && activeDatePreset(ctx, attribute)) {
+            removeContextMenu(ctx);
+            return;
+        }
         const changed = state.operator !== current;
         if (changed) {
             ctx.gridInterface.__setHeaderFilterOperator(attribute, state.operator);

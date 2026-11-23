@@ -10,6 +10,7 @@ import { contextMenuColumnChooser } from './contextMenuColumnChooser';
 import { formatSubmenu } from './formatSubmenu';
 import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
+import { openImportDialog } from './importDialog';
 import { shortcutHelpEntry } from './shortcutHelp';
 import { placeUnderCell, showMenu } from './showMenu';
 
@@ -219,6 +220,13 @@ function headerMenuEntries(
         formatSubmenu(ctx, attribute),
         columnSettingsEntry(ctx, attribute),
         shortcutHelpEntry(ctx),
+        // GridConfig.importMenu: the import dialog, also for a grid without rows - it has no cell to right click
+        {
+            id: 'header.import',
+            label: text('header.import'),
+            visible: () => ctx.gridInterface.__showImportMenu(),
+            action: () => openImportDialog(ctx)
+        },
         aggregateSubmenu(ctx, attribute),
         {
             type: 'submenu',

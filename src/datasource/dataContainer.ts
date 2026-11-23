@@ -1052,6 +1052,41 @@ export class DataContainer {
     }
 
     /**
+     * @internal
+     * Makes adding new rows one step of the undo history, for the grid's import: undo marks them for
+     * deletion - a new row marked for deletion is taken out, in none of the lists of `getChanges()`, as
+     * the grid's Delete takes out a new row - and redo takes the marks off again. The rows stay in the
+     * container, so undo never removes a row. Recorded as their deletion marks taken off (`before: true`,
+     * `after: false`), in the step of this run of code
+     * @param rows the rows just added, new and not marked
+     */
+    public __recordAdded(rows: readonly Entity[]) {
+        for (const row of this.rowsIn([...rows])) {
+            if (row.__controller.__isNew && !row.__controller.__isDeleted) {
+                this.__history.record({ row, field: null, before: true, after: false });
+            }
+        }
+    }
+
+    /**
+     * @internal
+     * The validation errors a row would have, without keeping any: every field with rules, of any object
+     * with the fields - the grid's import checks the rows of a file with it before it adds them. The
+     * messages by field, in the order of the rules; empty when it passes every rule
+     * @param row the values, a plain object or a row
+     */
+    public __checkRow(row: object): Map<string, string[]> {
+        const errors = new Map<string, string[]>();
+        for (const [field, rules] of this.__rules) {
+            const messages = runRules(rules, (row as Record<string, unknown>)[field], row as Entity);
+            if (messages.length) {
+                errors.set(field, messages);
+            }
+        }
+        return errors;
+    }
+
+    /**
      * marks or unmarks a row for deletion, recorded in the undo history when the mark changes
      */
     private setDeleted(row: DataEntity, deleted: boolean) {

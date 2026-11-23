@@ -10,6 +10,9 @@ a header of the column labels.
 - **CSV**: `getCsv()` gives the text, `downloadCsv()` saves it. Each value as the cell shows it. In
   the API only, not in the row menu.
 
+The other way, a CSV or Excel file read into new rows, is the [Import](24-import.md): what the grid
+exports, it imports back with the same values.
+
 ## Excel
 
 Every Excel file the grid writes follows two rules, there are no options to change them:
