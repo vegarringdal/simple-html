@@ -4892,6 +4892,22 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * "Run workflow" shows for a workflow on the default branch only: next.yml has to be on master too, as
   release.yml and beta.yml (see *Questions for the user*)
 
+### Saved views in the exported grid; Min lines where Multiline is (user request)
+
+* the user: "asked earlier for gridconfig to enable/setting to show saved/save custom configs. Like saved
+  view showed. Can these be included when getting gridconfig/setting gridconfig?" - the views button is
+  `viewsButton`; the views the user saved were not in exportConfig (only `config.views`). Now `views`:
+  getViews() - set back by importConfig with setViews. The format stays version 2 (an optional part);
+  convertGridConfig checks it is a list. updateColumns is simpler: the views come with exportConfig
+* "missing way to set min rows to show in multiline field in detail in gridconfig": minRows was on the
+  Detail form tab only, for a field multiline by the grid's config - Multiline turned on in the dialog's
+  Columns tab did not count before Apply. Now *Min lines in the detail form* under Multiline (the same
+  draft, setFieldOption), and detailFormTabPanel takes the dialog's multiline (isMultiline)
+* detailFormOf keeps the options of a field out of the form (Min lines set for a column not in the form
+  yet was lost on Apply)
+* tests: configVersion.test.ts (views out and in), detailFormSettings.test.ts (Min lines under Multiline,
+  options kept)
+
 ### Checks before a push: npm run verify, a pre-push hook (user request)
 
 * the user, on the failed run 45260464054: "we also have some failing action, maybe we need to add rule on

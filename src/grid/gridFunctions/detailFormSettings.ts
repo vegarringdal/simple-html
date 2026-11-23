@@ -142,10 +142,9 @@ export function detailFormOf(draft: DetailFormDraft): DetailForm {
     if (draft.maxWidth !== undefined) {
         form.maxWidth = draft.maxWidth;
     }
-    // the options of the fields in the form only
-    const fieldOptions = copyFieldOptions(
-        Object.fromEntries(Object.entries(draft.options).filter(([field]) => draft.included.has(field)))
-    );
+    // the options of every field: one out of the form keeps its own for when it is put in again - Min lines
+    // set on the Columns tab for a field not in it yet too
+    const fieldOptions = copyFieldOptions(draft.options);
     if (fieldOptions) {
         form.fieldOptions = fieldOptions;
     }
@@ -405,7 +404,8 @@ export function detailFormTabPanel(
     dialog: HTMLElement,
     draft: DetailFormDraft,
     tab: GridConfigTab,
-    update: () => void
+    update: () => void,
+    isMultiline?: (field: string) => boolean
 ): TemplateResult {
     const shown = tab === 'detailForm';
     return html`<div
@@ -415,7 +415,7 @@ export function detailFormTabPanel(
         aria-labelledby=${tabId(ctx, 'detailForm')}
         ?hidden=${!shown}
     >
-        ${shown ? settings(ctx, dialog, draft, update) : nothing}
+        ${shown ? settings(ctx, dialog, draft, update, multilineIn(ctx, isMultiline)) : nothing}
     </div>`;
 }
 
@@ -423,7 +423,13 @@ export function detailFormTabPanel(
  * The settings of the tab: Show the detail form, Expanded, the widths, the list of the fields, Move up /
  * Move down
  */
-function settings(ctx: Grid, dialog: HTMLElement, draft: DetailFormDraft, update: () => void): TemplateResult {
+function settings(
+    ctx: Grid,
+    dialog: HTMLElement,
+    draft: DetailFormDraft,
+    update: () => void,
+    isMultiline: (field: string) => boolean
+): TemplateResult {
     const gridInterface = ctx.gridInterface;
     const text = (id: TextId) => gridText(ctx, id);
     const layout = new Set(getLayoutFields(gridInterface));
@@ -607,10 +613,7 @@ function settings(ctx: Grid, dialog: HTMLElement, draft: DetailFormDraft, update
                     }
                     const field = entry;
                     const included = draft.included.has(field);
-                    const multiline = multilineOf(
-                        gridInterface.getDatasource().getField(field),
-                        gridInterface.__getGridConfig().columns[field]
-                    );
+                    const multiline = isMultiline(field);
                     return html`<div
                         class="column-settings-option detail-form-settings-option"
                         role="option"
@@ -672,7 +675,7 @@ function settings(ctx: Grid, dialog: HTMLElement, draft: DetailFormDraft, update
             isDetailFormSection(draft.active)
                 ? sectionSettings(ctx, dialog, draft, draft.active, update)
                 : draft.active
-                  ? fieldSettings(ctx, draft, draft.active, update)
+                  ? fieldSettings(ctx, draft, draft.active, update, isMultiline)
                   : nothing
         }`;
 }
@@ -707,11 +710,16 @@ function numberInput(
  * The settings of the field picked in the list (DetailFormFieldOptions): Min lines for a field of several
  * lines, Space above / below. A group named by its heading
  */
-function fieldSettings(ctx: Grid, draft: DetailFormDraft, field: string, update: () => void): TemplateResult {
-    const gridInterface = ctx.gridInterface;
+function fieldSettings(
+    ctx: Grid,
+    draft: DetailFormDraft,
+    field: string,
+    update: () => void,
+    isMultiline: (field: string) => boolean
+): TemplateResult {
     const options = draft.options[field] ?? {};
     const headingId = idOf(ctx, 'field-heading');
-    const multiline = multilineOf(gridInterface.getDatasource().getField(field), gridInterface.__getGridConfig().columns[field]);
+    const multiline = isMultiline(field);
     const set = (name: keyof DetailFormFieldOptions) => (value: string) => {
         setFieldOption(draft, field, name, value);
         update();
@@ -812,4 +820,16 @@ export function detailFormResetButton(ctx: Grid, draft: DetailFormDraft, update:
             ${gridText(ctx, 'columnSettings.detailForm.reset')}
         </button>
     </span>`;
+}
+
+/**
+ * Whether a field is of several lines for the tab: as the dialog has it - its Multiline on the Columns
+ * tab, not applied yet - else as the grid has it (multilineOf)
+ */
+function multilineIn(ctx: Grid, isMultiline?: (field: string) => boolean): (field: string) => boolean {
+    return (
+        isMultiline ??
+        ((field) =>
+            multilineOf(ctx.gridInterface.getDatasource().getField(field), ctx.gridInterface.__getGridConfig().columns[field]))
+    );
 }

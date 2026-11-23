@@ -2,6 +2,7 @@ import { type FilterExpression, type FilterOperator, where } from '../datasource
 import type { GroupArgument } from '../datasource/groupArgument';
 import type { SortArgument } from '../datasource/sortArgument';
 import type { ColumnConfig, GridConfig, GridState, LayoutColumn } from './gridConfig';
+import type { GridView } from './gridView';
 
 /**
  * The version of the saved grid `exportConfig()` writes. A saved grid without a version is version 1:
@@ -11,7 +12,8 @@ import type { ColumnConfig, GridConfig, GridState, LayoutColumn } from './gridCo
  * - **1** - v5: `attributes`, `columnsPinnedLeft` / `columnsCenter` / `columnsPinnedRight`, and the
  *   state - `sorting`, `grouping`, `expandedGroups`, `filter`, a column's `currentFilterValue` - in the
  *   config. No `version`
- * - **2** - v6: `{ version: 2, config, state }` - the {@link GridConfig} and the {@link GridState}, apart
+ * - **2** - v6: `{ version: 2, config, state, views }` - the {@link GridConfig}, the {@link GridState} and
+ *   the named views (`views`, optional: every view, the ones the user saved too)
  */
 export const GRID_CONFIG_VERSION = 2;
 
@@ -38,6 +40,12 @@ export interface ExportedGrid {
     config: GridConfig;
     /** what the user did with it: `getState()` - left out, the config's `initialState` is what it starts with */
     state?: Partial<GridState>;
+    /**
+     * the named views: every one - the config's (`config.views`) and the ones the user saved, renamed and
+     * deleted since with the views button (`viewsStorageKey`) - as `gridInterface.getViews()` has them, in
+     * their order. `importConfig()` gives them back with `setViews()`. Left out: the grid keeps the views it has
+     */
+    views?: GridView[];
 }
 
 // ------------------------------------------------------------------ version 1: a v5 config
@@ -238,6 +246,12 @@ export function convertGridConfig(saved: unknown): ExportedGrid {
     const converted: ExportedGrid = { version: GRID_CONFIG_VERSION, config: structuredClone(saved.config) as GridConfig };
     if (isObject(saved.state)) {
         converted.state = structuredClone(saved.state) as Partial<GridState>;
+    }
+    if (saved.views !== undefined && saved.views !== null) {
+        if (!Array.isArray(saved.views)) {
+            throw new TypeError(`convertGridConfig: views is a list of views, got ${JSON.stringify(saved.views)}`);
+        }
+        converted.views = structuredClone(saved.views) as GridView[];
     }
     return converted;
 }

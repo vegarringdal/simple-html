@@ -330,7 +330,10 @@ const config: GridConfig = {
   stay).
 - **A field's options** (`fieldOptions`, under its name - `DetailFormFieldOptions`): `minRows`, the least
   lines of a field of several lines (1 to 30, default 3), and `paddingTop` / `paddingBottom`, room in px.
-  The dialog sets them for the field picked.
+  The dialog sets them for the field picked - and *Min lines in the detail form* is under *Multiline* on
+  the Columns tab too, while Multiline is on (the same setting; the Detail form tab follows Multiline as
+  the dialog has it, before Apply). A field taken out of the form keeps its options for when it is put in
+  again.
 
   ```ts
   gridInterface.setState({
@@ -578,8 +581,13 @@ if (saved) {
   they are left out, give the datasource the field's type and its `required` rule.
 - **`config`** is the config as the app gave it - the constructor's, with what `updateConfig()` changed
   since - and **`state`** is `getState()`. The hooks and the datasource are not in it.
+- **`views`** are the named views - every one: the config's (`config.views`) and the ones the user saved,
+  renamed and deleted with the views button (`viewsStorageKey`) - as `getViews()` has them. Left out when
+  there are none. `importConfig()` gives them back with `setViews()` (written to `viewsStorageKey`); a saved
+  grid without `views` leaves the grid's. So a grid saved in a backend keeps the user's views with it.
 - **`importConfig()`** gives the config to `updateConfig()` - an option it leaves out stays as it is -
-  then the state to `setState()`; a saved grid without a state starts as its config says (`resetState()`).
+  then the state to `setState()`; a saved grid without a state starts as its config says (`resetState()`),
+  then its views to `setViews()`.
 - **A version newer than the grid's** throws a `TypeError` (it was saved by a newer grid), and so does a
   saved grid without a version that has `layout`, `columns` or `initialState`: that is a v6 config, save it
   as `{ version: 2, config }`.

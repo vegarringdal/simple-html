@@ -311,6 +311,8 @@ const norwegian: Record<TextId, string> = {
     'columnSettings.badge.multiline': 'Flere linjer',
     'columnSettings.badge.readonly': 'Skrivebeskyttet',
     'columnSettings.multiline': 'Flere linjer',
+    'columnSettings.minRows': 'Minst linjer i detaljskjemaet',
+    'columnSettings.minRows.hint': '1 til 30, minst antall linjer i feltet i detaljskjemaet - tom: 3',
     'columnSettings.readonly': 'Skrivebeskyttet',
     'columnSettings.badge.checkbox': 'Avkrysning',
     'columnSettings.badge.numberOverride': 'Tom / 0',

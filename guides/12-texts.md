@@ -673,6 +673,8 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.badge.multiline` | `Multiline` | in the list of the columns: a text column made multiline |
 | `columnSettings.badge.readonly` | `Read only` | in the list of the columns: a column made read only |
 | `columnSettings.multiline` | `Multiline` | the checkbox of a text column: its cells are text of several lines (`ColumnFormat.multiline`) |
+| `columnSettings.minRows` | `Min lines in the detail form` | under Multiline while it is on: `DetailForm.fieldOptions[field].minRows` |
+| `columnSettings.minRows.hint` | `1 to 30, the least lines of its box in the detail form - empty: 3` | under it |
 | `columnSettings.readonly` | `Read only` | the checkbox of every column: its cells are not edited, also in an editable grid (`ColumnFormat.readonly`) |
 | `columnSettings.badge.checkbox` | `Checkbox` | the column is shown as checkboxes |
 | `columnSettings.badge.numberOverride` | `Blank / 0` | the column shows a blank as 0, or 0 as blank (or neither, over its `numberOverride`) |

@@ -1332,6 +1332,19 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Saved views in exportConfig / importConfig; Min lines under Multiline (user request)
+
+##### Added
+- `exportConfig()` has `views`: every named view - the config's and the ones the user saved with the views
+  button (`viewsStorageKey`), as `getViews()` has them; `importConfig()` gives them back (`setViews()`). A
+  grid saved in a backend keeps its users' views. `reconcileColumns()` cleans them too.
+- The grid config dialog: *Min lines in the detail form* under *Multiline* on the Columns tab, while it is
+  on. The Detail form tab's *Min lines* follows the dialog's Multiline before Apply. New texts
+  `columnSettings.minRows`, `columnSettings.minRows.hint`.
+
+##### Changed
+- A field taken out of the detail form keeps its options (`fieldOptions`) for when it is put in again.
+
 #### The columns of a source changed: `reconcileColumns()`, `updateColumns()` (user request)
 
 ##### Added

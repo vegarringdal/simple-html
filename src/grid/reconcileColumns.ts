@@ -72,7 +72,7 @@ function formulaFields(formula: string): string[] {
  * - **`config.columns`** is the source's columns: each one's options as given, over the options the saved
  *   config had for it. A column the source has not is taken out - not a calculated column, it is the grid's
  * - **A field that is gone** is taken out of everything that names it - the config, its `initialState`, the
- *   state and every view of `config.views`: the layout (a column left without a field goes), the sort, the
+ *   state and every view - of `config.views` and the saved grid's `views` (the user's): the layout (a column left without a field goes), the sort, the
  *   grouping, the header filters, the conditions of the filter (an AND / OR group left empty goes, a
  *   condition comparing with it - `valueField` - too), the formats, the aggregates, the detail form's
  *   fields and options. A colour rule: its conditions on the field go, a rule left without one goes, and
@@ -207,6 +207,12 @@ export function reconcileColumns(
     const grid: ExportedGrid = { version: saved.version, config };
     if (nextState) {
         grid.state = nextState;
+    }
+    if (saved.views) {
+        grid.views = saved.views.map((view: GridView) => ({
+            ...structuredClone(view),
+            state: clean.state(structuredClone(view.state))
+        }));
     }
     return {
         grid,

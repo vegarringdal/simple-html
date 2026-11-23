@@ -212,4 +212,33 @@ describe('exportConfig() and importConfig()', () => {
         expect(() => gridInterface.importConfig({ version: 2, config: { ...V6, detailForm: { show: 1 } as any } })).toThrow();
         expect(gridInterface.exportConfig()).toEqual(before);
     });
+
+    it("expect the views - the config's and the user's saved - in exportConfig, given back by importConfig", async () => {
+        const { gridInterface } = await mountGrid(
+            { ...V6, views: [{ id: 'cfg', name: 'From the config', state: { sorting: [] } }] },
+            rows(),
+            fields()
+        );
+        // the user saves the state shown as a view of their own (the views button's Save as new view…)
+        gridInterface.setState({ sorting: [{ attribute: 'age', ascending: false }] });
+        gridInterface.saveViewAs('Mine');
+        const saved = JSON.parse(JSON.stringify(gridInterface.exportConfig()));
+        expect(saved.views.map((view: { name: string }) => view.name)).toEqual(['From the config', 'Mine']);
+        expect(saved.config.views).toEqual([{ id: 'cfg', name: 'From the config', state: { sorting: [] } }]);
+
+        const { gridInterface: other } = await mountGrid(V6, rows(), fields());
+        expect(other.getViews()).toEqual([]);
+        other.importConfig(saved);
+        expect(other.getViews().map((view) => view.name)).toEqual(['From the config', 'Mine']);
+        expect(other.getViews()[1].state.sorting).toEqual([{ attribute: 'age', ascending: false }]);
+    });
+
+    it('expect a grid without views to export none, and a saved grid without views to leave them', async () => {
+        const { gridInterface } = await mountGrid(V6, rows(), fields());
+        expect('views' in gridInterface.exportConfig()).toBe(false);
+        gridInterface.setViews([{ id: 'a', name: 'A', state: {} }]);
+        gridInterface.importConfig({ version: 2, config: V6 });
+        expect(gridInterface.getViews().map((view) => view.id)).toEqual(['a']);
+        expect(() => gridInterface.importConfig({ version: 2, config: V6, views: 'x' })).toThrow(/views is a list of views/);
+    });
 });

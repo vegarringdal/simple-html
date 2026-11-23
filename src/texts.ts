@@ -334,6 +334,8 @@ const DEFAULTS = {
     'columnSettings.badge.readonly': 'Read only',
     // editing: a text column's text of several lines, any column not edited in an editable grid
     'columnSettings.multiline': 'Multiline',
+    'columnSettings.minRows': 'Min lines in the detail form',
+    'columnSettings.minRows.hint': '1 to 30, the least lines of its box in the detail form - empty: 3',
     'columnSettings.readonly': 'Read only',
     'columnSettings.badge.checkbox': 'Checkbox',
     'columnSettings.badge.numberOverride': 'Blank / 0',

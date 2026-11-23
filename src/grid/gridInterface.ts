@@ -472,10 +472,11 @@ export class GridInterface<T> {
     }
 
     /**
-     * The grid as plain JSON, to save and give back to `importConfig()`: `{ version, config, state }` -
-     * the version of the format ({@link GRID_CONFIG_VERSION}), the config as the app gave it (the
-     * constructor's, with what `updateConfig()` changed since) and `getState()`, what the user did with it.
-     * The hooks and the datasource are not in it. See {@link ExportedGrid}
+     * The grid as plain JSON, to save and give back to `importConfig()`: `{ version, config, state, views }`
+     * - the version of the format ({@link GRID_CONFIG_VERSION}), the config as the app gave it (the
+     * constructor's, with what `updateConfig()` changed since), `getState()` - what the user did with it -
+     * and the named views (`getViews()`: the config's and the ones the user saved with the views button,
+     * left out when there are none). The hooks and the datasource are not in it. See {@link ExportedGrid}
      *
      * @example
      * ```ts
@@ -484,7 +485,17 @@ export class GridInterface<T> {
      * ```
      */
     public exportConfig(): ExportedGrid {
-        return { version: GRID_CONFIG_VERSION, config: structuredClone(this.givenConfig), state: this.getState() };
+        const exported: ExportedGrid = {
+            version: GRID_CONFIG_VERSION,
+            config: structuredClone(this.givenConfig),
+            state: this.getState()
+        };
+        // the views the user saved too: a grid saved and given back has them, wherever it is stored
+        const views = this.getViews();
+        if (views.length) {
+            exported.views = views;
+        }
+        return exported;
     }
 
     /**
@@ -509,22 +520,10 @@ export class GridInterface<T> {
      * ```
      */
     public updateColumns(columns: readonly SourceColumn[], options: ReconcileOptions = {}): ColumnsReport {
-        const saved = this.exportConfig();
-        // every view - the config's and the ones saved since (viewsStorageKey) - cleaned with the rest
-        const views = this.getViews();
-        const { grid, report } = reconcileColumns({ ...saved, config: { ...saved.config, views } }, columns, options);
-        const cleanViews = grid.config.views ?? [];
-        // the config keeps its own views, cleaned
-        const own = new Set((saved.config.views ?? []).map((view) => view.id));
-        if (saved.config.views) {
-            grid.config.views = cleanViews.filter((view) => own.has(view.id));
-        } else {
-            delete grid.config.views;
-        }
+        // the views - the config's and the ones saved since (viewsStorageKey) - are in it, cleaned with the
+        // rest and given back by importConfig
+        const { grid, report } = reconcileColumns(this.exportConfig(), columns, options);
         this.importConfig(grid);
-        if (views.length) {
-            this.setViews(cleanViews);
-        }
         return report;
     }
 
@@ -533,7 +532,7 @@ export class GridInterface<T> {
      * `version` is a config v5 saved (`saveConfig()`) or was written for, converted on the way in
      * ({@link convertGridConfig}). Its config is given to `updateConfig()` - an option it leaves out stays
      * as it is - then its state to `setState()`; without a state the grid goes to the config's start
-     * (`resetState()`).
+     * (`resetState()`). Its views to `setViews()` - stored with `viewsStorageKey` - when it has them.
      *
      * A v5 column's `type` and `mandatory` are the datasource's fields' in v6: they are left out, give the
      * datasource the field's type and its `required` rule.
@@ -549,12 +548,15 @@ export class GridInterface<T> {
      * ```
      */
     public importConfig(saved: unknown) {
-        const { config, state } = convertGridConfig(saved);
+        const { config, state, views } = convertGridConfig(saved);
         this.updateConfig(config);
         if (state) {
             this.setState(state);
         } else {
             this.resetState();
+        }
+        if (views) {
+            this.setViews(views);
         }
     }
 

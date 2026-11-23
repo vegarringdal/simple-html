@@ -595,14 +595,41 @@ describe('the Detail form tab - sections and the settings of the entry picked', 
         expect(gridInterface.getState().detailForm.fields).toEqual(['name', 'notes']);
     });
 
-    it("expect a field's options taken out of the form left out on Apply", async () => {
+    it("expect a field's options kept when it is taken out of the form: there when it is put in again", async () => {
         const { gridInterface } = await mount({ show: true, fields: ['name', 'notes'], fieldOptions: { notes: { minRows: 4 } } });
         gridInterface.openDetailFormSettings();
         press(list(), 'ArrowDown');
         expect(input('minRows')?.value).toBe('4');
         press(list(), ' ');
         button('Apply').click();
-        expect(gridInterface.getState().detailForm).toEqual({ show: true, fields: ['name'], width: 300 });
+        expect(gridInterface.getState().detailForm).toEqual({
+            show: true,
+            fields: ['name'],
+            width: 300,
+            fieldOptions: { notes: { minRows: 4 } }
+        });
+    });
+
+    it('expect Min lines under Multiline on the Columns tab while it is on: the Detail form tab the same, Apply sets it', async () => {
+        const { gridInterface } = await mount({ show: true, fields: ['name', 'notes'] });
+        gridInterface.openColumnSettings('name');
+        const minRows = () => dialog().querySelector('.column-settings-min-rows') as HTMLInputElement | null;
+        // name is no multiline field: none
+        expect(minRows()).toBeNull();
+        // Multiline turned on in the dialog: there, before Apply
+        const multiline = Array.from(dialog().querySelectorAll<HTMLLabelElement>('.column-settings-check'))
+            .find((label) => label.textContent?.trim() === 'Multiline')
+            ?.querySelector('input') as HTMLInputElement;
+        multiline.click();
+        expect(minRows()?.placeholder).toBe('3');
+        setValue(minRows() as HTMLInputElement, '6');
+        // the Detail form tab: name is of several lines there too, its Min lines the same
+        tabs()[1].click();
+        expect(picked().dataset.field).toBe('name');
+        expect(input('minRows')?.value).toBe('6');
+        button('Apply').click();
+        expect(gridInterface.getState().detailForm.fieldOptions).toEqual({ name: { minRows: 6 } });
+        expect(gridInterface.getState().formats.name?.multiline).toBe(true);
     });
 
     it('expect the setters to clear what is empty or does not fit', () => {

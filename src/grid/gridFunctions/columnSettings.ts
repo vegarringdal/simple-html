@@ -52,7 +52,8 @@ import {
     type DetailFormDraft,
     detailFormDraft,
     detailFormResetButton,
-    detailFormTabPanel
+    detailFormTabPanel,
+    setFieldOption
 } from './detailFormSettings';
 import { keepDialogInView, moveDialog, resizeHandles, showDialog } from './dialogFrame';
 import { defaultFilterOnType, isFilterOnType, setFilterOnType } from './filterOnType';
@@ -1489,11 +1490,43 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                     next[key] = on;
                 }
             });
+        const isMultiline = format?.multiline ?? own.multiline;
         const multiline =
             kind === 'text' && format?.checkbox === undefined
-                ? checkbox('columnSettings.multiline', format?.multiline ?? own.multiline, (on) => set('multiline', on))
+                ? html`${checkbox('columnSettings.multiline', isMultiline, (on) => set('multiline', on))}
+                  ${isMultiline ? minRowsSetting() : nothing}`
                 : nothing;
         return html`${multiline} ${checkbox('columnSettings.readonly', format?.readonly ?? own.readonly, (on) => set('readonly', on))}`;
+    };
+
+    /**
+     * Under Multiline, while it is on: *Min lines in the detail form* - the least lines of the field's box in
+     * the detail form (`DetailForm.fieldOptions[field].minRows`, 1 to 30). The Detail form tab's draft: the
+     * same as its *Min lines* for the field, Apply sets both
+     */
+    const minRowsSetting = () => {
+        const id = idOf(ctx, 'min-rows');
+        const hintId = idOf(ctx, 'min-rows-hint');
+        const value = settings.detailForm.options[field]?.minRows;
+        return html`<div class="column-settings-field">
+            <label class="column-settings-label" for=${id}>${text('columnSettings.minRows')}</label>
+            <input
+                id=${id}
+                class="filter-editor-value column-settings-min-rows"
+                type="number"
+                min="1"
+                max="30"
+                step="1"
+                placeholder="3"
+                aria-describedby=${hintId}
+                .value=${live(value === undefined ? '' : String(value))}
+                @change=${(event: Event) => {
+                    setFieldOption(settings.detailForm, field, 'minRows', (event.target as HTMLInputElement).value);
+                    update();
+                }}
+            />
+            <div class="column-settings-hint" id=${hintId}>${text('columnSettings.minRows.hint')}</div>
+        </div>`;
     };
 
     const settingsOf = () => {
@@ -1695,7 +1728,14 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                     ${pending(field) ? nothing : preview()}
                 </div>
             </div>
-            ${detailFormTabPanel(ctx, dialog, settings.detailForm, settings.tab, update)}
+            ${detailFormTabPanel(
+                ctx,
+                dialog,
+                settings.detailForm,
+                settings.tab,
+                update,
+                (name) => settings.formats[name]?.multiline ?? gridInterface.getDatasource().getField(name).multiline === true
+            )}
             <div class="filter-editor-footer">
                 ${settings.tab === 'detailForm' ? detailFormResetButton(ctx, settings.detailForm, update) : nothing}
                 <span class="column-settings-resets" ?hidden=${settings.tab !== 'columns'}>
