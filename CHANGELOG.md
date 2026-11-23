@@ -1332,6 +1332,20 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### The column chooser: a finger drags a field on a phone (user request)
+
+##### Fixed
+- Dragging a field out of the column chooser with a finger stopped on a phone: the list panned under it
+  and the browser cancelled the drag. The listener that keeps the list still was added once the hold made
+  it a drag - a phone's browser decides when the finger goes down whether a touch's moves can be held
+  back. It is on the field from the start now, holding them back only while a drag is on.
+- A long press on a chooser field (Android's own, at 500 ms) ended the drag: the chooser has no menu on a
+  long press, its `contextmenu` is canceled now and the drag goes on.
+
+##### Changed
+- The drag handle (⠿) of a chooser field drags at once with a finger, no hold - nothing pans under it
+  (`touch-action: none` on every `.simple-html-grid-drag-handle`). 24px wide on a touch screen.
+
 #### Changes: one kind at a time, the rows, the fields (user request)
 
 ##### Added

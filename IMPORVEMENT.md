@@ -4892,6 +4892,24 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * "Run workflow" shows for a workflow on the default branch only: next.yml has to be on master too, as
   release.yml and beta.yml (see *Questions for the user*)
 
+### Column chooser: drag with a finger (user request)
+
+* the user: "drag drop from column chooser do not work with touch, probably other places too"
+* not reproduced in headless Chromium (CDP touch: 17/17, held 350 and 800ms, straight up): it has no
+  threaded scrolling. On a phone the browser decides at touchstart whether the touch can block its pan;
+  dragEvent added its non-passive touchmove listener at the hold - too late: the list pans, pointercancel,
+  the drag ends. The chooser is the one drag on a `pan-y` element; the others are `touch-action: none`
+* dragEvent.ts: the touchmove listener on the cell from the start, cancelling only while a finger drags
+  (`fingerDrags`); `menuOnLongPress: false` for the chooser - a touch contextmenu (Android's, the grid's
+  long press) canceled in the capture phase, the drag goes on; a finger on `.simple-html-grid-drag-handle`
+  drags on a move, no hold. grid.css: every drag handle `touch-action: none`, 24px with a coarse pointer
+* the other drags checked: column resize, fill handle, the detail form's edge and list handle, the
+  dialogs' titlebar and corner, header labels, group chips - all `touch-action: none` already; no HTML5
+  drag and drop anywhere
+* tests: columnDragDrop.test.ts (the handle, the long press); chooser-touch-drag-check.js (local, 27/27),
+  touch-check.js 61/61, column-chooser-more-check.js 76/76
+* to confirm on a real phone: the user's device - headless Chromium can not show the first cause
+
 ### Changes: kinds, rows, fields (user request)
 
 * the user: "We prb want to have helpers called getChanges({deleted, new, modified}) where null = all.

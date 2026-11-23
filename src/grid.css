@@ -4407,7 +4407,8 @@
 /**
  * A drag handle - six dots - of a row that can be dragged: a field of the Detail form tab (at its
  * right) and of the column chooser (at its left), the same look in both. The quiet text colour, a grab
- * cursor; it does not take the width of the text around it
+ * cursor; it does not take the width of the text around it. A finger drags by it at once - no hold, no
+ * pan (`touch-action: none`) - and has 24px of it
  */
 .simple-html-grid .simple-html-grid-drag-handle {
     flex: none;
@@ -4420,6 +4421,15 @@
     cursor: grab;
     -webkit-user-select: none;
     user-select: none;
+    /* a finger drags it at once: the browser pans nothing under it (dragEvent, dragField) */
+    touch-action: none;
+}
+
+/* a finger: a handle wide enough to hit, the dots in its middle */
+@media (pointer: coarse) {
+    .simple-html-grid .simple-html-grid-drag-handle {
+        width: 24px;
+    }
 }
 
 .simple-html-grid .simple-html-grid-drag-handle:active {

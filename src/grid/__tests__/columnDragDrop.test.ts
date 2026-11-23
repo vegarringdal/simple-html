@@ -542,6 +542,62 @@ describe('drag/drop - touch', () => {
         expect(centerRows(gridInterface).slice(-2)).toEqual([['firstname'], ['age']]);
     });
 
+    /** the chooser open from the header menu of age, and its field of `attribute` */
+    const chooserField = (element: GridElement, attribute: string) => {
+        openLabelMenu(element, 'age');
+        menuItem('Column chooser').click();
+        return Array.from(
+            document.querySelectorAll<HTMLCellElement>('.simple-html-grid-menu-sub .simple-html-grid-menu-item')
+        ).find((item) => item.$attribute === attribute) as HTMLCellElement;
+    };
+
+    it('expect the handle of a chooser field to drag at once with a finger: no hold, its moves canceled', async () => {
+        const { element, gridInterface } = await mountGrid(threeColumns(), data());
+        const field = chooserField(element, 'firstname');
+        const handle = field.querySelector('.simple-html-grid-drag-handle') as HTMLElement;
+        pointerOver(zone(element, 'age', 'left'));
+
+        handle.dispatchEvent(pointerEvent('pointerdown', { ...touch, clientX: 10, clientY: 100 }));
+        // moved at once, straight up: a drag, not a swipe
+        field.dispatchEvent(pointerEvent('pointermove', { ...touch, clientX: 10, clientY: 80 }));
+        expect(ghost()).not.toBeNull();
+        const move = touchEvent('touchmove', handle, 10, 60);
+        handle.dispatchEvent(move);
+        expect(move.defaultPrevented).toBe(true);
+        field.dispatchEvent(pointerEvent('pointerup', { ...touch, clientX: 10, clientY: 60 }));
+
+        expect(ghost()).toBeNull();
+        expect(centerRows(gridInterface).slice(-2)).toEqual([['firstname'], ['age']]);
+        // the drag is over: the moves of the next press pan the list again
+        const after = touchEvent('touchmove', handle, 10, 40);
+        handle.dispatchEvent(after);
+        expect(after.defaultPrevented).toBe(false);
+    });
+
+    it('expect a long press to be no menu on a chooser field: its contextmenu canceled, the drag goes on', async () => {
+        const { element, gridInterface } = await mountGrid(threeColumns(), data());
+        const field = chooserField(element, 'firstname');
+        const label = field.querySelector('.simple-html-grid-chooser-label') as HTMLElement;
+        pointerOver(zone(element, 'age', 'left'));
+
+        label.dispatchEvent(pointerEvent('pointerdown', { ...touch, clientX: 10, clientY: 100 }));
+        await sleep(TOUCH_HOLD + 20);
+        expect(ghost()).not.toBeNull();
+        // Android's own long press, at 500ms (and the grid's, longPress.ts): a touch contextmenu
+        const menu = pointerEvent('contextmenu', { ...touch, button: 2 });
+        label.dispatchEvent(menu);
+        expect(menu.defaultPrevented).toBe(true);
+        expect(ghost()).not.toBeNull();
+        field.dispatchEvent(pointerEvent('pointermove', { ...touch, clientX: 10, clientY: 60 }));
+        field.dispatchEvent(pointerEvent('pointerup', { ...touch, clientX: 10, clientY: 60 }));
+
+        expect(centerRows(gridInterface).slice(-2)).toEqual([['firstname'], ['age']]);
+        // a right click of a mouse on it is the browser's: not canceled
+        const right = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+        label.dispatchEvent(right);
+        expect(right.defaultPrevented).toBe(false);
+    });
+
     it('expect a contextmenu on the field to end the drag a hold started: no drop, no sort (a long press, longPress.ts)', async () => {
         const { element, datasource, gridInterface } = await mountGrid(threeColumns(), data());
         const label = labelCell(element, 'firstname');

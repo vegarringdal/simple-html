@@ -77,8 +77,9 @@ export function renameColumn(ctx: Pick<Grid, 'gridInterface'>, field: string, la
  *   names the column follow
  *
  * A finger scrolls the list (its fields are `touch-action: pan-y`) and drags a field once it held it
- * still for TOUCH_HOLD ms, as on the header. The dragged field is shown over the chooser: dragEvent's
- * ghost is a popover too, shown after it.
+ * still for TOUCH_HOLD ms, as on the header - or at once by its handle (⠿, `touch-action: none`). A long
+ * press is no menu here: it does not end the drag (dragEvent's `menuOnLongPress`). The dragged field is
+ * shown over the chooser: dragEvent's ghost is a popover too, shown after it.
  */
 export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTMLElement) {
     removeContextMenu(ctx);
@@ -232,7 +233,7 @@ export function contextMenuColumnChooser(ctx: Grid, event: MouseEvent, cell: HTM
 
         // a finger scrolls the list up and down, and drags a field after holding it still (dragEvent.ts)
         for (let i = 0; i < cells.length; i++) {
-            dragEvent(ctx, cells[i] as HTMLCellElement, false, controller.signal, 'pan-y');
+            dragEvent(ctx, cells[i] as HTMLCellElement, false, controller.signal, 'pan-y', false);
         }
     };
     ctx.columnChooserMenu = contextMenu;

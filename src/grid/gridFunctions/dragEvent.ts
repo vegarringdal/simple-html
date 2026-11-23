@@ -72,16 +72,50 @@ type DragSource = {
  * finger that drags, and send pointercancel. The grid scrolls on a swipe itself (touchScroll.ts). The
  * column chooser's fields are in a list a finger scrolls: `pan-y`, the browser pans the list on a swipe
  * up or down (the drag stops, as on a swipe). Once a hold made it a drag, the finger's touchmove events
- * are canceled: the list does not pan under the drag.
+ * are canceled: the list does not pan under the drag. The listener that cancels them is on the cell from
+ * the start - non-passive, it cancels only while a drag is on: a phone's browser decides when the finger
+ * goes down whether its moves can be canceled, a listener added at the hold would come too late (the list
+ * would pan, the browser send pointercancel, the drag end).
+ *
+ * **A drag handle** in the cell (`.simple-html-grid-drag-handle`, the chooser's ⠿ - `touch-action: none`
+ * in the css) drags at once with a finger too: a move of DRAG_DISTANCE px, no hold - nothing pans under it.
+ *
+ * `menuOnLongPress: false` (the chooser: its fields have no menu) - a long press is no menu: the
+ * `contextmenu` of a finger (Android's own, the grid's long press) is canceled and the drag goes on.
  */
 export function dragEvent(
     ctx: Grid,
     cell: HTMLCellElement,
     sortEnabled = true,
     abortSignal?: AbortSignal,
-    touchAction: 'none' | 'pan-y' = 'none'
+    touchAction: 'none' | 'pan-y' = 'none',
+    menuOnLongPress = true
 ) {
     cell.style.touchAction = touchAction;
+    // true while a finger drags a field of this cell: its touchmove events are canceled
+    let fingerDrags = false;
+    cell.addEventListener(
+        'touchmove',
+        (event) => {
+            if (fingerDrags && event.cancelable) {
+                event.preventDefault();
+            }
+        },
+        { passive: false, signal: abortSignal }
+    );
+    if (!menuOnLongPress) {
+        // no menu on a long press: no browser menu, no text selection - and the drag goes on
+        cell.addEventListener(
+            'contextmenu',
+            (event) => {
+                if ((event as PointerEvent).pointerType === 'touch' || fingerDrags) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                }
+            },
+            { capture: true, signal: abortSignal }
+        );
+    }
 
     cell.addEventListener(
         'pointerdown',
@@ -106,6 +140,9 @@ export function dragEvent(
             // the rows' left and right: the grid's, or the detail form's at its right (detailForm.ts)
             const gridRect = ctx.body.getBoundingClientRect();
             const isTouch = down.pointerType === 'touch';
+            // a finger on the drag handle drags as a mouse does: on a move, no hold
+            const onHandle = down.target instanceof Element && !!down.target.closest('.simple-html-grid-drag-handle');
+            const holdToDrag = isTouch && !onHandle;
 
             // the element that follows the pointer, set while it is a drag
             let ghost: HTMLElement | null = null;
@@ -129,12 +166,9 @@ export function dragEvent(
                     cell.setPointerCapture(down.pointerId);
                 }
                 if (isTouch) {
-                    // the finger drags: nothing pans under it (a chooser field is pan-y). The touch events go
-                    // to the element the finger went down on, in the cell
-                    cell.addEventListener('touchmove', (event) => event.preventDefault(), {
-                        passive: false,
-                        signal: press.signal
-                    });
+                    // the finger drags: nothing pans under it (a chooser field is pan-y) - the cell's touchmove
+                    // listener cancels the moves. The touch events go to the element the finger went down on, in the cell
+                    fingerDrags = true;
                 }
                 setDragState(ctx, true);
                 return createGhost(ctx, cell, attribute, down.clientX, down.clientY);
@@ -144,6 +178,7 @@ export function dragEvent(
             const endPress = () => {
                 clearTimeout(holdTimer);
                 press.abort();
+                fingerDrags = false;
             };
 
             const endDrag = () => {
@@ -163,7 +198,7 @@ export function dragEvent(
                         if (distance < DRAG_DISTANCE) {
                             return;
                         }
-                        if (isTouch) {
+                        if (holdToDrag) {
                             // moved before the hold: a swipe, the grid scrolls (touchScroll.ts)
                             endPress();
                             stop();
@@ -194,7 +229,8 @@ export function dragEvent(
             });
 
             // the header menu opened on the field (a long press, a right click while the mouse drags): no
-            // drag, no drop and no sort when the pointer is let go
+            // drag, no drop and no sort when the pointer is let go. Not where a long press is no menu (the
+            // chooser): its contextmenu was canceled in the capture phase, before this
             cell.addEventListener(
                 'contextmenu',
                 () => {
@@ -204,7 +240,7 @@ export function dragEvent(
                 { signal: press.signal }
             );
 
-            if (isTouch) {
+            if (holdToDrag) {
                 holdTimer = setTimeout(() => {
                     ghost = startDrag();
                 }, TOUCH_HOLD);
