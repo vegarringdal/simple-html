@@ -553,15 +553,20 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
 }
 
 /**
- * The detail form - with a row, without one, without fields, collapsed - and the Detail form tab of the
- * grid config dialog: a field of several lines and one that is not in the layout in its list, on a Mac too
+ * The detail form - with a row, without one, without fields, collapsed, a section - and the Detail form tab
+ * of the grid config dialog: a field of several lines and one that is not in the layout in its list, the
+ * settings of the field of several lines with a section, on a Mac too
  */
 function showDetailForm({ datasource, gridInterface }: MountedGrid, check: () => void) {
     const before = gridInterface.getState().detailForm;
     gridInterface.setState({ detailForm: { show: true, fields: ['name', 'notes', 'extra'], expanded: false } });
     datasource.setRowAsCurrentEntity(0);
     check();
-    gridInterface.setState({ detailForm: { show: true, fields: ['name', 'notes', 'extra'] } });
+    // a section (its header is data, in «»), the field of several lines first: picked in the tab, its
+    // Min lines and Section collapsed shown
+    gridInterface.setState({
+        detailForm: { show: true, fields: ['notes', 'name', 'extra'], fieldOptions: { notes: { section: '«section»' } } }
+    });
     check();
 
     gridInterface.openDetailFormSettings();

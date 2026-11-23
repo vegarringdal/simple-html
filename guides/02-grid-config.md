@@ -243,7 +243,7 @@ Every option is optional.
 | `initialState` | | the sorting, grouping and filter the grid starts with, see [State](03-state.md#the-state-the-grid-starts-in) |
 | `groupAggregates` | `true` | the group rows show the columns' `aggregate`s. `false`: the name of the group only. See [Aggregates](18-aggregates.md) |
 | `totalsRow` | `false` | a row under the rows with the columns' `aggregate`s over the rows the filter lets through. See [Aggregates](18-aggregates.md#the-totals-row) |
-| `detailForm` | none | the current row as a form at the right of the rows: `{ show: true, fields: ['name', 'notes'], width: 300 }`, and `expanded`, `minWidth`, `maxWidth`. It is state, the user changes it in the grid config dialog, drags its width and collapses it. See [The detail form](#the-detail-form) |
+| `detailForm` | none | the current row as a form at the right of the rows: `{ show: true, fields: ['name', 'notes'], width: 300 }`, and `expanded`, `minWidth`, `maxWidth`, `fieldOptions` (sections, lines, room). It is state, the user changes it in the grid config dialog, drags its width and collapses it. See [The detail form](#the-detail-form) |
 
 How rows are selected is not a grid option: the datasource has the selection mode, see
 [Datasource](04-datasource.md#the-selection-mode). Readonly cells and css classes from the row, and
@@ -317,6 +317,26 @@ const config: GridConfig = {
   columns less than 150px (a phone, wide pinned columns) - has the form under the rows instead, over the
   footer, 40 % of the grid's height. It is laid out again when the grid gets wider or narrower. Its edge
   is not dragged there.
+- **Sections, lines and room** (`fieldOptions`, a field's options under its name - see
+  `DetailFormFieldOptions`): `section` puts a header above the field, and the field and the ones after
+  it up to the next header are a section. The header is a button with a chevron (`aria-expanded`, its
+  fields a `group` named by it) that collapses the section and expands it again - `collapsed` in the
+  state, a saved state keeps it. `minRows` is the least lines of a field of several lines (1 to 30,
+  default 3), `paddingTop` and `paddingBottom` room in px above and under a field (above the header of a
+  field that starts a section). The dialog's tab *Detail form* sets them for the field picked in its list.
+
+  ```ts
+  gridInterface.setState({
+      detailForm: {
+          show: true,
+          fields: ['name', 'country', 'city', 'notes'],
+          fieldOptions: {
+              country: { section: 'Address', paddingTop: 8 },
+              notes: { section: 'Notes', collapsed: true, minRows: 6 }
+          }
+      }
+  });
+  ```
 - **Keys and screen readers**: the form is a region named by its title (*Details*), each value's label
   tied to it. Tab comes to it after the footer - the button of its title first, then its edge (a
   `separator` with its width as `aria-valuenow`, the least and most as `aria-valuemin` /

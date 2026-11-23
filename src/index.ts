@@ -68,6 +68,7 @@ export type {
     ColumnConfig,
     ColumnEditor,
     DetailForm,
+    DetailFormFieldOptions,
     EditPermissions,
     GridConfig,
     GridLayout,

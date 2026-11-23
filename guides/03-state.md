@@ -184,8 +184,9 @@ gridInterface.setState({ formats });
 ## The detail form in the state
 
 `detailForm` is the detail form at the right of the rows: whether it is shown, the fields it shows in
-their order, its width and its least and most width, and whether it is expanded or collapsed - a view
-setting of the user, like the columns.
+their order, its width and its least and most width, whether it is expanded or collapsed, and the
+options of its fields (`fieldOptions`: section headers and whether each is collapsed, the least lines,
+room above and under) - a view setting of the user, like the columns.
 
 ```ts
 gridInterface.setState({ detailForm: { show: true, fields: ['company', 'notes', 'orderDate'], width: 300 } });
@@ -210,7 +211,9 @@ gridInterface.setState({
 - A field is listed once; a field that is no column is shown too, labelled as the column chooser
   labels it. `show` or `expanded` that is not a boolean, `fields` that is not a list of names, a
   `width`, `minWidth` or `maxWidth` that is no number of px, or a `minWidth` more than the `maxWidth`
-  throws a `TypeError`, and nothing of the state changes.
+  throws a `TypeError`, and nothing of the state changes - so does an option of `fieldOptions` that does
+  not fit (`minRows` 1 to 30, the room 0 or more px). A field's empty options are left out, `collapsed`
+  too without a `section`.
 - It is plain JSON.
 
 ## Calculated columns in the state
@@ -236,7 +239,9 @@ gridInterface.setState({ calculatedColumns: { ...saved, half: { formula: '{price
   the header filters and the detail form; its format and aggregates go.
 - **A saved state runs nothing**: a formula is text read by the grid's own small language - no `eval`.
   A formula with a problem, a name that is a field of the rows, anything that is no calculated column
-  throws a `TypeError`, and nothing of the state changes. See
+  throws a `TypeError`, and nothing of the state changes - so does an option of `fieldOptions` that does
+  not fit (`minRows` 1 to 30, the room 0 or more px). A field's empty options are left out, `collapsed`
+  too without a `section`. See
   [Security](23-calculated-columns.md#security).
 - It is applied before the formats and aggregates of the same state: a `format` of a calculated column
   is checked against its type.

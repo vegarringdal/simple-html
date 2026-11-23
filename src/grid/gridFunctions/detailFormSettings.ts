@@ -2,8 +2,8 @@ import { html, nothing, type TemplateResult } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
 import type { TextId } from '../../texts';
 import type { Grid } from '../grid';
-import type { DetailForm } from '../gridConfig';
-import { copyDetailForm, DETAIL_FORM_MIN_WIDTH, detailFormWidth, isDetailFormExpanded } from './detailForm';
+import type { DetailForm, DetailFormFieldOptions } from '../gridConfig';
+import { copyDetailForm, copyFieldOptions, DETAIL_FORM_MIN_WIDTH, detailFormWidth, isDetailFormExpanded } from './detailForm';
 import { followPointer, isPrimaryPress } from './followPointer';
 import { getColumnLabel } from './getColumnLabel';
 import { getLayoutFields } from './getLayoutFields';
@@ -36,6 +36,9 @@ import { hideTooltip } from './tooltip';
  *   it, on the rest picks it. The handle drags it to another place - a line shows where it goes
  *   (dragField): a mouse, a pen or a finger
  * - *Move up* / *Move down*: the field picked, up or down the list - its place in the form
+ * - *Settings of {field} in the form* (DetailFormFieldOptions, setFieldOption): *Section header above it*
+ *   (a text, empty: none) - *Section collapsed* with one - *Min lines* for a field of several lines,
+ *   *Space above (px)* and *Space below (px)*. A field with a header has it as a badge in the list
  *
  * What it edits is a draft (DetailFormDraft) in the dialog's draft: the grid changes on Apply only
  * (applyDetailForm), *Reset form* goes back to the detail form the grid starts with.
@@ -59,9 +62,14 @@ export interface DetailFormDraft {
     order: string[];
     /** the fields in the form */
     included: Set<string>;
-    /** the field picked in the list: Move up and Move down move it */
+    /** the field picked in the list: Move up and Move down move it, its settings are under the list */
     active: string;
+    /** the options of the fields (DetailForm.fieldOptions), a field taken out of the form keeps its own */
+    options: Record<string, DetailFormFieldOptions>;
 }
+
+/** the most lines Min lines takes: the most a textarea of the form has */
+const MAX_ROWS = 30;
 
 /** what the arrows of the list move by, PageUp and PageDown */
 const PAGE = 10;
@@ -92,13 +100,15 @@ export function detailFormDraft(ctx: Grid, form: DetailForm): DetailFormDraft {
         maxWidth: form.maxWidth,
         order,
         included: new Set(form.fields),
-        active: order[0] ?? ''
+        active: order[0] ?? '',
+        options: copyFieldOptions(form.fieldOptions) ?? {}
     };
 }
 
 /**
  * The detail form a draft makes: the fields checked, in the order of the list. `expanded` only when it
- * is collapsed, the min and max width only when they are set
+ * is collapsed, the min and max width only when they are set, `fieldOptions` of the fields checked only
+ * when one has some
  */
 export function detailFormOf(draft: DetailFormDraft): DetailForm {
     const form: DetailForm = {
@@ -114,6 +124,13 @@ export function detailFormOf(draft: DetailFormDraft): DetailForm {
     }
     if (draft.maxWidth !== undefined) {
         form.maxWidth = draft.maxWidth;
+    }
+    // the options of the fields in the form only
+    const fieldOptions = copyFieldOptions(
+        Object.fromEntries(Object.entries(draft.options).filter(([field]) => draft.included.has(field)))
+    );
+    if (fieldOptions) {
+        form.fieldOptions = fieldOptions;
     }
     return form;
 }
@@ -131,7 +148,8 @@ export function applyDetailForm(ctx: Grid, draft: DetailFormDraft) {
         now.minWidth === next.minWidth &&
         now.maxWidth === next.maxWidth &&
         now.fields.length === next.fields.length &&
-        now.fields.every((field, index) => field === next.fields[index]);
+        now.fields.every((field, index) => field === next.fields[index]) &&
+        JSON.stringify(now.fieldOptions ?? {}) === JSON.stringify(next.fieldOptions ?? {});
     if (!same) {
         ctx.gridInterface.setState({ detailForm: next });
     }
@@ -181,6 +199,51 @@ export function setWidths(draft: DetailFormDraft, part: 'width' | 'minWidth' | '
             draft.width = Math.min(draft.width, typed);
             draft.minWidth = draft.minWidth === undefined ? undefined : Math.min(draft.minWidth, typed);
         }
+    }
+}
+
+/**
+ * An option of a field typed in the tab, into the draft: the section's text (empty: none - `collapsed`
+ * goes with it), Section collapsed, Min lines (a whole number 1 to 30, else none), Space above / below (a
+ * number of px, 0 or more, rounded - 0 or anything else: none). A field left with no options has no entry
+ * @param value the input's value: its text, or `checked` for Section collapsed
+ */
+export function setFieldOption(
+    draft: DetailFormDraft,
+    field: string,
+    name: keyof DetailFormFieldOptions,
+    value: string | boolean
+) {
+    const options: DetailFormFieldOptions = { ...draft.options[field] };
+    if (name === 'section') {
+        const text = String(value).trim();
+        if (text) {
+            options.section = text;
+        } else {
+            delete options.section;
+            delete options.collapsed;
+        }
+    } else if (name === 'collapsed') {
+        if (value === true) {
+            options.collapsed = true;
+        } else {
+            delete options.collapsed;
+        }
+    } else {
+        const text = String(value).trim();
+        const number = Math.round(Number(text));
+        const fits =
+            text !== '' && Number.isFinite(number) && (name === 'minRows' ? number >= 1 && number <= MAX_ROWS : number > 0);
+        if (fits) {
+            options[name] = number;
+        } else {
+            delete options[name];
+        }
+    }
+    if (Object.keys(options).length) {
+        draft.options[field] = options;
+    } else {
+        delete draft.options[field];
     }
 }
 
@@ -482,6 +545,11 @@ function settings(ctx: Grid, dialog: HTMLElement, draft: DetailFormDraft, update
                         <span class="column-settings-option-type">${typeName(field)}</span>
                         ${multiline ? html`<span class="column-settings-badge">${text('columnSettings.detailForm.multiline')}</span>` : nothing}
                         ${layout.has(field) ? nothing : html`<span class="column-settings-badge">${text('columnSettings.detailForm.hidden')}</span>`}
+                        ${
+                            draft.options[field]?.section
+                                ? html`<span class="column-settings-badge detail-form-settings-section-badge">${draft.options[field]?.section}</span>`
+                                : nothing
+                        }
                         <span
                             class="simple-html-grid-drag-handle detail-form-settings-handle"
                             aria-hidden="true"
@@ -514,7 +582,89 @@ function settings(ctx: Grid, dialog: HTMLElement, draft: DetailFormDraft, update
                     ${text('columnSettings.detailForm.moveDown')}
                 </button>
             </div>
+        </div>
+        ${draft.active ? fieldSettings(ctx, draft, update) : nothing}`;
+}
+
+/**
+ * The settings of the field picked in the list (DetailFormFieldOptions): Section header above it -
+ * Section collapsed with a header - Min lines for a field of several lines, Space above / below. A group
+ * named by its heading
+ */
+function fieldSettings(ctx: Grid, draft: DetailFormDraft, update: () => void): TemplateResult {
+    const gridInterface = ctx.gridInterface;
+    const field = draft.active;
+    const options = draft.options[field] ?? {};
+    const text = (id: TextId) => gridText(ctx, id);
+    const headingId = idOf(ctx, 'field-heading');
+    const sectionHintId = idOf(ctx, 'section-hint');
+    const multiline = multilineOf(gridInterface.getDatasource().getField(field), gridInterface.__getGridConfig().columns[field]);
+
+    /** an input of a number of the field: its label over it, empty when it has none */
+    const numberInput = (
+        name: 'minRows' | 'paddingTop' | 'paddingBottom',
+        label: TextId,
+        placeholder: string,
+        min: number,
+        max?: number
+    ) => {
+        const id = idOf(ctx, `field-${name}`);
+        return html`<div class="detail-form-settings-width-field">
+            <label class="column-settings-label" for=${id}>${text(label)}</label>
+            <input
+                id=${id}
+                class=${`filter-editor-value detail-form-settings-${name}`}
+                type="number"
+                min=${min}
+                max=${max ?? nothing}
+                step="1"
+                placeholder=${placeholder}
+                .value=${live(options[name] === undefined ? '' : String(options[name]))}
+                @change=${(event: Event) => {
+                    setFieldOption(draft, field, name, (event.target as HTMLInputElement).value);
+                    update();
+                }}
+            />
         </div>`;
+    };
+
+    return html`<div class="column-settings-field detail-form-settings-field" role="group" aria-labelledby=${headingId}>
+        <span class="column-settings-label" id=${headingId}>${gridText(ctx, 'columnSettings.detailForm.field', { field: getColumnLabel(ctx, field) })}</span>
+        <label class="column-settings-label" for=${idOf(ctx, 'field-section')}>${text('columnSettings.detailForm.section')}</label>
+        <input
+            id=${idOf(ctx, 'field-section')}
+            class="filter-editor-value detail-form-settings-section"
+            type="text"
+            autocomplete="off"
+            .value=${live(options.section ?? '')}
+            aria-describedby=${sectionHintId}
+            @change=${(event: Event) => {
+                setFieldOption(draft, field, 'section', (event.target as HTMLInputElement).value);
+                update();
+            }}
+        />
+        <div class="column-settings-hint" id=${sectionHintId}>${text('columnSettings.detailForm.section.hint')}</div>
+        ${
+            options.section
+                ? html`<label class="column-settings-check">
+                      <input
+                          type="checkbox"
+                          class="detail-form-settings-collapsed"
+                          .checked=${live(options.collapsed === true)}
+                          @change=${(event: Event) => {
+                              setFieldOption(draft, field, 'collapsed', (event.target as HTMLInputElement).checked);
+                              update();
+                          }}
+                      /><span>${text('columnSettings.detailForm.collapsed')}</span>
+                  </label>`
+                : nothing
+        }
+        <div class="detail-form-settings-widths">
+            ${multiline ? numberInput('minRows', 'columnSettings.detailForm.minRows', '3', 1, MAX_ROWS) : nothing}
+            ${numberInput('paddingTop', 'columnSettings.detailForm.paddingTop', '0', 0)}
+            ${numberInput('paddingBottom', 'columnSettings.detailForm.paddingBottom', '0', 0)}
+        </div>
+    </div>`;
 }
 
 /**

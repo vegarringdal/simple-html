@@ -4892,6 +4892,25 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * "Run workflow" shows for a workflow on the default branch only: next.yml has to be on master too, as
   release.yml and beta.yml (see *Questions for the user*)
 
+### The detail form: sections, min lines, room (user request)
+
+* the user: "in multiline, it could be useful to say min rows ... and for all inputs be able to add
+  section header with collapse, and set padding top/bottom if needed"
+* `DetailForm.fieldOptions` - a map beside `fields`, which stays a list of names: saved states, the
+  dialog's list and the removal of a column (gridInterface) work as they did. `section` on a field starts a
+  section, `collapsed` on it is state (the header's button sets it, as the title's sets `expanded`)
+* detailForm.ts: copyFieldOptions (empty entries and `collapsed` without a `section` left out),
+  assertFieldOptions, sectionTemplate / toggleDetailFormSection; minRows is the textarea's `rows` and a
+  custom property for the min height where field-sizing makes `rows` nothing (theme.test.ts lists it with
+  the per-cell properties)
+* detailFormSettings.ts: the draft's `options`, setFieldOption, the settings of the field picked; Apply
+  keeps the options of the fields in the form only
+* tests: detailForm.test.ts (sections, toggle, rows, room, the TypeErrors), detailFormSettings.test.ts, the
+  texts test with a section. detail-form-sections-check.js (local): 16/16, light and dark
+* the user asked whether the shadow of tredespace's menus should be stronger: in dark the menu's line was
+  the grid's line colour and black hardly shows on slate-900 - `--simple-html-grid-menu-border-color`,
+  slate-600 in its dark. The theme test keeps its shadows one colour in light and dark, so the line it is
+
 ### Text filters: the escape `\` (user request)
 
 * the user: the SQL escapes `!`, "what if we want to search = S__den, or a name containing % or *"; `\`

@@ -714,6 +714,55 @@ export interface DetailForm {
     minWidth?: number;
     /** the most width in px a drag (and `width`) gives the form, default none - the rows keep their room */
     maxWidth?: number;
+    /**
+     * the options of the fields of `fields`, under the field's name - a header that starts a section, the
+     * lines of a multiline field, the room above and under it. See {@link DetailFormFieldOptions}.
+     * Default none: a field without an entry is a label and a value
+     */
+    fieldOptions?: Record<string, DetailFormFieldOptions>;
+}
+
+/**
+ * The options of one field of the detail form, in `DetailForm.fieldOptions` under the field's name. Every
+ * option is optional. The grid config dialog (tab *Detail form*) sets them for the field picked in its list.
+ *
+ * - **`section`** - a header above the field, with this text: the field and the ones after it, up to the
+ *   next field with a `section`, are a section. The header is a button that collapses the section and
+ *   expands it again; the fields before the first header are in none.
+ * - **`collapsed`** - `true`: the section the header starts is collapsed, its header only. The header's
+ *   button changes it, so a saved state keeps what the user made it last. Only with `section`
+ * - **`minRows`** - the least lines a field of several lines (`FieldConfig.multiline`, or a value with a
+ *   line break) has, 1 to 30, default 3. It grows with its text. Ignored on a field of one line
+ * - **`paddingTop`**, **`paddingBottom`** - room in px above and under the field (above its section's
+ *   header for a field with `section`), default 0
+ *
+ * @sample detail-form
+ * @example
+ * ```ts
+ * import type { DetailForm } from '@simple-html/grid';
+ *
+ * const detailForm: DetailForm = {
+ *     show: true,
+ *     fields: ['company', 'country', 'city', 'notes'],
+ *     fieldOptions: {
+ *         country: { section: 'Address', paddingTop: 8 }, // country and city in a section
+ *         notes: { section: 'Notes', collapsed: true, minRows: 6 } // collapsed until its header is pressed
+ *     }
+ * };
+ * gridInterface.setState({ detailForm });
+ * ```
+ */
+export interface DetailFormFieldOptions {
+    /** a header above the field that starts a section, with this text - a button that collapses it */
+    section?: string;
+    /** `true`: the section of `section` is collapsed, default `false` */
+    collapsed?: boolean;
+    /** the least lines of a field of several lines, 1 to 30, default 3 */
+    minRows?: number;
+    /** room in px above the field, default 0 */
+    paddingTop?: number;
+    /** room in px under the field, default 0 */
+    paddingBottom?: number;
 }
 
 /**

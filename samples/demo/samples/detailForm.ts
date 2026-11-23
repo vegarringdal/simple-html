@@ -20,7 +20,7 @@ export const detailForm: DemoSample = {
     title: 'Detail form',
     group: 'Editing',
     description:
-        'The detail form (GridConfig.detailForm): the current row as a form at the right of the rows - a label and a value for each field picked, in their order. Notes has several lines and is not in the layout: the form shows all of it, in a field as tall as its lines. Click a row, or move with the arrows: the form follows. Edit in the form as in a cell - Ctrl+Z undoes - and the cells follow. Its title collapses it to a narrow strip, and expands it again. Drag its left edge to make it wider or narrower (200 to 600px here: minWidth, maxWidth) - or Tab to the edge and use ArrowLeft / ArrowRight. The gear at the right end of the footer opens the grid config dialog: its tab Detail form turns the form on and off, expands it, sets its width, min and max and picks the fields and their order (drag a field by its handle, Move up / Move down, Alt+↑ / Alt+↓). It is part of the state: Save and Restore keep it - the width dragged and collapsed too. Where the rows would get too little room beside it (a phone), the form is under them.',
+        'The detail form (GridConfig.detailForm): the current row as a form at the right of the rows - a label and a value for each field picked, in their order. Notes has several lines and is not in the layout: the form shows all of it, in a field as tall as its lines. Click a row, or move with the arrows: the form follows. Edit in the form as in a cell - Ctrl+Z undoes - and the cells follow. Its title collapses it to a narrow strip, and expands it again. Notes has at least 5 lines, and Country, Date and Active are in a section More whose header collapses it (fieldOptions: section, collapsed, minRows, paddingTop / paddingBottom - set for the field picked in the tab Detail form of the dialog). Drag its left edge to make it wider or narrower (200 to 600px here: minWidth, maxWidth) - or Tab to the edge and use ArrowLeft / ArrowRight. The gear at the right end of the footer opens the grid config dialog: its tab Detail form turns the form on and off, expands it, sets its width, min and max and picks the fields and their order (drag a field by its handle, Move up / Move down, Alt+↑ / Alt+↓). It is part of the state: Save and Restore keep it - the width dragged and collapsed too. Where the rows would get too little room beside it (a phone), the form is under them.',
     run(stage) {
         const ui = createStage(stage);
 
@@ -46,7 +46,13 @@ export const detailForm: DemoSample = {
                 fields: ['company', 'notes', 'country', 'date1', 'isActive'],
                 width: 280,
                 minWidth: 200,
-                maxWidth: 600
+                maxWidth: 600,
+                // notes at least 5 lines; country, date1 and isActive in a section "More" that collapses,
+                // with some room above it
+                fieldOptions: {
+                    notes: { minRows: 5 },
+                    country: { section: 'More', paddingTop: 6 }
+                }
             }
         };
 

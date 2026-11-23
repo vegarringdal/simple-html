@@ -88,7 +88,9 @@ const CELL_PROPERTIES = [
     '--simple-html-grid-cell-bar-image',
     '--simple-html-grid-scale-from',
     '--simple-html-grid-scale-to',
-    '--simple-html-grid-scale-at'
+    '--simple-html-grid-scale-at',
+    // the least lines of a textarea of the detail form (DetailFormFieldOptions.minRows), set on it
+    '--simple-html-grid-detail-form-min-rows'
 ];
 
 // the variables that are one plain colour, the same in light and dark

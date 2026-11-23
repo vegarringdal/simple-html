@@ -4,7 +4,7 @@ import { styleMap } from 'lit-html/directives/style-map.js';
 import { type Entity, isGroupRow } from '../../datasource/entity';
 import { colorRuleClasses, colorRuleOf, colorRuleStyle } from '../colorRules';
 import type { Grid } from '../grid';
-import type { DetailForm, ParsedGridConfig } from '../gridConfig';
+import type { DetailForm, DetailFormFieldOptions, ParsedGridConfig } from '../gridConfig';
 import { asPx } from './asPx';
 import { cellTextOf } from './cellText';
 import { detailFormResizeHandle } from './detailFormResize';
@@ -101,7 +101,7 @@ export function noDetailForm(): DetailForm {
 
 /**
  * A copy of a detail form, as the state keeps it: `show` a boolean, each field once; `width`,
- * `expanded`, `minWidth` and `maxWidth` only when they are given
+ * `expanded`, `minWidth`, `maxWidth` and `fieldOptions` (copyFieldOptions) only when they are given
  */
 export function copyDetailForm(form: DetailForm): DetailForm {
     const copy: DetailForm = { show: form.show === true, fields: [...new Set(form.fields)] };
@@ -117,7 +117,36 @@ export function copyDetailForm(form: DetailForm): DetailForm {
     if (form.maxWidth !== undefined) {
         copy.maxWidth = form.maxWidth;
     }
+    const options = copyFieldOptions(form.fieldOptions);
+    if (options) {
+        copy.fieldOptions = options;
+    }
     return copy;
+}
+
+/** the options a field can have, in the order a copy has them */
+const FIELD_OPTIONS = ['section', 'collapsed', 'minRows', 'paddingTop', 'paddingBottom'] as const;
+
+/**
+ * A copy of the fields' options: each field's options that are given, `collapsed` only with a `section`,
+ * a field with none left out. undefined when no field has one
+ */
+export function copyFieldOptions(
+    options: Record<string, DetailFormFieldOptions> | undefined
+): Record<string, DetailFormFieldOptions> | undefined {
+    const copy: Record<string, DetailFormFieldOptions> = {};
+    for (const [field, given] of Object.entries(options ?? {})) {
+        const one: DetailFormFieldOptions = {};
+        for (const name of FIELD_OPTIONS) {
+            if (given[name] !== undefined && (name !== 'collapsed' || given.section !== undefined)) {
+                (one as Record<string, unknown>)[name] = given[name];
+            }
+        }
+        if (Object.keys(one).length) {
+            copy[field] = one;
+        }
+    }
+    return Object.keys(copy).length ? copy : undefined;
 }
 
 /** true for a number of px, more than 0 */
@@ -126,15 +155,15 @@ const isPx = (value: unknown) => typeof value === 'number' && Number.isFinite(va
 /**
  * Checks a detail form from a config or a state - plain JavaScript and JSON are not checked by
  * TypeScript: an object with `show` (a boolean), `fields` (an array of field names) and maybe `width`,
- * `minWidth` and `maxWidth` (numbers of px, more than 0 - the least not more than the most) and
- * `expanded` (a boolean)
+ * `minWidth` and `maxWidth` (numbers of px, more than 0 - the least not more than the most),
+ * `expanded` (a boolean) and `fieldOptions` (assertFieldOptions)
  * @param where the start of the message: `GridConfig.detailForm`, `setState: detailForm`
  * @throws a `TypeError` that says what is wrong
  */
 export function assertDetailForm(form: unknown, where: string): asserts form is DetailForm {
     if (typeof form !== 'object' || form === null || Array.isArray(form)) {
         throw new TypeError(
-            `${where} is an object { show, fields, width?, expanded?, minWidth?, maxWidth? }, got ${JSON.stringify(form)}`
+            `${where} is an object { show, fields, width?, expanded?, minWidth?, maxWidth?, fieldOptions? }, got ${JSON.stringify(form)}`
         );
     }
     const { show, fields, width, expanded, minWidth, maxWidth } = form as Record<string, unknown>;
@@ -154,6 +183,58 @@ export function assertDetailForm(form: unknown, where: string): asserts form is 
     }
     if (typeof minWidth === 'number' && typeof maxWidth === 'number' && minWidth > maxWidth) {
         throw new TypeError(`${where}.minWidth (${minWidth}) is more than its maxWidth (${maxWidth})`);
+    }
+    assertFieldOptions((form as Record<string, unknown>).fieldOptions, `${where}.fieldOptions`);
+}
+
+/**
+ * Checks `DetailForm.fieldOptions`: undefined, or an object of a field's options under its name -
+ * `section` a text, `collapsed` a boolean, `minRows` a whole number from 1 to MAX_LINES, `paddingTop`
+ * and `paddingBottom` numbers of px, 0 or more. Nothing else
+ * @throws a `TypeError` that says what is wrong
+ */
+function assertFieldOptions(options: unknown, where: string) {
+    if (options === undefined) {
+        return;
+    }
+    if (typeof options !== 'object' || options === null || Array.isArray(options)) {
+        throw new TypeError(`${where} is an object of a field's options under its name, got ${JSON.stringify(options)}`);
+    }
+    for (const [field, given] of Object.entries(options)) {
+        const at = `${where}.${field}`;
+        if (typeof given !== 'object' || given === null || Array.isArray(given)) {
+            throw new TypeError(
+                `${at} is an object { ${FIELD_OPTIONS.map((name) => `${name}?`).join(', ')} }, got ${JSON.stringify(given)}`
+            );
+        }
+        for (const [name, value] of Object.entries(given)) {
+            if (value === undefined) {
+                continue;
+            }
+            const fits =
+                name === 'section'
+                    ? typeof value === 'string'
+                    : name === 'collapsed'
+                      ? typeof value === 'boolean'
+                      : name === 'minRows'
+                        ? Number.isInteger(value) && (value as number) >= 1 && (value as number) <= MAX_LINES
+                        : name === 'paddingTop' || name === 'paddingBottom'
+                          ? typeof value === 'number' && Number.isFinite(value) && value >= 0
+                          : null;
+            if (fits === null) {
+                throw new TypeError(`${at}.${name} is no option of a field, they are ${FIELD_OPTIONS.join(', ')}`);
+            }
+            if (!fits) {
+                const what: Record<string, string> = {
+                    section: 'a text',
+                    collapsed: 'true or false',
+                    minRows: `a whole number from 1 to ${MAX_LINES}`,
+                    paddingTop: 'a number of px, 0 or more',
+                    paddingBottom: 'a number of px, 0 or more'
+                };
+                throw new TypeError(`${at}.${name} is ${what[name]}, got ${JSON.stringify(value)}`);
+            }
+        }
     }
 }
 
@@ -367,7 +448,73 @@ function bodyContent(ctx: Grid, config: ParsedGridConfig, shown: { row: Entity }
     if (!fields.length) {
         return html`<div class="simple-html-grid-detail-form-empty">${gridText(ctx, 'detailForm.noFields')}</div>`;
     }
-    return html`${fields.map((field, index) => fieldTemplate(ctx, config, shown.row, field, index))}`;
+    const options = config.detailForm.fieldOptions ?? {};
+    // the fields before the first header, then a section per header: its fields up to the next header
+    const loose: TemplateResult[] = [];
+    const sections: { field: string; index: number; title: string; fields: TemplateResult[] }[] = [];
+    fields.forEach((field, index) => {
+        const title = sectionTitle(options[field]);
+        if (title !== null) {
+            sections.push({ field, index, title, fields: [] });
+        }
+        const template = fieldTemplate(ctx, config, shown.row, field, index, options[field]);
+        (sections.length ? sections[sections.length - 1].fields : loose).push(template);
+    });
+    return html`${loose}${sections.map((section) => sectionTemplate(ctx, section, options[section.field]))}`;
+}
+
+/** the text of the header a field's options start a section with: null for none (no text, or blanks) */
+function sectionTitle(options: DetailFormFieldOptions | undefined): string | null {
+    const title = options?.section?.trim();
+    return title ? title : null;
+}
+
+/**
+ * A section of the form: its header - a button that collapses and expands it (`aria-expanded`, it
+ * controls the group) - and its fields in a group named by the header, hidden while it is collapsed. The
+ * room above it is its first field's `paddingTop`
+ */
+function sectionTemplate(
+    ctx: Grid,
+    section: { field: string; index: number; title: string; fields: TemplateResult[] },
+    options: DetailFormFieldOptions | undefined
+): TemplateResult {
+    const collapsed = options?.collapsed === true;
+    const headerId = detailFormId(ctx, `section-${section.index}`);
+    const groupId = detailFormId(ctx, `section-${section.index}-fields`);
+    return html`<div
+        class=${`simple-html-grid-detail-form-section${collapsed ? ' simple-html-grid-detail-form-section-collapsed' : ''}`}
+        data-section=${section.field}
+        style=${styleMap(options?.paddingTop ? { paddingTop: asPx(options.paddingTop) } : {})}
+    >
+        <button
+            type="button"
+            class="simple-html-grid-detail-form-section-header"
+            id=${headerId}
+            aria-expanded=${collapsed ? 'false' : 'true'}
+            aria-controls=${groupId}
+            @click=${() => toggleDetailFormSection(ctx, section.field)}
+        >
+            ${CHEVRON_ICON}<span class="simple-html-grid-detail-form-section-title">${section.title}</span>
+        </button>
+        <div class="simple-html-grid-detail-form-section-fields" role="group" id=${groupId} aria-labelledby=${headerId} ?hidden=${collapsed}>
+            ${collapsed ? nothing : section.fields}
+        </div>
+    </div>`;
+}
+
+/**
+ * Collapses an expanded section of the form, expands a collapsed one: the button of its header. The
+ * `collapsed` of the field that starts it, in the state's `fieldOptions` (setState): a saved state keeps it
+ * @param field the field whose `section` starts it
+ */
+export function toggleDetailFormSection(ctx: Grid, field: string) {
+    const gridInterface = ctx.gridInterface;
+    const form = gridInterface.getState().detailForm;
+    const options = form.fieldOptions ?? {};
+    const own = options[field] ?? {};
+    const fieldOptions = { ...options, [field]: { ...own, collapsed: own.collapsed !== true } };
+    gridInterface.setState({ detailForm: { ...form, fieldOptions } });
 }
 
 /**
@@ -417,8 +564,17 @@ function renderForm(ctx: Grid, element: HTMLElement) {
  * A field of the form: its label, its value - an input, a textarea for text of several lines, a
  * checkbox - the link of the row, the errors. Editable where the cell is
  * @param index the field's place in the form: its ids
+ * @param options its options (DetailForm.fieldOptions): the least lines of a textarea, the room above
+ * and under it - the room above a field that starts a section is above the section's header
  */
-function fieldTemplate(ctx: Grid, config: ParsedGridConfig, row: Entity, field: string, index: number): TemplateResult {
+function fieldTemplate(
+    ctx: Grid,
+    config: ParsedGridConfig,
+    row: Entity,
+    field: string,
+    index: number,
+    options: DetailFormFieldOptions | undefined
+): TemplateResult {
     const gridInterface = ctx.gridInterface;
     const datasource = gridInterface.getDatasource();
     const history = datasource.getDataContainer().__history;
@@ -520,12 +676,14 @@ function fieldTemplate(ctx: Grid, config: ParsedGridConfig, row: Entity, field: 
             @keydown=${keydown}
         />`;
     } else if (multiline) {
-        // as many lines as the text has (a browser without field-sizing: content), it grows with the text
-        const lines = Math.min(Math.max(textLines(text).length + 1, MIN_LINES), MAX_LINES);
+        // as many lines as the text has (a browser without field-sizing: content), it grows with the text;
+        // at least minRows (the field's option), as tall as that with field-sizing too
+        const minRows = options?.minRows;
+        const lines = Math.min(Math.max(textLines(text).length + 1, minRows ?? MIN_LINES), MAX_LINES);
         control = html`<textarea
             id=${id}
             class=${`simple-html-grid-detail-form-input simple-html-grid-detail-form-text${colors}`}
-            style=${colorStyle}
+            style=${styleMap({ ...colorRuleStyle(rule), ...(minRows ? { '--simple-html-grid-detail-form-min-rows': String(minRows) } : {}) })}
             rows=${lines}
             .value=${live(text)}
             .readOnly=${readonly}
@@ -557,7 +715,15 @@ function fieldTemplate(ctx: Grid, config: ParsedGridConfig, row: Entity, field: 
         />`;
     }
 
-    return html`<div class="simple-html-grid-detail-form-field" data-field=${field}>
+    // the room above a field that starts a section is above its header (sectionTemplate)
+    const room: Record<string, string> = {};
+    if (options?.paddingTop && sectionTitle(options) === null) {
+        room.paddingTop = asPx(options.paddingTop);
+    }
+    if (options?.paddingBottom) {
+        room.paddingBottom = asPx(options.paddingBottom);
+    }
+    return html`<div class="simple-html-grid-detail-form-field" data-field=${field} style=${styleMap(room)}>
         <label class="simple-html-grid-detail-form-label" for=${id}>${label}</label>
         ${control}
         ${

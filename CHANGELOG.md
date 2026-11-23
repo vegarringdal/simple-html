@@ -1332,6 +1332,26 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### The detail form: sections, lines and room per field (user request)
+
+##### Added
+- `DetailForm.fieldOptions` (`DetailFormFieldOptions`, under a field's name): `section` - a header above
+  the field that starts a section up to the next header, a button (`aria-expanded`) that collapses it;
+  `collapsed`, kept in the state; `minRows` - the least lines of a field of several lines (1 to 30,
+  default 3); `paddingTop` / `paddingBottom` - room in px. Checked as the rest of the detail form (a
+  `TypeError` that says which). The grid config dialog's tab *Detail form* sets them for the field picked:
+  *Section header above it*, *Section collapsed*, *Min lines*, *Space above / below (px)*; a field with a
+  header has it as a badge in the list. New texts `columnSettings.detailForm.field`, `.section`,
+  `.section.hint`, `.collapsed`, `.minRows`, `.paddingTop`, `.paddingBottom`. New classes
+  `.simple-html-grid-detail-form-section` (`-header`, `-title`, `-fields`, `-collapsed`).
+
+#### Menus: a line of their own colour
+
+##### Added
+- `--simple-html-grid-menu-border-color`, the line around a menu - the grid's lines by default, as before.
+  The TreDeSpace theme makes it slate-300 / slate-600: in dark the menus are the colour of the rows, and
+  a shadow of black hardly shows on slate-900.
+
 #### Text filters: `\` escapes a wildcard (user request)
 
 ##### Added

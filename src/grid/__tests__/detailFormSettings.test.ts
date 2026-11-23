@@ -4,7 +4,7 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DatasourceOptions } from '../../datasource/datasourceOptions';
 import type { DetailForm, GridConfig } from '../gridConfig';
 import type { GridElement } from '../gridElement';
-import { type DetailFormDraft, setWidths } from '../gridFunctions/detailFormSettings';
+import { type DetailFormDraft, setFieldOption, setWidths } from '../gridFunctions/detailFormSettings';
 import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
 import { pointerEvent } from './interactionTestHelpers';
 
@@ -395,7 +395,8 @@ describe('grid config dialog - Expanded, the min and max width', () => {
             maxWidth: 400,
             order: [],
             included: new Set(),
-            active: ''
+            active: '',
+            options: {}
         };
         for (const part of ['width', 'minWidth', 'maxWidth'] as const) {
             setWidths(draft, part, 'wide');
@@ -509,5 +510,69 @@ describe('grid config dialog - a field dragged by its handle', () => {
         press(list(), 'ArrowDown', { altKey: true });
         button('Move down').click();
         expect(optionTexts().slice(0, 3)).toEqual(['[x] City Text', '[ ] Age Number', '[x] Name Text']);
+    });
+});
+
+describe('the Detail form tab - the settings of the field picked (DetailFormFieldOptions)', () => {
+    const input = (name: string) => dialog().querySelector(`.detail-form-settings-${name}`) as HTMLInputElement | null;
+    const heading = () => dialog().querySelector('.detail-form-settings-field > .column-settings-label')?.textContent?.trim();
+
+    it('expect its heading, Section header, Space above / below; Min lines on a field of several lines only', async () => {
+        const { gridInterface } = await mount({ show: true, fields: ['name', 'notes'] });
+        gridInterface.openDetailFormSettings();
+        expect(picked().dataset.field).toBe('name');
+        expect(heading()).toBe('Settings of Name in the form');
+        expect([
+            !!input('section'),
+            !!input('collapsed'),
+            !!input('minRows'),
+            !!input('paddingTop'),
+            !!input('paddingBottom')
+        ]).toEqual([true, false, false, true, true]);
+        press(list(), 'ArrowDown');
+        expect(heading()).toBe('Settings of Notes in the form');
+        expect(input('minRows')?.placeholder).toBe('3');
+    });
+
+    it('expect a section, collapsed, min lines and room to be applied to the state, a badge in the list', async () => {
+        const { gridInterface } = await mount({ show: true, fields: ['name', 'notes'] });
+        gridInterface.openDetailFormSettings();
+        press(list(), 'ArrowDown');
+        setValue(input('section') as HTMLInputElement, '  More  ');
+        // Section collapsed comes with a header
+        (input('collapsed') as HTMLInputElement).click();
+        setValue(input('minRows') as HTMLInputElement, '5');
+        setValue(input('paddingTop') as HTMLInputElement, '10.4');
+        setValue(input('paddingBottom') as HTMLInputElement, 'x');
+        expect(optionTexts()[1]).toBe('[x] Notes Text Several lines Hidden More');
+        button('Apply').click();
+        expect(gridInterface.getState().detailForm.fieldOptions).toEqual({
+            notes: { section: 'More', collapsed: true, minRows: 5, paddingTop: 10 }
+        });
+    });
+
+    it('expect the options of a field taken out of the form left out on Apply, kept in the draft', async () => {
+        const { gridInterface } = await mount({ show: true, fields: ['name', 'notes'], fieldOptions: { notes: { minRows: 4 } } });
+        gridInterface.openDetailFormSettings();
+        press(list(), 'ArrowDown');
+        expect(input('minRows')?.value).toBe('4');
+        press(list(), ' ');
+        button('Apply').click();
+        expect(gridInterface.getState().detailForm).toEqual({ show: true, fields: ['name'], width: 300 });
+    });
+
+    it('expect setFieldOption to clear what is empty or does not fit, and a field with none to have no entry', () => {
+        const draft = { options: {} } as DetailFormDraft;
+        setFieldOption(draft, 'a', 'section', 'S');
+        setFieldOption(draft, 'a', 'collapsed', true);
+        setFieldOption(draft, 'a', 'minRows', '31');
+        setFieldOption(draft, 'a', 'paddingTop', '0');
+        expect(draft.options).toEqual({ a: { section: 'S', collapsed: true } });
+        setFieldOption(draft, 'a', 'minRows', '1');
+        expect(draft.options.a.minRows).toBe(1);
+        // no header: not collapsed either
+        setFieldOption(draft, 'a', 'section', ' ');
+        setFieldOption(draft, 'a', 'minRows', '');
+        expect(draft.options).toEqual({});
     });
 });

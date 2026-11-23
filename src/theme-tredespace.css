@@ -164,6 +164,9 @@
     /* the shadows of the library: black at 50% under a menu and a dialog, 45% under a tooltip. The
        library's scrollbar thumbs have none */
     --simple-html-grid-menu-shadow-color: rgb(0 0 0 / 0.5);
+    /* the line around a menu: slate-300 / slate-600 - the menus are the colour of the rows, and a shadow
+       of black hardly shows on slate-900: the line a step lighter than the grid's lines sets them off */
+    --simple-html-grid-menu-border-color: light-dark(#cbd5e1, oklch(44.6% 0.043 257.281));
     --simple-html-grid-dialog-shadow-color: rgb(0 0 0 / 0.5);
     --simple-html-grid-tooltip-shadow-color: rgb(0 0 0 / 0.45);
     --simple-html-grid-scrollbar-shadow-color: transparent;

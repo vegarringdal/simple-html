@@ -589,6 +589,14 @@ const DEFAULTS = {
     'columnSettings.detailForm.hidden': 'Hidden',
     'columnSettings.detailForm.moveUp': 'Move up',
     'columnSettings.detailForm.moveDown': 'Move down',
+    'columnSettings.detailForm.field': 'Settings of {field} in the form',
+    'columnSettings.detailForm.section': 'Section header above it',
+    'columnSettings.detailForm.section.hint':
+        'Starts a section: this field and the ones after it, up to the next header. Its header collapses it. Empty: none',
+    'columnSettings.detailForm.collapsed': 'Section collapsed',
+    'columnSettings.detailForm.minRows': 'Min lines',
+    'columnSettings.detailForm.paddingTop': 'Space above (px)',
+    'columnSettings.detailForm.paddingBottom': 'Space below (px)',
     'columnSettings.detailForm.reset': 'Reset form',
     'columnSettings.detailForm.reset.tooltip': 'The detail form the grid starts with',
 

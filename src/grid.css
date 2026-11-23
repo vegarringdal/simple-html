@@ -166,6 +166,9 @@
     /* shadows: the menus, the filter editor, the tooltips, the scrollbar thumbs. A plain colour is the
        same in light and dark */
     --simple-html-grid-menu-shadow-color: light-dark(rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.6));
+    /* the line around a menu: the grid's lines. A theme whose menus are the colour of the rows can make it
+       stronger - a shadow of black hardly shows on a dark grid */
+    --simple-html-grid-menu-border-color: var(--simple-html-grid-main-bg-border);
     --simple-html-grid-dialog-shadow-color: light-dark(rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.6));
     --simple-html-grid-tooltip-shadow-color: light-dark(rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.5));
     --simple-html-grid-scrollbar-shadow-color: rgb(0 0 0 / 30%);
@@ -2065,7 +2068,7 @@
     flex-direction: column;
     position: relative;
     background-color: var(--simple-html-grid-main-bg-color);
-    border: 1px solid var(--simple-html-grid-main-bg-border);
+    border: 1px solid var(--simple-html-grid-menu-border-color);
 }
 
 .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item {
@@ -4711,6 +4714,7 @@
  * browser has field-sizing, else it has a row per line (rows) and can be made taller */
 .simple-html-grid .simple-html-grid-detail-form-input.simple-html-grid-detail-form-text {
     height: auto;
+    /* 48px, or the field's minRows (DetailFormFieldOptions) lines: 1.4em each, the padding and the border */
     min-height: 48px;
     padding: 2px 4px;
     line-height: 1.4;
@@ -4718,6 +4722,77 @@
     overflow-wrap: anywhere;
     resize: vertical;
     field-sizing: content;
+}
+
+/* the field's minRows (DetailFormFieldOptions, set on the textarea): that many lines at least */
+.simple-html-grid .simple-html-grid-detail-form-input.simple-html-grid-detail-form-text[style*='--simple-html-grid-detail-form-min-rows'] {
+    min-height: calc(var(--simple-html-grid-detail-form-min-rows) * 1.4em + 6px);
+}
+
+/* a section of the form (DetailFormFieldOptions.section): its header a button over the whole width that
+ * collapses it - the chevron points down while it is expanded, right while it is collapsed - and a line
+ * under it */
+.simple-html-grid .simple-html-grid-detail-form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-section-header {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    min-height: 22px;
+    margin: 4px 0 0;
+    padding: 0 2px;
+    border: 0;
+    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
+    border-radius: 0;
+    background-color: transparent;
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight-header);
+    text-align: left;
+    cursor: pointer;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-section-header:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-section-header:focus-visible {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: -2px;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-section-header .simple-html-grid-chevron-icon {
+    transform: rotate(90deg);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-section-collapsed .simple-html-grid-detail-form-section-header .simple-html-grid-chevron-icon {
+    transform: none;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-section-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-section-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-section-fields[hidden] {
+    display: none;
 }
 
 .simple-html-grid .simple-html-grid-detail-form-input[readonly] {
