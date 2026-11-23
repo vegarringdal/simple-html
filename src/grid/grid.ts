@@ -4,6 +4,7 @@ import type { ColumnCache, RowCache } from './gridFunctions/colType';
 import { closeColumnSettings } from './gridFunctions/columnSettings';
 import { createDom } from './gridFunctions/createDom';
 import { releaseAllRenderers } from './gridFunctions/customCell';
+import { addDatePresetListeners } from './gridFunctions/datePresetFilter';
 import { closeFind, type FindBar, findDataChanged } from './gridFunctions/findBar';
 import { initResizerEvent } from './gridFunctions/initResizerEvent';
 import type { LastPress } from './gridFunctions/lastPress';
@@ -17,6 +18,7 @@ import { rebuildTopPanel } from './gridFunctions/rebuildTopPanel';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
 import { cancelRowsRender } from './gridFunctions/renderChangedRows';
 import { closeFilterEditor } from './gridFunctions/renderFilterEditor';
+import { closeShortcutHelp } from './gridFunctions/shortcutHelp';
 import type { MenuTree } from './gridFunctions/showMenu';
 import { closeTextEditor, type TextEditor } from './gridFunctions/textEditor';
 import { hideTooltip } from './gridFunctions/tooltip';
@@ -96,6 +98,8 @@ export class Grid {
     public filterEditor?: HTMLDialogElement | null;
     // the grid config dialog, modal too: see columnSettings.ts. Null when it is closed
     public columnSettings?: HTMLDialogElement | null;
+    // the keyboard shortcuts help, modal too: see shortcutHelp.ts. Null when it is closed
+    public shortcutHelp?: HTMLDialogElement | null;
     // the detail form, a panel at the right of the rows: see detailForm.ts. Made by createDom
     public detailForm: HTMLElement | null = null;
     // the column chooser, a popover that stays open while columns are dragged from it
@@ -110,6 +114,8 @@ export class Grid {
     public menuListenersAbort?: AbortController;
     /** aborts the document listeners of copy and paste, see addClipboardListeners in rangeClipboard.ts */
     public clipboardListenersAbort?: AbortController;
+    /** aborts the window listeners that refresh the quick dates, see addDatePresetListeners in datePresetFilter.ts */
+    public datePresetListenersAbort?: AbortController;
     /**
      * true while the pointer is down on a cell, from a press that can make a range of cells: the focus
      * moving to a cell then is part of it and keeps the ranges, see rangeCellFocused in rangeSelection.ts
@@ -210,6 +216,8 @@ export class Grid {
         }
 
         initResizerEvent(this);
+        // the quick dates of the header filters are computed again when the window gets the focus back
+        addDatePresetListeners(this);
     }
 
     /**
@@ -227,6 +235,7 @@ export class Grid {
         removeContextMenu(this);
         closeFilterEditor(this);
         closeColumnSettings(this);
+        closeShortcutHelp(this);
         this.columnChooserMenu?.remove();
         this.columnChooserMenu = null;
         // shown for a cell of this grid maybe: it is not in the element either
@@ -237,6 +246,7 @@ export class Grid {
 
         this.menuListenersAbort?.abort();
         this.clipboardListenersAbort?.abort();
+        this.datePresetListenersAbort?.abort();
 
         this.resizeObserver?.disconnect();
         this.resizeObserver = null;

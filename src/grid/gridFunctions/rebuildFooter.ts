@@ -5,6 +5,7 @@ import type { Grid } from '../grid';
 import { renderTotalsRow } from './aggregates';
 import { clearAllColumnFilters } from './clearAllColumnFilters';
 import { openColumnSettings } from './columnSettings';
+import { activeDatePreset, datePresetName } from './datePresetFilter';
 import { findFilterRowsCaseSensitive, findFilterRowsText } from './findBar';
 import { getColumnLabel } from './getColumnLabel';
 import { getElementByClassName } from './getElementByClassName';
@@ -59,14 +60,22 @@ const MAX_FOOTER_CONDITIONS = 5;
 /**
  * A chip: the label, the operator and the value. A BETWEEN with both ends: `between`, the start, `and`
  * (the text `footer.betweenAnd`) and the end; with one end it is shown as what it is, `≥ 10` or
- * `≤ 20`. A condition that matches case has "Aa" after its value
+ * `≤ 20`. A condition that matches case has "Aa" after its value. The BETWEEN of a quick date is its
+ * name: `Order date = This month`
+ * @param top a condition of the filter's top AND group: a header filter's own
  */
-function renderNode(ctx: Grid, node: FilterNode): unknown {
+function renderNode(ctx: Grid, node: FilterNode, top = false): unknown {
     if (node.kind === 'condition') {
         const valueSpan = (text: string) => html`<span class="footer-filter-value">${text}</span>`;
         let operator = operatorLabel(ctx, node.operator);
         let value: unknown = node.hasValue ? valueSpan(node.value) : null;
-        if (node.operator === 'BETWEEN' && node.value !== '' && node.valueTo) {
+        // a quick date of the header filter (datePresetFilter.ts): its name, `Order date = This month` - its
+        // BETWEEN is a condition of the top AND group, the header filter's own
+        const preset = top && node.operator === 'BETWEEN' ? activeDatePreset(ctx, node.field) : undefined;
+        if (preset) {
+            operator = operatorLabel(ctx, 'EQUAL');
+            value = valueSpan(datePresetName(ctx, preset));
+        } else if (node.operator === 'BETWEEN' && node.value !== '' && node.valueTo) {
             value = html`${valueSpan(node.value)} <span class="footer-filter-op">${gridText(ctx, 'footer.betweenAnd')}</span>
                 ${valueSpan(node.valueTo)}`;
         } else if (node.operator === 'BETWEEN') {
@@ -93,12 +102,17 @@ function renderNode(ctx: Grid, node: FilterNode): unknown {
     return html`<span class="footer-filter-group">${renderChildren(ctx, node)}</span>`;
 }
 
-function renderChildren(ctx: Grid, group: FilterGroupNode) {
+/**
+ * the chips of a group's children
+ * @param root the group is the filter's root: an AND root's conditions are the header filters' own
+ */
+function renderChildren(ctx: Grid, group: FilterGroupNode, root = false) {
     const connector = gridText(ctx, group.group === 'OR' ? 'footer.or' : 'footer.and');
+    const top = root && group.group === 'AND';
     return (group.children || []).map(
         (child, i) => html`
             ${i > 0 ? html`<span class="footer-filter-connector">${connector}</span>` : null}
-            ${renderNode(ctx, child)}
+            ${renderNode(ctx, child, top)}
         `
     );
 }
@@ -367,7 +381,7 @@ export function renderFooter(ctx: Grid) {
                                         count: conditionCount
                                     })}</span
                                 >`
-                                  : renderChildren(ctx, filterTree)
+                                  : renderChildren(ctx, filterTree, true)
 }
                       </div>`
                               : null

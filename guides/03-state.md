@@ -15,10 +15,11 @@ The user can keep several under names and switch between them in the footer: [Vi
 | `grouping` | the grouping, as `datasource.getGrouping()` |
 | `expandedGroups` | the ids of the expanded groups |
 | `filter` | the filter the rows are filtered by, as `datasource.getFilter()`. `null` when there is none |
-| `headerFilters` | what each header filter cell shows: the value, the operator picked in its menu and its Match case |
+| `headerFilters` | what each header filter cell shows: the value, the operator picked in its menu and its Match case - and a quick date (This month) |
 | `aggregates` | the aggregate functions of the columns, keyed by field (`{ balance: ['sum', 'avg'] }`): what `ColumnConfig.aggregate` starts with and the header menu changes, see [Aggregates](18-aggregates.md#from-the-header-menu) |
 | `totalsRow` | whether the totals row is shown: `GridConfig.totalsRow`, turned on and off in the header menu |
 | `formats` | the display formats of the columns, keyed by field (`{ born: { date: 'weekIso' } }`, `{ email: { link: { url: 'mailto:{email}' } } }`): what `ColumnConfig.format` starts with and the header menu's Format ›, the grid config dialog and the column chooser's ✎ (a label) change, see [Display formats](08-formatting.md#display-formats) and [Templates and links](08-formatting.md#templates-and-links) |
+| `calculatedColumns` | the calculated columns, keyed by field (`{ total: { formula: '{price} * {qty}', label: 'Total' } }`): what `GridConfig.calculatedColumns` starts with and the grid config dialog adds, changes and removes, see [Calculated columns in the state](#calculated-columns-in-the-state) |
 | `detailForm` | the detail form: whether it is shown, its fields in their order, its width (dragged too) and its least and most width, expanded or collapsed (`{ show: true, fields: ['name', 'notes'], width: 300 }`) - what `GridConfig.detailForm` starts with and the grid config dialog, the form's edge and its title change, see [The detail form](02-grid-config.md#the-detail-form) |
 
 ```ts
@@ -31,7 +32,8 @@ state.headerFilters; // { age: { value: 30 } }
 
 `filter` is what the rows are filtered by. `headerFilters` is only what the header cells show: the
 conditions a header filter made are in `filter` already. Keep both, as `getState()` gives them, so
-the header shows what the rows are filtered by.
+the header shows what the rows are filtered by. A quick date is the one exception: it is computed
+from today when the state is set, see [below](#quick-dates-in-the-state).
 
 These are **not** state: the options (`readonly`, `dimRepeatedValues`, sizes ... see
 [Grid config](02-grid-config.md)), the data and its edits, the selected rows, the current row, the
@@ -211,6 +213,35 @@ gridInterface.setState({
   throws a `TypeError`, and nothing of the state changes.
 - It is plain JSON.
 
+## Calculated columns in the state
+
+`calculatedColumns` is keyed by field: the columns whose value a formula computes from the row, see
+[Calculated columns](23-calculated-columns.md).
+
+```ts
+const saved = gridInterface.getState().calculatedColumns; // { total: { formula: '{price} * {qty}', label: 'Total' } }
+
+// one more, at the end of the layout
+const layout = gridInterface.getState().layout;
+layout.center.push({ fields: ['half'], width: 90 });
+gridInterface.setState({ calculatedColumns: { ...saved, half: { formula: '{price} / 2' } }, layout });
+```
+
+- It starts as `GridConfig.calculatedColumns` (or `initialState.calculatedColumns`), and `resetState()`
+  goes back to it. `updateConfig({ calculatedColumns })` shows new ones at once.
+- The user changes it in the grid config dialog: its Apply is a `setState({ calculatedColumns })`, with
+  the layout of a new one.
+- `setState({ calculatedColumns })` replaces all of them, and the rows are filtered, sorted and grouped
+  again with their values. One left out is taken out of the layout, the sort, the grouping, the filter,
+  the header filters and the detail form; its format and aggregates go.
+- **A saved state runs nothing**: a formula is text read by the grid's own small language - no `eval`.
+  A formula with a problem, a name that is a field of the rows, anything that is no calculated column
+  throws a `TypeError`, and nothing of the state changes. See
+  [Security](23-calculated-columns.md#security).
+- It is applied before the formats and aggregates of the same state: a `format` of a calculated column
+  is checked against its type.
+- It is plain JSON.
+
 ## Header filters in the state
 
 `headerFilters` is keyed by field. Only the columns whose header filter has a value, an operator
@@ -260,6 +291,35 @@ gridInterface.setState({
     headerFilters: { country: { value: 'Norway' } }
 });
 ```
+
+### Quick dates in the state
+
+A [quick date](06-filtering.md#quick-dates) picked in a date column's filter menu - This month, Last
+week, Overdue ... - is kept as itself, `datePreset`, with the operator `BETWEEN` and the days it was
+computed to last:
+
+```ts
+import type { GridState } from '@simple-html/grid';
+
+// getState() on 22 November 2026, after Quick dates › This month on orderDate
+const saved: Pick<GridState, 'headerFilters'> = {
+    headerFilters: {
+        orderDate: { value: [new Date(2026, 10, 1), new Date(2026, 10, 30)], operator: 'BETWEEN', datePreset: 'thisMonth' }
+    }
+};
+```
+
+It is **relative**: `setState()` (and `initialState`, `resetState()`) computes its days from the day it
+is set - the same state set on 2 December filters on December - and its `BETWEEN` replaces the
+column's conditions in the state's `filter` (in the filter the grid has, when the state has none), the
+other conditions kept. The `value` stored is only what it was last; give `value: null` and the grid
+fills it in. So `setState({ headerFilters: { orderDate: { value: null, datePreset: 'today' } } })`
+filters on today, without a `filter`. `filter` itself is plain - `getFilter()` and
+[`toSqlWhere()`](22-sql.md#a-quick-date) see the dates of the day - and through JSON its Dates are ISO
+text, as any. A quick date a column can not take (not a date column, no `BETWEEN` in its
+`filterOperators`, an id that is none) is left out, the rest of the header filter kept. A page open
+over midnight: `gridInterface.refreshDatePresets()`, which the grid calls when the window gets the
+focus back.
 
 ## Views
 

@@ -282,7 +282,8 @@ const config: GridConfig = {
 Right click a header filter for its menu: the submenu **Filter ›**, then the main tool, in the menu
 itself: the **value list** for text fields and [lookup columns](20-lookups.md), the
 **range block** for number, date and datetime fields - a boolean column has neither, its header
-filter is a checkbox. In Filter ›:
+filter is a checkbox. A date or datetime column has its [quick dates](#quick-dates) under the range
+block. In Filter ›:
 
 - **Operator ›** picks the operator the column's header filter uses, the one in use has a ✓: for text
   Equal, Not Equal, Contains, Does not contain, Begins with and Ends with; for numbers and dates Equal,
@@ -300,8 +301,8 @@ filter is a checkbox. In Filter ›:
 - **Advanced Filter…** opens the [filter editor](#the-filter-editor)
 
 From the keyboard: Shift+F10 (or the menu key) on the header filter opens the menu with the focus on
-Filter ›, ArrowRight goes into it; Tab goes from Filter › into the value list or the range block,
-Shift+Tab back.
+Filter ›, ArrowRight goes into it; Tab goes from Filter › into the value list or the range block (and
+on to the quick dates), Shift+Tab back.
 
 ```sample filter-operator-header
 ```
@@ -390,6 +391,86 @@ Operator › first and then typing in the header filter.
 
 It is a block of the menu, `filter.range`: a `menus.filter` hook can hide it, move it or put a block
 of its own in its place, see [Menus](10-menus.md#the-built-in-ids).
+
+### Quick dates
+
+Under the range block of a date or datetime column: the date ranges filtered on all day, one click
+each - no Apply, the menu closes and the rows are filtered.
+
+```text
+[ Today        ][ Yesterday    ]
+[ This week    ][ Last week    ]
+[ This month   ][ Last month   ]
+[ This quarter ][ Last quarter ]
+[ This year    ][ Last year    ]
+[ Last 7 days  ][ Last 30 days ]
+[ Next 7 days  ][ Overdue      ]
+```
+
+| quick date | the days, from today |
+| --- | --- |
+| Today, Yesterday | the day |
+| This week, Last week | 7 days from the first day of the week: the date picker's `datePickerConfig.weekStart`, Monday by default (ISO weeks). `weekStart: 0` makes Sunday the first |
+| This month, Last month | the 1st to the last day of the month |
+| This quarter, Last quarter | January-March, April-June, July-September, October-December |
+| This year, Last year | 1 January to 31 December |
+| Last 7 days, Last 30 days | today and the 6 (29) days before |
+| Next 7 days | today and the 6 days after |
+| Overdue | every day before today - an open start. Only on a column that lists it in `datePresets`: it means something on a due date, not on a birthday |
+
+- **A quick date is relative.** The header filter keeps it as itself -
+  `headerFilters[field].datePreset: 'thisMonth'`, see [the state](03-state.md#header-filters-in-the-state)
+  - and its days are computed from today whenever it filters: when it is picked, when a state with it
+  is set (`setState()`, `initialState`, `resetState()`), when Enter is pressed on it. A view saved with
+  This month shows the month it is opened in. A page left open over midnight: the grid computes them
+  again when the window gets the focus back or the page is shown again, and filters again when their
+  days changed - `gridInterface.refreshDatePresets()` does the same from code (a timer for a screen
+  on the wall).
+- **The filter is plain**: a `BETWEEN` of the days, the column's conditions replaced as typing does,
+  the rest of the filter kept. A `date` field compares the days, a `datetime` from 00:00:00 of the
+  first day to 23:59:59 of the last, as the [range picker](#the-range-picker). Overdue is a `BETWEEN`
+  with an open start: `[null, yesterday]`. `getFilter()`, `getFilterString()`, the filter editor and
+  [`toSqlWhere()`](22-sql.md#a-quick-date) see those dates, never the quick date. The display format of
+  the column plays no part: This month on a column shown as weeks is the month.
+- **What shows it**: the header filter cell its name (*This month*), the operator indicator Between
+  (`a..b`) - a quick date sets the operator to Between, and the grid sends `filter-operator-change`
+  when it was another one - the footer's chip `Order date = This month`, the range block its days in
+  From and To. The button of the quick date in use is filled. The tooltip of a button has its days,
+  as the field writes a date: `2026-11-16 – 2026-11-22`.
+- **What replaces it**: a date typed or picked in the cell, the range block's Apply with a date
+  changed (Apply with nothing changed keeps it), another operator (its first day stays: This week
+  with ≥ is ≥ Monday), Clear Filter, Blank ›, the filter editor's Apply when it changed the column's
+  conditions (unchanged, the quick date stays). The name of a quick date typed in the cell - `today`,
+  `last week`, any case - is that quick date.
+- **Which a column offers**: `datePresets` - a list in the order shown (`DATE_PRESETS` has every one),
+  `false` for none. Left out: every one but Overdue. Only a column whose header filter offers
+  `BETWEEN` (`filterOperators`); a lookup column filters as text, it has none.
+- The keyboard: Tab goes on from the range block to the quick dates, one stop: the one in use, else
+  the first. ArrowLeft / ArrowRight the one before / after, ArrowUp / ArrowDown the one above / below,
+  Home / End the first / last; Enter or Space filters on it.
+
+```ts
+import { DATE_PRESETS, type GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    columns: {
+        // every quick date on the due date, Overdue too
+        dueDate: { datePresets: [...DATE_PRESETS] },
+        // a few on the order date, in this order
+        orderDate: { datePresets: ['today', 'thisWeek', 'thisMonth', 'last30Days'] },
+        // none on the date of birth
+        born: { datePresets: false }
+    },
+    layout: { center: [{ fields: ['dueDate'], width: 110 }, { fields: ['orderDate'], width: 110 }, { fields: ['born'], width: 110 }] }
+};
+
+// from code, as if picked: the grid fills in the operator, the days and the filter
+gridInterface.setState({ headerFilters: { orderDate: { value: null, datePreset: 'thisMonth' } } });
+```
+
+It is a block of the menu, `filter.dates`: a `menus.filter` hook can hide it or move it, see
+[Menus](10-menus.md#the-built-in-ids). The texts are `filter.dates.*`, see
+[Texts](12-texts.md#the-quick-dates).
 
 ### Filters from the row menu
 
@@ -488,7 +569,7 @@ The footer shows the number of rows shown (`datasource.length()`, group rows inc
 number of rows there are (`12/500`), and the
 filter as a row of chips: field, operator, value, with the groups in brackets. "✕ Clear" removes the
 whole filter, a click on the chips opens the filter editor. A `BETWEEN` is `Age between 10 and 20`
-(an open end: `Age ≥ 10`), a condition that matches case has **Aa** after its value. The labels are the column labels, the
+(an open end: `Age ≥ 10`), a [quick date](#quick-dates) its name - `Order date = This month` - and a condition that matches case has **Aa** after its value. The labels are the column labels, the
 rest are texts (`footer.*`, the operators `footer.operator.*`), see [Texts](12-texts.md#footer). The
 values of a lookup column are shown as its cells show them, by their labels (`Country in Norway`);
 the filter editor shows the values (`NO`), they are what it edits.
@@ -837,7 +918,7 @@ people.getFilterString((field) => (field === 'country' ? 'Land' : field));
 
 people.getFilterTree();
 // { kind: 'group', group: 'AND', children: [
-//     { kind: 'condition', label: 'country', operator: 'EQUAL', value: 'Norway', hasValue: true, caseSensitive: false },
+//     { kind: 'condition', field: 'country', label: 'country', operator: 'EQUAL', value: 'Norway', hasValue: true, caseSensitive: false },
 //     { kind: 'group', group: 'OR', children: [ ...the two age conditions ] }
 // ] }
 ```

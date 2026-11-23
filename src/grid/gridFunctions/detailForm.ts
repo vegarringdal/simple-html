@@ -1,7 +1,8 @@
 import { html, nothing, render, type TemplateResult } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
+import { styleMap } from 'lit-html/directives/style-map.js';
 import { type Entity, isGroupRow } from '../../datasource/entity';
-import { colorRuleClasses, colorRuleOf } from '../colorRules';
+import { colorRuleClasses, colorRuleOf, colorRuleStyle } from '../colorRules';
 import type { Grid } from '../grid';
 import type { DetailForm, ParsedGridConfig } from '../gridConfig';
 import { asPx } from './asPx';
@@ -441,9 +442,12 @@ function fieldTemplate(ctx: Grid, config: ParsedGridConfig, row: Entity, field: 
     const link = cell.type === 'text' && !lookup ? gridInterface.__getCellLink(field, row) : null;
     // the colours of the column's colour rule that matches the value (ColumnFormat.rules), as the cell has
     // them: on the input or the textarea
-    const colors = colorRuleClasses(colorRuleOf(gridInterface, field, row))
+    const rule = colorRuleOf(gridInterface, field, row);
+    const colors = colorRuleClasses(rule)
         .map((name) => ` ${name}`)
         .join('');
+    // a custom colour of the rule: custom properties, set with style.setProperty() (styleMap)
+    const colorStyle = styleMap(colorRuleStyle(rule));
 
     // the element of the last render: the one the user may be typing in
     const root = ctx.element.getRootNode() as Partial<DocumentOrShadowRoot>;
@@ -521,6 +525,7 @@ function fieldTemplate(ctx: Grid, config: ParsedGridConfig, row: Entity, field: 
         control = html`<textarea
             id=${id}
             class=${`simple-html-grid-detail-form-input simple-html-grid-detail-form-text${colors}`}
+            style=${colorStyle}
             rows=${lines}
             .value=${live(text)}
             .readOnly=${readonly}
@@ -536,6 +541,7 @@ function fieldTemplate(ctx: Grid, config: ParsedGridConfig, row: Entity, field: 
         control = html`<input
             id=${id}
             class=${`simple-html-grid-detail-form-input${colors}`}
+            style=${colorStyle}
             type="text"
             spellcheck="false"
             autocomplete="off"

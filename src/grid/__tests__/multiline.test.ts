@@ -643,6 +643,42 @@ describe('multiline - closing the editor', () => {
     });
 });
 
+describe('multiline - the ✕ of the editor', () => {
+    const closeButton = () => document.querySelector('.simple-html-grid-text-editor-close') as HTMLButtonElement;
+
+    it('expect a ✕ at the right of the hint, named Save and close, that saves and closes: one undo step, the focus back in the cell', async () => {
+        const { element, datasource } = await mountGrid(config(), data(), multilineFields());
+        const input = openWithEnter(element, 'notes', 1);
+        expect(closeButton().getAttribute('aria-label')).toEqual('Save and close');
+        expect(closeButton().getAttribute('data-tooltip')).toEqual('Save and close');
+        expect(closeButton().type).toEqual('button');
+        // after the hint, in its footer
+        expect(closeButton().previousElementSibling?.classList.contains('simple-html-grid-text-editor-hint')).toBe(true);
+
+        typeInEditor('from a finger');
+        // the press keeps the focus in the text: it goes back to the cell after
+        const press = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+        closeButton().dispatchEvent(press);
+        expect(press.defaultPrevented).toBe(true);
+        closeButton().click();
+
+        expect(editor()).toBeNull();
+        expect(notes(datasource)[1]).toEqual('from a finger');
+        expect(datasource.canUndo()).toBe(true);
+        expect(document.activeElement).toBe(input);
+    });
+
+    it('expect the ✕ of a readonly editor to be Close: it closes, nothing saved', async () => {
+        const { element, datasource } = await mountGrid(config({ readonly: true }), data(), multilineFields());
+        openWithEnter(element, 'notes', 0);
+        expect(closeButton().getAttribute('aria-label')).toEqual('Close');
+        textarea().value = 'changed';
+        closeButton().click();
+        expect(editor()).toBeNull();
+        expect(notes(datasource)[0]).toEqual('line 1\nline 2');
+    });
+});
+
 describe('multiline - readonly', () => {
     it('expect a readonly grid to open it read-only on Enter, F2 and a double click, typing not', async () => {
         const { element, datasource } = await mountGrid(config({ readonly: true }), data(), multilineFields());

@@ -4,7 +4,9 @@ import type { GroupArgument } from '../datasource/groupArgument';
 import type { SortArgument } from '../datasource/sortArgument';
 import type { IDateConfig } from '../date/interfaces';
 import type { Texts } from '../texts';
+import type { CalculatedColumn } from './calculatedColumns';
 import type { ColumnFormat } from './columnFormat';
+import type { DatePreset } from './datePresets';
 import type { GridView } from './gridView';
 
 /**
@@ -67,6 +69,33 @@ export type GridConfig = {
      * @sample column-layout
      */
     layout: GridLayout;
+    /**
+     * The calculated columns the grid starts with, by field name: columns whose values a formula
+     * computes from the other fields of the row - `{ total: { formula: '{price} * {qty}' } }`. Put their
+     * fields in the `layout`, give them `columns` options (a label, an aggregate, a format) as any field.
+     * See {@link CalculatedColumn} and the guide "Calculated columns".
+     *
+     * Part of the grid's state (`GridState.calculatedColumns`): the user adds, changes and removes them in
+     * the grid config dialog, `getState()` has them. `resetState()` goes back to these (unless
+     * `initialState.calculatedColumns` is given); `updateConfig({ calculatedColumns })` shows new ones
+     * at once and makes them what `resetState()` goes back to.
+     *
+     * @sample calculated-columns
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     calculatedColumns: {
+     *         total: { formula: '{price} * {qty}', label: 'Total' },
+     *         daysLate: { formula: 'DAYS({due}, TODAY())', label: 'Days late' }
+     *     },
+     *     columns: { total: { aggregate: 'sum' } },
+     *     layout: { center: [{ fields: ['price', 'qty'], width: 80 }, { fields: ['total'], width: 90 }, { fields: ['daysLate'], width: 80 }] }
+     * };
+     * ```
+     */
+    calculatedColumns?: Record<string, CalculatedColumn>;
     /**
      * The state the grid starts in, and `resetState()` goes back to: sorted, grouped, filtered ...
      * What is left out starts empty (no sorting, no filter ...), the layout is `layout`.
@@ -264,6 +293,29 @@ export type GridConfig = {
      * @sample views
      */
     viewsButton?: boolean;
+    /**
+     * the keyboard shortcuts help, default `true`: a dialog that lists the keys of the grid in groups -
+     * moving around, selecting, editing, find, the menus - with a search, the keys as the platform names
+     * them (⌘ on a Mac). The user opens it with `?` where the key types nothing (a readonly cell, a
+     * checkbox, a column header, a row number), Ctrl+/ (Cmd+/) anywhere in the grid - also while typing in
+     * a cell - and *Keyboard shortcuts…* in the header menu (`header.shortcuts`). Its texts are
+     * `shortcuts.*`, see the texts guide.
+     *
+     * `false` turns its keys and the menu entry off - for an app with a help of its own, or one that uses
+     * the keys itself. `gridInterface.openShortcutHelp()` still opens it. A lookup's dropdown grid has it
+     * `false`. See the accessibility guide, "The keyboard shortcuts help"
+     *
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     layout: { center: [{ fields: ['name'], width: 150 }] },
+     *     shortcutHelp: false // the app's own help button calls gridInterface.openShortcutHelp()
+     * };
+     * ```
+     */
+    shortcutHelp?: boolean;
     /**
      * the whole grid is readonly, default `true`: no cell can be edited, and the row menu has no paste
      * or clear. Set `false` to edit; the column's `readonly` and the `isReadonly` hook
@@ -826,6 +878,32 @@ export type ColumnConfig = {
      */
     filterOnType?: boolean;
     /**
+     * the quick date filters the column's filter menu offers - *Quick dates*, one click each: Today,
+     * Yesterday, This week, Last week, This month ... in the order given. Left out: every one but
+     * `'overdue'` (see {@link DATE_PRESETS}, {@link DatePreset}). `false` (or `[]`): none, the menu has
+     * no Quick dates.
+     *
+     * For a `date` or `datetime` column whose header filter offers `BETWEEN` (a quick date is a range of
+     * days). A `TypeError` when the grid is made or `updateConfig()` is given the column: an id that is no
+     * quick date, or the option on another type (a lookup column filters as text). It limits what the
+     * user picks: a state from `setState()` can hold any quick date.
+     *
+     * @sample filtering
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     columns: {
+     *         dueDate: { datePresets: ['today', 'next7Days', 'thisMonth', 'overdue'] },
+     *         born: { datePresets: false } // no quick dates
+     *     },
+     *     layout: { center: [{ fields: ['dueDate'], width: 110 }, { fields: ['born'], width: 110 }] }
+     * };
+     * ```
+     */
+    datePresets?: DatePreset[] | false;
+    /**
      * the name of another column whose value in the row is the type of this cell -
      * `'text' | 'number' | 'boolean' | 'date' | 'datetime'`. A number/text/date etc in the same
      * column, for property/value style data. Only for a `text` field (the default), and a value that
@@ -1105,7 +1183,9 @@ export interface GridState {
      * Only the columns that have one of them are listed.
      *
      * The rows are filtered by `filter`: these are what the header shows, the conditions they made are
-     * in `filter` already. A state from `getState()` has both.
+     * in `filter` already. A state from `getState()` has both. The one exception is a quick date
+     * (`datePreset`): it is computed from today when the state is set, and its condition replaces the
+     * column's in `filter` - see `HeaderFilter.datePreset`.
      */
     headerFilters: Record<string, HeaderFilter>;
     /**
@@ -1132,6 +1212,14 @@ export interface GridState {
      * grid config dialog (tab *Detail form*), the form's edge and its title bar. See {@link DetailForm}
      */
     detailForm: DetailForm;
+    /**
+     * the calculated columns, by field name - what `GridConfig.calculatedColumns` starts with and the
+     * user adds, changes and removes in the grid config dialog: `{ total: { formula: '{price} * {qty}',
+     * label: 'Total' } }`. Their formulas are text, not code: a state from storage runs nothing. A column
+     * left out that the grid had is taken out of the layout, the sort, the grouping, the filter and the
+     * detail form. See {@link CalculatedColumn}
+     */
+    calculatedColumns: Record<string, CalculatedColumn>;
 }
 
 /**
@@ -1148,7 +1236,8 @@ export interface GridState {
  *     balance: { value: [1000, 5000], operator: 'BETWEEN' }, // typed as 1000..5000
  *     active: { value: true }, // a boolean column's checkbox
  *     city: { value: 'Os*', filterOnType: true }, // filter as you type turned on
- *     due: { value: new Date(2026, 10, 16), operator: 'EQUAL' } // `2026-W47` typed, the column shown as weekIso
+ *     due: { value: new Date(2026, 10, 16), operator: 'EQUAL' }, // `2026-W47` typed, the column shown as weekIso
+ *     orderDate: { value: null, datePreset: 'thisMonth' } // Quick dates › This month: this month when it is set
  * };
  * ```
  */
@@ -1177,14 +1266,29 @@ export interface HeaderFilter {
      * listed only when the user's differs from it. See `ColumnConfig.filterOnType`
      */
     filterOnType?: boolean;
+    /**
+     * the quick date filter picked in the column's filter menu (*Quick dates*: `'thisMonth'` ...), see
+     * {@link DatePreset}. It is **relative**: the grid computes its days from today whenever it filters -
+     * when it is picked, when a state with it is set (`setState()`, `initialState`, `resetState()`) and
+     * when the window gets the focus back on another day (`gridInterface.refreshDatePresets()`). So a
+     * state saved with This month filters on the month it is set in.
+     *
+     * With it, `operator` is `'BETWEEN'` and `value` the `[from, to]` it was computed to last (a
+     * `datetime`'s To at 23:59:59, an open start null for `'overdue'`): set it with `value: null`, the
+     * grid fills them in. Its condition - a plain `BETWEEN` of those days - replaces the column's in
+     * `GridState.filter` when the state is set: `filter` and `toSqlWhere()` never see the quick date.
+     * The cell shows its name (*This month*). A value typed, picked or cleared replaces it, and so does
+     * another operator. Left out for a column that can not take it (no date column, no `BETWEEN`)
+     */
+    datePreset?: DatePreset;
 }
 
 /**
  * @internal
- * The options of the config: all of it but `columns`, `layout` and `initialState`, the parts the grid
- * copies and changes.
+ * The options of the config: all of it but `columns`, `layout`, `initialState` and `calculatedColumns`,
+ * the parts the grid copies and changes.
  */
-export type GridOptions = Omit<GridConfig, 'columns' | 'layout' | 'initialState'>;
+export type GridOptions = Omit<GridConfig, 'columns' | 'layout' | 'initialState' | 'calculatedColumns'>;
 
 /**
  * @internal
@@ -1210,6 +1314,7 @@ export type ParsedGridOptions = GridOptions &
             | 'filterOperatorIndicator'
             | 'settingsButton'
             | 'viewsButton'
+            | 'shortcutHelp'
             | 'placeholderRowCurrentEntityOnly'
             | 'groupAggregates'
             | 'totalsRow'

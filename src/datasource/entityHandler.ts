@@ -93,6 +93,12 @@ export class EntityHandler {
     private __onEdit: (row: Entity, field: string, oldValue: unknown) => void;
 
     /**
+     * the calculated fields of the container, by name (see CalculatedField): the container's own Map, so
+     * a field added later is answered too. Empty for most containers
+     */
+    private __calculated: ReadonlyMap<string, { value: (row: Entity) => unknown }>;
+
+    /**
      * @param options.key the key field of the container, `__KEY` reads and writes it
      * @param options.isNew the row is new: `__rowState` is `'N'` and `getChanges()` lists it in `newEntities`
      * @param options.fieldType the type of a field: a `date` field compares two dates on the day,
@@ -100,6 +106,8 @@ export class EntityHandler {
      * @param options.onEdit called after a field of the row was set (not the `__` fields), with the
      * row, the field and the value the field had before: the container records the change for undo
      * (`datasource.undo()`) and validates the field there. Without it nothing is called
+     * @param options.calculated the calculated fields, by name: a read of one is answered with its value
+     * in the row, computed now - setting one does nothing. The container's Map. Without it none
      */
     constructor(
         options: {
@@ -107,22 +115,32 @@ export class EntityHandler {
             isNew?: boolean;
             fieldType?: (field: string) => FieldType | undefined;
             onEdit?: (row: Entity, field: string, oldValue: unknown) => void;
+            calculated?: ReadonlyMap<string, { value: (row: Entity) => unknown }>;
         } = {}
     ) {
         this.__KEYSTRING = options.key;
         this.__isNew = options.isNew ?? false;
         this.__fieldType = options.fieldType ?? (() => undefined);
         this.__onEdit = options.onEdit ?? (() => undefined);
+        this.__calculated = options.calculated ?? new Map();
     }
 
     /**
      * The proxy's get trap, called by the `Proxy` when a field of the row is read. Not for calling
      * yourself.
      */
-    get(target: any, prop: string) {
+    get(target: any, prop: string, receiver: Entity) {
         // the row's own fields, most of the reads: only a name that starts with __ is the proxy's. A
         // symbol is no string, its [0] is undefined
         if (prop[0] !== '_' || prop[1] !== '_') {
+            // a calculated field: its value in the row now, nothing stored. It reads the row through the
+            // proxy (receiver), another calculated field too
+            if (this.__calculated.size !== 0) {
+                const calculated = this.__calculated.get(prop);
+                if (calculated) {
+                    return calculated.value(receiver);
+                }
+            }
             return target[prop];
         }
         if (prop === '__controller') {
@@ -157,6 +175,10 @@ export class EntityHandler {
      * and the container records it for undo and validates the field. Not for calling yourself.
      */
     set(obj: any, prop: string, value: any, receiver: Entity) {
+        // a calculated field is read only: no value is stored, no edit made
+        if (this.__calculated.size !== 0 && this.__calculated.has(prop)) {
+            return true;
+        }
         let update = true;
 
         if (prop[0] === '_' && prop[1] === '_') {

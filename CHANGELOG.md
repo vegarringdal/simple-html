@@ -1332,6 +1332,73 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Quick dates in the filter menu (user request)
+
+##### Added
+- **Quick dates** on date and datetime columns: under the filter menu's range block, one click for Today,
+  Yesterday, This / Last week, This / Last month, This / Last quarter, This / Last year, Last 7 / 30 days,
+  Next 7 days (and Overdue, not offered by default). The header filter keeps the preset
+  (`HeaderFilter.datePreset`) and shows its name, the footer chip too; the datasource holds a plain BETWEEN of
+  the days, so `getFilter()` and `toSqlWhere()` see dates. **Relative**: computed from today again when a
+  state is applied (`setState`, `initialState`, `resetState`) and when the window gets the focus back - a view
+  saved in November means December in December; `gridInterface.refreshDatePresets()` for a page left open.
+  The week starts as the date picker's (`datePickerConfig.weekStart`, Monday by default). Typing a preset's
+  name in the cell applies it. `ColumnConfig.datePresets` (a list, or false), `DATE_PRESETS`, `DatePreset`.
+
+#### Calculated columns; colour rules on several fields, by formula, in any colour (user request)
+
+##### Added
+- **Calculated columns**: `GridConfig.calculatedColumns` / `GridState.calculatedColumns`
+  (`{ [field]: { formula, label?, type? } }`, `CalculatedColumn`, `CalculatedType`), and *Add calculated column*
+  in the grid config dialog (the formula with the `{ }` field button, the type it gives, its value in the
+  preview row, its problems at once). A calculated field is computed when it is read - the row proxy answers
+  it - so it is never an edit, never in `getChanges()` or JSON, and always current; the filter, sort,
+  grouping, aggregates, cells, copy, exports, Find and the detail form read it as any field. Read only.
+  `toSqlWhere()` throws for a condition on one (it is no column of the database) - guide 22 shows the ways
+  round. Guide 23 *Calculated columns*, sample *Calculated columns*.
+- **Formulas** (`formula.ts`): numbers, text, `{field}`, `+ - * / &`, comparisons, AND / OR / NOT, IF, ROUND,
+  ABS, MIN, MAX, TODAY, DAYS, YEAR, MONTH, CONCAT, COALESCE, ISBLANK; checked for types before they run, a
+  blank gives a blank, a row that can not be computed a blank cell. **Safe**: read by our own tokenizer and
+  parser into a fixed set of parts - no `eval`, no `Function`, no `.` or `[]`; functions and fields from Maps
+  (`constructor`, `{__proto__}` are refused), rows read as own properties; at most 1000 characters, 500
+  parts, 32 deep; no cycles between calculated columns; results are text, never markup.
+- **Colour rules, more**: a rule is a value (as before), **conditions** on other fields of the row (AND /
+  OR, `conditions`, `combine`, `RuleCondition`) or a **formula** (`expression`) that gives true / false.
+  **14 palette colours** (amber, lime, teal, cyan, indigo, pink, brown added) and **any colour** `#rrggbb`
+  from a colour picker (`RuleColor`): on a background of its own the text is black or white, whichever
+  reads; a text colour of its own is made lighter in dark mode until it reads.
+
+#### Keyboard shortcuts help (user request)
+
+##### Added
+- **`?`** (in the grid where it types nothing: a readonly cell, a checkbox, a header, a row number) and
+  **Ctrl+/** (Cmd+/, anywhere in the grid) open a dialog of every key of the grid: 9 groups, a search, the
+  keys as `<kbd>`, on a Mac as a Mac writes them (⇧⌘Z). Keys the grid does not offer are left out (editing in
+  a readonly grid ...). `gridInterface.openShortcutHelp()`, `GridConfig.shortcutHelp: false` turns the keys
+  and the header menu's *Keyboard shortcuts…* (`header.shortcuts`) off. One list (`shortcutList.ts`) for the
+  dialog and guide 14's tables - a test keeps them equal. Texts `shortcuts.*`, the names of the keys too.
+
+##### Fixed
+- On touch the resize handle at the top right of the dialogs (filter editor, grid config) covered the middle
+  of their ✕: a tap resized the dialog.
+
+#### Docs: a Features overview (user request)
+
+##### Docs
+- **Feature overview** (`guides/00-features.md`, `#guide/features`): what the grid can do in 19 tables - data,
+  columns, display and formatting, filtering, sorting and grouping, selection, editing, find, the detail form,
+  the grid config dialog, menus, export, state, live data, theming, texts, accessibility, touch, SQL - each
+  feature with a line what it does and links to its guide section and sample; the keys at the end. A section
+  of its own in the sidebar, and the site's start page. The README has a Features list.
+- The wide tables of the guides scroll in their own box on a phone, not the whole page.
+
+#### The multiline editor: a ✕ that saves and closes (user request)
+
+##### Added
+- A **✕ at the right of the multiline editor's hint**: it saves and closes, the focus back in the cell - a
+  finger has no Ctrl+Enter. In a readonly editor it closes. Texts `cell.multiline.close` ("Save and close")
+  and `cell.multiline.closeReadonly` ("Close").
+
 #### Docs site: the full grid sample about 30 rows high (user request)
 
 ##### Docs

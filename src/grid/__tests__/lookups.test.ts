@@ -761,6 +761,8 @@ describe('lookups - the dropdown grid', () => {
         // no settings button either (and no footer to put it in)
         expect(dropdownInterface().__getGridConfig().settingsButton).toBe(false);
         expect(dropdown().querySelector('.footer-settings')).toBeNull();
+        // nor a keyboard shortcuts help of its own: `?` in it is the grid's the cell is in
+        expect(dropdownInterface().__getGridConfig().shortcutHelp).toBe(false);
 
         press(headerFilterInput(dropdown(), 'name'), 'F4');
         expect(document.querySelectorAll('.simple-html-grid-menu')).toHaveLength(0);

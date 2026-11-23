@@ -174,14 +174,15 @@ describe('menus - the built-in ids', () => {
 
         openFilterMenu(element, 'firstname');
 
-        // not the operators of a number, nor its range block
+        // not the operators of a number, nor its range block - nor the quick dates of a date
         const numberOnly = [
             'filter.operator.lessThan',
             'filter.operator.lessThanOrEqualTo',
             'filter.operator.greaterThan',
             'filter.operator.greaterThanOrEqualTo',
             'filter.operator.between',
-            'filter.range'
+            'filter.range',
+            'filter.dates'
         ];
         expect(menuTreeIds()).toEqual(MENU_IDS.filter.filter((id) => !numberOnly.includes(id)));
     });
@@ -191,14 +192,15 @@ describe('menus - the built-in ids', () => {
 
         openFilterMenu(element, 'age');
 
-        // not the operators of a text, Match case and the value list
+        // not the operators of a text, Match case and the value list - nor the quick dates of a date
         const textOnly = [
             'filter.operator.contains',
             'filter.operator.doesNotContain',
             'filter.operator.beginWith',
             'filter.operator.endWith',
             'filter.matchCase',
-            'filter.values'
+            'filter.values',
+            'filter.dates'
         ];
         expect(menuTreeIds()).toEqual(MENU_IDS.filter.filter((id) => !textOnly.includes(id)));
     });
@@ -1175,6 +1177,7 @@ describe('menus - the default menus, short', () => {
             'header.size',
             'header.format',
             'header.settings',
+            'header.shortcuts',
             'header.aggregate',
             'header.grouping'
         ]);

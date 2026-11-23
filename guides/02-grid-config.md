@@ -151,7 +151,7 @@ A column's header shows the first of:
 1. the label the user gave it in the grid config dialog or with the ✎ of the column chooser: `format.label`,
    state (`GridState.formats`)
 2. its `label` in `columns`
-3. the field's `label` in the datasource's `fields`
+3. the field's `label` in the datasource's `fields` - for a calculated column its `label`
 4. the field name, with the first letter in upper case and `_` as a space: `first_name` shows as
    `First Name`, but `firstName` as `Firstname`. Give such a field a label.
 
@@ -172,6 +172,7 @@ Every option of a `ColumnConfig` is optional.
 | `filterOperators` | the operators the column offers in the header filter's menu and the filter editor, e.g. `['CONTAINS', 'BEGIN_WITH', 'IS_BLANK']`: some of its type's (`operatorsFor(type)`), with one the header filter takes. Default: all of its type's. A `TypeError` for an operator of another type. See [Filtering](06-filtering.md#the-operators-a-column-offers) |
 | `filterCaseSensitive` | `true`: the grid's conditions on the column match case - the header filter, its value list, the row menu's filter and the filter editor. Its Match case is on and can not be turned off. Text columns only, else a `TypeError`. See [Filtering](06-filtering.md#match-case) |
 | `filterOnType` | `true`: the header filter filters as you type, after a short pause - no Enter needed. Left out, the grid's `filterOnType`. The user turns it on and off (the operator choice, the filter menu, the grid config dialog). Not a boolean column. See [Filtering](06-filtering.md#filter-as-you-type) |
+| `datePresets` | the quick dates of a date or datetime column's filter menu, in this order: `['today', 'thisWeek', 'overdue']` (`DATE_PRESETS` has them all). Default: every one but `'overdue'`; `false` none. A `TypeError` for an id that is none, another type, or a column without `BETWEEN`. See [Quick dates](06-filtering.md#quick-dates) |
 | `numberOverride` | number fields only: `'ZERO_TO_BLANK'` shows 0 as an empty cell, `'BLANK_TO_ZERO'` shows an empty cell as 0. The value is not changed. The user's from the column settings (`format.numberOverride`) wins |
 | `format` | how the cells show the value, a display format: `{ date: 'norwegian' }` (22.11.2026), `{ date: 'weekIso' }` (2026-W47) for a date or datetime field, `{ number: { decimals: 2, thousands: ' ', decimal: ',' } }` (1 234 567,89) for a number field; for a text field a template of its text and a link, `{ text: '{name} ({id})', link: { url: 'https://crm.example.com/customer/{id}', newTab: true } }`. Only the text shown: editing, filtering, sorting and copy keep to the field's formatter - but the header filter takes a date or number format's text as the cells show it, `2026-W47` is the week (`filterAsShown`, see [Filter as shown](08-formatting.md#filter-as-shown)). Where the grid starts - the user picks another in the header menu (Format ›) or the grid config dialog, it is state (`GridState.formats`). It has the rest of the column settings too: `label`, `placeholderRow` / `placeholderRowLabel`, `numberOverride`, `checkbox` (a text or number column of `1` / `0` as checkboxes), `multiline`, `readonly` and `rules`, the colour rules of any column (`[{ operator: 'LESS_THAN', value: '0', color: 'red' }]`). A `TypeError` for a format that does not fit the field, and for a link of another scheme than https, http, mailto, tel. See [Display formats](08-formatting.md#display-formats), [Templates and links](08-formatting.md#templates-and-links) [Label, placeholder, blank / 0, checkboxes, multiline, read only](08-formatting.md#label-placeholder-blank--0-checkboxes-multiline-read-only) and [Colour rules](08-formatting.md#colour-rules) |
 | `allowPasteClearOnly` | typing in the cell does nothing, paste and clear from the row menu work. For a field you set from a dropdown of your own |
@@ -182,6 +183,24 @@ Every option of a `ColumnConfig` is optional.
 
 `focusButton` takes `'ALWAYS'`, `'SHOW_IF_GRID_NOT_READONLY'` or
 `'SHOW_IF_GRID_AND_CELL_NOT_READONLY'`.
+
+### Calculated columns
+
+`calculatedColumns` adds columns whose value a formula computes from the row - a field of their own,
+put in the `layout` as any field, with `columns` options as any column:
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    calculatedColumns: { total: { formula: '{price} * {qty}', label: 'Total' } },
+    columns: { total: { aggregate: 'sum', format: { number: { decimals: 2 } } } },
+    layout: { center: [{ fields: ['price'], width: 80 }, { fields: ['qty'], width: 60 }, { fields: ['total'], width: 90 }] }
+};
+```
+
+They are read only, part of the state (`GridState.calculatedColumns`), and the user adds and changes
+them in the grid config dialog. See [Calculated columns](23-calculated-columns.md).
 
 ```sample required-placeholders
 ```
@@ -205,6 +224,7 @@ Every option is optional.
 | `filterOperatorIndicator` | `true` | shows the operator of each header filter as a small symbol in its cell (`=`, `≥`, `*a*` ...): on the right of a text filter, on the left of a number or date filter. A click (F4 in the filter) opens the operator choice. Not on a boolean column nor on a column under 60px. See [Filtering](06-filtering.md#the-operator-in-the-cell) |
 | `filterOnType` | `false` | every header filter filters as you type, after a short pause - the default of the columns, a column's `filterOnType` wins. See [Filtering](06-filtering.md#filter-as-you-type) |
 | `settingsButton` | `true` | a gear at the right end of the footer, the last stop of Tab there: it opens the grid config dialog - the display formats, a text column's template and link, the detail form, saved in the state. `false` hides the gear only: *Column settings…* stays in the header menu (`header.settings`, the `menus` hook takes it out) and `openColumnSettings()` opens the dialog. Not in a footer of no height. See [The grid config dialog](08-formatting.md#the-grid-config-dialog) |
+| `shortcutHelp` | `true` | the keyboard shortcuts help: `?` where the key types nothing (a readonly cell, a column header) and Ctrl+/ anywhere in the grid open it, the header menu has *Keyboard shortcuts…* (`header.shortcuts`). `false` turns the keys and the entry off, `openShortcutHelp()` still opens the help. See [The keyboard shortcuts help](14-accessibility.md#the-keyboard-shortcuts-help) |
 | `views` | | the named views the grid starts with, `{ id, name, state, readonly?, default? }`: snapshots of the state the user switches between with the views button at the left end of the footer. `readonly`: a view of yours the user can apply, not change; `default`: applied when the grid is made. See [Views](03-state.md#views) |
 | `viewsStorageKey` | | keeps the user's views in localStorage under this key - read when the grid is made, written when they change. See [Views](03-state.md#views) |
 | `viewsButton` | `true` with `views` or `viewsStorageKey`, else `false` | the views button at the left end of the footer, the first stop of Tab there: the name of the view shown, a `*` when it changed, a click opens the views menu. `false` hides it, the views API still works. Not in a footer of no height |

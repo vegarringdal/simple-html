@@ -10,6 +10,7 @@ import { type Formatter, parseFilterText } from '../../datasource/formatter';
 import { isBlank } from '../../datasource/isBlank';
 import { dateConditions, isOutsidePeriod } from '../filterAsShown';
 import type { Grid } from '../grid';
+import { datePresetToRun, filterOnDatePreset } from './datePresetFilter';
 import { getHeaderFilterOperator, isHeaderFilterCaseSensitive } from './getHeaderFilterOperator';
 import { asShownDateFormat, headerFilterFormatter } from './headerFilterFormatter';
 import { valuesWithLabel } from './lookupColumn';
@@ -23,6 +24,10 @@ import { valuesWithLabel } from './lookupColumn';
  * A column that filters as shown (headerFilterFormatter.ts, filterAsShown.ts) reads the text as its cells
  * show it - `2026-W47`, `1 234,5` - and stores the value as before: a date the start of the period typed.
  * Its conditions are of the whole period (dateConditions): `= 2026-W47` is a BETWEEN of Monday and Sunday
+ *
+ * A quick date (datePresetFilter.ts) - the name of one typed or left in the cell (`This month`), or the
+ * header filter's own value run again while it is one and the operator stays Between - filters on the
+ * quick date again, its days from today (filterOnDatePreset). Any other value replaces the quick date
  * @param value what the user typed, or the column's current header filter value (a Date or number, the
  * `[from, to]` of a BETWEEN) when the filter is run again with another operator or "Match case" - that
  * is formatted first, the formatter parses text only
@@ -31,6 +36,11 @@ import { valuesWithLabel } from './lookupColumn';
  * or a `NOT_IN` with `notinArray`. The header filter cell is emptied then, a list is nothing it can show
  */
 export function filterCallback(ctx: Grid, value: unknown, field: string, filterArray?: unknown[] | null, notinArray?: boolean) {
+    const preset = datePresetToRun(ctx, field, value, !!filterArray);
+    if (preset) {
+        filterOnDatePreset(ctx, field, preset);
+        return;
+    }
     const datasource = ctx.gridInterface.getDatasource();
     const { type } = datasource.getField(field);
     // the field's formatter, or the one of the display format when the column filters as shown
@@ -189,6 +199,17 @@ export function sameConditions(a: FilterCondition[], b: FilterCondition[]): bool
                 sameValue(condition.value, b[i].value)
         )
     );
+}
+
+/**
+ * A copy of the filter with `conditions` as the column's own, as a header filter makes them: the
+ * column's top level conditions replaced (filterWithoutColumn), the rest kept. For a quick date
+ * (datePresetFilter.ts) and a state that has one (GridInterface)
+ */
+export function withColumnConditions(filter: FilterExpression | null, field: string, conditions: FilterCondition[]): FilterGroup {
+    const group = filterWithoutColumn(filter, field);
+    group.children.push(...conditions);
+    return group;
 }
 
 /**

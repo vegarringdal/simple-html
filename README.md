@@ -14,6 +14,31 @@ hooks, given next to the config.
 Docs, guides and live samples: https://airemote.github.io/simple-html/. The guides are also in this
 repo, see [Guides](#guides) below.
 
+## Features
+
+The highlights. Every feature, each linked to its guide and a live sample:
+[Feature overview](https://airemote.github.io/simple-html/#guide/features) (in this repo:
+[guides/00-features.md](guides/00-features.md)).
+
+- Typed fields - text, numbers, dates, date and time, yes/no - sorted, filtered and edited by their type
+- Pinned and stacked columns: the user moves, resizes, hides and fits them to their content
+- Header filters with operators, a value list as in a spreadsheet, date and range pickers, filter as
+  you type, and a filter editor for nested AND / OR groups
+- Sorting on several columns, grouping by drag and drop, aggregates in the group rows and a totals row
+- Ranges of cells: copy and paste to and from Excel, fill down, a summary of the selected cells
+- Editing with validation, undo and redo, change tracking and a save workflow - and permissions to add,
+  change and delete rows
+- Lookups: a value picked from a select or a dropdown grid
+- Display formats, templates and links, colour rules - the user sets them in the grid config dialog
+- A detail form beside the rows, with the current row
+- Find (Ctrl+F) with match case and filter rows
+- Export to Excel (.xlsx) and CSV
+- Save and restore what the user changed: the layout, sorting, grouping, filters, formats
+- Live data: rows from a server merged by key, the user's edits kept
+- Two themes, light and dark; every text translatable; the keyboard, screen readers and touch
+- `toSqlWhere()`: the filter as a SQL WHERE for PostgreSQL, Oracle, SQLite and SQL Server, safe from
+  injection
+
 ## Install
 
 The package is not on npmjs.com. It is published to **GitHub Packages** as

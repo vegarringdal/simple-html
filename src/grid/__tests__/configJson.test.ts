@@ -102,6 +102,7 @@ const fullConfig = (): GridConfig => ({
     hideLabels: false,
     hideFilter: false,
     filterOperatorIndicator: false,
+    shortcutHelp: false,
     readonly: false,
     autoRemoveContextMenuOnScrollEvent: true,
     dimRepeatedValues: true,

@@ -8,6 +8,7 @@ import { cellFilterKeyNavigationCellRowHandler } from './cellFilterKeyNavigation
 import type { ColType } from './colType';
 import { contextmenuDate, contextmenuDateRange, rangeFilterText } from './contextmenuDate';
 import { contextmenuFilter } from './contextmenuFilter';
+import { activeDatePreset, datePresetName, datePresetOfText, datePresetRangeOf } from './datePresetFilter';
 import { filterCallback, headerFilterText, parseRangeText } from './filterCallback';
 import { cancelFilterOnType, filterAfterPause, filterTextParses, isFilterOnType } from './filterOnType';
 import { canChooseOperator, openOperatorChoice, operatorIndicator } from './filterOperatorIndicator';
@@ -112,8 +113,10 @@ export function renderHeaderFilter(
                     cell as any
                 );
             } else {
-                // a BETWEEN's [from, to] as from..to
-                const currentText = headerFilterText(currentValue, formatter);
+                // a BETWEEN's [from, to] as from..to - a quick date its name, `This month` (datePresetFilter.ts):
+                // Enter on it filters on it again, from today, another text replaces it
+                const preset = activeDatePreset(ctx, attribute);
+                const currentText = preset ? datePresetName(ctx, preset) : headerFilterText(currentValue, formatter);
 
                 let lastFilter = currentText;
                 let skipFocus = false;
@@ -146,7 +149,8 @@ export function renderHeaderFilter(
                         cell.$attribute !== attribute ||
                         !input.isConnected ||
                         lastFilter === text ||
-                        !filterTextParses(formatter, type, operator, text)
+                        // the name of a quick date is one to filter on too
+                        (!filterTextParses(formatter, type, operator, text) && !datePresetOfText(ctx, attribute, text))
                     ) {
                         return;
                     }
@@ -216,12 +220,12 @@ export function renderHeaderFilter(
                                     if (getHeaderFilterOperator(ctx, attribute) === 'BETWEEN') {
                                         // from..to: the range picker, on the two ends - an open end is not
                                         // picked. Use gives from..to, Clear no filter. Weeks shown: from
-                                        // Monday of the first to Sunday of the last (pickerRange)
-                                        const range = pickerRange(
-                                            ctx,
-                                            attribute,
-                                            parseRangeText(formatter, typed) ?? [null, null]
-                                        );
+                                        // Monday of the first to Sunday of the last (pickerRange). The name
+                                        // of a quick date: on its days
+                                        const typedPreset = datePresetOfText(ctx, attribute, typed);
+                                        const range = typedPreset
+                                            ? datePresetRangeOf(ctx, attribute, typedPreset)
+                                            : pickerRange(ctx, attribute, parseRangeText(formatter, typed) ?? [null, null]);
                                         contextmenuDateRange(ctx, cell, range, (picked) =>
                                             usePicked(rangeFilterText(formatter, type, picked))
                                         );

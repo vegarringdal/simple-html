@@ -186,7 +186,8 @@ export interface MenuSeparator {
  *
  * The header filter menu's value list (search box, checkboxes, "Cancel" and "Apply") is a block of the grid's
  * own, `'filter.values'`: hide or move it as one entry, it is not built from items. So is the range block
- * of a number or date column (its operators, an input, "Cancel" and "Apply"), `'filter.range'`.
+ * of a number or date column (its operators, an input, "Cancel" and "Apply"), `'filter.range'`, and the
+ * quick dates of a date column (Today, This week ...), `'filter.dates'`.
  *
  * Also for something bigger than a list of items in a menu of your own: a second grid as a dropdown,
  * which then closes with the grid's menus (outside click, scroll, another menu opening).
@@ -501,6 +502,7 @@ export interface GridMenus {
  * | `header.format.decimalMark` | Decimal mark › - Dot, Comma (`.dot`, `.comma`). The character of the thousands separator greyed out | a number field |
  * | `header.format.percent` | Percent, a toggle: the number times 100 with ` %` | a number field |
  * | `header.settings` | Column settings… - the grid config dialog on this column (`gridInterface.openColumnSettings(field)`): its display format, a text column's template and link | |
+ * | `header.shortcuts` | Keyboard shortcuts… - the keyboard shortcuts help (`gridInterface.openShortcutHelp()`), its hint the key that opens it: Ctrl+/ (`header.shortcuts.hint`, ⌘/ on a Mac) | `GridConfig.shortcutHelp` (the default) |
  * | `header.aggregate` | Aggregate › - a submenu | |
  * | `header.aggregate.sum` | Sum - a toggle with a ✓ when on: the column's sum in the group rows and the totals row (`GridState.aggregates`) | a number field |
  * | `header.aggregate.avg` | Average, a toggle | a number field |
@@ -542,6 +544,7 @@ export interface GridMenus {
  * | `filter.filter.advanced` | Advanced Filter… - the filter editor | |
  * | `filter.values` | the value list: search box, "Select all" and a checkbox per value, "Cancel" and "Apply" - a {@link MenuBlock}, its texts are `filter.values.*` | a text field, a lookup column - with `IN` |
  * | `filter.range` | the range block: the operators of Operator › as a row of buttons (=, ≠, <, ≤, >, ≥, Between), an input - From and To for Between - "Cancel" and "Apply": as the operator picked in Operator › and the value typed in the header filter. A {@link MenuBlock}, its texts are `filter.range.*` | a number, date or datetime field, not a lookup column |
+ * | `filter.dates` | the quick dates, under the range block: a button each - Today, Yesterday, This week, Last week ... (`ColumnConfig.datePresets`) - one click filters the column on its days, from today, and the header filter keeps it (`GridState.headerFilters[field].datePreset`). A {@link MenuBlock}, its texts are `filter.dates.*` | a date or datetime field whose header filter has `BETWEEN`, not a lookup column, `datePresets` not `false` |
  *
  * The items of Operator › are the operator choice of the header filter's operator indicator too
  * (`GridConfig.filterOperatorIndicator`), a menu of its own: `GridMenus.filter` is not called for it. Under
@@ -700,6 +703,7 @@ export const MENU_IDS = {
         'header.format.decimalMark.comma',
         'header.format.percent',
         'header.settings',
+        'header.shortcuts',
         'header.aggregate',
         'header.aggregate.sum',
         'header.aggregate.avg',
@@ -738,7 +742,8 @@ export const MENU_IDS = {
         'filter.filter.advancedSeparator',
         'filter.filter.advanced',
         'filter.values',
-        'filter.range'
+        'filter.range',
+        'filter.dates'
     ],
     /** the column menu's ids, right click on a column number */
     column: [

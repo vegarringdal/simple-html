@@ -76,24 +76,40 @@
        column settings' preview, underlined. At least 4.5:1 against the rows and the selected rows -
        under the tints of an error, a range and Find too - the inputs and the bars */
     --simple-html-grid-link-color: light-dark(#1e3a8a, #e8f1ff);
-    /* the palette of the colour rules (ColumnFormat.rules): a text colour and a background of each colour,
-       on the cells and the detail form's values. A text colour has 4.5:1 or more to the rows, the selected
-       rows - under a range's tint too - the inputs and every background of the palette; the text and a
-       link 4.5:1 to the backgrounds, the focus outline, the row state and the markers 3:1. The rows of the
-       dark look are grey: its text colours are light tints, 4.5:1 asks it */
+    /* the palette of the colour rules (ColumnFormat.rules): a text colour and a background of each of its 14
+       colours, on the cells and the detail form's values. A text colour has 4.5:1 or more to the rows, the
+       selected rows - under a range's tint too - the inputs and every background of the palette; the text
+       and a link 4.5:1 to the backgrounds, the focus outline, the row state and the markers 3:1. The rows of
+       the dark look are grey: its text colours are light tints, 4.5:1 asks it. The backgrounds are
+       Tailwind's 200 in light and 900 in dark - apart from yellow and blue, amber's is its 300 and a
+       golden #805500, cyan's its 300 and 800; brown is made of orange's hue, less of it */
     --simple-html-grid-palette-red-color: light-dark(#90101a, #ffe4dd);
     --simple-html-grid-palette-orange-color: light-dark(#7c2f00, #ffe7c4);
+    --simple-html-grid-palette-amber-color: light-dark(#6b3a00, #ffeab0);
     --simple-html-grid-palette-yellow-color: light-dark(#654100, #ffec6c);
+    --simple-html-grid-palette-lime-color: light-dark(#2f4a00, #e4ffb0);
     --simple-html-grid-palette-green-color: light-dark(#00541c, #9dffb3);
+    --simple-html-grid-palette-teal-color: light-dark(#00504a, #b8fff0);
+    --simple-html-grid-palette-cyan-color: light-dark(#004a60, #c8f8ff);
     --simple-html-grid-palette-blue-color: light-dark(#12429f, #ccf1ff);
+    --simple-html-grid-palette-indigo-color: light-dark(#3426a0, #e4e6ff);
     --simple-html-grid-palette-purple-color: light-dark(#681aa4, #fae2ff);
+    --simple-html-grid-palette-pink-color: light-dark(#8a1050, #ffe0f0);
+    --simple-html-grid-palette-brown-color: light-dark(#5c3317, #fbe8d8);
     --simple-html-grid-palette-grey-color: light-dark(#414853, #e3ecf9);
     --simple-html-grid-palette-red-bg-color: light-dark(#fecaca, #7f1d1d);
     --simple-html-grid-palette-orange-bg-color: light-dark(#fed7aa, #7c2d12);
+    --simple-html-grid-palette-amber-bg-color: light-dark(#fcd34d, #805500);
     --simple-html-grid-palette-yellow-bg-color: light-dark(#fef08a, #713f12);
+    --simple-html-grid-palette-lime-bg-color: light-dark(#d9f99d, #365314);
     --simple-html-grid-palette-green-bg-color: light-dark(#bbf7d0, #14532d);
+    --simple-html-grid-palette-teal-bg-color: light-dark(#99f6e4, #134e4a);
+    --simple-html-grid-palette-cyan-bg-color: light-dark(#67e8f9, #155e75);
     --simple-html-grid-palette-blue-bg-color: light-dark(#bae6fd, #0c4a6e);
+    --simple-html-grid-palette-indigo-bg-color: light-dark(#c7d2fe, #312e81);
     --simple-html-grid-palette-purple-bg-color: light-dark(#e9d5ff, #581c87);
+    --simple-html-grid-palette-pink-bg-color: light-dark(#fbcfe8, #831843);
+    --simple-html-grid-palette-brown-bg-color: light-dark(#e8d5c4, #4a2c1a);
     --simple-html-grid-palette-grey-bg-color: light-dark(#d1d5db, #2b3544);
     /* the totals row under the rows (GridConfig.totalsRow): its background and its text */
     --simple-html-grid-totals-bg-color: light-dark(#e8edf3, #2a3441);
@@ -1268,11 +1284,53 @@
     resize: none;
 }
 
-.simple-html-grid .simple-html-grid-text-editor-hint {
-    padding: 1px 4px;
+.simple-html-grid .simple-html-grid-text-editor-footer {
+    display: flex;
+    align-items: center;
     border-top: 1px solid var(--simple-html-grid-main-bg-border);
     color: var(--simple-html-grid-main-font-color);
     background-color: var(--simple-html-grid-main-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-text-editor-hint {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 1px 4px;
+}
+
+/* the ✕ at the right of the hint: saves and closes - a finger has no Ctrl+Enter. Square, no frame until
+   the pointer is on it */
+.simple-html-grid .simple-html-grid-text-editor-close {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    margin: 0 1px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 0;
+    font: inherit;
+    line-height: 1;
+    color: inherit;
+    background: transparent;
+    cursor: pointer;
+}
+
+.simple-html-grid .simple-html-grid-text-editor-close:hover {
+    border-color: var(--simple-html-grid-control-border-color);
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid .simple-html-grid-text-editor-close:focus-visible {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: -2px;
+}
+
+/* a finger: a target of a touch row's height */
+@media (pointer: coarse) {
+    .simple-html-grid .simple-html-grid-text-editor-close {
+        width: var(--simple-html-grid-touch-row-height);
+        height: var(--simple-html-grid-touch-row-height);
+    }
 }
 
 /**
@@ -2465,27 +2523,24 @@
 }
 
 /**
- * The name of a view, asked for by Save as new view… and Rename… of the views menu (viewsMenu.ts): a
- * block of a menu of its own - its label, the input framed as the range block's, a line that says what
- * is wrong with the name, Cancel and Save / Rename
+ * The quick dates of the filter menu of a date column (datePresetBlock.ts), under the range block and as
+ * wide: a button each in two columns - this one and the one before side by side - one click filters. The
+ * one in use filled with the accent colour, as the operator picked in the range block. 24px high on a
+ * touch screen too, as the range block's buttons: the WCAG 2.2 minimum target, the block stays compact
  */
-.simple-html-grid .simple-html-grid-view-name {
-    display: flex;
-    flex-direction: column;
+.simple-html-grid .simple-html-grid-date-presets {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 4px;
     box-sizing: border-box;
-    width: 260px;
-    max-width: calc(100vw - 8px);
+    min-width: 220px;
+    max-width: 320px;
     padding: 6px 8px 8px;
+    border-top: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
-.simple-html-grid .simple-html-grid-view-name .simple-html-grid-view-name-label {
-    font-weight: var(--simple-html-grid-font-weight-header);
-}
-
-.simple-html-grid .simple-html-grid-view-name .simple-html-grid-view-name-input {
+.simple-html-grid .simple-html-grid-date-presets .simple-html-grid-date-preset {
     box-sizing: border-box;
-    width: 100%;
     min-width: 0;
     height: 24px;
     margin: 0;
@@ -2498,29 +2553,28 @@
     font-size: var(--simple-html-grid-font-size);
     font-weight: var(--simple-html-grid-font-weight);
     text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
 }
 
-/* the line under the input: no name yet in the quiet colour of a hint, a name taken as a warning. Its
- * height kept, the buttons do not move when it comes and goes */
-.simple-html-grid .simple-html-grid-view-name .simple-html-grid-view-name-problem {
-    min-height: 1.4em;
-    color: var(--simple-html-grid-sec-font-color);
+.simple-html-grid .simple-html-grid-date-presets .simple-html-grid-date-preset:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
 }
 
-.simple-html-grid .simple-html-grid-view-name .simple-html-grid-view-name-taken {
-    color: var(--simple-html-grid-warning-font-color);
+/* the one the header filter filters on */
+.simple-html-grid .simple-html-grid-date-presets .simple-html-grid-date-preset[aria-current='true'] {
+    border-color: var(--simple-html-grid-accent-color);
+    background-color: var(--simple-html-grid-accent-color);
+    color: var(--simple-html-grid-accent-font-color);
+    font-weight: var(--simple-html-grid-font-weight-header);
 }
 
-.simple-html-grid .simple-html-grid-view-name .simple-html-grid-view-name-buttons {
-    display: flex;
-    justify-content: flex-end;
-    gap: 6px;
-}
-
-/* Save while the name is not fine: greyed out, aria-disabled - it keeps the focus */
-.simple-html-grid .simple-html-grid-view-name .simple-html-grid-button[aria-disabled='true'] {
-    filter: opacity(0.5);
-    cursor: default;
+/* the keyboard on one: the outline outside, inside a filled one it would not show */
+.simple-html-grid .simple-html-grid-date-presets .simple-html-grid-date-preset:focus-visible {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: 1px;
 }
 
 .simple-html-draggable-element {
@@ -2641,78 +2695,6 @@
 
 .simple-html-grid .footer-inner.has-settings .footer-summary {
     right: 36px;
-}
-
-/* the views button (GridConfig.viewsButton, viewsMenu.ts): at the left end of the footer, on the line of
- * the filter's row (its top is set to the horizontal scrollbar's band), as the gear is at the right. The
- * area is that line, the button in its middle, square and framed as "No filter": the name of the view
- * shown, a * when it changed, a chevron. The name is cut with an ellipsis where the filter's row starts
- * (fitViews in rebuildFooter.ts), the * and the chevron stay. With it the footer keeps 36px on both sides
- * (has-views) - room for a button cut to its * and chevron - and the filter's row stays in the middle. The
- * same size on a touch screen, as the footer's other buttons */
-.simple-html-grid .footer-views {
-    position: absolute;
-    left: 4px;
-    bottom: 4px;
-    display: flex;
-    align-items: center;
-    min-width: 0;
-    max-width: 40%;
-    pointer-events: none;
-}
-
-.simple-html-grid .footer-views-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    min-width: 0;
-    max-width: 100%;
-    box-sizing: border-box;
-    margin: 0;
-    padding: 1px 4px;
-    border: 1px solid var(--simple-html-grid-main-bg-border);
-    border-radius: 0;
-    background-color: var(--simple-html-grid-sec-bg-color);
-    color: var(--simple-html-grid-main-font-color);
-    font-family: inherit;
-    font-size: inherit;
-    line-height: 1.5;
-    white-space: nowrap;
-    overflow: hidden;
-    cursor: pointer;
-    pointer-events: all;
-}
-
-.simple-html-grid .footer-views-button:hover {
-    background-color: var(--simple-html-grid-main-bg-selected-even);
-}
-
-.simple-html-grid .footer-views-button:active {
-    background-color: var(--simple-html-grid-main-bg-color);
-}
-
-.simple-html-grid .footer-views-name {
-    flex: 0 1 auto;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* changed since the view was applied or saved: a * in the colour of an edited cell's marker */
-.simple-html-grid .footer-views-modified {
-    flex: none;
-    color: var(--simple-html-grid-edited-color);
-    font-weight: var(--simple-html-grid-font-weight-header);
-}
-
-/* the chevron points down: the button opens a list, as a select does */
-.simple-html-grid .footer-views-button .simple-html-grid-chevron-icon {
-    transform: rotate(90deg);
-}
-
-.simple-html-grid .footer-inner.has-views {
-    padding-left: 36px;
-    padding-right: 36px;
 }
 
 /* "changed rows only" (datasource.filterChangedOnly()): a chip of its own in front of the filter's,
@@ -3046,6 +3028,13 @@
 
 .simple-html-grid.filter-editor-content .filter-editor-close:hover {
     background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+/* the ✕ over the resize handle of the top right corner: a tap on it closes the dialog. On a touch screen
+ * the handle is 20px (below) and covered the middle of the ✕ - a finger resized the dialog instead */
+.simple-html-grid.filter-editor-content .filter-editor-close {
+    position: relative;
+    z-index: 4;
 }
 
 /* the groups: they scroll when the dialog is as high as the window, or made smaller */
@@ -3675,6 +3664,152 @@
     gap: 4px;
 }
 
+/* the radio buttons of the palette, wrapping as one with the swatches: the colour picker after them */
+.simple-html-grid.filter-editor-content .column-settings-swatch-group {
+    display: contents;
+}
+
+/* the colour picker of a custom colour (#rrggbb), after the swatches: a box of the swatches' frame with a
+ * + while no custom colour is picked - the picker is over it, not seen - and the colour picked in it once
+ * one is, the frame of the swatch checked (the swatches have none checked then) */
+.simple-html-grid.filter-editor-content .column-settings-swatch-custom-box {
+    position: relative;
+    flex: none;
+    box-sizing: border-box;
+    width: 28px;
+    height: 20px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    line-height: 18px;
+    text-align: center;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-custom-box:has(.column-settings-swatch-custom-picked) {
+    border: 2px solid var(--simple-html-grid-main-font-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-custom-box:focus-within {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: 1px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-custom {
+    position: absolute;
+    inset: 0;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 1px;
+    border: none;
+    border-radius: 0;
+    background-color: transparent;
+    cursor: pointer;
+    opacity: 0;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-custom:focus-visible {
+    outline: none;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-custom-picked {
+    opacity: 1;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-custom::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-custom::-webkit-color-swatch {
+    border: none;
+    border-radius: 0;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-custom::-moz-color-swatch {
+    border: none;
+    border-radius: 0;
+}
+
+/* the first line of a rule: the kind of its condition (Value, Conditions, Formula) and its buttons */
+.simple-html-grid.filter-editor-content .column-settings-rule-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-kind {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 10px;
+}
+
+/* the label of the kind: as wide as its text, the three choices beside it */
+.simple-html-grid.filter-editor-content .column-settings-rule-kind > .column-settings-rule-style-label {
+    flex: none;
+}
+
+/* a condition of the kind Conditions: its field, operator and value on a line, as the Value's - a little
+ * narrower, the field picker takes room too */
+.simple-html-grid.filter-editor-content .column-settings-rule-condition > .column-settings-rule-field {
+    flex: 0 1 120px;
+    min-width: 0;
+}
+
+.simple-html-grid.filter-editor-content
+    .column-settings-rule-condition:has(> .column-settings-rule-field)
+    > .column-settings-rule-operator {
+    flex: 0 1 130px;
+    min-width: 0;
+}
+
+.simple-html-grid.filter-editor-content
+    .column-settings-rule-condition:has(> .column-settings-rule-field)
+    > .column-settings-rule-value {
+    flex: 1 1 90px;
+    min-width: 60px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-combine {
+    flex: 0 1 170px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-expression {
+    flex: 1 1 200px;
+}
+
+/* the list of the columns with Add calculated column under it */
+.simple-html-grid.filter-editor-content .column-settings-columns {
+    flex: 1 1 200px;
+    min-width: 160px;
+    max-width: 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-columns > .column-settings-list {
+    flex: none;
+    min-width: 0;
+    max-width: none;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-calculated-add {
+    align-self: flex-start;
+}
+
+/* a calculated column's settings: a group framed as a rule, at the top of the column's */
+.simple-html-grid.filter-editor-content .column-settings-calculated {
+    padding: 6px;
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-calculated-name {
+    font-family: var(--simple-html-grid-font-family);
+}
+
 /* a swatch: a radio button drawn as a square of its colour in the controls' frame, 20px and 4px apart -
  * 24px from one to the next (WCAG 2.5.8). The one picked has a frame of the text's colour, 2px, inside
  * a ring of the input's colour: it is said by its shape too, not by a colour only. None is crossed out */
@@ -3720,20 +3855,48 @@
     background-color: var(--simple-html-grid-palette-orange-color);
 }
 
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-amber {
+    background-color: var(--simple-html-grid-palette-amber-color);
+}
+
 .simple-html-grid.filter-editor-content .column-settings-swatch-text-yellow {
     background-color: var(--simple-html-grid-palette-yellow-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-lime {
+    background-color: var(--simple-html-grid-palette-lime-color);
 }
 
 .simple-html-grid.filter-editor-content .column-settings-swatch-text-green {
     background-color: var(--simple-html-grid-palette-green-color);
 }
 
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-teal {
+    background-color: var(--simple-html-grid-palette-teal-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-cyan {
+    background-color: var(--simple-html-grid-palette-cyan-color);
+}
+
 .simple-html-grid.filter-editor-content .column-settings-swatch-text-blue {
     background-color: var(--simple-html-grid-palette-blue-color);
 }
 
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-indigo {
+    background-color: var(--simple-html-grid-palette-indigo-color);
+}
+
 .simple-html-grid.filter-editor-content .column-settings-swatch-text-purple {
     background-color: var(--simple-html-grid-palette-purple-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-pink {
+    background-color: var(--simple-html-grid-palette-pink-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-brown {
+    background-color: var(--simple-html-grid-palette-brown-color);
 }
 
 .simple-html-grid.filter-editor-content .column-settings-swatch-text-grey {
@@ -3748,20 +3911,48 @@
     background-color: var(--simple-html-grid-palette-orange-bg-color);
 }
 
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-amber {
+    background-color: var(--simple-html-grid-palette-amber-bg-color);
+}
+
 .simple-html-grid.filter-editor-content .column-settings-swatch-bg-yellow {
     background-color: var(--simple-html-grid-palette-yellow-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-lime {
+    background-color: var(--simple-html-grid-palette-lime-bg-color);
 }
 
 .simple-html-grid.filter-editor-content .column-settings-swatch-bg-green {
     background-color: var(--simple-html-grid-palette-green-bg-color);
 }
 
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-teal {
+    background-color: var(--simple-html-grid-palette-teal-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-cyan {
+    background-color: var(--simple-html-grid-palette-cyan-bg-color);
+}
+
 .simple-html-grid.filter-editor-content .column-settings-swatch-bg-blue {
     background-color: var(--simple-html-grid-palette-blue-bg-color);
 }
 
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-indigo {
+    background-color: var(--simple-html-grid-palette-indigo-bg-color);
+}
+
 .simple-html-grid.filter-editor-content .column-settings-swatch-bg-purple {
     background-color: var(--simple-html-grid-palette-purple-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-pink {
+    background-color: var(--simple-html-grid-palette-pink-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-brown {
+    background-color: var(--simple-html-grid-palette-brown-bg-color);
 }
 
 .simple-html-grid.filter-editor-content .column-settings-swatch-bg-grey {
@@ -3951,6 +4142,97 @@
     width: 6px;
     height: 10px;
     fill: currentColor;
+}
+
+/**
+ * The keyboard shortcuts help (shortcutHelp.ts): a dialog of the filter editor's look - it has the class
+ * filter-editor-content too, its title bar, body and resize handles are the filter editor's. Under the
+ * title bar the search (framed as the column chooser's) and a hint, then the groups of keys that scroll: a
+ * table each, its title the caption, a row per entry - the keys in boxes (<kbd>), what they do. The
+ * colours are the dialog's own variables, no theme needs more. Square, as the rest of the grid. On a phone
+ * it is as wide as the window, the keys wrap between the alternatives
+ */
+.simple-html-grid.filter-editor-content.shortcut-help {
+    width: 560px;
+}
+
+.simple-html-grid.filter-editor-content .shortcut-help-top {
+    flex: none;
+    padding: 8px 12px 0;
+}
+
+/* the search: the column chooser's, as wide as the dialog */
+.simple-html-grid.filter-editor-content .shortcut-help-top .simple-html-grid-chooser-search {
+    margin: 0;
+}
+
+.simple-html-grid.filter-editor-content .shortcut-help-hint,
+.simple-html-grid.filter-editor-content .shortcut-help-none {
+    margin-top: 6px;
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+/* no room while the search has matches: the status is empty. Shown still, a screen reader reads it out
+ * when it gets its text */
+.simple-html-grid.filter-editor-content .shortcut-help-none:empty {
+    margin-top: 0;
+}
+
+.simple-html-grid.filter-editor-content .shortcut-help-group {
+    width: 100%;
+    margin: 0 0 10px;
+    border-collapse: collapse;
+}
+
+.simple-html-grid.filter-editor-content .shortcut-help-group caption {
+    padding: 2px 0 4px;
+    text-align: left;
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+.simple-html-grid.filter-editor-content .shortcut-help-group th,
+.simple-html-grid.filter-editor-content .shortcut-help-group td {
+    padding: 3px 0;
+    border-top: 1px solid var(--simple-html-grid-main-bg-border);
+    text-align: left;
+    vertical-align: top;
+    font-weight: var(--simple-html-grid-font-weight);
+}
+
+/* the keys: the first column, what they do beside them */
+.simple-html-grid.filter-editor-content .shortcut-help-group th {
+    width: 45%;
+    padding-right: 12px;
+}
+
+/* a combination of keys stays on one line */
+.simple-html-grid.filter-editor-content .shortcut-help-keys {
+    font: inherit;
+    white-space: nowrap;
+}
+
+/* a key: a box framed as the controls, its lower edge thicker - a key cap */
+.simple-html-grid.filter-editor-content .shortcut-help-keys kbd {
+    display: inline-block;
+    box-sizing: border-box;
+    min-width: 18px;
+    margin: 1px;
+    padding: 0 4px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-bottom-width: 2px;
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    line-height: 15px;
+    text-align: center;
+}
+
+/* the / between the keys that do the same */
+.simple-html-grid.filter-editor-content .shortcut-help-or {
+    color: var(--simple-html-grid-sec-font-color);
 }
 
 /**
@@ -4231,20 +4513,48 @@
     color: var(--simple-html-grid-palette-orange-color);
 }
 
+.simple-html-grid .simple-html-grid-cell-text-amber:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-amber-color);
+}
+
 .simple-html-grid .simple-html-grid-cell-text-yellow:not(.simple-html-cell-error, .simple-html-cell-find-match) {
     color: var(--simple-html-grid-palette-yellow-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-text-lime:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-lime-color);
 }
 
 .simple-html-grid .simple-html-grid-cell-text-green:not(.simple-html-cell-error, .simple-html-cell-find-match) {
     color: var(--simple-html-grid-palette-green-color);
 }
 
+.simple-html-grid .simple-html-grid-cell-text-teal:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-teal-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-text-cyan:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-cyan-color);
+}
+
 .simple-html-grid .simple-html-grid-cell-text-blue:not(.simple-html-cell-error, .simple-html-cell-find-match) {
     color: var(--simple-html-grid-palette-blue-color);
 }
 
+.simple-html-grid .simple-html-grid-cell-text-indigo:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-indigo-color);
+}
+
 .simple-html-grid .simple-html-grid-cell-text-purple:not(.simple-html-cell-error, .simple-html-cell-find-match) {
     color: var(--simple-html-grid-palette-purple-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-text-pink:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-pink-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-text-brown:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-brown-color);
 }
 
 .simple-html-grid .simple-html-grid-cell-text-grey:not(.simple-html-cell-error, .simple-html-cell-find-match) {
@@ -4259,24 +4569,62 @@
     background-color: var(--simple-html-grid-palette-orange-bg-color);
 }
 
+.simple-html-grid .simple-html-grid-cell-bg-amber:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-amber-bg-color);
+}
+
 .simple-html-grid .simple-html-grid-cell-bg-yellow:not(.simple-html-cell-error, .simple-html-cell-find-match) {
     background-color: var(--simple-html-grid-palette-yellow-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-lime:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-lime-bg-color);
 }
 
 .simple-html-grid .simple-html-grid-cell-bg-green:not(.simple-html-cell-error, .simple-html-cell-find-match) {
     background-color: var(--simple-html-grid-palette-green-bg-color);
 }
 
+.simple-html-grid .simple-html-grid-cell-bg-teal:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-teal-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-cyan:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-cyan-bg-color);
+}
+
 .simple-html-grid .simple-html-grid-cell-bg-blue:not(.simple-html-cell-error, .simple-html-cell-find-match) {
     background-color: var(--simple-html-grid-palette-blue-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-indigo:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-indigo-bg-color);
 }
 
 .simple-html-grid .simple-html-grid-cell-bg-purple:not(.simple-html-cell-error, .simple-html-cell-find-match) {
     background-color: var(--simple-html-grid-palette-purple-bg-color);
 }
 
+.simple-html-grid .simple-html-grid-cell-bg-pink:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-pink-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-brown:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-brown-bg-color);
+}
+
 .simple-html-grid .simple-html-grid-cell-bg-grey:not(.simple-html-cell-error, .simple-html-cell-find-match) {
     background-color: var(--simple-html-grid-palette-grey-bg-color);
+}
+
+/* a custom colour of a rule (#rrggbb, ruleColors.ts): the cell's custom properties, set by the grid with
+ * style.setProperty() - the text in light and in dark (made lighter there), the background */
+.simple-html-grid .simple-html-grid-cell-text-custom:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: light-dark(var(--simple-html-grid-rule-text-light), var(--simple-html-grid-rule-text-dark));
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-custom:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-rule-bg);
 }
 
 /* the text of a cell takes the cell's colour: its input, the lines under it, a custom cell's host, a link -
@@ -4646,3 +4994,136 @@
         height: 20px;
     }
 }
+
+/**
+ * The name of a view, asked for by Save as new view… and Rename… of the views menu (viewsMenu.ts): a
+ * block of a menu of its own - its label, the input framed as the range block's, a line that says what
+ * is wrong with the name, Cancel and Save / Rename
+ */
+.simple-html-grid .simple-html-grid-view-name {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    box-sizing: border-box;
+    width: 260px;
+    max-width: calc(100vw - 8px);
+    padding: 6px 8px 8px;
+}
+
+.simple-html-grid .simple-html-grid-view-name .simple-html-grid-view-name-label {
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+.simple-html-grid .simple-html-grid-view-name .simple-html-grid-view-name-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 24px;
+    margin: 0;
+    padding: 0 6px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    text-align: left;
+}
+
+/* the line under the input: no name yet in the quiet colour of a hint, a name taken as a warning. Its
+ * height kept, the buttons do not move when it comes and goes */
+.simple-html-grid .simple-html-grid-view-name .simple-html-grid-view-name-problem {
+    min-height: 1.4em;
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+.simple-html-grid .simple-html-grid-view-name .simple-html-grid-view-name-taken {
+    color: var(--simple-html-grid-warning-font-color);
+}
+
+.simple-html-grid .simple-html-grid-view-name .simple-html-grid-view-name-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+/* Save while the name is not fine: greyed out, aria-disabled - it keeps the focus */
+.simple-html-grid .simple-html-grid-view-name .simple-html-grid-button[aria-disabled='true'] {
+    filter: opacity(0.5);
+    cursor: default;
+}
+
+
+/* the views button (GridConfig.viewsButton, viewsMenu.ts): at the left end of the footer, on the line of
+ * the filter's row (its top is set to the horizontal scrollbar's band), as the gear is at the right. The
+ * area is that line, the button in its middle, square and framed as "No filter": the name of the view
+ * shown, a * when it changed, a chevron. The name is cut with an ellipsis where the filter's row starts
+ * (fitViews in rebuildFooter.ts), the * and the chevron stay. With it the footer keeps 36px on both sides
+ * (has-views) - room for a button cut to its * and chevron - and the filter's row stays in the middle. The
+ * same size on a touch screen, as the footer's other buttons */
+.simple-html-grid .footer-views {
+    position: absolute;
+    left: 4px;
+    bottom: 4px;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    max-width: 40%;
+    pointer-events: none;
+}
+
+.simple-html-grid .footer-views-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 1px 4px;
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: inherit;
+    font-size: inherit;
+    line-height: 1.5;
+    white-space: nowrap;
+    overflow: hidden;
+    cursor: pointer;
+    pointer-events: all;
+}
+
+.simple-html-grid .footer-views-button:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid .footer-views-button:active {
+    background-color: var(--simple-html-grid-main-bg-color);
+}
+
+.simple-html-grid .footer-views-name {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* changed since the view was applied or saved: a * in the colour of an edited cell's marker */
+.simple-html-grid .footer-views-modified {
+    flex: none;
+    color: var(--simple-html-grid-edited-color);
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+/* the chevron points down: the button opens a list, as a select does */
+.simple-html-grid .footer-views-button .simple-html-grid-chevron-icon {
+    transform: rotate(90deg);
+}
+
+.simple-html-grid .footer-inner.has-views {
+    padding-left: 36px;
+    padding-right: 36px;
+}
+

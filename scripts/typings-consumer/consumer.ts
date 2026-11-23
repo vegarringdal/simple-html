@@ -10,6 +10,8 @@
 import { type SqlOptions, type SqlWhere, toSqlWhere } from '@simple-html/grid/sql';
 import {
     and,
+    type CalculatedColumn,
+    type CalculatedType,
     type CellClass,
     type CellRange,
     type CellRenderContext,
@@ -25,6 +27,7 @@ import {
     type CsvOptions,
     type CsvSeparator,
     createGrid,
+    DATE_PRESETS,
     DataContainer,
     Datasource,
     type DatasourceEvents,
@@ -33,6 +36,7 @@ import {
     type DateFormat,
     DateFormatterYYYYMMDD,
     DateInterface,
+    type DatePreset,
     type DetailForm,
     type EditPermissions,
     type Entity,
@@ -82,6 +86,8 @@ import {
     NumberFormatterDot,
     or,
     type PaletteColor,
+    type RuleColor,
+    type RuleCondition,
     registerCellRenderer,
     registerFormatter,
     registerLookup,
@@ -1053,11 +1059,55 @@ const ruleColumns: Record<string, ColumnConfig> = {
         }
     }
 };
-// @ts-expect-error no free colours: a hex colour is not readable in both light and dark
+// a custom colour is #rrggbb: the grid keeps it readable in dark
 const hexColour: ColorRule = { operator: 'EQUAL', value: '1', color: '#ff0000' };
+const customBackground: RuleColor = '#0f766e';
+// @ts-expect-error a colour is a name of the palette or starts with #
+const namedColour: ColorRule = { operator: 'EQUAL', value: '1', color: 'magenta' };
 // @ts-expect-error the value is text as typed in the header filter
 const numberValue: ColorRule = { operator: 'EQUAL', value: 1, color: 'red' };
-console.log(ruleColumns, hexColour, numberValue);
+// conditions on other fields of the row, and a formula
+const lateCondition: RuleCondition = { field: 'status', operator: 'EQUAL', value: 'late' };
+const multiField: ColorRule = {
+    conditions: [lateCondition, { field: 'balance', operator: 'GREATER_THAN', value: '0' }],
+    combine: 'OR',
+    background: customBackground
+};
+const formulaRule: ColorRule = { expression: 'DAYS({due}, TODAY()) > 7', color: 'pink', bold: true };
+// @ts-expect-error combine is AND or OR
+const badCombine: ColorRule = { conditions: [lateCondition], combine: 'XOR', color: 'red' };
+console.log(ruleColumns, hexColour, namedColour, numberValue, multiField, formulaRule, badCombine);
+
+// calculated columns: a formula over the fields of the row, in the config and the state
+const totalColumn: CalculatedColumn = { formula: '{price} * {qty}', label: 'Total', type: 'number' };
+const resultType: CalculatedType = 'date';
+const calculatedConfig: GridConfig = {
+    calculatedColumns: { total: totalColumn, due: { formula: 'TODAY()', type: resultType } },
+    layout: { center: [{ fields: ['total'], width: 90 }] }
+};
+const savedCalculated: Record<string, CalculatedColumn> = gridInterface.getState().calculatedColumns;
+gridInterface.setState({ calculatedColumns: { ...savedCalculated, total: totalColumn } });
+// @ts-expect-error the formula is text
+const formulaNumber: CalculatedColumn = { formula: 2 };
+// @ts-expect-error a type of the language: number, text, date, boolean
+const datetimeType: CalculatedColumn = { formula: 'TODAY()', type: 'datetime' };
+console.log(calculatedConfig, formulaNumber, datetimeType);
+// quick dates: the ids a column offers, the one a header filter keeps - relative, computed from today
+const quickDate: DatePreset = 'thisMonth';
+const quickDateColumns: Record<string, ColumnConfig> = {
+    dueDate: { datePresets: [...DATE_PRESETS] },
+    orderDate: { datePresets: ['today', 'last7Days', quickDate] },
+    born: { datePresets: false }
+};
+gridInterface.setState({ headerFilters: { orderDate: { value: null, datePreset: 'overdue' } } });
+gridInterface.refreshDatePresets();
+// @ts-expect-error a quick date the grid does not have
+const tomorrow: DatePreset = 'tomorrow';
+// @ts-expect-error true is no list: every one but Overdue is the default, left out
+const allQuickDates: ColumnConfig = { datePresets: true };
+// @ts-expect-error DATE_PRESETS is read only: copy it
+DATE_PRESETS.push('today');
+console.log(quickDateColumns, tomorrow, allQuickDates);
 
 // the sql entry, through the package's "exports" (bundler resolution here, node16 in tsconfig.sql.json):
 // a filter of the grid is a filter toSqlWhere takes
