@@ -4892,6 +4892,19 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * "Run workflow" shows for a workflow on the default branch only: next.yml has to be on master too, as
   release.yml and beta.yml (see *Questions for the user*)
 
+### Checks before a push: npm run verify, a pre-push hook (user request)
+
+* the user, on the failed run 45260464054: "we also have some failing action, maybe we need to add rule on
+  testing better before push". It was commit 594d5972: a test's type error (typecheck, check:docs fail -
+  the docs check typechecks too). The local typecheck had shown it; it was read as a count of grep lines
+  (0) and pushed. Fixed in 438d2fb6, every run after it green
+* scripts/verify.js (`npm run verify`): the commands of checks.yml's matrix, read from the workflow - they
+  can not drift apart - every one run, a PASS / FAIL summary, exit 1 on a failure; `npm run verify --
+  vitest` runs the ones with the text. Tests: scripts/__tests__/verify.test.ts
+* .githooks/pre-push runs it; `npm run hooks` turns it on (git config core.hooksPath .githooks) - once per
+  clone, the user's to do: changing git config was not mine to. `git push --no-verify` skips it, knowingly
+* CLAUDE.MD: the rule - verify before every push, push on "all 5 passed" and exit 0 only
+
 ### The columns of a source changed (user request)
 
 * the user: "be able in the gridConfig to set if view button should show or not" - there: `viewsButton`
