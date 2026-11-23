@@ -584,7 +584,7 @@ describe('drag/drop - touch', () => {
         await sleep(TOUCH_HOLD + 20);
         expect(ghost()).not.toBeNull();
         // Android's own long press, at 500ms (and the grid's, longPress.ts): a touch contextmenu
-        const menu = pointerEvent('contextmenu', { ...touch, button: 2 });
+        const menu = new PointerEvent('contextmenu', { bubbles: true, cancelable: true, pointerType: 'touch', button: 2 });
         label.dispatchEvent(menu);
         expect(menu.defaultPrevented).toBe(true);
         expect(ghost()).not.toBeNull();
