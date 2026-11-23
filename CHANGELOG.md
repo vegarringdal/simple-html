@@ -1332,6 +1332,19 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Quick dates in the filter menu (user request)
+
+##### Added
+- **Quick dates** on date and datetime columns: under the filter menu's range block, one click for Today,
+  Yesterday, This / Last week, This / Last month, This / Last quarter, This / Last year, Last 7 / 30 days,
+  Next 7 days (and Overdue, not offered by default). The header filter keeps the preset
+  (`HeaderFilter.datePreset`) and shows its name, the footer chip too; the datasource holds a plain BETWEEN of
+  the days, so `getFilter()` and `toSqlWhere()` see dates. **Relative**: computed from today again when a
+  state is applied (`setState`, `initialState`, `resetState`) and when the window gets the focus back - a view
+  saved in November means December in December; `gridInterface.refreshDatePresets()` for a page left open.
+  The week starts as the date picker's (`datePickerConfig.weekStart`, Monday by default). Typing a preset's
+  name in the cell applies it. `ColumnConfig.datePresets` (a list, or false), `DATE_PRESETS`, `DatePreset`.
+
 #### Calculated columns; colour rules on several fields, by formula, in any colour (user request)
 
 ##### Added

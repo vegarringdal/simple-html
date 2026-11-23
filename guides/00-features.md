@@ -62,6 +62,7 @@ On a Mac, Ctrl is Cmd and Alt is Option.
 | Value list | Tick the values to show, as in a spreadsheet, each with its count. A search narrows the list, or filters on the text | [guide](06-filtering.md#the-value-list) · [sample](#sample/filtering) |
 | Range block | For numbers and dates: an operator and a value, or from and to, in one go | [guide](06-filtering.md#the-range-block) · [sample](#sample/filtering) |
 | Date and range pickers | A calendar for a date filter; two months side by side for a range | [guide](06-filtering.md#the-range-picker) · [sample](#sample/filtering) |
+| Quick dates | One click for Today, This week, Last month, This quarter, Last 30 days, Overdue ... - kept as "this month", so a saved view still means this month next month | [guide](06-filtering.md#quick-dates) · [sample](#sample/filtering) |
 | Filter as shown | Type the filter as the cells show it: `2026-W47` is that week, `1 234,5` that number | [guide](06-filtering.md#filter-as-shown) · [sample](#sample/full-grid) |
 | Filter as you type | Filters after a short pause, no Enter needed - per column, turned on by the user or you | [guide](06-filtering.md#filter-as-you-type) · [sample](#sample/filter-operator-header) |
 | Match case | `Oslo` matches `Oslo`, not `OSLO`: upper and lower case as typed | [guide](06-filtering.md#match-case) · [sample](#sample/filtering) |
