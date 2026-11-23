@@ -1332,6 +1332,26 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Data bars, colour scales and icon sets; colours in the Excel export (user request)
+
+##### Added
+- **Data bars** (`ColumnFormat.bar`, `DataBarFormat { color?, min?, max? }`): a bar in a number cell, as long as
+  its value's place in the range - by default the rows the filter lets through, 0 included, so a negative value
+  draws left of an axis.
+- **Colour scales** (`scale`, `ColorScaleFormat { minColor, midColor?, maxColor, min?, mid?, max? }`): a two or
+  three colour background by value - a heat map.
+- **Icon sets** (`icons`, `IconSetFormat { set, thresholds?, unit?, reverse?, position? }`): arrows, traffic
+  lights, flags or symbols before or after the value by thresholds (percent of the range or numbers); a screen
+  reader gets *High* / *Middle* / *Low*. `--simple-html-grid-icon-green/amber/red-color`.
+- Number columns (calculated ones too); palette colours or `#rrggbb` (a custom colour drawn as a tint, the text
+  always reads); set in the grid config dialog - *Data bars, scales, icons*, with a preview - and kept in the
+  state. The range is the datasource's min / max of the rows the filter lets through, cached until a value or
+  the filter changes. A rule's background wins over a scale; a bar is drawn over it; icons show with any rule.
+- **Colours in the Excel export**: the rules' text colours, backgrounds and bold as the cells' styles (the light
+  palette), the bars, scales and icon sets as Excel's own conditional formatting (Excel computes them); the
+  number formats as before. `getExcel({ colors: false })` writes the values and formats only. CSV has no colours.
+- The full grid sample: a bar on Balance, a heat map on the months, arrows on KPI 1.
+
 #### Import: rows pasted from Excel, CSV and Excel files (user request)
 
 ##### Added

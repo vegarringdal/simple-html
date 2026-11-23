@@ -5,8 +5,7 @@ import type { Grid } from '../grid';
 import { type ImportSource, openImportFile, readCsvText } from '../importFile';
 import { IMPORT_LIMITS, ImportFileError, type ImportFileProblem } from '../importLimits';
 import type { ImportCell } from '../xlsxRead';
-import { asPx } from './asPx';
-import { moveDialog, resizeHandles, showDialog } from './dialogFrame';
+import { keepDialogInView, moveDialog, resizeHandles, showDialog } from './dialogFrame';
 import { getColumnLabel } from './getColumnLabel';
 import { gridText } from './gridText';
 import {
@@ -674,10 +673,7 @@ function renderImportDialog(ctx: Grid, dialog: HTMLDialogElement, state: ImportS
     }
     if (dialog.open) {
         // it was centered as it opened, without the rows: grown with them, it is moved up to stay in the window
-        const rect = dialog.getBoundingClientRect();
-        if (rect.bottom > window.innerHeight) {
-            dialog.style.top = asPx(Math.max(0, Math.round(window.innerHeight - rect.height)));
-        }
+        keepDialogInView(dialog);
         // the control that had the focus is gone (a picker of a table read again): the dialog gets it
         if (!dialog.contains(document.activeElement)) {
             dialog.focus({ preventScroll: true });
