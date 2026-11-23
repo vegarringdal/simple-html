@@ -53,6 +53,8 @@ import { multiline } from './samples/multiline';
 import multilineSource from './samples/multiline.ts?raw';
 import { ranges } from './samples/ranges';
 import rangesSource from './samples/ranges.ts?raw';
+import { reconcileColumns } from './samples/reconcileColumns';
+import reconcileColumnsSource from './samples/reconcileColumns.ts?raw';
 import { requiredPlaceholders } from './samples/requiredPlaceholders';
 import requiredPlaceholdersSource from './samples/requiredPlaceholders.ts?raw';
 import { rowsData } from './samples/rowsData';
@@ -126,6 +128,7 @@ export const SAMPLES: Sample[] = [
     // config
     { ...gridState, source: gridStateSource },
     { ...views, source: viewsSource },
+    { ...reconcileColumns, source: reconcileColumnsSource },
     { ...tooltips, source: tooltipsSource },
     { ...translation, source: translationSource },
     { ...theming, source: themingSource },

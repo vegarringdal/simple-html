@@ -96,6 +96,7 @@ import { updateVerticalScrollHeight } from './gridFunctions/updateVerticalScroll
 import type { CellClass, GridHooks } from './gridHooks';
 import type { MenuContext, MenuEntry, MenuPosition } from './gridMenus';
 import { assertViews, type GridView, newViewId, startViews, viewStateText, writeStoredViews } from './gridView';
+import { type ColumnsReport, type ReconcileOptions, reconcileColumns, type SourceColumn } from './reconcileColumns';
 import type { ExcelOptions } from './xlsx';
 import type { ImportCell } from './xlsxRead';
 
@@ -484,6 +485,47 @@ export class GridInterface<T> {
      */
     public exportConfig(): ExportedGrid {
         return { version: GRID_CONFIG_VERSION, config: structuredClone(this.givenConfig), state: this.getState() };
+    }
+
+    /**
+     * The grid with the columns its source has now - a database view the grid was made from got columns
+     * and lost some: {@link reconcileColumns} on what the grid has (`exportConfig()`), given back
+     * (`importConfig()`). A field that is gone leaves the layout, the sort, the grouping, the filters, the
+     * formats, the colour rules (a rule that needed it goes), the detail form, the views - the config's and
+     * the ones the user saved (written back, `setViews()`) - and a calculated column whose formula named it
+     * goes; a new field is listed by the column chooser (shown with `showNew`). Returns what changed.
+     *
+     * The datasource keeps its fields: a new field it has no type of is shown as text - make the datasource
+     * with the new fields' types when it can be made again.
+     * @param columns the columns of the source now, in their order: `{ field, label?, ...ColumnConfig }`
+     * @sample reconcile-columns
+     * @example
+     * ```ts
+     * // the view's columns now: city is gone, region is new
+     * const report = gridInterface.updateColumns([{ field: 'company' }, { field: 'country' }, { field: 'region', label: 'Region' }]);
+     * if (report.removed.length) {
+     *     alert(`Gone from the view: ${report.removed.join(', ')}`);
+     * }
+     * ```
+     */
+    public updateColumns(columns: readonly SourceColumn[], options: ReconcileOptions = {}): ColumnsReport {
+        const saved = this.exportConfig();
+        // every view - the config's and the ones saved since (viewsStorageKey) - cleaned with the rest
+        const views = this.getViews();
+        const { grid, report } = reconcileColumns({ ...saved, config: { ...saved.config, views } }, columns, options);
+        const cleanViews = grid.config.views ?? [];
+        // the config keeps its own views, cleaned
+        const own = new Set((saved.config.views ?? []).map((view) => view.id));
+        if (saved.config.views) {
+            grid.config.views = cleanViews.filter((view) => own.has(view.id));
+        } else {
+            delete grid.config.views;
+        }
+        this.importConfig(grid);
+        if (views.length) {
+            this.setViews(cleanViews);
+        }
+        return report;
     }
 
     /**

@@ -597,6 +597,56 @@ if (state) {
 }
 ```
 
+### When the source's columns change: `reconcileColumns()` / `updateColumns()`
+
+A grid made from a source - the columns of a database view, an API - and saved names the fields the source
+had then. When the source gets columns and loses some, bring the saved grid up to date with the columns it
+has now, before the grid is made from it - or on the grid that is shown:
+
+```ts
+import { convertGridConfig, createGrid, Datasource, reconcileColumns, type SourceColumn } from '@simple-html/grid';
+
+declare const host: HTMLElement;
+// the columns of the view now: a ColumnConfig and its field
+const columns: SourceColumn[] = [
+    { field: 'company', label: 'Company' },
+    { field: 'country', label: 'Country' },
+    { field: 'region', label: 'Region' }
+];
+
+const saved = convertGridConfig(JSON.parse(localStorage.getItem('my-grid') ?? 'null'));
+const { grid, report } = reconcileColumns(saved, columns);
+// report: { added: ['region'], removed: ['city'], removedCalculated: [...], removedRules: [{ field, rule }] }
+
+const datasource = new Datasource({ fields: { region: 'text' } }); // the new fields' types
+const gridInterface = createGrid(host, { config: grid.config, datasource });
+if (grid.state) {
+    gridInterface.setState(grid.state);
+}
+
+// a grid that is shown: the same, its views saved since too - returns the report
+gridInterface.updateColumns(columns, { showNew: true });
+```
+
+- **`config.columns`** becomes the source's columns: each one's options as given, over the options the
+  saved config had for it (a `readonly` kept, the source's `label` wins). A calculated column stays, it is
+  the grid's.
+- **A field that is gone** leaves everything that names it - the config, its `initialState`, the state and
+  every view (`config.views`; `updateColumns()` the views saved since too, written back): the layout (a
+  column left without a field goes), the sort, the grouping, the header filters, the filter's conditions
+  (an AND / OR group left empty goes, a condition comparing with the field - `valueField` - too), the
+  formats, the aggregates, the detail form's fields and options.
+- **Colour rules**: a condition on the field goes, a rule left without a condition goes, a formula that
+  names the field goes - each rule taken out is in `report.removedRules`.
+- **A calculated column** whose formula names a field that is gone goes, and so does one that names it
+  (`report.removedCalculated`).
+- **A new field** is in `config.columns`: the column chooser lists it, hidden. `showNew: true` shows it at
+  the end of the scrolling columns, `width` px wide (100).
+- The datasource keeps its fields: give it the new fields' types; a field it has no type of is text.
+
+```sample reconcile-columns
+```
+
 ## Rendering again
 
 The grid renders again by itself when the datasource changes: new data, sorting, filtering,

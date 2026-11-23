@@ -4892,6 +4892,25 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * "Run workflow" shows for a workflow on the default branch only: next.yml has to be on master too, as
   release.yml and beta.yml (see *Questions for the user*)
 
+### The columns of a source changed (user request)
+
+* the user: "be able in the gridConfig to set if view button should show or not" - there: `viewsButton`
+  (the sample shows it). "a cleanup strategy helper ... updateColumn where we set array of column config
+  to define real columns, in case we have built it with a view as source, and now source view have been
+  changed and some new columns have been added or removed ... remove some color rules/config, or at least
+  disable the rules ... column chooser need to be able to find new columns / not show removed"
+* reconcileColumns.ts: a pure function on a saved grid (ExportedGrid) - the load-time case: the app reads
+  the view's columns, makes the datasource with them, reconciles, makes the grid. `known` = the config's
+  columns and the layouts' fields (not calculated); gone = known not in the source; the calculated columns
+  naming a gone field (`{name}` in the formula), until none more. cleaner(): layout, filter (groups, valueField),
+  rules (conditions, formulas), formats, detail form, state - used on the config, initialState, state,
+  views. Rules that can not work are taken out, not "disabled": a ColorRule has no such flag, and the
+  report lists them for the app to tell the user
+* gridInterface.updateColumns: exportConfig + getViews → reconcileColumns → importConfig + setViews (the
+  config keeps its own views). The datasource's fields are fixed when it is made: a new field without a
+  type there is text (documented)
+* tests: reconcileColumns.test.ts (10). Sample: reconcile-columns (Config)
+
 ### Match case seen in the header (user request)
 
 * the user: "Important we also have a getFilter, in case we want to send it to backend, then generate sql

@@ -1332,6 +1332,20 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### The columns of a source changed: `reconcileColumns()`, `updateColumns()` (user request)
+
+##### Added
+- `reconcileColumns(saved, columns, options?)`: a saved grid (`exportConfig()`) brought up to date with
+  the columns its source has now (`SourceColumn[]`: a ColumnConfig and its field). `config.columns` is the
+  source's; a field that is gone leaves the layout, the sort, the grouping, the filter's conditions, the
+  header filters, the formats, the aggregates, the detail form, the colour rules (a condition, a rule left
+  without one, a formula naming it), the calculated columns that name it - in the config, its initialState,
+  the state and the views. A new field is listed by the column chooser (`showNew` shows it). Returns
+  `{ grid, report }`: `added`, `removed`, `removedCalculated`, `removedRules`.
+- `gridInterface.updateColumns(columns, options?)`: the same on the grid that is shown, the views saved
+  since too; returns the report.
+- The sample *Columns from a source*: a view's version 2 loses a column and gets two.
+
 #### Match case seen in the header, set in the dialog (user request)
 
 ##### Added

@@ -101,6 +101,14 @@ export type { GridView } from './grid/gridView';
 export { type ImportTable, type ReadImportFileOptions, readImportFile } from './grid/importFile';
 export { IMPORT_LIMITS, ImportFileError, type ImportFileProblem } from './grid/importLimits';
 export { type Lookup, type LookupFromDatasource, type LookupFromGridInterface, registerLookup } from './grid/lookup';
+export {
+    type ColumnsReport,
+    type ReconciledGrid,
+    type ReconcileOptions,
+    type RemovedRule,
+    reconcileColumns,
+    type SourceColumn
+} from './grid/reconcileColumns';
 export type { ExcelOptions } from './grid/xlsx';
 export type { ImportCell } from './grid/xlsxRead';
 export { setTexts, TEXTS, type TextId, type Texts } from './texts';
