@@ -1,5 +1,12 @@
 import { configDefaults, defineConfig } from 'vitest/config';
 
+// Every test runs in one time zone with summer time, whatever the machine's: GitHub's runners are UTC,
+// a developer's machine is not. Set here, before the workers start, so a test file's dates made when it
+// loads (`const TODAY = new Date(2026, 10, 22)`) are in it too - a `beforeAll` that sets TZ comes after
+// them: on a UTC runner those dates were UTC and the code's Oslo, an hour apart. A test that wants
+// another zone sets it and puts this one back (columnFormat.test.ts)
+process.env.TZ = 'Europe/Oslo';
+
 export default defineConfig({
     test: {
         // happy-dom has no showPopover() / hidePopover(): a minimal stub, see the file

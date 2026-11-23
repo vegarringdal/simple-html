@@ -4868,6 +4868,17 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
   edit 9, detail-form 91 (its tabs scoped), detail-form-more 120, display-format 39, edit-permissions 57,
   multiline-lines 128 - all pass
 
+### The tests failed on GitHub's runners: the time zone, not a timeout
+
+* 22 tests of columnFormat.test.ts, filterAsShown.test.ts and filterAsShownGrid.test.ts failed on the
+  runner, every one a date an hour off (`2026-11-16T00:00Z` expected, `2026-11-15T23:00Z` received). They
+  passed here: this machine is CET. `TZ=UTC npx vitest run` showed the same 22
+* the files set `TZ=Europe/Oslo` in `beforeAll`, but their dates (`TODAY`, `MONDAY` ...) are made when the
+  file loads, before it: on a UTC machine those were UTC, the code's dates Oslo
+* vitest.config.ts sets `process.env.TZ = 'Europe/Oslo'` before the workers start: every test file runs
+  in it from its first line, on any machine. Checked: all 4252 with `TZ=UTC`, the three files with
+  `TZ=America/New_York`
+
 ## Considered, not done
 
 ## Candidates / not started
