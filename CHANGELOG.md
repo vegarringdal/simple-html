@@ -1332,6 +1332,17 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Changes: one kind at a time, the rows, the fields (user request)
+
+##### Added
+- `getChanges(kinds?)`, `hasChanges(kinds?)` take the kinds of change, `{ new?, modified?, deleted? }`
+  (`ChangeKinds`): left out or `null` all of them; the kinds `true` only those; only kinds `false` all but
+  those. `getChanges()` keeps its three lists, a kind not asked for is `[]`. The data container too.
+- `datasource.getChangedRows(kinds?)`: the changed rows themselves, in the order of the data - to
+  validate what a save sends (`validate(getChangedRows({ deleted: false }))`).
+- `datasource.getChangedFields(row)`: the fields of a row that differ from their original;
+  `getOriginalValue(row, field)`: the value before the edit.
+
 #### Colour rules on a date: weeks, months, quick dates - ISO or US weeks (user request)
 
 ##### Added

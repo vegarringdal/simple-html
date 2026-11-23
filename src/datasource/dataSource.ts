@@ -3,7 +3,7 @@ import { findText, getText } from '../texts';
 import { AGGREGATE_FUNCTIONS, type AggregateFunction, aggregateRows, groupDataRows, isAggregateFunction } from './aggregate';
 import { assertOptions } from './assertOptions';
 import type { CalculatedField } from './calculatedField';
-import type { Changes } from './changes';
+import type { ChangeKinds, Changes } from './changes';
 import { DataContainer } from './dataContainer';
 import type { DatasourceEvents } from './datasourceEvents';
 import type { DatasourceOptions } from './datasourceOptions';
@@ -834,15 +834,22 @@ export class Datasource<T = any> {
      * // newEntities:      [{ name: 'New', id: -1 }] - a generated key
      * // modifiedEntities: [{ id: 1, name: 'Anna' }]
      * // deletedEntities:  [{ id: 2, name: 'Bob', born: ... }]
+     *
+     * // one kind, or some: the others are []
+     * datasource.getChanges({ deleted: true }); // { newEntities: [], modifiedEntities: [], deletedEntities: [...] }
+     * datasource.getChanges({ deleted: false }); // the new and edited rows, no deletions
      * ```
+     * @param kinds the kinds of change listed, see {@link ChangeKinds}: all when left out or `null`
+     * @throws a `TypeError` for kinds that are not `{ new?, modified?, deleted? }` of booleans
      */
-    public getChanges(): Changes<T> {
-        return this.__dataContainer.getChanges() as Changes<T>;
+    public getChanges(kinds?: ChangeKinds | null): Changes<T> {
+        return this.__dataContainer.getChanges(kinds) as Changes<T>;
     }
 
     /**
-     * `true` when there is something to save: `getChanges()` would list a row. For an "unsaved
-     * changes" indicator, or to ask before the user leaves the page. A new row marked for deletion is
+     * `true` when there is something to save: `getChanges()` would list a row - of the kinds asked for,
+     * see {@link ChangeKinds} (all by default). For an "unsaved changes" indicator, or to ask before the
+     * user leaves the page. A new row marked for deletion is
      * no change, and neither is a field edited back to its original value.
      *
      * The changes are those of the data container, so of every datasource sharing it.
@@ -859,10 +866,73 @@ export class Datasource<T = any> {
      *     }
      * });
      * saveButton.disabled = !datasource.hasChanges();
+     * // only deletions to confirm
+     * const askFirst = datasource.hasChanges({ deleted: true });
+     * ```
+     * @param kinds the kinds of change, see {@link ChangeKinds}: all when left out or `null`
+     */
+    public hasChanges(kinds?: ChangeKinds | null): boolean {
+        return this.__dataContainer.hasChanges(kinds);
+    }
+
+    /**
+     * The rows `getChanges()` lists, of the kinds asked for - the rows themselves, not copies, in the order
+     * of the data: to validate what a save sends, select the edited rows, show them. A new row marked for
+     * deletion is in none, and neither is a row whose fields are all back to their original value.
+     *
+     * The changes are those of the data container, so of every datasource sharing it.
+     *
+     * @param kinds the kinds of change, see {@link ChangeKinds}: all when left out or `null`
+     * @throws a `TypeError` for kinds that are not `{ new?, modified?, deleted? }` of booleans
+     * @sample editing
+     * @example
+     * ```ts
+     * // validate only what a save sends: the new and edited rows
+     * const errors = datasource.validate(datasource.getChangedRows({ deleted: false }));
+     *
+     * // how many rows are new
+     * const added = datasource.getChangedRows({ new: true }).length;
      * ```
      */
-    public hasChanges(): boolean {
-        return this.__dataContainer.hasChanges();
+    public getChangedRows(kinds?: ChangeKinds | null): T[] {
+        return this.__dataContainer.getChangedRows(kinds) as T[];
+    }
+
+    /**
+     * The fields of a row that differ from their original value - the ones `getChanges()` sends for it -
+     * in the order they were first edited. `[]` for a new row (it has no original), a row not edited, and
+     * an object that is no row of the datasource's data. A field edited back to its original is not in it.
+     *
+     * @sample editing
+     * @example
+     * ```ts
+     * const [ann] = datasource.getDataRows();
+     * ann.name = 'Anna';
+     * ann.city = 'Bergen';
+     * datasource.getChangedFields(ann); // ['name', 'city']
+     * ```
+     */
+    public getChangedFields(row: T): string[] {
+        return this.__dataContainer.getChangedFields(row as Entity);
+    }
+
+    /**
+     * The value a field of a row had before it was edited: as the data was set, or accepted last
+     * (`acceptChanges()`). The value it has now when the field is not edited. undefined for a new row (it
+     * has no original) and for an object that is no row of the datasource's data. For a "was" tooltip, or a
+     * conflict to show both sides of.
+     *
+     * @sample editing
+     * @example
+     * ```ts
+     * const [ann] = datasource.getDataRows();
+     * ann.name = 'Anna';
+     * datasource.getOriginalValue(ann, 'name'); // 'Ann'
+     * datasource.getOriginalValue(ann, 'city'); // the city now: not edited
+     * ```
+     */
+    public getOriginalValue(row: T, field: keyof T & string): unknown {
+        return this.__dataContainer.getOriginalValue(row as Entity, field);
     }
 
     /**
@@ -904,7 +974,7 @@ export class Datasource<T = any> {
      * }
      *
      * // only what a save sends: the new and edited rows
-     * people.validate(people.getAllData().filter((row) => row.__rowState === 'N' || row.__rowState === 'M'));
+     * people.validate(people.getChangedRows({ deleted: false }));
      * ```
      */
     public validate(rows?: Entity | Entity[]): ValidationError<T>[] {

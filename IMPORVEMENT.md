@@ -4892,6 +4892,20 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * "Run workflow" shows for a workflow on the default branch only: next.yml has to be on master too, as
   release.yml and beta.yml (see *Questions for the user*)
 
+### Changes: kinds, rows, fields (user request)
+
+* the user: "We prb want to have helpers called getChanges({deleted, new, modified}) where null = all.
+  Maybe other helper function we should include"
+* changes.ts: `ChangeKinds`, changeKindsOf - all for none / null / `{}`; the kinds `true` when one is;
+  else all but the `false` ones (both readings of "null = all": `{ deleted: true }` only deletions,
+  `{ deleted: false }` the rest). Checked: a TypeError for another key or value
+* dataContainer.ts: changeKindOf / editedFields shared by getChanges, hasChanges (the same rows as
+  before), getChangedRows, getChangedFields, getOriginalValue; Datasource wraps them typed
+* chosen helpers: getChangedRows - the validate docs filtered `__rowState` by hand to validate what a
+  save sends; getChangedFields / getOriginalValue - read `__controller` internals before. Not added:
+  a row's state (`row.__rowState` is there), revert (`resetRows()` / the row menu are)
+* tests: changeHelpers.test.ts. Guide: editing, *One kind of change, the rows, the fields*
+
 ### Colour rules on a date: periods, quick dates, ISO / US weeks (user request)
 
 * the user: "in column color, on date, we should be able to set condition based on week etc like in

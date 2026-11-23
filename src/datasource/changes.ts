@@ -98,3 +98,62 @@ export interface Changes<T = Record<string, unknown>> {
     /** the rows marked for deletion, with the values they have now */
     deletedEntities: T[];
 }
+
+/**
+ * Which kinds of change `getChanges()`, `hasChanges()` and `getChangedRows()` look at:
+ *
+ * - left out, or `null` - all of them
+ * - kinds set to `true` - only those: `{ new: true }` the new rows, `{ new: true, modified: true }` what a
+ *   save of the rows sends without the deletions
+ * - only kinds set to `false` - all but those: `{ deleted: false }` is the new and edited rows
+ *
+ * A kind left out is not asked for: with a kind `true` it is left out, with only kinds `false` it is in.
+ * `getChanges()` keeps its three lists, a kind not asked for is `[]`.
+ *
+ * @example
+ * ```ts
+ * import { Datasource } from '@simple-html/grid';
+ *
+ * const datasource = new Datasource({ key: 'id' });
+ * datasource.getChanges({ deleted: true }).deletedEntities; // only the rows marked for deletion
+ * datasource.hasChanges({ new: true, modified: true }); // added or edited rows, not deletions
+ * datasource.getChangedRows({ deleted: false }); // the new and edited rows themselves
+ * ```
+ */
+export interface ChangeKinds {
+    /** the rows added (`addNewEmpty()`, `__rowState` `'N'`) */
+    new?: boolean | null;
+    /** the rows edited (`'M'`) */
+    modified?: boolean | null;
+    /** the rows marked for deletion (`'D'`) - not a new row marked: it was never saved */
+    deleted?: boolean | null;
+}
+
+/** the kind of change of a row, as ChangeKinds names it */
+export type ChangeKind = 'new' | 'modified' | 'deleted';
+
+/**
+ * @internal
+ * The kinds ChangeKinds asks for: all for none (null, undefined, `{}`); the ones `true` when one is;
+ * else all but the ones `false`
+ * @throws a `TypeError` for what is no object of `new`, `modified`, `deleted` - booleans, null or left out
+ */
+export function changeKindsOf(kinds: ChangeKinds | null | undefined): Set<ChangeKind> {
+    const all: ChangeKind[] = ['new', 'modified', 'deleted'];
+    if (kinds === null || kinds === undefined) {
+        return new Set(all);
+    }
+    if (typeof kinds !== 'object' || Array.isArray(kinds)) {
+        throw new TypeError(`the kinds of change are { new?, modified?, deleted? }, got ${JSON.stringify(kinds)}`);
+    }
+    for (const [name, value] of Object.entries(kinds)) {
+        if (!all.includes(name as ChangeKind)) {
+            throw new TypeError(`'${name}' is no kind of change, they are new, modified and deleted`);
+        }
+        if (value !== undefined && value !== null && typeof value !== 'boolean') {
+            throw new TypeError(`${name} is true, false or null, got ${JSON.stringify(value)}`);
+        }
+    }
+    const picked = all.filter((kind) => kinds[kind] === true);
+    return new Set(picked.length ? picked : all.filter((kind) => kinds[kind] !== false));
+}

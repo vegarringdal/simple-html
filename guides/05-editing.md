@@ -350,6 +350,51 @@ const { newEntities, modifiedEntities, deletedEntities } = people.getChanges();
 After a save, `acceptChanges()` makes the changes the new starting point, see [Saving](#saving).
 Before it, `validate()` checks the rows, see [Validation](#validation).
 
+### One kind of change, the rows, the fields
+
+`getChanges()`, `hasChanges()` and `getChangedRows()` take the kinds of change they look at,
+`{ new?, modified?, deleted? }` (`ChangeKinds`):
+
+| kinds | |
+| --- | --- |
+| left out, `null`, `{}` | all of them |
+| `{ deleted: true }` | only those set to `true`: the rows marked for deletion |
+| `{ new: true, modified: true }` | the new and edited rows |
+| `{ deleted: false }` | only kinds `false`: all but those - the new and edited rows too |
+
+```ts
+import { Datasource } from '@simple-html/grid';
+
+interface Person {
+    id: number;
+    name: string;
+    city: string;
+}
+declare const datasource: Datasource<Person>;
+
+// the lists not asked for are []: one request for the deletions, one for the rest
+const { deletedEntities } = datasource.getChanges({ deleted: true });
+const { newEntities, modifiedEntities } = datasource.getChanges({ deleted: false });
+
+// a confirm only when something is deleted
+const confirmFirst = datasource.hasChanges({ deleted: true });
+
+// the rows themselves, not copies: validate what a save sends
+datasource.validate(datasource.getChangedRows({ deleted: false }));
+
+// a row's edited fields and what they were
+const [ann] = datasource.getDataRows();
+datasource.getChangedFields(ann); // ['name', 'city'] - in the order they were edited
+datasource.getOriginalValue(ann, 'name'); // 'Ann' - the value now when the field is not edited
+```
+
+- `getChangedRows()` lists the rows `getChanges()` would - a new row marked for deletion is in none, a
+  row edited back to its original values neither - in the order of the data.
+- `getChangedFields(row)` is `[]` for a new row (it has no original) and a row not edited;
+  `getOriginalValue(row, field)` is undefined for a new row. After `acceptChanges()` the values now are
+  the originals.
+- Kinds that are not `{ new?, modified?, deleted? }` of booleans (or `null`) throw a `TypeError`.
+
 ### Throwing changes away
 
 ```ts

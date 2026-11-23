@@ -1,7 +1,7 @@
 import { Emitter, type EventHandler } from '../emitter';
 import { assertOptions } from './assertOptions';
 import type { CalculatedField } from './calculatedField';
-import type { Changes, ModifiedEntity } from './changes';
+import { type ChangeKind, type ChangeKinds, type Changes, changeKindsOf, type ModifiedEntity } from './changes';
 import type { DatasourceEvents } from './datasourceEvents';
 import type { DataEntity, Entity } from './entity';
 import { EntityHandler, isSameValue } from './entityHandler';
@@ -1144,7 +1144,8 @@ export class DataContainer {
     /**
      * The rows added, edited and marked for deletion, as copies - see {@link Changes} for what is
      * in it and when an edit counts. `datasource.getChanges()` is the same, typed with the
-     * datasource's row type.
+     * datasource's row type. `kinds` picks the lists filled ({@link ChangeKinds}): all by default, a kind
+     * not asked for is `[]`.
      *
      * A `Date` is compared by its field's type from the `fields` of the datasources on this
      * container. Used without a datasource every field compares a `Date` to the second.
@@ -1164,29 +1165,25 @@ export class DataContainer {
      * // { newEntities: [], modifiedEntities: [{ id: 1, name: 'Anna' }], deletedEntities: [] }
      * ```
      */
-    public getChanges(): Changes {
+    public getChanges(kinds?: ChangeKinds | null): Changes {
+        const asked = changeKindsOf(kinds);
         const changes: Changes = { newEntities: [], modifiedEntities: [], deletedEntities: [] };
         for (const row of this.__collection) {
-            const controller = row.__controller;
-            // a spread reads the row's own fields through the proxy, the result is a plain object
-            if (controller.__isDeleted) {
-                // a new row marked for deletion was never saved, there is nothing to send for it
-                if (!controller.__isNew) {
-                    changes.deletedEntities.push({ ...row });
-                }
+            const kind = changeKindOf(row);
+            if (!kind || !asked.has(kind)) {
                 continue;
             }
-            if (controller.__isNew) {
+            const controller = row.__controller;
+            // a spread reads the row's own fields through the proxy, the result is a plain object
+            if (kind === 'deleted') {
+                changes.deletedEntities.push({ ...row });
+            } else if (kind === 'new') {
                 // with a key field the generated key is in the row. Without one it is not a field of the
                 // row: the copy gets it as __KEY, so the server's key can be given back with acceptChanges()
                 changes.newEntities.push(controller.__KEYSTRING ? { ...row } : { ...row, __KEY: row.__KEY });
-                continue;
-            }
-            // __editedProps keeps a prop set back to its original value, as false: leave it out
-            const edited = Object.keys(controller.__editedProps).filter((prop) => controller.__editedProps[prop]);
-            if (edited.length) {
+            } else {
                 const entry: ModifiedEntity<Record<string, unknown>> = { [controller.__KEYSTRING || '__KEY']: row.__KEY };
-                for (const prop of edited) {
+                for (const prop of editedFields(row)) {
                     entry[prop] = row[prop];
                 }
                 changes.modifiedEntities.push(entry);
@@ -1196,9 +1193,9 @@ export class DataContainer {
     }
 
     /**
-     * `true` when there is something to save: `getChanges()` would list a row. For an "unsaved
-     * changes" indicator. A new row marked for deletion is no change, and neither is a field edited
-     * back to its original value.
+     * `true` when there is something to save: `getChanges()` would list a row - of the kinds asked for
+     * ({@link ChangeKinds}, all by default). For an "unsaved changes" indicator. A new row marked for
+     * deletion is no change, and neither is a field edited back to its original value.
      *
      * @example
      * ```ts
@@ -1210,14 +1207,51 @@ export class DataContainer {
      *
      * container.getDataSet()[0].name = 'Anna';
      * container.hasChanges(); // true
+     * container.hasChanges({ deleted: true }); // false
      * ```
      */
-    public hasChanges(): boolean {
-        // the same rows getChanges() lists
+    public hasChanges(kinds?: ChangeKinds | null): boolean {
+        const asked = changeKindsOf(kinds);
         return this.__collection.some((row) => {
-            const { __isDeleted, __isNew, __edited } = row.__controller;
-            return __isDeleted ? !__isNew : __isNew || __edited === true;
+            const kind = changeKindOf(row);
+            return kind !== null && asked.has(kind);
         });
+    }
+
+    /**
+     * The rows getChanges() lists, of the kinds asked for ({@link ChangeKinds}) - the rows themselves, not
+     * copies, in the order of the data: to validate, select or show them
+     */
+    public getChangedRows(kinds?: ChangeKinds | null): Entity[] {
+        const asked = changeKindsOf(kinds);
+        return this.__collection.filter((row) => {
+            const kind = changeKindOf(row);
+            return kind !== null && asked.has(kind);
+        });
+    }
+
+    /**
+     * The fields of a row that differ from their original value, in the order they were first edited -
+     * `getChanges()`'s fields of the row. `[]` for a new row (it has no original), a row not edited, and
+     * an object that is no row of the container
+     */
+    public getChangedFields(row: Entity): string[] {
+        const own = this.rowsIn(row)[0];
+        return own && !own.__controller.__isNew ? editedFields(own) : [];
+    }
+
+    /**
+     * The value a field of a row had before it was edited - the data set, or accepted last. The value it
+     * has now when the field is not edited; undefined for a new row (it has no original) and for an object
+     * that is no row of the container
+     */
+    public getOriginalValue(row: Entity, field: string): unknown {
+        const own = this.rowsIn(row)[0];
+        if (!own || own.__controller.__isNew) {
+            return undefined;
+        }
+        const controller = own.__controller;
+        return controller.__editedProps[field] === true ? controller.__originalValues[field] : own[field];
     }
 
     /**
@@ -1651,4 +1685,25 @@ function rulesText(rules: readonly ResolvedRule[]): string {
 function dayNumber(): number {
     const now = new Date();
     return Math.round(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86_400_000);
+}
+
+/**
+ * the kind of change of a row, as getChanges() lists it: null for a row not changed, and for a new row
+ * marked for deletion - it was never saved, there is nothing to send
+ */
+function changeKindOf(row: DataEntity): ChangeKind | null {
+    const { __isDeleted, __isNew } = row.__controller;
+    if (__isDeleted) {
+        return __isNew ? null : 'deleted';
+    }
+    if (__isNew) {
+        return 'new';
+    }
+    return editedFields(row).length ? 'modified' : null;
+}
+
+/** the fields of a row that differ from their original: __editedProps keeps one set back, as false */
+function editedFields(row: DataEntity): string[] {
+    const edited = row.__controller.__editedProps;
+    return Object.keys(edited).filter((prop) => edited[prop]);
 }
