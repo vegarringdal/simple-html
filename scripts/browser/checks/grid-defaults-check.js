@@ -130,6 +130,15 @@ const STORAGE = 'simple-html-demo-views';
 
         // the default view: Standard and the views, kept in the storage of the views
         await openDefaults(page);
+        const buttonCheck = await page.$eval(`${dialog} .grid-defaults-views-button`, (el) => ({
+            checked: el.checked,
+            text: el.parentElement.textContent.trim()
+        }));
+        check(
+            'Show the views button: on in a sample with views',
+            buttonCheck.checked && buttonCheck.text === 'Show the views button',
+            buttonCheck
+        );
         const viewPicker = `${dialog} .grid-defaults-view`;
         check('the default view picker: Standard', (await pickerText(page, '.grid-defaults-view')) === 'Standard');
         await page.click(viewPicker);

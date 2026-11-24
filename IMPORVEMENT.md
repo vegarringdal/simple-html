@@ -5186,6 +5186,9 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
   `<select>` was tried: happy-dom selects the wrong option of options a nested template inserts), Reset
   formats in the footer. Apply: `setState({ formats, typeFormats })`, then `setDefaultView()` when it changed.
   The Columns tab follows the draft: a column's picker says `Default: Norwegian`, its preview shows it
+* later the same day the user: "named views button is still a option I cant enable under the gridconfig" -
+  *Show the views button* on the tab, over Default view: `updateConfig({ viewsButton })` on Apply when it
+  changed (config, not state: exportConfig keeps it)
 * tests: typeFormats.test.ts (12); the tab tests of detailFormSettings.test.ts with three tabs; texts.test.ts
   shows the tab (showDefaults)
 

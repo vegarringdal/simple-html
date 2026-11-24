@@ -1405,6 +1405,7 @@ rows); the vertical time is rendering every cell of every row on screen, which s
   and `number` column without a date or number format of its own - `{ date: 'norwegian', number: {
   decimals: 2 } }`. A column's own format wins; checkbox and lookup columns show none. State: saved with
   `getState()`, the views and `exportConfig()`; `updateConfig({ typeFormats })` changes it
+- the Defaults tab: **Show the views button** (`viewsButton`, set with `updateConfig()` on Apply)
 - the grid config dialog has a third tab, **Defaults**: a format picker per type and the **Default view**
   (Standard or one of the views); *Reset formats* in its footer. A column's format picker says
   `Default: Norwegian` when it follows its type's

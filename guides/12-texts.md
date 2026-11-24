@@ -925,6 +925,8 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.defaults.formats.hint` | `A column without a format of its own shows the format of its type` | its hint |
 | `columnSettings.defaults.format.tooltip` | `How every column of this type shows its values` | the tooltip of each type's format picker |
 | `columnSettings.defaults.views` | `Views` | the heading over the default view |
+| `columnSettings.defaults.viewsButton` | `Show the views button` | the Defaults tab: the views button at the footer's left end on or off (`GridConfig.viewsButton`) |
+| `columnSettings.defaults.viewsButton.hint` | `At the left end of the footer: save, switch, rename and delete views` | its hint |
 | `columnSettings.defaults.defaultView` | `Default view` | the picker of the view the grid opens with: Standard or a view |
 | `columnSettings.defaults.defaultView.hint` | `The view the grid opens with` | its hint |
 | `columnSettings.defaults.noViews` | `No views saved yet: save one from the views button` | its hint without views, the picker greyed out |

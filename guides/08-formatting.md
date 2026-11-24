@@ -665,6 +665,8 @@ Its title is *Grid config*. Under the title bar are three tabs:
     format of its own - the entries of Format ›, *Default* the field's formatter (`GridState.typeFormats`,
     see [Formats by type](#formats-by-type)). The Columns tab shows it at once: a column's picker says
     `Default: Norwegian`, its preview shows it.
+  - *Show the views button*: the button at the left end of the footer that saves, switches, renames and
+    deletes the views (`viewsButton`, set with `updateConfig()` on Apply - `exportConfig()` keeps it).
   - *Default view*: the view the grid opens with - *Standard* (the config's state) or one of the views,
     as *Default view* in the views menu ([Views](03-state.md#views)). Greyed out without views.
   - *Reset formats* in the footer goes back to the formats by type the grid starts with.

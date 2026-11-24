@@ -241,6 +241,38 @@ describe('the Defaults tab of the grid config dialog', () => {
         expect(gridInterface.getViews().some((view) => view.default)).toBe(false);
     });
 
+    it('expect Show the views button to turn the button on and off on Apply, Cancel to leave it', async () => {
+        const { element, gridInterface } = await mountGrid(config(), rows(), fields());
+        const viewsButton = () => element.querySelector('.footer-views-button');
+        const check = () => dialog().querySelector('.grid-defaults-views-button') as HTMLInputElement;
+        const toggle = () => {
+            check().checked = !check().checked;
+            check().dispatchEvent(new Event('change', { bubbles: true }));
+        };
+        expect(viewsButton()).toBeNull();
+
+        gridInterface.openColumnSettings();
+        tab('Defaults').click();
+        expect(check().checked).toBe(false);
+        expect(check().parentElement?.textContent?.trim()).toEqual('Show the views button');
+        toggle();
+        expect(viewsButton()).toBeNull();
+        button('Apply').click();
+        expect(viewsButton()).not.toBeNull();
+        expect(gridInterface.exportConfig().config.viewsButton).toBe(true);
+
+        toggle();
+        button('Cancel').click();
+        expect(viewsButton()).not.toBeNull();
+
+        gridInterface.openColumnSettings();
+        tab('Defaults').click();
+        expect(check().checked).toBe(true);
+        toggle();
+        button('Apply').click();
+        expect(viewsButton()).toBeNull();
+    });
+
     it('expect the default view greyed out without views, the hint saying how to save one', async () => {
         const { gridInterface } = await mountGrid(config(), rows(), fields());
         gridInterface.openColumnSettings();

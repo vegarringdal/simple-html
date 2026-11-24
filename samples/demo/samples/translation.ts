@@ -572,6 +572,8 @@ const norwegian: Record<TextId, string> = {
     'columnSettings.defaults.formats.hint': 'En kolonne uten eget format viser formatet til typen sin',
     'columnSettings.defaults.format.tooltip': 'Hvordan alle kolonner av denne typen viser verdiene',
     'columnSettings.defaults.views': 'Visninger',
+    'columnSettings.defaults.viewsButton': 'Vis visningsknappen',
+    'columnSettings.defaults.viewsButton.hint': 'Til venstre i bunnlinjen: lagre, bytte, gi nytt navn og slette visninger',
     'columnSettings.defaults.defaultView': 'Standardvisning',
     'columnSettings.defaults.defaultView.hint': 'Visningen rutenettet åpner med',
     'columnSettings.defaults.noViews': 'Ingen lagrede visninger ennå: lagre en fra visningsknappen',

@@ -1,4 +1,5 @@
 import { html, nothing, type TemplateResult } from 'lit-html';
+import { live } from 'lit-html/directives/live.js';
 import { TYPE_FORMAT_TYPES, type TypeFormats } from '../columnFormat';
 import type { Grid } from '../grid';
 import type { MenuItem } from '../gridMenus';
@@ -13,12 +14,15 @@ import { gridText } from './gridText';
  *   date, datetime and number column without a date or number format of its own - a picker each, of the
  *   entries of Format › (formatSubmenu.ts), Default the field's formatter. The Columns tab shows it in a
  *   column's picker, `Default: Norwegian`, and in its preview.
+ * - **Show the views button** (`GridConfig.viewsButton`, `updateConfig()`): the button at the footer's
+ *   left end that saves, switches, renames and deletes the views. Kept by `exportConfig()`.
  * - **Default view** (`GridView.default`, `gridInterface.setDefaultView()`): the view the grid opens
  *   with, Standard (the config's state) or one of the views - as *Default view* in the views menu. With
  *   no views it is greyed out and says how to save one.
  *
  * What it edits is a copy (DefaultsDraft): Apply of the dialog sets the formats with the columns'
- * (`setState({ formats, typeFormats })`) and the default view (applyDefaults); Cancel drops it. Reset
+ * (`setState({ formats, typeFormats })`), the views button and the default view (applyDefaults); Cancel
+ * drops it. Reset
  * formats in the footer goes back to the formats by type the grid starts with.
  */
 
@@ -28,6 +32,8 @@ export interface DefaultsDraft {
     typeFormats: TypeFormats;
     /** the id of the default view, null for Standard: the one when the dialog opened */
     defaultView: string | null;
+    /** whether the views button is shown (`GridConfig.viewsButton`): as it is when the dialog opened */
+    viewsButton: boolean;
 }
 
 /** the draft of the tab: the grid's formats by type and default view now */
@@ -35,16 +41,21 @@ export function defaultsDraft(ctx: Grid): DefaultsDraft {
     const gridInterface = ctx.gridInterface;
     return {
         typeFormats: gridInterface.getState().typeFormats,
-        defaultView: gridInterface.getViews().find((view) => view.default)?.id ?? null
+        defaultView: gridInterface.getViews().find((view) => view.default)?.id ?? null,
+        viewsButton: gridInterface.__getGridConfig().viewsButton
     };
 }
 
 /**
- * Apply of the dialog, the default view: set when it changed (`views-change`). The formats by type are
- * set by the dialog's Apply, with the columns' formats in one setState
+ * Apply of the dialog, the views button and the default view: each set when it changed (`updateConfig`,
+ * `views-change`). The formats by type are set by the dialog's Apply, with the columns' formats in one
+ * setState
  */
 export function applyDefaults(ctx: Grid, draft: DefaultsDraft) {
     const gridInterface = ctx.gridInterface;
+    if (draft.viewsButton !== gridInterface.__getGridConfig().viewsButton) {
+        gridInterface.updateConfig({ viewsButton: draft.viewsButton });
+    }
     const views = gridInterface.getViews();
     // a view deleted since the dialog opened: Standard
     if (draft.defaultView !== null && !views.some((view) => view.id === draft.defaultView)) {
@@ -147,7 +158,23 @@ function viewSettings(ctx: Grid, draft: DefaultsDraft, update: () => void): Temp
             update();
         }
     });
+    const buttonHintId = idOf(ctx, 'views-button-hint');
     return html`<div class="column-settings-heading">${text('columnSettings.defaults.views')}</div>
+        <div class="column-settings-field">
+            <label class="column-settings-check">
+                <input
+                    type="checkbox"
+                    class="grid-defaults-views-button"
+                    aria-describedby=${buttonHintId}
+                    .checked=${live(draft.viewsButton)}
+                    @change=${(event: Event) => {
+                        draft.viewsButton = (event.target as HTMLInputElement).checked;
+                        update();
+                    }}
+                /><span>${text('columnSettings.defaults.viewsButton')}</span>
+            </label>
+            <div class="column-settings-hint" id=${buttonHintId}>${text('columnSettings.defaults.viewsButton.hint')}</div>
+        </div>
         <div class="column-settings-field">
             <span class="column-settings-label">${label}</span>
             <div class="column-settings-input-row">

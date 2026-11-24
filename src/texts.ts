@@ -630,6 +630,8 @@ const DEFAULTS = {
     'columnSettings.defaults.formats.hint': 'A column without a format of its own shows the format of its type',
     'columnSettings.defaults.format.tooltip': 'How every column of this type shows its values',
     'columnSettings.defaults.views': 'Views',
+    'columnSettings.defaults.viewsButton': 'Show the views button',
+    'columnSettings.defaults.viewsButton.hint': 'At the left end of the footer: save, switch, rename and delete views',
     'columnSettings.defaults.defaultView': 'Default view',
     'columnSettings.defaults.defaultView.hint': 'The view the grid opens with',
     'columnSettings.defaults.noViews': 'No views saved yet: save one from the views button',
