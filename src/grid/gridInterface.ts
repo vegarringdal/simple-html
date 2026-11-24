@@ -268,6 +268,8 @@ export class GridInterface<T> {
      * is no field of the rows - its column options stay, the column chooser does not list it
      */
     private everCalculated = new Set<string>();
+    // the version of the datasource's fields this interface's formats were checked against (fieldsChanged)
+    private fieldsVersion: number;
 
     /**
      * the formulas of the formula colour rules (`ColorRule.expression`), read once each: null for one with
@@ -372,6 +374,8 @@ export class GridInterface<T> {
         // before the start state is applied: it can sort on a lookup column, group by a week
         this.setSortValues();
         this.dataSource.__setGroupValue(this.groupValue);
+        // datasource.setFields() since: see syncFields
+        this.fieldsVersion = this.dataSource.__getFieldsVersion();
         // the views of the config and the storage: the default one is the state the grid starts in
         this.views = startViews(gridConfig.views, gridConfig.viewsStorageKey);
         this.applyStartView();
@@ -1655,6 +1659,83 @@ export class GridInterface<T> {
             this.dataSource.__setGroupValue(null);
         }
         this.registerCalculated({}, () => undefined);
+    }
+
+    /**
+     * `datasource.setFields()` gave the fields other types: a display format of a column that its new type
+     * does not take - a date format on what is a text now - is dropped, with a warning, all but its
+     * label, placeholder and read only: from the formats
+     * shown, and from the ones resetState() and the dialog's Reset go back to. The formats by type stay
+     * (`typeFormats`, per type). The rows are filtered and rendered again after it (collection-filtered)
+     */
+    /**
+     * `datasource.setFields()` since the formats were checked last (the datasource's fields version): they
+     * are checked again, fieldsChanged. On `fields-change` while a grid is connected, and when one connects:
+     * a disconnected interface holds no subscription of the datasource
+     */
+    private syncFields() {
+        const version = this.dataSource.__getFieldsVersion();
+        if (version !== this.fieldsVersion) {
+            this.fieldsVersion = version;
+            this.fieldsChanged();
+        }
+    }
+
+    /** see syncFields: the formats checked against the fields of the datasource now */
+    private fieldsChanged() {
+        const fits = (field: string, format: ColumnFormat | undefined, warn = false) => {
+            try {
+                assertColumnFormat(
+                    format,
+                    field,
+                    this.dataSource.getField(field).type,
+                    this.lookupColumns.has(field),
+                    `columns.${field}.format`,
+                    this.ruleFieldOf(this.gridConfig.columns, this.gridConfig.layout)
+                );
+                return true;
+            } catch (error) {
+                if (warn) {
+                    console.warn(
+                        `simple-html-grid: setFields() - the format of '${field}' is dropped: ${(error as Error).message}`
+                    );
+                }
+                return false;
+            }
+        };
+        /** a format that does not fit: the parts of it every column takes - its label, placeholder, read only */
+        const kept = (format: ColumnFormat): ColumnFormat | undefined => {
+            const rest: ColumnFormat = {};
+            for (const key of ['label', 'placeholderRow', 'placeholderRowLabel', 'readonly'] as const) {
+                if (format[key] !== undefined) {
+                    Object.assign(rest, { [key]: format[key] });
+                }
+            }
+            return hasDisplayFormat(rest) ? rest : undefined;
+        };
+        for (const [field, column] of Object.entries(this.gridConfig.columns)) {
+            if (column.format && !fits(field, column.format, true)) {
+                column.format = kept(column.format);
+                if (!column.format) {
+                    delete column.format;
+                }
+            }
+        }
+        for (const formats of [this.configFormats, this.initialState.formats ?? {}]) {
+            for (const [field, format] of Object.entries(formats)) {
+                if (!fits(field, format)) {
+                    const rest = kept(format);
+                    if (rest) {
+                        formats[field] = rest;
+                    } else {
+                        delete formats[field];
+                    }
+                }
+            }
+        }
+        // a lookup column sorts on its labels, a date column on its days: the sort values of the types now
+        this.clearSortValues();
+        this.setSortValues();
     }
 
     /**
@@ -3600,6 +3681,8 @@ export class GridInterface<T> {
      */
     private subscribeToDatasource() {
         this.unsubscribeFromDatasource();
+        // the fields changed while no grid was connected (datasource.setFields())
+        this.syncFields();
 
         // the handlers do nothing while applyState runs (suppressEvents), it rebuilds once when
         // done, or when no grid is connected
@@ -3623,6 +3706,8 @@ export class GridInterface<T> {
                     grid.rebuild(false);
                 }
             }),
+            // before the rows are filtered again by the new types (collection-filtered)
+            follow('fields-change', () => this.syncFields()),
             follow('collection-sorted', (_data, grid) => {
                 this.clearRanges();
                 grid.rebuild();

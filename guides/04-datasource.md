@@ -208,6 +208,27 @@ datasource.getFormatter('born').format(new Date(2026, 10, 20)); // '2026-11-20'
 datasource.getFormatter('price').format(12.5); // '12,5'
 ```
 
+### Fields known later: `setFields()`
+
+When the columns are known only after the datasource is made - the metadata of a query comes with its
+rows - `datasource.setFields(fields)` replaces the fields, as `fields` of the constructor gives them:
+
+```ts
+import { Datasource } from '@simple-html/grid';
+
+const datasource = new Datasource({ key: 'ID' });
+// ... the grid is made on it; then the metadata of the query comes
+datasource.setFields({ ID: 'number', BORN: 'date', NAME: { type: 'text', label: 'Name' } });
+```
+
+- The rows stay. They are filtered, sorted and grouped again by the new types, after the event
+  `fields-change`; a grid on the datasource shows them.
+- A field not given is a text field now. A display format of a column that its new type does not take
+  (a date format on a text) is dropped, with a warning - its label, placeholder and read only stay.
+- The rows that have validation errors are checked again with the new rules; `validate()` checks the rest.
+- What is wrong - an unknown type, a formatter that is not registered, a field another datasource on
+  the same container gives another type - throws, and nothing changes.
+
 ### Validation rules
 
 `validate` lists the field's rules: the id of a validator as text (`'required'`), or an object with

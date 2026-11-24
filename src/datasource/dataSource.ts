@@ -336,9 +336,30 @@ export class Datasource<T = any> {
             datetime: defaultFor('datetime')
         };
 
-        // the validators are looked up here too, like the formatters
+        // the validators are looked up here too, like the formatters. The container tracks the edits, a
+        // date field compares on the day there, and it validates the edits: it throws when another
+        // datasource on the container gave a field another type, or other rules
+        this.applyFields(options.fields);
+
+        this.__selectionMode = options.selectionMode || 'multiple';
+        this.__selection = new Selection(this);
+        this.__filter = new Filter();
+        // the type is looked up once per sort, not per row
+        this.__sorting = new Sort((attribute) => this.getField(attribute).type);
+        this.__grouping = new Grouping();
+    }
+
+    /**
+     * Reads `fields` - the shorthand written out, the formatters and validators looked up - gives their
+     * types and rules to the container, and only then keeps them: what throws changes nothing
+     * @throws see the constructor and setFields
+     */
+    private applyFields(fields: DatasourceOptions['fields']) {
+        const configs = new Map<string, FieldConfig>();
+        const fieldFormatters = new Map<string, Formatter>();
+        const fieldRules = new Map<string, ValidationRuleObject[]>();
         const rules = new Map<string, ResolvedRule[]>();
-        for (const [name, field] of Object.entries(options.fields || {})) {
+        for (const [name, field] of Object.entries(fields || {})) {
             const config: FieldConfig = typeof field === 'string' ? { type: field } : { ...field };
             // a typo in plain js would otherwise show up much later, as a field without a formatter
             if (config.type !== undefined && !isFieldType(config.type)) {
@@ -352,34 +373,72 @@ export class Datasource<T = any> {
                 throw new Error(`Datasource: field '${name}' is multiline, that is for text fields only, not '${config.type}'`);
             }
             if (config.formatter !== undefined) {
-                this.__fieldFormatters.set(name, getRegisteredFormatter(config.formatter, `field '${name}'`));
+                fieldFormatters.set(name, getRegisteredFormatter(config.formatter, `field '${name}'`));
             }
             if (config.validate !== undefined) {
                 const resolved = resolveRules(config.validate, name);
                 if (resolved.length) {
                     rules.set(name, resolved);
-                    this.__fieldRules.set(
+                    fieldRules.set(
                         name,
                         resolved.map(({ rule }) => rule)
                     );
                 }
             }
-            this.__fields.set(name, config);
+            configs.set(name, config);
         }
-        // the container tracks the edits, a date field compares on the day there, and it validates
-        // the edits. Throws when another datasource on the container gave a field another type, or
-        // other rules
         this.__dataContainer.__addFields(
-            new Map(Array.from(this.__fields, ([name, config]) => [name, config.type ?? 'text'])),
+            this,
+            new Map(Array.from(configs, ([name, config]) => [name, config.type ?? 'text'])),
             rules
         );
+        this.__fields = configs;
+        this.__fieldFormatters = fieldFormatters;
+        this.__fieldRules = fieldRules;
+    }
 
-        this.__selectionMode = options.selectionMode || 'multiple';
-        this.__selection = new Selection(this);
-        this.__filter = new Filter();
-        // the type is looked up once per sort, not per row
-        this.__sorting = new Sort((attribute) => this.getField(attribute).type);
-        this.__grouping = new Grouping();
+    /**
+     * Replaces the fields - their types, labels, formatters, validation rules - as `fields` of the
+     * constructor gives them: for columns known only after the datasource is made (the metadata of a
+     * query came). The rows stay; they are filtered, sorted and grouped again by the new types
+     * (`collection-filtered`), after `fields-change`. A grid on the datasource shows them: its columns
+     * keep their settings, a display format the new type does not take is dropped - not the label, the
+     * placeholder, read only (a warning in the console).
+     *
+     * The fields not given are text fields now. The rows that have validation errors are validated again
+     * with the new rules; the other rows when `validate()` is called, or edited.
+     *
+     * @param fields the fields, as `DatasourceOptions.fields`: `{ born: 'date', age: { type: 'number' } }`
+     * @throws as the constructor: a type that does not exist, a formatter or validator id that is not
+     * registered, wrong rules, and a field that has another type or other rules in another datasource on
+     * the same container. Nothing changes then
+     *
+     * @example
+     * ```ts
+     * import { Datasource } from '@simple-html/grid';
+     *
+     * const datasource = new Datasource({ key: 'ID' });
+     * // ... the grid is made on it; later the metadata of the query comes
+     * datasource.setFields({ ID: 'number', BORN: 'date', NAME: { type: 'text', label: 'Name' } });
+     * ```
+     */
+    public setFields(fields: DatasourceOptions['fields']) {
+        this.applyFields(fields);
+        this.__fieldsVersion++;
+        this.__callSubscribers('fields-change', {});
+        this.reloadDatasource();
+    }
+
+    /** counts setFields(): see __getFieldsVersion */
+    private __fieldsVersion = 0;
+
+    /**
+     * @internal
+     * How many times setFields() changed the fields: a grid not connected then checks its formats against
+     * the new fields when it connects
+     */
+    public __getFieldsVersion(): number {
+        return this.__fieldsVersion;
     }
 
     /**

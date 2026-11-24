@@ -1383,6 +1383,9 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 
 - `gridInterface.getServerFilter({ fields, find, calculated })`: the filter AND Find's filter, without the
   calculated columns and the fields the backend has not - what to send to a backend in one call
+- `datasource.setFields(fields)`: the fields replaced after the datasource is made (the metadata of a
+  query came); the rows filtered, sorted and grouped again, the event `fields-change`. A grid on it drops
+  the display formats the new types do not take (not the label, placeholder, read only)
 - the event `cell-dblclick`: a data cell double-clicked, the payload of `cell-click` (a custom and a link
   cell too, not a checkbox)
 

@@ -185,25 +185,48 @@ export class DataContainer {
     }
 
     /**
+     * the fields each datasource on this container listed, by the datasource: what __fieldTypes and
+     * __rules are made of, so one datasource can change its own (__setFields)
+     */
+    private __fieldOwners = new Map<object, { types: Map<string, FieldType>; rules: Map<string, ResolvedRule[]> }>();
+
+    /**
      * @internal
      * Called by every datasource made on this container, with the type of each field in its
-     * `fields` and the validation rules of the fields that have them. Edit tracking and validation
-     * are the container's - the rows are shared, an edit is one edit whichever datasource shows it -
-     * so it needs one type and one list of rules per field: a field listed by one datasource has its
-     * type and rules, and datasources that both list a field must give it the same type, and the
-     * same rules when both give it rules.
+     * `fields` and the validation rules of the fields that have them - and again by
+     * `datasource.setFields()`, with its new ones. Edit tracking and validation are the container's -
+     * the rows are shared, an edit is one edit whichever datasource shows it - so it needs one type and
+     * one list of rules per field: a field listed by one datasource has its type and rules, and
+     * datasources that both list a field must give it the same type, and the same rules when both
+     * give it rules.
      *
-     * @throws when a field already has another type, or other rules, from a datasource made earlier
-     * on this container. Nothing is added then.
+     * The fields the datasource listed before are its no more. When the rules change, the rows that have
+     * errors are validated again with the new ones: an error of a rule that is gone goes.
+     *
+     * @param owner the datasource: its fields replace the ones it gave before
+     * @throws when a field has another type, or other rules, from another datasource on this container,
+     * or is a calculated field of a grid. Nothing changes then.
      */
-    public __addFields(types: Map<string, FieldType>, rules: Map<string, ResolvedRule[]>): void {
+    public __addFields(owner: object, types: Map<string, FieldType>, rules: Map<string, ResolvedRule[]>): void {
+        const otherTypes = new Map<string, FieldType>();
+        const otherRules = new Map<string, ResolvedRule[]>();
+        for (const [each, fields] of this.__fieldOwners) {
+            if (each !== owner) {
+                for (const [field, type] of fields.types) {
+                    otherTypes.set(field, type);
+                }
+                for (const [field, fieldRules] of fields.rules) {
+                    otherRules.set(field, fieldRules);
+                }
+            }
+        }
         for (const [field, type] of types) {
             if (this.__calculated.has(field)) {
                 throw new Error(
                     `Datasource: field '${field}' is a calculated field of a grid on the same container, give it another name`
                 );
             }
-            const known = this.__fieldTypes.get(field);
+            const known = otherTypes.get(field);
             if (known !== undefined && known !== type) {
                 throw new Error(
                     `Datasource: field '${field}' is '${type}' here and '${known}' in another datasource on the same container, give it the same type in both`
@@ -211,18 +234,32 @@ export class DataContainer {
             }
         }
         for (const [field, fieldRules] of rules) {
-            const known = this.__rules.get(field);
+            const known = otherRules.get(field);
             if (known !== undefined && rulesText(known) !== rulesText(fieldRules)) {
                 throw new Error(
                     `Datasource: field '${field}' has other validation rules here than in another datasource on the same container, give it the same rules in both (or rules in one of them only)`
                 );
             }
         }
+        const rulesBefore = rulesKey(this.__rules);
+        this.__fieldOwners.set(owner, { types, rules });
+        this.__fieldTypes = new Map(otherTypes);
         for (const [field, type] of types) {
             this.__fieldTypes.set(field, type);
         }
+        this.__rules = new Map(otherRules);
         for (const [field, fieldRules] of rules) {
             this.__rules.set(field, fieldRules);
+        }
+        // other rules: the errors the rows have are of the old ones - checked again with the new
+        if (rulesKey(this.__rules) !== rulesBefore) {
+            for (const row of this.__collection) {
+                const errors = this.__errors.get(row);
+                if (errors) {
+                    this.__errors.delete(row);
+                    this.validateRow(row, errors.keys());
+                }
+            }
         }
     }
 
@@ -1668,6 +1705,11 @@ function findKey<V>(keys: Map<unknown, V>, key: unknown): V | undefined {
  * the rules of a field as text, to tell whether two datasources gave a field the same rules: the
  * options of each rule in the order of their names, so `{ id, value }` and `{ value, id }` are the same
  */
+/** the rules of every field as one text, to tell whether they changed */
+function rulesKey(rules: Map<string, ResolvedRule[]>): string {
+    return Array.from(rules, ([field, fieldRules]) => `${field}:${rulesText(fieldRules)}`).join('|');
+}
+
 function rulesText(rules: readonly ResolvedRule[]): string {
     return JSON.stringify(
         rules.map(({ rule }) =>

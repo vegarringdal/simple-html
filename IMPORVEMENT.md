@@ -5189,7 +5189,7 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * tests: typeFormats.test.ts (12); the tab tests of detailFormSettings.test.ts with three tabs; texts.test.ts
   shows the tab (showDefaults)
 
-### The wishlist of an app with a backend (2026-11-24): #1, #2, #4, #5, #6, #7, #10
+### The wishlist of an app with a backend (2026-11-24): #1 - #7, #10
 
 * the user's list, "helpers the app would otherwise have to write"; #8 (rows of arrays) waits for their
   measurements, #11 (column defaults when converting v5) was taken off the list
@@ -5210,6 +5210,14 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
   column (a function), dateStorage
 * #6 `getServerFilter({ fields, find = true, calculated = 'strip' })`: getFilter() AND getFindFilter({ fields }),
   then withoutFields - the calculated columns of the state and the fields not in `fields`
+* #3 `datasource.setFields()` (not `gridInterface.setDatasource()`: the callers keep the same objects):
+  the constructor's reading of `fields` is applyFields(), which gives the container the types and rules
+  before it keeps them - what throws changes nothing. The container keeps the fields per datasource
+  (`__fieldOwners`), so one datasource can replace its own and a field two give must still agree; when the
+  rules change the rows with errors are validated again. `fields-change`, then reloadDatasource(). The grid
+  follows `fields-change` while connected and compares the datasource's fields version when it connects (a
+  removed grid holds no subscription - gridEvents.test.ts asks for none): a format a new type does not take goes (the shown ones,
+  the config's, initialState's), its label / placeholder / readonly kept; the sort values again
 * #7 `cell-dblclick`: sent in a setTimeout by the input cell's and the custom cell's dblclick (a link cell is
   one), after what the grid does with it; the checkbox cell sends neither click
 

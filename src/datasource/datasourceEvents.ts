@@ -88,6 +88,13 @@ export interface DatasourceEvents {
     'collection-expand': Record<string, never>;
 
     /**
+     * `setFields()` replaced the fields: their types, labels, formatters and rules. Sent before the rows
+     * are filtered, sorted and grouped again by them (`collection-filtered`). Empty payload, read
+     * `getField()`.
+     */
+    'fields-change': Record<string, never>;
+
+    /**
      * `collapseGroup()` collapsed one or all groups. Empty payload.
      */
     'collection-collapse': Record<string, never>;
