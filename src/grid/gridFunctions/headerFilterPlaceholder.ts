@@ -21,7 +21,7 @@ export function defaultFilterPlaceholder(
     ctx: Grid,
     attribute: string,
     operator: FilterOperator,
-    format: ColumnFormat | undefined = ctx.gridInterface.__getGridConfig().columns[attribute]?.format
+    format: ColumnFormat | undefined = ctx.gridInterface.__getColumnFormat(attribute)
 ): string {
     const column = ctx.gridInterface.__getGridConfig().columns[attribute];
     const lookup = !!ctx.gridInterface.__getLookupColumn(attribute);

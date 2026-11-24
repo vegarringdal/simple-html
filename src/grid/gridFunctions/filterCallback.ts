@@ -44,7 +44,7 @@ export function filterCallback(ctx: Grid, value: unknown, field: string, filterA
     const datasource = ctx.gridInterface.getDatasource();
     const { type } = datasource.getField(field);
     // the field's formatter, or the one of the display format when the column filters as shown
-    const formatter = headerFilterFormatter(ctx, field, ctx.gridInterface.__getGridConfig().columns[field]?.format);
+    const formatter = headerFilterFormatter(ctx, field, ctx.gridInterface.__getColumnFormat(field));
     const operator = getHeaderFilterOperator(ctx, field);
     // the [from, to] of a BETWEEN run again with another operator: its first end
     const single = Array.isArray(value) && operator !== 'BETWEEN' ? (isBlank(value[0]) ? value[1] : value[0]) : value;

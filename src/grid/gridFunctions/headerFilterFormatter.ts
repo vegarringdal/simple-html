@@ -1,5 +1,5 @@
 import type { Formatter } from '../../datasource/formatter';
-import { type ColumnFormat, type DateFormat, type FormatTexts, formatTexts } from '../columnFormat';
+import { type ColumnFormat, type DateFormat, type FormatTexts, formatTexts, type TypeFormats } from '../columnFormat';
 import { asShownFormatter, filtersAsShown, periodOf } from '../filterAsShown';
 import type { Grid } from '../grid';
 import type { DateRange } from './contextmenuDate';
@@ -56,7 +56,7 @@ export function headerFilterFormatter(ctx: Grid, field: string, format: ColumnFo
  * without it
  */
 export function asShownDateFormat(ctx: Grid, field: string): { format: DateFormat; texts: FormatTexts } | null {
-    const date = asShownFormat(ctx, field, ctx.gridInterface.__getGridConfig().columns[field]?.format)?.date;
+    const date = asShownFormat(ctx, field, ctx.gridInterface.__getColumnFormat(field))?.date;
     return date ? { format: date, texts: textsOf(ctx) } : null;
 }
 
@@ -94,17 +94,28 @@ function asShownKey(ctx: Grid, field: string, format: ColumnFormat | undefined):
  * format filtered as shown, filter as shown turned on or off) runs again with its value, as the cell
  * shows it now - the cell and the rows stay one: `2026-W47` switched to `month` shows `2026-11` and
  * filters on November. The header is rendered again when one ran
+ * shows it now - the cell and the rows stay one: `2026-W47` switched to `month` shows `2026-11` and
+ * filters on November. The formats by type count too (GridState.typeFormats): a column without a format
+ * of its own shows its type's
  * @param before the formats of the state before the change, `getState().formats`
+ * @param typeFormatsBefore the formats by type before the change, `getState().typeFormats`: the ones now
+ * when left out
  */
-export function refilterChangedFormats(ctx: Grid, before: Record<string, ColumnFormat>) {
-    const columns = ctx.gridInterface.__getGridConfig().columns;
+export function refilterChangedFormats(
+    ctx: Grid,
+    before: Record<string, ColumnFormat>,
+    typeFormatsBefore: TypeFormats = ctx.gridInterface.__getGridConfig().typeFormats
+) {
+    const gridInterface = ctx.gridInterface;
+    const columns = gridInterface.__getGridConfig().columns;
     let ran = false;
     for (const field of Object.keys(columns)) {
         const value = ctx.gridInterface.__getHeaderFilter(field)?.value;
         if (value === null || value === undefined) {
             continue;
         }
-        if (asShownKey(ctx, field, before[field]) !== asShownKey(ctx, field, columns[field]?.format)) {
+        const was = gridInterface.__getColumnFormat(field, before[field], typeFormatsBefore);
+        if (asShownKey(ctx, field, was) !== asShownKey(ctx, field, gridInterface.__getColumnFormat(field))) {
             filterCallback(ctx, value, field);
             ran = true;
         }

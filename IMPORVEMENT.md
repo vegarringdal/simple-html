@@ -5166,6 +5166,29 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
   build:demo, check:browser --jobs 3) - `npm run verify` reads the matrix only, so it stays quick
 * color-rules-check.js: reads the rules of age, the sample gives age a template now
 
+### The Defaults tab of the grid config dialog: formats by type, the default view
+
+* the user (2026-11-24): "in the gridconfig we need own tab for base settings, like what is default for date,
+  number etc. Also be able to configure default for saved views"
+* `TypeFormats` (columnFormat.ts) - `{ date?, datetime?, number? }` - in `GridConfig.typeFormats` and
+  `GridState.typeFormats`: state, as the columns' formats are - getState, setState, resetState, the views and
+  exportConfig keep it; `updateConfig({ typeFormats })` sets it. assertTypeFormats checks each part as a
+  column of the type takes it (`date` no time of day)
+* one place reads a column's format with its type's: `GridInterface.__getColumnFormat(field)`
+  (withTypeFormat) - the column's own date / number wins, not a checkbox, not a lookup column. The readers
+  of a date or number format read it there: the cell formatter, the header filter (as shown, its
+  placeholder, its menu), grouping by a period, a rule's default week, the footer summary's decimals, 0 of
+  blank / 0, the Excel number formats. refilterChangedFormats compares with the formats by type before
+* Format ›: Default's example is the type's format (formatMenu, a fallback); typeFormatSubmenu - the same
+  entries for a type, the Defaults tab's pickers. formatName: the name of a format for a picker
+* the dialog: a third tab, *Defaults* (gridDefaultsSettings.ts) - Formats by type (a picker each: Date, Date
+  and time, Number) and Default view (a picker of Standard and the views, a menu as the other pickers - a
+  `<select>` was tried: happy-dom selects the wrong option of options a nested template inserts), Reset
+  formats in the footer. Apply: `setState({ formats, typeFormats })`, then `setDefaultView()` when it changed.
+  The Columns tab follows the draft: a column's picker says `Default: Norwegian`, its preview shows it
+* tests: typeFormats.test.ts (12); the tab tests of detailFormSettings.test.ts with three tabs; texts.test.ts
+  shows the tab (showDefaults)
+
 ## Considered, not done
 
 ## Candidates / not started

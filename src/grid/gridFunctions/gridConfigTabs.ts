@@ -5,7 +5,8 @@ import { gridText } from './gridText';
 
 /**
  * The tabs of the grid config dialog (columnSettings.ts), under its title bar: *Columns* - the settings
- * of each column - and *Detail form* (detailFormSettings.ts). And the tabs of a column's settings on the
+ * of each column - *Detail form* (detailFormSettings.ts) and *Defaults* (gridDefaultsSettings.ts), the
+ * settings of the grid: the formats by type, the default view. And the tabs of a column's settings on the
  * Columns tab: *General*, *Display*, *Header filter*, *Colours* (see ColumnSection in columnSettings.ts).
  * The WAI-ARIA tabs pattern, with automatic activation:
  *
@@ -17,12 +18,13 @@ import { gridText } from './gridText';
  */
 
 /** a tab of the dialog */
-export type GridConfigTab = 'columns' | 'detailForm';
+export type GridConfigTab = 'columns' | 'detailForm' | 'defaults';
 
 /** the tabs in their order, with their texts */
 const TABS: readonly { tab: GridConfigTab; text: TextId }[] = [
     { tab: 'columns', text: 'columnSettings.tab.columns' },
-    { tab: 'detailForm', text: 'columnSettings.tab.detailForm' }
+    { tab: 'detailForm', text: 'columnSettings.tab.detailForm' },
+    { tab: 'defaults', text: 'columnSettings.tab.defaults' }
 ];
 
 /** the id of a tab's button, unique in the page: a page can have several grids */
@@ -36,7 +38,7 @@ export function tabPanelId(ctx: Grid, tab: GridConfigTab) {
 }
 
 /**
- * The tab list of the dialog: Columns, Detail form
+ * The tab list of the dialog: Columns, Detail form, Defaults
  * @param current the tab shown
  * @param show shows another tab: the dialog renders it, synchronously
  * @param labelId the id of the dialog's title, the list's name

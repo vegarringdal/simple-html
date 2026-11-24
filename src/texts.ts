@@ -350,6 +350,8 @@ const DEFAULTS = {
     // a date, datetime or number column: the picker of its format, the entries of Format ›
     'columnSettings.format': 'Format',
     'columnSettings.format.tooltip': 'How the cells show the value',
+    // the format picker of a column without a format of its own, whose type has one (the Defaults tab)
+    'columnSettings.format.ofType': 'Default: {format}',
     // under the format of a date or number column: its header filter takes the text as the cells show it.
     // Off and greyed out, with the second hint, for a format that is no period of time
     'columnSettings.filterAsShown': 'Filter as shown',
@@ -578,6 +580,7 @@ const DEFAULTS = {
     // the tabs of the dialog, and its Detail form tab: what the detail form (GridState.detailForm) shows
     'columnSettings.tab.columns': 'Columns',
     'columnSettings.tab.detailForm': 'Detail form',
+    'columnSettings.tab.defaults': 'Defaults',
     // the tabs of a column's settings on the Columns tab (ColumnSection in columnSettings.ts), and their list's name
     'columnSettings.section.general': 'General',
     'columnSettings.section.display': 'Display',
@@ -621,6 +624,17 @@ const DEFAULTS = {
     'columnSettings.detailForm.sectionType': 'Section',
     'columnSettings.detailForm.reset': 'Reset form',
     'columnSettings.detailForm.reset.tooltip': 'The detail form the grid starts with',
+    // the Defaults tab of the grid config dialog (gridDefaultsSettings.ts): the formats by type
+    // (GridState.typeFormats) and the default view
+    'columnSettings.defaults.formats': 'Formats by type',
+    'columnSettings.defaults.formats.hint': 'A column without a format of its own shows the format of its type',
+    'columnSettings.defaults.format.tooltip': 'How every column of this type shows its values',
+    'columnSettings.defaults.views': 'Views',
+    'columnSettings.defaults.defaultView': 'Default view',
+    'columnSettings.defaults.defaultView.hint': 'The view the grid opens with',
+    'columnSettings.defaults.noViews': 'No views saved yet: save one from the views button',
+    'columnSettings.defaults.reset': 'Reset formats',
+    'columnSettings.defaults.reset.tooltip': 'The formats by type the grid starts with',
 
     // the detail form (GridConfig.detailForm): its title, the row it shows - {row} its number, as the row
     // numbers show it - and what it says without a row or without fields. The tooltips of the button of

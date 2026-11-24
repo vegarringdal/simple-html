@@ -2,7 +2,7 @@ import type { Entity } from '../../datasource/entity';
 import type { FieldType } from '../../datasource/field';
 import type { Formatter } from '../../datasource/formatter';
 import { cellFieldText, fillTemplate } from '../cellTemplate';
-import { hasValueFormat } from '../columnFormat';
+import { type ColumnFormat, hasValueFormat } from '../columnFormat';
 import type { Grid } from '../grid';
 import type { ColumnConfig } from '../gridConfig';
 import { getCellType } from './getCellType';
@@ -56,12 +56,13 @@ export function numberOverrideOf(column: ColumnConfig | undefined): ColumnConfig
 
 /**
  * The text of 0 in a number column, for numberOverride: the display format's (`0,00`) when the column
- * has one (`ColumnConfig.format`), else `'0'` - the field formatter's text is compared with `'0'`, as
- * before the display formats
+ * shows one (its own or its type's, GridInterface.__getColumnFormat), else `'0'` - the field formatter's
+ * text is compared with `'0'`, as before the display formats
+ * @param format the format the column shows, GridInterface.__getColumnFormat
  * @param formatter the formatter of the cell, GridInterface.__getCellFormatter
  */
-export function zeroText(column: ColumnConfig | undefined, formatter: Formatter): string {
-    return hasValueFormat(column?.format) ? formatter.format(0) : '0';
+export function zeroText(format: ColumnFormat | undefined, formatter: Formatter): string {
+    return hasValueFormat(format) ? formatter.format(0) : '0';
 }
 
 /**
@@ -94,7 +95,7 @@ export function cellTextOf(
     const column = ctx.gridInterface.__getGridConfig().columns[field];
     // with the column's display format: a cell of another type than the field's has none
     const formatter = ctx.gridInterface.__getCellFormatter(field);
-    const zero = fieldConfig.type === 'number' ? zeroText(column, formatter) : '0';
+    const zero = fieldConfig.type === 'number' ? zeroText(ctx.gridInterface.__getColumnFormat(field), formatter) : '0';
     // the template of a text column: filled in for each row, its placeholders are fields of the row
     const template = options.template !== false && fieldConfig.type === 'text' ? column?.format?.text : undefined;
 

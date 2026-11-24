@@ -540,6 +540,86 @@ export function hasValueFormat(format: ColumnFormat | undefined): boolean {
     return format?.date !== undefined || format?.number !== undefined;
 }
 
+/**
+ * The formats of the columns by type: how a column of a type shows its values when it has no date or
+ * number format of its own - `GridConfig.typeFormats`, `GridState.typeFormats`, the Defaults tab of the
+ * grid config dialog. A type left out shows the field's formatter.
+ *
+ * A column's own format wins (`ColumnFormat.date`, `.number`); one shown as checkboxes shows no number,
+ * and a lookup column shows its labels. The rest of a column's format - its label, its template, its
+ * blank / 0 - stays: `{value}` of a template is the value in the type's format.
+ *
+ * @example
+ * ```ts
+ * import type { GridConfig, TypeFormats } from '@simple-html/grid';
+ *
+ * // every date as 22.11.2026, every number as 1 234 567,89 - a column can still have its own
+ * const typeFormats: TypeFormats = { date: 'norwegian', number: { decimals: 2, thousands: ' ', decimal: ',' } };
+ * const config: Partial<GridConfig> = { typeFormats };
+ * ```
+ */
+export interface TypeFormats {
+    /** the format of a `date` column, see {@link DateFormat}: no time of day (`'isoTime'` ...) */
+    date?: DateFormat;
+    /** the format of a `datetime` column, see {@link DateFormat} */
+    datetime?: DateFormat;
+    /** the format of a `number` column, see {@link NumberFormat} */
+    number?: NumberFormat;
+}
+
+/** @internal the types a TypeFormats has a format of, in the order of the Defaults tab */
+export const TYPE_FORMAT_TYPES = ['date', 'datetime', 'number'] as const;
+
+/**
+ * @internal
+ * A column's format with the format of its type (TypeFormats) when it has no date or number format of
+ * its own and shows a value - not as a checkbox, not a lookup column. The column's format as it is
+ * otherwise, undefined when it has none
+ */
+export function withTypeFormat(
+    format: ColumnFormat | undefined,
+    type: FieldType,
+    typeFormats: TypeFormats,
+    lookup = false
+): ColumnFormat | undefined {
+    if (lookup || hasValueFormat(format) || format?.checkbox) {
+        return format;
+    }
+    if ((type === 'date' || type === 'datetime') && typeFormats[type] !== undefined) {
+        return { ...format, date: typeFormats[type] };
+    }
+    if (type === 'number' && typeFormats.number !== undefined) {
+        return { ...format, number: typeFormats.number };
+    }
+    return format;
+}
+
+/**
+ * @internal
+ * Checks the formats by type (GridConfig.typeFormats, GridState.typeFormats): an object of a date and a
+ * datetime format and a number format - each as a column of its type takes it
+ * @throws a `TypeError` naming the part and what it takes
+ */
+export function assertTypeFormats(typeFormats: unknown, name: string): void {
+    if (typeFormats === undefined) {
+        return;
+    }
+    if (!isObject(typeFormats)) {
+        throw new TypeError(
+            `${name} is ${JSON.stringify(typeFormats)}, it is an object: { date: 'norwegian', datetime: 'isoTime', number: { decimals: 2 } }`
+        );
+    }
+    for (const [key, value] of Object.entries(typeFormats)) {
+        if (!TYPE_FORMAT_TYPES.some((type) => type === key)) {
+            throw new TypeError(`${name} has '${key}', it has ${TYPE_FORMAT_TYPES.join(', ')}`);
+        }
+        if (value !== undefined) {
+            const type = key as FieldType;
+            assertColumnFormat(type === 'number' ? { number: value } : { date: value }, key, type, false, name);
+        }
+    }
+}
+
 /** two digits, `5` -> `'05'` */
 function pad(value: number): string {
     return String(value).padStart(2, '0');

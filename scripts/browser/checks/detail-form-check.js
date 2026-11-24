@@ -107,7 +107,11 @@ const GRID = '.stage simple-html-grid';
             dialog.title === 'Grid config' && dialog.gear === 'Grid config',
             dialog
         );
-        check(`${name}: two tabs, Columns shown`, dialog.tabs.join() === 'Columns:true,Detail form:false', dialog.tabs);
+        check(
+            `${name}: three tabs, Columns shown`,
+            dialog.tabs.join() === 'Columns:true,Detail form:false,Defaults:false',
+            dialog.tabs
+        );
         if (shots) {
             await page.screenshot({ path: `${shots}/dialog-columns-${name}.png` });
         }
@@ -129,7 +133,8 @@ const GRID = '.stage simple-html-grid';
         await page.keyboard.press('Home');
         await page.keyboard.press('End');
         tab = await selectedTab();
-        check(`${name}: Home / End`, tab.text === 'Detail form' && tab.focused, tab);
+        check(`${name}: Home / End`, tab.text === 'Defaults' && tab.focused, tab);
+        await page.keyboard.press('ArrowLeft');
         const panels = await page.evaluate(() =>
             [...document.querySelectorAll('dialog.column-settings > [role="tabpanel"]')].map(
                 (p) => `${p.className.split(' ')[1]}:${p.hidden}`
@@ -137,7 +142,7 @@ const GRID = '.stage simple-html-grid';
         );
         check(
             `${name}: the Columns panel hidden, the Detail form one shown`,
-            panels.join() === 'column-settings-body:true,detail-form-settings:false',
+            panels.join() === 'column-settings-body:true,detail-form-settings:false,grid-defaults-settings:true',
             panels
         );
 

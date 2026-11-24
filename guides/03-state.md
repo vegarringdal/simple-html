@@ -19,6 +19,7 @@ The user can keep several under names and switch between them in the footer: [Vi
 | `aggregates` | the aggregate functions of the columns, keyed by field (`{ balance: ['sum', 'avg'] }`): what `ColumnConfig.aggregate` starts with and the header menu changes, see [Aggregates](18-aggregates.md#from-the-header-menu) |
 | `totalsRow` | whether the totals row is shown: `GridConfig.totalsRow`, turned on and off in the header menu |
 | `formats` | the display formats of the columns, keyed by field (`{ born: { date: 'weekIso' } }`, `{ email: { link: { url: 'mailto:{email}' } } }`): what `ColumnConfig.format` starts with and the header menu's Format ›, the grid config dialog and the column chooser's ✎ (a label) change, see [Display formats](08-formatting.md#display-formats) and [Templates and links](08-formatting.md#templates-and-links) |
+| `typeFormats` | the formats by type (`{ date: 'norwegian', number: { decimals: 2 } }`): how every date, datetime and number column without a format of its own shows its values - what `GridConfig.typeFormats` starts with and the Defaults tab of the grid config dialog changes, see [Formats by type](08-formatting.md#formats-by-type) |
 | `calculatedColumns` | the calculated columns, keyed by field (`{ total: { formula: '{price} * {qty}', label: 'Total' } }`): what `GridConfig.calculatedColumns` starts with and the grid config dialog adds, changes and removes, see [Calculated columns in the state](#calculated-columns-in-the-state) |
 | `detailForm` | the detail form: whether it is shown, its fields in their order, its width (dragged too) and its least and most width, expanded or collapsed (`{ show: true, fields: ['name', 'notes'], width: 300 }`) - what `GridConfig.detailForm` starts with and the grid config dialog, the form's edge and its title change, see [The detail form](02-grid-config.md#the-detail-form) |
 
@@ -180,6 +181,9 @@ gridInterface.setState({ formats });
   [Label, placeholder, blank / 0, checkboxes, multiline, read only](08-formatting.md#label-placeholder-blank--0-checkboxes-multiline-read-only) and
   [Colour rules](08-formatting.md#colour-rules). A rule's value is text as it is typed in the header
   filter (`'2026-11-22'`), so a saved rule reads the same.
+- `typeFormats` is next to it: the format of each type, for the columns without one of their own -
+  `setState({ typeFormats: { date: 'norwegian' } })` shows every such date column as `22.11.2026`. See
+  [Formats by type](08-formatting.md#formats-by-type).
 
 ## The detail form in the state
 
@@ -357,7 +361,8 @@ the line of the filter - the first stop of Tab in the footer. It shows the name 
 the state changed since the view was applied or saved - a filter, a column moved or resized, a sort; its
 name for a screen reader says it in words, "View: My open orders (changed)". A click opens the views
 menu: the views to switch to - one click - then *Save*, *Save as new view…*, *Revert changes*,
-*Rename…*, *Delete* and *Default view*, see [The views menu](10-menus.md#the-views-menu). On a narrow
+*Rename…*, *Delete* and *Default view*, see [The views menu](10-menus.md#the-views-menu) - the default
+view can be picked on the Defaults tab of the grid config dialog too. On a narrow
 grid the filter goes first: the name is cut where the filter's row starts, its tooltip has all of it.
 `viewsButton: false` hides the button, the API below still works.
 

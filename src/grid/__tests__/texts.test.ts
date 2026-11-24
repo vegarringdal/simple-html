@@ -645,6 +645,30 @@ function showViews({ element, gridInterface }: MountedGrid, check: () => void) {
 }
 
 /**
+ * The Defaults tab of the grid config dialog: its formats by type and the default view - without views
+ * (the hint says how to save one) and with one, Reset formats; and on the Columns tab the format picker of
+ * a column whose type has a format, Default and the type's format
+ */
+function showDefaults({ gridInterface }: MountedGrid, check: () => void) {
+    const before = gridInterface.getState();
+    const tab = (id: string) =>
+        document.querySelector(`dialog.column-settings [role="tab"][id$="-settings-tab-${id}"]`) as HTMLElement;
+    gridInterface.setState({ typeFormats: { date: 'iso' } });
+    gridInterface.openColumnSettings('born');
+    check();
+    tab('defaults').click();
+    check();
+    (document.querySelector('dialog.column-settings .filter-editor-close') as HTMLElement).click();
+    gridInterface.setViews([{ id: 'mine', name: '«mine»', state: {} }]);
+    gridInterface.openColumnSettings('born');
+    tab('defaults').click();
+    check();
+    (document.querySelector('dialog.column-settings .filter-editor-close') as HTMLElement).click();
+    gridInterface.setViews([]);
+    gridInterface.setState(before);
+}
+
+/**
  * Opens every part of the grid that shows a text, and checks each
  */
 /**
@@ -959,6 +983,8 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     showDetailForm({ element, datasource, gridInterface }, check);
     // the views button and its menu, see showViews
     showViews({ element, datasource, gridInterface }, check);
+    // the Defaults tab of the dialog, see showDefaults
+    showDefaults({ element, datasource, gridInterface }, check);
     // the import dialog, see showImport
     await showImport({ element, datasource, gridInterface }, check);
 

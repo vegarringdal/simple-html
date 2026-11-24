@@ -5,7 +5,7 @@ import type { SortArgument } from '../datasource/sortArgument';
 import type { IDateConfig } from '../date/interfaces';
 import type { Texts } from '../texts';
 import type { CalculatedColumn } from './calculatedColumns';
-import type { ColumnFormat } from './columnFormat';
+import type { ColumnFormat, TypeFormats } from './columnFormat';
 import type { DatePreset } from './datePresets';
 import type { GridView } from './gridView';
 
@@ -562,6 +562,14 @@ export type GridConfig = {
      * @sample aggregates
      */
     totalsRow?: boolean;
+    /**
+     * the formats of the columns by type: how every `date`, `datetime` and `number` column shows its
+     * values when it has no date or number format of its own - `{ date: 'norwegian', number: { decimals: 2 } }`.
+     * The grid's state (`GridState.typeFormats`): the user changes it on the Defaults tab of the grid
+     * config dialog, `getState()` and the views keep it. A type left out shows the field's formatter. See
+     * {@link TypeFormats}. A format a type does not take throws a `TypeError`
+     */
+    typeFormats?: TypeFormats;
 
     /**
      * The detail form the grid starts with, default none (`{ show: false, fields: [] }`): a panel at the
@@ -1319,6 +1327,12 @@ export interface GridState {
      */
     formats: Record<string, ColumnFormat>;
     /**
+     * the formats of the columns by type - what `GridConfig.typeFormats` starts with and the Defaults tab
+     * of the grid config dialog changes: `{ date: 'norwegian', number: { decimals: 2 } }`. A column with a
+     * date or number format of its own (`formats`) shows that one. See {@link TypeFormats}
+     */
+    typeFormats: TypeFormats;
+    /**
      * the detail form - whether it is shown, its fields in their order, its width (dragged too), whether
      * it is expanded or collapsed - what `GridConfig.detailForm` starts with and the user changes: the
      * grid config dialog (tab *Detail form*), the form's edge and its title bar. See {@link DetailForm}
@@ -1430,6 +1444,7 @@ export type ParsedGridOptions = GridOptions &
             | 'placeholderRowCurrentEntityOnly'
             | 'groupAggregates'
             | 'totalsRow'
+            | 'typeFormats'
             | 'detailForm'
         >
     > & {

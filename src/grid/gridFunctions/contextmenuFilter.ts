@@ -457,7 +457,7 @@ function rangeBlock(
 
     const text = (id: TextId) => gridText(ctx, id);
     // the field's formatter, or the display format's when the column filters as shown (`2026-W47`)
-    const formatter = headerFilterFormatter(ctx, attribute, ctx.gridInterface.__getGridConfig().columns[attribute]?.format);
+    const formatter = headerFilterFormatter(ctx, attribute, ctx.gridInterface.__getColumnFormat(attribute));
     // what an empty input says to type: as an empty header filter, the formatter's placeholder - a date's
     // format - else the type's
     const placeholder = formatter.placeholder || (type === 'number' ? text('filter.placeholder.number') : '');

@@ -460,7 +460,7 @@ const contrast = (a, b) => {
             same(shown, wanted) && shown.length > 0 && shown.length < total,
             `${shown.length} shown, ${wanted.length} with it, of ${total}`
         );
-        let screen = await rowsOnScreen();
+        const screen = await rowsOnScreen();
         check(
             `${theme}: every row on screen has a marked cell`,
             screen.rows.length > 0 && screen.rows.length <= shown.length && same(screen.rows, screen.marked),

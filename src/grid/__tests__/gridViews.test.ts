@@ -107,6 +107,7 @@ describe('gridView - the helpers', () => {
                 aggregates: {},
                 totalsRow: false,
                 formats: {},
+                typeFormats: {},
                 detailForm: { show: false, fields: [] },
                 calculatedColumns: {}
             }) as GridState;

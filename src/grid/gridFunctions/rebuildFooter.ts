@@ -134,7 +134,7 @@ function summaryTemplate(ctx: Grid, top: number) {
     const parts = [gridText(ctx, 'footer.summary.count', { count: summary.count })];
     if (summary.numberField && summary.sum !== null && summary.avg !== null && summary.min !== null && summary.max !== null) {
         const formatter = ctx.gridInterface.__getCellFormatter(summary.numberField);
-        const decimals = ctx.gridInterface.__getGridConfig().columns[summary.numberField]?.format?.number?.decimals;
+        const decimals = ctx.gridInterface.__getColumnFormat(summary.numberField)?.number?.decimals;
         const shown = (value: number) => formatter.format(decimals === undefined ? Math.round(value * 100) / 100 : value);
         parts.push(
             gridText(ctx, 'footer.summary.sum', { sum: shown(summary.sum) }),

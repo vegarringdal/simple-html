@@ -37,7 +37,6 @@ export function renderHeaderFilter(
     setAria(cell, 'aria-colindex', attribute ? String(ariaColIndex(config, colType, column, celno)) : null);
 
     if (attribute) {
-        const cellConfig = config.columns[attribute];
         // the name of the input for a screen reader; the placeholder says what to type, see below
         const label = gridText(ctx, 'grid.filter', { label: getColumnLabel(ctx, attribute) });
         // a lookup column (ColumnConfig.editor) filters on the labels it shows: a text filter, also for a
@@ -46,7 +45,9 @@ export function renderHeaderFilter(
         const lookup = !!ctx.gridInterface.__getLookupColumn(attribute);
         const type = lookup ? 'text' : field.type;
         // a column that filters as shown reads and writes the text in its display format (`2026-W47`)
-        const formatter: Formatter = lookup ? TextFormatter : headerFilterFormatter(ctx, attribute, cellConfig.format);
+        const formatter: Formatter = lookup
+            ? TextFormatter
+            : headerFilterFormatter(ctx, attribute, ctx.gridInterface.__getColumnFormat(attribute));
 
         // the column's own placeholder, a BETWEEN's "from..to", the formatter's (a date's format,
         // YYYY-MM-DD, an example of the display format it filters as shown), the field's type: "Text",

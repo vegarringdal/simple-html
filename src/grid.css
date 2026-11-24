@@ -4170,6 +4170,14 @@
     gap: 10px;
 }
 
+/* the Defaults tab (gridDefaultsSettings.ts): its settings under each other, a heading over each group */
+.simple-html-grid.filter-editor-content .grid-defaults-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+
 /* Width, Min width, Max width: side by side, under each other where the dialog is narrow */
 .simple-html-grid.filter-editor-content .detail-form-settings-widths {
     display: flex;

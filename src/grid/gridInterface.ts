@@ -23,13 +23,16 @@ import { cellFieldText, type FieldText, fieldTextOf, type LinkResult, linkOf, te
 import type { RuleFieldOf } from './colorRules';
 import {
     assertColumnFormat,
+    assertTypeFormats,
     type ColumnFormat,
     displayFormatter,
     formatTexts,
     GROUP_BY_FORMATS,
     hasDisplayFormat,
     hasValueFormat,
-    readonlyOf
+    readonlyOf,
+    type TypeFormats,
+    withTypeFormat
 } from './columnFormat';
 import { convertGridConfig, type ExportedGrid, GRID_CONFIG_VERSION } from './configVersion';
 import type { CsvOptions } from './csv';
@@ -220,7 +223,7 @@ export class GridInterface<T> {
      * by the field's formatter. Read when the rows are grouped: the column's format of that moment
      */
     private readonly groupValue = (field: string, value: unknown): string | undefined => {
-        const date = this.gridConfig.columns[field]?.format?.date;
+        const date = this.__getColumnFormat(field)?.date;
         if (date === undefined || !GROUP_BY_FORMATS.includes(date)) {
             return undefined;
         }
@@ -407,6 +410,7 @@ export class GridInterface<T> {
             aggregates: aggregatesOfColumns(this.gridConfig.columns),
             totalsRow: this.gridConfig.totalsRow,
             formats: formatsOfColumns(this.gridConfig.columns),
+            typeFormats: structuredClone(this.gridConfig.typeFormats),
             detailForm: copyDetailForm(this.gridConfig.detailForm),
             calculatedColumns: structuredClone(this.calculated)
         };
@@ -983,6 +987,7 @@ export class GridInterface<T> {
             aggregates: initialState.aggregates ?? structuredClone(this.configAggregates),
             totalsRow: initialState.totalsRow ?? this.options.totalsRow ?? false,
             formats: initialState.formats ?? structuredClone(this.configFormats),
+            typeFormats: initialState.typeFormats ?? structuredClone(this.options.typeFormats ?? {}),
             // applyState checks it and keeps a copy
             detailForm: initialState.detailForm ?? this.options.detailForm ?? noDetailForm(),
             calculatedColumns: initialState.calculatedColumns ?? structuredClone(this.configCalculated)
@@ -1103,8 +1108,10 @@ export class GridInterface<T> {
         const totalsRow = 'totalsRow' in config ? withDefaults(this.options).totalsRow : this.gridConfig.totalsRow;
         // and so is the detail form (the grid config dialog changes it)
         const detailForm = 'detailForm' in config ? withDefaults(this.options).detailForm : this.gridConfig.detailForm;
+        // and so are the formats by type (the Defaults tab of the dialog)
+        const typeFormats = 'typeFormats' in config ? withDefaults(this.options).typeFormats : this.gridConfig.typeFormats;
         // in place, so code that got the parsed config before reads the new options too
-        Object.assign(this.gridConfig, withDefaults(this.options), { totalsRow, detailForm });
+        Object.assign(this.gridConfig, withDefaults(this.options), { totalsRow, detailForm, typeFormats });
 
         // `in`, so that `columns: undefined` gives every column the defaults, as it does for an option.
         // Their aggregates are the ones resetState() goes back to from now on
@@ -1215,6 +1222,7 @@ export class GridInterface<T> {
             if (state.formats) {
                 this.assertStateFormats(state.formats);
             }
+            assertTypeFormats(state.typeFormats, 'setState: typeFormats');
             if (state.detailForm !== undefined) {
                 assertDetailForm(state.detailForm, 'setState: detailForm');
             }
@@ -1268,6 +1276,13 @@ export class GridInterface<T> {
             }
             // a date column grouped by what it shows: the weeks now, not the days. A grouping in the state
             // groups below
+            if (!state.grouping) {
+                this.dataSource.__regroup();
+            }
+        }
+        // the formats by type: a column without a format of its own shows its type's
+        if (state.typeFormats) {
+            this.gridConfig.typeFormats = structuredClone(state.typeFormats);
             if (!state.grouping) {
                 this.dataSource.__regroup();
             }
@@ -1923,7 +1938,8 @@ export class GridInterface<T> {
      * or number column as checkboxes, the placeholder and the operator of the header filter, with a
      * preview of the current row (see {@link ColumnFormat}). The user opens it with the gear at the right
      * end of the footer (`GridConfig.settingsButton`) or *Column settings…* in the header menu; call this
-     * from a button of your own. Its other tab is the detail form, see {@link openDetailFormSettings}.
+     * from a button of your own. Its other tabs are the detail form, see {@link openDetailFormSettings},
+     * and Defaults: the formats by type (`GridState.typeFormats`) and the default view.
      *
      * Its Apply sets the formats of the state (`setState({ formats })`, {@link GridState}): `getState()`
      * has them, to save. Reset column / Reset all go back to the formats the grid starts with -
@@ -3343,7 +3359,7 @@ export class GridInterface<T> {
         field: string,
         type?: FieldType,
         row?: Entity,
-        format: ColumnFormat | undefined = this.gridConfig.columns[field]?.format
+        format: ColumnFormat | undefined = this.__getColumnFormat(field)
     ): Formatter {
         const formatter = this.dataSource.getFormatter(field, type);
         if (type !== undefined && type !== this.dataSource.getField(field).type) {
@@ -3358,6 +3374,33 @@ export class GridInterface<T> {
             return templateFormatter(shown, field, format.text, this.__fieldTextOf(row));
         }
         return shown;
+    }
+
+    /**
+     * @internal
+     * The format a column shows its values with: its own (`ColumnConfig.format`, `GridState.formats`),
+     * with the format of its type (`GridState.typeFormats`, withTypeFormat) when it has no date or number
+     * format of its own. Every reader of a column's date or number format reads it here: the cells, the
+     * header filter as shown, the colour rules, the export, the grouping by a period
+     * @param format the column's own format: its current one when left out. The grid config dialog
+     * gives the one it edits
+     * @param typeFormats the formats by type: the grid's when left out. The dialog gives the ones it edits
+     */
+    public __getColumnFormat(
+        field: string,
+        format: ColumnFormat | undefined = this.gridConfig.columns[field]?.format,
+        typeFormats: TypeFormats = this.gridConfig.typeFormats
+    ): ColumnFormat | undefined {
+        return withTypeFormat(format, this.dataSource.getField(field).type, typeFormats, this.lookupColumns.has(field));
+    }
+
+    /**
+     * @internal
+     * The formats by type the grid starts with - `initialState.typeFormats`, else the config's
+     * `typeFormats`: the Reset of the dialog's Defaults tab. A copy
+     */
+    public __getStartTypeFormats(): TypeFormats {
+        return structuredClone(this.initialState.typeFormats ?? this.options.typeFormats ?? {});
     }
 
     /**
@@ -3684,6 +3727,7 @@ function withDefaults(options: GridOptions): ParsedGridOptions {
         placeholderRowCurrentEntityOnly: options.placeholderRowCurrentEntityOnly ?? true,
         groupAggregates: options.groupAggregates ?? true,
         totalsRow: options.totalsRow ?? false,
+        typeFormats: structuredClone(options.typeFormats ?? {}),
         detailForm: options.detailForm ? copyDetailForm(options.detailForm) : noDetailForm(),
         edit: editPermissionsOf(options.edit)
     };
@@ -3879,6 +3923,8 @@ function assertAggregates(config: Partial<GridConfig>, datasource: Datasource<an
  * @throws a `TypeError` naming the column and what it takes
  */
 function assertFormats(config: Partial<GridConfig>, datasource: Datasource<any>, fieldOf: RuleFieldOf) {
+    assertTypeFormats(config.typeFormats, 'GridConfig: typeFormats');
+    assertTypeFormats(config.initialState?.typeFormats, 'GridConfig: initialState.typeFormats');
     for (const [field, column] of Object.entries(config.columns ?? {})) {
         if (!column || typeof column !== 'object') {
             continue;

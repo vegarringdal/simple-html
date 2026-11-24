@@ -1,3 +1,5 @@
+import type { FieldType } from '../../datasource/field';
+import type { Formatter } from '../../datasource/formatter';
 import type { TextId } from '../../texts';
 import {
     type ColumnFormat,
@@ -6,12 +8,15 @@ import {
     DATETIME_FORMATS,
     type DateFormat,
     decimalMarkOf,
+    displayFormatter,
     formatDateAs,
     formatNumberAs,
     formatTexts,
     hasDisplayFormat,
     hasValueFormat,
-    type NumberFormat
+    type NumberFormat,
+    type TypeFormats,
+    withTypeFormat
 } from '../columnFormat';
 import type { Grid } from '../grid';
 import type { MenuEntry, MenuItem, MenuSubmenu } from '../gridMenus';
@@ -22,7 +27,8 @@ import { refilterChangedFormats } from './headerFilterFormatter';
  * Format › in the header menu: how the column's cells show the value, picked by the user - the display
  * formats of columnFormat.ts. A date or datetime column lists the date formats, a number column the
  * number formats; text and boolean columns, and a lookup column (its cells show a label), have none.
- * The format in use has a ✓, "Default" when the column has none: the field's formatter. A pick changes
+ * The format in use has a ✓, "Default" when the column has none: the format of its type
+ * (GridState.typeFormats), else the field's formatter - its hint shows which. A pick changes
  * the date or number part of the column's format only (`ColumnFormat.date`, `.number`): its label, its
  * blank / 0 from the column settings stay. A number column shown as checkboxes has no Format ›.
  *
@@ -31,7 +37,8 @@ import { refilterChangedFormats } from './headerFilterFormatter';
  * column) or to 1234567.891 (a number column, 0.256 with Percent) - made when the menu opens, not texts.
  *
  * The grid config dialog (columnSettings.ts) opens the same entries from its format picker, with a
- * FormatTarget of its draft: one list of the formats, in one order.
+ * FormatTarget of its draft: one list of the formats, in one order. Its Defaults tab opens them for a type
+ * (typeFormatSubmenu): the format of every column of the type.
  */
 
 /** the number the hints of a number column show */
@@ -68,6 +75,20 @@ const DECIMAL_MARKS = [
 
 /** the decimals, `undefined` as the number has them */
 const DECIMALS = [undefined, 0, 1, 2, 3, 4] as const;
+
+/**
+ * The name of a date or number format, as a picker of the grid config dialog shows it: the date format's
+ * entry (`Week, ISO`), a number format's example (`1 234 567,89`). null for a format without one
+ */
+export function formatName(ctx: Grid, format: Pick<ColumnFormat, 'date' | 'number'> | undefined): string | null {
+    if (format?.date) {
+        return gridText(ctx, `header.format.date.${format.date}`);
+    }
+    if (format?.number) {
+        return formatNumberAs(format.number.percent ? PERCENT_SAMPLE : NUMBER_SAMPLE, format.number);
+    }
+    return null;
+}
 
 /**
  * Where the entries of Format › read the format in use and write the one picked: the grid's state for
@@ -108,17 +129,58 @@ function stateTarget(ctx: Grid, attribute: string): FormatTarget {
  * are not for the column's type are hidden by `visible`, and so is the submenu when none is
  * @param target where the format is read and written: the grid's state (the header menu) when left
  * out, the grid config dialog's draft for its picker
+ * @param typeFormats the formats by type, what Default shows: the grid's when left out, the dialog's
+ * draft for its picker
  */
-export function formatSubmenu(ctx: Grid, attribute: string, target: FormatTarget = stateTarget(ctx, attribute)): MenuSubmenu {
+export function formatSubmenu(
+    ctx: Grid,
+    attribute: string,
+    target: FormatTarget = stateTarget(ctx, attribute),
+    typeFormats: TypeFormats = ctx.gridInterface.__getGridConfig().typeFormats
+): MenuSubmenu {
     const gridInterface = ctx.gridInterface;
     const datasource = gridInterface.getDatasource();
     const type = datasource.getField(attribute).type;
     const lookup = gridInterface.__getLookupColumn(attribute) !== undefined;
-    const isDate = !lookup && (type === 'date' || type === 'datetime');
-    const isDatetime = !lookup && type === 'datetime';
-    const isNumber = !lookup && type === 'number';
-    const fieldFormatter = datasource.getFormatter(attribute);
+    return formatMenu(
+        ctx,
+        lookup ? null : type,
+        datasource.getFormatter(attribute),
+        withTypeFormat(undefined, type, typeFormats, lookup),
+        target
+    );
+}
+
+/**
+ * The Format submenu of a type, for the Defaults tab of the grid config dialog: the formats of a date, a
+ * datetime or a number column - Default is the field's formatter, the datasource's default of the type
+ * @param target the format of the type in the dialog's draft (TypeFormats), as a column's format
+ */
+export function typeFormatSubmenu(ctx: Grid, type: 'date' | 'datetime' | 'number', target: FormatTarget): MenuSubmenu {
+    // a name of no field: the datasource's default formatter of the type
+    return formatMenu(ctx, type, ctx.gridInterface.getDatasource().getFormatter('', type), undefined, target);
+}
+
+/**
+ * The entries of Format ›, see formatSubmenu
+ * @param type the type whose formats it lists, null for none (a lookup column)
+ * @param fieldFormatter the formatter of the values: the hints of Default and a number's decimal mark
+ * @param fallback the format Default shows - the type's (TypeFormats) - undefined: the field's formatter
+ */
+function formatMenu(
+    ctx: Grid,
+    type: FieldType | null,
+    fieldFormatter: Formatter,
+    fallback: ColumnFormat | undefined,
+    target: FormatTarget
+): MenuSubmenu {
+    const gridInterface = ctx.gridInterface;
+    const isDate = type === 'date' || type === 'datetime';
+    const isDatetime = type === 'datetime';
+    const isNumber = type === 'number';
     const formatTextsNow = formatTexts(gridInterface.__getGridConfig().texts);
+    /** what Default shows: the type's format, else the field's formatter */
+    const defaultFormatter = fallback ? displayFormatter(fieldFormatter, fallback, formatTextsNow) : fieldFormatter;
     const text = (id: TextId) => gridText(ctx, id);
     // the date of the examples: now, when the menu opens
     const now = new Date();
@@ -128,10 +190,10 @@ export function formatSubmenu(ctx: Grid, attribute: string, target: FormatTarget
     /** the number format in use, undefined with Default */
     const numberNow = (): NumberFormat | undefined => current()?.number;
     /**
-     * what a number entry changes: the format in use - with Default, the field formatter's decimal mark,
-     * so a first pick keeps it (NumberFormatterComma shows 1,5)
+     * what a number entry changes: the format in use - with Default, the type's format, else the field
+     * formatter's decimal mark, so a first pick keeps it (NumberFormatterComma shows 1,5)
      */
-    const numberBase = (): NumberFormat => numberNow() ?? { decimal: decimalMarkOf(fieldFormatter) };
+    const numberBase = (): NumberFormat => numberNow() ?? fallback?.number ?? { decimal: decimalMarkOf(fieldFormatter) };
     const changed = (change: NumberFormat): NumberFormat => compactNumberFormat({ ...numberBase(), ...change });
     /** the example of a number format: 1234567.891, 0.256 with Percent */
     const numberExample = (format: NumberFormat) => formatNumberAs(format.percent ? PERCENT_SAMPLE : NUMBER_SAMPLE, format);
@@ -186,7 +248,7 @@ export function formatSubmenu(ctx: Grid, attribute: string, target: FormatTarget
         {
             id: 'header.format.default',
             label: text('header.format.default'),
-            hint: isNumber ? fieldFormatter.format(NUMBER_SAMPLE) : fieldFormatter.format(now),
+            hint: isNumber ? defaultFormatter.format(NUMBER_SAMPLE) : defaultFormatter.format(now),
             selected: () => !hasValueFormat(current()),
             action: () => set(undefined)
         },

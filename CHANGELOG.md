@@ -1363,6 +1363,19 @@ rows); the vertical time is rendering every cell of every row on screen, which s
   mouse - `datePickerConfig.rowHeight` still wins. Whether it fits under the cell is worked out from the
   rows' height when `datepickerHeight` is not given (it was 282 whatever `rowHeight` was)
 
+#### Formats by type and the default view: the Defaults tab of the grid config dialog
+
+##### Added
+- `GridConfig.typeFormats` / `GridState.typeFormats` (`TypeFormats`): a format for every `date`, `datetime`
+  and `number` column without a date or number format of its own - `{ date: 'norwegian', number: {
+  decimals: 2 } }`. A column's own format wins; checkbox and lookup columns show none. State: saved with
+  `getState()`, the views and `exportConfig()`; `updateConfig({ typeFormats })` changes it
+- the grid config dialog has a third tab, **Defaults**: a format picker per type and the **Default view**
+  (Standard or one of the views); *Reset formats* in its footer. A column's format picker says
+  `Default: Norwegian` when it follows its type's
+- Format ›: *Default* shows the type's format as its example
+- texts `columnSettings.tab.defaults`, `columnSettings.format.ofType`, `columnSettings.defaults.*`
+
 #### Fill down in the row menu
 
 ##### Added

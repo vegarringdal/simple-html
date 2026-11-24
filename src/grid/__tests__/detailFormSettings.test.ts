@@ -117,9 +117,9 @@ describe('grid config dialog - title and tabs', () => {
         expect(title?.textContent?.trim()).toEqual('Grid config');
         const tablist = dialog().querySelector('[role="tablist"]') as HTMLElement;
         expect(tablist.getAttribute('aria-labelledby')).toEqual(title?.id);
-        expect(tabs().map((tab) => tab.textContent?.trim())).toEqual(['Columns', 'Detail form']);
-        expect(tabs().map((tab) => tab.getAttribute('aria-selected'))).toEqual(['true', 'false']);
-        expect(tabs().map((tab) => tab.tabIndex)).toEqual([0, -1]);
+        expect(tabs().map((tab) => tab.textContent?.trim())).toEqual(['Columns', 'Detail form', 'Defaults']);
+        expect(tabs().map((tab) => tab.getAttribute('aria-selected'))).toEqual(['true', 'false', 'false']);
+        expect(tabs().map((tab) => tab.tabIndex)).toEqual([0, -1, -1]);
         // each tab controls its panel, named by the tab
         for (const tab of tabs()) {
             const controlled = panel(tab.getAttribute('aria-controls') as string);
@@ -144,16 +144,19 @@ describe('grid config dialog - title and tabs', () => {
 
         tabs()[1].focus();
         expect(press(tabs()[1], 'ArrowRight').defaultPrevented).toBe(true);
-        expect(tabs()[0].getAttribute('aria-selected')).toEqual('true');
+        expect(tabs()[2].getAttribute('aria-selected')).toEqual('true');
+        expect(document.activeElement).toBe(tabs()[2]);
+        // round: from the last to the first, and back
+        press(tabs()[2], 'ArrowRight');
         expect(document.activeElement).toBe(tabs()[0]);
         press(tabs()[0], 'ArrowLeft');
-        expect(document.activeElement).toBe(tabs()[1]);
-        press(tabs()[1], 'Home');
+        expect(document.activeElement).toBe(tabs()[2]);
+        press(tabs()[2], 'Home');
         expect(tabs()[0].getAttribute('aria-selected')).toEqual('true');
         press(tabs()[0], 'End');
-        expect(tabs()[1].getAttribute('aria-selected')).toEqual('true');
+        expect(tabs()[2].getAttribute('aria-selected')).toEqual('true');
         // the other keys are not the tabs'
-        expect(press(tabs()[1], 'ArrowDown').defaultPrevented).toBe(false);
+        expect(press(tabs()[2], 'ArrowDown').defaultPrevented).toBe(false);
     });
 
     it('expect openDetailFormSettings() on the Detail form tab, openColumnSettings() on the Columns tab', async () => {

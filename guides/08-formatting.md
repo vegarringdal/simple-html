@@ -382,6 +382,40 @@ gridInterface.resetState(); // the formats of the config again
 
 See [State](03-state.md#display-formats-in-the-state).
 
+### Formats by type
+
+`typeFormats` in the config gives every column of a type a format: the date, datetime and number
+columns without a date or number format of their own show it. The user picks them on the Defaults
+tab of the grid config dialog.
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: Partial<GridConfig> = {
+    typeFormats: {
+        date: 'norwegian', // 22.11.2026
+        datetime: 'norwegianTime', // 22.11.2026 13:45
+        number: { decimals: 2, thousands: ' ', decimal: ',' } // 1 234 567,89
+    },
+    // due keeps its own: 2026-W47
+    columns: { due: { format: { date: 'weekIso' } } }
+};
+```
+
+- **A column's own format wins**: `date` or `number` in its `format`. The rest of its format stays -
+  a column with only a label, a template or blank / 0 shows its type's format, `{value}` of a template
+  in it.
+- **Not** a number column shown as checkboxes, nor a lookup column: they show no number or date.
+- It is a display format like a column's own, with all that follows: the header filter
+  [as shown](#filter-as-shown), grouping by a week, month, quarter or year, the Excel number format.
+- Format › of a column without its own says *Default*, its example the type's format: *Default* is
+  "as the grid's default". In the dialog the column's picker says `Default: Norwegian`.
+- A type left out shows the field's formatter. `date` takes no time of day (`'isoTime'` ...), and a
+  format a type does not take throws a `TypeError`.
+- It is state: `GridState.typeFormats`, saved with `getState()` and the views, `resetState()` goes back
+  to the config's. `updateConfig({ typeFormats })` changes it. See
+  [Display formats in the state](03-state.md#display-formats-in-the-state).
+
 ### Filter as shown
 
 The header filter of a column with a display format takes the text **as the cells show it**, and
@@ -618,7 +652,7 @@ The gear at the right end of the footer opens it - and *Column settings…* in t
 column, and `gridInterface.openColumnSettings(field)` from a button of your own. `settingsButton: false`
 hides the gear ([Grid config](02-grid-config.md#grid-options)).
 
-Its title is *Grid config*. Under the title bar are two tabs:
+Its title is *Grid config*. Under the title bar are three tabs:
 
 - **Columns**, below: the settings of each column. `openColumnSettings()` opens the dialog on it.
 - **Detail form**: the detail form at the right of the rows - *Show the detail form*, *Expanded*, its
@@ -626,9 +660,17 @@ Its title is *Grid config*. Under the title bar are two tabs:
   follow it), and the fields it shows in their order - each with a drag handle at its right that drags
   it to another place, a line showing where. `openDetailFormSettings()` opens the dialog on it. See
   [The detail form](02-grid-config.md#the-detail-form).
+- **Defaults**: the settings of the grid, not of a column.
+  - *Formats by type*: a picker of the format of every date, date and time, and number column without a
+    format of its own - the entries of Format ›, *Default* the field's formatter (`GridState.typeFormats`,
+    see [Formats by type](#formats-by-type)). The Columns tab shows it at once: a column's picker says
+    `Default: Norwegian`, its preview shows it.
+  - *Default view*: the view the grid opens with - *Standard* (the config's state) or one of the views,
+    as *Default view* in the views menu ([Views](03-state.md#views)). Greyed out without views.
+  - *Reset formats* in the footer goes back to the formats by type the grid starts with.
 
 The tabs are a tab list: Tab comes to the tab shown, ArrowLeft / ArrowRight (Home / End) show another.
-The footer is the dialog's: *Apply* applies both tabs, *Cancel* drops what was changed on both. Its
+The footer is the dialog's: *Apply* applies every tab, *Cancel* drops what was changed on all of them. Its
 left end has the resets of the tab shown.
 
 The Columns tab has the columns at the left and the settings of the one picked at the right - those

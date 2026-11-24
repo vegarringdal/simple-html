@@ -915,7 +915,7 @@ interface RuleContext {
  */
 export function defaultRuleWeek(gridInterface: GridInterface<any>, field: string): RuleWeek {
     const config = gridInterface.__getGridConfig();
-    const shown = config.columns[field]?.format?.date;
+    const shown = gridInterface.__getColumnFormat(field)?.date;
     if (shown === 'weekUs' || shown === 'weekIso') {
         return shown === 'weekUs' ? 'us' : 'iso';
     }

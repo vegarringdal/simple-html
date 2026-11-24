@@ -93,6 +93,7 @@ describe('getState', () => {
             aggregates: {},
             totalsRow: false,
             formats: {},
+            typeFormats: {},
             detailForm: { show: false, fields: [] },
             calculatedColumns: {}
         });
@@ -443,6 +444,7 @@ describe('initialState', () => {
             aggregates: {},
             totalsRow: false,
             formats: {},
+            typeFormats: {},
             detailForm: { show: false, fields: [] },
             calculatedColumns: {}
         });

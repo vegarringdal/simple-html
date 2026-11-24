@@ -184,7 +184,11 @@ export function renderRowCell(
         // blank / 0 from the column settings first (numberOverrideOf)
         const value =
             fieldType === 'number' && !lookupColumn
-                ? overrideNumberText(formatted, numberOverrideOf(cellConfig), zeroText(cellConfig, formatter))
+                ? overrideNumberText(
+                      formatted,
+                      numberOverrideOf(cellConfig),
+                      zeroText(ctx.gridInterface.__getColumnFormat(attribute), formatter)
+                  )
                 : formatted;
 
         // the name of the input for a screen reader: the column's label, as in the header

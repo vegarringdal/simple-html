@@ -202,7 +202,7 @@ function valueFillFormats(
     column: number,
     rules: (ColorRule | null)[] | null
 ): XlsxConditionalFormat[] {
-    const format = gridInterface.__getGridConfig().columns[field]?.format;
+    const format = gridInterface.__getColumnFormat(field);
     if (
         gridInterface.getDatasource().getField(field).type !== 'number' ||
         gridInterface.__getLookupColumn(field) ||
@@ -290,7 +290,8 @@ function excelCell(gridInterface: GridInterface<any>, field: string): (row: Enti
     // the column's display format as an Excel number format, undefined where Excel has none. A column
     // with dynamicCellTypeColumn is a text field: it has no date or number format. The template and the
     // link of a text column are not exported: the cell is its value, as copy and the CSV export have it
-    const format = column?.format && hasValueFormat(column.format) ? column.format : undefined;
+    const shownFormat = gridInterface.__getColumnFormat(field);
+    const format = shownFormat && hasValueFormat(shownFormat) ? shownFormat : undefined;
     const numberFormat = format?.number ? excelNumberFormat(format.number) : undefined;
     const dateFormat = format?.date ? excelDateFormat(format.date) : undefined;
     const number = (value: number): XlsxValue => (numberFormat ? { number: value, format: numberFormat } : value);

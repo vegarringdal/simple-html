@@ -28,12 +28,12 @@ import {
     type ColumnFormat,
     checkboxProblem,
     checkboxValues,
-    formatNumberAs,
     formatTexts,
     hasDisplayFormat,
     hasValueFormat,
     isCheckedValue,
-    UNCHECKED_VALUE
+    UNCHECKED_VALUE,
+    withTypeFormat
 } from '../columnFormat';
 import { shownRange } from '../dataBars';
 import { canFilterAsShown, filtersAsShown } from '../filterAsShown';
@@ -57,11 +57,12 @@ import {
 } from './detailFormSettings';
 import { keepDialogInView, moveDialog, resizeHandles, showDialog } from './dialogFrame';
 import { defaultFilterOnType, isFilterOnType, setFilterOnType } from './filterOnType';
-import { formatSubmenu, NUMBER_SAMPLE, PERCENT_SAMPLE } from './formatSubmenu';
+import { formatName, formatSubmenu } from './formatSubmenu';
 import { getColumnLabel, getConfigColumnLabel } from './getColumnLabel';
 import { getHeaderFilterOperator, isHeaderFilterCaseSensitive } from './getHeaderFilterOperator';
 import { getLayoutFields } from './getLayoutFields';
 import { configTabs, type GridConfigTab, tabId, tabList, tabPanelId } from './gridConfigTabs';
+import { applyDefaults, type DefaultsDraft, defaultsDraft, defaultsResetButton, defaultsTabPanel } from './gridDefaultsSettings';
 import { gridText } from './gridText';
 import { refilterChangedFormats } from './headerFilterFormatter';
 import { HEADER_OPERATOR_TEXTS, setHeaderFilterOperator } from './headerOperatorMenu';
@@ -83,9 +84,12 @@ import { attachTooltips, hideTooltip, tooltipsEnabled } from './tooltip';
  * *Column settings…* in the header menu (`header.settings`) and `gridInterface.openColumnSettings()` -
  * on the Columns tab - and `gridInterface.openDetailFormSettings()` on the Detail form tab.
  *
- * Two tabs under the title bar (gridConfigTabs.ts): **Columns**, the settings of the columns below, and
- * **Detail form** (detailFormSettings.ts), the fields of the detail form (detailForm.ts). The footer is
- * the dialog's: Apply applies both tabs, Cancel drops both; its left end has the resets of the tab shown.
+ * Three tabs under the title bar (gridConfigTabs.ts): **Columns**, the settings of the columns below,
+ * **Detail form** (detailFormSettings.ts), the fields of the detail form (detailForm.ts), and **Defaults**
+ * (gridDefaultsSettings.ts), the formats by type and the default view. The footer is the dialog's: Apply
+ * applies every tab, Cancel drops them all; its left end has the resets of the tab shown. A column
+ * without a format of its own shows its type's of the Defaults tab: its picker says `Default: Norwegian`,
+ * the preview shows it.
  *
  * - **Left**: the columns of the layout, in their order - a listbox, one stop of Tab, the arrows, Home,
  *   End, PageUp / PageDown and a letter pick one. Each has its label, its type and what it has set:
@@ -165,6 +169,8 @@ interface ColumnSettings {
     section: ColumnSection;
     /** what the Detail form tab edits, see detailFormSettings.ts */
     detailForm: DetailFormDraft;
+    /** what the Defaults tab edits, see gridDefaultsSettings.ts: the formats by type, the default view */
+    defaults: DefaultsDraft;
     /** the calculated columns, by field: a copy of the state's when it opened (GridState.calculatedColumns) */
     calculated: Record<string, CalculatedColumn>;
     /** the calculated columns added in the dialog, in their order: at the end of the layout on Apply */
@@ -245,6 +251,7 @@ export function openColumnSettings(ctx: Grid, field?: string, tab: GridConfigTab
         tab,
         section: 'general',
         detailForm: detailFormDraft(ctx, ctx.gridInterface.getState().detailForm),
+        defaults: defaultsDraft(ctx),
         calculated: ctx.gridInterface.getState().calculatedColumns,
         added: [],
         typedNames: {},
@@ -472,6 +479,8 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
     const kindOfColumn = (name: string): ColumnKind => (pending(name) ? (draftType(name) ?? 'text') : kindOf(ctx, name));
     const kind = kindOfColumn(field);
     const format = settings.formats[field];
+    /** the format the column shows: its own, with its type's of the Defaults tab when it has none (withTypeFormat) */
+    const shownFormat = kind === 'lookup' ? format : withTypeFormat(format, kind, settings.defaults.typeFormats);
     const at = previewRow(ctx);
     /** what a colour rule's condition or formula knows of a field, with the draft's calculated columns */
     const appliedFieldOf = gridInterface.__ruleFieldOf();
@@ -578,7 +587,8 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                 delete formats[name];
             }
         }
-        const next: Partial<GridState> = { formats };
+        const typeFormatsBefore = state.typeFormats;
+        const next: Partial<GridState> = { formats, typeFormats: structuredClone(settings.defaults.typeFormats) };
         if (settings.added.length || JSON.stringify(settings.calculated) !== JSON.stringify(state.calculatedColumns)) {
             // the calculated columns first (setState gives them to the datasource), a new one at the end
             next.calculatedColumns = structuredClone(settings.calculated);
@@ -608,7 +618,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
             }
         }
         // a header filter whose column reads its text in another way now (filter as shown): it runs again
-        refilterChangedFormats(ctx, before);
+        refilterChangedFormats(ctx, before, typeFormatsBefore);
         // a header filter whose operator changed: as if it was picked in Operator › - the filter runs again
         // with the value the cell has, the header shows it, filter-operator-change is sent
         for (const [name, operator] of Object.entries(settings.operators)) {
@@ -628,8 +638,9 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                 setHeaderFilterCaseSensitive(ctx, name, on);
             }
         }
-        // the Detail form tab's
+        // the Detail form tab's, the Defaults tab's default view
         applyDetailForm(ctx, settings.detailForm);
+        applyDefaults(ctx, settings.defaults);
         // the dialog stays open: the badges, a calculated column applied
         update();
         return true;
@@ -865,10 +876,10 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
      * without a date or number format
      */
     const filterAsShownSettings = () => {
-        if (!hasValueFormat(format)) {
+        if (!hasValueFormat(shownFormat)) {
             return nothing;
         }
-        const can = canFilterAsShown(format, texts);
+        const can = canFilterAsShown(shownFormat, texts);
         const hintId = idOf(ctx, 'filter-as-shown-hint');
         return html`<div class="column-settings-field">
             <label class="column-settings-check">
@@ -877,7 +888,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                     class="column-settings-filter-as-shown"
                     aria-describedby=${hintId}
                     ?disabled=${!can}
-                    .checked=${live(filtersAsShown(format, texts))}
+                    .checked=${live(filtersAsShown(shownFormat, texts))}
                     @change=${(event: Event) =>
                         change((next) => {
                             if ((event.target as HTMLInputElement).checked) {
@@ -896,11 +907,11 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
 
     /** a date, datetime or number column: its format, a picker of the entries of Format › */
     const formatSettings = () => {
-        const picked = format?.date
-            ? text(`header.format.date.${format.date}`)
-            : format?.number
-              ? formatNumberAs(format.number.percent ? PERCENT_SAMPLE : NUMBER_SAMPLE, format.number)
-              : text('header.format.default');
+        // without one of its own: Default, the format of its type said after it (the Defaults tab)
+        const typeName = formatName(ctx, shownFormat);
+        const picked =
+            formatName(ctx, format) ??
+            (typeName ? text('columnSettings.format.ofType', { format: typeName }) : text('header.format.default'));
         const label = text('columnSettings.format');
         return html`<div class="column-settings-field">
             <span class="column-settings-label">${label}</span>
@@ -913,10 +924,15 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                     data-tooltip=${text('columnSettings.format.tooltip')}
                     @click=${(event: MouseEvent) => {
                         // the entries of Format ›, on what the dialog edits
-                        const entries = formatSubmenu(ctx, field, {
-                            current: () => settings.formats[field],
-                            set: (next) => setFormat(field, next)
-                        }).entries;
+                        const entries = formatSubmenu(
+                            ctx,
+                            field,
+                            {
+                                current: () => settings.formats[field],
+                                set: (next) => setFormat(field, next)
+                            },
+                            settings.defaults.typeFormats
+                        ).entries;
                         gridInterface.openMenu(event.currentTarget as HTMLElement, entries);
                     }}
                 >
@@ -1253,7 +1269,8 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                   change,
                   typed: settings.typedNumbers,
                   idOf: (part) => idOf(ctx, part),
-                  formatNumber: (value) => gridInterface.__getCellFormatter(field, undefined, undefined, format).format(value),
+                  formatNumber: (value) =>
+                      gridInterface.__getCellFormatter(field, undefined, undefined, shownFormat).format(value),
                   shown: shownRange(datasource, field)
               })
             : nothing;
@@ -1448,12 +1465,12 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         } else if (at && row) {
             // the format of the dialog through the grid's own code, as the cell will show it - with the
             // blank / 0 of a number column
-            const formatter = gridInterface.__getCellFormatter(field, undefined, at.row, format);
+            const formatter = gridInterface.__getCellFormatter(field, undefined, at.row, shownFormat);
             const column = { ...gridInterface.__getGridConfig().columns[field], format };
             const formatted = formatter.format(row[field]);
             const shown =
                 kind === 'number'
-                    ? overrideNumberText(formatted, numberOverrideOf(column), zeroText(column, formatter))
+                    ? overrideNumberText(formatted, numberOverrideOf(column), zeroText(shownFormat, formatter))
                     : formatted;
             const link = formatProblems(format).length ? null : gridInterface.__getLinkResult(field, at.row, format);
             const href = link && 'href' in link ? link.href : null;
@@ -1745,8 +1762,10 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                 update,
                 (name) => settings.formats[name]?.multiline ?? gridInterface.getDatasource().getField(name).multiline === true
             )}
+            ${defaultsTabPanel(ctx, settings.defaults, settings.tab, update)}
             <div class="filter-editor-footer">
                 ${settings.tab === 'detailForm' ? detailFormResetButton(ctx, settings.detailForm, update) : nothing}
+                ${settings.tab === 'defaults' ? defaultsResetButton(ctx, settings.defaults, update) : nothing}
                 <span class="column-settings-resets" ?hidden=${settings.tab !== 'columns'}>
                     <button
                         type="button"

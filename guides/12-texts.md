@@ -687,6 +687,7 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.label` | `Label` | the label of the input of the column's label, every column: empty is the column's own, the input shows it |
 | `columnSettings.format` | `Format` | the label of the format picker of a date or number column |
 | `columnSettings.format.tooltip` | `How the cells show the value` | its tooltip |
+| `columnSettings.format.ofType` | `Default: {format}` | the format picker of a column without a format of its own whose type has one (the Defaults tab): `{format}` the type's format |
 | `columnSettings.filterAsShown` | `Filter as shown` | the checkbox under the format of a date or number column: the header filter takes the text as the cells show it |
 | `columnSettings.filterAsShown.hint` | `The header filter takes the text as the cells show it: a week, a month, a year is the whole of it` | under it |
 | `columnSettings.filterAsShown.off` | `Not for the day of the week or the time of day: the header filter takes the field's format` | under it instead, greyed out: a format that is no period of time |
@@ -882,6 +883,7 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.applyAndClose` | `Apply & close` | applies and closes |
 | `columnSettings.tab.columns` | `Columns` | the tab of the columns' settings |
 | `columnSettings.tab.detailForm` | `Detail form` | the tab of the detail form |
+| `columnSettings.tab.defaults` | `Defaults` | the tab of the settings of the grid: the formats by type, the default view |
 | `columnSettings.section.general` | `General` | the tab of a column's label, read only, multiline and placeholder |
 | `columnSettings.section.display` | `Display` | the tab of what a column's cells show: format, text, link, checkboxes, blank / 0 |
 | `columnSettings.section.filter` | `Header filter` | the tab of a column's header filter operator and filter as you type |
@@ -919,6 +921,15 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.detailForm.removeSection` | `Remove section` | the button: the section out of the form, its fields stay |
 | `columnSettings.detailForm.reset` | `Reset form` | the button at the footer's left on the Detail form tab: the detail form the grid starts with |
 | `columnSettings.detailForm.reset.tooltip` | `The detail form the grid starts with` | its tooltip |
+| `columnSettings.defaults.formats` | `Formats by type` | the Defaults tab: the heading over the formats of a date, a datetime and a number column (`GridState.typeFormats`) |
+| `columnSettings.defaults.formats.hint` | `A column without a format of its own shows the format of its type` | its hint |
+| `columnSettings.defaults.format.tooltip` | `How every column of this type shows its values` | the tooltip of each type's format picker |
+| `columnSettings.defaults.views` | `Views` | the heading over the default view |
+| `columnSettings.defaults.defaultView` | `Default view` | the picker of the view the grid opens with: Standard or a view |
+| `columnSettings.defaults.defaultView.hint` | `The view the grid opens with` | its hint |
+| `columnSettings.defaults.noViews` | `No views saved yet: save one from the views button` | its hint without views, the picker greyed out |
+| `columnSettings.defaults.reset` | `Reset formats` | the button at the footer's left on the Defaults tab |
+| `columnSettings.defaults.reset.tooltip` | `The formats by type the grid starts with` | its tooltip |
 
 ### Detail form
 
