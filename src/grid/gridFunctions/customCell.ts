@@ -150,6 +150,9 @@ export function renderCustomCell(ctx: Grid, custom: CustomCell) {
                     if ((!isDate || ownEdit()) && !isCellLinkTarget(e.target)) {
                         editCustomCell(ctx, custom);
                     }
+                    setTimeout(() => {
+                        ctx.gridInterface.__callSubscribers('cell-dblclick', { ...cellData, originalEvent: e });
+                    });
                 }}
                 @focusin=${(e: FocusEvent) => {
                     // the focus moved within the cell, between the host and what the renderer put in it

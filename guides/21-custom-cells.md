@@ -251,7 +251,7 @@ it as they find the input of another cell. It has the keyboard focus ring of eve
 - **Space** on the host does not scroll the page (a typed space opens the editor).
 - **Copy** (Ctrl+C) copies the cell's text - the formatter's, not what the renderer drew. **Paste** writes
   the value, as into a checkbox: the host is no input.
-- A click makes the row the current row and sends `cell-click`; the focus moving into the cell sends
+- A click makes the row the current row and sends `cell-click`, a double click `cell-dblclick`; the focus moving into the cell sends
   `cell-row-focus` once - moving on from the host into your control is not a new focus of the cell.
 
 Stop a key your control handles itself, `event.stopPropagation()`, when the grid should not get it: a

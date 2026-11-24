@@ -672,6 +672,19 @@ describe('custom cells - keys and events', () => {
         expect(clicks).toEqual([2]);
     });
 
+    it('expect a double click to send cell-dblclick with the cell', async () => {
+        const { id } = recorder();
+        const { element, gridInterface } = await mountGrid(config({ status: id }), rows(), fields());
+        const received: { row: number; attribute: string; type: string }[] = [];
+        gridInterface.on('cell-dblclick', (data) =>
+            received.push({ row: data.row, attribute: data.attribute, type: data.originalEvent.type })
+        );
+
+        hostOf(element, 'status', 2).dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+        await sleep(10);
+        expect(received).toEqual([{ row: 2, attribute: 'status', type: 'dblclick' }]);
+    });
+
     it('expect the row menu on a right click, Space on the cell not to scroll the page', async () => {
         const { id } = recorder();
         const { element } = await mountGrid(config({ status: id }), rows(), fields());

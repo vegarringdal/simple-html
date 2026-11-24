@@ -38,6 +38,7 @@ export const events: DemoSample = {
         const gridEvents: (keyof GridEvents)[] = [
             'grid-connected',
             'cell-click',
+            'cell-dblclick',
             'cell-row-focus',
             'cell-focus-button-click',
             'cell-header-focus',

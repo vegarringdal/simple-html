@@ -145,11 +145,12 @@ what it is.
 | event | sent when | payload |
 | --- | --- | --- |
 | `cell-click` | a data cell was clicked. Sent after the click, so the row is current already | the cell, `originalEvent`: the click |
+| `cell-dblclick` | a data cell was double-clicked. Sent after it - after the `cell-click` of its two clicks - and after what the grid does with it (the editor of a multiline cell, a lookup's list) | the cell, `originalEvent`: the dblclick |
 | `cell-row-focus` | a data cell got focus, by a click or the keyboard | the cell, `originalEvent`: the focus event |
 | `cell-focus-button-click` | the `...` button of a cell was clicked, or Space pressed in the cell | the cell, `target`: the cell's input, `originalEvent` |
 | `cell-header-focus` | a header filter got focus | the cell, `rowData`: see below |
 
-`cell-click` and `cell-row-focus` are not sent for a checkbox (boolean) cell.
+`cell-click`, `cell-dblclick` and `cell-row-focus` are not sent for a checkbox (boolean) cell.
 
 The focus button is shown in the focused cell by the column option `focusButton` (`'ALWAYS'`,
 `'SHOW_IF_GRID_NOT_READONLY'` or `'SHOW_IF_GRID_AND_CELL_NOT_READONLY'`). Use it to open a picker of

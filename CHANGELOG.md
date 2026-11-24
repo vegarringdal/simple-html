@@ -1381,6 +1381,11 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - the filter types of the sql entry: `SqlFilter`, `SqlFilterGroup`, `SqlFilterCondition`,
   `SqlFilterOperator`, `SqlV5Filter`, `SqlFieldsOptions`
 
+- `gridInterface.getServerFilter({ fields, find, calculated })`: the filter AND Find's filter, without the
+  calculated columns and the fields the backend has not - what to send to a backend in one call
+- the event `cell-dblclick`: a data cell double-clicked, the payload of `cell-click` (a custom and a link
+  cell too, not a checkbox)
+
 ##### Changed
 - `convertGridConfig()` of a v5 config throws a `TypeError` for a filter with an operator that is none
   (it was passed on) - the v5 filter converter is the one above

@@ -5,7 +5,8 @@ import type { Datasource, EntityUnion } from '../datasource/dataSource';
 import type { DatasourceEvents } from '../datasource/datasourceEvents';
 import { type Entity, isGroupRow } from '../datasource/entity';
 import type { FieldType } from '../datasource/field';
-import { type FilterExpression, type FilterOperator, operatorsFor, where } from '../datasource/filterExpression';
+import { and, type FilterExpression, type FilterOperator, operatorsFor, where } from '../datasource/filterExpression';
+import { withoutFields } from '../datasource/filterFields';
 import type { Formatter } from '../datasource/formatter';
 import { Emitter, type EventHandler } from '../emitter';
 import { assertTexts } from '../texts';
@@ -2460,6 +2461,68 @@ export class GridInterface<T> {
             );
         }
         return this.grid ? getFindFilter(this.grid, fields) : null;
+    }
+
+    /**
+     * The filter to send to a backend - what every button that loads rows from it can call: the filter
+     * (`datasource.getFilter()`) AND Find's *Filter rows* ({@link getFindFilter}), without the conditions
+     * the backend can not run - the calculated columns, and the fields it has no column for
+     * (`withoutFields()`: a condition taken out matches every row, so the backend sends every row the grid
+     * shows, maybe more - load them, the datasource's filter drops the rest). `toSqlWhere()`
+     * (`@simple-html/grid/sql`) makes SQL of it.
+     *
+     * @param options.fields the fields the backend has a column for: a condition on another field is
+     * taken out, and Find's filter names none of the others. Default every field
+     * @param options.find `false`: without Find's filter. Default `true`
+     * @param options.calculated `'keep'`: the conditions on the calculated columns stay (the database
+     * computes them too). Default `'strip'`, they go
+     * @returns the filter, `null` for every row
+     * @throws a `TypeError` for options that are wrong: `fields` that is no list of at least one field name
+     *
+     * @sample sql
+     * @example
+     * ```ts
+     * import { toSqlWhere } from '@simple-html/grid/sql';
+     *
+     * const columns = { company: 'company', country: 'country', age: { column: 'age', type: 'number' as const } };
+     * const filter = gridInterface.getServerFilter({ fields: Object.keys(columns) });
+     * const body = JSON.stringify({ filter }); // the backend: toSqlWhere(filter, { dialect: 'postgres', columns })
+     * ```
+     */
+    public getServerFilter(
+        options: { fields?: readonly string[]; find?: boolean; calculated?: 'strip' | 'keep' } = {}
+    ): FilterExpression | null {
+        assertOptions(
+            'getServerFilter',
+            options,
+            "getServerFilter({ fields: ['company', 'country'], find: true, calculated: 'strip' })"
+        );
+        const { fields, find = true, calculated = 'strip' } = options;
+        if (typeof find !== 'boolean') {
+            throw new TypeError(`getServerFilter({ find }): find is true or false, got ${JSON.stringify(find)}`);
+        }
+        if (calculated !== 'strip' && calculated !== 'keep') {
+            throw new TypeError(
+                `getServerFilter({ calculated }): calculated is 'strip' or 'keep', got ${JSON.stringify(calculated)}`
+            );
+        }
+        if (
+            fields !== undefined &&
+            (!Array.isArray(fields) || !fields.length || fields.some((field) => typeof field !== 'string'))
+        ) {
+            throw new TypeError(
+                `getServerFilter({ fields }): fields is a list of the field names your backend has, e.g. ['company', 'country'], got ${JSON.stringify(fields)}`
+            );
+        }
+        const parts = [
+            this.dataSource.getFilter(),
+            find ? this.getFindFilter(fields === undefined ? {} : { fields }) : null
+        ].filter((part): part is FilterExpression => part !== null);
+        const filter = parts.length > 1 ? and(...parts) : (parts[0] ?? null);
+        const known = fields === undefined ? null : new Set(fields);
+        const strip = (field: string) =>
+            (calculated === 'strip' && Object.hasOwn(this.calculated, field)) || (known !== null && !known.has(field));
+        return withoutFields(filter, strip);
     }
 
     /**

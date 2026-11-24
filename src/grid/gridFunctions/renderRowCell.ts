@@ -473,13 +473,27 @@ export function renderRowCell(
                                 });
                             });
                         }}
-                        @dblclick=${() => {
+                        @dblclick=${(e: MouseEvent) => {
                             if (multiline) {
                                 openEditor();
                             }
                             if (lookupEditable) {
                                 openLookup();
                             }
+                            // after the clicks' cell-click, as they are sent
+                            setTimeout(() => {
+                                ctx.gridInterface.__callSubscribers('cell-dblclick', {
+                                    cell,
+                                    row,
+                                    column,
+                                    celno,
+                                    colType,
+                                    cellType,
+                                    attribute,
+                                    rowData,
+                                    originalEvent: e
+                                });
+                            });
                         }}
                         @mousedown=${(e: MouseEvent) => {
                             if (e.button === 2) {

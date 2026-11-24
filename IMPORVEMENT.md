@@ -5189,7 +5189,7 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * tests: typeFormats.test.ts (12); the tab tests of detailFormSettings.test.ts with three tabs; texts.test.ts
   shows the tab (showDefaults)
 
-### The wishlist of an app with a backend (2026-11-24): #1, #2, #4, #5, #10
+### The wishlist of an app with a backend (2026-11-24): #1, #2, #4, #5, #6, #7, #10
 
 * the user's list, "helpers the app would otherwise have to write"; #8 (rows of arrays) waits for their
   measurements, #11 (column defaults when converting v5) was taken off the list
@@ -5208,6 +5208,10 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
   options' errors not: the backend's own mistake is a 500
 * sqlColumnsFromFields: the fields of the datasource (a type, or a config's `type`) as columns; nameCase,
   column (a function), dateStorage
+* #6 `getServerFilter({ fields, find = true, calculated = 'strip' })`: getFilter() AND getFindFilter({ fields }),
+  then withoutFields - the calculated columns of the state and the fields not in `fields`
+* #7 `cell-dblclick`: sent in a setTimeout by the input cell's and the custom cell's dblclick (a link cell is
+  one), after what the grid does with it; the checkbox cell sends neither click
 
 ## Considered, not done
 

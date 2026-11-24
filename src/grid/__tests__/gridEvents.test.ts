@@ -128,6 +128,34 @@ describe('grid events - cell events', () => {
         expect(received[0].originalEvent).toBe(click);
     });
 
+    it('expect cell-dblclick with the payload of cell-click, after the cell-click of its clicks', async () => {
+        const { element, datasource, gridInterface } = await mountGrid();
+        const order: string[] = [];
+        const received: GridEvents['cell-dblclick'][] = [];
+        gridInterface.on('cell-click', () => {
+            order.push('click');
+        });
+        gridInterface.on('cell-dblclick', (data) => {
+            order.push('dblclick');
+            received.push(data);
+        });
+
+        const input = cellInput(element, 'lastname', 1);
+        input.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        input.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        const dblclick = new MouseEvent('dblclick', { bubbles: true });
+        input.dispatchEvent(dblclick);
+        await sleep(0);
+
+        expect(order).toEqual(['click', 'click', 'dblclick']);
+        expect(received[0].attribute).toEqual('lastname');
+        expect(received[0].row).toEqual(1);
+        expect(received[0].rowData).toBe(datasource.getRows()[1]);
+        expect(received[0].cellType).toEqual('row-cell');
+        expect(received[0].cell.contains(input)).toBe(true);
+        expect(received[0].originalEvent).toBe(dblclick);
+    });
+
     it('expect a handler that returns nothing to keep listening', async () => {
         const { element, gridInterface } = await mountGrid();
         const attributes: string[] = [];

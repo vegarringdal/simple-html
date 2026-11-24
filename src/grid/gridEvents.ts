@@ -78,6 +78,27 @@ export interface GridEvents {
     };
 
     /**
+     * A data cell was double-clicked: the payload of `cell-click`, `originalEvent` the dblclick. Sent in a
+     * `setTimeout` after it, so after the `cell-click` of each of its two clicks. A cell with a renderer
+     * and a link cell send it too; a boolean (checkbox) cell does not. What the grid does with a double
+     * click is done first - a multiline cell's editor, a lookup's list are open - and the text of a link
+     * opened it.
+     *
+     * @example
+     * ```ts
+     * gridInterface.on('cell-dblclick', ({ attribute, rowData }) => {
+     *     if (attribute === 'report') {
+     *         window.open(`/reports/${String(rowData.id)}`);
+     *     }
+     * });
+     * ```
+     */
+    'cell-dblclick': GridCellEventData & {
+        /** the double click */
+        originalEvent: MouseEvent;
+    };
+
+    /**
      * A data cell got focus, by click or keyboard. `originalEvent` is the focus event. Not sent for a
      * boolean (checkbox) cell.
      */

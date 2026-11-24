@@ -519,6 +519,27 @@ gives a condition. Its SQL selects the rows *Filter rows* shows, or fewer - neve
 the same rows on the text fields and the lookup columns. The [find guide](19-find.md#filter-rows-on-a-backend)
 has every field type; the differences are in the table below.
 
+## The filter to send: `getServerFilter()`
+
+One call gives what a button that loads rows sends: the filter AND Find's filter, without the conditions
+the backend can not run.
+
+```ts
+const columns = { company: 'company', country: 'country', age: { column: 'age', type: 'number' as const } };
+
+// the filter AND Find's "Filter rows", without the calculated columns and the fields not in columns
+const filter = gridInterface.getServerFilter({ fields: Object.keys(columns) });
+await fetch('/api/customers', { method: 'POST', body: JSON.stringify({ filter }) });
+```
+
+- `fields`: the fields the backend has. A condition on another field is taken out, as
+  [`withoutFields()`](#calculated-columns) takes it out - it matches every row - and Find's filter names
+  none of them. Default every field.
+- `find: false` leaves Find's filter out. `calculated: 'keep'` keeps the conditions on the calculated
+  columns, for a database that computes them too (default `'strip'`).
+- `null` is every row. What comes back is filtered by the datasource as it is: the browser drops the
+  rows the backend could not.
+
 ## Where the SQL differs from the grid
 
 Where SQL can do what the grid does, the SQL selects the same rows: the tests run thousands of filters
