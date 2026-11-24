@@ -2480,7 +2480,7 @@ in the console. All passed. Found and fixed:
   workers (texts.test.ts' every-text tests, the docs site's every-guide test, the 1000 rows scrolled); GitHub's
   runners are slower. `testTimeout: 30_000` in vitest.config.ts: room on the runners, a test that hangs still
   stops. All 2922 tests pass with `npx vitest run` as the workflow runs it
-* seen too, not changed: the run warns that actions/checkout@v4 and actions/setup-node@v4 target Node 20,
+* seen too, changed 2026-11-24 (v7): the run warns that actions/checkout@v4 and actions/setup-node@v4 target Node 20,
   which GitHub forces onto Node 24 now (v7 of both is out)
 
 ### SQL from the filter: `@simple-html/grid/sql` (user request)
@@ -5117,8 +5117,6 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
 * **The publish workflows on master**: copy `.github/workflows/release.yml`, `beta.yml` and `next.yml` onto master, so
   GitHub shows their "Run workflow" buttons? The user (2026-11-23): not yet - keep them ready on v6_maybe.
   When it is time: one commit on master with the three files; a run then builds the branch picked
-* **actions/checkout and actions/setup-node v4 → v7**: the Node 20 deprecation warning of the runs - bump
-  them?
 * **The old worktrees**: about 35 merged worktrees in `.claude/worktrees/` - `git worktree remove --force
   <path>` for each, by the user (removal commands are blocked for Claude)
 
