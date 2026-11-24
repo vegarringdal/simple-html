@@ -574,9 +574,8 @@ const response = await fetch('/api/customers', {
     body: JSON.stringify({ filter: datasource.getFilter(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })
 });
 if (response.ok) {
-    // dates come as text in JSON: make them Dates, as the fields of the grid need
-    const rows = (await response.json()).map((row: any) => ({ ...row, born: row.born ? new Date(row.born) : null }));
-    datasource.setData(rows);
+    // dates come as text in JSON: parse makes them Dates, as the fields of the grid need
+    datasource.setData(await response.json(), { parse: true });
 }
 ```
 

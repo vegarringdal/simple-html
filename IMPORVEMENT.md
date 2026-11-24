@@ -5189,7 +5189,7 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * tests: typeFormats.test.ts (12); the tab tests of detailFormSettings.test.ts with three tabs; texts.test.ts
   shows the tab (showDefaults)
 
-### The wishlist of an app with a backend (2026-11-24): #1 - #7, #10
+### The wishlist of an app with a backend (2026-11-24): #1 - #7, #9, #10
 
 * the user's list, "helpers the app would otherwise have to write"; #8 (rows of arrays) waits for their
   measurements, #11 (column defaults when converting v5) was taken off the list
@@ -5218,6 +5218,10 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
   follows `fields-change` while connected and compares the datasource's fields version when it connects (a
   removed grid holds no subscription - gridEvents.test.ts asks for none): a format a new type does not take goes (the shown ones,
   the config's, initialState's), its label / placeholder / readonly kept; the sort values again
+* #9 `parseRow()` / `setData(rows, { parse: true })` (parseValue.ts): only the listed fields; a value not
+  readable as its type stays (nothing lost); a day `YYYY-MM-DD` is local midnight - `new Date()` reads it as
+  UTC, the day before west of Greenwich; a date-time without a zone local, as ISO says. In place: a row
+  already in the datasource is a proxy, setting would be an edit - for rows before setData
 * #7 `cell-dblclick`: sent in a setTimeout by the input cell's and the custom cell's dblclick (a link cell is
   one), after what the grid does with it; the checkbox cell sends neither click
 

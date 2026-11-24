@@ -208,6 +208,29 @@ datasource.getFormatter('born').format(new Date(2026, 10, 20)); // '2026-11-20'
 datasource.getFormatter('price').format(12.5); // '12,5'
 ```
 
+### Rows from JSON: `parse`
+
+JSON has no dates, and a backend can send numbers as text. `setData(rows, { parse: true })` reads each
+row's values as the types of the fields first - `datasource.parseRow(row)` does it to one row:
+
+```ts
+import { Datasource } from '@simple-html/grid';
+
+const datasource = new Datasource({ fields: { born: 'date', amount: 'number', active: 'boolean' } });
+datasource.setData([{ born: '2026-11-22', amount: '12.5', active: 'true' }], { parse: true });
+// born: a Date, 22 November 00:00 local time - amount: 12.5 - active: true
+```
+
+| type | becomes |
+| --- | --- |
+| `date`, `datetime` | a `Date`: `'2026-11-22'` the start of that day in local time (not UTC, as `new Date('2026-11-22')` reads it); `'2026-11-22T08:30:00'` and `'2026-11-22 08:30:00'` local time; with `Z` or an offset that instant; a number the milliseconds since 1970 |
+| `number` | the number of text that is one: `'12.5'`, `'-3'`, `'1e3'` - not `'12,5'` |
+| `boolean` | `'true'` / `'false'` (any case), `1` / `0`, `'1'` / `'0'` |
+
+`''` is `null` for those types. A value that can not be read as its type stays as it is, the cell shows
+it; the fields not listed and the text fields are not touched. `parseRow()` changes the object: use it on
+rows before `setData()` - a row in the datasource is a proxy, its values set would be edits.
+
 ### Fields known later: `setFields()`
 
 When the columns are known only after the datasource is made - the metadata of a query comes with its

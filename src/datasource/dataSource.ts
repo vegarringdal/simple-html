@@ -17,6 +17,7 @@ import type { GroupArgument } from './groupArgument';
 import { Grouping } from './grouping';
 import { isBlank } from './isBlank';
 import type { Conflict, UpsertOptions, UpsertResult } from './liveData';
+import { parseFieldValue } from './parseValue';
 import { Selection } from './selection';
 import type { SelectionMode } from './selectionMode';
 import { Sort } from './sort';
@@ -427,6 +428,46 @@ export class Datasource<T = any> {
         this.__fieldsVersion++;
         this.__callSubscribers('fields-change', {});
         this.reloadDatasource();
+    }
+
+    /**
+     * Reads the values of a row as the types of the fields: a row as JSON gives it - from a backend, a
+     * stream - with the values the grid needs. Each field listed in `fields` (the others stay as they are):
+     *
+     * - `date`, `datetime`: ISO text a `Date` - `'2026-11-22'` the start of that day in local time (not
+     *   UTC, as `new Date('2026-11-22')` reads it), `'2026-11-22T08:30:00'` and `'2026-11-22 08:30:00'`
+     *   local time, with `Z` or an offset that instant - a number the milliseconds since 1970
+     * - `number`: text that is a number (`'12.5'`, `'-3'`, `'1e3'`) the number
+     * - `boolean`: `'true'` / `'false'`, `1` / `0`, `'1'` / `'0'` true and false
+     * - `''` is `null` for those types; a value that can not be read as its type stays as it is
+     *
+     * Changes the object, and returns it: for the rows before `setData()` - a row already in the
+     * datasource is a proxy, setting its values would be edits. `setData(rows, { parse: true })` does it
+     * to every row.
+     *
+     * @param row a plain object, as JSON gave it
+     * @returns the same object
+     *
+     * @example
+     * ```ts
+     * import { Datasource } from '@simple-html/grid';
+     *
+     * const datasource = new Datasource({ fields: { born: 'date', amount: 'number', active: 'boolean' } });
+     * const row = datasource.parseRow({ born: '2026-11-22', amount: '12.5', active: 'true', name: 'Ann' });
+     * // { born: Date (22 November 2026, 00:00 local), amount: 12.5, active: true, name: 'Ann' }
+     *
+     * declare const rowsFromServer: object[];
+     * datasource.setData(rowsFromServer, { parse: true }); // every row
+     * ```
+     */
+    public parseRow<R extends object>(row: R): R {
+        const values = row as Record<string, unknown>;
+        for (const [name, config] of this.__fields) {
+            if (Object.hasOwn(values, name)) {
+                values[name] = parseFieldValue(values[name], config.type ?? 'text');
+            }
+        }
+        return row;
     }
 
     /** counts setFields(): see __getFieldsVersion */
@@ -1462,6 +1503,8 @@ export class Datasource<T = any> {
      * @param options.refilter `false` to show every row that is set, also one the filter would leave out,
      * default `true`: the filter runs on the rows. With `false` the filter stays set (the header filters
      * and the footer still show it) while rows it leaves out are shown, until it runs again
+     * @param options.parse `true`: each row's values read as the types of the fields first - ISO text a
+     * `Date`, `'12.5'` a number - see {@link parseRow}. For rows as JSON gives them. Default `false`
      *
      * The selection follows the key (`DatasourceOptions.key`): rows that come back with the same key stay
      * selected. {@link currentEntity} is set to `null` when it is no longer in the data (replaced by new
@@ -1483,9 +1526,14 @@ export class Datasource<T = any> {
      * datasource.setData(moreRows, { add: true, refilter: false }); // shown even if the filter leaves them out
      * ```
      */
-    public setData(rows: any[], options: { add?: boolean; refilter?: boolean } = {}) {
+    public setData(rows: any[], options: { add?: boolean; refilter?: boolean; parse?: boolean } = {}) {
         assertOptions('setData', options, 'setData(rows, { add: true })');
-        const { add = false, refilter = true } = options;
+        const { add = false, refilter = true, parse = false } = options;
+        if (parse) {
+            for (const row of rows) {
+                this.parseRow(row);
+            }
+        }
         if (add) {
             // concat, not push(...rows): a spread of very many rows is more arguments than a call takes
             this.__collectionFiltered = this.__collectionFiltered.concat(this.__dataContainer.setData(rows, { add }));

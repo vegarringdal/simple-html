@@ -1363,7 +1363,7 @@ rows); the vertical time is rendering every cell of every row on screen, which s
   mouse - `datePickerConfig.rowHeight` still wins. Whether it fits under the cell is worked out from the
   rows' height when `datepickerHeight` is not given (it was 282 whatever `rowHeight` was)
 
-#### Helpers for a backend: v5 filters, the columns from the fields, the conditions a backend has not, the 400 errors
+#### Helpers for an app with a backend: v5 filters, the columns from the fields, the filter to send, the 400 errors, fields known later, rows from JSON
 
 ##### Added
 - `convertV5Filter(filter)`, `isV5Filter(x)`, `normalizeFilter(x)` - from `@simple-html/grid` and from
@@ -1386,6 +1386,9 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - `datasource.setFields(fields)`: the fields replaced after the datasource is made (the metadata of a
   query came); the rows filtered, sorted and grouped again, the event `fields-change`. A grid on it drops
   the display formats the new types do not take (not the label, placeholder, read only)
+- `datasource.parseRow(row)` and `setData(rows, { parse: true })`: the values of rows as JSON gives them
+  read as the types of the fields - ISO text a `Date` (a day the start of it in local time), `'12.5'` a
+  number, `'true'` / `1` true
 - the event `cell-dblclick`: a data cell double-clicked, the payload of `cell-click` (a custom and a link
   cell too, not a checkbox)
 
