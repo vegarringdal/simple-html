@@ -5240,6 +5240,16 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * find-case-sql-check.js: the SQL sample's WHERE stays the filter's with *Filter rows* on (the button and
   typed in the bar); the guides (find, SQL, events, filtering, features) say Find filters in the browser
 
+### `importFile()`: an Excel import in one call (2026-11-24)
+
+* the user: "want a excel import to the grid as helper function, so external app do not need it. Default
+  to first sheet". The reader was there (readImportFile, xlsxRead.ts, the import dialog); new is
+  `gridInterface.importFile(file, { sheet, separator, ...ImportOptions })`: readImportFile + importRows,
+  `header` true by default. The import options are checked before the file is read
+* adds new rows (undoable), as the dialog: replacing the data stays readImportFile + your own setData
+* tests in importFile.test.ts: getExcel() of a grid into another by importFile(), a sheet by name with
+  `header: false`, CSV with `invalidRows: 'skip'`, the errors
+
 ## Considered, not done
 
 ## Candidates / not started

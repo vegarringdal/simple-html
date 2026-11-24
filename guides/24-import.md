@@ -118,6 +118,19 @@ row, *Required*.
 
 ## From code
 
+**`importFile(file)`** does it in one call: it reads an Excel workbook (.xlsx) or a CSV file - the first
+sheet, unless `sheet` names another - and adds its rows, the first row that is not empty the header.
+
+```ts
+declare const file: File;
+
+const result = await gridInterface.importFile(file); // the first sheet, a header row
+await gridInterface.importFile(file, { sheet: 'Customers', invalidRows: 'skip' }); // another sheet
+```
+
+It takes `sheet` and `separator` of `readImportFile()` and the options of `importRows()` below, `header`
+`true` by default. The rows are new rows, one step of the undo history, as the dialog adds them.
+
 `importRows()` imports rows of cells - an array of rows, each an array of text, numbers, booleans, `Date`
 or `null`. `readImportFile()` reads a file into such rows:
 

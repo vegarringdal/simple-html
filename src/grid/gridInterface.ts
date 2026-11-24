@@ -101,6 +101,7 @@ import { updateVerticalScrollHeight } from './gridFunctions/updateVerticalScroll
 import type { CellClass, GridHooks } from './gridHooks';
 import type { MenuContext, MenuEntry, MenuPosition } from './gridMenus';
 import { assertViews, type GridView, newViewId, startViews, viewStateText, writeStoredViews } from './gridView';
+import { type ReadImportFileOptions, readImportFile } from './importFile';
 import { type ColumnsReport, type ReconcileOptions, reconcileColumns, type SourceColumn } from './reconcileColumns';
 import type { ExcelOptions } from './xlsx';
 import type { ImportCell } from './xlsxRead';
@@ -2765,6 +2766,60 @@ export class GridInterface<T> {
         }
         assertImportOptions(options);
         return importRows(this, rows, options);
+    }
+
+    /**
+     * Imports a file in one call: an Excel workbook (.xlsx) or a CSV file, read by {@link readImportFile}
+     * and added by {@link importRows} - so an app needs no reader of its own. By default the first sheet,
+     * and the first row that is not empty is the header: its names go to the columns' labels or the
+     * fields' names, as the import dialog matches them.
+     *
+     * The rows are new rows, one step of the undo history, see {@link importRows}. To replace the data
+     * instead, read the file with {@link readImportFile}.
+     *
+     * Code is not stopped by the grid's `readonly` or the edit permissions: check them yourself when the
+     * file comes from the user. Works without the grid on the page too.
+     *
+     * @param file the file: from an `<input type="file">`, a drop, `fetch()` - any `Blob`
+     * @param options `sheet` (its index from 0 or its name, default the first) and `separator` (a CSV
+     * file's, default the one found) of {@link ReadImportFileOptions}, and the options of
+     * {@link importRows} - `header` is `true` by default here
+     * @returns (a promise of) the new rows, the problems found and how many rows were skipped
+     * @throws (the promise rejects with) an `ImportFileError` for a file it does not read (over a limit,
+     * an .xls file, a damaged one), a `RangeError` for a sheet the workbook has not, a `TypeError` for an
+     * option that is wrong
+     *
+     * @sample import
+     * @example
+     * ```ts
+     * const input = document.querySelector<HTMLInputElement>('#file')!;
+     * input.onchange = async () => {
+     *     const result = await gridInterface.importFile(input.files![0]); // the first sheet, a header row
+     *     console.log(`${result.rows.length} rows imported, ${result.problems.length} problems`);
+     * };
+     *
+     * // another sheet, the rows with problems left out
+     * await gridInterface.importFile(input.files![0], { sheet: 'Customers', invalidRows: 'skip' });
+     * ```
+     */
+    public async importFile(file: Blob, options: ReadImportFileOptions & ImportOptions = {}): Promise<ImportResult<T>> {
+        assertOptions('importFile', options, 'importFile(file, { sheet: 0, header: true })');
+        if (!(file instanceof Blob)) {
+            throw new TypeError(`importFile(): file is a File or a Blob, not ${JSON.stringify(file)}`);
+        }
+        const { sheet, separator, header = true, ...rest } = options;
+        const importOptions: ImportOptions = { header, ...rest };
+        // the options checked before the file is read
+        assertImportOptions(importOptions);
+        const read: ReadImportFileOptions = {};
+        if (sheet !== undefined) {
+            read.sheet = sheet;
+        }
+        if (separator !== undefined) {
+            read.separator = separator;
+        }
+        const table = await readImportFile(file, read);
+        return importRows(this, table.rows, importOptions);
     }
 
     /**

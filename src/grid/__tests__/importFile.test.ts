@@ -180,4 +180,37 @@ describe('the grid exports, the grid imports', () => {
             );
         });
     }
+
+    it('expect importFile() to read the first sheet with a header and add the rows - one call', async () => {
+        const from = grid();
+        from.datasource.setData(people.map((person) => ({ ...person })));
+        const file = await from.gridInterface.getExcel();
+        const to = grid();
+        to.datasource.setData([]);
+        const result = await to.gridInterface.importFile(file);
+        expect(result.problems).toEqual([]);
+        expect(values(result.rows)).toEqual(values(people));
+        expect(to.datasource.getChanges().newEntities).toHaveLength(3);
+    });
+
+    it('expect importFile() to take a sheet by name or index, header: false and the import options', async () => {
+        const bytes = await buildXlsx({ name: 'Other', columns: [{ label: 'x' }], rows: [['y']] });
+        const to = grid();
+        to.datasource.setData([]);
+        const named = await to.gridInterface.importFile(new Blob([bytes]), { sheet: 'Other', header: false, fields: ['name'] });
+        expect(named.rows.map((row) => row.name)).toEqual(['x', 'y']);
+        const csv = new Blob(['name;age\nAnn;abc\nBob;7\n']);
+        const skipped = await to.gridInterface.importFile(csv, { separator: ';', invalidRows: 'skip' });
+        expect(skipped.rows.map((row) => row.name)).toEqual(['Bob']);
+        expect(skipped.skipped).toBe(1);
+    });
+
+    it('expect importFile() to reject what is wrong: no file, an option, a sheet the workbook has not', async () => {
+        const { gridInterface } = grid();
+        await expect(gridInterface.importFile('a,b' as never)).rejects.toThrow(TypeError);
+        await expect(gridInterface.importFile(new Blob(['a']), { invalidRows: 'drop' as never })).rejects.toThrow(TypeError);
+        await expect(gridInterface.importFile(new Blob(['a']), { colour: 1 } as never)).rejects.toThrow(TypeError);
+        const bytes = await buildXlsx({ name: 'People', columns: [{ label: 'Name' }], rows: [['Ann']] });
+        await expect(gridInterface.importFile(new Blob([bytes]), { sheet: 1 })).rejects.toThrow(RangeError);
+    });
 });

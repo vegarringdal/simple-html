@@ -1366,6 +1366,8 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 #### Helpers for an app with a backend: v5 filters, the columns from the fields, the filter to send, the 400 errors, fields known later, rows from JSON
 
 ##### Added
+- `gridInterface.importFile(file, options)`: an Excel workbook (the first sheet by default) or a CSV file
+  read and its rows added in one call - `readImportFile()` and `importRows()` with `header: true`
 - `convertV5Filter(filter)`, `isV5Filter(x)`, `normalizeFilter(x)` - from `@simple-html/grid` and from
   `@simple-html/grid/sql` (no DOM): a v5 filter (`filterArguments`, `attribute`) as a v6 one, for old links,
   bookmarks and saved configs. `normalizeFilter` takes either shape, also as JSON text, `null` for none; what
