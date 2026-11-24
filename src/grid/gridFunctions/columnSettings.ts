@@ -794,8 +794,11 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
             /><span>${text(label)}</span>
         </label>`;
 
-    /** a text column: the text it shows, Show as link, the address, Open in a new tab */
-    const textSettings = () => {
+    /**
+     * the text a cell shows (a template), and with `withLink` Show as link, the address, Open in a new
+     * tab: a text column and a number column have both, a date column the text only
+     */
+    const textSettings = (withLink: boolean) => {
         const link = format?.link;
         const textProblems = formatProblems(format?.text === undefined ? undefined : { text: format.text });
         const urlProblems = formatProblems(link ? { link } : undefined);
@@ -813,18 +816,22 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                 }),
             textProblems
         )}
-        ${checkbox('columnSettings.link', !!link, (on) =>
-            change((next) => {
-                if (on) {
-                    // a link from the dialog opens in a new tab at first: the grid's page stays
-                    next.link = { url: '', newTab: true };
-                } else {
-                    delete next.link;
-                }
-            })
-        )}
         ${
-            link
+            withLink
+                ? checkbox('columnSettings.link', !!link, (on) =>
+                      change((next) => {
+                          if (on) {
+                              // a link from the dialog opens in a new tab at first: the grid's page stays
+                              next.link = { url: '', newTab: true };
+                          } else {
+                              delete next.link;
+                          }
+                      })
+                  )
+                : nothing
+        }
+        ${
+            withLink && link
                 ? html`${templateInput(
                       'url',
                       'columnSettings.url',
@@ -1534,12 +1541,14 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         const checkboxes = format?.checkbox !== undefined;
         switch (kind) {
             case 'text':
-                return html`${checkboxSettings()} ${checkboxes ? nothing : textSettings()}`;
+                return html`${checkboxSettings()} ${checkboxes ? nothing : textSettings(true)}`;
             case 'number':
-                return html`${checkboxSettings()} ${checkboxes ? nothing : html`${formatSettings()} ${numberOverrideSettings()}`}`;
+                return html`${checkboxSettings()} ${
+                    checkboxes ? nothing : html`${formatSettings()} ${numberOverrideSettings()} ${textSettings(true)}`
+                }`;
             case 'date':
             case 'datetime':
-                return formatSettings();
+                return html`${formatSettings()} ${textSettings(false)}`;
             default:
                 return html`<div class="column-settings-none">${text(kind === 'lookup' ? 'columnSettings.none.lookup' : 'columnSettings.none.boolean')}</div>`;
         }

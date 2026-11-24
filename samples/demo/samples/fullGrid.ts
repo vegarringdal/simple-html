@@ -112,7 +112,8 @@ function config(readonly: boolean): GridConfig {
                 renderer: 'full-grid-status',
                 format: { rules: [{ operator: 'EQUAL', value: 'waiting', background: 'orange' }] }
             },
-            age: { aggregate: 'avg' },
+            // a template on a number: {value} and text, the value stays the number (sorting, filtering)
+            age: { aggregate: 'avg', format: { text: '{value} yrs' } },
             // a data bar too: the negative balances to the left of 0
             balance: {
                 aggregate: ['sum', 'avg'],

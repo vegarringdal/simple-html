@@ -431,8 +431,8 @@ describe('links in the grid - the state and the config', () => {
         expect(() => gridInterface.setState({ formats: { email: { link: { url: 'javascript:alert(1)' } } } })).toThrow(
             /setState: formats.email.link.url is "javascript:alert\(1\)": a link to javascript: is not allowed/
         );
-        expect(() => gridInterface.setState({ formats: { id: { link: { url: '{website}' } } } })).toThrow(
-            /formats.id.link is for a text field/
+        expect(() => gridInterface.setState({ formats: { company: { date: 'iso' } } })).toThrow(
+            /formats.company.date is for a date or datetime field/
         );
         expect(gridInterface.getState().formats).toEqual(before);
     });
@@ -460,5 +460,61 @@ describe('links in the grid - the state and the config', () => {
         const gridInterface = new GridInterface(config(), datasource);
         expect(() => gridInterface.updateConfig(bad({ link: { url: 'data:text/html,{x}' } }))).toThrow(TypeError);
         expect(() => gridInterface.updateConfig(bad({ text: '' }))).toThrow(TypeError);
+    });
+});
+
+describe('templates and links on a number and a date column', () => {
+    const NUMBER_COLUMNS = ['weight', 'order', 'born'];
+    const numberRows = () => [{ weight: 1234.56, order: 1042, born: new Date(2001, 4, 17) }];
+    const numberFields = (): DatasourceOptions => ({ fields: { weight: 'number', order: 'number', born: 'date' } });
+    const numberConfig = (): GridConfig => ({
+        readonly: false,
+        columns: {
+            weight: { format: { number: { decimals: 1, thousands: ' ', decimal: ',' }, text: '{value} kg' } },
+            order: { format: { text: 'order {value}', link: { url: 'https://shop.example.com/order/{value}' } } },
+            born: { format: { date: 'norwegian', text: 'born {value}' } }
+        },
+        layout: { center: NUMBER_COLUMNS.map((field) => ({ fields: [field], width: 120 })) }
+    });
+    const input = (element: GridElement, field: string) =>
+        element.querySelector(`input.cellpos-middle-pinned-0-${NUMBER_COLUMNS.indexOf(field)}-0`) as HTMLInputElement;
+    const host = (element: GridElement, field: string) =>
+        element.querySelector(
+            `.simple-html-grid-cell-custom.cellpos-middle-pinned-0-${NUMBER_COLUMNS.indexOf(field)}-0`
+        ) as HTMLElement;
+
+    it('expect {value} in the number or date format of the column, the template around it', async () => {
+        const { element } = await mountGrid(numberConfig(), numberRows(), numberFields());
+        expect(input(element, 'weight').value).toEqual('1 234,6 kg');
+        expect(input(element, 'born').value).toEqual('born 17.05.2001');
+    });
+
+    it('expect a number edited as the value, the template after', async () => {
+        const { element, datasource } = await mountGrid(numberConfig(), numberRows(), numberFields());
+        input(element, 'weight').focus();
+        expect(input(element, 'weight').value).not.toContain('kg');
+        input(element, 'weight').value = '80';
+        input(element, 'weight').dispatchEvent(new Event('input', { bubbles: true }));
+        expect(datasource.getRows()[0].weight).toEqual(80);
+        input(element, 'weight').blur();
+        expect(input(element, 'weight').value).toEqual('80,0 kg');
+    });
+
+    it('expect a number column with a link to be a link cell: its text the template, its address the number', async () => {
+        const { element } = await mountGrid(numberConfig(), numberRows(), numberFields());
+        const link = host(element, 'order').querySelector('a.simple-html-grid-cell-link') as HTMLAnchorElement;
+        expect(link.textContent).toEqual('order 1042');
+        expect(link.getAttribute('href')).toEqual('https://shop.example.com/order/1042');
+    });
+
+    it('expect sorting on the number, not the text of the template', async () => {
+        const rows = [
+            { weight: 9, order: 1, born: null },
+            { weight: 10, order: 2, born: null }
+        ];
+        const { datasource } = await mountGrid(numberConfig(), rows, numberFields());
+        datasource.sort([{ attribute: 'weight', ascending: true }]);
+        // as text '10,0 kg' would come before '9,0 kg'
+        expect(datasource.getRows().map((row: any) => row.weight)).toEqual([9, 10]);
     });
 });

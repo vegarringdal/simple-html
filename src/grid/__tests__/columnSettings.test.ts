@@ -366,6 +366,22 @@ describe('column settings - the settings of each type', () => {
         expect(selected().querySelector('.column-settings-badge')).toBeNull();
     });
 
+    it('expect a number column to have a template and a link, a date column a template only', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('balance');
+        expect(input('text')).not.toBeNull();
+        expect(checkbox('Show as link')).toBeDefined();
+        type('text', '{value} kg');
+        expect(previewCell().textContent?.trim()).toContain('kg');
+
+        gridInterface.openColumnSettings('born');
+        expect(input('text')).not.toBeNull();
+        expect(checkbox('Show as link')).toBeUndefined();
+        // {value} in the column's date format
+        type('text', 'born {value}');
+        expect(previewCell().textContent?.trim()).toEqual('born 22.11.2026');
+    });
+
     it('expect the preview of the current row when there is one', async () => {
         const { gridInterface, datasource } = await mountGrid(config(), rows(), fields());
         datasource.setRowAsCurrentEntity(1);

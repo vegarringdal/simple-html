@@ -171,7 +171,7 @@ export interface NumberFormat {
 }
 
 /**
- * The link of a text column, `ColumnFormat.link`: its cells are links, the text they show (the cell's
+ * The link of a text or number column, `ColumnFormat.link`: its cells are links, the text they show (the cell's
  * own, or `ColumnFormat.text`) is the link's text. The address is a template: text with `{field}`
  * placeholders, each the value of a field of the row - encoded, so a value can not change where the
  * link goes. Templates, not code: nothing in it is run.
@@ -183,6 +183,7 @@ export interface NumberFormat {
  * | `'mailto:{email}'` | `mailto:ann@example.com` |
  * | `'tel:{phone}'` | `tel:+47%2012345678` |
  * | `'{website}'` | the address the field holds, as it is: one placeholder alone is a whole address |
+ * | `'https://shop.example.com/order/{value}'` on a number column | `https://shop.example.com/order/1042` |
  *
  * The address starts with `https://`, `http://`, `mailto:` or `tel:`, or is one placeholder - else the
  * format throws a `TypeError` (`javascript:`, `data:`, a relative `/customer/{id}`). A row whose address
@@ -253,7 +254,8 @@ export interface CheckboxFormat {
 /**
  * The display format of a column, `ColumnConfig.format` and `GridState.formats`: one plain object (JSON)
  * with a part for the kind of value the column holds - `date` for a `date` or `datetime` field, `number`
- * for a `number` field, `text` and `link` for a `text` field. A part for another type throws a
+ * for a `number` field, `text` for a `text`, `number`, `date` or `datetime` field, `link` for a `text` or
+ * `number` field. A part for another type throws a
  * `TypeError`. `{}` is no format: the field's formatter.
  *
  * Only what the cells show changes - and what follows the cells: the aggregates of a number column, the
@@ -264,7 +266,7 @@ export interface CheckboxFormat {
  * Excel export writes the value, with an Excel number format like the display format where Excel has
  * one - and the colours of the rules, the bars, the scales and the icons (`ExcelOptions.colors`).
  *
- * The templates of a text column - `text` and `link.url` - are text with `{field}` placeholders, not
+ * The templates - `text` and `link.url` - are text with `{field}` placeholders, not
  * code: a saved state can come from anywhere, nothing in a format is run. See the formatting guide,
  * "Templates" and "Links".
  *
@@ -287,6 +289,7 @@ export interface CheckboxFormat {
  *         due: { format: week }, // 2026-W47
  *         balance: { format: { number: { decimals: 2, thousands: ' ', decimal: ',' } } }, // 1 234 567,89
  *         name: { format: { text: '{name} ({id})' } }, // Ann (12)
+ *         weight: { format: { number: { decimals: 1 }, text: '{value} kg' } }, // 72.5 kg
  *         company: { format: { link: { url: 'https://duckduckgo.com/?q={company}', newTab: true } } },
  *         stock: { format: { label: 'In stock', placeholderRowLabel: true, numberOverride: 'ZERO_TO_BLANK' } },
  *         newsletter: { format: { checkbox: { checked: '1', unchecked: '0' } } }, // '1' is checked
@@ -302,6 +305,7 @@ export interface CheckboxFormat {
  *             { fields: ['due'], width: 100 },
  *             { fields: ['balance'], width: 120 },
  *             { fields: ['name'], width: 120 },
+ *             { fields: ['weight'], width: 100 },
  *             { fields: ['company'], width: 150 },
  *             { fields: ['stock'], width: 80 },
  *             { fields: ['newsletter'], width: 80 },
@@ -319,13 +323,14 @@ export interface ColumnFormat {
     /** how a `number` column shows its numbers, see {@link NumberFormat} */
     number?: NumberFormat;
     /**
-     * what the cells of a `text` column show: a template, text with `{field}` placeholders - each the
-     * value of a field of the row as its formatter writes it, `{value}` the cell's own. `'{firstname}
-     * {lastname}'`, `'{value} kg'`, `'{company}'`. Left out: the cell's own text. The text of the link
-     * too, with `link`. Not `''`
+     * what the cells of a `text`, `number`, `date` or `datetime` column show: a template, text with
+     * `{field}` placeholders - each the value of a field of the row as its formatter writes it, `{value}`
+     * the cell's own, in the column's `number` or `date` format when it has one. `'{firstname}
+     * {lastname}'`, `'{value} kg'`, `'week {value}'`, `'{company}'`. Left out: the cell's own text. The
+     * text of the link too, with `link`. An edited cell shows the value, not the template. Not `''`
      */
     text?: string;
-    /** the cells of a `text` column are links, see {@link LinkFormat} */
+    /** the cells of a `text` or `number` column are links, see {@link LinkFormat} */
     link?: LinkFormat;
     /**
      * the column's label, any column: its header and everywhere the grid names the column - the menus,
@@ -799,6 +804,12 @@ const NUMBER_OVERRIDES: readonly NonNullable<ColumnFormat['numberOverride']>[] =
  */
 const LINK_FORMAT_KEYS: readonly (keyof LinkFormat)[] = ['url', 'newTab'];
 
+/** the types of field a template (`ColumnFormat.text`) is for: the ones with a text to put `{value}` in */
+const TEMPLATE_TYPES: readonly FieldType[] = ['text', 'number', 'date', 'datetime'];
+
+/** the types of field a link (`ColumnFormat.link`) is for: a text, an order number */
+const LINK_TYPES: readonly FieldType[] = ['text', 'number'];
+
 /**
  * the keys a number format has
  */
@@ -816,7 +827,8 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
  * - `date` for a `date` field: one of DATE_FORMATS; a `datetime` field DATETIME_FORMATS too
  * - `number` for a `number` field: a {@link NumberFormat}, its parts of the values they take, not the
  *   same character for both separators
- * - `text` and `link` for a `text` field: a template that is text, not `''`, without a placeholder of
+ * - `text` for a `text`, `number`, `date` or `datetime` field, `link` for a `text` or `number` field: a
+ *   template that is text, not `''`, without a placeholder of
  *   the grid's own (`{__...}`); a {@link LinkFormat} whose `url` starts with `https://`, `http://`,
  *   `mailto:` or `tel:` or is one placeholder (cellTemplate.ts, urlTemplateProblem)
  * - `label` and `placeholderRow` text, not `''`; `placeholderRowLabel` true or false, not with `placeholderRow`;
@@ -898,8 +910,11 @@ export function assertColumnFormat(
             throw new TypeError(`${name} has checkbox and ${other}: a checkbox shows no text, it is the one or the other`);
         }
     }
-    if ((text !== undefined || link !== undefined) && type !== 'text') {
-        throw new TypeError(`${name}.${text !== undefined ? 'text' : 'link'} is for a text field, '${field}' is ${type}`);
+    if (text !== undefined && !TEMPLATE_TYPES.includes(type)) {
+        throw new TypeError(`${name}.text is for a text, number, date or datetime field, '${field}' is ${type}`);
+    }
+    if (link !== undefined && !LINK_TYPES.includes(type)) {
+        throw new TypeError(`${name}.link is for a text or number field, '${field}' is ${type}`);
     }
     if (text !== undefined) {
         assertTextTemplate(text, `${name}.text`);

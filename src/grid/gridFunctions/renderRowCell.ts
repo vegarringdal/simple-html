@@ -224,10 +224,14 @@ export function renderRowCell(
         const repeated = isRepeatedValue(ctx, row, attribute);
         const repeatedClass = repeated ? ' simple-html-grid-repeated-value' : '';
 
-        // a text column with a link (ColumnFormat.link): the grid's own custom cell, an <a> (linkCell.ts).
-        // Not a cell of another type (dynamicCellTypeColumn), nor where a renderer of your own draws it
+        // a text or number column with a link (ColumnFormat.link): the grid's own custom cell, an <a>
+        // (linkCell.ts). Not a cell of another type (dynamicCellTypeColumn), nor where a renderer of your
+        // own draws it
         const linkCell =
-            !lookupColumn && cellConfigType === 'text' && fieldType === 'text' && cellConfig.format?.link !== undefined;
+            !lookupColumn &&
+            cellConfigType === fieldType &&
+            (fieldType === 'text' || fieldType === 'number') &&
+            cellConfig.format?.link !== undefined;
 
         if (cellConfig.renderer || linkCell) {
             // a renderer of your own draws the cell (ColumnConfig.renderer, customCell.ts), or the link's

@@ -12,7 +12,7 @@ renderer, see [Custom cells](21-custom-cells.md): it gets the formatter's text t
 
 How a column *shows* its values - a date as `22.11.2026` or as the week `2026-W47`, a number as
 `1 234 567,89` - the user can pick in the header menu, without a formatter of your own: see
-[Display formats](#display-formats). A text column can show a template of the row's fields,
+[Display formats](#display-formats). A column can show a template of the row's fields,
 `{firstname} {lastname}`, and be a link, `https://crm.example.com/customer/{id}` or `mailto:{email}`:
 see [Templates and links](#templates-and-links). A cell can take a colour from its value - red text
 below 0, an orange background for `waiting`: see [Colour rules](#colour-rules). A number column can draw
@@ -464,9 +464,9 @@ const config: GridConfig = {
 
 ## Templates and links
 
-A text column has two more parts in its format: `text`, a template of what its cells show, and
-`link`, which makes its cells links. Both are templates: text with `{field}` placeholders, each filled
-in with the value of a field of the row.
+A column has two more parts in its format: `text`, a template of what its cells show - a text, number,
+date or datetime column - and `link`, which makes its cells links - a text or number column. Both are
+templates: text with `{field}` placeholders, each filled in with the value of a field of the row.
 
 ```ts
 import type { GridConfig } from '@simple-html/grid';
@@ -475,8 +475,12 @@ const config: GridConfig = {
     columns: {
         // Ann Lee: the text of two fields
         firstname: { format: { text: '{firstname} {lastname}' } },
-        // 12 kg: the cell's own value, {value}, and text - weight is a text field: a number field has none
-        weight: { format: { text: '{value} kg' } },
+        // 1 234,5 kg: the cell's own value, {value}, in the column's number format, and text
+        weight: { format: { number: { decimals: 1, thousands: ' ', decimal: ',' }, text: '{value} kg' } },
+        // a link from an order number: order 1042, to https://shop.example.com/order/1042
+        order: { format: { text: 'order {value}', link: { url: 'https://shop.example.com/order/{value}' } } },
+        // due 2026-W47: the column's date format in the template
+        due: { format: { date: 'weekIso', text: 'due {value}' } },
         // a link to the customer, its text the company and the id: Acme Corp (12)
         company: {
             format: { text: '{company} ({id})', link: { url: 'https://crm.example.com/customer/{id}', newTab: true } }
@@ -489,7 +493,9 @@ const config: GridConfig = {
     layout: {
         center: [
             { fields: ['firstname'], width: 140 },
-            { fields: ['weight'], width: 80 },
+            { fields: ['weight'], width: 100 },
+            { fields: ['order'], width: 100 },
+            { fields: ['due'], width: 100 },
             { fields: ['company'], width: 160 },
             { fields: ['email'], width: 180 },
             { fields: ['phone'], width: 120 },
@@ -508,7 +514,10 @@ const config: GridConfig = {
   `2026-11-22` for a date, `1234.5` for a number - not in a display format, and the value of a lookup
   field, not its label. The field does not have to be a column: `{id}` can be a field the grid does not
   show. A field the row does not have is empty.
-- **`{value}`** is the cell's own value: a template that fits any column. A field named `value` can not
+- **`{value}`** is the cell's own value: a template that fits any column. In a number or date column
+  with a display format (`number`, `date`) it is written in that format - `1 234,5`, `2026-W47` -
+  except in the address of a link, where it is the field's formatter's (`1042`). An edited cell shows
+  the value, not the template. A field named `value` can not
   be reached from another column.
 - **A brace that is not a placeholder is text**: `{}`, `{a` and `}` are shown as they are. A name is
   everything between the braces, spaces too: `{ id }` is the field ` id `.
@@ -659,7 +668,8 @@ The settings, from the top:
   one or the other: they start as the column shows them, its `numberOverride` too, and turning the
   column's own off is kept as `'NONE'`.
 - **A text column** has *Text shown* (the template, empty for the cell's own text), *Show as link*,
-  *Address* and *Open in a new tab*. The `{ }` button beside a template opens a menu of the fields -
+  *Address* and *Open in a new tab*. A number column has them too, under its format; a date column
+  *Text shown*. The `{ }` button beside a template opens a menu of the fields -
   the columns' and those of the row, by their labels, with a search - and puts the one picked in at the
   caret: no need to know the names of the fields.
 - **Show as checkbox**, a text or number column: its cells are checkboxes - for a flag of `1` / `0`.

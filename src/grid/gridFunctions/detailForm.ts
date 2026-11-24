@@ -687,7 +687,10 @@ function fieldTemplate(
         gridInterface.__isCellReadonly(row, field);
     const errors = datasource.__getRowErrors(row)?.get(field) ?? [];
     const required = datasource.getField(field).validate.some((rule) => rule.id === 'required');
-    const link = cell.type === 'text' && !lookup ? gridInterface.__getCellLink(field, row) : null;
+    const link =
+        (cell.type === 'text' || cell.type === 'number') && cell.type === datasource.getField(field).type && !lookup
+            ? gridInterface.__getCellLink(field, row)
+            : null;
     // the colours of the column's colour rule that matches the value (ColumnFormat.rules), as the cell has
     // them: on the input or the textarea
     const rule = colorRuleOf(gridInterface, field, row);

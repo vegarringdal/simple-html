@@ -526,12 +526,21 @@ describe('display formats - the check of a format', () => {
         expect(check({ text: '{name} ({id})' }, 'text')).not.toThrow();
         expect(check({ link: { url: 'https://x.com/{id}', newTab: true } }, 'text')).not.toThrow();
         expect(check({ text: '{company}', link: { url: 'mailto:{email}' } }, 'text')).not.toThrow();
-        expect(check({ text: '{value} kg' }, 'number')).toThrow(
-            new TypeError("GridConfig: columns.field.format.text is for a text field, 'field' is number")
+        // a template on a number or a date, a link on a number (an order number)
+        expect(check({ number: { decimals: 1 }, text: '{value} kg' }, 'number')).not.toThrow();
+        expect(check({ date: 'weekIso', text: 'due {value}' }, 'date')).not.toThrow();
+        expect(check({ text: '{value}' }, 'datetime')).not.toThrow();
+        expect(check({ link: { url: 'https://x.com/order/{value}' } }, 'number')).not.toThrow();
+        expect(check({ text: '{value}!' }, 'boolean')).toThrow(
+            new TypeError(
+                "GridConfig: columns.field.format.text is for a text, number, date or datetime field, 'field' is boolean"
+            )
         );
         expect(check({ link: { url: '{website}' } }, 'date')).toThrow(
-            new TypeError("GridConfig: columns.field.format.link is for a text field, 'field' is date")
+            new TypeError("GridConfig: columns.field.format.link is for a text or number field, 'field' is date")
         );
+        // a checkbox shows no text: still not with a template
+        expect(check({ checkbox: {}, text: '{value} kg' }, 'number')).toThrow(TypeError);
         expect(check({ link: { url: '{website}' } }, 'boolean')).toThrow(TypeError);
         // a date part on a text field still says what it says
         expect(check({ date: 'iso' }, 'text')).toThrow(/format.date is for a date or datetime field/);

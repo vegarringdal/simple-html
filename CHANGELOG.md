@@ -1332,6 +1332,17 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### A template on a number or date column, a link on a number column
+
+##### Added
+- `ColumnFormat.text` on a `number`, `date` or `datetime` column: `{ number: { decimals: 1 }, text: '{value}
+  kg' }` shows `72,5 kg`, `{ date: 'weekIso', text: 'due {value}' }` `due 2026-W47` - `{value}` in the
+  column's display format. An edited cell shows the value; sorting, filtering, copy and the exports use
+  the value
+- `ColumnFormat.link` on a `number` column: a link from an order number,
+  `{ link: { url: 'https://shop.example.com/order/{value}' } }`
+- the grid config dialog: *Text shown* for number and date columns, *Show as link* for number columns
+
 #### The date picker's days for a finger
 
 ##### Changed

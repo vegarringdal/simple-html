@@ -5115,6 +5115,20 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
   section of the css)
 * tests: datePickerCell.test.ts (22 / 28 / given, matchMedia stubbed; the height worked out)
 
+### A template on a number or date column, a link on a number
+
+* columnFormat.ts: `text` for text, number, date, datetime (TEMPLATE_TYPES), `link` for text and number
+  (LINK_TYPES) - a link on a date would be a link cell, edited as text without its picker: not done.
+  A checkbox still takes neither
+* GridInterface.__getCellFormatter: the display format first, the template around it - `{value}` is
+  written in the number / date format; the address of a link keeps the field's formatter (`1042`, not
+  `1 042`)
+* renderRowCell / detailForm: a link cell for a number column too (the cell's type the field's)
+* the dialog: textSettings(withLink) under the number format; under the date format without the link
+* guides/08-formatting.md, the full-grid sample (age `{value} yrs`)
+* tests: columnFormat.test.ts (what fits where), linkColumn.test.ts (number and date: the formats in the
+  template, an edit, a link cell from a number, sorting on the number), columnSettings.test.ts (the dialog)
+
 ## Considered, not done
 
 ## Candidates / not started
@@ -5195,7 +5209,7 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
 
 ### Features
 
-* **Column settings, more** (see *Column settings* above): a template and a link on a number or date column (`{value} kg` on a number, a link from an order number); relative
+* **Column settings, more** (see *Column settings* above): relative
   addresses within the app (resolved against a base the config gives, the base's origin kept); an "Open link"
   entry in the row menu; a `HYPERLINK` in the Excel export (a formula of data, Excel's 255 characters); the
   dialog's own undo (the filter editor has one); `placeholderRow` and `focusButton` on a link cell; more of

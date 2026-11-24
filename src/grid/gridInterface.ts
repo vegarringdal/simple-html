@@ -3302,9 +3302,10 @@ export class GridInterface<T> {
      * the language of the text `format.locale`, a week and a quarter written as `format.weekIso`,
      * `format.weekUs` and `format.quarter` say.
      *
-     * The template of a text column (`ColumnFormat.text`) needs the row - its placeholders are fields of
-     * the row - so it is only there with `row` (the cells, cellTextOf): `format(value)` is the template
-     * filled in, `{value}` the value it is given (templateFormatter, cellTemplate.ts).
+     * The template of a column (`ColumnFormat.text`) needs the row - its placeholders are fields of the
+     * row - so it is only there with `row` (the cells, cellTextOf): `format(value)` is the template filled
+     * in, `{value}` the value it is given, in the column's number or date format when it has one
+     * (templateFormatter, cellTemplate.ts).
      *
      * Not for a lookup column (its lookup's formatter shows a label), nor for a cell whose type is not
      * the field's (`dynamicCellTypeColumn` on a text field: its other types have no format)
@@ -3323,13 +3324,15 @@ export class GridInterface<T> {
         if (type !== undefined && type !== this.dataSource.getField(field).type) {
             return formatter;
         }
-        if (format && hasValueFormat(format)) {
-            return displayFormatter(formatter, format, formatTexts(this.gridConfig.texts));
-        }
+        // the value as the display format shows it, then the template around it: {value} in that format
+        const shown =
+            format && hasValueFormat(format)
+                ? displayFormatter(formatter, format, formatTexts(this.gridConfig.texts))
+                : formatter;
         if (format?.text !== undefined && row) {
-            return templateFormatter(formatter, field, format.text, this.__fieldTextOf(row));
+            return templateFormatter(shown, field, format.text, this.__fieldTextOf(row));
         }
-        return formatter;
+        return shown;
     }
 
     /**
