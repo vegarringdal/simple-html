@@ -118,3 +118,60 @@ describe('toSqlWhere - a formula is hostile input', () => {
         ).toBe('("price" IS NOT NULL AND "price" = $1)');
     });
 });
+
+describe('toSqlWhere - calculated columns with dates', () => {
+    const dated: Record<string, SqlColumn> = {
+        due: { column: 'due', type: 'date' },
+        utc: { column: 'utc', type: 'datetime', dateStorage: 'utc' },
+        zoned: { column: 'zoned', type: 'datetime', dateStorage: 'zoned' },
+        seconds: { column: 'seconds', type: 'datetime', dateStorage: 'epochSeconds' },
+        millis: { column: 'millis', type: 'datetime', dateStorage: 'epochMillis' }
+    };
+    const sqlOf = (dialect: SqlDialect, formula: string, timeZone = 'Europe/Oslo') =>
+        toSqlWhere(
+            { field: 'calc', operator: 'GREATER_THAN', value: 0 },
+            { dialect, columns: dated, timeZone, calculated: { calc: formula } }
+        ).sql;
+
+    it('expect a date column as its day in the time zone: the wall clock on every database', () => {
+        expect(sqlOf('postgres', 'YEAR({due})')).toContain('EXTRACT(YEAR FROM CAST("due" AS date))');
+        expect(sqlOf('oracle', 'YEAR({due})')).toContain('EXTRACT(YEAR FROM TRUNC("due"))');
+        expect(sqlOf('sqlite', 'YEAR({due})')).toContain(`strftime('%Y', date("due"))`);
+        expect(sqlOf('mssql', 'YEAR({due})')).toContain('YEAR(CAST([due] AS date))');
+    });
+
+    it('expect the instants in the time zone on PostgreSQL and Oracle', () => {
+        expect(sqlOf('postgres', 'YEAR({utc})')).toContain(`CAST(timezone('Europe/Oslo', timezone('UTC', "utc")) AS date)`);
+        expect(sqlOf('postgres', 'YEAR({zoned})')).toContain(`CAST(timezone('Europe/Oslo', "zoned") AS date)`);
+        expect(sqlOf('postgres', 'YEAR({millis})')).toContain(`to_timestamp("millis" / 1000.0)`);
+        expect(sqlOf('oracle', 'YEAR({utc})')).toContain(
+            `TRUNC(CAST(FROM_TZ(CAST("utc" AS TIMESTAMP), 'UTC') AT TIME ZONE 'Europe/Oslo' AS DATE))`
+        );
+        expect(sqlOf('oracle', 'YEAR({seconds})')).toContain(`NUMTODSINTERVAL("seconds", 'SECOND')`);
+    });
+
+    it('expect the instants on SQLite and SQL Server in UTC only - else a TypeError', () => {
+        expect(sqlOf('sqlite', 'YEAR({seconds})', 'UTC')).toContain(`date("seconds", 'unixepoch')`);
+        expect(sqlOf('mssql', 'YEAR({zoned})', 'Etc/UTC')).toContain(`CAST(SWITCHOFFSET([zoned], '+00:00') AS date)`);
+        expect(() => sqlOf('sqlite', 'YEAR({utc})')).toThrow(/sqlite can read its day in Europe\/Oslo only/);
+        expect(() => sqlOf('mssql', 'YEAR({zoned})')).toThrow(TypeError);
+        expect(() => sqlOf('mssql', 'YEAR({seconds})', 'UTC')).toThrow(TypeError);
+    });
+
+    it('expect TODAY() as the day it is in the time zone now, a literal', () => {
+        const clock = new Intl.DateTimeFormat('en-CA', { timeZone: 'Pacific/Kiritimati' }).format(new Date());
+        expect(sqlOf('postgres', 'DAYS({due}, TODAY())', 'Pacific/Kiritimati')).toContain(`DATE '${clock}'`);
+        expect(sqlOf('mssql', 'DAYS({due}, TODAY())', 'Pacific/Kiritimati')).toContain(
+            `DATEDIFF(day, CAST([due] AS date), CAST('${clock}' AS date))`
+        );
+    });
+
+    it('expect a date formula to be a date column of days: a filter compares the day', () => {
+        const { sql, params } = toSqlWhere(
+            { field: 'first', operator: 'EQUAL', value: '2026-03-29' },
+            { dialect: 'postgres', columns: dated, timeZone: 'Europe/Oslo', calculated: { first: 'MIN({due}, {zoned})' } }
+        );
+        expect(sql).toContain('LEAST(CAST("due" AS date)');
+        expect(params).toEqual(['2026-03-29 00:00:00', '2026-03-30 00:00:00']);
+    });
+});

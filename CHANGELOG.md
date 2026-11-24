@@ -1368,7 +1368,9 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 ##### Added
 - `toSqlWhere(filter, { calculated })` (sql entry): the calculated columns of the grid (`getState().calculatedColumns`,
   or a formula by field) - a filter on one compares its formula written as SQL, the values the grid computes,
-  on PostgreSQL (13 or later), Oracle, SQLite and SQL Server (2017 or later). Not yet: formulas with dates.
+  on PostgreSQL (13 or later), Oracle, SQLite and SQL Server (2017 or later). Dates are their day in the
+  user's `timeZone`: a date column of wall clocks on every database, instants (`utc`, `zoned`, epoch) on
+  PostgreSQL and Oracle - on SQLite and SQL Server in UTC only
   New type `SqlCalculatedColumn`
 - the formulas of the calculated columns and the formula colour rules: `!=` and `==` (as `<>` and `=`), and
   the functions of text `LEFT`, `RIGHT`, `MID` / `SUBSTRING`, `LEN`, `UPPER`, `LOWER`, `TRIM`, `CONTAINS`

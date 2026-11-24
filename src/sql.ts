@@ -276,7 +276,7 @@ export interface SqlOptions {
      * The calculated columns of the grid (`gridInterface.getState().calculatedColumns`), by field: a filter
      * on one compares its formula, written as SQL, as it compares a column. Its formula reads the fields of
      * `columns` and the other calculated columns - no field `columns` has not. See {@link SqlCalculatedColumn}.
-     * Not yet: a formula with dates (a date field, TODAY, DAYS, YEAR, MONTH) throws a `TypeError`.
+     * A formula with dates needs `timeZone`: a date is its day in the user's time zone, as in the grid.
      */
     calculated?: Record<string, string | SqlCalculatedColumn>;
 }

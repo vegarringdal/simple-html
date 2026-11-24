@@ -277,7 +277,8 @@ const body = JSON.stringify({
 });
 ```
 
-Not yet: a formula with dates (a date field, TODAY, DAYS, YEAR, MONTH). The SQL guide has what differs.
+A formula with dates takes the day in the user's time zone (`timeZone`), as the grid does. The SQL guide
+has what differs.
 
 ## Security
 

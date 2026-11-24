@@ -479,12 +479,28 @@ const { sql, params } = toSqlWhere(filter, {
   literals with their quotes doubled (PostgreSQL gets a text with a `\` as its bytes in hex), its numbers
   digits - never pasted into the SQL. What is wrong with it is a `TypeError` that `isSqlFilterError()`
   knows: answer it with a 400. The SQL of one calculated column is at most 100 000 characters.
-- **Not yet**: a formula with dates - a date field, `TODAY()`, `DAYS()`, `YEAR()`, `MONTH()` - throws a
-  `TypeError`; ROUND's digits must be written in the formula (`ROUND({price}, 2)`).
+- ROUND's digits are written in the formula (`ROUND({price}, 2)`).
+
+**Dates.** A date of a formula is its day in the user's `timeZone`, as the grid reads it in the browser:
+`DAYS()`, `YEAR()`, `MONTH()`, the comparisons and a date as text (`YYYY-MM-DD`) take the day, and
+`TODAY()` is the day it is there when the SQL is made. A date column becomes its day by how it holds its
+dates (`dateStorage`):
+
+| | PostgreSQL | Oracle | SQLite | SQL Server |
+| --- | --- | --- | --- | --- |
+| `'local'` (a wall clock) | `CAST(col AS date)` | `TRUNC(col)` | `date(col)` | `CAST(col AS date)` |
+| `'utc'`, `'zoned'` | `timezone('Europe/Oslo', …)` | `FROM_TZ(…) AT TIME ZONE 'Europe/Oslo'` | in UTC only | in UTC only |
+| `'epochSeconds'`, `'epochMillis'` | `to_timestamp(col)` in the zone | `NUMTODSINTERVAL` in the zone | in UTC only | no |
+
+SQLite has no time zones, SQL Server's `AT TIME ZONE` takes Windows names: there an instant can be read in
+UTC only, any other `timeZone` throws a `TypeError` - store the wall clock, or let the database compute
+the column. A calculated column of dates is a `date` column of days: a filter on it compares the day, as
+on any date column.
 
 The SQL gives the values the grid computes - the tests run every function and 2000 random formulas on
 SQLite and compare each row with the grid, and the SQL of each database was run on PostgreSQL 17, Oracle
-23 and SQL Server 2017 and 2022 with the same rows. What it takes to get there, so you can read the SQL:
+23 and SQL Server 2017 and 2022 with the same rows - the dates around midnight, the changes of the clock
+and today, in every `dateStorage` the database reads. What it takes to get there, so you can read the SQL:
 
 | the grid | the SQL |
 | --- | --- |

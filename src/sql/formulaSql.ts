@@ -1,5 +1,5 @@
 import type { FormulaNode, FormulaType } from '../grid/formula';
-import type { SqlDialect } from '../sql';
+import type { SqlDateStorage, SqlDialect } from '../sql';
 
 /**
  * @internal
@@ -30,7 +30,13 @@ import type { SqlDialect } from '../sql';
  *   Oracle does not), a count is cut to a whole number, a negative one is 0
  * - CONTAINS of `''` is true (CHARINDEX and INSTR say no, or NULL)
  *
- * Not yet: dates (a date field, TODAY, DAYS, YEAR, MONTH) throw a `TypeError`.
+ * **Dates** are their day in the user's time zone, as the grid's: DAYS, YEAR, MONTH, the comparisons and
+ * a date as text read the day of the browser (formula.ts dayOf). A date column is made its day by
+ * dayOfColumn - the wall clock (`dateStorage: 'local'`) on every database, the instants (`utc`, `zoned`,
+ * epoch) in the time zone on PostgreSQL and Oracle, and on SQLite and SQL Server in UTC only (one has no
+ * time zones, the other Windows names). TODAY() is the day in the time zone when the SQL is made: a
+ * literal. A date is a DATE (text `YYYY-MM-DD` on SQLite), so a filter on a calculated column of dates
+ * compares it as a `date` column of wall clocks.
  *
  * **Safe.** A formula is hostile input, as a filter is. It is read by formula.ts into parts of a fixed
  * kind; a field is a column of the options (its quoted name) or another calculated column; a number is
@@ -80,7 +86,31 @@ interface FormulaDialect {
     /** a value of a boolean column, as SQL */
     booleanLiteral(value: unknown): string;
     binary(x: string): string;
+    /** a day, `YYYY-MM-DD` (checked: digits and dashes) */
+    dateLiteral(day: string): string;
+    /** a day as text: `YYYY-MM-DD` */
+    dateText(day: string): string;
+    /** the days from one day to another: a whole number */
+    days(from: string, to: string): string;
+    year(day: string): string;
+    month(day: string): string;
+    /**
+     * the day of a column's date in a time zone (an IANA name, checked), as the dates of the formula
+     * are: null when the database can not
+     */
+    dayOf(column: string, storage: SqlDateStorage, timeZone: string): string | null;
 }
+
+/** an IANA name as a literal: letters, digits, `_`, `+`, `-` and `/` only, so its quotes are all it needs */
+function zoneLiteral(timeZone: string): string {
+    if (!/^[A-Za-z0-9_+\-/]{1,64}$/.test(timeZone)) {
+        throw new TypeError(`toSqlWhere: options.timeZone ${JSON.stringify(timeZone)} can not be in the SQL of a formula`);
+    }
+    return `'${timeZone}'`;
+}
+
+/** UTC by another name: the zones SQLite and SQL Server can read instants in */
+const UTC_NAMES: ReadonlySet<string> = new Set(['UTC', 'Etc/UTC', 'GMT', 'Etc/GMT', 'Etc/Universal', 'Etc/Zulu', 'UCT', 'Zulu']);
 
 /** the text of a literal: its single quotes doubled - no database here reads `''` as anything else */
 const quoted = (value: string) => `'${value.replace(/'/g, "''")}'`;
@@ -126,7 +156,29 @@ const postgres: FormulaDialect = {
     least: (values) => (values.length === 1 ? values[0] : `LEAST(${values.join(', ')})`),
     greatest: (values) => (values.length === 1 ? values[0] : `GREATEST(${values.join(', ')})`),
     booleanLiteral: (value) => (typeof value === 'boolean' ? String(value).toUpperCase() : literalOf(postgres, value)),
-    binary: (x) => `${x} COLLATE "C"`
+    binary: (x) => `${x} COLLATE "C"`,
+    dateLiteral: (day) => `DATE '${day}'`,
+    dateText: (day) => `to_char(${day}, 'YYYY-MM-DD')`,
+    // date - date is the days between, an integer
+    days: (from, to) => `(${to} - ${from})`,
+    year: (day) => `CAST(EXTRACT(YEAR FROM ${day}) AS integer)`,
+    month: (day) => `CAST(EXTRACT(MONTH FROM ${day}) AS integer)`,
+    dayOf: (column, storage, timeZone) => {
+        const zone = zoneLiteral(timeZone);
+        switch (storage) {
+            case 'local':
+                return `CAST(${column} AS date)`;
+            case 'utc':
+                // the UTC wall clock read as UTC, then the wall clock of the zone
+                return `CAST(timezone(${zone}, timezone('UTC', ${column})) AS date)`;
+            case 'zoned':
+                return `CAST(timezone(${zone}, ${column}) AS date)`;
+            case 'epochSeconds':
+                return `CAST(timezone(${zone}, to_timestamp(${column})) AS date)`;
+            default:
+                return `CAST(timezone(${zone}, to_timestamp(${column} / 1000.0)) AS date)`;
+        }
+    }
 };
 
 const oracle: FormulaDialect = {
@@ -151,7 +203,30 @@ const oracle: FormulaDialect = {
     least: (values) => skippingNull('LEAST', values),
     greatest: (values) => skippingNull('GREATEST', values),
     booleanLiteral: (value) => literalOf(oracle, value),
-    binary: (x) => x
+    binary: (x) => x,
+    dateLiteral: (day) => `DATE '${day}'`,
+    dateText: (day) => `TO_CHAR(${day}, 'YYYY-MM-DD')`,
+    // DATE - DATE is the days between; both are days (TRUNC)
+    days: (from, to) => `(${to} - ${from})`,
+    year: (day) => `EXTRACT(YEAR FROM ${day})`,
+    month: (day) => `EXTRACT(MONTH FROM ${day})`,
+    dayOf: (column, storage, timeZone) => {
+        const zone = zoneLiteral(timeZone);
+        const inZone = (utc: string) => `TRUNC(CAST(FROM_TZ(${utc}, 'UTC') AT TIME ZONE ${zone} AS DATE))`;
+        const epoch = (seconds: string) => inZone(`(TIMESTAMP '1970-01-01 00:00:00' + NUMTODSINTERVAL(${seconds}, 'SECOND'))`);
+        switch (storage) {
+            case 'local':
+                return `TRUNC(${column})`;
+            case 'utc':
+                return inZone(`CAST(${column} AS TIMESTAMP)`);
+            case 'zoned':
+                return `TRUNC(CAST(${column} AT TIME ZONE ${zone} AS DATE))`;
+            case 'epochSeconds':
+                return epoch(column);
+            default:
+                return epoch(`${column} / 1000`);
+        }
+    }
 };
 
 const sqlite: FormulaDialect = {
@@ -175,7 +250,31 @@ const sqlite: FormulaDialect = {
     least: (values) => skippingNull('min', values),
     greatest: (values) => skippingNull('max', values),
     booleanLiteral: (value) => literalOf(sqlite, value),
-    binary: (x) => `${x} COLLATE BINARY`
+    binary: (x) => `${x} COLLATE BINARY`,
+    // a day is the text YYYY-MM-DD: its order is the order of the days
+    dateLiteral: (day) => `'${day}'`,
+    dateText: (day) => day,
+    days: (from, to) => `CAST(round(julianday(${to}) - julianday(${from})) AS INTEGER)`,
+    year: (day) => `CAST(strftime('%Y', ${day}) AS INTEGER)`,
+    month: (day) => `CAST(strftime('%m', ${day}) AS INTEGER)`,
+    // no time zones but UTC: the instants only there
+    dayOf: (column, storage, timeZone) => {
+        if (storage === 'local') {
+            return `date(${column})`;
+        }
+        if (!UTC_NAMES.has(timeZone)) {
+            return null;
+        }
+        switch (storage) {
+            case 'epochSeconds':
+                return `date(${column}, 'unixepoch')`;
+            case 'epochMillis':
+                return `date(${column} / 1000.0, 'unixepoch')`;
+            default:
+                // julianday() reads the offset of a zoned text, date() gives the UTC day
+                return `date(${column})`;
+        }
+    }
 };
 
 const mssql: FormulaDialect = {
@@ -202,7 +301,23 @@ const mssql: FormulaDialect = {
     greatest: (values) =>
         values.length === 1 ? values[0] : `(SELECT MAX(v) FROM (VALUES ${values.map((v) => `(${v})`).join(', ')}) AS t(v))`,
     booleanLiteral: (value) => (typeof value === 'boolean' ? (value ? '1' : '0') : literalOf(mssql, value)),
-    binary: (x) => mssqlBinary(x)
+    binary: (x) => mssqlBinary(x),
+    // the ISO text is read the same whatever SET LANGUAGE / DATEFORMAT is, as a date
+    dateLiteral: (day) => `CAST('${day}' AS date)`,
+    dateText: (day) => `CONVERT(char(10), ${day}, 23)`,
+    days: (from, to) => `DATEDIFF(day, ${from}, ${to})`,
+    year: (day) => `YEAR(${day})`,
+    month: (day) => `MONTH(${day})`,
+    // AT TIME ZONE takes Windows names, not IANA: the instants in UTC only
+    dayOf: (column, storage, timeZone) => {
+        if (storage === 'local') {
+            return `CAST(${column} AS date)`;
+        }
+        if (!UTC_NAMES.has(timeZone) || storage === 'epochSeconds' || storage === 'epochMillis') {
+            return null;
+        }
+        return storage === 'zoned' ? `CAST(SWITCHOFFSET(${column}, '+00:00') AS date)` : `CAST(${column} AS date)`;
+    }
 };
 
 function mssqlBinary(x: string): string {
@@ -240,16 +355,38 @@ const OR = (parts: (string | null)[]): string | null => {
 
 /**
  * @internal
+ * The day of a date column in the user's time zone, as the dates of a formula are (see the top)
+ * @throws a `TypeError` where the database can not: an instant in a time zone that is not UTC on SQLite
+ * and SQL Server, epoch numbers on SQL Server
+ */
+export function dayOfColumn(dialectName: SqlDialect, column: string, storage: SqlDateStorage, timeZone: string): string {
+    const day = DIALECTS[dialectName].dayOf(column, storage, timeZone);
+    if (day === null) {
+        throw new TypeError(
+            `toSqlWhere: a formula reads a date column of dateStorage '${storage}': ${dialectName} can read its day in ${timeZone} only when the column holds the wall clock (dateStorage 'local')${dialectName === 'mssql' && storage.startsWith('epoch') ? '' : ', or in UTC'}`
+        );
+    }
+    return day;
+}
+
+/**
+ * @internal
  * The SQL of a formula: its value, NULL where it is blank or can not be computed (as the grid's cell)
  * @param node the formula read (readFormula of formula.ts), its types checked
- * @param fieldOf the SQL of a field the formula reads: a column, another calculated column
- * @throws a `TypeError` for what is not in SQL yet (dates), a `RangeError` for SQL over MAX_FORMULA_SQL
+ * @param fieldOf the SQL of a field the formula reads: a column (a date column its day, dayOfColumn),
+ * another calculated column
+ * @param today the day TODAY() is, `YYYY-MM-DD` in the user's time zone - it throws without one
+ * @throws a `TypeError` for ROUND with digits that are not written in the formula, a `RangeError` for SQL
+ * over MAX_FORMULA_SQL
  */
 export function formulaSql(
     node: FormulaNode,
     _type: FormulaType,
     dialectName: SqlDialect,
-    fieldOf: (field: string) => FormulaSqlField
+    fieldOf: (field: string) => FormulaSqlField,
+    today: () => string = () => {
+        throw new TypeError("toSqlWhere: options.timeZone is needed for TODAY(): the user's IANA time zone, e.g. 'Europe/Oslo'");
+    }
 ): string {
     const d = DIALECTS[dialectName];
     const limit = (sql: string): string => {
@@ -311,18 +448,11 @@ export function formulaSql(
                 return 'text';
         }
     };
-    const noDates = (each: FormulaNode) => {
-        if (typeOf(each) === 'date') {
-            throw new TypeError('toSqlWhere: a formula with dates is not made SQL yet: compute it in the database');
-        }
-    };
-
     /** a boolean's predicate as a value: 1 or 0 */
     const asValue = (predicate: string) => `CASE WHEN ${predicate} THEN 1 ELSE 0 END`;
 
     /** the value of a part: NULL for blank. The error of the part is apart (err) */
     const value = (each: FormulaNode): string => {
-        noDates(each);
         switch (each.kind) {
             case 'number':
                 return String(each.value);
@@ -381,6 +511,8 @@ export function formulaSql(
                 return d.numberText(sql);
             case 'boolean':
                 return `CASE ${sql} WHEN 1 THEN ${d.text('true')} WHEN 0 THEN ${d.text('false')} END`;
+            case 'date':
+                return d.dateText(sql);
             default:
                 return sql;
         }
@@ -441,6 +573,19 @@ export function formulaSql(
                 return `LOWER(${textOf(args[0])})`;
             case 'TRIM':
                 return d.blankToNull(d.trim(textOf(args[0])));
+            case 'TODAY': {
+                const day = today();
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) {
+                    throw new TypeError(`toSqlWhere: today is a day, YYYY-MM-DD: ${day}`);
+                }
+                return d.dateLiteral(day);
+            }
+            case 'DAYS':
+                return d.days(value(args[0]), value(args[1]));
+            case 'YEAR':
+                return d.year(value(args[0]));
+            case 'MONTH':
+                return d.month(value(args[0]));
             default:
                 throw new TypeError(`toSqlWhere: ${name}() in a formula is not made SQL yet: compute it in the database`);
         }
@@ -482,7 +627,6 @@ export function formulaSql(
 
     const callPredicate = (name: string, args: FormulaNode[]): string => {
         if (name === 'ISBLANK') {
-            noDates(args[0]);
             return `${value(args[0])} IS NULL`;
         }
         // CONTAINS: a blank part is '', in every text
@@ -548,7 +692,6 @@ export function formulaSql(
         }
     };
 
-    noDates(node);
     // a true / false formula is 1 / 0 - and blank, as the grid's: `{active}` alone of a blank row
     const sql = value(node);
     const error = err(node);

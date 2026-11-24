@@ -16,9 +16,9 @@ import type {
 } from '../sql';
 import { DIALECTS, type Dialect } from './dialects';
 import { markFilterError } from './filterError';
-import { type FormulaSqlField, formulaSql } from './formulaSql';
+import { dayOfColumn, type FormulaSqlField, formulaSql } from './formulaSql';
 import { show } from './show';
-import { nextSecond, readFilterDate, startOfDay, startOfNextDay, type TimeZoneClock, timeZoneClock } from './sqlDates';
+import { isoText, nextSecond, readFilterDate, startOfDay, startOfNextDay, type TimeZoneClock, timeZoneClock } from './sqlDates';
 
 /**
  * @internal
@@ -85,6 +85,8 @@ interface Context {
     making: Set<string>;
     /** the user's time zone, there when a column is a date */
     clock: TimeZoneClock | null;
+    /** its name, for the SQL of a formula with dates */
+    timeZone: string | null;
     limits: Required<SqlLimits>;
     firstParam: number;
     params: SqlParam[];
@@ -149,6 +151,7 @@ function readOptions(options: SqlOptions): Context {
         calculated,
         calculatedColumns: new Map(),
         making: new Set(),
+        timeZone: typeof timeZone === 'string' ? timeZone : null,
         clock,
         limits: readLimits(own(options, 'limits')),
         firstParam: firstParam as number,
@@ -417,7 +420,7 @@ function calculatedColumn(context: Context, field: string): Column {
             return { type: column.type === 'datetime' ? 'date' : column.type };
         }
         if (context.calculated.has(name)) {
-            return { type: calculatedColumn(context, name).type as 'number' | 'text' | 'boolean' };
+            return { type: calculatedColumn(context, name).type as 'number' | 'text' | 'boolean' | 'date' };
         }
         return undefined;
     };
@@ -436,18 +439,25 @@ function calculatedColumn(context: Context, field: string): Column {
     const fieldOf = (name: string): FormulaSqlField => {
         const column = context.columns.get(name);
         if (column) {
-            return {
-                sql: column.sql,
-                type: column.type === 'datetime' ? 'date' : column.type,
-                booleanValues: column.booleanValues
-            };
+            if (isDateType(column.type)) {
+                // a date of a formula is its day in the user's time zone, as in the grid
+                const day = dayOfColumn(context.dialectName, column.sql, column.dateStorage, timeZoneOf(context));
+                return { sql: day, type: 'date' };
+            }
+            return { sql: column.sql, type: column.type as 'number' | 'text' | 'boolean', booleanValues: column.booleanValues };
         }
         const other = calculatedColumn(context, name);
-        return { sql: other.sql, type: other.type as 'number' | 'text' | 'boolean', calculated: true };
+        return { sql: other.sql, type: other.type as 'number' | 'text' | 'boolean' | 'date', calculated: true };
+    };
+    // TODAY(): the day it is in the user's time zone now
+    const today = () => {
+        timeZoneOf(context);
+        return isoText(clockOf(context).wallOf(Date.now()), ' ').slice(0, 10);
     };
     const column: Column = {
-        sql: `(${formulaSql(read.node, read.type, context.dialectName, fieldOf)})`,
+        sql: `(${formulaSql(read.node, read.type, context.dialectName, fieldOf, today)})`,
         type: read.type as SqlColumnType,
+        // a date of a formula is a day: a date column that holds wall clocks
         dateStorage: 'local',
         // a true / false formula is 1 / 0 in the SQL
         booleanValues: { true: 1, false: 0 }
@@ -978,6 +988,16 @@ function foldedParam(context: Context, text: string, exact: boolean, upper = fal
         return param(context, upper ? text.toUpperCase() : text.toLowerCase());
     }
     return `${upper ? 'UPPER' : 'LOWER'}(${param(context, text)})`;
+}
+
+/** the user's time zone: needed for a formula with dates */
+function timeZoneOf(context: Context): string {
+    if (context.timeZone === null) {
+        throw new TypeError(
+            "toSqlWhere: options.timeZone is needed for the dates of a formula: the user's IANA time zone, e.g. 'Europe/Oslo'"
+        );
+    }
+    return context.timeZone;
 }
 
 function clockOf(context: Context): TimeZoneClock {

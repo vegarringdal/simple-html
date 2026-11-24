@@ -5303,8 +5303,15 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
   once without a difference; filters through toSqlWhere vs the grid's filter of the values),
   sqlFormula.test.ts (the SQL of each database, hostile texts, the size limit). The sql bundle takes
   grid/formula.ts (no imports): 52 KB -> 87 KB
-* not yet: dates (TODAY, DAYS, YEAR, MONTH, a date field) - the time zone of the user and the date storage
-  of the columns are there in buildWhere for it
+* dates (the user: "just continue until u have them all"): a date of a formula is its day in the user's
+  time zone, as formula.ts dayOf - a DATE in the SQL (text YYYY-MM-DD on SQLite). dayOfColumn per storage:
+  the wall clock everywhere; utc / zoned / epoch through timezone() on PostgreSQL and FROM_TZ ... AT TIME
+  ZONE on Oracle; SQLite (no zones) and SQL Server (Windows names) in UTC only, else a TypeError. TODAY()
+  the day of the clock of options.timeZone, a literal. A date formula is a `date` column of wall clocks:
+  compareDate works on it. Probed first (db<>fiddle: timezone(), FROM_TZ, NUMTODSINTERVAL, DATEDIFF,
+  CONVERT 23), then validated: PostgreSQL 17 with ~200 formulas, Oracle 23 (the whole run timed out at
+  1.2 MB: the date formulas and 40 random), SQL Server 2017 / 2022 (wall clocks) - no differences; SQLite
+  in the tests with 23 date formulas, dates in the random mix (20 000 once) and date filters
 
 ## Considered, not done
 
