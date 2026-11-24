@@ -95,7 +95,7 @@ async function buildSql() {
             logLevel: 'error'
         });
         const allowed =
-            /^src\/(sql\.ts|sql\/[^/]+\.ts|datasource\/(filterExpression|assertOptions|objectFilter|isBlank|textPattern|v5Filter|filterFields)\.ts)$/;
+            /^src\/(sql\.ts|sql\/[^/]+\.ts|grid\/formula\.ts|datasource\/(filterExpression|assertOptions|objectFilter|isBlank|textPattern|v5Filter|filterFields)\.ts)$/;
         const others = Object.keys(result.metafile.inputs).filter((input) => !allowed.test(input));
         if (others.length) {
             throw new Error(`the sql entry may not bundle ${others.join(', ')}: it has to load in Node, without a DOM`);

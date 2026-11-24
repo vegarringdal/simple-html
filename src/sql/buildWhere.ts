@@ -2,9 +2,21 @@ import { FILTER_OPERATORS, type FilterOperator } from '../datasource/filterExpre
 import { isBlank } from '../datasource/isBlank';
 import { objectFilter, rangeOperator } from '../datasource/objectFilter';
 import { textPatternParts } from '../datasource/textPattern';
-import type { SqlColumn, SqlColumnType, SqlDateStorage, SqlDialect, SqlLimits, SqlOptions, SqlParam, SqlWhere } from '../sql';
+import { type FieldTypeResult, readFormula } from '../grid/formula';
+import type {
+    SqlCalculatedColumn,
+    SqlColumn,
+    SqlColumnType,
+    SqlDateStorage,
+    SqlDialect,
+    SqlLimits,
+    SqlOptions,
+    SqlParam,
+    SqlWhere
+} from '../sql';
 import { DIALECTS, type Dialect } from './dialects';
 import { markFilterError } from './filterError';
+import { type FormulaSqlField, formulaSql } from './formulaSql';
 import { show } from './show';
 import { nextSecond, readFilterDate, startOfDay, startOfNextDay, type TimeZoneClock, timeZoneClock } from './sqlDates';
 
@@ -64,7 +76,13 @@ interface Column {
 /** the options checked, and the parameters made so far */
 interface Context {
     dialect: Dialect;
+    dialectName: SqlDialect;
     columns: Map<string, Column>;
+    /** the calculated columns of the options, read; their SQL made when a filter uses one (calculatedColumn) */
+    calculated: Map<string, SqlCalculatedColumn>;
+    /** the calculated columns made SQL, and the ones being made (a cycle) */
+    calculatedColumns: Map<string, Column>;
+    making: Set<string>;
     /** the user's time zone, there when a column is a date */
     clock: TimeZoneClock | null;
     limits: Required<SqlLimits>;
@@ -80,7 +98,7 @@ function readOptions(options: SqlOptions): Context {
     if (!isPlainObject(options)) {
         throw new TypeError('toSqlWhere: options is an object: { dialect, columns }');
     }
-    checkKeys(options, ['dialect', 'columns', 'timeZone', 'dateStorage', 'firstParam', 'limits'], 'options');
+    checkKeys(options, ['dialect', 'columns', 'timeZone', 'dateStorage', 'firstParam', 'limits', 'calculated'], 'options');
 
     const dialectName = own(options, 'dialect');
     if (typeof dialectName !== 'string' || !Object.hasOwn(DIALECTS, dialectName)) {
@@ -121,9 +139,16 @@ function readOptions(options: SqlOptions): Context {
         throw new TypeError(`toSqlWhere: options.firstParam is a whole number from 1, not ${show(firstParam)}`);
     }
 
+    // the calculated columns come from the user's state, with the filter: what is wrong is the request's
+    const calculated = markFilterError(() => readCalculated(own(options, 'calculated'), columns));
+
     return {
         dialect,
+        dialectName: dialectName as SqlDialect,
         columns,
+        calculated,
+        calculatedColumns: new Map(),
+        making: new Set(),
         clock,
         limits: readLimits(own(options, 'limits')),
         firstParam: firstParam as number,
@@ -327,9 +352,108 @@ function readName(name: unknown, where: string): string | undefined {
 
 function columnOf(context: Context, field: string, where: string): Column {
     const column = context.columns.get(field);
-    if (!column) {
-        throw new TypeError(`toSqlWhere: ${where} ${show(field)} is not one of the columns`);
+    if (column) {
+        return column;
     }
+    if (context.calculated.has(field)) {
+        return calculatedColumn(context, field);
+    }
+    throw new TypeError(`toSqlWhere: ${where} ${show(field)} is not one of the columns`);
+}
+
+// ------------------------------------------------------------------ the calculated columns
+
+/** options.calculated: by field, a formula or `{ formula, type?, label? }`; no field of `columns` */
+function readCalculated(option: unknown, columns: Map<string, Column>): Map<string, SqlCalculatedColumn> {
+    const calculated = new Map<string, SqlCalculatedColumn>();
+    if (option === undefined || option === null) {
+        return calculated;
+    }
+    if (!isPlainObject(option)) {
+        throw new TypeError(
+            "toSqlWhere: options.calculated is an object: { total: '{price} * {qty}' } or { total: { formula } }"
+        );
+    }
+    for (const field of Object.keys(option)) {
+        const where = `options.calculated[${show(field)}]`;
+        if (columns.has(field)) {
+            throw new TypeError(
+                `toSqlWhere: ${where} is a field of options.columns too: a calculated column has a name of its own`
+            );
+        }
+        const entry = option[field];
+        const column: SqlCalculatedColumn = typeof entry === 'string' ? { formula: entry } : (entry as SqlCalculatedColumn);
+        if (!isPlainObject(column) || typeof column.formula !== 'string') {
+            throw new TypeError(`toSqlWhere: ${where} is a formula, or { formula, type? }, not ${show(entry)}`);
+        }
+        checkKeys(column, ['formula', 'type', 'label'], where);
+        calculated.set(field, {
+            formula: own(column, 'formula') as string,
+            type: own(column, 'type') as SqlCalculatedColumn['type']
+        });
+    }
+    return calculated;
+}
+
+/**
+ * A calculated column as a column: its formula as SQL (formulaSql.ts), made the first time a filter uses
+ * it. Its fields are the columns and the other calculated columns
+ * @throws a `TypeError` for a formula with a problem, a type that is not the formula's, a cycle, dates
+ */
+function calculatedColumn(context: Context, field: string): Column {
+    const done = context.calculatedColumns.get(field);
+    if (done) {
+        return done;
+    }
+    const where = `options.calculated[${show(field)}]`;
+    if (context.making.has(field)) {
+        throw new TypeError(`toSqlWhere: ${where}: its formula reads itself, through the other calculated columns`);
+    }
+    context.making.add(field);
+    const entry = context.calculated.get(field) as SqlCalculatedColumn;
+    const typeOf = (name: string): FieldTypeResult => {
+        const column = context.columns.get(name);
+        if (column) {
+            return { type: column.type === 'datetime' ? 'date' : column.type };
+        }
+        if (context.calculated.has(name)) {
+            return { type: calculatedColumn(context, name).type as 'number' | 'text' | 'boolean' };
+        }
+        return undefined;
+    };
+    const read = readFormula(entry.formula, typeOf);
+    if ('problem' in read) {
+        const { id, values } = read.problem;
+        throw new TypeError(
+            id === 'unknownField'
+                ? `toSqlWhere: ${where}.formula reads ${values.field}, which is not one of the columns`
+                : `toSqlWhere: ${where}.formula has a problem: ${id} ${JSON.stringify(values)}`
+        );
+    }
+    if (entry.type !== undefined && entry.type !== read.type) {
+        throw new TypeError(`toSqlWhere: ${where}.type is ${show(entry.type)}, its formula gives a ${read.type}`);
+    }
+    const fieldOf = (name: string): FormulaSqlField => {
+        const column = context.columns.get(name);
+        if (column) {
+            return {
+                sql: column.sql,
+                type: column.type === 'datetime' ? 'date' : column.type,
+                booleanValues: column.booleanValues
+            };
+        }
+        const other = calculatedColumn(context, name);
+        return { sql: other.sql, type: other.type as 'number' | 'text' | 'boolean', calculated: true };
+    };
+    const column: Column = {
+        sql: `(${formulaSql(read.node, read.type, context.dialectName, fieldOf)})`,
+        type: read.type as SqlColumnType,
+        dateStorage: 'local',
+        // a true / false formula is 1 / 0 in the SQL
+        booleanValues: { true: 1, false: 0 }
+    };
+    context.making.delete(field);
+    context.calculatedColumns.set(field, column);
     return column;
 }
 

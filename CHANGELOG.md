@@ -1366,6 +1366,10 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 #### Helpers for an app with a backend: v5 filters, the columns from the fields, the filter to send, the 400 errors, fields known later, rows from JSON
 
 ##### Added
+- `toSqlWhere(filter, { calculated })` (sql entry): the calculated columns of the grid (`getState().calculatedColumns`,
+  or a formula by field) - a filter on one compares its formula written as SQL, the values the grid computes,
+  on PostgreSQL (13 or later), Oracle, SQLite and SQL Server (2017 or later). Not yet: formulas with dates.
+  New type `SqlCalculatedColumn`
 - the formulas of the calculated columns and the formula colour rules: `!=` and `==` (as `<>` and `=`), and
   the functions of text `LEFT`, `RIGHT`, `MID` / `SUBSTRING`, `LEN`, `UPPER`, `LOWER`, `TRIM`, `CONTAINS`
 - `null` in a grid config is an option left out: the options of the grid, of a column (`placeholderRow`,

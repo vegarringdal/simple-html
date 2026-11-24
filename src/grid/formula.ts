@@ -226,6 +226,11 @@ const KEYWORDS = ['AND', 'OR', 'NOT', 'TRUE', 'FALSE'];
 /** the operators of two parts */
 type BinaryOperator = '+' | '-' | '*' | '/' | '&' | '=' | '<>' | '<' | '<=' | '>' | '>=' | 'AND' | 'OR';
 
+/** @internal a part of a formula, read: `start` and `end` are where it is in the text, for the problems */
+export type FormulaNode = Node;
+/** @internal the operators of two parts */
+export type FormulaBinaryOperator = BinaryOperator;
+
 /** a part of a formula, read: `start` and `end` are where it is in the text, for the problems */
 type Node = { start: number; end: number } & (
     | { kind: 'number'; value: number }
@@ -1007,17 +1012,15 @@ function callsToday(node: Node): boolean {
 }
 
 /**
- * Reads and checks a formula: its syntax, its fields, the types of its parts. The first problem is
- * given, or the formula to run. Never throws, never runs code: any text is read as a formula or is a
- * problem
- * @param text the formula as written: `{price} * {qty}`
- * @param typeOf what the formula knows of a field: its type, the problem of a calculated column,
- * undefined for a field the grid does not know
+ * @internal
+ * A formula read and checked, not made runnable: its parts (the tree), its type and the fields it reads -
+ * for the SQL of a calculated column (sql/formulaSql.ts), which writes the tree as SQL. The first problem
+ * is given, as by compileFormula
  */
-export function compileFormula(
+export function readFormula(
     text: unknown,
     typeOf: (field: string) => FieldTypeResult
-): { formula: Formula } | { problem: FormulaProblem } {
+): { node: Node; type: FormulaType; fields: string[]; fieldTypes: Map<string, FormulaType> } | { problem: FormulaProblem } {
     if (typeof text !== 'string' || text.trim() === '') {
         return { problem: { id: 'empty', values: {} } };
     }
@@ -1041,29 +1044,49 @@ export function compileFormula(
             },
             fields
         );
-        return {
-            formula: {
-                type,
-                fields,
-                usesToday: callsToday(node),
-                evaluate(read) {
-                    try {
-                        return { value: run(node, read, fieldTypes) };
-                    } catch (error) {
-                        if (error instanceof RowError) {
-                            return { problem: error.problem };
-                        }
-                        throw error;
-                    }
-                }
-            }
-        };
+        return { node, type, fields, fieldTypes };
     } catch (error) {
         if (error instanceof ProblemError) {
             return { problem: error.problem };
         }
         throw error;
     }
+}
+
+/**
+ * Reads and checks a formula: its syntax, its fields, the types of its parts. The first problem is
+ * given, or the formula to run. Never throws, never runs code: any text is read as a formula or is a
+ * problem
+ * @param text the formula as written: `{price} * {qty}`
+ * @param typeOf what the formula knows of a field: its type, the problem of a calculated column,
+ * undefined for a field the grid does not know
+ */
+export function compileFormula(
+    text: unknown,
+    typeOf: (field: string) => FieldTypeResult
+): { formula: Formula } | { problem: FormulaProblem } {
+    const read = readFormula(text, typeOf);
+    if ('problem' in read) {
+        return read;
+    }
+    const { node, type, fields, fieldTypes } = read;
+    return {
+        formula: {
+            type,
+            fields,
+            usesToday: callsToday(node),
+            evaluate(row) {
+                try {
+                    return { value: run(node, row, fieldTypes) };
+                } catch (error) {
+                    if (error instanceof RowError) {
+                        return { problem: error.problem };
+                    }
+                    throw error;
+                }
+            }
+        }
+    };
 }
 
 /**

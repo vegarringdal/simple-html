@@ -4,6 +4,7 @@
  * itself, so this resolves through its package.json as a user's code does. `npm run check:typings`.
  */
 import {
+    type SqlCalculatedColumn,
     type SqlColumn,
     type SqlColumnType,
     type SqlDateStorage,
@@ -58,4 +59,13 @@ try {
 // @ts-expect-error a field type that is none
 sqlColumnsFromFields({ price: 'money' });
 
-export { fields, flags, money, old, params, sql, status };
+// the calculated columns of the grid's state: a formula, or { formula, type?, label? }
+const calculated: Record<string, string | SqlCalculatedColumn> = {
+    total: '{price} * {qty}',
+    label: { formula: 'LEFT({name}, 2)', type: 'text', label: 'Label' }
+};
+const withCalculated = toSqlWhere(left, { dialect: 'postgres', columns, calculated });
+// @ts-expect-error a calculated column is a formula
+toSqlWhere(left, { dialect: 'postgres', columns, calculated: { total: 42 } });
+
+export { fields, flags, money, old, params, sql, status, withCalculated };

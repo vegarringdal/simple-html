@@ -455,32 +455,69 @@ without a field or an operator (null, `''`), one without the value it needs (nul
 ## Calculated columns
 
 A [calculated column](23-calculated-columns.md) (`GridState.calculatedColumns`) is computed in the
-browser, from the row: the database has no column of it. A filter on one - its header filter, a rule of
-the filter editor - is a condition like any other in `datasource.getFilter()`, on a field that is in no
-`columns` of yours. `toSqlWhere()` refuses it, as any field it does not know, with a `TypeError` that
-names it - answer it with a 400:
+browser, from the row: the database has no column of it. Give `toSqlWhere()` the calculated columns with
+**`calculated`**, and a filter on one compares its formula, written as SQL, as it compares a column:
 
 ```ts
 import { toSqlWhere } from '@simple-html/grid/sql';
 
-const filter = { group: 'AND', children: [{ field: 'total', operator: 'GREATER_THAN', value: 100 }] };
-try {
-    toSqlWhere(filter, { dialect: 'postgres', columns: { price: { column: 'price', type: 'number' } } });
-} catch (error) {
-    // TypeError: toSqlWhere: filter.children[0].field "total" is not one of the columns
-}
+const filter = { field: 'total', operator: 'GREATER_THAN', value: 100 };
+const { sql, params } = toSqlWhere(filter, {
+    dialect: 'postgres',
+    columns: { price: { column: 'price', type: 'number' }, qty: { column: 'qty', type: 'number' } },
+    calculated: { total: '{price} * {qty}' } // or the grid's: gridInterface.getState().calculatedColumns
+});
+// sql: ((("price" * "qty")) IS NOT NULL AND (("price" * "qty")) > $1)
 ```
 
-It is never left out: that would load more rows than the user filtered for. Two ways to filter on it in
-a backend:
+- **`calculated`** is `getState().calculatedColumns` as it is - `{ total: { formula, label, type } }` - or
+  a formula by field: `{ total: '{price} * {qty}' }`. The browser sends it with the filter
+  (`getServerFilter({ calculated: 'keep' })` keeps the conditions on them).
+- A formula reads the fields of `columns` and the other calculated columns; a field that is not in
+  `columns` throws, as in a filter. The name of a calculated column is not one of `columns`.
+- A formula is hostile input, as the filter is: it is read by the grid's own parser, its texts are
+  literals with their quotes doubled (PostgreSQL gets a text with a `\` as its bytes in hex), its numbers
+  digits - never pasted into the SQL. What is wrong with it is a `TypeError` that `isSqlFilterError()`
+  knows: answer it with a 400. The SQL of one calculated column is at most 100 000 characters.
+- **Not yet**: a formula with dates - a date field, `TODAY()`, `DAYS()`, `YEAR()`, `MONTH()` - throws a
+  `TypeError`; ROUND's digits must be written in the formula (`ROUND({price}, 2)`).
 
-- **Let the database compute it too.** A generated column, or a column of a view, with the same
-  expression - `total numeric GENERATED ALWAYS AS (price * qty) STORED` on PostgreSQL, `AS (price * qty)`
-  on SQL Server, Oracle and SQLite - listed in `columns` with its type:
-  `columns: { total: { column: 'total', type: 'number' } }`. Keep the two the same: the grid's blanks
-  and `DAYS()` are the grid's, see [the formulas](23-calculated-columns.md#the-formulas).
-- **Filter it in the browser only.** Send the filter without the conditions on the calculated columns,
-  and let the grid filter the rows that came back - `datasource.filter()` with the whole filter:
+The SQL gives the values the grid computes - the tests run every function and 2000 random formulas on
+SQLite and compare each row with the grid, and the SQL of each database was run on PostgreSQL 17, Oracle
+23 and SQL Server 2017 and 2022 with the same rows. What it takes to get there, so you can read the SQL:
+
+| the grid | the SQL |
+| --- | --- |
+| a blank: null, `''` | NULL - a text column's `''` is `NULLIF(col, '')` (`DATALENGTH` on SQL Server, where `'  ' = ''`) |
+| a comparison with a blank is false, `=` true for two blanks | `a IS NOT NULL AND b IS NOT NULL AND ...`: never NULL, so `NOT` is right |
+| a text compares in any case | `LOWER()` on both sides |
+| `/` of numbers | as numbers: `7 / 2` is 3.5 - PostgreSQL, SQLite and SQL Server would divide whole numbers |
+| a division by 0 blanks the whole value | the value is NULL when a part divides by 0: `COALESCE({a} / {b}, 0)` is blank, not 0 |
+| ROUND halves away from 0 | a float rounded as a decimal: PostgreSQL and Oracle round a float half to even. SQLite's `round()` takes no negative digits: tens are a division |
+| MIN, MAX skip a blank | PostgreSQL's LEAST; COALESCE of the others in front of each on Oracle and SQLite; `MIN` of a `VALUES` list on SQL Server (no LEAST before 2022) |
+| a number as text (`&`, LEFT, LEN): `2.5`, `4`, `0.3` | PostgreSQL `trim_scale` (13 or later), Oracle `TO_CHAR` with the `0` in front of `.5`, SQLite `printf('%.15g')`, SQL Server `FORMAT(…, 'G15', 'en-US')` |
+| LEFT, MID start at 1 | a start below 1 is 1: PostgreSQL and SQL Server would count from 0 |
+| TRIM takes spaces, tabs and line breaks | the same four characters (SQL Server 2017 or later) |
+
+Where they still differ:
+
+| | the grid | the SQL |
+| --- | --- | --- |
+| numbers | each step kept to 15 significant digits: `4 / 3 - 1.5` is `-0.16666666666667` | the database's: `-0.166666666666667`. The same for numbers that are exact in binary (halves, quarters) and decimal columns |
+| a number as text past 15 digits, or below 0.0001 | `1e+21`, `0.00001` | PostgreSQL and Oracle write the digits, SQLite `1e-05` |
+| `<` on text | the browser's order of letters | the database's (`COLLATE "C"`, binary): code points |
+| LEN, LEFT, MID of an emoji | one character | two on SQL Server, unless the column has a collation of supplementary characters (`_SC`) |
+| `=` on text with spaces at the end | they count | SQL Server ignores them |
+| TRIM | every white space of Unicode | spaces, tabs and line breaks |
+| case of letters that are not ASCII | JavaScript's | the database's `LOWER()` - SQLite folds ASCII only |
+
+Without `calculated`, `toSqlWhere()` refuses a condition on a calculated column, as any field it does not
+know, with a `TypeError` that names it - it is never left out, that would load more rows than the user
+filtered for. A database that computes the column itself - a generated column, a column of a view - lists
+it in `columns` instead, with its type: `columns: { total: { column: 'total', type: 'number' } }`.
+
+To filter a calculated column in the browser only, send the filter without its conditions, and let the
+grid filter the rows that came back - `datasource.filter()` with the whole filter:
 
 ```ts
 import { withoutFields } from '@simple-html/grid'; // and from '@simple-html/grid/sql'
@@ -489,11 +526,11 @@ const calculated = Object.keys(gridInterface.getState().calculatedColumns);
 const forTheBackend = withoutFields(datasource.getFilter(), calculated);
 ```
 
-  A condition taken out matches every row: it is left out of an AND group, and an OR group with one is
-  left out whole - `country = 'Norway' OR total > 100` can be true for any row. So the backend sends
-  every row the whole filter lets through, maybe more, and the browser filters the rest. `null` when
-  nothing is left. `fields` can be a list, a Set, or a function: `(field) => !Object.hasOwn(columns, field)`
-  takes out every field the database does not have.
+A condition taken out matches every row: it is left out of an AND group, and an OR group with one is
+left out whole - `country = 'Norway' OR total > 100` can be true for any row. So the backend sends every
+row the whole filter lets through, maybe more, and the browser filters the rest. `null` when nothing is
+left. `fields` can be a list, a Set, or a function: `(field) => !Object.hasOwn(columns, field)` takes out
+every field the database does not have.
 
 ## The filter to send: `getServerFilter()`
 
@@ -511,7 +548,7 @@ await fetch('/api/customers', { method: 'POST', body: JSON.stringify({ filter })
 - `fields`: the fields the backend has. A condition on another field is taken out, as
   [`withoutFields()`](#calculated-columns) takes it out - it matches every row. Default every field.
 - `calculated: 'keep'` keeps the conditions on the calculated
-  columns, for a database that computes them too (default `'strip'`).
+  columns - for `toSqlWhere({ calculated })`, or a database that computes them too (default `'strip'`).
 - `null` is every row. What comes back is filtered by the datasource as it is: the browser drops the
   rows the backend could not.
 

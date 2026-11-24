@@ -272,6 +272,40 @@ export interface SqlOptions {
     firstParam?: number;
     /** the limits on the size of the filter, see {@link SqlLimits} */
     limits?: SqlLimits;
+    /**
+     * The calculated columns of the grid (`gridInterface.getState().calculatedColumns`), by field: a filter
+     * on one compares its formula, written as SQL, as it compares a column. Its formula reads the fields of
+     * `columns` and the other calculated columns - no field `columns` has not. See {@link SqlCalculatedColumn}.
+     * Not yet: a formula with dates (a date field, TODAY, DAYS, YEAR, MONTH) throws a `TypeError`.
+     */
+    calculated?: Record<string, string | SqlCalculatedColumn>;
+}
+
+/**
+ * A calculated column for {@link SqlOptions.calculated}: `CalculatedColumn` of the grid - the formula
+ * (`'{price} * {qty}'`), and the type and label it may have (the label is not used). A formula is text
+ * from the user's state, taken as hostile as a filter: what is wrong with it is a `TypeError` that
+ * `isSqlFilterError()` knows - a 400.
+ *
+ * @example
+ * ```ts
+ * import { type SqlCalculatedColumn, toSqlWhere } from '@simple-html/grid/sql';
+ *
+ * declare const body: { filter: unknown; calculated: Record<string, SqlCalculatedColumn> };
+ * const { sql, params } = toSqlWhere(body.filter, {
+ *     dialect: 'postgres',
+ *     columns: { price: { column: 'price', type: 'number' }, qty: { column: 'qty', type: 'number' } },
+ *     calculated: body.calculated // { total: { formula: '{price} * {qty}' } }
+ * });
+ * ```
+ */
+export interface SqlCalculatedColumn {
+    /** the formula, in the language of the grid's calculated columns: `{price} * {qty}` */
+    formula: string;
+    /** the type of its values: left out the formula's, given it must be the formula's */
+    type?: 'number' | 'text' | 'date' | 'boolean';
+    /** the column's label in the grid: not used */
+    label?: string;
 }
 
 /**

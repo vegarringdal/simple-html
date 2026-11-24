@@ -264,9 +264,20 @@ const config: GridConfig = {
 
 ## In a backend filter (SQL)
 
-A calculated column is computed in the browser: the database has no column of it. A filter on one,
-sent to a backend, is refused by [`toSqlWhere()`](22-sql.md#calculated-columns) - the field is not in
-its `columns` - unless the database computes the same value, see the SQL guide.
+A calculated column is computed in the browser: the database has no column of it. Send the calculated
+columns with the filter, and [`toSqlWhere({ calculated })`](22-sql.md#calculated-columns) writes each
+formula as SQL - a filter on `total` compares `"price" * "qty"` - giving the values the grid computes, on
+PostgreSQL, Oracle, SQLite and SQL Server:
+
+```ts
+// in the browser
+const body = JSON.stringify({
+    filter: gridInterface.getServerFilter({ calculated: 'keep' }),
+    calculated: gridInterface.getState().calculatedColumns
+});
+```
+
+Not yet: a formula with dates (a date field, TODAY, DAYS, YEAR, MONTH). The SQL guide has what differs.
 
 ## Security
 

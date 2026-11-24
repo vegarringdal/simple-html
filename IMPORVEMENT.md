@@ -5278,6 +5278,34 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * the hint of the formula field (en, nb), the calculated columns guide, the formatting guide; tests in
   formula.test.ts
 
+### Calculated columns as SQL: `toSqlWhere({ calculated })` (2026-11-25)
+
+* the user: "calculated columns should prob be overlooked by to sql? ... Would be cool if we could ... we
+  might need to add to_char etc on numbers" - then: "read the docs for the databases, maybe there are online
+  fiddles you can use to do some validation before writing tests"
+* sql/formulaSql.ts writes a formula's tree (formula.ts `readFormula()`, new: the parts without running
+  them) as SQL; buildWhere makes a calculated column a Column whose `sql` is that expression the first time
+  a filter uses it, so every comparison of a column works on it. Fields: the columns, other calculated
+  columns (inlined; a cycle throws); a formula with a problem a TypeError marked for isSqlFilterError
+* the grid's rules written out (see the header of formulaSql.ts and the SQL guide): blanks, two-valued
+  comparisons, LOWER for text, `/` as numbers, a division by 0 blanking the whole value (an `err` condition
+  per part, AND / OR / IF / COALESCE run only what the grid runs), ROUND half away from 0, MIN / MAX
+  skipping blanks, numbers as the grid writes them, LEFT / MID from 1, CONTAINS of ''
+* probed first on db<>fiddle (its API: POST /run?engine=..&version=.., one run per engine, no loops):
+  PostgreSQL 17 (round(float) half even, 7/2 = 3, substr(t, 0, 2) is 'a', trim_scale), Oracle 23
+  (TO_CHAR(0.5) '.5', SUBSTR(t, 0, 2) 'ab', LEAST with NULL NULL, round(binary_double) half even), SQL
+  Server 2017 / 2022 (FORMAT G15, CHARINDEX('') 0, LEN without trailing spaces, MIN of VALUES)
+* then validated: 145 formulas (75 written + 70 random) x 48 rows, the grid's values in a table, each
+  database returning only the rows it differs on - PostgreSQL 17 and Oracle 23 none; SQL Server only the
+  emoji row (UTF-16 units: documented - COLLATE ..._SC in the SQL gave Msg 468 collation conflicts).
+  Found on the way: SQLite printf('%.15g', NULL) is '0'; an untyped NULL text in SUBSTRING (Msg 8116)
+* tests: sqlFormulaSqlite.test.ts (every formula and 2000 random ones against SQLite row by row - 20 000 ran
+  once without a difference; filters through toSqlWhere vs the grid's filter of the values),
+  sqlFormula.test.ts (the SQL of each database, hostile texts, the size limit). The sql bundle takes
+  grid/formula.ts (no imports): 52 KB -> 87 KB
+* not yet: dates (TODAY, DAYS, YEAR, MONTH, a date field) - the time zone of the user and the date storage
+  of the columns are there in buildWhere for it
+
 ## Considered, not done
 
 ## Candidates / not started

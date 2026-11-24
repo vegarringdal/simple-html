@@ -2496,8 +2496,9 @@ export class GridInterface<T> {
      *
      * @param options.fields the fields the backend has a column for: a condition on another field is
      * taken out. Default every field
-     * @param options.calculated `'keep'`: the conditions on the calculated columns stay (the database
-     * computes them too). Default `'strip'`, they go
+     * @param options.calculated `'keep'`: the conditions on the calculated columns stay - for
+     * `toSqlWhere({ calculated })`, which makes SQL of their formulas (send `getState().calculatedColumns`
+     * with the filter), or a database that computes them too. Default `'strip'`, they go
      * @returns the filter, `null` for every row
      * @throws a `TypeError` for options that are wrong: `fields` that is no list of at least one field name
      *
