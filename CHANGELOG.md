@@ -1363,6 +1363,30 @@ rows); the vertical time is rendering every cell of every row on screen, which s
   mouse - `datePickerConfig.rowHeight` still wins. Whether it fits under the cell is worked out from the
   rows' height when `datepickerHeight` is not given (it was 282 whatever `rowHeight` was)
 
+#### Helpers for a backend: v5 filters, the columns from the fields, the conditions a backend has not, the 400 errors
+
+##### Added
+- `convertV5Filter(filter)`, `isV5Filter(x)`, `normalizeFilter(x)` - from `@simple-html/grid` and from
+  `@simple-html/grid/sql` (no DOM): a v5 filter (`filterArguments`, `attribute`) as a v6 one, for old links,
+  bookmarks and saved configs. `normalizeFilter` takes either shape, also as JSON text, `null` for none; what
+  is neither throws a `TypeError`
+- `withoutFields(filter, fields)` - both entries: the filter without the conditions on some fields (the
+  calculated columns), a condition taken out matching every row - out of an AND group, its OR group out
+  whole - so a backend selects every row the whole filter does, maybe more
+- `sqlColumnsFromFields(fields, { nameCase, column, dateStorage })` (sql entry): the `columns` of
+  `toSqlWhere()` from the datasource's `fields`
+- `isSqlFilterError(error)` (sql entry): true for what `toSqlWhere()`, `convertV5Filter()` and
+  `normalizeFilter()` throw for the filter and the user's `timeZone` - answer with a 400 - false for the
+  other options that are wrong. The errors stay `TypeError` / `RangeError`
+- the filter types of the sql entry: `SqlFilter`, `SqlFilterGroup`, `SqlFilterCondition`,
+  `SqlFilterOperator`, `SqlV5Filter`, `SqlFieldsOptions`
+
+##### Changed
+- `convertGridConfig()` of a v5 config throws a `TypeError` for a filter with an operator that is none
+  (it was passed on) - the v5 filter converter is the one above
+- the SQL guide's `withoutFields` sample left the other conditions of an OR group: it let fewer rows
+  through than the filter. The helper leaves the group out
+
 #### Formats by type and the default view: the Defaults tab of the grid config dialog
 
 ##### Added

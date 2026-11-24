@@ -11,7 +11,12 @@
  *
  * @module
  */
+
+import { withoutFields as without } from './datasource/filterFields';
+import { convertV5Filter as convertV5, isV5Filter as isV5, normalizeFilter as normalize } from './datasource/v5Filter';
 import { buildWhere } from './sql/buildWhere';
+import { isMarkedFilterError, markFilterError } from './sql/filterError';
+import { sqlColumnsOf } from './sql/sqlColumns';
 
 /**
  * Turns a filter of the grid into the condition of a SQL `WHERE`, with its values as parameters: the
@@ -22,7 +27,9 @@ import { buildWhere } from './sql/buildWhere';
  * is fixed keywords, placeholders and the quoted columns of `columns`. A field (or `valueField`) that
  * is not in `columns` throws, so does anything that is no filter: a wrong shape, an unknown operator or
  * property, a value of the wrong type. A filter over a limit (`limits`) throws a `RangeError`. A message
- * shows at most 40 characters of what it is about. Answer both with a 400.
+ * shows at most 40 characters of what it is about. Answer both with a 400: {@link isSqlFilterError} is
+ * true for them and for a `timeZone` that is none (the user's, sent with the filter) - not for the other
+ * options that are wrong, a mistake of the backend's code.
  *
  * It does not decide who may see which rows: AND your own conditions to it -
  * `WHERE tenant_id = $1 AND ${sql}`, with `firstParam: 2`.
@@ -292,4 +299,234 @@ export interface SqlWhere {
     sql: string;
     /** the values of the placeholders, in the order they are in `sql` */
     params: SqlParam[];
+}
+
+// ------------------------------------------------------------------ the filters, v6 and v5
+
+/**
+ * A filter of the grid - the same shape as `FilterExpression` of `@simple-html/grid` (a test keeps them
+ * one): a condition, or an AND / OR group of them. Its own name here, so the typings of this entry are one
+ * file. See the filtering guide.
+ */
+export type SqlFilter = SqlFilterGroup | SqlFilterCondition;
+
+/** a group of a {@link SqlFilter}: `FilterGroup` of the grid */
+export interface SqlFilterGroup {
+    /** `'AND'`: every child must match, `'OR'`: one is enough */
+    group: 'AND' | 'OR';
+    /** the conditions and groups in the group */
+    children: SqlFilter[];
+}
+
+/** a condition of a {@link SqlFilter}: `FilterCondition` of the grid */
+export interface SqlFilterCondition {
+    /** the field to test */
+    field: string;
+    /** how to compare */
+    operator: SqlFilterOperator;
+    /** what to compare with: an array for `IN` / `NOT_IN`, `[from, to]` for `BETWEEN` */
+    value?: unknown;
+    /** another field, whose value is compared with */
+    valueField?: string;
+    /** a text compared with the case of its letters */
+    caseSensitive?: boolean;
+    /** `*`, `%` and `_` are characters like any other */
+    literal?: boolean;
+}
+
+/** the operators of a condition: `FilterOperator` of the grid */
+export type SqlFilterOperator =
+    | 'EQUAL'
+    | 'NOT_EQUAL_TO'
+    | 'LESS_THAN'
+    | 'LESS_THAN_OR_EQUAL_TO'
+    | 'GREATER_THAN'
+    | 'GREATER_THAN_OR_EQUAL_TO'
+    | 'BETWEEN'
+    | 'CONTAINS'
+    | 'DOES_NOT_CONTAIN'
+    | 'BEGIN_WITH'
+    | 'END_WITH'
+    | 'IN'
+    | 'NOT_IN'
+    | 'IS_BLANK'
+    | 'IS_NOT_BLANK';
+
+/**
+ * A filter as v5 had it - `V5Filter` of `@simple-html/grid`: a group has `type: 'GROUP'` and
+ * `filterArguments`, a condition `attribute`, `operator`, `value`
+ */
+export interface SqlV5Filter {
+    /** `'GROUP'` for a group, `'CONDITION'` for a condition */
+    type?: 'GROUP' | 'CONDITION';
+    /** a group's: `'OR'` is an OR group, anything else AND */
+    logicalOperator?: 'AND' | 'OR' | 'NONE';
+    /** a condition's field */
+    attribute?: string | null;
+    /** the field's type: dropped, the datasource's `fields` have it in v6 */
+    attributeType?: string | null;
+    /** a condition's operator: the names of v6 */
+    operator?: string | null;
+    /** a condition's value - the name of another field with `valueType: 'ATTRIBUTE'` */
+    value?: unknown;
+    /** `'ATTRIBUTE'`: `value` is another field, a `valueField` in v6 */
+    valueType?: 'VALUE' | 'ATTRIBUTE' | null;
+    /** a group's conditions and groups */
+    filterArguments?: SqlV5Filter[];
+}
+
+/**
+ * `true` for a filter of v5 - `convertV5Filter` of `@simple-html/grid`, the same function: an object with
+ * a key only v5 had (`filterArguments`, `attribute`, `logicalOperator` ...) and none only v6 has.
+ *
+ * @example
+ * ```ts
+ * import { isV5Filter } from '@simple-html/grid/sql';
+ *
+ * isV5Filter({ attribute: 'age', operator: 'EQUAL', value: 30 }); // true
+ * ```
+ */
+export function isV5Filter(value: unknown): value is SqlV5Filter {
+    return isV5(value);
+}
+
+/**
+ * A filter of v5 as one of v6, for the old links and bookmarks a backend still gets - `convertV5Filter`
+ * of `@simple-html/grid`, the same function. `null` for none. Hand the result to {@link toSqlWhere}.
+ *
+ * @throws a `TypeError` for what is no v5 filter, a `RangeError` for groups nested deeper than 100 -
+ * answer both with a 400 ({@link isSqlFilterError})
+ *
+ * @example
+ * ```ts
+ * import { convertV5Filter, toSqlWhere } from '@simple-html/grid/sql';
+ *
+ * const filter = convertV5Filter({ attribute: 'name', operator: 'BEGIN_WITH', value: 'an' });
+ * // { field: 'name', operator: 'BEGIN_WITH', value: 'an' }
+ * toSqlWhere(filter, { dialect: 'postgres', columns: { name: 'name' } });
+ * ```
+ */
+export function convertV5Filter(filter: unknown): SqlFilter | null {
+    return markFilterError(() => convertV5(filter));
+}
+
+/**
+ * A filter of either shape - v5, v6, or either as JSON text (`?filter=`) - as one of v6, `null` for none:
+ * `normalizeFilter` of `@simple-html/grid`, the same function. A v6 filter is returned as it is:
+ * {@link toSqlWhere} checks it.
+ *
+ * @throws a `TypeError` for what is neither - text that is no JSON, a number, an object of neither shape:
+ * it is not taken as no filter, which would select every row. Answer it with a 400 ({@link isSqlFilterError})
+ *
+ * @example
+ * ```ts
+ * import { normalizeFilter, toSqlWhere } from '@simple-html/grid/sql';
+ *
+ * declare const body: string; // the request's
+ * const filter = normalizeFilter(JSON.parse(body).filter); // a v5 or a v6 filter, or none
+ * const { sql, params } = toSqlWhere(filter, { dialect: 'postgres', columns: { name: 'name' } });
+ * ```
+ */
+export function normalizeFilter(filter: unknown): SqlFilter | null {
+    return markFilterError(() => normalize(filter));
+}
+
+// ------------------------------------------------------------------ errors
+
+/**
+ * `true` for an error of a filter that came from outside: what {@link toSqlWhere}, {@link convertV5Filter}
+ * and {@link normalizeFilter} throw for the filter - its shape, its values, a limit - and for a
+ * `timeZone` that is none (the user's, sent with the filter): the request's mistake, answer it with a 400.
+ * `false` for anything else, among them a `TypeError` of the other `options` that are wrong: a mistake of
+ * the backend's code. The error stays the `TypeError` or `RangeError` it was.
+ *
+ * @example
+ * ```ts
+ * import { isSqlFilterError, normalizeFilter, toSqlWhere } from '@simple-html/grid/sql';
+ *
+ * function where(body: { filter: unknown; timeZone: string }) {
+ *     try {
+ *         return toSqlWhere(normalizeFilter(body.filter), { dialect: 'postgres', columns: { name: 'name' }, timeZone: body.timeZone });
+ *     } catch (error) {
+ *         if (isSqlFilterError(error)) {
+ *             return { status: 400, message: error.message };
+ *         }
+ *         throw error; // a 500
+ *     }
+ * }
+ * ```
+ */
+export function isSqlFilterError(error: unknown): error is TypeError | RangeError {
+    return isMarkedFilterError(error);
+}
+
+// ------------------------------------------------------------------ the fields
+
+/**
+ * A filter without the conditions on some fields - `withoutFields` of `@simple-html/grid`, the same
+ * function: a condition taken out matches every row (left out of an AND group, its OR group left out
+ * whole), so the SQL selects every row the whole filter lets through, maybe more. For the calculated
+ * columns, and the fields the database does not have. `null` when nothing is left.
+ *
+ * @param fields the fields whose conditions go: a list, a Set, or a function true for each of them
+ *
+ * @example
+ * ```ts
+ * import { type SqlFilter, toSqlWhere, withoutFields } from '@simple-html/grid/sql';
+ *
+ * declare const body: { filter: SqlFilter };
+ * const columns = { name: 'name', age: 'age' };
+ * // the fields the database has not: out, the browser filters on them
+ * const filter = withoutFields(body.filter, (field) => !Object.hasOwn(columns, field));
+ * toSqlWhere(filter, { dialect: 'postgres', columns });
+ * ```
+ */
+export function withoutFields(
+    filter: SqlFilter | null | undefined,
+    fields: Iterable<string> | ((field: string) => boolean)
+): SqlFilter | null {
+    return without(filter, fields);
+}
+
+/**
+ * The options of {@link sqlColumnsFromFields}
+ */
+export interface SqlFieldsOptions {
+    /**
+     * the case of the column names: `'asIs'` (the default) the field's name, `'upper'` / `'lower'`. The
+     * names are quoted: Oracle's unquoted names are upper case - `'upper'` - PostgreSQL's lower case
+     */
+    nameCase?: 'asIs' | 'upper' | 'lower';
+    /** the name of a field's column, before `nameCase`: `(field) => 'customer.' + field` - default the field */
+    column?: (field: string) => string;
+    /** how the `date` and `datetime` columns hold their dates, see {@link SqlDateStorage}. Left out: `'local'` */
+    dateStorage?: SqlDateStorage;
+}
+
+/**
+ * The `columns` of {@link toSqlWhere} from the fields of the grid's datasource - the same object as
+ * `DatasourceOptions.fields`: `{ born: 'date', age: { type: 'number', label: 'Age' } }`. Each field is a
+ * column of its type (a field without one is `'text'`), named as the field - `nameCase` and `column`
+ * change that. One list of the fields for the browser and the backend keeps their types the same.
+ *
+ * @param fields the datasource's fields: a type, or a config with `type` (the rest is not read)
+ * @throws a `TypeError` for fields that are no object, a type that is none, wrong options
+ *
+ * @example
+ * ```ts
+ * import { type SqlFilter, sqlColumnsFromFields, toSqlWhere } from '@simple-html/grid/sql';
+ *
+ * declare const filter: SqlFilter;
+ * const fields = { project: 'text', born: 'date', amount: { type: 'number', label: 'Amount' } } as const;
+ * const columns = sqlColumnsFromFields(fields, { nameCase: 'upper' });
+ * // { project: { column: 'PROJECT', type: 'text' }, born: { column: 'BORN', type: 'date' },
+ * //   amount: { column: 'AMOUNT', type: 'number' } }
+ * toSqlWhere(filter, { dialect: 'oracle', columns });
+ * ```
+ */
+export function sqlColumnsFromFields(
+    fields: Readonly<Record<string, SqlColumnType | { readonly type?: SqlColumnType }>>,
+    options: SqlFieldsOptions = {}
+): Record<string, SqlColumn> {
+    return sqlColumnsOf(fields, options);
 }

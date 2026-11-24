@@ -736,38 +736,21 @@ condition and ignores it, it does not throw. To keep saved filters, convert them
 (the [whole v5 config](#a-v5-config-converted) has changed too, its converter uses this one):
 
 ```ts
-import { type FilterExpression, type FilterOperator, where } from '@simple-html/grid';
-
-/** a filter as v5 saved it in GridConfig.filter */
-interface V5Filter {
-    type?: 'GROUP' | 'CONDITION';
-    logicalOperator?: 'AND' | 'OR' | 'NONE';
-    attribute?: string | null;
-    operator?: FilterOperator | null;
-    value?: unknown;
-    valueType?: 'VALUE' | 'ATTRIBUTE' | null;
-    filterArguments?: V5Filter[];
-}
-
-function fromV5(filter: V5Filter): FilterExpression | null {
-    if (filter.type === 'GROUP' || Array.isArray(filter.filterArguments)) {
-        const children = (filter.filterArguments ?? []).map(fromV5).filter((child): child is FilterExpression => child !== null);
-        return { group: filter.logicalOperator === 'OR' ? 'OR' : 'AND', children };
-    }
-    if (!filter.attribute || !filter.operator) {
-        return null; // incomplete, v5 ignored it too
-    }
-    if (filter.valueType === 'ATTRIBUTE') {
-        return { field: filter.attribute, operator: filter.operator, valueField: String(filter.value) };
-    }
-    return where(filter.attribute, filter.operator, filter.value);
-}
+import { convertV5Filter, normalizeFilter } from '@simple-html/grid';
 
 const saved = JSON.parse(localStorage.getItem('my-grid-layout') ?? 'null');
 if (saved?.filter) {
-    gridInterface.setState({ filter: fromV5(saved.filter) });
+    gridInterface.setState({ filter: convertV5Filter(saved.filter) });
 }
+
+// a link of v5 or v6 (?filter=...), either shape: v6, or null
+const fromLink = normalizeFilter(new URLSearchParams(location.search).get('filter'));
 ```
+
+`convertV5Filter()` makes a group's `logicalOperator: 'OR'` an OR group (anything else AND), `attribute`
+the `field`, `valueType: 'ATTRIBUTE'` a `valueField`, and leaves out an incomplete condition as v5 did.
+What is no v5 filter throws a `TypeError`. `isV5Filter()` tells the shapes apart. A backend has the same
+three in `@simple-html/grid/sql`, see [SQL](guides/22-sql.md#links-and-bookmarks-of-v5).
 
 `attributeType` is dropped: list the field in `fields`.
 

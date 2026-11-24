@@ -4,6 +4,7 @@ import { objectFilter, rangeOperator } from '../datasource/objectFilter';
 import { textPatternParts } from '../datasource/textPattern';
 import type { SqlColumn, SqlColumnType, SqlDateStorage, SqlDialect, SqlLimits, SqlOptions, SqlParam, SqlWhere } from '../sql';
 import { DIALECTS, type Dialect } from './dialects';
+import { markFilterError } from './filterError';
 import { show } from './show';
 import { nextSecond, readFilterDate, startOfDay, startOfNextDay, type TimeZoneClock, timeZoneClock } from './sqlDates';
 
@@ -17,7 +18,8 @@ export function buildWhere(filter: unknown, options: SqlOptions): SqlWhere {
     if (filter === null || filter === undefined) {
         return { sql: NO_CONDITION, params: [] };
     }
-    const sql = build(filter, context, 1, 'filter');
+    // what is wrong with the filter is the request's: marked for isSqlFilterError. The options were read above
+    const sql = markFilterError(() => build(filter, context, 1, 'filter'));
     return { sql: sql ?? NO_CONDITION, params: context.params };
 }
 
@@ -99,10 +101,15 @@ function readOptions(options: SqlOptions): Context {
     let clock: TimeZoneClock | null = null;
     const timeZone = own(options, 'timeZone');
     if (timeZone !== undefined) {
-        if (typeof timeZone !== 'string') {
-            throw new TypeError(`toSqlWhere: options.timeZone is an IANA time zone, e.g. 'Europe/Oslo', not ${show(timeZone)}`);
-        }
-        clock = timeZoneClock(timeZone);
+        // the user's time zone, sent by the browser with the filter: what is wrong with it is the request's
+        clock = markFilterError(() => {
+            if (typeof timeZone !== 'string') {
+                throw new TypeError(
+                    `toSqlWhere: options.timeZone is an IANA time zone, e.g. 'Europe/Oslo', not ${show(timeZone)}`
+                );
+            }
+            return timeZoneClock(timeZone);
+        });
     } else if ([...columns.values()].some((column) => isDateType(column.type))) {
         throw new TypeError(
             "toSqlWhere: options.timeZone is needed for the date columns: the user's IANA time zone, e.g. 'Europe/Oslo'"

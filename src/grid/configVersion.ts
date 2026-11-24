@@ -1,6 +1,6 @@
-import { type FilterExpression, type FilterOperator, where } from '../datasource/filterExpression';
 import type { GroupArgument } from '../datasource/groupArgument';
 import type { SortArgument } from '../datasource/sortArgument';
+import { convertV5Filter, type V5Filter } from '../datasource/v5Filter';
 import type { ColumnConfig, GridConfig, GridState, LayoutColumn } from './gridConfig';
 import type { GridView } from './gridView';
 
@@ -50,17 +50,6 @@ export interface ExportedGrid {
 
 // ------------------------------------------------------------------ version 1: a v5 config
 
-/** a filter as v5 saved it in `GridConfig.filter` */
-interface V5Filter {
-    type?: 'GROUP' | 'CONDITION';
-    logicalOperator?: 'AND' | 'OR' | 'NONE';
-    attribute?: string | null;
-    operator?: FilterOperator | null;
-    value?: unknown;
-    valueType?: 'VALUE' | 'ATTRIBUTE' | null;
-    filterArguments?: V5Filter[];
-}
-
 /** a column of `columnsPinnedLeft` / `columnsCenter` / `columnsPinnedRight` in v5 */
 interface V5Column {
     rows: string[];
@@ -93,23 +82,6 @@ type V5GridConfig = Record<string, unknown> & {
 
 /** the v5 options that are gone without a place in v6: they are left out */
 const V5_DROPPED = ['tooltipText', 'selectionMode'];
-
-/** a v5 filter as a v6 one: null for one v5 ignored too (no field or no operator) */
-function filterOfV5(filter: V5Filter): FilterExpression | null {
-    if (filter.type === 'GROUP' || Array.isArray(filter.filterArguments)) {
-        const children = (filter.filterArguments ?? [])
-            .map(filterOfV5)
-            .filter((child): child is FilterExpression => child !== null);
-        return { group: filter.logicalOperator === 'OR' ? 'OR' : 'AND', children };
-    }
-    if (!filter.attribute || !filter.operator) {
-        return null;
-    }
-    if (filter.valueType === 'ATTRIBUTE') {
-        return { field: filter.attribute, operator: filter.operator, valueField: String(filter.value) };
-    }
-    return where(filter.attribute, filter.operator, filter.value);
-}
 
 const layoutColumnsOfV5 = (columns: V5Column[] = []): LayoutColumn[] =>
     columns.map((column) => ({ fields: [...column.rows], width: column.width }));
@@ -164,7 +136,7 @@ function fromVersion1(v5: V5GridConfig): ExportedGrid {
         sorting: sorting ?? [],
         grouping: grouping ?? [],
         expandedGroups: expandedGroups ?? [],
-        filter: filter ? filterOfV5(filter) : null,
+        filter: convertV5Filter(filter),
         headerFilters
     };
     const config: GridConfig = { ...(options as Partial<GridConfig>), columns, layout, initialState };

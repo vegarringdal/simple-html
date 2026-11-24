@@ -23,6 +23,7 @@ export {
     or,
     where
 } from './datasource/filterExpression';
+export { withoutFields } from './datasource/filterFields';
 export type { Formatter } from './datasource/formatter';
 export { registerFormatter } from './datasource/formatterRegistry';
 export type { GroupArgument } from './datasource/groupArgument';
@@ -33,6 +34,7 @@ export type { SelectionMode } from './datasource/selectionMode';
 export type { SortArgument } from './datasource/sortArgument';
 export { TextFormatter } from './datasource/textFormatter';
 export { escapeTextPattern } from './datasource/textPattern';
+export { convertV5Filter, isV5Filter, normalizeFilter, type V5Filter } from './datasource/v5Filter';
 export type {
     ValidationError,
     ValidationOption,

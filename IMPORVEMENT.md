@@ -5189,6 +5189,26 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * tests: typeFormats.test.ts (12); the tab tests of detailFormSettings.test.ts with three tabs; texts.test.ts
   shows the tab (showDefaults)
 
+### The wishlist of an app with a backend (2026-11-24): #1, #2, #4, #5, #10
+
+* the user's list, "helpers the app would otherwise have to write"; #8 (rows of arrays) waits for their
+  measurements, #11 (column defaults when converting v5) was taken off the list
+* v5Filter.ts (datasource, no DOM): convertV5Filter - hostile input: what is no v5 filter throws a
+  TypeError naming its place, deeper than 100 a RangeError - isV5Filter (a key only v5 had, none only v6
+  has), normalizeFilter (null / '' / text as JSON / v5 / v6 as it is; else a TypeError, never "no filter").
+  configVersion's filterOfV5 is it now
+* filterFields.ts: withoutFields - a condition taken out is true: out of an AND, its OR out whole. The
+  guide's sample kept the rest of an OR (fewer rows than the filter): fixed with it. A test filters 60 rows
+  with four filters and checks the backend's part lets every row of the whole filter through
+* the sql entry: its typings are one file without imports, so it has its own filter types (SqlFilter ...);
+  sqlHelpers.test.ts checks them equal to the grid's with expectTypeOf. The wrappers call the same code
+  (build.js lets the sql bundle take v5Filter.ts and filterFields.ts)
+* isSqlFilterError: errors of the filter (buildWhere's build) and of the timeZone (the user's, sent with
+  the filter) get a mark - a symbol of the global registry, so two copies of the package agree - the other
+  options' errors not: the backend's own mistake is a 500
+* sqlColumnsFromFields: the fields of the datasource (a type, or a config's `type`) as columns; nameCase,
+  column (a function), dateStorage
+
 ## Considered, not done
 
 ## Candidates / not started

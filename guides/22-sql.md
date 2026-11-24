@@ -56,6 +56,66 @@ const { sql, params } = toSqlWhere(filter, {
 - The options are checked on every call: an unknown option (`timezone` for `timeZone`) throws, so does a
   column that is not a plain name.
 
+### The columns from the grid's fields
+
+`sqlColumnsFromFields()` makes `columns` of the datasource's `fields` - one list of the fields for the
+browser and the backend, so their types stay the same:
+
+```ts
+import { sqlColumnsFromFields, toSqlWhere } from '@simple-html/grid/sql';
+
+// the same object as the grid's `new Datasource({ fields })`
+const fields = { project: 'text', born: 'date', amount: { type: 'number', label: 'Amount' } } as const;
+const columns = sqlColumnsFromFields(fields, { nameCase: 'upper' });
+// { project: { column: 'PROJECT', type: 'text' }, born: { column: 'BORN', type: 'date' },
+//   amount: { column: 'AMOUNT', type: 'number' } }
+const { sql } = toSqlWhere({ field: 'project', operator: 'EQUAL', value: 'x' }, { dialect: 'oracle', columns, timeZone: 'UTC' });
+```
+
+Each field is a column of its type, `'text'` without one, named as the field. `nameCase` (`'upper'`,
+`'lower'`, `'asIs'`) sets the case of the names - they are quoted, and Oracle's unquoted names are upper
+case - `column: (field) => ...` names them another way (`'crm.' + field`), and `dateStorage` is the
+[storage](#dates-and-time-zones) of every date and datetime column. Only `type` of a field is read.
+
+### Errors: answer with a 400
+
+A filter that is no filter, a field that is no column, a filter over a limit and a `timeZone` that is
+none throw a `TypeError` or a `RangeError`: the request's mistake. **`isSqlFilterError(error)`** is true
+for them - and false for the other options that are wrong, a mistake of your code (a 500):
+
+```ts
+import { isSqlFilterError, toSqlWhere } from '@simple-html/grid/sql';
+
+declare const body: { filter: unknown; timeZone: string };
+try {
+    toSqlWhere(body.filter, { dialect: 'postgres', columns: { name: 'name' }, timeZone: body.timeZone });
+} catch (error) {
+    if (!isSqlFilterError(error)) {
+        throw error; // a 500
+    }
+    // a 400, with error.message
+}
+```
+
+### Links and bookmarks of v5
+
+A filter of v5 - `{ type: 'GROUP', logicalOperator, filterArguments }`, `{ attribute, operator, value }`
+- from an old `?filter=` link or a saved config: **`normalizeFilter()`** takes either shape, also as
+JSON text, and gives the v6 filter (null for none); `convertV5Filter()` converts a v5 one, `isV5Filter()`
+tells which it is. All three are in `@simple-html/grid` too, for the browser:
+
+```ts
+import { normalizeFilter, toSqlWhere } from '@simple-html/grid/sql';
+
+const filter = normalizeFilter('{"attribute":"name","operator":"BEGIN_WITH","value":"an"}');
+// { field: 'name', operator: 'BEGIN_WITH', value: 'an' }
+const { sql } = toSqlWhere(filter, { dialect: 'postgres', columns: { name: 'name' } });
+```
+
+They take hostile input as `toSqlWhere()` does: what is neither shape throws a `TypeError`
+(`isSqlFilterError` is true for it) - it is not taken as no filter, which would select every row. See
+[Migration](../MIGRATION.md#saved-configs).
+
 ## Security
 
 The filter comes from a browser, so `toSqlWhere()` takes it as hostile JSON.
@@ -424,28 +484,17 @@ a backend:
   and let the grid filter the rows that came back - `datasource.filter()` with the whole filter:
 
 ```ts
-import type { FilterExpression } from '@simple-html/grid';
+import { withoutFields } from '@simple-html/grid'; // and from '@simple-html/grid/sql'
 
-/** the filter without the conditions on these fields, null when nothing is left */
-function withoutFields(filter: FilterExpression | null, fields: ReadonlySet<string>): FilterExpression | null {
-    if (!filter) {
-        return null;
-    }
-    if ('children' in filter) {
-        const children = filter.children
-            .map((child) => withoutFields(child, fields))
-            .filter((child): child is FilterExpression => child !== null);
-        return children.length ? { ...filter, children } : null;
-    }
-    return fields.has(filter.field) || (filter.valueField !== undefined && fields.has(filter.valueField)) ? null : filter;
-}
-
-const calculated = new Set(Object.keys(gridInterface.getState().calculatedColumns));
+const calculated = Object.keys(gridInterface.getState().calculatedColumns);
 const forTheBackend = withoutFields(datasource.getFilter(), calculated);
 ```
 
-  Take care with OR: without its conditions on a calculated column, an OR group lets more rows
-  through - which is what the browser then filters, but more rows travel.
+  A condition taken out matches every row: it is left out of an AND group, and an OR group with one is
+  left out whole - `country = 'Norway' OR total > 100` can be true for any row. So the backend sends
+  every row the whole filter lets through, maybe more, and the browser filters the rest. `null` when
+  nothing is left. `fields` can be a list, a Set, or a function: `(field) => !Object.hasOwn(columns, field)`
+  takes out every field the database does not have.
 
 ## Find's filter
 
@@ -515,7 +564,7 @@ An Express backend with `pg`:
 ```ts nocheck
 import express from 'express';
 import pg from 'pg';
-import { toSqlWhere, type SqlOptions } from '@simple-html/grid/sql';
+import { isSqlFilterError, normalizeFilter, toSqlWhere, type SqlOptions } from '@simple-html/grid/sql';
 
 const pool = new pg.Pool();
 const app = express();
@@ -537,15 +586,16 @@ app.post('/api/customers', async (req, res) => {
     }
     let where;
     try {
-        where = toSqlWhere(req.body.filter, {
+        // a v5 filter of an old link too
+        where = toSqlWhere(normalizeFilter(req.body.filter), {
             dialect: 'postgres',
             columns,
             timeZone: typeof req.body.timeZone === 'string' ? req.body.timeZone : 'UTC',
             firstParam: 2 // $1 is the tenant
         });
     } catch (error) {
-        // a filter that is no filter, a field that is no column, a filter too large
-        if (error instanceof TypeError || error instanceof RangeError) {
+        // a filter that is no filter, a field that is no column, a filter too large, a time zone that is none
+        if (isSqlFilterError(error)) {
             return res.status(400).json({ error: error.message });
         }
         throw error;
