@@ -5312,6 +5312,11 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
   CONVERT 23), then validated: PostgreSQL 17 with ~200 formulas, Oracle 23 (the whole run timed out at
   1.2 MB: the date formulas and 40 random), SQL Server 2017 / 2022 (wall clocks) - no differences; SQLite
   in the tests with 23 date formulas, dates in the random mix (20 000 once) and date filters
+* ROUND with digits of the row (the last limit): blank is 0, one that is no whole number from -10 to 10
+  blanks the value (an err condition with a nested CASE, no cast of a huge number); the value a CASE of the
+  21 digits. On the way: SQL Server's ROUND of a literal 9.5 (decimal(2,1)) overflows to 10.0 (Msg 8115):
+  rounded as decimal(38, 10) now. Validated on PostgreSQL 17 (103 formulas), Oracle 23 (28: a large run
+  times out), SQL Server 2022 (103; the emoji rows only). Every function of the language is SQL now
 
 ## Considered, not done
 

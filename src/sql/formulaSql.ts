@@ -285,7 +285,8 @@ const mssql: FormulaDialect = {
     blankToNull: (x) => `CASE WHEN DATALENGTH(${x}) = 0 THEN NULL ELSE ${x} END`,
     concat: (parts) => parts.join(' + '),
     divide: (a, b) => `(CAST(${a} AS float) / NULLIF(${b}, 0))`,
-    round: (x, digits) => `ROUND(${x}, ${digits})`,
+    // as a decimal: ROUND of a literal 9.5 (decimal(2,1)) overflows to 10.0, a float's 1.005 is 1.00499...
+    round: (x, digits) => `ROUND(CAST(${x} AS decimal(38, 10)), ${digits})`,
     whole: (x) => `CAST(${x} AS int)`,
     // an emoji is two characters here (UTF-16 units), unless the column has a collation of supplementary
     // characters (_SC): COLLATE ..._SC in the SQL conflicts with the collations of what it meets (Msg 468)
@@ -376,8 +377,8 @@ export function dayOfColumn(dialectName: SqlDialect, column: string, storage: Sq
  * @param fieldOf the SQL of a field the formula reads: a column (a date column its day, dayOfColumn),
  * another calculated column
  * @param today the day TODAY() is, `YYYY-MM-DD` in the user's time zone - it throws without one
- * @throws a `TypeError` for ROUND with digits that are not written in the formula, a `RangeError` for SQL
- * over MAX_FORMULA_SQL
+ * @throws a `TypeError` for a text with a NUL, TODAY() without a time zone; a `RangeError` for SQL over
+ * MAX_FORMULA_SQL
  */
 export function formulaSql(
     node: FormulaNode,
@@ -534,12 +535,17 @@ export function formulaSql(
                 return `CASE WHEN ${predicate(args[0])} THEN ${value(args[1])} ELSE ${value(args[2])} END`;
             case 'ROUND': {
                 const digits = args[1] ? constantOf(args[1]) : 0;
-                if (digits === undefined) {
-                    throw new TypeError(
-                        'toSqlWhere: the digits of ROUND in a formula are a number written in it, e.g. ROUND({price}, 2)'
-                    );
+                if (digits !== undefined) {
+                    return d.round(value(args[0]), digits);
                 }
-                return d.round(value(args[0]), digits);
+                // digits of the row: blank is 0, one that is no whole number from -10 to 10 is a problem of
+                // the row (roundDigitsErr) - each one rounded as written
+                const n = value(args[1]);
+                const x = value(args[0]);
+                const each = Array.from({ length: 21 }, (_, index) => index - 10)
+                    .map((to) => `WHEN ${to} THEN ${d.round(x, to)}`)
+                    .join(' ');
+                return `CASE COALESCE(${n}, 0) ${each} END`;
             }
             case 'ABS':
                 return `ABS(${value(args[0])})`;
@@ -676,6 +682,14 @@ export function formulaSql(
                     const condition = predicate(args[0]);
                     const [yes, no] = [err(args[1]), err(args[2])];
                     return OR([err(args[0]), yes && `(${condition} AND ${yes})`, no && `(NOT (${condition}) AND ${no})`]);
+                }
+                if (name === 'ROUND' && args[1] && constantOf(args[1]) === undefined) {
+                    const n = value(args[1]);
+                    // not a whole number from -10 to 10 (blank is 0): as the grid's isDigits
+                    // nested CASE: the whole number is made only of one from -10 to 10 (no overflow of a cast)
+                    const whole = `CASE WHEN ${n} = ${d.whole(n)} THEN 0 ELSE 1 END`;
+                    const wrong = `(${n} IS NOT NULL AND CASE WHEN ${n} BETWEEN -10 AND 10 THEN ${whole} ELSE 1 END = 1)`;
+                    return OR([err(args[0]), err(args[1]), wrong]);
                 }
                 if (name === 'COALESCE') {
                     // run until a value is not blank: the next one runs only when this one is blank

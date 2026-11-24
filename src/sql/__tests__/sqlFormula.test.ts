@@ -41,6 +41,11 @@ describe('toSqlWhere - calculated columns, the SQL of each database', () => {
         expect(where('postgres', 'ROUND({price})', 'EQUAL', 3).sql).toContain('ROUND(CAST("price" AS numeric), 0)');
         expect(where('oracle', 'ROUND({price}, 1)', 'EQUAL', 3).sql).toContain('ROUND(CAST("price" AS NUMBER), 1)');
         expect(where('sqlite', 'ROUND({price}, -2)', 'EQUAL', 3).sql).toContain('(round("price" / 100.0) * 100)');
+        expect(where('mssql', 'ROUND({price}, 1)', 'EQUAL', 3).sql).toContain('ROUND(CAST([price] AS decimal(38, 10)), 1)');
+        // digits of the row: each one as written, a wrong one blanks the value
+        const rowDigits = where('postgres', 'ROUND({price}, {qty})', 'EQUAL', 3).sql;
+        expect(rowDigits).toContain('CASE COALESCE("qty", 0) WHEN -10 THEN ROUND(CAST("price" AS numeric), -10)');
+        expect(rowDigits).toContain('CASE WHEN "qty" BETWEEN -10 AND 10 THEN CASE WHEN "qty" = CAST(TRUNC("qty") AS integer)');
     });
 
     it('expect MIN and MAX to skip a blank in every database', () => {

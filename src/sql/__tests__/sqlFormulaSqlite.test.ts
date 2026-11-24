@@ -229,6 +229,12 @@ const FORMULAS = [
     'ROUND({price}, 1)',
     'ROUND({price} / 4, 2)',
     'ROUND({price}, -2)',
+    // the digits of the row: blank is 0, not a whole number from -10 to 10 blanks the value
+    'ROUND({price} / 8, {qty})',
+    'ROUND({price} * 100, -{qty})',
+    'ROUND({price}, {price})',
+    'ROUND({price}, {qty} * 10)',
+    'COALESCE(ROUND({price}, {qty} * 10), 7)',
     'ROUND(-{price})',
     'ABS({price})',
     'MIN({price}, {qty})',
@@ -360,7 +366,7 @@ function randomFormula(r: ReturnType<typeof random>, type: 'number' | 'text' | '
             () => `${sub('number')} ${r.pick(['+', '-', '*'])} ${sub('number')}`,
             () => `${sub('number')} / ${r.pick(['{qty}', '2', '4'])}`,
             () => `-(${sub('number')})`,
-            () => `ROUND(${sub('number')}, ${r.pick(['0', '1', '-1'])})`,
+            () => `ROUND(${sub('number')}, ${r.pick(['0', '1', '-1', '{qty}', '-{qty}'])})`,
             () => `ABS(${sub('number')})`,
             () => `${r.pick(['MIN', 'MAX'])}(${sub('number')}, ${sub('number')})`,
             () => `COALESCE(${sub('number')}, ${sub('number')})`,
@@ -504,6 +510,5 @@ describe('toSqlWhere with calculated columns on SQLite selects the rows the grid
             )
         ).toThrow(/options.timeZone is needed/);
         expect(where({ price: '1' })).toThrow(/a field of options.columns too/);
-        expect(where({ x: 'ROUND({price}, {qty})' })).toThrow(/digits of ROUND/);
     });
 });

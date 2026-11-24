@@ -479,7 +479,6 @@ const { sql, params } = toSqlWhere(filter, {
   literals with their quotes doubled (PostgreSQL gets a text with a `\` as its bytes in hex), its numbers
   digits - never pasted into the SQL. What is wrong with it is a `TypeError` that `isSqlFilterError()`
   knows: answer it with a 400. The SQL of one calculated column is at most 100 000 characters.
-- ROUND's digits are written in the formula (`ROUND({price}, 2)`).
 
 **Dates.** A date of a formula is its day in the user's `timeZone`, as the grid reads it in the browser:
 `DAYS()`, `YEAR()`, `MONTH()`, the comparisons and a date as text (`YYYY-MM-DD`) take the day, and
@@ -509,7 +508,7 @@ and today, in every `dateStorage` the database reads. What it takes to get there
 | a text compares in any case | `LOWER()` on both sides |
 | `/` of numbers | as numbers: `7 / 2` is 3.5 - PostgreSQL, SQLite and SQL Server would divide whole numbers |
 | a division by 0 blanks the whole value | the value is NULL when a part divides by 0: `COALESCE({a} / {b}, 0)` is blank, not 0 |
-| ROUND halves away from 0 | a float rounded as a decimal: PostgreSQL and Oracle round a float half to even. SQLite's `round()` takes no negative digits: tens are a division |
+| ROUND halves away from 0, digits from a field too (blank is 0, not a whole number from -10 to 10 blanks the value) | a float rounded as a decimal: PostgreSQL and Oracle round a float half to even, SQL Server's `decimal(38, 10)` keeps a literal `9.5` from overflowing. SQLite's `round()` takes no negative digits: tens are a division. Digits of the row: a `CASE` of the 21 digits |
 | MIN, MAX skip a blank | PostgreSQL's LEAST; COALESCE of the others in front of each on Oracle and SQLite; `MIN` of a `VALUES` list on SQL Server (no LEAST before 2022) |
 | a number as text (`&`, LEFT, LEN): `2.5`, `4`, `0.3` | PostgreSQL `trim_scale` (13 or later), Oracle `TO_CHAR` with the `0` in front of `.5`, SQLite `printf('%.15g')`, SQL Server `FORMAT(…, 'G15', 'en-US')` |
 | LEFT, MID start at 1 | a start below 1 is 1: PostgreSQL and SQL Server would count from 0 |
