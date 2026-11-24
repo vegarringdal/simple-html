@@ -35,6 +35,7 @@ import {
     type TypeFormats,
     withTypeFormat
 } from './columnFormat';
+import { nullsAsDefaults } from './configNulls';
 import { convertGridConfig, type ExportedGrid, GRID_CONFIG_VERSION } from './configVersion';
 import type { CsvOptions } from './csv';
 import { DATE_PRESETS, type DatePreset, datePresetRange, isDatePreset, takesDatePresets, weekStartOf } from './datePresets';
@@ -287,7 +288,8 @@ export class GridInterface<T> {
      * @param gridConfig the columns, the layout and the options, see {@link GridConfig}. The object is
      * not changed, the grid copies the parts it changes
      * @param datasource the rows. The grid applies `gridConfig.initialState` to it: its sorting,
-     * grouping and filter are replaced (left out, they are cleared)
+     * grouping and filter are replaced (left out, they are cleared). `null` is an option left out: the
+     * default - for the options of the grid, of a column and of its `format` (a config from a backend)
      * @param hooks optional: the functions - `isReadonly`, `cellClass`, `menus`, see {@link GridHooks}.
      * The grid keeps a copy of the object, change them later with {@link updateHooks}
      * @throws a `TypeError` when `gridConfig` has `isReadonly`, `cellClass` or `menus` (those are
@@ -315,6 +317,8 @@ export class GridInterface<T> {
      * ```
      */
     constructor(gridConfig: GridConfig, datasource: Datasource<T>, hooks: GridHooks<T> = {}) {
+        // null is an option left out: a config from a backend has null for what is not set
+        gridConfig = nullsAsDefaults(gridConfig);
         assertNoHooks(gridConfig);
         assertNoV5Options(gridConfig);
         assertConfigTexts(gridConfig);
@@ -1005,7 +1009,7 @@ export class GridInterface<T> {
      * `tooltips`, `columns` ... and rebuilds the grid once. The functions - `isReadonly`, `cellClass`,
      * `menus` - are not part of the config, change them with {@link updateHooks}.
      *
-     * - **Only the keys given change**, the rest stay as they are. A key given as `undefined` goes
+     * - **Only the keys given change**, the rest stay as they are. A key given as `undefined` or `null` goes
      *   back to its default - `layout` excepted, a grid always has one.
      * - **`columns` replaces the options of every column**, nothing is merged: a field left out gets
      *   the defaults.
@@ -1055,6 +1059,8 @@ export class GridInterface<T> {
      * ```
      */
     public updateConfig(config: Partial<GridConfig>) {
+        // null is an option left out (here: back to its default), as in the constructor
+        config = nullsAsDefaults(config);
         assertNoHooks(config);
         assertNoV5Options(config);
         assertConfigTexts(config);

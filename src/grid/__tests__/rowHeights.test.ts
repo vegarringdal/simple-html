@@ -268,7 +268,7 @@ describe('fitRows - the heights', () => {
 
     it('expect a TypeError for multilineLineHeight that is not a whole number of 1 or more', async () => {
         const { gridInterface } = await mountGrid(config(), data(), fields());
-        for (const height of [0, -1, 15.5, Number.NaN, Number.POSITIVE_INFINITY, '15', null]) {
+        for (const height of [0, -1, 15.5, Number.NaN, Number.POSITIVE_INFINITY, '15']) {
             expect(() => gridInterface.updateConfig({ multilineLineHeight: height as any }), String(height)).toThrow(
                 /multilineLineHeight is .*, it is a whole number of px, 1 or more/
             );

@@ -243,7 +243,7 @@ describe('multiline - the cell', () => {
 
     it('expect a TypeError for multilineTooltipLines that is not a whole number of 1 or more', async () => {
         const { gridInterface } = await mountGrid(config(), data(), multilineFields());
-        for (const lines of [0, -1, 2.5, Number.NaN, Number.POSITIVE_INFINITY, '5', null]) {
+        for (const lines of [0, -1, 2.5, Number.NaN, Number.POSITIVE_INFINITY, '5']) {
             expect(() => gridInterface.updateConfig({ multilineTooltipLines: lines as any }), String(lines)).toThrow(
                 /multilineTooltipLines is .*, it is a whole number of 1 or more/
             );

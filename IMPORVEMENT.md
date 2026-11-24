@@ -5250,6 +5250,19 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * tests in importFile.test.ts: getExcel() of a grid into another by importFile(), a sheet by name with
   `header: false`, CSV with `invalidRows: 'skip'`, the errors
 
+### `null` in a grid config is the default (2026-11-24)
+
+* the user: "if placeholder is null in gridconfig, it should default to its internal format etc, or just
+  optional". A probe of every column option and format option with `null`: 12 of 16 column options and
+  every format option threw (`operator is null, ...`); the placeholders did not, but only by luck (`??`, `||`)
+* configNulls.ts `nullsAsDefaults(config)`, first thing in the constructor and updateConfig(): the options
+  of the config `null` -> `undefined` (updateConfig: back to the default), a column's and its format's
+  `null` keys left out, a column `null` is `{}`. `layout: null` left for its check. A copy
+* not done: the types still say `string`, not `string | null` - a TypeScript app with a typed backend
+  response casts; `setState({ formats })` and `initialState.formats` with `null` keys still throw
+* configNulls.test.ts: every column option x a text, number and date column, every format option, the
+  options of the grid, updateConfig, a wrong value still throws
+
 ## Considered, not done
 
 ## Candidates / not started

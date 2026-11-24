@@ -224,7 +224,8 @@ describe('edit permissions - the config', () => {
         const make = (edit: unknown) => () => new GridInterface(config(edit as EditPermissions), new Datasource(fields()));
 
         expect(make(true)).toThrow(/GridConfig: edit is true, it is an object of what the user may do/);
-        expect(make(null)).toThrow(TypeError);
+        // null is an option left out: every permission
+        expect(make(null)()).toBeInstanceOf(GridInterface);
         expect(make(['add'])).toThrow(TypeError);
         expect(make('add')).toThrow(TypeError);
         // a misspelt permission would leave the user allowed without a word

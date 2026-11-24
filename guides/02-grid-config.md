@@ -10,6 +10,12 @@ row, the menus - are [hooks](#hooks), given next to the config.
 
 The grid does not change the config object you pass in. It keeps its own copy.
 
+**`null` is an option left out.** A config from a backend or a database often has `null` for what is not
+set: `placeholderRow: null`, `operator: null`, `format: null`, `readonly: null`. The grid takes each as not
+given - the column's own default (the field's label, the formatter's format, the default operator) or the
+grid's (`readonly: null` is `true`). In `updateConfig()`, `null` sets an option back to its default, as
+`undefined` does. A value that is wrong still throws; `layout` can not be `null`.
+
 ## Columns and layout
 
 A config has two parts for the columns:

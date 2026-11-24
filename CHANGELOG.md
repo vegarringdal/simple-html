@@ -1366,6 +1366,10 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 #### Helpers for an app with a backend: v5 filters, the columns from the fields, the filter to send, the 400 errors, fields known later, rows from JSON
 
 ##### Added
+- `null` in a grid config is an option left out: the options of the grid, of a column (`placeholderRow`,
+  `operator`, `aggregate`, `editor` ...) and of its `format` - the default, as a config from a backend has
+  `null` for what is not set. It threw for most of them (`operator is null`). In `updateConfig()` `null` is
+  the default again, as `undefined`
 - `gridInterface.importFile(file, options)`: an Excel workbook (the first sheet by default) or a CSV file
   read and its rows added in one call - `readImportFile()` and `importRows()` with `header: true`
 - `convertV5Filter(filter)`, `isV5Filter(x)`, `normalizeFilter(x)` - from `@simple-html/grid` and from
