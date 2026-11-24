@@ -189,6 +189,9 @@ export class Datasource<T = any> {
      */
     private __grouping: Grouping;
 
+    /** the grid's text of a value to group on, see __setGroupValue */
+    private __groupValue: ((field: string, value: unknown) => string | undefined) | null = null;
+
     /**
      * this holds the filtered data, used when sorting and grouping
      */
@@ -2006,7 +2009,8 @@ export class Datasource<T = any> {
      * The groups start collapsed, apart from the ones whose id is in {@link getExpanded} (set with
      * {@link setExpanded}, or expanded before): `getRows()` has only the group rows until a group is
      * expanded. The rows are grouped on their value as the field's formatter shows it, so a `date` field
-     * groups by day; every blank value (null, undefined, `''`) is one group with the id `' blank'`.
+     * groups by day - in a grid, a date column shown as weeks, months, quarters or years
+     * (`ColumnFormat.date` `'weekIso'`, `'weekUs'`, `'month'`, `'quarter'`, `'year'`) groups by them; every blank value (null, undefined, `''`) is one group with the id `' blank'`.
      *
      * @param groups the fields to group on, the first is the outer group
      * @param options.add `true` to add the groups after the current grouping, default `false`: they
@@ -2621,6 +2625,41 @@ export class Datasource<T = any> {
      */
     public __setSortValue(field: string, sortValue: ((value: unknown) => string) | null): void {
         this.__sorting.setSortValue(field, sortValue);
+    }
+
+    /**
+     * @internal
+     * Groups a field on a text made from its value instead of the field's formatter: the grid groups a
+     * date column shown as weeks, months, quarters or years by them. The function returns undefined for
+     * a field it leaves to the formatter. It must agree with the sort: equal texts for rows next to each
+     * other in the sort order - a period of time does. Takes effect on the next grouping, see __regroup
+     * @param groupValue null to group every field by its formatter again
+     */
+    public __setGroupValue(groupValue: ((field: string, value: unknown) => string | undefined) | null): void {
+        this.__groupValue = groupValue;
+    }
+
+    /**
+     * @internal
+     * the function __setGroupValue() was given, null without one
+     */
+    public __getGroupValue(): ((field: string, value: unknown) => string | undefined) | null {
+        return this.__groupValue;
+    }
+
+    /**
+     * @internal
+     * Builds the groups again from the rows as they are sorted now - after what they are grouped on
+     * changed (__setGroupValue's texts: a column's display format). The sort is kept. Sends
+     * `collection-grouped` with `info: 'group'`, as group(). Nothing when the rows are not grouped
+     */
+    public __regroup(): void {
+        const groupings = this.__grouping.getGrouping();
+        if (!groupings.length) {
+            return;
+        }
+        this.__collectionDisplayed = this.__grouping.group(this.__collectionFiltered, groupings, true, this);
+        this.__callSubscribers('collection-grouped', { info: 'group', groupings });
     }
 
     /**

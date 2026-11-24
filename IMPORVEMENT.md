@@ -5129,6 +5129,18 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * tests: columnFormat.test.ts (what fits where), linkColumn.test.ts (number and date: the formats in the
   template, an edit, a link cell from a number, sorting on the number), columnSettings.test.ts (the dialog)
 
+### Grouping a date column by the weeks, months, quarters or years it shows
+
+* the datasource: `__setGroupValue(fn)` - the grid's text of a value to group on, undefined to leave a field
+  to its formatter (grouping.ts groupKey) - and `__regroup()`, the groups built again in the sort they are
+  in (`collection-grouped`, info `'group'`)
+* the grid: `groupValue` - the column's display format when it is in GROUP_BY_FORMATS (weekIso, weekUs,
+  month, quarter, year: periods, their rows are next to each other in the sort - not the weekday, not a
+  time of day), read at grouping time. Set when made, taken back by destroy(); setState with formats
+  (without a grouping of its own) and updateConfig with columns regroup
+* no option: the column shows weeks, it groups by weeks - ISO or US as the format says
+* tests: groupByPeriod.test.ts
+
 ## Considered, not done
 
 ## Candidates / not started
@@ -5217,9 +5229,7 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
   the
   group chips keep the title they were grouped with when the label changes after (`GroupArgument.title`);
   a checkbox column's header filter as a checkbox (it is typed now: `1`)
-* **Display formats, more** (see *Display formats* above): grouping by the format - a group per week,
-  month, quarter or year (needs a group value function in the datasource; the group names are the field
-  formatter's now); a value list of weeks for a date column (the header filter takes `2026-W47` now, see
+* **Display formats, more** (see *Display formats* above): a value list of weeks for a date column (the header filter takes `2026-W47` now, see
   *Filter as shown*); copy and CSV of the text shown as an option; Days until kept up to date over
   midnight (a timer); more formats - US with time on a 12-hour clock, `november 2026`, a week without
   its year, short day names, a currency, negatives in parentheses or red, more than 4 decimals; the

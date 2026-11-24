@@ -115,6 +115,13 @@ export const DATE_FORMATS: readonly DateFormat[] = [
 
 /**
  * @internal
+ * the date formats a date column is grouped by when it shows them: a period of time, so the rows of one
+ * are next to each other in the sort - not the day of the week, nor a time of day
+ */
+export const GROUP_BY_FORMATS: readonly DateFormat[] = ['weekIso', 'weekUs', 'month', 'quarter', 'year'];
+
+/**
+ * @internal
  * the display formats of a datetime column only: they show the time of day
  */
 export const DATETIME_FORMATS: readonly DateFormat[] = [

@@ -26,6 +26,7 @@ import {
     type ColumnFormat,
     displayFormatter,
     formatTexts,
+    GROUP_BY_FORMATS,
     hasDisplayFormat,
     hasValueFormat,
     readonlyOf
@@ -214,6 +215,19 @@ export class GridInterface<T> {
     private sortValues = new Map<string, (value: unknown) => string>();
 
     /**
+     * what this interface groups a date column on, given to the datasource (__setGroupValue): the week,
+     * month, quarter or year its cells show (GROUP_BY_FORMATS) - undefined for other columns, they group
+     * by the field's formatter. Read when the rows are grouped: the column's format of that moment
+     */
+    private readonly groupValue = (field: string, value: unknown): string | undefined => {
+        const date = this.gridConfig.columns[field]?.format?.date;
+        if (date === undefined || !GROUP_BY_FORMATS.includes(date)) {
+            return undefined;
+        }
+        return this.__getCellFormatter(field).format(value);
+    };
+
+    /**
      * the named views, see getViews(): copies of what was given (GridConfig.views, the storage,
      * setViews()). The grid changes them: saveView(), renameView() ...
      */
@@ -351,8 +365,9 @@ export class GridInterface<T> {
             this.everCalculated.add(name);
         }
 
-        // before the start state is applied: it can sort on a lookup column
+        // before the start state is applied: it can sort on a lookup column, group by a week
         this.setSortValues();
+        this.dataSource.__setGroupValue(this.groupValue);
         // the views of the config and the storage: the default one is the state the grid starts in
         this.views = startViews(gridConfig.views, gridConfig.viewsStorageKey);
         this.applyStartView();
@@ -1099,6 +1114,8 @@ export class GridInterface<T> {
             this.gridConfig.columns = structuredClone(columns ?? {});
             this.configAggregates = aggregatesOfColumns(this.gridConfig.columns);
             this.configFormats = formatsOfColumns(this.gridConfig.columns);
+            // the formats of the columns: a date column grouped by what it shows
+            this.dataSource.__regroup();
         }
         if (lookupColumns) {
             // the list open for a column of the old config is closed, the cells are rendered anew
@@ -1248,6 +1265,11 @@ export class GridInterface<T> {
                 if (hasDisplayFormat(format)) {
                     this.gridConfig.columns[field] = { ...this.gridConfig.columns[field], format };
                 }
+            }
+            // a date column grouped by what it shows: the weeks now, not the days. A grouping in the state
+            // groups below
+            if (!state.grouping) {
+                this.dataSource.__regroup();
             }
         }
 
@@ -1613,6 +1635,9 @@ export class GridInterface<T> {
         // the datasource can be shown in another grid: it sorts its fields on their values again, and
         // has no calculated fields of this grid
         this.clearSortValues();
+        if (this.dataSource.__getGroupValue() === this.groupValue) {
+            this.dataSource.__setGroupValue(null);
+        }
         this.registerCalculated({}, () => undefined);
     }
 

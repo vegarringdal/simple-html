@@ -361,8 +361,8 @@ that reads or writes it, keep to the field's formatter:
 | Find, the fitted width (`fitColumns()`), the dimmed repeated values | the text the cells show |
 | the header filter, its placeholder, the range block of its menu, the date pickers | the display format - **you type a week**, `2026-W47`, and the filter is the whole week (`filterAsShown`, see [Filter as shown](#filter-as-shown)). `filterAsShown: false`, the day of the week and a time of day: the field's formatter, `2026-11-22` |
 | the filter chips, the filter editor, `getFilterString()` | the field's formatter: a filter is on the value - `2026-W47` typed is a BETWEEN of `2026-11-16` and `2026-11-22` there |
-| the names of the group rows | the field's formatter, made by the datasource |
-| sorting, grouping | the value: a column shown as weeks sorts and groups by its dates |
+| the names of the group rows, grouping | the field's formatter (a day of a date) - but a date column shown as weeks, months, quarters or years groups by them: one group a week, `Due: 2026-W47`. Not the day of the week nor a time of day: their rows are not next to each other in the sort |
+| sorting | the value: a column shown as weeks sorts by its dates |
 | copy (Ctrl+C, Copy ›) and the CSV export | the field's formatter: the value, so a paste reads it back - `2026-W47` and `1 234 567,89` it could not |
 | the Excel export | the value, with an Excel number format like the display format where Excel has one, see [Export](15-export.md#typed-cells) |
 

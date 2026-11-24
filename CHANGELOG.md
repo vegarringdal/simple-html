@@ -1332,6 +1332,13 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Grouping by week, month, quarter or year
+
+##### Added
+- a date column shown as weeks, months, quarters or years (`ColumnFormat.date` `'weekIso'`, `'weekUs'`,
+  `'month'`, `'quarter'`, `'year'`) groups by them: one group a week, `Due: 2026-W47`. Another format for
+  the column - the header menu, the dialog, `setState()` - groups the rows again
+
 #### A template on a number or date column, a link on a number column
 
 ##### Added

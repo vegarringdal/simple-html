@@ -319,19 +319,24 @@ export class Grouping {
     }
 
     /**
-     * the key a row is grouped on, the same at every grouping level: the value as the field's
-     * formatter shows it, so a `date` field groups by day and a number field with a comma formatter
+     * the key a row is grouped on, the same at every grouping level: the grid's text for it when it has
+     * one (Datasource.__setGroupValue: a week, a month ...), else the value as the field's formatter shows it, so a `date` field groups by day and a number field with a comma formatter
      * shows `12,5` in the group header.
      * Groups are built from runs of equal keys in the sorted rows, so the key has to agree with
      * what the sort treats as equal (see `Sort.compareAscending`): every blank (null, undefined,
      * '', invalid Date) is the one ' blank' group, while 0 and false are real values.
      */
-    private groupKey(value: unknown, formatter: Formatter): string {
+    private groupKey(value: unknown, formatter: Formatter, field: string, ds: Datasource): string {
         if (isBlank(value)) {
             return BLANK_GROUP;
         }
         if (typeof value === 'boolean') {
             return value.toString();
+        }
+        // the grid's text for it: a week, a month ... of a date column shown so (Datasource.__setGroupValue)
+        const text = ds.__getGroupValue()?.(field, value);
+        if (text !== undefined) {
+            return text || BLANK_GROUP;
         }
         // a formatter can still format a value to nothing, NaN for example
         return formatter.format(value) || BLANK_GROUP;
@@ -354,7 +359,7 @@ export class Grouping {
 
         // first level, here we use array
         array.forEach((element) => {
-            const groupID = this.groupKey(element[groupBy], formatter);
+            const groupID = this.groupKey(element[groupBy], formatter, groupBy, ds);
             // every row of the group, it was only the first one: a grouping of one level left the
             // others with the level of a grouping before
             element.__groupLvl = groupNo + 1;
@@ -398,7 +403,7 @@ export class Grouping {
                 if (isGroupRow(child)) {
                     return;
                 }
-                const groupID = this.groupKey(child[groupBy], formatter);
+                const groupID = this.groupKey(child[groupBy], formatter, groupBy, ds);
 
                 if (groupID !== tempValue) {
                     const gidc = element.__groupID;

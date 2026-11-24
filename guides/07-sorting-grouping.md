@@ -75,7 +75,10 @@ datasource.group([]); // no grouping. removeGroup() does the same
 - **Groups start collapsed**, only the ids given to `setExpanded()` start expanded. `getExpanded()`
   lists the expanded ids.
 - A row is grouped on its value as the field's formatter shows it: a `date` field groups by day, a
-  number with its decimals as the formatter shows them. The rows with an empty value are one group
+  number with its decimals as the formatter shows them. In a grid, a date column shown as weeks,
+  months, quarters or years (its display format `weekIso`, `weekUs`, `month`, `quarter`, `year`, see
+  [Display formats](08-formatting.md#display-formats)) groups by them: `Due: 2026-W47`. Another format
+  for the column groups the rows again. The rows with an empty value are one group
   at the top, its id is `' blank'`.
 - Use `group()` to group. `setGrouping()` only stores the grouping: the next call that builds the
   displayed rows (`group()`, `sort()`, `filter()`, `setData()` ...) groups them.
