@@ -321,10 +321,9 @@ export const cellFilterKeyNavigationCellRowHandler = (
                         gotoCell = 0;
                     }
                 } else if (currentKey === ARROW_UP_KEY) {
+                    // the top field stays, as in the other sections (it wrapped to the bottom one)
                     if (gotoCell !== 0) {
                         gotoCell = gotoCell - 1;
-                    } else {
-                        gotoCell = config.layout.right[gotoCol].fields.length - 1;
                     }
                 }
                 break;

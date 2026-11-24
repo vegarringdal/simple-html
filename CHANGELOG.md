@@ -1332,6 +1332,12 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### The keys of the header filter row and the rows tested
+
+##### Fixed
+- Alt+ArrowUp in the top filter of a right pinned column of several fields jumped to its bottom filter:
+  it stays, as in the left and center columns (with labels shown it goes to the label, as before)
+
 #### Grouping by week, month, quarter or year
 
 ##### Added

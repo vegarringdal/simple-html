@@ -5141,6 +5141,15 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * no option: the column shows weeks, it groups by weeks - ISO or US as the format says
 * tests: groupByPeriod.test.ts
 
+### The keys of the filter row and the rows: tests
+
+* filterRowKeys.test.ts (33) and rowKeys.test.ts (35): every move of cellFilterKeyNavigationCellRowHandler
+  and cellRowKeyNavigationCellRowHandler in a layout of every section - left a | b, center c over d | e,
+  right f over g: Tab / Shift+Tab, Alt+arrows within a stacked column, across columns and sections, row to
+  row, up into the filters, down into the rows, past group rows; the plain arrows left to the input
+* found with them: Alt+ArrowUp on the top filter of a right pinned column wrapped to its bottom filter
+  (left and center stay) - fixed
+
 ## Considered, not done
 
 ## Candidates / not started
