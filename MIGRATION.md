@@ -802,8 +802,9 @@ The rules per type, for a backend that filters the same way, are in the filterin
   It was literal. A backend that filtered with `LIKE` and escaped the `_` should no longer escape it
   (`toSqlWhere()` does that for you).
 * **`\` escapes a wildcard in a text filter**: `pump\_01` finds `pump_01` only, `50\%` a `%`, `a\*b` a
-  `*`, `\\` one backslash. In v5 a `\` was an ordinary character: a saved filter value with a `\` in it
-  now reads the character after it as plain text - write it `\\`. `escapeTextPattern(text)` does that
+  `*`, `\\` one backslash. In v5 a `\` was an ordinary character: a saved filter value with `\*`, `\%`,
+  `\_` or `\\` in it now finds the character after the `\` as plain text - write the `\` as `\\`. A `\`
+  before anything else stays a `\` (`C:\temp`). `escapeTextPattern(text)` does that
   for a text you put in a filter as it is; the row menu's *Filter by this value* does it already.
 * **`getFilterTree()`**: every condition node has `caseSensitive` (a boolean), a `BETWEEN` node
   `valueTo`.

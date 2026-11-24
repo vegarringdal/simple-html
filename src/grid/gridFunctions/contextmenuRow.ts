@@ -7,6 +7,7 @@ import { type CellPoint, ctrlRanges, inRanges, samePoint, shiftRangeStart, shift
 import type { ColType } from './colType';
 import { isAlwaysCaseSensitive } from './columnFilterOptions';
 import { canMarkRow, rowsToMark, rowsToUnmark } from './deleteRows';
+import { fillDown } from './fillDown';
 import { SELECTOR_COLTYPE } from './GROUP_COLTYPE';
 import { getLayoutFields } from './getLayoutFields';
 import { cellText } from './gridCsv';
@@ -176,6 +177,15 @@ function rowMenuEntries(
                             pasteText(ctx, await navigator.clipboard.readText());
                         }
                     }
+                },
+                // as Ctrl+D: the ranges' top rows into the rows under them; without a range this cell gets the
+                // value above it. Greyed out where that has nothing to write: no range and the cell readonly
+                {
+                    id: 'row.paste.fillDown',
+                    label: text('row.paste.fillDown'),
+                    hint: keyText(ctx, 'row.paste.fillDown.hint'),
+                    disabled: () => noRanges() && cellReadonly(),
+                    action: () => fillDown(gridInterface, { row, field: attribute })
                 },
                 // GridConfig.importMenu: the rows on the clipboard as new rows, in the import dialog - their
                 // columns from this cell's column on, or by the names of a header row

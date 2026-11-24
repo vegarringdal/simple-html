@@ -6,6 +6,7 @@ import type { GridConfig } from '../gridConfig';
 import type { GridElement } from '../gridElement';
 import { fillRows } from '../gridFunctions/fillDown';
 import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
+import { menuEntry, openRowMenu } from './interactionTestHelpers';
 
 /**
  * Fill down (plan item 34, fillDown.ts): Ctrl+D / Cmd+D in a cell and gridInterface.fillDown() copy the
@@ -159,6 +160,37 @@ describe('fill down - Ctrl+D', () => {
         mounted.gridInterface.setRanges([{ fromRow: 1, fromField: 'status', toRow: 3, toField: 'status' }]);
         mounted.gridInterface.fillDown();
         expect(column(mounted, 'status')).toEqual(['open', 'done', 'done', 'done']);
+    });
+
+    it("expect the row menu's Paste › Fill down to fill the ranges, or the cell right clicked from above", async () => {
+        const mounted = await mount();
+        const { element, gridInterface } = mounted;
+        const disabled = () => menuEntry('row.paste.fillDown').getAttribute('aria-disabled') === 'true';
+
+        // no range: the cell right clicked gets the value above it
+        openRowMenu(element, 'name', 2);
+        expect(menuEntry('row.paste.fillDown').textContent).toContain('Ctrl+D');
+        expect(disabled()).toBe(false);
+        menuEntry('row.paste.fillDown').click();
+        expect(column(mounted, 'name')).toEqual(['Ann', 'Bob', 'Bob', 'Dan']);
+
+        // a readonly cell and no range: nothing to write
+        openRowMenu(element, 'code', 2);
+        expect(disabled()).toBe(true);
+
+        // a range: filled as Ctrl+D fills it, wherever the menu was opened
+        gridInterface.setRanges([{ fromRow: 0, fromField: 'status', toRow: 2, toField: 'status' }]);
+        openRowMenu(element, 'code', 3);
+        expect(disabled()).toBe(false);
+        menuEntry('row.paste.fillDown').click();
+        expect(column(mounted, 'status')).toEqual(['open', 'open', 'open', 'late']);
+        expect(column(mounted, 'code')).toEqual(['A', 'B', 'C', 'D']);
+    });
+
+    it('expect no Fill down in the row menu of a readonly grid', async () => {
+        const { element } = await mount({ readonly: true });
+        openRowMenu(element, 'name', 1);
+        expect(menuEntry('row.paste.fillDown')).toBeNull();
     });
 });
 

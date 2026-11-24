@@ -10,6 +10,7 @@ import { gridText } from './gridText';
 const MAC_TEXTS = {
     'row.edit.undo.hint': 'row.edit.undo.hint.mac',
     'row.edit.redo.hint': 'row.edit.redo.hint.mac',
+    'row.paste.fillDown.hint': 'row.paste.fillDown.hint.mac',
     'find.previous.tooltip': 'find.previous.tooltip.mac',
     'find.matchCase.tooltip': 'find.matchCase.tooltip.mac',
     'cell.multiline.hint': 'cell.multiline.hint.mac',

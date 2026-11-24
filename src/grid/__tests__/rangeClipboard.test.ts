@@ -734,22 +734,20 @@ describe('clipboard - the row menu', () => {
             'row.paste.current',
             'row.paste.cell',
             'row.paste.range',
+            'row.paste.fillDown',
             'row.clear',
             'row.clear.current',
             'row.clear.cell',
             'row.clear.range'
         ]);
         const disabled = (id: string) => menuEntry(id)?.getAttribute('aria-disabled') === 'true';
-        expect(['row.paste.current', 'row.paste.cell', 'row.paste.range', 'row.clear.range'].map(disabled)).toEqual([
-            true,
-            true,
-            true,
-            true
-        ]);
+        expect(
+            ['row.paste.current', 'row.paste.cell', 'row.paste.range', 'row.paste.fillDown', 'row.clear.range'].map(disabled)
+        ).toEqual([true, true, true, true, true]);
 
         // with a range: its entries can be used
         gridInterface.setRanges([range(0, 'name', 1, 'name')]);
         openRowMenu(element, 'city', 0);
-        expect(['row.paste.range', 'row.clear.range'].map(disabled)).toEqual([false, false]);
+        expect(['row.paste.range', 'row.paste.fillDown', 'row.clear.range'].map(disabled)).toEqual([false, false, false]);
     });
 });

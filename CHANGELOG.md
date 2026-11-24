@@ -1332,6 +1332,13 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### Fill down in the row menu
+
+##### Added
+- the row menu's Paste › **Fill down** (`row.paste.fillDown`, hint Ctrl+D / ⌘D): as Ctrl+D - every range's
+  top row into the rows under it; without a range the cell right clicked gets the value above it. Greyed
+  out without a range when the cell is readonly. Texts `row.paste.fillDown`, `.hint`, `.hint.mac`
+
 #### Saved views in exportConfig / importConfig; Min lines under Multiline (user request)
 
 ##### Added

@@ -1557,7 +1557,7 @@ in the console. All passed. Found and fixed:
   12/12 (Ctrl+D with a readonly column, default prevented, Ctrl+Z, the handle at the line's corner and
   hit by the pointer, a drag of two rows, the handle at the new corner, the focus kept, Esc), light and
   dark screenshots
-* not done: a "Fill down" entry in the row menu (after the menus' submenus merge); fill up/right; series
+* done 2026-11-24: a "Fill down" entry in the row menu (Paste ›); not done (after the menus' submenus merge); fill up/right; series
   (1, 2, 3 ...) - the handle copies
 
 ### Menus: submenus, shorter, the keyboard (user request)
@@ -5095,6 +5095,15 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
   sqlSqlite.test.ts (texts with `\` in the rows, 16 escaped values x 6 operators x case x literal: grid
   and SQLite select the same rows), sqlInjection.test.ts's real database with `literal`
 * changes the meaning of a saved value with `\*`, `\%`, `\_` or `\\` in it - rare; in the changelog
+
+### Fill down in the row menu
+
+* the row menu's Paste › Fill down (`row.paste.fillDown`), after Paste range: `fillDown(gridInterface,
+  { row, field })` - the ranges, or without one the cell right clicked from above (Ctrl+D's own rules).
+  Greyed out with no range and a readonly cell; hint Ctrl+D / ⌘D (keyText.ts). In MENU_IDS.row, the menus
+  and texts guides, the Norwegian sample
+* tests: fillDown.test.ts (the cell from above, a readonly cell greyed out, a range filled from another
+  cell's menu, none in a readonly grid); rangeClipboard.test.ts lists it with the paste entries
 
 ## Considered, not done
 

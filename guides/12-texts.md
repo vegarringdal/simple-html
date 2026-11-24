@@ -220,6 +220,9 @@ Right click on a cell or a row number.
 | `row.paste.cell` | `Paste cell` | pastes into the column of the selected rows |
 | `row.paste.cell.hint` | `selected rows` | its hint |
 | `row.paste.range` | `Paste range` | pastes the clipboard into the ranges of cells, as Ctrl+V |
+| `row.paste.fillDown` | `Fill down` | fills down, as Ctrl+D |
+| `row.paste.fillDown.hint` | `Ctrl+D` | its hint, the key |
+| `row.paste.fillDown.hint.mac` | `⌘D` | its hint on a Mac |
 | `row.paste.newRows` | `As new rows…` | opens the import dialog with the rows on the clipboard (`GridConfig.importMenu`), see [Import dialog](#import-dialog) |
 | `row.clear` | `Clear` | the clear submenu, an editable grid |
 | `row.clear.current` | `Clear cell` | empties the cell right clicked |

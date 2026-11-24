@@ -443,6 +443,7 @@ export interface GridMenus {
  * | `row.paste.current` | Paste cell - the cell right clicked. Greyed out when it is readonly - also on a row `edit` does not let the user change (`change: false`, a row that is not new) | the grid is editable, and `edit` allows `change` or `add` |
  * | `row.paste.cell` | Paste cell (selected rows) - the column of the selected rows, the readonly cells skipped. Greyed out with no row selected | the grid is editable, and `edit` allows `change` or `add` |
  * | `row.paste.range` | Paste range - the clipboard as Ctrl+V pastes it with ranges: one value into every cell of them, a block from the top left of the last one. Greyed out without a range | the grid is editable, and `edit` allows `change` or `add` |
+ * | `row.paste.fillDown` | Fill down (Ctrl+D) - as Ctrl+D (`gridInterface.fillDown()`): in every range the values of its top row go into the rows under it, a range of one row gets the row above it; without a range the cell right clicked gets the value of the cell above it. Readonly cells skipped. Greyed out without a range when the cell is readonly | the grid is editable, and `edit` allows `change` or `add` |
  * | `row.paste.newRowsSeparator` | a line | `GridConfig.importMenu`, the grid is editable and `edit` allows `add` |
  * | `row.paste.newRows` | As new rows… - the import dialog with the rows on the clipboard (`gridInterface.openImport(text)`): their columns from this cell's column on, or by the names of a header row; new rows on Import | `GridConfig.importMenu`, the grid is editable and `edit` allows `add` |
  * | `row.clear` | Clear › - a submenu | the grid is editable, and `edit` allows `change` or `add` |
@@ -615,6 +616,7 @@ export const MENU_IDS = {
         'row.paste.current',
         'row.paste.cell',
         'row.paste.range',
+        'row.paste.fillDown',
         'row.paste.newRowsSeparator',
         'row.paste.newRows',
         'row.clear',
