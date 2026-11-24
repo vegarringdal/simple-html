@@ -5150,6 +5150,22 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * found with them: Alt+ArrowUp on the top filter of a right pinned column wrapped to its bottom filter
   (left and center stay) - fixed
 
+### The browser checks in the repo, a CI job
+
+* the user asked for it (2026-11-24), after the list of candidates named it: the checks lived in the
+  git-excluded `.claude/browser-checks` only (lost once with a reboot). Earlier a playwright suite had been
+  removed as "not worth the weight" (*Browser level gui tests* above): this is not that suite - the same
+  plain scripts as before, playwright a dev dependency (no browser downloaded by `npm ci`), a CI job
+* scripts/browser/run.js serves dist_demo (node's http, no server package) and runs checks/*.js two at a
+  time, a script's verdict: exit 0, a PASS, no FAIL; the output of the failed ones after the summary.
+  `npm run check:browser [-- --only <part> --jobs <n>]`; CHROMIUM_PATH, PORT, SHOTS
+* the scripts converted: `require('playwright')`, `executablePath: process.env.CHROMIUM_PATH ||
+  undefined`, no deps-dir argument, no local paths; sections.js finds playwright-core's classes by path
+* the scripts that compare a site before and after a change (two urls) stay local
+* checks.yml: a `browser` job outside the matrix (`npx playwright install --with-deps chromium`,
+  build:demo, check:browser --jobs 3) - `npm run verify` reads the matrix only, so it stays quick
+* color-rules-check.js: reads the rules of age, the sample gives age a template now
+
 ## Considered, not done
 
 ## Candidates / not started
@@ -5217,12 +5233,6 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
 
 ### Tooling
 
-* **Real-browser checks in the repo**: the Chromium checks live in `.claude/browser-checks/` (git
-  excluded, local only): custom cells, fill, the filter UI, find, the footer summary, lookups, menus,
-  submenus, row classes, the candidates. The first ones (check.js, undo, a11y, live, range, aggregate ...)
-  were lost with a reboot; a new live check should wait for the sample's timer instead of a fixed delay
-  (live-check.js raced it under load). Moving them to `scripts/browser/` with playwright as a dev
-  dependency would make them a CI job; the Chromium download hangs on this dev machine
 * **Test coverage**: 126 test files, 2550 tests, 91% of the statements: `src/datasource` 96%, `src/grid`
   98%, `src/grid/gridFunctions` 88%, `src/date` 85% (its templates 89%). Thinnest: the key handlers of the
   header filter row (40%) and of the rows (59%), renderHeaderFilter (62%), fillDown (60%, the fill handle's
