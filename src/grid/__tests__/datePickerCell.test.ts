@@ -8,6 +8,7 @@ import { and, where } from '../../datasource/filterExpression';
 import type { IDateConfig } from '../../date/interfaces';
 import type { GridConfig } from '../gridConfig';
 import type { GridElement } from '../gridElement';
+import { datePickerHeight } from '../gridFunctions/contextmenuDate';
 import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
 import { headerFilterInput, menuEntry, openFilterMenu, sleep, typeInHeaderFilter } from './interactionTestHelpers';
 
@@ -150,6 +151,35 @@ describe('grid date picker', () => {
         expect(picker.querySelectorAll('.simple-html-date-week').length).toEqual(0);
         expect(picker.style.width).toEqual('320px');
         expect(picker.querySelector('.simple-html-date-day-header')?.textContent?.trim()).toEqual('Mo');
+    });
+
+    it('expect rows of 22px with a mouse, 28px on a touch screen, the rowHeight given on both', async () => {
+        const rowHeight = (picker: HTMLElement) =>
+            (picker.querySelector('.simple-html-date-day-row') as HTMLElement).style.height;
+        const touch = vi.fn((query: string) => ({ matches: query === '(pointer: coarse)' }));
+        try {
+            const mouse = await mountGrid(config({}), data(), fields);
+            expect(rowHeight(await openPicker(mouse.element))).toEqual('22px');
+
+            document.body.innerHTML = '';
+            vi.stubGlobal('matchMedia', touch);
+            const finger = await mountGrid(config({}), data(), fields);
+            expect(rowHeight(await openPicker(finger.element))).toEqual('28px');
+            expect(touch).toHaveBeenCalledWith('(pointer: coarse)');
+
+            document.body.innerHTML = '';
+            const given = await mountGrid(config({ rowHeight: 24 }), data(), fields);
+            expect(rowHeight(await openPicker(given.element))).toEqual('24px');
+        } finally {
+            vi.unstubAllGlobals();
+        }
+    });
+
+    it('expect the height it needs below a cell to follow the rows, datepickerHeight to win', () => {
+        expect(datePickerHeight({}, 22)).toEqual(282);
+        // seven rows - the names of the days and six weeks - of 6px more
+        expect(datePickerHeight({}, 28)).toEqual(324);
+        expect(datePickerHeight({ datepickerHeight: 300 }, 28)).toEqual(300);
     });
 });
 

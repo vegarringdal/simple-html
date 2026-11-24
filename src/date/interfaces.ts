@@ -85,7 +85,10 @@ export interface IDateConfig {
      */
     isoWeek: boolean;
 
-    /** the height of a row of days, in px */
+    /**
+     * the height of a row of days, in px. The grid's date picker: 22 by default, 28 on a touch screen
+     * (`pointer: coarse`) - room for a finger
+     */
     rowHeight: number;
     /** the width of a month, in px */
     monthWidth: number;
@@ -132,9 +135,9 @@ export interface IDateConfig {
     /** the minutes of the picked time, set from `datepickerDate` by the date picker */
     datepickerMinute?: number;
     /**
-     * grid only: the height of the date picker in px, default 282 - its height with the other defaults
-     * (277) and a gap of 5. The grid opens the picker above the cell when there is no room for this
-     * below it. Set it when you change `rowHeight` or `monthMargin`. The range picker (`rangepicker`) is
+     * grid only: the height of the date picker in px - by default 282 (its height with rows of 22px, 277,
+     * and a gap of 5) and 7px more for every px a row is taller (`rowHeight`). The grid opens the picker
+     * above the cell when there is no room for this below it. Set it when you change `monthMargin`. The range picker (`rangepicker`) is
      * measured, this is not used for it
      */
     datepickerHeight?: number;

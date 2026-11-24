@@ -14,6 +14,27 @@ import { type MenuPlace, moveMenu, openMenuElement, placeMenu } from './showMenu
  */
 export type DateRange = [Date | null, Date | null];
 
+/** the height of a row of days by default: 22px, 28px on a touch screen - room for a finger */
+const ROW_HEIGHT = 22;
+const TOUCH_ROW_HEIGHT = 28;
+/** the rows of a month that are rowHeight high: the names of the days and six weeks */
+const ROWS_OF_A_MONTH = 7;
+/** the date picker's height with rows of 22px (277) and a gap of 5 */
+const PICKER_HEIGHT = 282;
+
+/** a touch screen: the primary pointer is a finger, as the grid's css `@media (pointer: coarse)` */
+function isTouchScreen() {
+    return typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+}
+
+/**
+ * the height of the date picker, to open it above the cell when it does not fit below: `datepickerHeight`
+ * when given, else worked out from the height of its rows
+ */
+export function datePickerHeight(config: Partial<IDateConfig>, rowHeight: number) {
+    return config.datepickerHeight || PICKER_HEIGHT + ROWS_OF_A_MONTH * (rowHeight - ROW_HEIGHT);
+}
+
 /**
  * A date picker of the grid, not shown yet: a `.simple-html-grid` div with the `<simple-html-date>` in
  * it. Its config is the grid's `datePickerConfig` - only the fields given, every field read here has a
@@ -37,7 +58,8 @@ function createDatePicker(ctx: Grid, picker: Partial<IDateConfig>) {
         texts: ctx.gridInterface.__getGridConfig().texts,
         // ?? and not ||, 0 (sunday) is a valid week start
         weekStart: config.weekStart ?? 1,
-        rowHeight: config.rowHeight || 22,
+        // the app's, else taller on a touch screen
+        rowHeight: config.rowHeight || (isTouchScreen() ? TOUCH_ROW_HEIGHT : ROW_HEIGHT),
         monthWidth: config.monthWidth || 230,
         monthMargin: config.monthMargin ?? 10,
         hideDimmedDates: config.hideDimmedDates !== undefined ? config.hideDimmedDates : false,
@@ -100,8 +122,7 @@ export function contextmenuDate(
     if (rect.left + width > window.innerWidth) {
         left = window.innerWidth - width;
     }
-    // the default is the height of the picker with the default config (277) and a gap of 5
-    const height = config.datepickerHeight || 282;
+    const height = datePickerHeight(config, dateconfig.rowHeight);
     if (rect.bottom + height > window.innerHeight) {
         top = rect.top - height;
     }

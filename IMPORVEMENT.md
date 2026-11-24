@@ -5105,6 +5105,16 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * tests: fillDown.test.ts (the cell from above, a readonly cell greyed out, a range filled from another
   cell's menu, none in a readonly grid); rangeClipboard.test.ts lists it with the paste entries
 
+### The date picker's days for a finger
+
+* contextmenuDate.ts: `rowHeight` 28 by default on a touch screen (`matchMedia('(pointer: coarse)')`, as
+  the css), 22 with a mouse, the app's `datePickerConfig.rowHeight` on both. The height it needs below a
+  cell (`datePickerHeight`) follows the rows: 282 + 7px for every px of a row more - before it was 282 for
+  every `rowHeight`, set `datepickerHeight` yourself. The day cells centre their text already: no css
+* the filter editor's buttons not changed: the 24px of the buttons is the user's choice (see the touch
+  section of the css)
+* tests: datePickerCell.test.ts (22 / 28 / given, matchMedia stubbed; the height worked out)
+
 ## Considered, not done
 
 ## Candidates / not started
@@ -5204,8 +5214,9 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
   active cell to here, Add this cell) but drags none (a hold and a drag could be one); the fill handle
   (7px) is small for a finger; the editor
   of a multiline cell hints "Ctrl+Enter to save, Esc to cancel", keys a phone has not (a tap outside
-  saves); the date picker's days are 22px rows (`datePickerConfig.rowHeight`), the filter editor's AND /
-  OR and icon buttons 24px - small for a finger; the docs site is not made for a phone (its sidebar takes
+  saves); the filter editor's AND / OR and icon buttons are 24px - kept: the user found taller buttons "higher
+  than I like", a finger gets taller rows of lists only (the date picker's days: 28px on a touch screen
+  since 2026-11-24); the docs site is not made for a phone (its sidebar takes
   half the width: touch-check.js gives the grid the page with css of its own)
 * **Custom cells, the plan's "later"**: `focusButton` and `placeholderRow` on a custom cell, a `measure()`
   for `fitColumns()`, renderers for group rows, the totals row and header labels

@@ -1332,6 +1332,13 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
   header cell, the handler was on the label in it).
 
+#### The date picker's days for a finger
+
+##### Changed
+- the grid's date picker has rows of days of 28px on a touch screen (`pointer: coarse`), 22px with a
+  mouse - `datePickerConfig.rowHeight` still wins. Whether it fits under the cell is worked out from the
+  rows' height when `datepickerHeight` is not given (it was 282 whatever `rowHeight` was)
+
 #### Fill down in the row menu
 
 ##### Added
