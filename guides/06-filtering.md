@@ -607,8 +607,8 @@ marked cells. Like *Changed rows only* it is on top of the filter (AND) and not 
 `getFilter()`, the filter editor and the state do not have it. It filters the rows again when the
 text changes and whenever the rows are filtered; closing the find bar turns it off. With *Match case*
 (`Aa`) it finds the text as it is typed. See [Find](19-find.md#filter-rows).
-`gridInterface.getFindFilter()` gives it as a filter, for a backend that loads the rows: see
-[Find](19-find.md#filter-rows-on-a-backend).
+It filters in the browser only: a backend does not get it, the rows it sends are filtered by it, see
+[Find](19-find.md#filter-rows-and-a-backend).
 
 ```ts
 gridInterface.find('denma', { filterRows: true }); // only the rows with a cell that shows "denma"
@@ -773,8 +773,7 @@ as it is:
 
 `escapeTextPattern(text)` gives the value that finds `text` as it is (`'50% off'` → `'50\% off'`), for a
 header filter an app fills in. **`literal: true`** on the condition takes all of the value as it is,
-`*`, `%`, `_` and `\` too: `CONTAINS '50%'` finds `50% off`, not `500` - Find's filter for a backend
-(`getFindFilter()`) and the row menu's *Filter* on a cell's value have it, the header filters and the
+`*`, `%`, `_` and `\` too: `CONTAINS '50%'` finds `50% off`, not `500` - the row menu's *Filter* on a cell's value has it, the header filters and the
 filter editor do not make it (the filter editor leaves it out of a condition it applies).
 A text of several lines is one text: `BEGIN_WITH` is the start of the whole value, not of a line.
 

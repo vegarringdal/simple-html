@@ -6,8 +6,8 @@ import type { GridConfig } from '../gridConfig';
 import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
 
 /**
- * gridInterface.getServerFilter(): the filter AND Find's "Filter rows", without the conditions a backend
- * can not run - the calculated columns, the fields it has no column for
+ * gridInterface.getServerFilter(): the filter without the conditions a backend can not run (Find's
+ * "Filter rows" is not in it, it filters in the browser) - the calculated columns, the fields it has no column for
  */
 
 beforeAll(() => {
@@ -50,20 +50,24 @@ describe('getServerFilter', () => {
         expect(gridInterface.getServerFilter()).toBeNull();
     });
 
-    it("expect Find's filter ANDed to it, left out with find: false", async () => {
+    it("expect Find's Filter rows left out: it filters in the browser", async () => {
         const { gridInterface, datasource } = await mount();
         datasource.filter(where('country', 'EQUAL', 'Norway'));
         gridInterface.find('acme', { filterRows: true });
-        const find = gridInterface.getFindFilter({ fields: ['company', 'country'] });
-        expect(find).not.toBeNull();
-        expect(gridInterface.getServerFilter({ fields: ['company', 'country'] })).toEqual(
-            and(where('country', 'EQUAL', 'Norway'), find!)
-        );
-        expect(gridInterface.getServerFilter({ fields: ['company', 'country'], find: false })).toEqual(
-            where('country', 'EQUAL', 'Norway')
-        );
+        expect(gridInterface.getServerFilter()).toEqual(where('country', 'EQUAL', 'Norway'));
         datasource.filter(null);
-        expect(gridInterface.getServerFilter({ fields: ['company', 'country'] })).toEqual(find);
+        expect(gridInterface.getServerFilter()).toBeNull();
+    });
+
+    it('expect Filter rows of Find to filter rows set after it was turned on', async () => {
+        const { gridInterface, datasource } = await mount();
+        gridInterface.find('globex', { filterRows: true });
+        expect(datasource.getRows().map((row) => row.id)).toEqual([2]);
+        datasource.setData([
+            { id: 3, company: 'Globex AS', country: 'Norway', price: 1, qty: 1, note: '' },
+            { id: 4, company: 'Initech', country: 'Norway', price: 1, qty: 1, note: '' }
+        ]);
+        expect(datasource.getRows().map((row) => row.id)).toEqual([3]);
     });
 
     it('expect a condition on a field the backend has not taken out with fields', async () => {
@@ -77,9 +81,8 @@ describe('getServerFilter', () => {
     it('expect options that are wrong to throw a TypeError', async () => {
         const { gridInterface } = await mount();
         expect(() => gridInterface.getServerFilter({ fields: [] })).toThrow(TypeError);
-        expect(() => gridInterface.getServerFilter({ find: 'yes' as never })).toThrow('find is true or false');
         expect(() => gridInterface.getServerFilter({ calculated: 'drop' as never })).toThrow("calculated is 'strip' or 'keep'");
-        expect(() => gridInterface.getServerFilter({ fields: [], find: false })).toThrow(TypeError);
+        expect(() => gridInterface.getServerFilter({ fields: [], calculated: 'keep' })).toThrow(TypeError);
         expect(() => gridInterface.getServerFilter(true as never)).toThrow(TypeError);
     });
 });

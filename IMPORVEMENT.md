@@ -5228,6 +5228,18 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * #7 `cell-dblclick`: sent in a setTimeout by the input cell's and the custom cell's dblclick (a link cell is
   one), after what the grid does with it; the checkbox cell sends neither click
 
+### Find makes no SQL (2026-11-24)
+
+* the user: "the find should not generate sql, that is just a mess, should be local filter added after data
+  grid is filled with data". Removed (never released): `gridInterface.getFindFilter()`, the event
+  `find-filter-change`, findFilter.ts, findFilter.test.ts, sqlFindSqlite.test.ts, the `find` option of
+  `getServerFilter()`, the find buttons of the SQL sample but one
+* *Filter rows* was already a row filter of the datasource (`__setRowFilter`), kept by `setData()`: a test
+  in serverFilter.test.ts sets rows after it was turned on and gets only the matching ones
+* `FilterCondition.literal` stays (the row menu's *Filter* on a cell's value makes it)
+* find-case-sql-check.js: the SQL sample's WHERE stays the filter's with *Filter rows* on (the button and
+  typed in the bar); the guides (find, SQL, events, filtering, features) say Find filters in the browser
+
 ## Considered, not done
 
 ## Candidates / not started

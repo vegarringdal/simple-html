@@ -7,8 +7,8 @@ the rows the grid's own filter selects, by the rules of [Filtering](06-filtering
 takes the filter as hostile input: no value is ever part of the SQL.
 
 It is a separate entry of the package, `@simple-html/grid/sql`, with no DOM and no lit-html: Node loads
-it with `import` and with `require`, without a bundler. Find's *Filter rows* has a filter of its own for
-it, see [Find's filter](#finds-filter).
+it with `import` and with `require`, without a bundler. Find's *Filter rows* is not sent: it filters in the
+browser, see [Find](19-find.md#filter-rows-and-a-backend).
 
 ```sample sql
 ```
@@ -241,7 +241,6 @@ made. `NOT (sql)` of any WHERE selects exactly the other rows.
 - **`literal: true`** takes `*`, `%`, `_` and `\` as characters, as the grid does then: they are escaped
   where they are wildcards of the pattern - `!%` and `!_` with `ESCAPE '!'`, `[%]` and `[_]` on SQL
   Server, `[*]` in `GLOB` - and the rest is as above: `CONTAINS '50%'` is `LIKE '%50!%%' ESCAPE '!'`.
-  [Find's filter](#finds-filter) has it on its texts.
 - **A blank row** - null, and `''` - is the text `''`: it matches a pattern of wildcards only, and
   `NOT_EQUAL_TO` / `DOES_NOT_CONTAIN` of anything else.
 - `IS_BLANK` is null or `''`, `IS_NOT_BLANK` the others.
@@ -496,46 +495,22 @@ const forTheBackend = withoutFields(datasource.getFilter(), calculated);
   nothing is left. `fields` can be a list, a Set, or a function: `(field) => !Object.hasOwn(columns, field)`
   takes out every field the database does not have.
 
-## Find's filter
-
-Find (Ctrl+F in the grid) has a toggle *Filter rows*: only the rows with a cell that shows the text.
-It is not part of the filter - it tests the text the cells show - so `getFilter()` has not got it.
-**`gridInterface.getFindFilter()`** gives it as a filter for the backend: AND it to the filter, and
-`toSqlWhere()` makes SQL of it like of any other filter. `find-filter-change` says when it changed.
-
-```ts
-import { and, type FilterExpression } from '@simple-html/grid';
-
-const parts = [datasource.getFilter(), gridInterface.getFindFilter()].filter(
-    (part): part is FilterExpression => part !== null
-);
-const filter = and(...parts); // send it, as the filter alone before
-```
-
-It is an OR group: for a text field `CONTAINS` the text with `literal: true` (Find takes `*`, `%` and `_`
-as they are) and `caseSensitive: true` with *Match case*; for a lookup column `IN` the values whose label
-holds the text; for a number or a date field `EQUAL` the value the text is; `IN []` (`1=0`) when no field
-gives a condition. Its SQL selects the rows *Filter rows* shows, or fewer - never a row without a match:
-the same rows on the text fields and the lookup columns. The [find guide](19-find.md#filter-rows-on-a-backend)
-has every field type; the differences are in the table below.
-
 ## The filter to send: `getServerFilter()`
 
-One call gives what a button that loads rows sends: the filter AND Find's filter, without the conditions
-the backend can not run.
+One call gives what a button that loads rows sends: the filter, without the conditions the backend can
+not run. Find's *Filter rows* is not in it - it filters the rows that come back, in the browser.
 
 ```ts
 const columns = { company: 'company', country: 'country', age: { column: 'age', type: 'number' as const } };
 
-// the filter AND Find's "Filter rows", without the calculated columns and the fields not in columns
+// the filter, without the calculated columns and the fields not in columns
 const filter = gridInterface.getServerFilter({ fields: Object.keys(columns) });
 await fetch('/api/customers', { method: 'POST', body: JSON.stringify({ filter }) });
 ```
 
 - `fields`: the fields the backend has. A condition on another field is taken out, as
-  [`withoutFields()`](#calculated-columns) takes it out - it matches every row - and Find's filter names
-  none of them. Default every field.
-- `find: false` leaves Find's filter out. `calculated: 'keep'` keeps the conditions on the calculated
+  [`withoutFields()`](#calculated-columns) takes it out - it matches every row. Default every field.
+- `calculated: 'keep'` keeps the conditions on the calculated
   columns, for a database that computes them too (default `'strip'`).
 - `null` is every row. What comes back is filtered by the datasource as it is: the browser drops the
   rows the backend could not.
@@ -557,11 +532,6 @@ database decides:
 | SQL Server, a text `valueField` | trailing spaces count | `=` ignores them |
 | comparisons of text (`LESS_THAN` ...) | UTF-16 code units | code points: differs only for letters past U+FFFF against U+E000-U+FFFF |
 | what is no filter | an unknown operator is `EQUAL` (text) or `GREATER_THAN_OR_EQUAL_TO`, `'or'` is AND, `'abc'` on a number is 0, a malformed `BETWEEN` is left out | a `TypeError` |
-| [Find's filter](#finds-filter), a number field | *Filter rows*: a cell whose text holds the text - `30` finds `130`, `30.5`, `1 030` | the number the text is: `EQUAL 30`. `0` is no condition (it would be the blank rows too), unless a blank shows `0` |
-| Find's filter, a date or datetime field | a cell whose text holds the text - `2026-03` finds every day of March | the day (second) when the text is all of a cell's text, `2026-03-14`; else no condition |
-| Find's filter, a lookup column | the label a cell shows, also of a value the lookup has no row for (the cell shows the value) | `IN` the values of the lookup's rows whose label holds the text: not the others. A short text in a large lookup is a long list - over `limits.listLength` (1000) it throws, raise it |
-| Find's filter, a text field with a formatter or template of its own, a `dynamicCellTypeColumn` | the text the cell shows | no condition: the database has the value, not that text |
-| Find's filter, a field the backend has no column for | searched, as every field of the layout | `getFindFilter({ fields })` leaves it out; left in, `toSqlWhere()` throws |
 
 ## A full example
 

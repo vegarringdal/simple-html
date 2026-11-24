@@ -1,12 +1,12 @@
-// Real browser check of Find's "Match case" and its filter for SQL (the find bar of Ctrl+F; #sample/find
-// and #sample/sql):
+// Real browser check of Find's "Match case", and that Find makes no SQL (the find bar of Ctrl+F;
+// #sample/find and #sample/sql):
 // - the toggle Aa: by the mouse (the focus stays in the input), by Alt+C in the input, by Tab and Space;
 //   aria-pressed, a tooltip, square, filled in the accent colour while on (3:1 read from the pixels)
 // - the counts with and without case: what the cells show, counted from the datasource in the page
 // - "Filter rows" with case: the rows shown are the rows with a cell that shows the text as it is; the
 //   footer's chip has the Aa marker
-// - the SQL sample: the find's SQL under the grid when Filter rows is on - the text as it is (50% escaped),
-//   caseSensitive with Aa, a number EQUAL - ANDed with the filter; typed in the bar too; off again
+// - the SQL sample: Filter rows on filters the rows in the browser, the SQL under the grid stays the
+//   filter's - by the sample's button and typed in the bar
 // - screenshots: the bar and the chip in the default theme light and dark and TreDeSpace light and dark,
 //   the SQL sample light and dark
 // Usage: /.claude/browser-checks node find-case-sql-check.js <site url> [screenshot dir]
@@ -305,7 +305,7 @@ async function findSample(browser, gridTheme, mode) {
     await page.close();
 }
 
-/** the SQL sample: the find's SQL when Filter rows is on */
+/** the SQL sample: Find's Filter rows filters in the browser, the SQL stays the filter's */
 async function sqlSample(browser, mode) {
     const page = await open(browser, 'sql', mode, 'default');
     const blocks = () => page.evaluate(() => [...document.querySelectorAll('.stage .demo-sql-block')].map((b) => b.textContent));
@@ -318,51 +318,22 @@ async function sqlSample(browser, mode) {
         shown.join(' | ')
     );
 
-    await button('Find "ACME" (match case), Filter rows');
+    await button('Find "acme", Filter rows');
     await page.waitForTimeout(300);
     shown = await blocks();
     check(
-        `${mode}: Find "ACME" with Match case and Filter rows: the company and country as they are, in every dialect`,
-        shown[0].includes(`"company_name" LIKE $1 ESCAPE '!'`) &&
-            !shown[0].includes('LOWER("company_name")') &&
-            shown[0].includes('"%ACME%"') &&
-            shown[1].includes(':1') &&
-            shown[2].includes('GLOB') &&
-            shown[2].includes('"*ACME*"') &&
-            shown[3].includes('@p1') &&
-            shown.every((b) => b.includes(`with Find's Filter rows: "ACME"`)),
+        `${mode}: Find "acme" with Filter rows: still WHERE 1=1, no find in the SQL`,
+        shown.every((b) => b.includes('WHERE 1=1') && !b.includes('acme')),
         shown.join(' | ')
     );
-    // the rows of the grid: every row has ACME somewhere
     const rows = await gi(page, (g) => g.getDatasource().getDataRows().length);
-    const wanted = await rowsWith(page, 'ACME', true);
+    const wanted = await rowsWith(page, 'acme', false);
     check(`${mode}: the grid shows the rows with a match`, rows === wanted && rows > 0, `${rows} vs ${wanted}`);
-
-    await button('Find "50%", Filter rows');
-    await page.waitForTimeout(300);
-    shown = await blocks();
-    check(
-        `${mode}: Find "50%": the % is a character in each dialect's pattern`,
-        shown[0].includes('"%50!%%"') &&
-            shown[1].includes('"%50!%%"') &&
-            shown[2].includes('"*50%*"') &&
-            shown[3].includes('"%50[%]%"') &&
-            shown[0].includes('LOWER("company_name")'),
-        shown.join(' | ')
-    );
-
-    // with a filter: ANDed
     await button('Norway, age 30-40');
-    await button('Find "30", Filter rows');
-    await page.waitForTimeout(300);
     shown = await blocks();
     check(
-        `${mode}: Find "30" ANDed with the filter: the age EQUAL 30, the texts CONTAINS`,
-        shown[0].includes('"age" = $') &&
-            shown[0].includes('"%30%"') &&
-            shown[0].includes('"norway"') &&
-            shown[0].includes(') AND ((') &&
-            shown[0].startsWith('postgres'),
+        `${mode}: a filter with Filter rows on: the filter's SQL only`,
+        shown[0].includes('"norway"') && !shown[0].includes('acme'),
         shown[0]
     );
     if (shots) {
@@ -379,8 +350,6 @@ async function sqlSample(browser, mode) {
     await button('Clear filter');
     await button('Close find');
     await page.waitForTimeout(200);
-    shown = await blocks();
-    const closed = shown.every((b) => b.includes('WHERE 1=1'));
     const cell = await cellCenter(page, 1, 'company');
     await page.mouse.click(cell.x, cell.y);
     await page.keyboard.press('Control+f');
@@ -391,27 +360,11 @@ async function sqlSample(browser, mode) {
     await page.waitForTimeout(400);
     shown = await blocks();
     check(
-        `${mode}: typed in the bar, Alt+C and the funnel: the SQL follows - "Mango" as it is`,
-        closed &&
-            shown[0].includes(`"favorite_fruit" LIKE $`) &&
-            shown[0].includes('"%Mango%"') &&
-            !shown[0].includes('LOWER("favorite_fruit")'),
-        shown[0]
-    );
-    // the phone is no column of the backend: not in the find's SQL, no error
-    check(
-        `${mode}: the phone is not in the find's SQL (getFindFilter({ fields }))`,
-        shown.every((b) => !b.includes('phone') && b.includes('WHERE')),
-        shown[3]
-    );
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(300);
-    shown = await blocks();
-    check(
-        `${mode}: Esc closes the bar: WHERE 1=1 again`,
+        `${mode}: typed in the bar, Alt+C and the funnel: still WHERE 1=1`,
         shown.every((b) => b.includes('WHERE 1=1')),
         shown.join(' | ')
     );
+    await page.keyboard.press('Escape');
     check(`${mode}: SQL sample: no page errors`, page.__errors.length === 0, page.__errors.join(' | '));
     await page.close();
 }

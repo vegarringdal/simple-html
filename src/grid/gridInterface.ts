@@ -5,7 +5,7 @@ import type { Datasource, EntityUnion } from '../datasource/dataSource';
 import type { DatasourceEvents } from '../datasource/datasourceEvents';
 import { type Entity, isGroupRow } from '../datasource/entity';
 import type { FieldType } from '../datasource/field';
-import { and, type FilterExpression, type FilterOperator, operatorsFor, where } from '../datasource/filterExpression';
+import { type FilterExpression, type FilterOperator, operatorsFor, where } from '../datasource/filterExpression';
 import { withoutFields } from '../datasource/filterFields';
 import type { Formatter } from '../datasource/formatter';
 import { Emitter, type EventHandler } from '../emitter';
@@ -72,7 +72,7 @@ import {
 } from './gridFunctions/editPermissions';
 import { fillDown } from './gridFunctions/fillDown';
 import { columnConditions, sameConditions, withColumnConditions } from './gridFunctions/filterCallback';
-import { closeFind, findDataChanged, findStep, getFindFilter, getFindResult, openFind } from './gridFunctions/findBar';
+import { closeFind, findDataChanged, findStep, getFindResult, openFind } from './gridFunctions/findBar';
 import { DEFAULT_COLUMN_WIDTH, fitColumns } from './gridFunctions/fitColumns';
 import { getCellHeight } from './gridFunctions/getCellHeight';
 import { getElementByClassName } from './gridFunctions/getElementByClassName';
@@ -2344,7 +2344,7 @@ export class GridInterface<T> {
      *
      * **`filterRows`** turns "Filter rows" of the find bar on or off, as its toggle does: only the rows
      * with a match are shown - on top of the filter, not part of it (`getFilter()` and the state do not
-     * have it, {@link getFindFilter} gives it for a backend). Left out, it stays as it is. It is turned
+     * have it, nor `getServerFilter()`: it filters in the browser, also rows set later). Left out, it stays as it is. It is turned
      * off when the bar closes ({@link closeFind}, Esc), and by the footer's Clear. See
      * {@link FindResult.filterRows}.
      *
@@ -2478,83 +2478,17 @@ export class GridInterface<T> {
     }
 
     /**
-     * Find's "Filter rows" as a filter, for a backend that loads the rows: the rows with a match as a
-     * {@link FilterExpression}, which `toSqlWhere()` (`@simple-html/grid/sql`) turns into SQL like any
-     * other filter. AND it to `datasource.getFilter()`: "Filter rows" is on top of the filter. `null`
-     * while "Filter rows" shows every row - it is off, the bar is closed, the text is empty. The
-     * `find-filter-change` event sends it each time it changes.
-     *
-     * An OR group of one condition per field Find searches (the fields of the layout), for the fields
-     * whose cells SQL can match the way they show:
-     *
-     * - **a text field** showing its value as it is: `CONTAINS` the text, `literal` (`*`, `%` and `_`
-     *   are no wildcards: Find takes the text as it is) and `caseSensitive` with Match case - every line
-     *   of a multiline text. The same rows as Find
-     * - **a lookup column**: `IN` the values whose label - what the cells show - holds the text
-     * - **a number field**: `EQUAL` the number the text reads as, when the cell of that number shows the
-     *   text: `30` is 30 - Find also marks `130`
-     * - **a date or datetime field**: `EQUAL` the day (the second) the text is, as the cells show it:
-     *   `2026-03-14`. A part of a date is none
-     *
-     * Left out: a boolean and a column of checkboxes (Find does not search them), a text field with a
-     * formatter or a template of its own, a column whose type changes per row. With no condition, a
-     * condition of no row: `IN []` on the first field.
-     *
-     * So the filter selects the rows Find shows, or fewer - never a row without a match. The find
-     * guide has the details.
-     *
-     * @param options.fields the fields the filter may name - the ones your backend has a column for (a
-     * field made in the browser is not in the database). A field Find searches that is not in it is
-     * left out, the condition of no row is on its first. Default every field Find searches
-     * @returns the filter, or `null` for every row - also while the grid is not on the page
-     * @throws a `TypeError` for `fields` that is not a list of at least one field name
-     *
-     * @sample sql
-     * @example
-     * ```ts
-     * import { and, type FilterExpression } from '@simple-html/grid';
-     * import { toSqlWhere } from '@simple-html/grid/sql';
-     *
-     * gridInterface.find('acme', { filterRows: true });
-     * gridInterface.getFindFilter();
-     * // { group: 'OR', children: [
-     * //     { field: 'company', operator: 'CONTAINS', value: 'acme', literal: true },
-     * //     { field: 'country', operator: 'CONTAINS', value: 'acme', literal: true } ] }
-     *
-     * // what a backend gets: the filter AND the find, the fields it has columns for
-     * const find = gridInterface.getFindFilter({ fields: ['company', 'country', 'age'] });
-     * const parts = [datasource.getFilter(), find].filter((part): part is FilterExpression => part !== null);
-     * const { sql, params } = toSqlWhere(and(...parts), {
-     *     dialect: 'postgres',
-     *     columns: { company: 'company', country: 'country', age: { column: 'age', type: 'number' } }
-     * });
-     * ```
-     */
-    public getFindFilter(options: { fields?: readonly string[] } = {}): FilterExpression | null {
-        assertOptions('getFindFilter', options, "getFindFilter({ fields: ['company', 'country'] })");
-        const { fields } = options;
-        if (
-            fields !== undefined &&
-            (!Array.isArray(fields) || !fields.length || fields.some((field) => typeof field !== 'string'))
-        ) {
-            throw new TypeError(
-                `getFindFilter({ fields }): fields is a list of the field names your backend has, e.g. ['company', 'country'], got ${JSON.stringify(fields)}`
-            );
-        }
-        return this.grid ? getFindFilter(this.grid, fields) : null;
-    }
-
-    /**
      * The filter to send to a backend - what every button that loads rows from it can call: the filter
-     * (`datasource.getFilter()`) AND Find's *Filter rows* ({@link getFindFilter}), without the conditions
-     * the backend can not run - the calculated columns, and the fields it has no column for
-     * (`withoutFields()`: a condition taken out matches every row, so the backend sends every row the grid
-     * shows, maybe more - load them, the datasource's filter drops the rest). `toSqlWhere()`
-     * (`@simple-html/grid/sql`) makes SQL of it.
+     * (`datasource.getFilter()`), without the conditions the backend can not run - the calculated columns,
+     * and the fields it has no column for (`withoutFields()`: a condition taken out matches every row, so the
+     * backend sends every row the grid shows, maybe more - load them, the datasource's filter drops the rest).
+     * `toSqlWhere()` (`@simple-html/grid/sql`) makes SQL of it.
+     *
+     * Find is not in it: *Filter rows* of the find bar filters the rows in the browser, also the rows loaded
+     * after it was turned on.
      *
      * @param options.fields the fields the backend has a column for: a condition on another field is
-     * taken out, and Find's filter names none of the others. Default every field
-     * @param options.find `false`: without Find's filter. Default `true`
+     * taken out. Default every field
      * @param options.calculated `'keep'`: the conditions on the calculated columns stay (the database
      * computes them too). Default `'strip'`, they go
      * @returns the filter, `null` for every row
@@ -2570,18 +2504,9 @@ export class GridInterface<T> {
      * const body = JSON.stringify({ filter }); // the backend: toSqlWhere(filter, { dialect: 'postgres', columns })
      * ```
      */
-    public getServerFilter(
-        options: { fields?: readonly string[]; find?: boolean; calculated?: 'strip' | 'keep' } = {}
-    ): FilterExpression | null {
-        assertOptions(
-            'getServerFilter',
-            options,
-            "getServerFilter({ fields: ['company', 'country'], find: true, calculated: 'strip' })"
-        );
-        const { fields, find = true, calculated = 'strip' } = options;
-        if (typeof find !== 'boolean') {
-            throw new TypeError(`getServerFilter({ find }): find is true or false, got ${JSON.stringify(find)}`);
-        }
+    public getServerFilter(options: { fields?: readonly string[]; calculated?: 'strip' | 'keep' } = {}): FilterExpression | null {
+        assertOptions('getServerFilter', options, "getServerFilter({ fields: ['company', 'country'], calculated: 'strip' })");
+        const { fields, calculated = 'strip' } = options;
         if (calculated !== 'strip' && calculated !== 'keep') {
             throw new TypeError(
                 `getServerFilter({ calculated }): calculated is 'strip' or 'keep', got ${JSON.stringify(calculated)}`
@@ -2595,11 +2520,7 @@ export class GridInterface<T> {
                 `getServerFilter({ fields }): fields is a list of the field names your backend has, e.g. ['company', 'country'], got ${JSON.stringify(fields)}`
             );
         }
-        const parts = [
-            this.dataSource.getFilter(),
-            find ? this.getFindFilter(fields === undefined ? {} : { fields }) : null
-        ].filter((part): part is FilterExpression => part !== null);
-        const filter = parts.length > 1 ? and(...parts) : (parts[0] ?? null);
+        const filter = this.dataSource.getFilter();
         const known = fields === undefined ? null : new Set(fields);
         const strip = (field: string) =>
             (calculated === 'strip' && Object.hasOwn(this.calculated, field)) || (known !== null && !known.has(field));

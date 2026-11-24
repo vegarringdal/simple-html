@@ -228,20 +228,11 @@ gridInterface.on('column-selection-change', ({ columns, fields }) => {
 });
 ```
 
-### `find-change` and `find-filter-change`
+### `find-change`
 
 `find-change` is sent when what Find (Ctrl+F in the grid) has found changes: the bar opened or closed,
 the typing stopped, the current match moved, *Match case* or *Filter rows* turned on or off. The payload
-is what `getFind()` gives. `find-filter-change` is sent only when the rows *Filter rows* shows change
-what they are - on, off, another text, *Match case*, the columns - with `{ filter }`, what
-`getFindFilter()` gives: the filter a backend that loads the rows needs, see
-[Find](19-find.md#filter-rows-on-a-backend).
-
-```ts
-gridInterface.on('find-filter-change', ({ filter }) => {
-    console.log(filter ? 'load the rows with a match' : 'load every row');
-});
-```
+is what `getFind()` gives.
 
 ### `views-change`
 

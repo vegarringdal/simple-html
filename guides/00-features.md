@@ -126,7 +126,7 @@ On a Mac, Ctrl is Cmd and Alt is Option.
 | Find in the grid | Ctrl+F opens a find bar: every cell that shows the text is marked, with a count; Enter goes to the next | [guide](19-find.md#the-keys) · [sample](#sample/find) |
 | Match case | Find the text with upper and lower case as typed | [guide](19-find.md#match-case) · [sample](#sample/find) |
 | Filter rows | Show only the rows with a match | [guide](19-find.md#filter-rows) · [sample](#sample/find) |
-| On a server too | The rows found, as a filter a server can turn into SQL | [guide](19-find.md#filter-rows-on-a-backend) · [sample](#sample/sql) |
+| Rows loaded later | Filter rows filters the rows a backend sends after it was turned on, in the browser | [guide](19-find.md#filter-rows-and-a-backend) · [sample](#sample/find) |
 
 ## Detail form
 

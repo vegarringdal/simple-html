@@ -37,7 +37,7 @@ import { sqlColumnsOf } from './sql/sqlColumns';
  * The rules are the grid's, see the filtering guide "Operators": a text ignores case unless the
  * condition is `caseSensitive` (`*` and `%` are wildcards, `_` one character, unless it is `literal`), a
  * blank number is 0, a blank boolean false, a blank date is no date, a date is its day in the user's
- * `timeZone`. Find's filter (`gridInterface.getFindFilter()`) is a filter like any other. A condition
+ * `timeZone`. A condition
  * the grid ignores (no field, no operator, no value) is left out. Where SQL does not do exactly what the
  * grid does, the SQL guide says so.
  *

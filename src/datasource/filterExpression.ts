@@ -232,8 +232,7 @@ export interface FilterCondition {
      * with a text value. Ignored by the others - `IN` / `NOT_IN` and the comparisons have no wildcards -
      * and on the other types. `toSqlWhere()` escapes the wildcards of the database's pattern for it.
      *
-     * Made by code: Find's `gridInterface.getFindFilter()` makes its conditions with it, as Find takes
-     * its text as it is. The header filters and the filter editor do not make it, and the filter editor
+     * Made by code: the row menu's *Filter* on a cell's value makes it. The header filters and the filter editor do not make it, and the filter editor
      * leaves it out when it applies a filter it edited.
      */
     literal?: boolean;

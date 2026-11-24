@@ -5,8 +5,7 @@ type a text, and every cell that shows it is marked - the current match more - w
 it, `3 of 17`. Enter goes to the next match, Shift+Enter to the previous one, and the grid scrolls to
 it. Esc closes the bar and puts the focus in the cell of the current match. The button `Aa`, *Match
 case*, finds the text as it is typed (see [below](#match-case)); the funnel button, *Filter rows*, shows
-only the rows with a match (see [below](#filter-rows)) - and a backend can load the same rows with SQL
-(see [Filter rows on a backend](#filter-rows-on-a-backend)). A browser's find does not work in a grid:
+only the rows with a match (see [below](#filter-rows)). A browser's find does not work in a grid:
 only the rows on screen are in the page, and the text is in inputs.
 
 ```sample find
@@ -137,70 +136,21 @@ gridInterface.find('norway'); // another text: it stays on
 gridInterface.find('norway', { filterRows: false }); // every row, the bar stays open
 ```
 
-## Filter rows on a backend
+## Filter rows and a backend
 
-*Filter rows* filters the rows the grid has, with the text the cells show: it is not part of the
-filter, so `datasource.getFilter()` and a backend do not see it. When a backend loads the rows (and only
-the rows a filter lets through, with [`toSqlWhere()`](22-sql.md)), **`gridInterface.getFindFilter()`**
-gives *Filter rows* as a filter: AND it to the filter, and the SQL selects the rows with a match.
+*Filter rows* is a filter of the browser only: it tests the text the cells show, which a database does
+not have. It is not part of the filter, so `datasource.getFilter()` and `gridInterface.getServerFilter()`
+do not have it, and no SQL is made of it. When a backend loads the rows, it loads them by the filter;
+*Filter rows* then filters what came back - `setData()` with the new rows filters them again with it, as
+long as it is on.
 
 ```ts
-import { and, type FilterExpression } from '@simple-html/grid';
-import { toSqlWhere } from '@simple-html/grid/sql';
+import type { FilterExpression } from '@simple-html/grid';
+
+declare function loadRows(filter: FilterExpression | null): Promise<Record<string, unknown>[]>; // your backend
 
 gridInterface.find('acme', { filterRows: true });
-const find = gridInterface.getFindFilter();
-// { group: 'OR', children: [
-//     { field: 'company', operator: 'CONTAINS', value: 'acme', literal: true },
-//     { field: 'country', operator: 'CONTAINS', value: 'acme', literal: true } ] }
-
-// in the browser: the filter and the find, sent to the backend as JSON
-const parts = [datasource.getFilter(), find].filter((part): part is FilterExpression => part !== null);
-const body = JSON.stringify({ filter: and(...parts), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone });
-
-// in the backend: a filter like any other
-const { sql, params } = toSqlWhere(JSON.parse(body).filter, {
-    dialect: 'postgres',
-    columns: { company: 'company', country: 'country', age: { column: 'age', type: 'number' } },
-    timeZone: 'Europe/Oslo'
-});
-```
-
-- **`null`** while *Filter rows* shows every row: it is off, the bar is closed, the text is empty. It is
-  the text, *Match case* and the fields the rows were filtered with - after the typing stopped.
-- **`find-filter-change`** is sent each time it changes - *Filter rows* turned on or off, another text
-  (when the typing stops), *Match case*, the columns of the layout - with `{ filter }`, what
-  `getFindFilter()` gives. Not when the data changes or the current match moves: load the rows again on
-  it, without a loop. `setData()` with the rows the backend sent filters them again in the browser too.
-- **`getFindFilter({ fields })`**: the fields the filter may name, the ones the backend has a column
-  for - a field made in the browser is not in the database, and `toSqlWhere()` throws for a field that
-  is not in its `columns`. A field Find searches that is not in the list is left out.
-
-It is an OR group of a condition for each field Find searches (the fields of the layout), where SQL can
-match the cells the way the grid shows them:
-
-| field | the condition | the same rows as Find? |
-| --- | --- | --- |
-| text, shown as it is (the built-in text formatter) | `CONTAINS` the text, `literal: true` - `*`, `%` and `_` are characters, as in Find - and `caseSensitive: true` with *Match case*. Every line of a multiline text | yes |
-| a lookup column (`editor`) | `IN` the values of its lookup whose label holds the text - as the cells show it. A text field's values as they are (`caseSensitive: true`) | yes, but a value the lookup has no row for: the cell shows the value, the filter has not got it |
-| number | `EQUAL` the number the text reads as (the field's formatter), when the cell of that number shows the text: `30` is `EQUAL 30`, `12,5` with a decimal comma 12.5, `30.0` with two decimals 30. Not `0` - `EQUAL 0` would select the blank rows too - unless a blank is shown as `0` (`numberOverride: 'BLANK_TO_ZERO'`) | fewer: Find marks `130` and `30.5` for `30` too, the text of a cell is not in the database |
-| date, datetime | `EQUAL` the day (the second) when the text is all of what its cell shows: `2026-03-14`, `2026-03-14T10:30:00` | fewer: a part of a date (`2026-03`, `14`) is no day, Find marks it |
-| boolean, a column of checkboxes | none: Find does not search a checkbox either | yes |
-| a text field with a formatter or a template (`format.text`) of its own, a column with `dynamicCellTypeColumn` | none: the text a cell shows is not the value in the database | fewer |
-
-So the filter selects **the rows *Filter rows* shows, or fewer - never a row without a match**: the same
-rows on text fields and lookup columns, which the tests check against SQLite. When no field gives a
-condition, it is a condition of no row (`IN []` on the first field, `1=0` in SQL) - as no cell the SQL
-can match shows the text. The rows the backend sends are filtered again in the browser by *Filter rows*,
-so the grid shows the rows with a match whatever the SQL selected. Where SQL and the grid differ (case
-of letters that are not ASCII, a lookup with many matching labels) is in the
-[SQL guide](22-sql.md#where-the-sql-differs-from-the-grid).
-
-*Filter rows* in the grid keeps its own test of the rows - the text the cells show - and does not filter
-with this filter: that one has fewer rows for a number or a date, and the rows shown and the marked cells
-agree.
-
-```sample sql
+datasource.setData(await loadRows(gridInterface.getServerFilter())); // only the rows with "acme" shown
 ```
 
 ## It follows the data
@@ -237,10 +187,6 @@ gridInterface.on('find-change', ({ open, count, position }) => {
     console.log(open ? `${position} of ${count}` : 'find closed');
 });
 
-// Filter rows as a filter, for a backend - see above
-gridInterface.on('find-filter-change', ({ filter }) => console.log(filter));
-gridInterface.getFindFilter();
-
 // as Ctrl+F: the focus into the bar - for a button or a menu entry of your own
 gridInterface.openFind();
 gridInterface.closeFind();
@@ -262,11 +208,8 @@ gridInterface.closeFind();
 - **`find-change`** is sent with the same each time it changes: the bar opened or closed, the typing
   stopped, the current match moved, *Filter rows* or *Match case* turned on or off, the matches were
   found again after the data changed. Not when nothing changed.
-- **`getFindFilter()`** and **`find-filter-change`**: *Filter rows* as a filter for a backend, see
-  [above](#filter-rows-on-a-backend).
 
-Without the grid on the page they do nothing: `find()` returns 0, `getFind()` gives a closed find,
-`getFindFilter()` null. The matches, *Match case* and *Filter rows* are not part of `getState()`.
+Without the grid on the page they do nothing: `find()` returns 0, `getFind()` gives a closed find. The matches, *Match case* and *Filter rows* are not part of `getState()`.
 
 ## What a screen reader gets
 
@@ -291,9 +234,6 @@ Without the grid on the page they do nothing: `find()` returns 0, `getFind()` gi
   focus in its cell, which is read then.
 - **Contains**, in any case or with *Match case*: no whole word or regular expression. Not the group
   rows, the rows of collapsed groups, the hidden fields, the checkboxes.
-- **The find filter of a backend** (`getFindFilter()`) finds a number or a date by its whole value
-  only, and not the cells a formatter of your own writes: fewer rows than *Filter rows*, see
-  [the table](#filter-rows-on-a-backend).
 - **No Cmd+G / Ctrl+G** for the next match: F3, Enter in the bar, `findNext()`.
 - **A large grid**: each search makes the text of every cell, 100 000 rows of 10 fields are a million
   texts - some hundred ms. It runs once the typing (or the changes of the data) stop. *Filter rows*

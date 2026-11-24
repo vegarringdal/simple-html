@@ -4,8 +4,7 @@ import { type FilterCondition, type FilterOperator, where } from '../filterExpre
 
 /**
  * `literal: true` on a condition (FilterCondition.literal): `*`, `%` and `_` of a text value are
- * characters, not wildcards - the text is matched as it is. Find's getFindFilter() makes its conditions
- * with it. The SQL of it is compared with the grid on SQLite in src/sql/__tests__/sqlSqlite.test.ts.
+ * characters, not wildcards - the text is matched as it is. The SQL of it is compared with the grid on SQLite in src/sql/__tests__/sqlSqlite.test.ts.
  */
 
 const NAMES = ['50% off', '500', '5', 'a_b', 'axb', 'a*b', 'aXb', 'A_B', '*', '%', '_', '', null, 'a\nb', 'tab_end'];

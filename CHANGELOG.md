@@ -1381,8 +1381,9 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - the filter types of the sql entry: `SqlFilter`, `SqlFilterGroup`, `SqlFilterCondition`,
   `SqlFilterOperator`, `SqlV5Filter`, `SqlFieldsOptions`
 
-- `gridInterface.getServerFilter({ fields, find, calculated })`: the filter AND Find's filter, without the
-  calculated columns and the fields the backend has not - what to send to a backend in one call
+- `gridInterface.getServerFilter({ fields, calculated })`: the filter without the calculated columns and the
+  fields the backend has not - what to send to a backend in one call. Find's *Filter rows* is not in it: it
+  filters in the browser, the rows loaded after it was turned on too
 - `datasource.setFields(fields)`: the fields replaced after the datasource is made (the metadata of a
   query came); the rows filtered, sorted and grouped again, the event `fields-change`. A grid on it drops
   the display formats the new types do not take (not the label, placeholder, read only)
@@ -1839,17 +1840,9 @@ rows); the vertical time is rendering every cell of every row on screen, which s
   `aria-pressed`): the matches, the count, the marks and *Filter rows* follow it; the footer's chip gets the
   `Aa` marker. `find(text, { caseSensitive })`, `getFind().caseSensitive`, in `find-change` too. Kept when
   the bar closes, as the text.
-- **`gridInterface.getFindFilter({ fields? })`**: *Filter rows* as a `FilterExpression` a backend gives
-  `toSqlWhere()` - an OR of a condition per field of the layout where SQL can match what the cell shows: a
-  text field `CONTAINS` (literal, case as Match case), a lookup column `IN` the values whose label has the
-  text, a number `EQUAL` the number when its cell shows the text, a date the day / second when the text is
-  the whole cell. It never selects a row the grid would not show; on numbers and dates it can select fewer
-  (the grid also finds part of a number or a date) - see the find and SQL guides. null while *Filter rows*
-  shows every row. The event **`find-filter-change`** `{ filter }` when it changes.
 - **`FilterCondition.literal`** (`where(field, op, value, { literal: true })`): `*`, `%` and `_` of the value
   are plain characters - in the datasource and in `toSqlWhere()` (escaped per dialect). The filter editor
   does not keep it (it rebuilds a condition).
-- The SQL sample shows the find's SQL ANDed in when *Filter rows* is on.
 
 ##### Changed
 - The find input's least width is 24px (was 40px): five buttons fit a narrow grid.
