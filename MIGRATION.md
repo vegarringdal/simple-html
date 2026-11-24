@@ -799,9 +799,12 @@ The rules per type, for a backend that filters the same way, are in the filterin
   value, not one of its lines, and `*` / `%` span line breaks.
 * **Text `<` / `>`** compare the texts without wildcards (a `*` turned them into `EQUAL`).
 * **`_` is a wildcard in a text filter**: one character, any, as in SQL `LIKE` - `p_mp` finds `pump`.
-  It was literal. There is no escape: a filter for `pump_01` also finds `pump-01`. Use `IN` (the value
-  list) for an exact text with a `_` in it. A backend that filtered with `LIKE` and escaped the `_`
-  should no longer escape it (`toSqlWhere()` does that for you).
+  It was literal. A backend that filtered with `LIKE` and escaped the `_` should no longer escape it
+  (`toSqlWhere()` does that for you).
+* **`\` escapes a wildcard in a text filter**: `pump\_01` finds `pump_01` only, `50\%` a `%`, `a\*b` a
+  `*`, `\\` one backslash. In v5 a `\` was an ordinary character: a saved filter value with a `\` in it
+  now reads the character after it as plain text - write it `\\`. `escapeTextPattern(text)` does that
+  for a text you put in a filter as it is; the row menu's *Filter by this value* does it already.
 * **`getFilterTree()`**: every condition node has `caseSensitive` (a boolean), a `BETWEEN` node
   `valueTo`.
 * **Menu hooks**: the header menu's Filter › has new entries (Match case, more operators) - see
@@ -1364,7 +1367,9 @@ What changes:
 **The grid does it now**: `gridInterface.importConfig(saved)` and `convertGridConfig(saved)` take a v5
 config - a saved grid without a `version` is one - and convert it as below; `exportConfig()` saves
 `{ version: 2, config, state }`. See the grid config guide, *Exporting with a version*. The code below is
-what they do, for a config you want to convert yourself.
+what they do, for a config you want to convert yourself. The export has `views` too - the named views
+of the views button, the ones users saved included - and `importConfig()` puts them back; an export
+without `views` leaves the grid's views as they are.
 
 This turns a v5 config - one you wrote, or one `saveConfig()` saved - into a v6 one: `attributes`
 become `columns`, the `columns*` the `layout`, and the state v5 kept in the config goes into
@@ -2013,6 +2018,10 @@ changes, see [Theming](guides/13-theming.md):
   focused checkbox (`:focus`) are gone, and a click in a text cell shows the same ring as the keyboard.
 * **`grid.css` only styles the grid's inputs.** It set `z-index: 1000` and `pointer-events: all` on
   every `input` of the page; now only on `.simple-html-grid input`.
+* **The header has no scrollbar.** v5 gave the header a scrollbar of its own to line it up with the
+  rows, so css that styled or hid that scrollbar does nothing now. The header leaves the room of the
+  rows' scrollbar at its end instead, and an element fills that corner: `.simple-html-grid-header-gutter`,
+  coloured like the scrollbar's track. On a phone, where scrollbars take no room, the header lines up too.
 * The colours that were written in the css (17: stripes, shadows, the backdrop, the warning and danger
   reds) are variables now, see the tables in the guide.
 

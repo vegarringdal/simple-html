@@ -55,7 +55,7 @@ Tasks:
   - theming - table of every CSS variable, dark theme
   - keyboard - every shortcut
   - texts / translation, and accessibility
-- [ ] **Migration guide v5 -> v6** - every breaking change with before/after code. Collected while
+- [x] **Migration guide v5 -> v6** - every breaking change with before/after code. Collected while
       working, not reconstructed at the end. **S per item**
 - [x] README rewritten around the v6 API and pointing to the site, CHANGELOG entry per change. **S**
 
