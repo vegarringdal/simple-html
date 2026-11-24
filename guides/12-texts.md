@@ -819,7 +819,7 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.calculated.name.hint` | `A letter, then letters, digits and _. Not changed once applied` | under the input |
 | `columnSettings.calculated.formula` | `Formula` | the label of its formula |
 | `columnSettings.calculated.formula.placeholder` | `{price} * {qty}` | its placeholder, a formula as it is written |
-| `columnSettings.calculated.formula.hint` | `Fields in braces, numbers, "text", + - * / &, = <> < <= > >=, AND OR NOT, IF ROUND ABS MIN MAX TODAY DAYS YEAR MONTH CONCAT COALESCE ISBLANK` | under it: the language. The keywords and the names of the functions are the language's, keep them |
+| `columnSettings.calculated.formula.hint` | `Fields in braces, numbers, "text", + - * / &, = <> != < <= > >=, AND OR NOT, IF ROUND ABS MIN MAX TODAY DAYS YEAR MONTH CONCAT COALESCE ISBLANK LEFT RIGHT MID LEN UPPER LOWER TRIM CONTAINS` | under it: the language. The keywords and the names of the functions are the language's, keep them |
 | `columnSettings.calculated.gives` | `Gives: {type}` | the type of its values, `{type}` the name of a type (`columnSettings.type.*`) |
 | `columnSettings.calculated.value` | `In this row: {value}` | its value in the row of the preview |
 | `columnSettings.calculated.blank` | `(blank)` | the value when it is blank |

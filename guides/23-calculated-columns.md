@@ -84,6 +84,7 @@ COALESCE({discount}, 0)
 | `+ - * /` | numbers. A minus in front: `-{qty}` |
 | `&` | joins values as text: `{name} & " (" & {id} & ")"` |
 | `= <> < <= > >=` | compares two values of one type: true or false. One at a time: `a < b < c` is a problem, write `a < b AND b < c` |
+| `!=`, `==` | the same as `<>` and `=`: `{shipped} != {ordered}` compares two columns |
 | `AND`, `OR`, `NOT` | true / false: `{qty} > 10 AND NOT {paid}` |
 | `( )` | brackets |
 
@@ -105,6 +106,17 @@ do not matter. Precedence, the first binding the loosest: `OR`, `AND`, `NOT`, th
 | `CONCAT(a, b, …)` | the values as one text, as `&` joins them |
 | `COALESCE(a, b, …)` | the first value that is not blank - all of one type: `COALESCE({qty}, 0)` |
 | `ISBLANK(x)` | true when x is blank |
+| `LEFT(text, n)`, `RIGHT(text, n)` | the first / the last n characters: `LEFT({zip}, 2)` |
+| `MID(text, start, n)`, `SUBSTRING(text, start, n)` | n characters from the start-th, the first is 1: `MID("2026-11-24", 6, 2)` is `11` |
+| `LEN(text)` | how many characters - 0 for a blank |
+| `UPPER(text)`, `LOWER(text)` | the text in upper / lower case |
+| `TRIM(text)` | the text without the spaces around it |
+| `CONTAINS(text, part)` | true when the text has the part, in any case: `CONTAINS({note}, "urgent")` |
+
+The functions of text take a value of any type, as `&` does: a number as it is written, a date as
+`YYYY-MM-DD` - `LEFT({born}, 4)` is the year as text. A count or a position that is not a whole number is
+cut to one (`LEFT(x, 2.9)` is 2 characters), a negative one is 0, a start before 1 is 1. A letter made of
+two UTF-16 units (an emoji) is one character.
 
 ### Types
 
@@ -116,7 +128,7 @@ that can not work is a problem at once, not a wrong value in some rows:
   is the problem *\* takes a number: {age} is a text*.
 - `+ - * /`, ROUND, ABS take numbers; DAYS, YEAR, MONTH dates; AND, OR, NOT, IF's condition true / false.
 - `=`, `<>`, the comparisons, IF's two values, COALESCE, MIN and MAX take values of one type.
-- `&` and CONCAT take any: a number as it is written (`12.5`), a date as `YYYY-MM-DD`, true / false as
+- `&`, CONCAT and the functions of text take any: a number as it is written (`12.5`), a date as `YYYY-MM-DD`, true / false as
   `true` / `false`.
 
 ### Blanks
@@ -128,7 +140,8 @@ A field that is empty - null, undefined, `''`, an invalid date - is blank.
   `{price} * COALESCE({qty}, 0)`.
 - **A comparison with a blank is false**; `=` is true for two blanks and `<>` the other way round, so
   `{note} = ""` asks whether the note is blank. AND, OR, NOT and IF take a blank as false.
-- `&` and CONCAT take a blank as `''`; MIN and MAX skip it.
+- `&`, CONCAT and the functions of text take a blank as `''` (`LEN` of a blank is 0, `LEFT` of one is
+  blank); MIN and MAX skip it.
 - 0 is a number, not a blank: `ISBLANK(0)` is false (the header filter takes 0 as blank, see
   [0 is blank](06-filtering.md#0-is-blank)).
 

@@ -229,7 +229,16 @@ describe('formula - the functions', () => {
             'MONTH',
             'CONCAT',
             'COALESCE',
-            'ISBLANK'
+            'ISBLANK',
+            'LEFT',
+            'RIGHT',
+            'MID',
+            'SUBSTRING',
+            'LEN',
+            'UPPER',
+            'LOWER',
+            'TRIM',
+            'CONTAINS'
         ]);
     });
 });
@@ -286,7 +295,7 @@ describe('formula - problems of the formula', () => {
         expect(problem('1 < 2 < 3')).toEqual('Compare two values at a time (7): a < b AND b < c');
         expect(problem('price * 2')).toEqual('PRICE at 1 is no function - a field is written in braces');
         expect(problem('SUM(1, 2)')).toEqual(
-            'SUM is no function: IF, ROUND, ABS, MIN, MAX, TODAY, DAYS, YEAR, MONTH, CONCAT, COALESCE, ISBLANK'
+            'SUM is no function: IF, ROUND, ABS, MIN, MAX, TODAY, DAYS, YEAR, MONTH, CONCAT, COALESCE, ISBLANK, LEFT, RIGHT, MID, SUBSTRING, LEN, UPPER, LOWER, TRIM, CONTAINS'
         );
         expect(problem('AND(TRUE, FALSE)')).toMatch(/^AND is no function/);
         expect(problem('ROUND()')).toEqual('ROUND has 0 values: it is written ROUND(x, n)');
@@ -363,5 +372,77 @@ describe('formula - problems of a row', () => {
         expect(rowProblem('{name} & {name}', long)).toEqual('A text of more than 10000 characters in this row: no value');
         expect(rowProblem('CONCAT({name}, {name})', long)).toEqual('A text of more than 10000 characters in this row: no value');
         expect(value('{name} & "!"', long)).toHaveLength(6001);
+    });
+});
+
+describe('formula - != and ==, as <> and =', () => {
+    it('expect != to compare as <>, == as =: fields with fields, texts in any case, blanks', () => {
+        expect(value('{name} != {status}')).toBe(true);
+        expect(value('{name} != "ann"')).toBe(false);
+        expect(value('{price} != {qty}')).toBe(true);
+        expect(value('{price} == 2.5')).toBe(true);
+        expect(value('{name} != ""')).toBe(true);
+        expect(value('{name} != ""', { ...ROW, name: null })).toBe(false);
+        expect(value('{price} * 2 != {qty} + 1')).toBe(false);
+        expect(formula('{qty} != 4').type).toBe('boolean');
+    });
+
+    it('expect != on two types to be the problem <> has, a lone ! to be no operator', () => {
+        expect(problem('{name} != 1')).toBe(problem('{name} <> 1'));
+        expect(problem('!{active}')).toContain('!');
+        expect(problem('{qty} != 1 != 2')).toBe(problem('{qty} <> 1 <> 2'));
+    });
+});
+
+describe('formula - the functions of text', () => {
+    it('expect LEFT, RIGHT, MID and SUBSTRING: characters by count and position, the first 1', () => {
+        expect(value('LEFT({status}, 2)')).toBe('La');
+        expect(value('RIGHT({status}, 2)')).toBe('te');
+        expect(value('MID({status}, 2, 2)')).toBe('at');
+        expect(value('SUBSTRING({status}, 2, 2)')).toBe('at');
+        expect(value('LEFT({status}, 10)')).toBe('Late');
+        expect(value('RIGHT({status}, 10)')).toBe('Late');
+        expect(value('RIGHT({status}, 0)')).toBeNull();
+        expect(value('MID({status}, 0, 2)')).toBe('La');
+        expect(value('MID({status}, 9, 2)')).toBeNull();
+        expect(value('LEFT({status}, 1.9)')).toBe('L');
+        expect(value('LEFT({status}, -1)')).toBeNull();
+        // a letter of two UTF-16 units is one character
+        expect(value('LEFT("😀ab", 1)')).toBe('😀');
+    });
+
+    it('expect any type as & takes it: a number as written, a date YYYY-MM-DD', () => {
+        expect(value('LEFT({price}, 1)')).toBe('2');
+        expect(value('LEFT({due}, 4)')).toBe('2026');
+        expect(value('MID({due}, 6, 2)')).toBe('11');
+        expect(value('LEN({qty} * 1000)')).toBe(4);
+    });
+
+    it('expect LEN, UPPER, LOWER, TRIM and CONTAINS', () => {
+        expect(value('LEN({name})')).toBe(3);
+        expect(value('LEN({name})', { ...ROW, name: null })).toBe(0);
+        expect(value('UPPER({name})')).toBe('ANN');
+        expect(value('LOWER({status})')).toBe('late');
+        expect(value('TRIM("  a b  ")')).toBe('a b');
+        expect(value('TRIM("   ")')).toBeNull();
+        expect(value('CONTAINS({status}, "AT")')).toBe(true);
+        expect(value('CONTAINS({status}, "x")')).toBe(false);
+        expect(value('CONTAINS({status}, "")')).toBe(true);
+        expect(value('CONTAINS({name}, "a")', { ...ROW, name: null })).toBe(false);
+    });
+
+    it('expect a blank text to be blank out, a blank count blank out', () => {
+        expect(value('LEFT({name}, 2)', { ...ROW, name: null })).toBeNull();
+        expect(value('LEFT({name}, {qty})', { ...ROW, qty: null })).toBeNull();
+        expect(value('UPPER({name})', { ...ROW, name: '' })).toBeNull();
+    });
+
+    it('expect the types checked: a count that is no number, the number of values, the type they give', () => {
+        expect(problem('LEFT({name}, "2")')).toContain('LEFT takes a number');
+        expect(problem('MID({name}, 1)')).toContain('MID(text, start, n)');
+        expect(formula('UPPER({name})').type).toBe('text');
+        expect(formula('LEN({name})').type).toBe('number');
+        expect(formula('CONTAINS({name}, "a")').type).toBe('boolean');
+        expect(value('IF(LEFT({status}, 1) != "L", 1, 2)')).toBe(2);
     });
 });

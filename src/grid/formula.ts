@@ -11,6 +11,7 @@
  * and        := not ( AND not )*
  * not        := NOT not | compare
  * compare    := concat [ ( = | <> | < | <= | > | >= ) concat ]     -- one comparison: no a < b < c
+ *                                                                   -- `!=` is `<>`, `==` is `=`
  * concat     := additive ( & additive )*
  * additive   := term ( ( + | - ) term )*
  * term       := unary ( ( * | / ) unary )*
@@ -48,7 +49,8 @@
  * property of the row. What it gives is a number, a text, a date or true / false - data, shown as text.
  *
  * The functions (FUNCTIONS): IF, ROUND, ABS, MIN, MAX, TODAY, DAYS, YEAR, MONTH, CONCAT, COALESCE,
- * ISBLANK - see the guide "Calculated columns".
+ * ISBLANK, and of text LEFT, RIGHT, MID (SUBSTRING), LEN, UPPER, LOWER, TRIM, CONTAINS - see the guide
+ * "Calculated columns".
  */
 
 /**
@@ -185,6 +187,14 @@ interface FunctionSpec {
  * | `CONCAT(a, b, …)` | the values as one text, as `&` joins them |
  * | `COALESCE(a, b, …)` | the first that is not blank - all of one type |
  * | `ISBLANK(x)` | true when x is blank |
+ * | `LEFT(text, n)`, `RIGHT(text, n)` | the first / the last n characters |
+ * | `MID(text, start, n)`, `SUBSTRING(…)` | n characters from the start-th, the first is 1 |
+ * | `LEN(text)` | how many characters, 0 for a blank |
+ * | `UPPER(text)`, `LOWER(text)`, `TRIM(text)` | in upper / lower case; without the spaces around it |
+ * | `CONTAINS(text, part)` | true when the text has the part, in any case |
+ *
+ * The functions of text take a value of any type as `&` does (a number as written, a date `YYYY-MM-DD`);
+ * a count or a position that is not a whole number is cut to one, a negative one is 0 (a start below 1 is 1).
  */
 export const FUNCTIONS: ReadonlyMap<string, FunctionSpec> = new Map([
     ['IF', { min: 3, max: 3, usage: 'IF(condition, a, b)' }],
@@ -198,7 +208,16 @@ export const FUNCTIONS: ReadonlyMap<string, FunctionSpec> = new Map([
     ['MONTH', { min: 1, max: 1, usage: 'MONTH(date)' }],
     ['CONCAT', { min: 1, max: Number.POSITIVE_INFINITY, usage: 'CONCAT(a, b, …)' }],
     ['COALESCE', { min: 1, max: Number.POSITIVE_INFINITY, usage: 'COALESCE(a, b, …)' }],
-    ['ISBLANK', { min: 1, max: 1, usage: 'ISBLANK(x)' }]
+    ['ISBLANK', { min: 1, max: 1, usage: 'ISBLANK(x)' }],
+    ['LEFT', { min: 2, max: 2, usage: 'LEFT(text, n)' }],
+    ['RIGHT', { min: 2, max: 2, usage: 'RIGHT(text, n)' }],
+    ['MID', { min: 3, max: 3, usage: 'MID(text, start, n)' }],
+    ['SUBSTRING', { min: 3, max: 3, usage: 'SUBSTRING(text, start, n)' }],
+    ['LEN', { min: 1, max: 1, usage: 'LEN(text)' }],
+    ['UPPER', { min: 1, max: 1, usage: 'UPPER(text)' }],
+    ['LOWER', { min: 1, max: 1, usage: 'LOWER(text)' }],
+    ['TRIM', { min: 1, max: 1, usage: 'TRIM(text)' }],
+    ['CONTAINS', { min: 2, max: 2, usage: 'CONTAINS(text, part)' }]
 ]);
 
 /** the keywords: operators and the two booleans, any case */
@@ -238,7 +257,10 @@ function fail(id: FormulaProblemId, values: Record<string, string | number> = {}
 }
 
 /** the characters of an operator, the longest first: `<=` before `<` */
-const OPERATORS = ['<>', '<=', '>=', '+', '-', '*', '/', '&', '=', '<', '>', '(', ')', ','];
+const OPERATORS = ['<>', '!=', '==', '<=', '>=', '+', '-', '*', '/', '&', '=', '<', '>', '(', ')', ','];
+
+/** the operators written another way, as in JavaScript and SQL: `!=` is `<>`, `==` is `=` */
+const OPERATOR_ALIASES: Record<string, string> = { '!=': '<>', '==': '=' };
 
 /**
  * The formula in its tokens, the last one `end`
@@ -299,7 +321,7 @@ function tokenize(text: string): Token[] {
                 fail('character', { text: char, position: at + 1 });
             }
             at += operator.length;
-            tokens.push({ kind: 'operator', text: operator, start, end: at });
+            tokens.push({ kind: 'operator', text: OPERATOR_ALIASES[operator] ?? operator, start, end: at });
         }
     }
     tokens.push({ kind: 'end', text: '', start: text.length, end: text.length });
@@ -647,6 +669,28 @@ function check(node: Node, text: string, typeOf: (field: string) => FieldTypeRes
                     return 'text';
                 case 'COALESCE':
                     return same(args, name);
+                case 'LEFT':
+                case 'RIGHT':
+                case 'MID':
+                case 'SUBSTRING':
+                    // the text of any type, as & takes it; the positions and counts numbers
+                    typed(args[0]);
+                    for (const each of args.slice(1)) {
+                        must(each, 'number', name);
+                    }
+                    return 'text';
+                case 'LEN':
+                    typed(args[0]);
+                    return 'number';
+                case 'UPPER':
+                case 'LOWER':
+                case 'TRIM':
+                    typed(args[0]);
+                    return 'text';
+                case 'CONTAINS':
+                    typed(args[0]);
+                    typed(args[1]);
+                    return 'boolean';
                 default:
                     // ISBLANK: any type
                     typed(args[0]);
@@ -898,10 +942,53 @@ function call(name: string, args: Node[], value: (each: Node) => FormulaValue): 
             }
             return null;
         }
+        case 'LEFT':
+        case 'RIGHT': {
+            const chars = charactersOf(value(args[0]));
+            const count = countOf(value(args[1]));
+            if (count === null) {
+                return null;
+            }
+            const kept = name === 'LEFT' ? chars.slice(0, count) : count === 0 ? [] : chars.slice(-count);
+            return joinedText(kept.join(''));
+        }
+        case 'MID':
+        case 'SUBSTRING': {
+            const chars = charactersOf(value(args[0]));
+            const start = countOf(value(args[1]));
+            const count = countOf(value(args[2]));
+            if (start === null || count === null) {
+                return null;
+            }
+            const from = Math.max(start, 1) - 1;
+            return joinedText(chars.slice(from, from + count).join(''));
+        }
+        case 'LEN':
+            return charactersOf(value(args[0])).length;
+        case 'UPPER':
+            return joinedText(textOf(value(args[0])).toUpperCase());
+        case 'LOWER':
+            return joinedText(textOf(value(args[0])).toLowerCase());
+        case 'TRIM':
+            return joinedText(textOf(value(args[0])).trim());
+        case 'CONTAINS': {
+            const fold = (each: FormulaValue) => textOf(each).toLocaleLowerCase();
+            return fold(value(args[0])).includes(fold(value(args[1])));
+        }
         default:
             // ISBLANK
             return value(args[0]) === null;
     }
+}
+
+/** a value as its characters, for the functions of text: a letter of two UTF-16 units is one */
+function charactersOf(value: FormulaValue): string[] {
+    return Array.from(textOf(value));
+}
+
+/** a count or a position of a function of text: a whole number, 0 at least - null for a blank */
+function countOf(value: FormulaValue): number | null {
+    return value === null ? null : Math.max(0, Math.trunc(value as number));
 }
 
 /** true when a part calls TODAY() */

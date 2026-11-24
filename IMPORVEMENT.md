@@ -5263,6 +5263,21 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * configNulls.test.ts: every column option x a text, number and date column, every format option, the
   options of the grid, updateConfig, a wrong value still throws
 
+### Formulas: `!=`, the functions of text (2026-11-24)
+
+* the user: "our formula does not support comparing columns with not equal != and calculated should prb
+  include substring also, color formatting should probably do that too"
+* formula.ts: `!=` and `==` read as `<>` and `=` by the tokenizer (OPERATOR_ALIASES), so every check and
+  problem is the one of `<>` / `=`; a lone `!` is still the problem *character*
+* LEFT, RIGHT, MID, SUBSTRING (MID's other name), LEN, UPPER, LOWER, TRIM, CONTAINS: the text of any type
+  as `&` takes it (textOf), characters by code point (Array.from), counts cut to whole numbers, negative 0,
+  a start below 1 is 1 - no new problem texts. A blank text: '' (LEN 0, the others blank); a blank count
+  blank. CONTAINS in any case, as the comparisons
+* the colour rules: their Formula kind is the same language, so it has them too; the Value kind compares
+  with a typed value, not another column - a formula does that (`{a} != {b}`)
+* the hint of the formula field (en, nb), the calculated columns guide, the formatting guide; tests in
+  formula.test.ts
+
 ## Considered, not done
 
 ## Candidates / not started

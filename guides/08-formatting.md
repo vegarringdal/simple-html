@@ -869,7 +869,8 @@ one of three kinds:
   it; all of them (`combine: 'AND'`, the default) or any (`'OR'`).
 - **Formula** (`expression`): a [formula](23-calculated-columns.md#the-formulas) that is true or false -
   `{balance} < 0 AND {status} = "late"`, `DAYS({due}, TODAY()) > 7`. True colours the cell; a row where
-  it can not be computed is not coloured.
+  it can not be computed is not coloured. Two columns compared: `{shipped} != {ordered}`; a part of a text:
+  `LEFT({account}, 2) = "NO"`, `CONTAINS({note}, "urgent")`.
 
 The user makes them in the [grid config dialog](#the-grid-config-dialog) (*Colour rules*), a developer
 starts a column with them in `ColumnConfig.format`:

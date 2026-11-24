@@ -460,7 +460,7 @@ const norwegian: Record<TextId, string> = {
     'columnSettings.calculated.formula': 'Formel',
     'columnSettings.calculated.formula.placeholder': '{pris} * {antall}',
     'columnSettings.calculated.formula.hint':
-        'Felt i klammer, tall, "tekst", + - * / &, = <> < <= > >=, AND OR NOT, IF ROUND ABS MIN MAX TODAY DAYS YEAR MONTH CONCAT COALESCE ISBLANK',
+        'Felt i klammer, tall, "tekst", + - * / &, = <> != < <= > >=, AND OR NOT, IF ROUND ABS MIN MAX TODAY DAYS YEAR MONTH CONCAT COALESCE ISBLANK LEFT RIGHT MID LEN UPPER LOWER TRIM CONTAINS',
     'columnSettings.calculated.gives': 'Gir: {type}',
     'columnSettings.calculated.value': 'I denne raden: {value}',
     'columnSettings.calculated.blank': '(tom)',
