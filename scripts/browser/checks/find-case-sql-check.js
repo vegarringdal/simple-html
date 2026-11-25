@@ -365,6 +365,31 @@ async function sqlSample(browser, mode) {
         shown.join(' | ')
     );
     await page.keyboard.press('Escape');
+    // a calculated column: its formula in the SQL of every dialect, not "is not one of the columns"
+    await button('Clear filter');
+    await button('calculated: LEFT({company}, 3) = "won"');
+    await page.waitForTimeout(300);
+    shown = await blocks();
+    check(
+        `${mode}: a filter on a calculated column (LEFT): its formula as SQL in every dialect`,
+        shown.length === 4 &&
+            shown.every((b) => b.includes('WHERE') && b.includes('company_name') && !b.includes('not one of the columns')) &&
+            shown[0].includes('SUBSTR(') &&
+            shown[3].includes('SUBSTRING('),
+        shown.join(' | ')
+    );
+    const shortRows = await gi(page, (g) => g.getDatasource().getRows().length);
+    check(`${mode}: the grid shows the rows of the calculated filter`, shortRows > 0, String(shortRows));
+    await button('calculated: days since date1 > 30');
+    await page.waitForTimeout(300);
+    shown = await blocks();
+    check(
+        `${mode}: a calculated column with dates (DAYS, TODAY): SQL in every dialect`,
+        shown.every((b) => b.includes('WHERE') && !b.includes('not one of the columns')) &&
+            shown[0].includes(`DATE '`) &&
+            shown[3].includes('DATEDIFF(day'),
+        shown.join(' | ')
+    );
     check(`${mode}: SQL sample: no page errors`, page.__errors.length === 0, page.__errors.join(' | '));
     await page.close();
 }

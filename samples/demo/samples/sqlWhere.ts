@@ -23,7 +23,7 @@ export const sqlWhere: DemoSample = {
     title: 'SQL from the filter',
     group: 'Datasource',
     description:
-        'The grid filters in the browser; a backend that loads only the rows it lets through needs the filter as SQL. toSqlWhere() from @simple-html/grid/sql turns datasource.getFilter() - sent to the backend as JSON - into the condition of a WHERE and its parameters, for PostgreSQL, Oracle, SQLite and SQL Server: no value is ever in the SQL, only placeholders, and a field that is not in the columns it is given throws. Filter in the header, the menus or the filter editor: the WHERE below follows. Find (Ctrl+F in the grid) is not in it: its Filter rows filters the rows in the browser, also the rows loaded after. The dates are read in the time zone of this browser, as the grid reads them.',
+        'The grid filters in the browser; a backend that loads only the rows it lets through needs the filter as SQL. toSqlWhere() from @simple-html/grid/sql turns datasource.getFilter() - sent to the backend as JSON - into the condition of a WHERE and its parameters, for PostgreSQL, Oracle, SQLite and SQL Server: no value is ever in the SQL, only placeholders, and a field that is not in the columns it is given throws. Filter in the header, the menus or the filter editor: the WHERE below follows. Find (Ctrl+F in the grid) is not in it: its Filter rows filters the rows in the browser, also the rows loaded after. A calculated column (Add calculated column in the grid config dialog, or the button) is sent with the filter: its formula is written as SQL. The dates are read in the time zone of this browser, as the grid reads them.',
     run(stage) {
         const ui = createStage(stage);
         const { datasource, gridInterface } = mountGrid(ui.gridHost, baseGridConfig());
@@ -37,14 +37,16 @@ export const sqlWhere: DemoSample = {
         const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
         const show = () => {
-            // what the browser would send: the filter as JSON
+            // what the browser would send: the filter and the calculated columns, as JSON - toSqlWhere
+            // writes the formula of a calculated column the filter uses as SQL
             const filter = JSON.parse(JSON.stringify(datasource.getFilter()));
+            const calculated = JSON.parse(JSON.stringify(gridInterface.getState().calculatedColumns));
             output.replaceChildren(
                 ...DIALECTS.map((dialect) => {
                     const block = document.createElement('pre');
                     block.className = 'demo-sql-block';
                     try {
-                        const { sql, params } = toSqlWhere(filter, { dialect, columns: COLUMNS, timeZone });
+                        const { sql, params } = toSqlWhere(filter, { dialect, columns: COLUMNS, timeZone, calculated });
                         block.textContent = `${dialect}\nWHERE ${sql}\nparams: ${JSON.stringify(params)}`;
                     } catch (error) {
                         // a field that is not in the columns, a filter over a limit: a 400 in a backend
@@ -75,6 +77,20 @@ export const sqlWhere: DemoSample = {
         });
         ui.button('phone (not a column)', () => {
             datasource.filter(where('phone', 'CONTAINS', '47'));
+        });
+        ui.button('calculated: LEFT({company}, 3) = "won"', () => {
+            const { calculatedColumns } = gridInterface.getState();
+            gridInterface.setState({
+                calculatedColumns: { ...calculatedColumns, short: { formula: 'LEFT({company}, 3)', label: 'Short' } }
+            });
+            datasource.filter(where('short', 'EQUAL', 'won'));
+        });
+        ui.button('calculated: days since date1 > 30', () => {
+            const { calculatedColumns } = gridInterface.getState();
+            gridInterface.setState({
+                calculatedColumns: { ...calculatedColumns, daysSince: { formula: 'DAYS({date1}, TODAY())', label: 'Days since' } }
+            });
+            datasource.filter(where('daysSince', 'GREATER_THAN', 30));
         });
         ui.button('Clear filter', () => {
             datasource.filter(null);

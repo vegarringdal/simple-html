@@ -5330,6 +5330,14 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * known limit: the SQL of ROUND with digits of the row repeats its value 21 times, MIN / MAX on Oracle and
   SQLite n² times - nested ones reach MAX_FORMULA_SQL (100 000 characters, a RangeError) sooner
 
+### The SQL sample sends the calculated columns (2026-11-25)
+
+* the user added a calculated column (LEFT({company}, 3)) in the demo and filtered on it: every dialect said
+  "calc_1 is not one of the columns" - the library was done and tested, the sample (sqlWhere.ts) never passed
+  `calculated` to toSqlWhere. It sends `getState().calculatedColumns` now, and has two buttons (LEFT, DAYS /
+  TODAY). find-case-sql-check.js clicks them: the formula's SQL in all four blocks, the rows shown - so the
+  sample can not fall behind the library again unseen
+
 ## Considered, not done
 
 ## Candidates / not started
