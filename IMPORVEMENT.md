@@ -5318,6 +5318,18 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
   rounded as decimal(38, 10) now. Validated on PostgreSQL 17 (103 formulas), Oracle 23 (28: a large run
   times out), SQL Server 2022 (103; the emoji rows only). Every function of the language is SQL now
 
+### A review of the session (2026-11-25)
+
+* fixed: `getServerFilter({ fields, calculated: 'keep' })` took out every condition on a calculated column
+  - it is no field of the backend - so the SQL guide's way of sending them did nothing with `fields`. Kept
+  now when the backend has every field its formula reads (CalculatedField.uses, through the other
+  calculated columns); a column with a problem is taken out. Test in serverFilter.test.ts
+* looked at, no bug: the err chain of a division by 0 through AND / OR / IF / COALESCE, blanks and
+  two-valued predicates, the day of each date storage, the quoting of texts and the time zone, configNulls
+  in the constructor (every check is `!== undefined`), importFile's options, the Find removal (no text left)
+* known limit: the SQL of ROUND with digits of the row repeats its value 21 times, MIN / MAX on Oracle and
+  SQLite n² times - nested ones reach MAX_FORMULA_SQL (100 000 characters, a RangeError) sooner
+
 ## Considered, not done
 
 ## Candidates / not started

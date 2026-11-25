@@ -2495,7 +2495,8 @@ export class GridInterface<T> {
      * after it was turned on.
      *
      * @param options.fields the fields the backend has a column for: a condition on another field is
-     * taken out. Default every field
+     * taken out - a calculated column kept (`calculated: 'keep'`) counts as one when the backend has every
+     * field its formula reads. Default every field
      * @param options.calculated `'keep'`: the conditions on the calculated columns stay - for
      * `toSqlWhere({ calculated })`, which makes SQL of their formulas (send `getState().calculatedColumns`
      * with the filter), or a database that computes them too. Default `'strip'`, they go
@@ -2530,8 +2531,15 @@ export class GridInterface<T> {
         }
         const filter = this.dataSource.getFilter();
         const known = fields === undefined ? null : new Set(fields);
-        const strip = (field: string) =>
-            (calculated === 'strip' && Object.hasOwn(this.calculated, field)) || (known !== null && !known.has(field));
+        const strip = (field: string) => {
+            if (Object.hasOwn(this.calculated, field)) {
+                // kept when the backend has every field its formula reads, through the other calculated
+                // columns: it is no field of the backend itself. One with a problem has no formula to send
+                const uses = this.calculatedFieldsSet.get(field)?.uses;
+                return calculated === 'strip' || !uses || (known !== null && uses.some((each) => !known.has(each)));
+            }
+            return known !== null && !known.has(field);
+        };
         return withoutFields(filter, strip);
     }
 

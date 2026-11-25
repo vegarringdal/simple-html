@@ -472,7 +472,8 @@ const { sql, params } = toSqlWhere(filter, {
 
 - **`calculated`** is `getState().calculatedColumns` as it is - `{ total: { formula, label, type } }` - or
   a formula by field: `{ total: '{price} * {qty}' }`. The browser sends it with the filter
-  (`getServerFilter({ calculated: 'keep' })` keeps the conditions on them).
+  (`getServerFilter({ fields, calculated: 'keep' })` keeps the conditions on them - each one whose formula
+  reads only fields the backend has).
 - A formula reads the fields of `columns` and the other calculated columns; a field that is not in
   `columns` throws, as in a filter. The name of a calculated column is not one of `columns`.
 - A formula is hostile input, as the filter is: it is read by the grid's own parser, its texts are

@@ -1395,8 +1395,8 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - the filter types of the sql entry: `SqlFilter`, `SqlFilterGroup`, `SqlFilterCondition`,
   `SqlFilterOperator`, `SqlV5Filter`, `SqlFieldsOptions`
 
-- `gridInterface.getServerFilter({ fields, calculated })`: the filter without the calculated columns and the
-  fields the backend has not - what to send to a backend in one call. Find's *Filter rows* is not in it: it
+- `gridInterface.getServerFilter({ fields, calculated })`: the filter without the calculated columns (with
+  `calculated: 'keep'`: without those whose formula reads a field not in `fields`) and the fields the backend has not - what to send to a backend in one call. Find's *Filter rows* is not in it: it
   filters in the browser, the rows loaded after it was turned on too
 - `datasource.setFields(fields)`: the fields replaced after the datasource is made (the metadata of a
   query came); the rows filtered, sorted and grouped again, the event `fields-change`. A grid on it drops

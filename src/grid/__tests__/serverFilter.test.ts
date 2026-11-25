@@ -78,6 +78,21 @@ describe('getServerFilter', () => {
         );
     });
 
+    it('expect a calculated column kept with fields when the backend has the fields its formula reads', async () => {
+        const { gridInterface, datasource } = await mount();
+        const filter = and(where('country', 'EQUAL', 'Norway'), where('total', 'GREATER_THAN', 10));
+        datasource.filter(filter);
+        // total is {price} * {qty}: no field of the backend, but its formula's fields are
+        expect(gridInterface.getServerFilter({ fields: ['country', 'price', 'qty'], calculated: 'keep' })).toEqual(filter);
+        // the backend has no qty: it can not compute total
+        expect(gridInterface.getServerFilter({ fields: ['country', 'price'], calculated: 'keep' })).toEqual(
+            and(where('country', 'EQUAL', 'Norway'))
+        );
+        expect(gridInterface.getServerFilter({ fields: ['country', 'price', 'qty'] })).toEqual(
+            and(where('country', 'EQUAL', 'Norway'))
+        );
+    });
+
     it('expect options that are wrong to throw a TypeError', async () => {
         const { gridInterface } = await mount();
         expect(() => gridInterface.getServerFilter({ fields: [] })).toThrow(TypeError);
