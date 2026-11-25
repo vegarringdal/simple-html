@@ -321,17 +321,19 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
 
     // no current row: the first row is the preview's. A text column with nothing set
     datasource.currentEntity = null;
+    // a template without a link (only a config or setState() gives one now): its column's Text badge
+    gridInterface.setState({ formats: { ...gridInterface.getState().formats, country: { text: '{country}!' } } });
     gridInterface.openColumnSettings('name');
+    check();
+    // a link: no address, then one that does not start with its scheme, then one of another scheme. The
+    // checkbox is Show as link; its text (Text shown) under it
+    toggleText('columnSettings.link');
     check();
     // a template that names a field of the grid's own
     type('text', '{__«x»}');
     check();
     // a template: the column's badge
     type('text', '{name}');
-    check();
-    // a link: no address, then one that does not start with its scheme, then one of another scheme. The
-    // checkbox is Show as link
-    toggleText('columnSettings.link');
     check();
     type('url', '«zz»');
     check();

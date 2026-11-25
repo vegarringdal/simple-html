@@ -98,9 +98,21 @@ const picker = () => dialog().querySelector('.column-settings-format') as HTMLBu
 
 /** types a template, as the user: the value, then its input event */
 function type(part: string, value: string) {
+    showText(part);
     const element = input(part) as HTMLInputElement;
     element.value = value;
     element.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+/**
+ * Text shown is the text of a link: before it is typed into, Show as link is turned on (with an address,
+ * or the dialog says to write one) when the column has no template yet
+ */
+function showText(part: string) {
+    if (part === 'text' && !input('text') && checkbox('Show as link')) {
+        toggle('Show as link');
+        type('url', 'https://example.com/{id}');
+    }
 }
 
 /** turns a checkbox on or off, as a click: checked, then its change event */
@@ -350,36 +362,55 @@ describe('column settings - the settings of each type', () => {
         const { gridInterface } = await mountGrid(config(), rows(), fields());
         gridInterface.openColumnSettings('name');
 
+        // Text shown is under Show as link, while it is on
+        expect(input('text')).toBeNull();
+        showText('text');
         const text = input('text') as HTMLInputElement;
         expect(text.placeholder).toEqual('{firstname} {lastname}');
         expect(document.querySelector(`label[for="${text.id}"]`)?.textContent?.trim()).toEqual('Text shown');
         const hint = document.getElementById((text.getAttribute('aria-describedby') as string).split(' ')[0]);
         expect(hint?.textContent).toContain('{value}');
         expect(dialog().querySelector('.column-settings-preview-title')?.textContent?.trim()).toEqual('Preview, the first row');
-        expect(previewCell().textContent?.trim()).toEqual('Ann');
-
         type('text', '{name} ({id})');
         expect(previewCell().textContent?.trim()).toEqual('Ann (12)');
         expect(selected().textContent).toContain('Text');
-        // emptied: no template
+        // emptied: no template, the link stays
         type('text', '');
-        expect(selected().querySelector('.column-settings-badge')).toBeNull();
+        expect(Array.from(selected().querySelectorAll('.column-settings-badge'), (badge) => badge.textContent?.trim())).toEqual([
+            'Link'
+        ]);
     });
 
-    it('expect a number column to have a template and a link, a date column a template only', async () => {
+    it('expect a number column to have a link with its text, a date column neither', async () => {
         const { gridInterface } = await mountGrid(config(), rows(), fields());
         gridInterface.openColumnSettings('balance');
-        expect(input('text')).not.toBeNull();
+        expect(input('text')).toBeNull();
         expect(checkbox('Show as link')).toBeDefined();
         type('text', '{value} kg');
         expect(previewCell().textContent?.trim()).toContain('kg');
 
         gridInterface.openColumnSettings('born');
-        expect(input('text')).not.toBeNull();
+        expect(input('text')).toBeNull();
         expect(checkbox('Show as link')).toBeUndefined();
+    });
+
+    it("expect a template the column has without a link (the config's) to be shown, to be seen and emptied", async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.setState({ formats: { born: { date: 'norwegian', text: 'born {value}' } } });
+        gridInterface.openColumnSettings('born');
+        expect(input('text')?.value).toEqual('born {value}');
         // {value} in the column's date format
-        type('text', 'born {value}');
         expect(previewCell().textContent?.trim()).toEqual('born 22.11.2026');
+    });
+
+    it('expect Show as link turned off to take its text with it', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('name');
+        type('text', '{name} ({id})');
+        expect(input('text')?.value).toEqual('{name} ({id})');
+        toggle('Show as link');
+        expect(input('text')).toBeNull();
+        expect(previewCell().textContent?.trim()).toEqual('Ann');
     });
 
     it('expect the preview of the current row when there is one', async () => {
@@ -525,8 +556,8 @@ describe('column settings - Apply and Reset', () => {
     it('expect Apply to set the formats of the state, the dialog open; Apply & close to close it', async () => {
         const { element, gridInterface } = await mountGrid(config(), rows(), fields());
         gridInterface.openColumnSettings('company');
+        // the link on first (the helper), then its text and its address
         type('text', '{company} ({id})');
-        toggle('Show as link');
         type('url', 'mailto:{company}');
 
         button('Apply').click();
@@ -571,7 +602,8 @@ describe('column settings - Apply and Reset', () => {
         options()[0].click();
         expect(input('text')?.value).toEqual('{name}!');
         button('Reset all').click();
-        expect(input('text')?.value).toEqual('');
+        // no template and no link: no Text shown
+        expect(input('text')).toBeNull();
         button('Apply').click();
         expect(gridInterface.getState().formats).toEqual({ born: { date: 'norwegian' } });
     });
@@ -844,7 +876,6 @@ describe('column settings - the label, the placeholder, blank / 0, the checkboxe
         const { element, gridInterface } = await mountGrid(config(), rows(), fields());
         gridInterface.openColumnSettings('company');
         type('text', '{company}!');
-        toggle('Show as link');
         type('url', 'https://x.com/{id}');
 
         toggle('Show as checkbox');
@@ -873,7 +904,8 @@ describe('column settings - the label, the placeholder, blank / 0, the checkboxe
 
         // off: the text settings again, empty
         toggle('Show as checkbox');
-        expect(input('text')?.value).toEqual('');
+        // the text settings again: Show as link, off - its text under it when it is on
+        expect([checkbox('Show as link')?.checked, input('text')]).toEqual([false, null]);
         expect(input('checked')).toBeNull();
     });
 

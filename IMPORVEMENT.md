@@ -5469,6 +5469,16 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * sqlCheckboxFilter.test.ts: `'Y'` / `'N'` text and `1` / `0` number columns, the three states clicked,
   the grid and SQLite the same rows
 
+### Text shown is the text of the link, in the dialog (2026-11-25)
+
+* the user (a screenshot of the Display tab): "text shown should prb be under show as link, and be hidden
+  unless show as link is enabled". textSettings in columnSettings.ts: Show as link, then while it is on Text
+  shown (with Filter as shown) and the address. Turned off, the link takes `text` and `filterAsShown` with
+  it. A template the column has without a link (a config's, `{value} kg`; a date column's) stays in view.
+  ColumnFormat.text is unchanged: a config can still give a template without a link
+* tests: the dialog tests' type('text') turns the link on first (with an address); the texts test shows a
+  Text badge from setState(); column-settings-check.js turns the link on before the text
+
 ## Considered, not done
 
 ## Candidates / not started

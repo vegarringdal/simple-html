@@ -247,13 +247,16 @@ const overlap = (a, b) => !!a && !!b && a.left < b.right && b.left < a.right && 
 
         // a text column: city - a template of other columns, a link with a field put in from the menu
         await pick('city');
+        // Text shown is the text of the link: under Show as link, while it is on
+        const textCount = await page.locator(`${dialogSel} input[id$="-settings-text"]`).count();
+        check(`${name}: text: no Text shown before Show as link`, textCount === 0, { textCount });
+        await page.locator(`${dialogSel} .column-settings-check`, { hasText: 'Show as link' }).click();
         await page.locator(`${dialogSel} input[id$="-settings-text"]`).fill('{city} in {countryCode}');
         check(
             `${name}: text: the template of two columns in the preview`,
             / in [A-Z]{2}$/.test(await preview()),
             await preview()
         );
-        await page.locator(`${dialogSel} .column-settings-check`, { hasText: 'Show as link' }).click();
         const url = page.locator(`${dialogSel} input[id$="-settings-url"]`);
         await url.fill('javascript:alert(1)');
         const refused = await page.evaluate(() => ({

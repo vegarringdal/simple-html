@@ -719,9 +719,11 @@ The settings, from the top:
   under it says why. A number column has *Show blank as 0* and *Show 0 as blank* too,
   one or the other: they start as the column shows them, its `numberOverride` too, and turning the
   column's own off is kept as `'NONE'`.
-- **A text column** has *Text shown* (the template, empty for the cell's own text), *Show as link*,
-  *Address* and *Open in a new tab*. A number column has them too, under its format; a date column
-  *Text shown*. The `{ }` button beside a template opens a menu of the fields -
+- **A text column** has *Show as link*, and under it while it is on *Text shown* (the link's text, a
+  template - empty for the cell's own text, with *Filter as shown*), *Address* and *Open in a new tab*.
+  Turned off, the link's text goes with it. A number column has them too, under its format. A template
+  a column has without a link - the config's (`text: '{value} kg'`), a date column's - is shown there
+  too, to be seen and emptied; the dialog makes no new one without a link. The `{ }` button beside a template opens a menu of the fields -
   the columns' and those of the row, by their labels, with a search - and puts the one picked in at the
   caret: no need to know the names of the fields.
 - **Show as checkbox**, a text or number column: its cells are checkboxes - for a flag of `1` / `0`.

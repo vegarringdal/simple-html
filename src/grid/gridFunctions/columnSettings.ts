@@ -847,7 +847,9 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         const link = format?.link;
         const textProblems = formatProblems(format?.text === undefined ? undefined : { text: format.text });
         const urlProblems = formatProblems(link ? { link } : undefined);
-        return html`${templateInput(
+        // Text shown is the text of the link: under Show as link, while it is on. A template the column
+        // has without a link (the config's: `{value} kg`) stays in view, to be seen and emptied
+        const textInput = html`${templateInput(
             'text',
             'columnSettings.text',
             format?.text ?? '',
@@ -877,8 +879,9 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                       <div class="column-settings-hint">${text('columnSettings.filterAsShown.template.hint')}</div>
                   </div>`
                 : nothing
-        }
-        ${
+        }`;
+        const showText = (withLink && !!link) || format?.text !== undefined;
+        return html`${
             withLink
                 ? checkbox('columnSettings.link', !!link, (on) =>
                       change((next) => {
@@ -886,12 +889,16 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                               // a link from the dialog opens in a new tab at first: the grid's page stays
                               next.link = { url: '', newTab: true };
                           } else {
+                              // its text goes with it, and how it is filtered
                               delete next.link;
+                              delete next.text;
+                              delete next.filterAsShown;
                           }
                       })
                   )
                 : nothing
         }
+        ${showText ? textInput : nothing}
         ${
             withLink && link
                 ? html`${templateInput(
