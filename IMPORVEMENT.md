@@ -5503,6 +5503,20 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * known from the pages, worth a look: a template column sorts by its value, not its text; no CSV in the
   grid's menus; Esc does not undo typing in a plain cell (Ctrl+Z does)
 
+### A column with a template sorts on the text it shows (2026-11-25)
+
+* the user: "A template or link column sorts by its value, not the text you see, though it now filters on
+  the text - fix". The sort values (Datasource.__setSortValue, Sort.setSortValue) get the row too:
+  `(value, row) => text`. The grid gives every text column (not a lookup column) one: the template filled
+  in (templateText, whether filtered as shown or not), `''` without a template - the value decides then. A
+  template set later sorts at once (it is read at the sort)
+* grouping: a group is a run of equal values in the sort order, and a template's text is no function of
+  the value (`{id} {first}`): a grouped column sorts on its value (the sort value gives `''`). For that
+  Datasource.group() stores the grouping before it sorts (it stored it after)
+* runOrderBy makes the text of each row once per sort (a Map), not twice per compare - the lookup columns'
+  labels too
+* templateSort.test.ts: `{last}, {first}` both ways, another template, none, grouped by it
+
 ## Considered, not done
 
 ## Candidates / not started

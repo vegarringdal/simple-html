@@ -227,7 +227,7 @@ export class GridInterface<T> {
      * what this interface sorts its lookup columns on, given to the datasource (__setSortValue): the
      * label the cell shows. Kept to take them back, see clearSortValues
      */
-    private sortValues = new Map<string, (value: unknown) => string>();
+    private sortValues = new Map<string, (value: unknown, row: Entity) => string>();
 
     /**
      * what this interface groups a date column on, given to the datasource (__setGroupValue): the week,
@@ -251,9 +251,24 @@ export class GridInterface<T> {
         if (template === null) {
             return undefined;
         }
+        return this.templateText(field, row);
+    };
+
+    /**
+     * The text a row shows in a text column with a template (`format.text`) - whether it is filtered as
+     * shown or not: what its sort compares. undefined for a column without one, or a lookup column
+     */
+    private templateText(field: string, row: Entity): string | undefined {
+        if (this.__getLookupColumn(field)) {
+            return undefined;
+        }
+        const template = this.__getColumnFormat(field)?.text;
+        if (template === undefined) {
+            return undefined;
+        }
         const formatter = this.dataSource.getFormatter(field);
         return fillTemplate(template, cellFieldText(field, row[field], formatter, this.__fieldTextOf(row)));
-    };
+    }
 
     /**
      * the named views, see getViews(): copies of what was given (GridConfig.views, the storage,
@@ -3726,11 +3741,25 @@ export class GridInterface<T> {
     }
 
     /**
-     * The datasource sorts the lookup columns on the label their cells show, see Datasource.__setSortValue
+     * The datasource sorts the lookup columns on the label their cells show, and the text columns with a
+     * template (`format.text`) on the text they show - the template filled in for the row; see
+     * Datasource.__setSortValue. A template is read when the rows are sorted, so a template set later sorts
+     * too. A column grouped by sorts on its value: the groups are made from runs of one value
      */
     private setSortValues() {
         for (const [field, column] of this.lookupColumns) {
             const sortValue = (value: unknown) => column.formatter.format(value);
+            this.sortValues.set(field, sortValue);
+            this.dataSource.__setSortValue(field, sortValue);
+        }
+        for (const field of Object.keys(this.gridConfig.columns)) {
+            if (this.lookupColumns.has(field) || this.dataSource.getField(field).type !== 'text') {
+                continue;
+            }
+            const sortValue = (_value: unknown, row: Entity) => {
+                const grouped = this.dataSource.getGrouping().some((group) => group.attribute === field);
+                return grouped ? '' : (this.templateText(field, row) ?? '');
+            };
             this.sortValues.set(field, sortValue);
             this.dataSource.__setSortValue(field, sortValue);
         }

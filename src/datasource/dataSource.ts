@@ -2149,6 +2149,9 @@ export class Datasource<T = any> {
         groupings.forEach((group: GroupArgument) => {
             this.__sorting.setOrderBy({ attribute: group.attribute, ascending: true }, true);
         });
+        // the grouping known while the rows are sorted: a sort value can tell a grouped field (a text column
+        // with a template sorts on its value then, a group is a run of one value)
+        this.__grouping.setGrouping(groupings);
         this.__sorting.runOrderBy(this.__collectionFiltered);
         if (groupings.length) {
             const result = this.__grouping.group(this.__collectionFiltered, groupings, true, this);
@@ -2733,7 +2736,7 @@ export class Datasource<T = any> {
      * column (`ColumnConfig.editor`) on the label it shows. Takes effect on the next sort
      * @param sortValue the text of a value, null to sort on the value again
      */
-    public __setSortValue(field: string, sortValue: ((value: unknown) => string) | null): void {
+    public __setSortValue(field: string, sortValue: ((value: unknown, row: Entity) => string) | null): void {
         this.__sorting.setSortValue(field, sortValue);
     }
 
@@ -2796,7 +2799,7 @@ export class Datasource<T = any> {
      * @internal
      * the function __setSortValue() was given for a field, undefined without one
      */
-    public __getSortValue(field: string): ((value: unknown) => string) | undefined {
+    public __getSortValue(field: string): ((value: unknown, row: Entity) => string) | undefined {
         return this.__sorting.getSortValue(field);
     }
 

@@ -640,7 +640,8 @@ As a display format: only what the cells show, and what follows the cells.
 | a renderer of your own | `text` is the template's text |
 | copy, paste, the CSV export, the Excel export | the value - no template, no link: a paste reads it back. Excel gets text, not a `HYPERLINK` |
 | the filters - the header filter, the filter menu's value list, the filter editor, IN | **the text shown** on a `text` field: `= Ann Berg`, *contains* `(12)` - what you see. `filterAsShown: false` in the format (*Filter as shown* in the grid config dialog) filters the value instead. A backend compares the same text: [`getShownFormulas()`](22-sql.md#a-column-filtered-on-its-template) |
-| sorting, grouping | the value |
+| sorting | **the text shown** on a `text` field - `{last}, {first}` sorts by the last name - as it is filtered; the value of a column grouped by |
+| grouping | the value: a group is a run of one value |
 
 A template and a link are for a `text` field, and not for a lookup column (`editor`): a format with
 them on another type throws a `TypeError`. A cell of another type in a `dynamicCellTypeColumn` is

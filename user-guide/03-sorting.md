@@ -51,8 +51,9 @@ When the rows are grouped, the grouped columns stay sorted: grouping needs it (s
   the name you see: Denmark, Norway, Sweden. Not by the codes behind them.
 - **A column shown in a format of its own** (a week, a month, a number with separators) is sorted by
   its real value, the date or the number - not by the text shown.
-- **A column that shows a text built from several fields**, such as `Ann Berg (12)`, is sorted by its
-  own value, not by the whole text you see.
+- **A column that shows a text built from several fields**, such as `Berg, Ann (12)`, is sorted by the
+  text you see: by the last name here. While you group by it, its groups are in the order of its own
+  value.
 - **A calculated column** (see [Calculated columns](07-calculated-columns.md)) is sorted as its type:
   a number, a date or a text.
 

@@ -966,7 +966,7 @@ describe('lookups - sorting, filtering, export and clipboard on the label', () =
         datasource.setData(data());
         const first = new GridInterface(config(), datasource);
         const formatter = datasource.__getSortValue('country');
-        expect(formatter?.('SE')).toEqual('Sweden');
+        expect(formatter?.('SE', {})).toEqual('Sweden');
         first.destroy();
         expect(datasource.__getSortValue('country')).toBeUndefined();
 
