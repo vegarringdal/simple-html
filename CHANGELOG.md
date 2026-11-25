@@ -1366,6 +1366,9 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 #### Helpers for an app with a backend: v5 filters, the columns from the fields, the filter to send, the 400 errors, fields known later, rows from JSON
 
 ##### Added
+- a text field's date (a column of several types, `dynamicCellTypeColumn`) is filtered, sorted and grouped by
+  the text its cell shows, `2026-11-25` - not JavaScript's `Thu May 17 1990 ...`: the same rows as
+  `toSqlWhere()` on a text column with the ISO text. Values of different kinds sort by their text
 - `toSqlWhere()`: a text `EQUAL` / `NOT_EQUAL_TO` without wildcards is `=` (`LOWER(col) = $1`, an index is
   used) on PostgreSQL, Oracle and SQLite; SQL Server keeps `LIKE`, its `=` ignores trailing spaces
 - `toSqlWhere(filter, { calculated })` (sql entry): the calculated columns of the grid (`getState().calculatedColumns`,

@@ -5364,6 +5364,18 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * the SQLite parity tests (thousands of filters against the grid) pass unchanged; the tests that pinned the
   SQL text were updated, the escaping tests moved to BEGIN_WITH (still a pattern)
 
+### A column of several types: a date as its ISO text (2026-11-25)
+
+* a text field with `dynamicCellTypeColumn` holds numbers, dates, booleans: the filter compared
+  `String(date)` - `Thu May 17 1990 00:00:00 GMT+0200 (...)` - so `= 1990-05-17` found nothing and
+  *contains* `May` found the date; the SQL of the same filter (a text column with ISO text) found it. Now
+  valueText.ts (no imports: the sql bundle takes it): a date `1990-05-17`, with a time of day
+  `2026-11-25T14:30:00` - as the default date formats show the cells - for the text formatter, the text
+  filter, the sort and so the grouping. The sort compares two values of different kinds (a number and a
+  date) as their text: it compared 36 with a timestamp
+* sqlDynamic.test.ts: nine filters, the grid and SQLite (the column as text) select the same rows; the sort
+* not done: typed per row (`> 30` as numbers on the number rows) - the user asked for the SQL to be right
+
 ## Considered, not done
 
 ## Candidates / not started

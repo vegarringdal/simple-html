@@ -290,8 +290,10 @@ describe('config as JSON - a Date in the state', () => {
 
         mounted.gridInterface.setState(JSON.parse(saved));
 
-        // the text '2001-05-1...Z' compared with the row values as text: not the rows of before
-        expect(names(mounted)).not.toEqual(['b', 'c']);
+        // the text '2001-05-1...Z' is compared with the rows' dates as text (their ISO text, valueText): a
+        // text, no longer a Date - the type of the field decides
+        const filtered = mounted.gridInterface.getState().filter as { children: { value: unknown }[] };
+        expect(typeof filtered.children[0].value).toBe('string');
 
         // with its type listed, the text filters the same as the Date did
         const listed = await mountGrid(config, data(), { fields: { born: 'date', since: 'datetime' } });

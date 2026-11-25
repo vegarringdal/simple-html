@@ -2,6 +2,7 @@ import type { Entity } from './entity';
 import type { FieldType } from './field';
 import { isBlank } from './isBlank';
 import type { SortArgument } from './sortArgument';
+import { valueText } from './valueText';
 
 export class Sort {
     private lastSorting: SortArgument[];
@@ -164,10 +165,12 @@ export class Sort {
         }
 
         // a string against anything compares as text both ways round. Mixing `localeCompare` one
-        // way and `<` the other way made the sort disagree with itself
-        if (typeof v1 === 'string' || typeof v2 === 'string') {
-            const s1 = String(v1);
-            const s2 = String(v2);
+        // way and `<` the other way made the sort disagree with itself. So do two values of different
+        // kinds - a number and a date of a column of several types (dynamicCellTypeColumn): as their text
+        const kind = (value: unknown) => (value instanceof Date ? 'date' : typeof value);
+        if (typeof v1 === 'string' || typeof v2 === 'string' || kind(v1) !== kind(v2)) {
+            const s1 = valueText(v1);
+            const s2 = valueText(v2);
             if (s1 === s2) {
                 return 0;
             }

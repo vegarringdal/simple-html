@@ -3,6 +3,7 @@ import type { FieldType } from './field';
 import type { FilterOperator } from './filterExpression';
 import { isBlank } from './isBlank';
 import { textPatternParts } from './textPattern';
+import { valueText } from './valueText';
 
 /**
  * @internal
@@ -186,7 +187,7 @@ export function rangeOperator(operator: FilterOperator): FilterOperator {
 
 /**
  * A text condition. The row value as text - a blank (null, undefined) is `''`, anything else
- * `String(value)` - and the value as text, both in lower case unless `caseSensitive`. `*` and `%` in
+ * `valueText()`, a date `2026-11-25` - and the value as text, both in lower case unless `caseSensitive`. `*` and `%` in
  * the value are wildcards: any text, none too, line breaks too. `_` is one character, any - as in SQL
  * `LIKE`. A `\` before `*`, `%`, `_` or `\` makes it a plain character (textPatternParts), the rest
  * of the value is taken as it is; `literal` takes all of it as it is, the wildcards and `\` too. The
@@ -201,7 +202,7 @@ function compareText(
     literal: boolean
 ): boolean {
     const asText = (from: unknown) => {
-        const text = from === null || from === undefined ? '' : String(from);
+        const text = valueText(from);
         return caseSensitive ? text : text.toLowerCase();
     };
     const row = asText(rowValue);

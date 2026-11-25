@@ -1,11 +1,12 @@
 import type { Formatter } from './formatter';
+import { valueText } from './valueText';
 
 /**
  * Formatter for text, the default for `text` fields (and so for every field not listed in `fields`).
  * Registered as `'text'`, the options name it by that id (see {@link registerFormatter}).
  *
- * - `format` - the value as text, `''` for null and undefined. Anything else goes through
- *   `String()`: 0 is `'0'`, false is `'false'`
+ * - `format` - the value as text, `''` for null and undefined, a date `2026-11-25` (with a time of day
+ *   `2026-11-25T14:30:00`). Anything else goes through `String()`: 0 is `'0'`, false is `'false'`
  * - `parse` / `parseFilter` - the text as it is
  *
  * @sample custom-formatter
@@ -27,7 +28,7 @@ import type { Formatter } from './formatter';
 export const TextFormatter = {
     /** the value as text, `''` for null and undefined */
     format(value: unknown): string {
-        return value === null || value === undefined ? '' : String(value);
+        return valueText(value);
     },
     /** the text as it is */
     parse(text: string): string {

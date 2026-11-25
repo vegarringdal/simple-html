@@ -1221,7 +1221,12 @@ const config: GridConfig = {
   leaves the cell text.
 - Each cell is shown and edited as its type, with the datasource's default formatter for it:
   `datasource.getFormatter(field, type)`. A date cell gets the date picker, a boolean a checkbox.
-- Sorting, grouping and filtering still treat the field as text.
+- Sorting, grouping and filtering treat the field as text - the text the cell shows: a date is
+  `2026-11-25` (`2026-11-25T14:30:00` with a time of day), a number `36`, a boolean `true`. So
+  `= 1990-05-17` and *contains* `1990-05` find a date, and values of different types sort by that text.
+  `> 30` compares texts, not numbers.
+- **A backend** keeps the column as text, with the same ISO text for a date: `toSqlWhere()` with it as a
+  text column selects the rows the grid does.
 
 ```sample dynamic-cell-types
 ```
