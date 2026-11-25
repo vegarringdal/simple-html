@@ -21,8 +21,9 @@ const { headingIds, repoFile, siteHref, tsCodeBlocks } = require('./site/markdow
  *    pages and headings the links in the guides go to (NN-slug.md, NN-slug.md#heading, #heading,
  *    #guide/<id>, #sample/<id>, #api/<name>, #api/<name>.<member>), and the files of the repo they
  *    link to (../MIGRATION.md, ../MIGRATION.md#heading - the site links those to github).
- * 4. the user guide (user-guide/*.md): no code in it, its links go to its own pages and headings
- *    (NN-slug.md, NN-slug.md#heading, #heading) or a sample (#sample/<id>).
+ * 4. the user guide (user-guide/*.md): no code in it (a ```tryit <id> box of samples/demo/tryIt.ts is fine,
+ *    its id must be there), its links go to its own pages and headings (NN-slug.md, NN-slug.md#heading,
+ *    #heading) or a sample (#sample/<id>).
  *
  * Errors are reported with the guide file and line, or the symbol and file:line of the JSDoc.
  */
@@ -200,12 +201,29 @@ function checkUserGuide(pages) {
     const files = new Set(pages.map((page) => path.basename(page.file)));
     const headings = new Map(pages.map((page) => [page.id, new Set(headingIds(page.body))]));
     const samples = new Set(sampleIds());
+    // the "Try it" boxes: the ids of samples/demo/tryIt.ts
+    const tryIts = new Set(
+        [...fs.readFileSync(path.join(ROOT, 'samples/demo/tryIt.ts'), 'utf8').matchAll(/^\s{8}id: '([a-z0-9-]+)'/gm)].map(
+            (m) => m[1]
+        )
+    );
     const errors = [];
     for (const page of pages) {
+        let inTryIt = false;
         page.text.split(/\r?\n/).forEach((line, index) => {
             const where = `${page.file}:${index + 1}`;
-            if (/^\s*```/.test(line)) {
-                errors.push(`${where}: no code in the user guide - it is for the people using a grid`);
+            const tryIt = /^\s*```tryit\s+(\S+)\s*$/.exec(line);
+            if (tryIt) {
+                inTryIt = true;
+                if (!tryIts.has(tryIt[1])) {
+                    errors.push(`${where}: no "Try it" has the id "${tryIt[1]}" (samples/demo/tryIt.ts)`);
+                }
+            } else if (inTryIt && /^\s*```\s*$/.test(line)) {
+                inTryIt = false;
+            } else if (/^\s*```/.test(line)) {
+                errors.push(
+                    `${where}: no code in the user guide - it is for the people using a grid (a \`\`\`tryit <id> box is fine)`
+                );
             }
             for (const [, target] of line.matchAll(/\]\(([^)\s]+)\)/g)) {
                 if (/^[a-z][a-z0-9+.-]*:/i.test(target)) {

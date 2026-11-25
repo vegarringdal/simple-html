@@ -4,6 +4,9 @@ A view is the way the grid looks, saved under a name: "My open orders", "Late de
 the grid the way you need it - columns, filters, sorting - save it as a view, and later switch back to it
 with one click. You can keep as many views as you like.
 
+```tryit views
+```
+
 ## The views button
 
 If your app shows it, the views button is at the left end of the footer, under the rows. It shows the

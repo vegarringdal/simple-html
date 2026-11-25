@@ -5,6 +5,9 @@ customer. You can group by one column, or by several for groups inside groups. G
 totals of the rows in them, and a totals row under all the rows can show the totals of everything you
 have filtered.
 
+```tryit grouping
+```
+
 ## Group by a column
 
 1. Find the grouping panel: the thin strip above the column headers.

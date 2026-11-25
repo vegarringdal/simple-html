@@ -5517,6 +5517,22 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
   labels too
 * templateSort.test.ts: `{last}, {first}` both ways, another template, none, grouped by it
 
+### The user guide's "Try it" boxes (2026-11-26)
+
+* the user: "user guide should be more interactive? sample based, so users actually want to try/see it".
+  Every page starts with a Try it box: a ```tryit <id> block (markdown.js) becomes div.doc-tryit, and
+  samples/demo/tryIt.ts puts in it a live grid of the demo data (labels Date, Active, Fruit) and 1-5 tasks
+  - "Show only the rows of Norway", "Sort by Age, highest first", "Pin Company to the left", "Add a
+  calculated column with a function". The box looks at the grid every 400ms (state, rows, find, views,
+  changes, what dialog or menu is open), so any way of doing a task counts; a task done stays done, one can
+  follow another (`done.has(0)`: "then clear it"). Tasks the grid can not see (an export, a copy) have a
+  checkbox the reader ticks. Start again: a new grid, no task done. No code shown
+* checked: a script did every task of every page through the grid's own methods - each ticks (50 tasks);
+  found that groups start collapsed, so "Collapse all" ticked by itself: now Expand all, then Collapse all
+* checkDocs.js: a ```tryit block is no code, its id must be in tryIt.ts. user-guide-check.js: every box has
+  its grid and tasks, none done before the reader does it, a header click ticks the sort tasks, typing in
+  the filter row the filter task, Ctrl+F the find task, Start again clears them
+
 ## Considered, not done
 
 ## Candidates / not started

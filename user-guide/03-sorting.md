@@ -3,6 +3,9 @@
 Sort the rows by clicking a column header. You can sort by one column, or by several: first by one,
 then by the next within equal values. The sort stays when the rows are filtered or reloaded.
 
+```tryit sorting
+```
+
 ## Sort by a column
 
 1. Click the column header (the name of the column). The rows are sorted A to Z, smallest to

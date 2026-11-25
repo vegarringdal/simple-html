@@ -12,6 +12,9 @@ editing. To move from cell to cell, hold **Alt** with the arrow keys.
 
 Some keys only work if your app lets you edit the grid. They are marked *editing* below.
 
+```tryit keyboard
+```
+
 ## See every key in the grid
 
 Press **Ctrl+/** anywhere in the grid, also while you type in a cell. Or press **?** where it types

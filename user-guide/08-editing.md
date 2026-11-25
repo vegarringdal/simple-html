@@ -5,6 +5,9 @@ decides what you may do: some grids are read only, some let you add rows but not
 are there. The grid keeps track of every change until it is saved, and **saving is done by your app** -
 usually with a Save button of its own. Until then, every change can be undone.
 
+```tryit editing
+```
+
 ## Edit a cell
 
 1. Click the cell. It is ready to type in at once, with the cursor where you clicked.

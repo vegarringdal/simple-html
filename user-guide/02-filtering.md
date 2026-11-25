@@ -4,6 +4,9 @@ A filter shows only the rows you want to see. The quickest way is to type in the
 column headers. For more, right-click a filter box for its menu, or build any filter in the filter
 editor. The footer always shows what the rows are filtered by.
 
+```tryit filtering
+```
+
 ## Filter on a value
 
 1. Click the filter box under a column header.

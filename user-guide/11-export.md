@@ -4,6 +4,9 @@ You can save the rows of the grid as an Excel file (.xlsx). Some apps also offer
 file most programs can read. The file has what you see: the rows your filter lets through, in your
 sort order, and the columns in the order you placed them.
 
+```tryit export
+```
+
 ## Export to Excel
 
 1. Right click any cell of the grid.

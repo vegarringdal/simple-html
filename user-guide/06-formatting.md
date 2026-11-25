@@ -12,6 +12,9 @@ cell of the current row (or the first row) will look. Click **Apply** to use the
 close** to use them and close, **Cancel** to drop them. **Reset column** and **Reset all** go back to
 how the columns started. See also [Grid config](14-grid-config.md).
 
+```tryit formatting
+```
+
 ## Pick a date or number format
 
 The quickest way: right click the label of a date or number column and open **Format ›**. Each entry

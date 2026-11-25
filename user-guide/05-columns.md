@@ -5,6 +5,9 @@ the side, and which ones are shown at all. You do it in the header, with the mou
 in the header menu - right click a column's label. The grid keeps what you change while you work; if
 your app saves views, a view keeps it too, see [Views](13-views.md).
 
+```tryit columns
+```
+
 ## Move a column
 
 1. Press on the column's label and drag it. On a touch screen, hold the label still a moment, then drag.

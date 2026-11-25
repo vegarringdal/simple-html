@@ -4,6 +4,9 @@ You can select whole rows, whole columns, or a block of cells, much as in a spre
 select can be copied to Excel, Google Sheets or Word, and cells copied there can be pasted into the
 grid. Rows, columns and cells are selected separately: selecting cells does not select their rows.
 
+```tryit selecting-and-copying
+```
+
 ## Select rows
 
 - **One row**: click the row number at the left of the row. The row turns a selected colour.

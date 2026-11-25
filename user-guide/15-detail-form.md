@@ -4,6 +4,9 @@ The detail form shows the current row as a form, beside the rows: a label and a 
 It is handy for long notes that do not fit in a narrow column, and for fields that are not columns in
 the grid at all. Your app may show it from the start, or you can turn it on yourself.
 
+```tryit detail-form
+```
+
 ## What it shows
 
 - The form is a panel at the right of the rows. Its title says *Details* and the number of the row.

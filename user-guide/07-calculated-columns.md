@@ -8,6 +8,9 @@ A calculated column works like any other column: you can move, pin, hide, sort, 
 and colour it, and it is copied and exported. It is **read only**: you can not type in it, and it is
 never saved as data - the value is worked out again whenever the row changes.
 
+```tryit calculated-columns
+```
+
 ## Add a calculated column
 
 1. Open **Grid config** (the gear at the right end of the footer).

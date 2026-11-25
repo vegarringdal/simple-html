@@ -10,6 +10,8 @@ const REPO_FILE_URL = 'https://github.com/airemote/simple-html/blob/v6_maybe/';
  * Fenced code blocks:
  * - ```sample <id>  an empty <div class="doc-sample" data-sample="<id>">, the site puts the live
  *                   sample in it: the running grid and its source
+ * - ```tryit <id>   an empty <div class="doc-tryit" data-tryit="<id>">: the user guide's "Try it" box, a
+ *                   live grid and its tasks (samples/demo/tryIt.ts)
  * - any other       <pre class="code-block" data-lang="<language>"><code>, the site highlights
  *                   ts/js/json blocks with samples/demo/highlight.ts
  *
@@ -29,6 +31,10 @@ const marked = new Marked({
             const [language = '', argument = ''] = (lang || '').trim().split(/\s+/);
             if (language === 'sample') {
                 return `<div class="doc-sample" data-sample="${escapeHtml(argument)}"></div>\n`;
+            }
+            // the user guide's "Try it" box: a live grid and its tasks, samples/demo/tryIt.ts
+            if (language === 'tryit') {
+                return `<div class="doc-tryit" data-tryit="${escapeHtml(argument)}"></div>\n`;
             }
             return `<pre class="code-block" data-lang="${escapeHtml(language)}"><code>${escapeHtml(text)}</code></pre>\n`;
         },

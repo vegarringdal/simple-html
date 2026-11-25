@@ -3,6 +3,9 @@
 **Grid config** is the dialog where you set up the columns, the detail form and the grid's defaults in
 one place. Nothing changes in the grid until you click **Apply**, so you can try things out and cancel.
 
+```tryit grid-config
+```
+
 ## Open the dialog
 
 - Click the gear ⚙ at the right end of the footer, under the rows. Its tooltip says *Grid config*.

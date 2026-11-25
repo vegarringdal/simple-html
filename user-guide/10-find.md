@@ -4,6 +4,9 @@ Find looks for a text in the cells of the grid and marks every cell that shows i
 find bar of a browser or a text editor. The browser's own find does not work well in a grid, because
 only the rows on the screen are in the page: use the grid's find instead.
 
+```tryit find
+```
+
 ## Open the find bar
 
 1. Click a cell of the grid, so the focus is in the grid. A header filter or a column header works too.

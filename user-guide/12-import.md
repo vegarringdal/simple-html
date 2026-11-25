@@ -4,6 +4,9 @@ Import adds rows from a CSV file, an Excel workbook (.xlsx) or rows copied in a 
 rows of the grid. Before anything is added, you see which column goes to which field and which
 values could not be read. Import is only there if your app allows it, and only where you may add rows.
 
+```tryit import
+```
+
 ## Open the import dialog
 
 - **From a file**: right click a column name in the header and choose **Import rows…**.

@@ -54,6 +54,24 @@ const pages = fs
         for (const each of pages) {
             await page.goto(`${base}#user-guide/${each.id}`);
             await page.waitForFunction((title) => document.querySelector('main h1')?.textContent?.trim() === title, each.title);
+            // its "Try it" box: a live grid and its tasks
+            const box = await page
+                .waitForFunction(
+                    () => {
+                        const tryIt = document.querySelector('main .doc-tryit');
+                        return tryIt?.querySelector('.tryit-grid simple-html-grid .simple-html-grid-col-cell') && tryIt;
+                    },
+                    null,
+                    { timeout: 5000 }
+                )
+                .then(() => true)
+                .catch(() => false);
+            const tasks = await page.$$eval('main .doc-tryit .tryit-task', (items) => items.length);
+            check(`${each.id}: a Try it box, its grid and ${tasks} tasks`, box && tasks > 0, { box, tasks });
+            // nothing done before the reader does it: the box looks every 400ms
+            await page.waitForTimeout(900);
+            const early = await page.$$eval('main .doc-tryit .tryit-done', (items) => items.length);
+            check(`${each.id}: no task done before it is done`, early === 0, { early });
             const found = await page.evaluate(() => ({
                 code: document.querySelectorAll('main pre').length,
                 headings: document.querySelectorAll('main h2').length,
@@ -64,6 +82,43 @@ const pages = fs
                 links.add(link);
             }
         }
+
+        // the tasks tick as they are done, as the page says to do them
+        const ticked = async (index) =>
+            page
+                .waitForFunction(
+                    (i) => document.querySelectorAll('main .tryit-task')[i]?.classList.contains('tryit-done'),
+                    index,
+                    {
+                        timeout: 3000
+                    }
+                )
+                .then(() => true)
+                .catch(() => false);
+        await page.goto(`${base}#user-guide/sorting`);
+        await page.waitForSelector('main .tryit-grid .simple-html-grid-col-cell');
+        await page.locator('main .tryit-grid [data-attribute-header="age"]').click();
+        check('sorting: a click on the header Age ticks "the youngest first"', await ticked(0));
+        await page.locator('main .tryit-grid [data-attribute-header="age"]').click();
+        check('sorting: a second click ticks "the oldest first"', await ticked(1));
+        const progress = await page.$eval('main .tryit-progress', (el) => el.textContent);
+        check('sorting: the progress says 2 of 3', progress === '2 of 3 done', progress);
+        await page.locator('main .tryit-again').click();
+        const reset = await page.$$eval('main .tryit-done', (els) => els.length);
+        check('sorting: Start again - no task done', reset === 0, { reset });
+
+        await page.goto(`${base}#user-guide/filtering`);
+        await page.waitForSelector('main .tryit-grid .simple-html-grid-col-cell');
+        const filter = page.locator('main .tryit-grid input.simple-html-grid-cell-filter-input[aria-label="Filter Country"]');
+        await filter.fill('norway');
+        await filter.press('Enter');
+        check('filtering: norway typed in the filter of Country ticks its task', await ticked(0));
+
+        await page.goto(`${base}#user-guide/find`);
+        await page.waitForSelector('main .tryit-grid .simple-html-grid-col-cell');
+        await page.locator('main .tryit-grid input[data-attribute="company"]').first().click();
+        await page.keyboard.press('Control+f');
+        check('find: Ctrl+F in the grid ticks "the find bar"', await ticked(0));
 
         // every link between the pages: the page, and its heading
         const broken = [];

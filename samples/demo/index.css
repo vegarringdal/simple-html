@@ -819,3 +819,65 @@ body.sidebar-hidden .main {
     flex: none;
     margin: 12px;
 }
+
+/* the user guide's "Try it" box (tryIt.ts): its tasks, ticked as they are done, over a live grid */
+.doc-tryit {
+    margin: 16px 0 24px;
+    padding: 10px 12px 12px;
+    background: var(--demo-bg);
+    border: 1px solid var(--demo-border);
+    border-left: 4px solid var(--demo-accent);
+    border-radius: 8px;
+}
+
+.tryit-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.tryit-title {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.tryit-progress {
+    color: var(--demo-muted);
+    font-size: 13px;
+}
+
+.tryit-again {
+    margin-left: auto;
+}
+
+.tryit-tasks {
+    margin: 8px 0 10px;
+    padding: 0;
+    list-style: none;
+}
+
+.tryit-task {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 3px 0;
+}
+
+.tryit-mark {
+    flex: none;
+    margin: 3px 0 0;
+}
+
+/* a task done: its tick in the accent colour, its text quieter */
+.tryit-done {
+    color: var(--demo-muted);
+}
+
+.tryit-done .tryit-mark {
+    accent-color: var(--demo-accent);
+}
+
+.tryit-grid {
+    position: relative;
+    height: calc(25px + 22px + 22px + 18px + 12 * 22px + 45px + 16px);
+}

@@ -3,6 +3,7 @@ import type { Guide } from 'docs:guides';
 import type { BuildInfo } from 'docs:status';
 import { highlightTs } from './highlight';
 import { SAMPLES, type Sample } from './sampleList';
+import { renderTryIt } from './tryIt';
 
 /**
  * The three kinds of pages of the docs site. Each renders into the main element of the shell
@@ -178,6 +179,7 @@ export function renderGuidePage(main: HTMLElement, guide: Guide) {
     doc.insertAdjacentHTML('beforeend', guide.html);
     highlightCodeBlocks(doc);
     doc.querySelectorAll<HTMLElement>('.doc-sample').forEach(renderSampleBlock);
+    doc.querySelectorAll<HTMLElement>('.doc-tryit').forEach(renderTryIt);
 }
 
 // ------------------------------------------------------------------ status

@@ -6,6 +6,9 @@ shows the parts of a grid and how to move around in it.
 
 On a Mac, **Ctrl** is **⌘** (Cmd) and **Alt** is **⌥** (Option).
 
+```tryit getting-started
+```
+
 ## Know the parts of a grid
 
 From the top:
