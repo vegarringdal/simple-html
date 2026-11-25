@@ -4,6 +4,8 @@ const { renderMarkdown } = require('./markdown');
 
 const ROOT = path.resolve(__dirname, '../..');
 const GUIDES_DIR = path.join(ROOT, 'guides');
+// the user guide, for the people using a grid: user-guide/NN-slug.md, as the guides
+const USER_GUIDE_DIR = path.join(ROOT, 'user-guide');
 
 // guides/01-getting-started.md: the number is the order in the sidebar, the rest the page id
 const GUIDE_FILE = /^(\d+)-([a-z0-9-]+)\.md$/;
@@ -42,10 +44,15 @@ function readGuides(dir = GUIDES_DIR) {
 /**
  * The guides as the site shows them: the html of the body of each
  * @param {string} [dir] another folder than guides/
+ * @param {string} [route] the site's route of the pages: 'guide', 'user-guide' for the user guide
  * @returns {{ id: string, title: string, html: string }[]}
  */
-function renderGuides(dir = GUIDES_DIR) {
-    return readGuides(dir).map((guide) => ({ id: guide.id, title: guide.title, html: renderMarkdown(guide.body, guide.id) }));
+function renderGuides(dir = GUIDES_DIR, route = 'guide') {
+    return readGuides(dir).map((guide) => ({
+        id: guide.id,
+        title: guide.title,
+        html: renderMarkdown(guide.body, guide.id, route)
+    }));
 }
 
-module.exports = { readGuides, renderGuides, GUIDES_DIR };
+module.exports = { readGuides, renderGuides, GUIDES_DIR, USER_GUIDE_DIR };

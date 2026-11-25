@@ -22,6 +22,13 @@ declare module 'docs:guides' {
     export default guides;
 }
 
+/** user-guide/NN-slug.md, the guide for the people using a grid: as the guides, its links to #user-guide/.. */
+declare module 'docs:user-guide' {
+    import type { Guide } from 'docs:guides';
+    const userGuide: Guide[];
+    export default userGuide;
+}
+
 /** the API pages, from typedoc (scripts/site/api.js) */
 declare module 'docs:api' {
     export interface ApiMember {

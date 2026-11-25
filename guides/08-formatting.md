@@ -773,8 +773,10 @@ The settings, from the top:
   not know, with a formula that has a problem or is not true / false, or with nothing to colour, is a
   problem; a value the column does not read (a date of another format) and a custom text colour under
   4.5:1 are said, they hold nothing back.
-- **Data bars, scales, icons**, a number column not shown as checkboxes: *Data bar*, *Colour scale* and
-  *Icons*, a checkbox each - on, its settings in a box under it: the colour swatches (of the palette's
+- **Data bars, scales, icons**, a number column not shown as checkboxes: the Colours tab is four panels,
+  one open at a time - *Colour rules*, *Data bar*, *Colour scale*, *Icons* - each a line saying what it has
+  (*2 rules*, *On*, *Off*, a red square for a problem in it). In the panel of *Data bar*, *Colour scale* or
+  *Icons* a checkbox of its name turns it on, its settings under it: the colour swatches (of the palette's
   backgrounds, a custom colour), *Min*, *Midpoint* and *Max* (empty: *Automatic*, from the rows), the
   *Icon set* (radio buttons that show its icons), *Middle from* and *High from*, *Thresholds* in *% of
   the range* or *Values*, where the *Icon* goes and *Reverse*. Under them five cells from the lowest

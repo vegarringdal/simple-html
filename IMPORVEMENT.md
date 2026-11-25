@@ -5479,6 +5479,30 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * tests: the dialog tests' type('text') turns the link on first (with an address); the texts test shows a
   Text badge from setState(); column-settings-check.js turns the link on before the text
 
+### The user guide (2026-11-25)
+
+* the user: "Please start on user guide. Have categories on type of actions. Filtering, Grouping,
+  formatting, export, import... etc. Update claude.md to have checks on test/typechecks and update docs if
+  we do any changes"
+* user-guide/NN-slug.md, 16 pages for the people using a grid, by what they do: Getting started,
+  Filtering, Sorting, Grouping, Columns, Formatting, Calculated columns, Editing, Selecting and copying,
+  Find, Export, Import, Views, Grid config, The detail form, Keyboard. The names of the buttons and menus
+  as the grid shows them (src/texts.ts), no code. Written from the developer guides and checked in the
+  code (four agents, a page set each): what the code does won where the brief guessed - moving between
+  cells is Alt+arrows (plain arrows move in the input), ranges Alt+Shift+arrows, no Ctrl+A, grouping only
+  by dragging, sorting by several columns Shift+click only, the only export menu is Excel's (row menu),
+  deleting a view asks nothing, the date picker has no keys
+* the site: docs:user-guide (esbuildPlugin, guides.js renderGuides(dir, route)), markdown.js links of a
+  page to #user-guide/<id>/<heading>; the sidebar's User Guide section (the TODO page gone), splitPlace
+  for user-guide/. checkDocs.js step 4: the user guide's links go to its pages and headings, no code in it.
+  user-guide-check.js: the sidebar lists the pages, each renders, every link between them opens its heading
+* on the way: the formula hint lacked SUBSTRING; guides/08's Colours passage was older than the panels
+* CLAUDE.MD: checks after every change (vitest, typecheck, browser checks for a UI change, verify before
+  a push, never pushed in the command of the checks, waits on conditions not times) and docs with every
+  change (guides, the user guide, texts with their table and Norwegian, CHANGELOG, IMPORVEMENT)
+* known from the pages, worth a look: a template column sorts by its value, not its text; no CSV in the
+  grid's menus; Esc does not undo typing in a plain cell (Ctrl+Z does)
+
 ## Considered, not done
 
 ## Candidates / not started

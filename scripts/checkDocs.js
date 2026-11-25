@@ -3,7 +3,7 @@ const os = require('node:os');
 const path = require('node:path');
 const ts = require('typescript');
 const { buildApiModel, convertProject, exampleBlocks } = require('./site/api');
-const { readGuides } = require('./site/guides');
+const { readGuides, USER_GUIDE_DIR } = require('./site/guides');
 const { headingIds, repoFile, siteHref, tsCodeBlocks } = require('./site/markdown');
 
 /**
@@ -21,6 +21,8 @@ const { headingIds, repoFile, siteHref, tsCodeBlocks } = require('./site/markdow
  *    pages and headings the links in the guides go to (NN-slug.md, NN-slug.md#heading, #heading,
  *    #guide/<id>, #sample/<id>, #api/<name>, #api/<name>.<member>), and the files of the repo they
  *    link to (../MIGRATION.md, ../MIGRATION.md#heading - the site links those to github).
+ * 4. the user guide (user-guide/*.md): no code in it, its links go to its own pages and headings
+ *    (NN-slug.md, NN-slug.md#heading, #heading) or a sample (#sample/<id>).
  *
  * Errors are reported with the guide file and line, or the symbol and file:line of the JSDoc.
  */
@@ -189,6 +191,45 @@ function checkReferences(guides, api) {
     return errors;
 }
 
+/**
+ * The user guide (user-guide/NN-slug.md), for the people who use a grid: no code in it, and every link to
+ * one of its pages or headings (`02-filtering.md#change-the-operator`) or to a sample of the site
+ * @returns {string[]} what is wrong, with the file and line
+ */
+function checkUserGuide(pages) {
+    const files = new Set(pages.map((page) => path.basename(page.file)));
+    const headings = new Map(pages.map((page) => [page.id, new Set(headingIds(page.body))]));
+    const samples = new Set(sampleIds());
+    const errors = [];
+    for (const page of pages) {
+        page.text.split(/\r?\n/).forEach((line, index) => {
+            const where = `${page.file}:${index + 1}`;
+            if (/^\s*```/.test(line)) {
+                errors.push(`${where}: no code in the user guide - it is for the people using a grid`);
+            }
+            for (const [, target] of line.matchAll(/\]\(([^)\s]+)\)/g)) {
+                if (/^[a-z][a-z0-9+.-]*:/i.test(target)) {
+                    continue; // another site
+                }
+                const sample = /^#sample\/(.+)$/.exec(target);
+                if (sample) {
+                    if (!samples.has(sample[1])) {
+                        errors.push(`${where}: no sample has the id "${sample[1]}"`);
+                    }
+                    continue;
+                }
+                const file = /^(?:\.\/)?(\d+-([a-z0-9-]+)\.md)(?:#(.+))?$/.exec(target);
+                const own = target.startsWith('#') ? [null, null, page.id, target.slice(1)] : null;
+                const link = file ?? own;
+                if (!link || (file && !files.has(file[1])) || (link[3] && !headings.get(link[2])?.has(link[3]))) {
+                    errors.push(`${where}: the link ${target} goes nowhere, there is no such page of the user guide or heading`);
+                }
+            }
+        });
+    }
+    return errors;
+}
+
 // ------------------------------------------------------------------
 
 async function run() {
@@ -213,9 +254,14 @@ async function run() {
     const referenceErrors = checkReferences(guides, buildApiModel(project));
     console.log(referenceErrors.length ? referenceErrors.join('\n') : 'ok');
 
-    const failed = !typedocOk || typeErrors.length || referenceErrors.length;
+    const userGuide = readGuides(USER_GUIDE_DIR);
+    console.log(`\n4. the user guide: ${userGuide.length} pages, their links, no code`);
+    const userGuideErrors = checkUserGuide(userGuide);
+    console.log(userGuideErrors.length ? userGuideErrors.join('\n') : 'ok');
+
+    const failed = !typedocOk || typeErrors.length || referenceErrors.length || userGuideErrors.length;
     console.log(
-        `\ndocs check ${failed ? 'failed' : 'passed'}: ${typeErrors.length} code block errors, ${referenceErrors.length} broken references`
+        `\ndocs check ${failed ? 'failed' : 'passed'}: ${typeErrors.length} code block errors, ${referenceErrors.length + userGuideErrors.length} broken references`
     );
     process.exit(failed ? 1 : 0);
 }

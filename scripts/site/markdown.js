@@ -59,12 +59,12 @@ function headingSlug(text, seen) {
  * guides/, so `../MIGRATION.md#package` is `{ file: 'MIGRATION.md', anchor: 'package' }`.
  * null for a guide file, a hash, an absolute path, a link to another site, and a path out of the repo.
  */
-function repoFile(href) {
+function repoFile(href, folder = 'guides') {
     if (/^(?:\.\/)?\d+-[a-z0-9-]+\.md(?:#.*)?$/.test(href) || /^([a-z][a-z0-9+.-]*:|#|\/)/i.test(href)) {
         return null;
     }
     const [target, anchor = ''] = href.split('#');
-    const file = path.posix.normalize(path.posix.join('guides', target));
+    const file = path.posix.normalize(path.posix.join(folder, target));
     if (!target || file.startsWith('../')) {
         return null;
     }
@@ -82,17 +82,17 @@ function repoFile(href) {
  *   The site has no page for it, the relative link would 404
  * - #guide/.., #sample/.., #api/.., and links to other sites stay as they are
  */
-function siteHref(href, guideId) {
+function siteHref(href, guideId, route = 'guide') {
     const file = /^(?:\.\/)?\d+-([a-z0-9-]+)\.md(?:#(.+))?$/.exec(href);
     if (file) {
-        return `#guide/${file[1]}${file[2] ? `/${file[2]}` : ''}`;
+        return `#${route}/${file[1]}${file[2] ? `/${file[2]}` : ''}`;
     }
-    const inRepo = repoFile(href);
+    const inRepo = repoFile(href, route === 'user-guide' ? 'user-guide' : 'guides');
     if (inRepo) {
         return `${REPO_FILE_URL}${inRepo.file}${inRepo.anchor ? `#${inRepo.anchor}` : ''}`;
     }
-    if (guideId && href.startsWith('#') && !/^#(guide|sample|api)\//.test(href)) {
-        return `#guide/${guideId}/${href.slice(1)}`;
+    if (guideId && href.startsWith('#') && !/^#(guide|user-guide|sample|api)\//.test(href)) {
+        return `#${route}/${guideId}/${href.slice(1)}`;
     }
     return href;
 }
@@ -100,9 +100,10 @@ function siteHref(href, guideId) {
 /**
  * @param {string} markdown
  * @param {string} [guideId] the guide it is, for its links to its own headings
+ * @param {string} [route] the site's route of its pages: 'guide' (guides/), 'user-guide' (user-guide/)
  * @returns {string} html
  */
-function renderMarkdown(markdown, guideId) {
+function renderMarkdown(markdown, guideId, route = 'guide') {
     const tokens = marked.lexer(markdown);
     const seen = new Map();
     marked.walkTokens(tokens, (token) => {
@@ -110,7 +111,7 @@ function renderMarkdown(markdown, guideId) {
             token.id = headingSlug(token.text, seen);
         }
         if (token.type === 'link') {
-            token.href = siteHref(token.href, guideId);
+            token.href = siteHref(token.href, guideId, route);
         }
     });
     return marked.parser(tokens);

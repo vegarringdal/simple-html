@@ -6,15 +6,8 @@ import '../../src/theme-tredespace.css';
 import api from 'docs:api';
 import guides, { type Guide } from 'docs:guides';
 import status from 'docs:status';
-import {
-    buildLine,
-    renderApiPage,
-    renderGuidePage,
-    renderSamplePage,
-    renderStatusPage,
-    renderUserGuidePage,
-    scrollToPlace
-} from './pages';
+import userGuide from 'docs:user-guide';
+import { buildLine, renderApiPage, renderGuidePage, renderSamplePage, renderStatusPage, scrollToPlace } from './pages';
 import { SAMPLES } from './sampleList';
 import { addSidebarToggle } from './sidebarToggle';
 import { applyGridTheme, currentGridTheme, GRID_THEMES, type GridTheme, initTheme, toggleTheme } from './theme';
@@ -25,6 +18,7 @@ initTheme();
  * The docs site: a sidebar with the guides, the samples and the API, and the page picked in it.
  * Every page has its own link (hash routing, so it works as static files on github pages):
  * - #status/work-in-progress   what is still open, from V6_PLAN.md and IMPORVEMENT.md (status.js)
+ * - #user-guide/<id> a page of the user guide, user-guide/NN-<id>.md, with its sections as a guide's
  * - #guide/<id>    a guide, guides/NN-<id>.md, #guide/<id>/<section> goes to one of its headings. The
  *                  feature overview, #guide/features, is the start page
  * - #sample/<id>   a sample, samples/demo/samples
@@ -164,7 +158,17 @@ if (featureGuides.length) {
 if (developerGuides.length) {
     navSection('Developer Guide', developerGuides.map(guideItem));
 }
-navSection('User Guide', [{ route: 'user-guide/todo', label: 'TODO', render: (main) => renderUserGuidePage(main) }]);
+// the user guide, user-guide/NN-slug.md: for the people who use a grid, by what they do
+if (userGuide.length) {
+    navSection(
+        'User Guide',
+        userGuide.map((page) => ({
+            route: `user-guide/${page.id}`,
+            label: page.title,
+            render: (main: HTMLElement) => renderGuidePage(main, page)
+        }))
+    );
+}
 navSection(
     'Samples',
     SAMPLES.map((sample) => ({
@@ -225,7 +229,8 @@ function show(page: Page) {
  * The route of a hash, and the place on its page: #api/<name>.<member>, #guide/<id>/<section>
  */
 function splitPlace(hash: string) {
-    const at = hash.startsWith('api/') ? hash.indexOf('.') : hash.startsWith('guide/') ? hash.indexOf('/', 'guide/'.length) : -1;
+    const guide = ['guide/', 'user-guide/'].find((prefix) => hash.startsWith(prefix));
+    const at = hash.startsWith('api/') ? hash.indexOf('.') : guide ? hash.indexOf('/', guide.length) : -1;
     return at === -1 ? { route: hash, place: '' } : { route: hash.slice(0, at), place: hash.slice(at + 1) };
 }
 

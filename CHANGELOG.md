@@ -1366,6 +1366,9 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 #### Helpers for an app with a backend: v5 filters, the columns from the fields, the filter to send, the 400 errors, fields known later, rows from JSON
 
 ##### Added
+- the user guide, `user-guide/` (the docs site's User Guide): for the people using a grid, a page for each kind
+  of action - filtering, sorting, grouping, columns, formatting, calculated columns, editing, selecting and
+  copying, find, export, import, views, the grid config dialog, the detail form, the keyboard
 - a text or number column shown as checkboxes has a checkbox as its header filter - checked, not checked,
   no filter - plain conditions `toSqlWhere()` takes
 - a text column with a template (`format.text`, a link's text) is filtered on the text it shows - every

@@ -242,18 +242,6 @@ export function renderStatusPage(main: HTMLElement, status: { build: BuildInfo; 
     highlightCodeBlocks(doc);
 }
 
-/**
- * #user-guide/todo: the user guide - for the people who use a grid, not the developers who build with it
- * (that is the "Developer Guide"). Written when every feature is in place; until then this page says so
- */
-export function renderUserGuidePage(main: HTMLElement) {
-    const doc = article(main, 'User Guide');
-    const todo = document.createElement('p');
-    todo.textContent =
-        'TODO: the user guide - how to filter, sort, group, select, copy, edit and save in a grid - is written when all the features are in place.';
-    doc.appendChild(todo);
-}
-
 // ------------------------------------------------------------------ API
 
 const API_NAMES = new Set(api.symbols.map((symbol) => symbol.name));

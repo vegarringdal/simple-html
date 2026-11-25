@@ -566,7 +566,7 @@ const DEFAULTS = {
     'columnSettings.calculated.formula': 'Formula',
     'columnSettings.calculated.formula.placeholder': '{price} * {qty}',
     'columnSettings.calculated.formula.hint':
-        'Fields in braces, numbers, "text", + - * / &, = <> != < <= > >=, AND OR NOT, IF ROUND ABS MIN MAX TODAY DAYS YEAR MONTH CONCAT COALESCE ISBLANK LEFT RIGHT MID LEN UPPER LOWER TRIM CONTAINS',
+        'Fields in braces, numbers, "text", + - * / &, = <> != < <= > >=, AND OR NOT, IF ROUND ABS MIN MAX TODAY DAYS YEAR MONTH CONCAT COALESCE ISBLANK LEFT RIGHT MID SUBSTRING LEN UPPER LOWER TRIM CONTAINS',
     'columnSettings.calculated.gives': 'Gives: {type}',
     'columnSettings.calculated.value': 'In this row: {value}',
     'columnSettings.calculated.blank': '(blank)',
