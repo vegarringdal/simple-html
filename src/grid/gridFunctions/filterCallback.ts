@@ -54,6 +54,23 @@ export function filterCallback(ctx: Grid, value: unknown, field: string, filterA
     // label matches, the rows are filtered on their values - a text filter, also for a number field
     const lookupColumn = ctx.gridInterface.__getLookupColumn(field);
 
+    // a column shown as checkboxes: the header's checkbox - checked is the value of a checked cell,
+    // not checked any other (a blank too, as its cell is not checked). Plain conditions, a backend's too
+    const checkbox =
+        !lookupColumn && !filterArray && (type === 'text' || type === 'number')
+            ? ctx.gridInterface.__getColumnFormat(field)?.checkbox
+            : undefined;
+    if (checkbox) {
+        filterOnCheckbox(
+            ctx,
+            field,
+            type === 'number' ? 'number' : 'text',
+            checkbox.checked ?? '1',
+            text === 'true' ? true : text === 'false' ? false : null
+        );
+        return;
+    }
+
     let filterValue: unknown;
     switch (lookupColumn ? 'text' : type) {
         case 'date':
@@ -113,6 +130,23 @@ export function filterCallback(ctx: Grid, value: unknown, field: string, filterA
     // a value list: the cell is cleared, the list is not something it can show
     ctx.gridInterface.__setHeaderFilterValue(field, filterArray ? null : filterValue);
 
+    datasource.filter(filter);
+}
+
+/**
+ * The header filter of a column shown as checkboxes (ColumnFormat.checkbox): checked - the field EQUAL the
+ * checked value, as it is (case and all: literal, caseSensitive); not checked - NOT_EQUAL_TO it, a blank
+ * row too; null - no filter. A number field compares the number
+ */
+function filterOnCheckbox(ctx: Grid, field: string, type: 'text' | 'number', checked: string, on: boolean | null) {
+    const datasource = ctx.gridInterface.getDatasource();
+    const filter = filterWithoutColumn(datasource.getFilter(), field);
+    if (on !== null) {
+        const value = type === 'number' ? Number(checked) : checked;
+        const options = type === 'text' ? { caseSensitive: true, literal: true } : {};
+        filter.children.push(where(field, on ? 'EQUAL' : 'NOT_EQUAL_TO', value, options));
+    }
+    ctx.gridInterface.__setHeaderFilterValue(field, on);
     datasource.filter(filter);
 }
 

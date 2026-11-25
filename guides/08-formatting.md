@@ -861,9 +861,13 @@ a database keeps as `1` / `0`, `'Y'` / `'N'`.
   one (`'0'` left out) - a number in a number field (`1`, `0`), else the text. An unchecked value `''`
   empties the cell (null), as Delete does. Shift+click and Ctrl+click make ranges, as on a boolean
   cell; a readonly grid or cell and `allowPasteClearOnly` write nothing. Undo takes it back.
-- **The value stays the value**: copy, paste, the CSV and Excel exports, sorting, grouping, the header
-  filter (typed: `1`) and the filter menu's value list have `1` and `0`. Find does not look in a
-  checkbox, `fitColumns()` gives it a checkbox's room.
+- **The header filter is a checkbox**, as a boolean column's: a click checks it - the rows whose value is
+  the checked value, as it is (`'Y'`, not `'y'` or `' Y '`; a number equal to it) - another unchecks it -
+  every other row, a blank too - and a third clears it. Plain conditions, `flag = 'Y'` and
+  `flag <> 'Y'`: a backend's `toSqlWhere()` selects the same rows.
+- **The value stays the value**: copy, paste, the CSV and Excel exports, sorting, grouping and the filter
+  menu's value list have `1` and `0`. Find does not look in a checkbox, `fitColumns()` gives it a
+  checkbox's room.
 - A checkbox shows no text: not with `text`, `link`, `number` or `numberOverride` (a `TypeError`), and a
   number column with checkboxes has no Format ›. A renderer of your own (`renderer`) wins, and a cell of
   another type in a `dynamicCellTypeColumn` is shown as its type.

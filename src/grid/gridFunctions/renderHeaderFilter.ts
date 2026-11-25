@@ -44,6 +44,12 @@ export function renderHeaderFilter(
         const field = ctx.gridInterface.getDatasource().getField(attribute);
         const lookup = !!ctx.gridInterface.__getLookupColumn(attribute);
         const type = lookup ? 'text' : field.type;
+        // a text or number column shown as checkboxes (ColumnFormat.checkbox): its filter is a checkbox too -
+        // checked, not checked, or neither (no filter), as a boolean column's
+        const shownAsCheckbox =
+            !lookup &&
+            (field.type === 'text' || field.type === 'number') &&
+            !!ctx.gridInterface.__getColumnFormat(attribute)?.checkbox;
         // a column that filters as shown reads and writes the text in its display format (`2026-W47`)
         const formatter: Formatter = lookup
             ? TextFormatter
@@ -64,7 +70,7 @@ export function renderHeaderFilter(
             // stop duplicate events
             let filterRunning = false;
 
-            if (type === 'boolean') {
+            if (type === 'boolean' || shownAsCheckbox) {
                 render(
                     html`<input
                         style="width:100%"

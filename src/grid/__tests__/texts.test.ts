@@ -781,6 +781,11 @@ async function showImport({ datasource, gridInterface }: MountedGrid, check: (mo
     gridInterface.openImport(new File([workbook], '«two sheets»'));
     // being read
     check();
+    // read when its sheet picker shows: unzipping takes its time on a slow machine (a CI runner), a
+    // fixed wait of 30ms was not always enough
+    for (let waited = 0; waited < 5000 && !document.body.textContent?.includes('import.sheet'); waited += 10) {
+        await sleep(10);
+    }
     await settle();
     check();
 

@@ -340,8 +340,17 @@ describe('column format - the checkboxes of a text or number column', () => {
         });
         expect(gridInterface.find('1')).toBe(0);
 
-        typeInHeaderFilter(element, 'flag', '0');
-        expect(datasource.getRows().map((row) => row.name)).toEqual(['Bob']);
+        // the header filter: a checkbox - checked the value '1' as it is, not checked the others (a blank too)
+        const box = headerFilterInput(element, 'flag');
+        expect([box.type, box.indeterminate]).toEqual(['checkbox', true]);
+        box.checked = true;
+        box.indeterminate = false;
+        box.dispatchEvent(new Event('change', { bubbles: true }));
+        expect(datasource.getRows().map((row) => row.name)).toEqual(['Ann']);
+        const again = headerFilterInput(element, 'flag');
+        again.checked = false;
+        again.dispatchEvent(new Event('change', { bubbles: true }));
+        expect(datasource.getRows().map((row) => row.name)).toEqual(['Bob', 'Cid', 'Dan']);
         datasource.filter(null);
         // the filter menu's value list: the values
         openFilterMenu(element, 'flag');

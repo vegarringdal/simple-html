@@ -225,8 +225,10 @@ export interface LinkFormat {
  * the checked or the unchecked value: a number for a number field (`1`), else the text (`'1'`); an
  * unchecked value `''` empties the cell (null), as Delete does.
  *
- * The value stays the value: copy, paste, the CSV and Excel exports, sorting, grouping, the header
- * filter and the filter menu's value list have `1` and `0`, as without the checkboxes.
+ * The header filter is a checkbox, as a boolean column's: checked - the field equal to the checked value,
+ * as it is; not checked - any other value, a blank too; neither - no filter. Plain conditions a backend's
+ * `toSqlWhere()` takes. The value stays the value: copy, paste, the CSV and Excel exports, sorting,
+ * grouping and the filter menu's value list have `1` and `0`, as without the checkboxes.
  *
  * | format | checked | a click writes |
  * | --- | --- | --- |

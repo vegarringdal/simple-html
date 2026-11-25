@@ -5456,6 +5456,19 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
   formatter / a datetime (no formula, the browser filters), the value list's texts. The SQL sample sends
   the formulas and has a button for `{company} ({country})`; find-case-sql-check.js clicks it
 
+### The header filter of a column shown as checkboxes is a checkbox (2026-11-25)
+
+* the user: "if we select checkbox, then filter needs to be checkbox filter too? with indeterminate, false
+  and true, and sql needs to understand it". renderHeaderFilter: a text or number column with
+  `format.checkbox` gets the boolean column's three-state checkbox; filterCallback (filterOnCheckbox):
+  checked - `EQUAL` the checked value (`caseSensitive`, `literal` on text; the number on a number field),
+  not checked - `NOT_EQUAL_TO` it (a blank row matches, its cell is unchecked), neither - no condition.
+  Plain conditions: toSqlWhere needs nothing new
+* one difference with the cells: a cell is checked when its text trimmed is the checked value (`' Y '`);
+  the filter compares the value as it is - documented
+* sqlCheckboxFilter.test.ts: `'Y'` / `'N'` text and `1` / `0` number columns, the three states clicked,
+  the grid and SQLite the same rows
+
 ## Considered, not done
 
 ## Candidates / not started

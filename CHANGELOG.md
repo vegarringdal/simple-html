@@ -1366,6 +1366,8 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 #### Helpers for an app with a backend: v5 filters, the columns from the fields, the filter to send, the 400 errors, fields known later, rows from JSON
 
 ##### Added
+- a text or number column shown as checkboxes has a checkbox as its header filter - checked, not checked,
+  no filter - plain conditions `toSqlWhere()` takes
 - a text column with a template (`format.text`, a link's text) is filtered on the text it shows - every
   operator, IN and the filter menu's values; `filterAsShown: false` filters the value. For a backend:
   `gridInterface.getShownFormulas()` and `toSqlWhere({ shown })` compare the same text in SQL
