@@ -58,6 +58,7 @@ import {
 import { keepDialogInView, moveDialog, resizeHandles, showDialog } from './dialogFrame';
 import { defaultFilterOnType, isFilterOnType, setFilterOnType } from './filterOnType';
 import { formatName, formatSubmenu } from './formatSubmenu';
+import { functionButton } from './formulaFunctionMenu';
 import { getColumnLabel, getConfigColumnLabel } from './getColumnLabel';
 import { getHeaderFilterOperator, isHeaderFilterCaseSensitive } from './getHeaderFilterOperator';
 import { getLayoutFields } from './getLayoutFields';
@@ -1417,6 +1418,11 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                             next.formula = formula;
                         }),
                     formulaFields.filter((name) => name !== field)
+                )}
+                ${functionButton(ctx, dialog, formulaId, (formula) =>
+                    changeColumn((next) => {
+                        next.formula = formula;
+                    })
                 )}
             </div>
             <div class="column-settings-hint" id=${idOf(ctx, 'calculated-hint')}>${text('columnSettings.calculated.formula.hint')}</div>

@@ -34,6 +34,7 @@ import { isHexColor, TEXT_CONTRAST, textContrast } from '../ruleColors';
 import { defaultHeaderOperator, headerFilterType } from './columnFilterOptions';
 import { contextMenuAttributes } from './contextMenuAttributes';
 import { DATE_PRESET_TEXTS } from './datePresetFilter';
+import { functionButton } from './formulaFunctionMenu';
 import { getColumnLabel } from './getColumnLabel';
 import { gridText } from './gridText';
 import { HEADER_OPERATOR_TEXTS } from './headerOperatorMenu';
@@ -929,7 +930,7 @@ export function colorRuleSettings(ctx: Grid, settings: RuleSettings): TemplateRe
                     .value=${live(rule.expression ?? '')}
                     @input=${(event: Event) => set((event.target as HTMLInputElement).value)}
                 />
-                ${settings.insertButton(inputId, set)}
+                ${settings.insertButton(inputId, set)} ${functionButton(ctx, dialog, inputId, set)}
             </div>
             ${result}`;
     };

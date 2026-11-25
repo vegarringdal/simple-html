@@ -532,6 +532,10 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
     shown.age = '«x»';
     type('calculated-formula', '{age} + 2');
     collect();
+    // the ƒ menu of the functions: each submenu, its entries and their tooltips
+    (dialog().querySelector('.column-settings-insert-function') as HTMLElement).click();
+    menuTreeEntries(collect);
+    gridInterface.closeMenu();
     datasource.undo();
     shown.notes = `«${'1'.repeat(10_001)}»`;
     type('calculated-formula', '{notes} & 1');

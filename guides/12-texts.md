@@ -663,6 +663,53 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.title.tooltip` | `Drag to move the dialog` | the title's tooltip |
 | `columnSettings.close.tooltip` | `Close without applying` | the ✕: its name and tooltip |
 | `columnSettings.columns` | `Columns` | the name of the list of the columns, for a screen reader |
+| `columnSettings.insertFunction` | `Insert a function` | the ƒ beside a formula: a menu of the functions |
+| `formula.functions.logic` | `Logic` | a submenu of the function menu |
+| `formula.functions.numbers` | `Numbers` | a submenu of the function menu |
+| `formula.functions.dates` | `Dates` | a submenu of the function menu |
+| `formula.functions.text` | `Text` | a submenu of the function menu |
+| `formula.function.IF` | `IF(condition, a, b)` | the function in the menu, as it is written |
+| `formula.function.IF.tooltip` | `a when the condition is true, else b - a and b of one type` | what it does: the entry's tooltip |
+| `formula.function.COALESCE` | `COALESCE(a, b, …)` | the function in the menu, as it is written |
+| `formula.function.COALESCE.tooltip` | `the first value that is not blank: COALESCE(x, 0) is 0 for a blank x` | what it does: the entry's tooltip |
+| `formula.function.ISBLANK` | `ISBLANK(x)` | the function in the menu, as it is written |
+| `formula.function.ISBLANK.tooltip` | `true when x is blank` | what it does: the entry's tooltip |
+| `formula.function.ROUND` | `ROUND(x, n)` | the function in the menu, as it is written |
+| `formula.function.ROUND.tooltip` | `x rounded to n decimals, halves away from 0 - a negative n rounds to tens, hundreds` | what it does: the entry's tooltip |
+| `formula.function.ABS` | `ABS(x)` | the function in the menu, as it is written |
+| `formula.function.ABS.tooltip` | `x without its sign` | what it does: the entry's tooltip |
+| `formula.function.MIN` | `MIN(a, b, …)` | the function in the menu, as it is written |
+| `formula.function.MIN.tooltip` | `the least of numbers or dates, a blank skipped` | what it does: the entry's tooltip |
+| `formula.function.MAX` | `MAX(a, b, …)` | the function in the menu, as it is written |
+| `formula.function.MAX.tooltip` | `the greatest of numbers or dates, a blank skipped` | what it does: the entry's tooltip |
+| `formula.function.TODAY` | `TODAY()` | the function in the menu, as it is written |
+| `formula.function.TODAY.tooltip` | `today, at 00:00` | what it does: the entry's tooltip |
+| `formula.function.DAYS` | `DAYS(from, to)` | the function in the menu, as it is written |
+| `formula.function.DAYS.tooltip` | `the days from one date to another: negative when to is before` | what it does: the entry's tooltip |
+| `formula.function.YEAR` | `YEAR(date)` | the function in the menu, as it is written |
+| `formula.function.YEAR.tooltip` | `the year of a date` | what it does: the entry's tooltip |
+| `formula.function.MONTH` | `MONTH(date)` | the function in the menu, as it is written |
+| `formula.function.MONTH.tooltip` | `the month of a date, 1 to 12` | what it does: the entry's tooltip |
+| `formula.function.CONCAT` | `CONCAT(a, b, …)` | the function in the menu, as it is written |
+| `formula.function.CONCAT.tooltip` | `the values as one text, as & joins them` | what it does: the entry's tooltip |
+| `formula.function.LEFT` | `LEFT(text, n)` | the function in the menu, as it is written |
+| `formula.function.LEFT.tooltip` | `the first n characters` | what it does: the entry's tooltip |
+| `formula.function.RIGHT` | `RIGHT(text, n)` | the function in the menu, as it is written |
+| `formula.function.RIGHT.tooltip` | `the last n characters` | what it does: the entry's tooltip |
+| `formula.function.MID` | `MID(text, start, n)` | the function in the menu, as it is written |
+| `formula.function.MID.tooltip` | `n characters from the start-th, the first is 1` | what it does: the entry's tooltip |
+| `formula.function.SUBSTRING` | `SUBSTRING(text, start, n)` | the function in the menu, as it is written |
+| `formula.function.SUBSTRING.tooltip` | `the same as MID: n characters from the start-th` | what it does: the entry's tooltip |
+| `formula.function.LEN` | `LEN(text)` | the function in the menu, as it is written |
+| `formula.function.LEN.tooltip` | `how many characters - 0 for a blank` | what it does: the entry's tooltip |
+| `formula.function.UPPER` | `UPPER(text)` | the function in the menu, as it is written |
+| `formula.function.UPPER.tooltip` | `the text in upper case` | what it does: the entry's tooltip |
+| `formula.function.LOWER` | `LOWER(text)` | the function in the menu, as it is written |
+| `formula.function.LOWER.tooltip` | `the text in lower case` | what it does: the entry's tooltip |
+| `formula.function.TRIM` | `TRIM(text)` | the function in the menu, as it is written |
+| `formula.function.TRIM.tooltip` | `the text without the spaces around it` | what it does: the entry's tooltip |
+| `formula.function.CONTAINS` | `CONTAINS(text, part)` | the function in the menu, as it is written |
+| `formula.function.CONTAINS.tooltip` | `true when the text has the part, in any case` | what it does: the entry's tooltip |
 | `columnSettings.back` | `‹ Columns` | back to the list of the columns, where they take turns with a column's settings: a narrow dialog (a phone) |
 | `columnSettings.type.text` | `Text` | the type of a text column, in the list and over its settings |
 | `columnSettings.type.number` | `Number` | a number column |

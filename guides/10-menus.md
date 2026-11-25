@@ -245,7 +245,7 @@ A `MenuEntry` is one of:
 
 | entry | shown as |
 | --- | --- |
-| `{ id, label, action, hint?, visible?, disabled?, selected? }` - a `MenuItem` | an entry to click. `type: 'item'` can be left out |
+| `{ id, label, action, hint?, tooltip?, visible?, disabled?, selected? }` - a `MenuItem` | an entry to click. `type: 'item'` can be left out |
 | `{ type: 'submenu', id, label, entries, visible? }` - a `MenuSubmenu` | an entry with a `›` that opens `entries` beside it, see [Submenus](#submenus) |
 | `{ type: 'section', id, label, visible? }` - a `MenuSection` | a section header with a line under it, `Pick a fruit:` |
 | `{ type: 'separator', id, visible? }` - a `MenuSeparator` | a dashed line |
@@ -253,6 +253,8 @@ A `MenuEntry` is one of:
 
 - Clicking an item closes the menu, then calls `action(context)`.
 - `hint` is shown after the label, in italics and in parentheses: `Paste cell (selected rows)`.
+- `tooltip` says what the item does, longer than a label: a tooltip while the pointer rests on it, and
+  its description for a screen reader (`aria-description`).
 - `visible(context)`: `false` leaves the entry out. `disabled(context)`: `true` shows the item greyed
   out, a click does nothing. `selected(context)`: `true` shows a ✓ in front of the label - a toggle
   that is on, the choice in use. They are called when the menu (or submenu) opens.

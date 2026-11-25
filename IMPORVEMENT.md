@@ -5399,6 +5399,20 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
   on screen, nothing sideways; three rules one open; the phone's turns; the list in view when the settings
   scroll. Tests of the rules read a closed rule's value from its line; the texts test shows a closed rule
 
+### The ƒ button: a menu of the functions of a formula (2026-11-25)
+
+* the user: "maybe everywhere we can use special functions etc, it should have a insert option like we have
+  with columns? and tooltip what it do?". Where a formula is typed - a calculated column, a colour rule's
+  Formula - a ƒ button beside the `{ }`: formulaFunctionMenu.ts, the functions in four submenus (Logic,
+  Numbers, Dates, Text; a test checks every function of formula.ts is in one), each its usage
+  (`formula.function.<NAME>`) with a tooltip (`.tooltip`); picked: `NAME()` at the caret, the caret between
+  the brackets, a selection wrapped, TODAY() whole
+* MenuItem.tooltip (public): data-tooltip and aria-description of the item; openMenuElement attaches the
+  tooltip handling to every menu (a menu outside the grid's dialogs had none). Checked in Chromium: the
+  tooltip shows over the submenu
+* a text may not hold `{x}` - the texts read it as a value to fill in: the COALESCE tooltip says
+  `COALESCE(x, 0)`
+
 ## Considered, not done
 
 ## Candidates / not started

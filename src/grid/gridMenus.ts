@@ -74,6 +74,12 @@ export interface MenuItem {
     label: string;
     /** shown after the label, in italics and in parentheses: `Paste cell (selected rows)` */
     hint?: string;
+    /**
+     * what the item does, longer than a label: shown as a tooltip while the pointer rests on it, and read
+     * by a screen reader as the item's description (`aria-description`). The formula fields' function
+     * menu has one for each function
+     */
+    tooltip?: string;
     /** called when the item is clicked, after the menu is closed */
     action: (context: MenuContext) => void;
     /** `false` leaves the item out of the menu. Called when the menu opens, left out it is shown */

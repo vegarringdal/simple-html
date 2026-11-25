@@ -3572,7 +3572,8 @@
 }
 
 /* { }: put a field in the template, framed as the toggle of Match case */
-.simple-html-grid.filter-editor-content .column-settings-insert {
+.simple-html-grid.filter-editor-content .column-settings-insert,
+.simple-html-grid.filter-editor-content .column-settings-insert-function {
     border-color: var(--simple-html-grid-control-border-color);
     font-family: var(--simple-html-grid-font-family);
     font-size: var(--simple-html-grid-font-size);

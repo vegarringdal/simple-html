@@ -221,7 +221,10 @@ footer):
   labelled *Calculated 1* - and picks it; the focus is in its formula.
 - A calculated column has its settings at the top, in place of the label: **Field name** (an input
   while it is new; once applied it stays), **Label**, **Formula** with the `{ }` button that puts a field
-  in at the caret (the columns and the calculated columns, by their labels, with a search), the type it
+  in at the caret (the columns and the calculated columns, by their labels, with a search) and the
+  **ƒ** button: a menu of the functions in four submenus - *Logic*, *Numbers*, *Dates*, *Text* - each as
+  it is written (`LEFT(text, n)`) with a tooltip of what it does. Picked, it is put in at the caret
+  between its brackets, or around the text selected (`{name}` selected is `LEFT({name})`). The type it
   gives (*Gives: Number*), its value in the row of the preview, and its problem - at once, the column is
   marked *Error* and Apply waits. A problem of the row (a division by 0) is said, it holds nothing back.
 - **Remove calculated column** takes it out of the dialog; Apply takes it out of the state and the

@@ -4,6 +4,7 @@ import type { MenuContext, MenuEntry, MenuPosition, MenuSubmenu } from '../gridM
 import { asPx } from './asPx';
 import { createElement } from './createElement';
 import { removeContextMenu } from './removeContextMenu';
+import { attachTooltips, tooltipsEnabled } from './tooltip';
 
 /**
  * Where a menu goes, in px from the window's left and top edges. `flipTop`: when the menu does not
@@ -113,6 +114,8 @@ export function openMenuElement(ctx: Grid, menu: HTMLElement, anchor: Element | 
     menu.popover = 'manual';
     menu.style.minWidth = asPx(130);
     popoverParent(anchor).appendChild(menu);
+    // the tooltips of its items (MenuItem.tooltip), also where no dialog of the grid handles them
+    attachTooltips(menu, () => tooltipsEnabled(ctx));
     menu.showPopover();
 
     ctx.contextMenu = menu;
@@ -371,6 +374,8 @@ function renderLevel(ctx: Grid, tree: MenuTree, entries: MenuEntry[], depth: num
                     data-menu-id=${entry.id}
                     aria-checked=${entry.selected ? String(selected) : nothing}
                     aria-disabled=${disabled ? 'true' : nothing}
+                    data-tooltip=${entry.tooltip ?? nothing}
+                    aria-description=${entry.tooltip ?? nothing}
                     @mousedown=${noFocus}
                     @mousemove=${(event: MouseEvent) => hoverItem(ctx, tree, depth, event.currentTarget as HTMLElement)}
                     @click=${() => {

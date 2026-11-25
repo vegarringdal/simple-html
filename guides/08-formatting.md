@@ -757,7 +757,9 @@ The settings, from the top:
   *Checked* for a checkbox column. *Conditions*: a line for each - its field (a picker of the columns and
   the calculated columns, with a search), its operator and value as for that field, a ✕ - *Add
   condition* under them, and over two or more *All of them* / *Any of them*. *Formula*: a formula that
-  is true or false, with the `{ }` button, and under it whether it is true in the row of the preview.
+  is true or false, with the `{ }` button and the **ƒ** button (a menu of the functions, see
+  [Calculated columns](23-calculated-columns.md#the-functions)), and under it whether it is true in the
+  row of the preview.
   Then *Text colour* and *Background*, a row of square swatches each (*None* and the palette; one stop
   of Tab, the arrows pick, each named by its colour for a screen reader and in its tooltip) with the
   colour picker of a custom colour after them (a `+` until one is picked), and *Bold*. *Add rule* under

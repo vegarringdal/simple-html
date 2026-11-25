@@ -1366,6 +1366,9 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 #### Helpers for an app with a backend: v5 filters, the columns from the fields, the filter to send, the 400 errors, fields known later, rows from JSON
 
 ##### Added
+- the **ƒ** button beside a formula (a calculated column's, a colour rule's): a menu of the functions by kind,
+  each with a tooltip of what it does; picked, put in at the caret. `MenuItem.tooltip`: a tooltip on an
+  item of a menu, its description for a screen reader too
 - the grid config dialog on small screens: one colour rule open, the others a line each (a sample in their
   colours, what they match); on a phone the list of the columns and a column's settings take turns
   (‹ Columns); side by side the list stays in view. Checked at 1366x768 and 1280x720 at 150 % zoom
