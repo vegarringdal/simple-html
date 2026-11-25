@@ -5376,6 +5376,29 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * sqlDynamic.test.ts: nine filters, the grid and SQLite (the column as text) select the same rows; the sort
 * not done: typed per row (`> 30` as numbers on the number rows) - the user asked for the SQL to be right
 
+### The grid config dialog on small screens (2026-11-25)
+
+* the user: "gridconfig does not fit mobile screen, assume this can be a issue on small laptop screens too.
+  So colour rules etc might need to be collapsible, or sub screens. Important we never go over typical
+  small laptops with 150% text size/zoom". Measured first (910x425 - 1366x768 at 150 % less the browser's
+  bars - and a Pixel 7): the dialog's box fitted already, the use did not - on the laptop one colour rule
+  (some 290px: kinds, condition, two rows of 15 swatches) filled the body and the list scrolled away with
+  it; on the phone the list stood over the settings, a scroll past every column to them
+* colour rules: one open (ColumnSettings.openRule: undefined - the first with a problem, else the first;
+  null - none), the others one line: a button with ▸, a sample `Abc` in the rule's colours
+  (colorRuleClasses / colorRuleStyle, as the cells), the summary (operator and value, a quick date's name,
+  Checked / Not checked, the conditions with AND / OR, a formula as written), the problem square; ↑ ↓ ✕
+  stay. A rule added is open, moved stays open, removed opens the next. Texts columnSettings.rules.open /
+  close / sample / unchecked
+* narrow (a container query on the Columns tab's body, max-width 520px): the list or the settings
+  (ColumnSettings.detail): a click or Enter shows the settings, ‹ Columns (columnSettings.back) the list,
+  the focus in it. Opened on a column (its header menu) shows its settings at once
+* side by side: the list sticky in the body, its height from the window (max(120px, min(360px, 100vh -
+  260px)))
+* dialog-small-screens-check.js (18): 910x425, 853x400 and a phone - every tab in the window, Apply & close
+  on screen, nothing sideways; three rules one open; the phone's turns; the list in view when the settings
+  scroll. Tests of the rules read a closed rule's value from its line; the texts test shows a closed rule
+
 ## Considered, not done
 
 ## Candidates / not started

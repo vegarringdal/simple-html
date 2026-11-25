@@ -661,6 +661,11 @@ Its title is *Grid config*. Under the title bar are three tabs:
   it to another place, a line showing where. `openDetailFormSettings()` opens the dialog on it. See
   [The detail form](02-grid-config.md#the-detail-form).
 - **Defaults**: the settings of the grid, not of a column.
+
+**Small screens.** The dialog fits a laptop of 1366x768 or 1280x720 at 150 % zoom, and a phone: what does
+not fit scrolls inside it, its buttons stay at the bottom. Side by side, the list of the columns stays in
+view while the settings scroll. Narrower than some 520px (a phone), the list and a column's settings take
+turns: a column clicked (or Enter in the list) shows its settings, **‹ Columns** the list again.
   - *Formats by type*: a picker of the format of every date, date and time, and number column without a
     format of its own - the entries of Format ›, *Default* the field's formatter (`GridState.typeFormats`,
     see [Formats by type](#formats-by-type)). The Columns tab shows it at once: a column's picker says
@@ -741,7 +746,11 @@ The settings, from the top:
   after a short pause in typing, see [Filter as you type](06-filtering.md#filter-as-you-type). It starts
   as the column has it (its `filterOnType`, the grid's, or the user's from the operator choice).
 - **Colour rules**, every column: the [colour rules](#colour-rules) of its cells, in their order - the
-  first that matches wins. Each rule is a group. Its first line: the kind of its condition - *Value*,
+  first that matches wins. **One rule is open**, the others are a line each - a sample in their colours
+  (*Abc*), what they match (`Greater than 100`, a formula as written) and their buttons: a click on the
+  line opens it, *▾* closes it. The first rule is open (the first with a problem), a rule added is open,
+  removing the open one opens the next. So a column of rules fits a small screen. Each rule is a group.
+  Its first line: the kind of its condition - *Value*,
   *Conditions* or *Formula*, radio buttons - and *Move up*, *Move down* and *Remove rule* at its right.
   *Value*: its operator (a picker of the operators the column's filter offers, not In / Not In) and its
   value as it is typed in the header filter - *From* and *To* for Between, none for Is Blank, a checkbox

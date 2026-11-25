@@ -88,6 +88,13 @@ const badges = (field: string) =>
     Array.from(option(field).querySelectorAll('.column-settings-badge'), (badge) => badge.textContent?.trim());
 const problems = (index = 0) =>
     Array.from(rules()[index].querySelectorAll('.column-settings-problem'), (problem) => problem.textContent?.trim());
+/** the value of a rule: its input when it is open, else the end of its one line (a closed rule) */
+const ruleValue = (index: number) => {
+    const input = rules()[index].querySelector<HTMLInputElement>('input.filter-editor-value');
+    return input
+        ? input.value
+        : (rules()[index].querySelector('.column-settings-rule-summary')?.textContent?.trim().split(' ').pop() ?? '');
+};
 const previewCell = () => dialog().querySelector('.column-settings-preview-cell') as HTMLElement;
 const apply = () => button('Apply');
 /** the swatches of a rule: its text colours or its backgrounds */
@@ -362,14 +369,14 @@ describe('column settings - colour rules: editing', () => {
         expect(byId('rule-0-up').getAttribute('aria-label')).toEqual('Move up');
         expect(byId('rule-0-down').getAttribute('data-tooltip')).toEqual('Move down');
         byId('rule-0-up').click();
-        expect(byId<HTMLInputElement>('rule-0-value').value).toEqual('0');
+        expect(ruleValue(0)).toEqual('0');
 
         byId('rule-0-down').click();
-        expect(byId<HTMLInputElement>('rule-0-value').value).toEqual('1000');
-        expect(byId<HTMLInputElement>('rule-1-value').value).toEqual('0');
+        expect(ruleValue(0)).toEqual('1000');
+        expect(ruleValue(1)).toEqual('0');
         expect(document.activeElement).toBe(byId('rule-1-down'));
         byId('rule-1-up').click();
-        expect(byId<HTMLInputElement>('rule-0-value').value).toEqual('0');
+        expect(ruleValue(0)).toEqual('0');
         expect(document.activeElement).toBe(byId('rule-0-up'));
     });
 
@@ -383,7 +390,7 @@ describe('column settings - colour rules: editing', () => {
 
         expect(byId('rule-0-remove').getAttribute('aria-label')).toEqual('Remove rule');
         byId('rule-1-remove').click();
-        expect(rules().map((_, i) => byId<HTMLInputElement>(`rule-${i}-value`).value)).toEqual(['0', '2000']);
+        expect(rules().map((_, i) => ruleValue(i))).toEqual(['0', '2000']);
         expect(document.activeElement).toBe(byId('rule-1-remove'));
         byId('rule-1-remove').click();
         expect(document.activeElement).toBe(byId('rule-0-remove'));

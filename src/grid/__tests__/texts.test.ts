@@ -442,6 +442,14 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
     option('«Active»').click();
     byId('rules-add').click();
     check();
+    // a second rule: the first closed, one line with "Edit the rule"; the second unchecked, closed by a
+    // third: "Not checked" on its line
+    byId('rules-add').click();
+    const unchecked = byId('rule-1-value') as HTMLInputElement;
+    unchecked.checked = false;
+    unchecked.dispatchEvent(new Event('change', { bubbles: true }));
+    byId('rules-add').click();
+    check();
 
     // what the dialog shows after each step below, checked at the end: a walk of the whole page after
     // each would take longer than the test may

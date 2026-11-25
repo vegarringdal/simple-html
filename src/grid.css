@@ -3366,6 +3366,50 @@
     flex-wrap: wrap;
     align-items: flex-start;
     gap: 12px;
+    /* its width decides the layout below: side by side, or one at a time (a phone) */
+    container-type: inline-size;
+}
+
+/* side by side: the list stays in view while the settings scroll (a laptop at 150 %: some 300px of body) */
+.simple-html-grid.filter-editor-content .column-settings-columns {
+    position: sticky;
+    top: 0;
+}
+
+/* "‹ Columns": only where the list and the settings take turns */
+.simple-html-grid.filter-editor-content .column-settings-back {
+    display: none;
+    align-self: flex-start;
+}
+
+/*
+ * Narrow (a phone, a small window): the list of the columns, or the settings of the one picked - never
+ * the one under the other, the settings a long scroll down past every column. A column clicked, or Enter
+ * in the list, shows its settings; "‹ Columns" the list again (ColumnSettings.detail)
+ */
+@container (max-width: 520px) {
+    .simple-html-grid.filter-editor-content .column-settings-body:not(.column-settings-detail) .column-settings-panel {
+        display: none;
+    }
+
+    .simple-html-grid.filter-editor-content .column-settings-body.column-settings-detail .column-settings-columns {
+        display: none;
+    }
+
+    .simple-html-grid.filter-editor-content .column-settings-columns {
+        position: static;
+        flex-basis: 100%;
+        max-width: none;
+    }
+
+    .simple-html-grid.filter-editor-content .column-settings-list {
+        max-height: none;
+    }
+
+    .simple-html-grid.filter-editor-content .column-settings-back {
+        display: inline-flex;
+        align-items: center;
+    }
 }
 
 /* the columns: a listbox framed as the inputs, its option picked lit as a selected row. The list has
@@ -3374,7 +3418,8 @@
     flex: 1 1 200px;
     min-width: 160px;
     max-width: 260px;
-    max-height: 360px;
+    /* the room of a low window too: the list scrolls in itself, its Add calculated column in view */
+    max-height: max(120px, min(360px, calc(100vh - 260px)));
     overflow-y: auto;
     box-sizing: border-box;
     border: 1px solid var(--simple-html-grid-control-border-color);
@@ -3793,6 +3838,62 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 4px 8px;
+}
+
+/* a closed rule: one line - a button with its sample in its colours and what it matches, the arrows and
+ * the remove after it. The summary is cut with … when the line has no room */
+.simple-html-grid.filter-editor-content .column-settings-rule-closed .column-settings-rule-head {
+    flex-wrap: nowrap;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-toggle {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    min-height: 24px;
+    margin: 0;
+    padding: 0 4px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-toggle:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-toggle:focus-visible {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: -2px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-chevron {
+    flex: none;
+    width: 1em;
+}
+
+/* the sample: the rule's colours as a cell has them (the classes and custom properties of colorRules.ts) */
+.simple-html-grid.filter-editor-content .column-settings-rule-sample {
+    flex: none;
+    padding: 0 6px;
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-sample:not(.simple-html-grid-cell-bg) {
+    background-color: var(--simple-html-grid-main-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-summary {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .simple-html-grid.filter-editor-content .column-settings-rule-kind {

@@ -160,6 +160,17 @@ interface ColumnSettings {
     caseSensitive: Record<string, boolean>;
     /** the column shown on the right */
     field: string;
+    /**
+     * a narrow dialog (a phone) shows the list of the columns or the settings of one, not both: true while
+     * it shows the settings - a column clicked, Enter in the list. Its "‹ Columns" goes back. A wide
+     * dialog shows both whatever it is (css, a container query)
+     */
+    detail: boolean;
+    /**
+     * the colour rule open in the column's settings, its index: the others are one line each. null: none
+     * (closed by the user); undefined: not picked yet - the first with a problem, else the first
+     */
+    openRule: number | null | undefined;
     /** the tab shown: the columns' settings, or the detail form's */
     tab: GridConfigTab;
     /**
@@ -248,6 +259,9 @@ export function openColumnSettings(ctx: Grid, field?: string, tab: GridConfigTab
             fields.filter((name) => takesMatchCase(ctx, name)).map((name) => [name, isHeaderFilterCaseSensitive(ctx, name)])
         ),
         field: field !== undefined && fields.includes(field) ? field : fields[0],
+        // opened on a column (its header menu): its settings, also on a phone
+        detail: field !== undefined,
+        openRule: undefined,
         tab,
         section: 'general',
         detailForm: detailFormDraft(ctx, ctx.gridInterface.getState().detailForm),
@@ -543,6 +557,10 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
     };
 
     const select = (name: string) => {
+        if (name !== settings.field) {
+            // the rules of another column: the first open again
+            settings.openRule = undefined;
+        }
         settings.field = name;
         update();
         // the option picked in view in the list
@@ -719,6 +737,12 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         if (next !== -1) {
             event.preventDefault();
             select(fields[next]);
+        } else if (event.key === 'Enter') {
+            // on a phone: the settings of the column, the focus on "‹ Columns"
+            event.preventDefault();
+            settings.detail = true;
+            update();
+            dialog.querySelector<HTMLElement>('.column-settings-back')?.focus();
         }
     };
 
@@ -1254,7 +1278,14 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
             fieldOf,
             fields: formulaFields,
             row: at ? previewOf(at.row) : undefined,
-            insertButton: (inputId, write) => insertButton(inputId, write, formulaFields)
+            insertButton: (inputId, write) => insertButton(inputId, write, formulaFields),
+            open: settings.openRule,
+            setOpen: (index, render = true) => {
+                settings.openRule = index;
+                if (render) {
+                    update();
+                }
+            }
         });
 
     /**
@@ -1684,7 +1715,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                 idOf(ctx, 'title')
             )}
             <div
-                class="filter-editor-body column-settings-body simple-html-dialog-scroller"
+                class=${`filter-editor-body column-settings-body simple-html-dialog-scroller${settings.detail ? ' column-settings-detail' : ''}`}
                 role="tabpanel"
                 id=${tabPanelId(ctx, 'columns')}
                 aria-labelledby=${tabId(ctx, 'columns')}
@@ -1707,7 +1738,11 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                             id=${idOf(ctx, `option-${index}`)}
                             data-field=${name}
                             aria-selected=${name === field ? 'true' : 'false'}
-                            @click=${() => select(name)}
+                            @click=${() => {
+                                // on a phone: its settings in place of the list
+                                settings.detail = true;
+                                select(name);
+                            }}
                         >
                             <span class="column-settings-option-label">${labelOf(name)}</span>
                             <span class="column-settings-option-type">${typeName(name)}</span>
@@ -1737,6 +1772,17 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                 </button>
                 </div>
                 <div class="column-settings-panel">
+                    <button
+                        type="button"
+                        class="simple-html-grid-button column-settings-back"
+                        @click=${() => {
+                            settings.detail = false;
+                            update();
+                            dialog.querySelector<HTMLElement>('.column-settings-list')?.focus();
+                        }}
+                    >
+                        ${text('columnSettings.back')}
+                    </button>
                     <div class="column-settings-heading">
                         <span class="column-settings-heading-label">${labelOf(field)}</span>
                         <span class="column-settings-option-type">${typeName(field)}</span>

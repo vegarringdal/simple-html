@@ -1,5 +1,6 @@
 import { html, nothing, type TemplateResult } from 'lit-html';
 import { live } from 'lit-html/directives/live.js';
+import { styleMap } from 'lit-html/directives/style-map.js';
 import type { Entity } from '../../datasource/entity';
 import type { FieldType } from '../../datasource/field';
 import type { FilterOperator } from '../../datasource/filterExpression';
@@ -7,7 +8,9 @@ import type { TextId } from '../../texts';
 import { readerOf } from '../calculatedColumns';
 import {
     type ColorRule,
+    colorRuleClasses,
     colorRuleProblem,
+    colorRuleStyle,
     formulaRuleProblem,
     PALETTE_COLORS,
     type PaletteColor,
@@ -90,6 +93,14 @@ export interface RuleSettings {
     row: Entity | undefined;
     /** the `{ }` button of a template: puts a field in the input of the id at its caret */
     insertButton: (inputId: string, write: (text: string) => void) => TemplateResult;
+    /**
+     * the rule open, its index - the others are one line each (its colours and its condition), so a
+     * column of rules fits a small screen. null: none; undefined: not picked - the first with a problem,
+     * else the first
+     */
+    open: number | null | undefined;
+    /** opens a rule (null: closes it); `render` false when a write renders after it */
+    setOpen: (index: number | null, render?: boolean) => void;
 }
 
 /**
@@ -303,6 +314,17 @@ export function colorSwatches(ctx: Grid, options: SwatchOptions): TemplateResult
  */
 export function colorRuleSettings(ctx: Grid, settings: RuleSettings): TemplateResult {
     const { dialog, field, rules, idOf, fieldOf } = settings;
+    /** the rule open: the one picked, else the first with a problem, else the first */
+    const openIndex = (): number | null => {
+        if (settings.open !== undefined) {
+            return settings.open;
+        }
+        const withProblem = rules.findIndex(
+            (rule) => ruleProblem(rule, fieldOf, (id, values) => gridText(ctx, id as TextId, values)) !== null
+        );
+        return withProblem !== -1 ? withProblem : rules.length ? 0 : null;
+    };
+    const open = openIndex();
     /** the rules in the draft, each tidy */
     const write = (next: ColorRule[]) => settings.write(next.map(tidyRule));
     const text = (id: TextId, values?: Readonly<Record<string, unknown>>) => gridText(ctx, id, values);
@@ -341,6 +363,8 @@ export function colorRuleSettings(ctx: Grid, settings: RuleSettings): TemplateRe
         if (value !== undefined) {
             rule.value = value;
         }
+        // the new rule open, the others closed
+        settings.setOpen(rules.length, false);
         write([...structuredClone([...rules]), rule]);
         focus(idOf(`rule-${rules.length}-operator`));
     };
@@ -351,11 +375,20 @@ export function colorRuleSettings(ctx: Grid, settings: RuleSettings): TemplateRe
         }
         const next = structuredClone([...rules]);
         [next[index], next[to]] = [next[to], next[index]];
+        // the open rule stays open where it went
+        if (open === index || open === to) {
+            settings.setOpen(open === index ? to : index, false);
+        }
         write(next);
         // the button pressed, on the rule moved
         focus(idOf(`rule-${to}-${step === -1 ? 'up' : 'down'}`));
     };
     const remove = (index: number) => {
+        // the open rule removed: the next one open (the one before for the last), as the focus goes
+        if (open !== null && open >= index) {
+            const left = rules.length - 1;
+            settings.setOpen(open === index ? (left ? Math.min(index, left - 1) : null) : open - 1, false);
+        }
         write(rules.filter((_, i) => i !== index).map((rule) => structuredClone(rule)));
         // the next rule's Remove, else the one before's, else Add rule
         const next = Math.min(index, rules.length - 2);
@@ -901,6 +934,40 @@ export function colorRuleSettings(ctx: Grid, settings: RuleSettings): TemplateRe
             ${result}`;
     };
 
+    /**
+     * what a closed rule matches, in a few words: its operator and value (`Greater than 100`, a quick date's
+     * name), its conditions joined by AND / OR, its formula as written
+     */
+    const summaryOf = (rule: ColorRule): string => {
+        const kind = ruleKind(rule);
+        if (kind === 'formula') {
+            return rule.expression ?? '';
+        }
+        const one = (on: string, condition: { operator?: string; value?: ColorRule['value']; datePreset?: DatePreset }) => {
+            const operator = condition.operator as FilterOperator | undefined;
+            const name = operator ? operatorName(operator) : '';
+            const value = condition.datePreset
+                ? text(DATE_PRESET_TEXTS[condition.datePreset])
+                : typeOf(on) === 'boolean' && typeof condition.value === 'string'
+                  ? // a checkbox: Checked / Not checked, as the editor says it
+                    text(condition.value === 'true' ? 'columnSettings.rules.checked' : 'columnSettings.rules.unchecked')
+                  : Array.isArray(condition.value)
+                    ? condition.value.join(' – ')
+                    : (condition.value ?? '');
+            return `${name} ${value}`.trim();
+        };
+        if (kind === 'conditions') {
+            const joiner = rule.combine === 'OR' ? ' OR ' : ' AND ';
+            return (rule.conditions ?? [])
+                .map((condition) => {
+                    const label = fieldOf(condition.field) ? getColumnLabel(ctx, condition.field) : `{${condition.field}}`;
+                    return `${label} ${one(condition.field, condition)}`;
+                })
+                .join(joiner);
+        }
+        return one(field, rule);
+    };
+
     /** a rule: its kind and buttons, its condition, its colours, Bold, its problems */
     const ruleTemplate = (rule: ColorRule, index: number) => {
         const kind = ruleKind(rule);
@@ -936,6 +1003,48 @@ export function colorRuleSettings(ctx: Grid, settings: RuleSettings): TemplateRe
                 : kind === 'conditions'
                   ? conditionsTemplate(rule, index, problemId, problem !== null)
                   : formulaTemplate(rule, index, problemId, problem !== null);
+        const buttons = html`<span class="column-settings-rule-buttons">
+            ${iconButton(idOf(`rule-${index}-up`), 'columnSettings.rules.moveUp', '↑', index === 0, () => move(index, -1))}
+            ${iconButton(idOf(`rule-${index}-down`), 'columnSettings.rules.moveDown', '↓', index === rules.length - 1, () =>
+                move(index, 1)
+            )}
+            ${iconButton(idOf(`rule-${index}-remove`), 'columnSettings.rules.remove', '✕', false, () => remove(index))}
+        </span>`;
+        if (open !== index) {
+            // one line: the sample in its colours, what it matches, its problem - a click opens it
+            return html`<div
+                class="column-settings-rule column-settings-rule-closed"
+                role="group"
+                aria-label=${text('columnSettings.rules.rule', { number: index + 1 })}
+                data-rule=${String(index)}
+                data-kind=${kind}
+            >
+                <div class="column-settings-rule-head">
+                    <button
+                        type="button"
+                        id=${idOf(`rule-${index}-toggle`)}
+                        class="column-settings-rule-toggle"
+                        aria-expanded="false"
+                        data-tooltip=${text('columnSettings.rules.open')}
+                        @click=${() => {
+                            settings.setOpen(index);
+                            focus(idOf(`rule-${index}-toggle`));
+                        }}
+                    >
+                        <span class="column-settings-rule-chevron" aria-hidden="true">▸</span>
+                        <span
+                            class=${['column-settings-rule-sample', ...colorRuleClasses(rule)].join(' ')}
+                            style=${styleMap(colorRuleStyle(rule))}
+                            aria-hidden="true"
+                            >${text('columnSettings.rules.sample')}</span
+                        >
+                        <span class="column-settings-rule-summary">${summaryOf(rule)}</span>
+                        ${problem ? html`<span class="column-settings-tab-problem" role="img" aria-label=${text('columnSettings.badge.problem')}></span>` : nothing}
+                    </button>
+                    ${buttons}
+                </div>
+            </div>`;
+        }
         return html`<div
             class="column-settings-rule"
             role="group"
@@ -944,18 +1053,22 @@ export function colorRuleSettings(ctx: Grid, settings: RuleSettings): TemplateRe
             data-kind=${kind}
         >
             <div class="column-settings-rule-head">
+                <button
+                    type="button"
+                    id=${idOf(`rule-${index}-toggle`)}
+                    class="filter-editor-icon column-settings-rule-button column-settings-rule-collapse"
+                    aria-expanded="true"
+                    aria-label=${text('columnSettings.rules.close')}
+                    data-tooltip=${text('columnSettings.rules.close')}
+                    @click=${() => {
+                        settings.setOpen(null);
+                        focus(idOf(`rule-${index}-toggle`));
+                    }}
+                >
+                    ▾
+                </button>
                 ${kindChoice(rule, index)}
-                <span class="column-settings-rule-buttons">
-                    ${iconButton(idOf(`rule-${index}-up`), 'columnSettings.rules.moveUp', '↑', index === 0, () => move(index, -1))}
-                    ${iconButton(
-                        idOf(`rule-${index}-down`),
-                        'columnSettings.rules.moveDown',
-                        '↓',
-                        index === rules.length - 1,
-                        () => move(index, 1)
-                    )}
-                    ${iconButton(idOf(`rule-${index}-remove`), 'columnSettings.rules.remove', '✕', false, () => remove(index))}
-                </span>
+                ${buttons}
             </div>
             ${condition} ${swatches(index, 'color', rule.color)} ${swatches(index, 'background', rule.background)}
             <label class="column-settings-check">

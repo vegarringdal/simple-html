@@ -663,6 +663,7 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.title.tooltip` | `Drag to move the dialog` | the title's tooltip |
 | `columnSettings.close.tooltip` | `Close without applying` | the ✕: its name and tooltip |
 | `columnSettings.columns` | `Columns` | the name of the list of the columns, for a screen reader |
+| `columnSettings.back` | `‹ Columns` | back to the list of the columns, where they take turns with a column's settings: a narrow dialog (a phone) |
 | `columnSettings.type.text` | `Text` | the type of a text column, in the list and over its settings |
 | `columnSettings.type.number` | `Number` | a number column |
 | `columnSettings.type.boolean` | `Checkbox` | a boolean column |
@@ -771,6 +772,10 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.rules.moveUp` | `Move up` | the button that moves a rule before the one above it: its name and tooltip |
 | `columnSettings.rules.moveDown` | `Move down` | after the one under it |
 | `columnSettings.rules.remove` | `Remove rule` | the ✕ of a rule |
+| `columnSettings.rules.open` | `Edit the rule` | the tooltip of a closed rule's line: a click opens it |
+| `columnSettings.rules.close` | `Close the rule` | the ▾ of the open rule: one line again |
+| `columnSettings.rules.sample` | `Abc` | the sample in a closed rule's colours |
+| `columnSettings.rules.unchecked` | `Not checked` | a closed rule on a checkbox column whose box is not checked |
 | `columnSettings.rules.problem.value` | `Write the value to compare with` | a rule's operator compares, its value is empty (a Between: both) |
 | `columnSettings.rules.problem.style` | `Pick a text colour, a background or bold` | a rule that colours nothing |
 | `columnSettings.rules.unread` | `The column does not read {value}: the rule colours no cell` | `{value}`: a value the field's formatter does not read - a date of another format. Apply is not held back |
