@@ -390,6 +390,15 @@ const check = (name, ok, detail = '') =>
             now.values[0] === before && now.shown[0] === (before === '1'),
             now
         );
+        /** the header filter of a column shown as checkboxes is a checkbox, neither checked nor unchecked at first */
+        const expectFilterCheckbox = async (locator) => {
+            const box = await locator.evaluate((el) => ({ type: el.type, indeterminate: el.indeterminate }));
+            check(
+                `${name}: checkbox: the header filter is a checkbox, no filter at first`,
+                box.type === 'checkbox' && box.indeterminate,
+                box
+            );
+        };
         await page.locator('.stage button', { hasText: 'Editing: off' }).first().click();
         await page.waitForTimeout(200);
         // the value stays the value: the CSV, the header filter, sorting
@@ -399,15 +408,16 @@ const check = (name, ok, detail = '') =>
             csv[0] === 'Newsletter' && csv.slice(1, 6).every((line) => line === '0' || line === '1'),
             csv.slice(0, 4)
         );
-        await filterInput('Newsletter').fill('1');
-        await filterInput('Newsletter').press('Enter');
+        // the header filter is a checkbox now: a click checks it - the rows of the checked value
+        await expectFilterCheckbox(filterInput('Newsletter'));
+        await filterInput('Newsletter').click();
         await page.waitForTimeout(250);
         const filtered = await api((gi) => {
             const rows = gi.getDatasource().getRows();
             return { count: rows.length, all1: rows.every((r) => r.newsletter === '1') };
         });
         check(
-            `${name}: checkbox: a header filter on 1 keeps the checked rows`,
+            `${name}: checkbox: the header's checkbox checked keeps the checked rows`,
             filtered.count > 0 && filtered.count < 5000 && filtered.all1,
             filtered
         );
@@ -417,9 +427,22 @@ const check = (name, ok, detail = '') =>
             now.shown.every((on) => on),
             now
         );
-        await filterInput('Newsletter').fill('');
-        await filterInput('Newsletter').press('Enter');
+        // not checked: the others; a third click: no filter
+        await filterInput('Newsletter').click();
         await page.waitForTimeout(250);
+        const unchecked = await api((gi) => {
+            const rows = gi.getDatasource().getRows();
+            return { count: rows.length, none1: rows.every((r) => r.newsletter !== '1') };
+        });
+        check(
+            `${name}: checkbox: the header's checkbox unchecked keeps the others`,
+            unchecked.count > 0 && unchecked.none1,
+            unchecked
+        );
+        await filterInput('Newsletter').click();
+        await page.waitForTimeout(250);
+        const all = await api((gi) => gi.getDatasource().getRows().length);
+        check(`${name}: checkbox: a third click, no filter`, all >= 5000 || all === filtered.count + unchecked.count, { all });
         // a click on the header sorts
         await page.locator('.stage [data-attribute-header="newsletter"]').click();
         await page.waitForTimeout(250);
