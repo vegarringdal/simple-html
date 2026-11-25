@@ -5413,6 +5413,29 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * a text may not hold `{x}` - the texts read it as a value to fill in: the COALESCE tooltip says
   `COALESCE(x, 0)`
 
+### The Colours tab of a number column: panels (2026-11-25)
+
+* the user: "maybe color rules, bars, scales should be sub panels". A number column's Colours tab is four
+  panels, one open at a time (ColumnSettings.colourPanel, Colour rules open first, kept for the next
+  column): Colour rules, Data bar, Colour scale, Icons - each a button line with ▸ / ▾, its title, what it
+  has (`1 rule`, `{count} rules`, No rules, On, Off: columnSettings.colours.*) and the red square of a
+  problem in it. valueFillSettings(ctx, settings, only) renders one kind; FillProblem.kinds says which
+  panel a problem is of. The section's own heading is hidden in a panel (kept for a screen reader). A
+  column of another type keeps its colour rules alone
+* tests: the bars tests open the panel of the part they use (openPanelOf); the texts test turns the three
+  on before it types their problems (an Error badge hides the others); data-bars-check.js opens the panels
+
+### The grid's dialogs open within 80 % of the window (2026-11-25)
+
+* the user: "if right side of that column rules etc gets too big, then gridconfig should scroll? but user
+  can resize maybe the size of dialog, but should never start bigger than 80% height/width of screen in low
+  resolution". `.filter-editor-content` (every dialog of the grid: grid config, filter editor, import,
+  keyboard shortcuts): max-height 80vh, max-width 80vw from 600px wide (a phone keeps its whole width);
+  the body scrolls, also when a panel opens later. resizeDialog adds `simple-html-dialog-resized`: 100vw
+  / 100vh then. The list of the columns: max(120px, min(360px, 80vh - 220px))
+* dialog-small-screens-check.js: opens within 80 % (a phone the whole width), resized from the bottom edge
+  higher than 80 %
+
 ## Considered, not done
 
 ## Candidates / not started

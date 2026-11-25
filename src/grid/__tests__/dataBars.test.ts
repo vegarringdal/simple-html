@@ -357,8 +357,13 @@ describe('bars, scales, icons - the numbers of the grid config dialog', () => {
 
         expect(ids({ bar: {}, scale: { minColor: 'red', maxColor: 'green' }, icons: { set: 'arrows' } })).toEqual([]);
         expect(valueFillProblems('total', { bar: {} }, { 'total|bar-min': 'x', 'other|bar-min': 'y' })).toEqual([
-            { id: 'columnSettings.bars.problem.notNumber', values: { value: 'x' } }
+            { id: 'columnSettings.bars.problem.notNumber', values: { value: 'x' }, kinds: ['bar'] }
         ]);
+        // each problem names the panel it is in: a scale's min and max, an icon set's thresholds
+        expect(
+            valueFillProblems('total', { scale: { minColor: 'red', maxColor: 'green', min: 5, max: 1 } }, {})[0].kinds
+        ).toEqual(['scale']);
+        expect(valueFillProblems('total', { icons: { set: 'arrows' } }, { 'total|icons-low': 'x' })[0].kinds).toEqual(['icons']);
         expect(ids({ bar: { min: 5, max: 1 } })).toEqual(['columnSettings.bars.problem.minMax']);
         expect(ids({ scale: { minColor: 'red', maxColor: 'green', min: 5, max: 5 } })).toEqual([
             'columnSettings.bars.problem.minMax'

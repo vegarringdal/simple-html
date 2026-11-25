@@ -1366,6 +1366,10 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 #### Helpers for an app with a backend: v5 filters, the columns from the fields, the filter to send, the 400 errors, fields known later, rows from JSON
 
 ##### Added
+- the grid's dialogs open within 80 % of the window's height and width (a phone: its whole width), what does
+  not fit scrolls inside; resized by the user, as large as the window
+- the Colours tab of a number column in four panels, one open at a time - Colour rules, Data bar, Colour scale,
+  Icons - each a line saying what it has and whether it has a problem
 - the **ƒ** button beside a formula (a calculated column's, a colour rule's): a menu of the functions by kind,
   each with a tooltip of what it does; picked, put in at the caret. `MenuItem.tooltip`: a tooltip on an
   item of a menu, its description for a screen reader too

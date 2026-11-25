@@ -47,7 +47,12 @@ type NumberPart = 'bar-min' | 'bar-max' | 'scale-min' | 'scale-mid' | 'scale-max
 export interface FillProblem {
     id: TextId;
     values?: Readonly<Record<string, unknown>>;
+    /** the kinds it is a problem of: its panel of the Colours tab is marked, and says it */
+    kinds: readonly FillKind[];
 }
+
+/** the three kinds of the section: each a panel of its own in the Colours tab */
+export type FillKind = 'bar' | 'scale' | 'icons';
 
 /**
  * What the section edits and how
@@ -97,24 +102,28 @@ export function valueFillProblems(field: string, format: ColumnFormat | undefine
     const problems: FillProblem[] = [];
     for (const [key, text] of Object.entries(typed)) {
         if (key.startsWith(`${field}|`) && parseNumberText(text) === null) {
-            problems.push({ id: 'columnSettings.bars.problem.notNumber', values: { value: text.trim() } });
+            const kind = key.slice(field.length + 1).split('-')[0] as FillKind;
+            problems.push({ id: 'columnSettings.bars.problem.notNumber', values: { value: text.trim() }, kinds: [kind] });
         }
     }
     const { bar, scale, icons } = format ?? {};
     const below = (min: number | undefined, max: number | undefined) => min === undefined || max === undefined || min < max;
-    if ((bar && !below(bar.min, bar.max)) || (scale && !below(scale.min, scale.max))) {
-        problems.push({ id: 'columnSettings.bars.problem.minMax' });
+    if (bar && !below(bar.min, bar.max)) {
+        problems.push({ id: 'columnSettings.bars.problem.minMax', kinds: ['bar'] });
+    }
+    if (scale && !below(scale.min, scale.max)) {
+        problems.push({ id: 'columnSettings.bars.problem.minMax', kinds: ['scale'] });
     }
     const mid = scale?.mid;
     if (mid !== undefined && ((scale?.min !== undefined && mid < scale.min) || (scale?.max !== undefined && mid > scale.max))) {
-        problems.push({ id: 'columnSettings.bars.problem.mid' });
+        problems.push({ id: 'columnSettings.bars.problem.mid', kinds: ['scale'] });
     }
     const [low, high] = icons?.thresholds ?? DEFAULT_THRESHOLDS;
     if (icons && low > high) {
-        problems.push({ id: 'columnSettings.bars.problem.thresholds' });
+        problems.push({ id: 'columnSettings.bars.problem.thresholds', kinds: ['icons'] });
     }
     if (icons && icons.unit !== 'number' && (low < 0 || high > 100)) {
-        problems.push({ id: 'columnSettings.bars.problem.percent' });
+        problems.push({ id: 'columnSettings.bars.problem.percent', kinds: ['icons'] });
     }
     return problems;
 }
@@ -149,13 +158,14 @@ export function previewFill(
  * The section: its heading and hint, the data bar, the colour scale, the icons, the problems, the five
  * cells of the preview
  */
-export function valueFillSettings(ctx: Grid, settings: FillSettings): TemplateResult {
+export function valueFillSettings(ctx: Grid, settings: FillSettings, only?: FillKind): TemplateResult {
     const { field, format, change, typed, idOf } = settings;
     const text = (id: TextId, values?: Readonly<Record<string, unknown>>) => gridText(ctx, id, values);
     const headingId = idOf('bars-heading');
     const hintId = idOf('bars-hint');
     const problemId = idOf('bars-problem');
-    const problems = valueFillProblems(field, format, typed);
+    // one kind (a panel of the Colours tab): its problems only
+    const problems = valueFillProblems(field, format, typed).filter((problem) => !only || problem.kinds.includes(only));
     const { bar, scale, icons } = format ?? {};
 
     /** the typed texts of the parts of a kind dropped: it was turned off */
@@ -428,12 +438,13 @@ export function valueFillSettings(ctx: Grid, settings: FillSettings): TemplateRe
     return html`<div class="column-settings-field column-settings-bars" role="group" aria-labelledby=${headingId} aria-describedby=${hintId}>
         <span class="column-settings-label" id=${headingId}>${text('columnSettings.bars')}</span>
         <div class="column-settings-hint" id=${hintId}>${text('columnSettings.bars.hint')}</div>
-        ${toggle('bar', 'columnSettings.bars.bar')} ${barPart} ${toggle('scale', 'columnSettings.bars.scale')} ${scalePart}
-        ${toggle('icons', 'columnSettings.bars.icons')} ${iconsPart}
+        ${!only || only === 'bar' ? html`${toggle('bar', 'columnSettings.bars.bar')} ${barPart}` : nothing}
+        ${!only || only === 'scale' ? html`${toggle('scale', 'columnSettings.bars.scale')} ${scalePart}` : nothing}
+        ${!only || only === 'icons' ? html`${toggle('icons', 'columnSettings.bars.icons')} ${iconsPart}` : nothing}
         <div class="column-settings-problems" id=${problemId} aria-live="polite">
             ${problems.map((problem) => html`<div class="column-settings-problem">${text(problem.id, problem.values)}</div>`)}
         </div>
-        ${bar || scale || icons ? samples(ctx, settings) : nothing}
+        ${(only ? format?.[only] : bar || scale || icons) ? samples(ctx, settings) : nothing}
     </div>`;
 }
 

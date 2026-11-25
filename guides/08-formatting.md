@@ -662,8 +662,11 @@ Its title is *Grid config*. Under the title bar are three tabs:
   [The detail form](02-grid-config.md#the-detail-form).
 - **Defaults**: the settings of the grid, not of a column.
 
-**Small screens.** The dialog fits a laptop of 1366x768 or 1280x720 at 150 % zoom, and a phone: what does
-not fit scrolls inside it, its buttons stay at the bottom. Side by side, the list of the columns stays in
+**Small screens.** The dialog fits a laptop of 1366x768 or 1280x720 at 150 % zoom, and a phone: it opens
+within 80 % of the window's height and width (a phone: its whole width), what does not fit scrolls inside
+it - also when more opens in it - and its buttons stay at the bottom. Resized by its edges or corners, it
+can be as large as the window. The grid's other dialogs (the filter editor, the import, the keyboard
+shortcuts) open within 80 % too. Side by side, the list of the columns stays in
 view while the settings scroll. Narrower than some 520px (a phone), the list and a column's settings take
 turns: a column clicked (or Enter in the list) shows its settings, **‹ Columns** the list again.
   - *Formats by type*: a picker of the format of every date, date and time, and number column without a
@@ -688,7 +691,7 @@ in tabs of their own, under the column's name:
 | **General** | Label - or a calculated column's field name, label and formula - Multiline, Read only, Placeholder |
 | **Display** | what the cells show: the format, Filter as shown, blank / 0, Text shown, Show as link, Show as checkbox. Not for a checkbox or a lookup column: General says they have no format |
 | **Header filter** | Filter operator, Filter as you type. Not for a checkbox column |
-| **Colours** | Colour rules; Data bars, scales, icons for a number column |
+| **Colours** | Colour rules; for a number column four panels, one open at a time - *Colour rules*, *Data bar*, *Colour scale*, *Icons* - each a line saying what it has (*2 rules*, *On*, *Off*, a red square for a problem in it), a click opens it |
 
 A tab with a problem in it has a small red square after its name (*Error* for a screen reader): *Apply*
 waits for it. The tab picked stays when another column is picked - General for a column without it. A

@@ -40,7 +40,30 @@ const mount = (more: GridConfig['columns'] = {}) => mountGrid(config(more), rows
 
 const dialog = () => document.querySelector('dialog.column-settings') as HTMLDialogElement;
 const section = () => dialog().querySelector('.column-settings-bars') as HTMLElement | null;
-const byId = <T extends HTMLElement = HTMLInputElement>(part: string) => dialog().querySelector(`[id$="-settings-${part}"]`) as T;
+/**
+ * the panel of the Colours tab a part of the section is in (Data bar, Colour scale, Icons), opened when it
+ * is closed: a number column shows one panel at a time
+ */
+function openPanelOf(part: string) {
+    const kind = part.startsWith('bars-bar')
+        ? 'bar'
+        : part.startsWith('bars-scale')
+          ? 'scale'
+          : part.startsWith('bars-')
+            ? 'icons'
+            : null;
+    if (!kind) {
+        return;
+    }
+    const toggle = dialog().querySelector(`[id$="-settings-colours-${kind}"]`) as HTMLElement | null;
+    if (toggle?.getAttribute('aria-expanded') === 'false') {
+        toggle.click();
+    }
+}
+const byId = <T extends HTMLElement = HTMLInputElement>(part: string) => {
+    openPanelOf(part);
+    return dialog().querySelector(`[id$="-settings-${part}"]`) as T;
+};
 const button = (text: string) =>
     Array.from(dialog().querySelectorAll<HTMLButtonElement>('button')).find(
         (each) => each.textContent?.trim() === text
@@ -67,6 +90,7 @@ function type(part: string, value: string) {
 
 /** picks a swatch of a row of swatches by its name */
 function pick(part: string, name: string) {
+    openPanelOf(part);
     const swatch = Array.from(dialog().querySelectorAll<HTMLInputElement>(`input[name$="-settings-${part}"]`)).find(
         (each) => each.getAttribute('aria-label') === name
     ) as HTMLInputElement;
@@ -76,6 +100,7 @@ function pick(part: string, name: string) {
 
 /** the name of the swatch picked in a row of swatches */
 const picked = (part: string) =>
+    openPanelOf(part) ??
     Array.from(dialog().querySelectorAll<HTMLInputElement>(`input[name$="-settings-${part}"]`))
         .find((each) => each.checked)
         ?.getAttribute('aria-label');
@@ -98,6 +123,12 @@ describe('the grid config dialog - data bars, scales, icons', () => {
         const { gridInterface } = await mount();
 
         gridInterface.openColumnSettings('amount');
+        // the Colours tab: four panels, Colour rules open - each a line saying what it has
+        const lines = Array.from(dialog().querySelectorAll('.column-settings-colour-panel-toggle'), (toggle) =>
+            toggle.textContent?.replace(/\s+/g, ' ').trim()
+        );
+        expect(lines).toEqual(['▾ Colour rules No rules', '▸ Data bar Off', '▸ Colour scale Off', '▸ Icons Off']);
+        openPanelOf('bars-bar');
         expect(section()?.querySelector('.column-settings-label')?.textContent).toBe('Data bars, scales, icons');
         expect(byId('bars-bar').checked).toBe(false);
         expect(byId('bars-scale').checked).toBe(false);

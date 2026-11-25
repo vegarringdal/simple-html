@@ -57,6 +57,17 @@ const measure = (page) =>
             await page.click('.stage simple-html-grid .footer-settings');
             await page.waitForSelector(dialog);
 
+            // it starts within 80 % of the window - its width the whole on a phone
+            const start = await page.$eval(dialog, (d) => {
+                const box = d.getBoundingClientRect();
+                return { w: box.width / innerWidth, h: box.height / innerHeight };
+            });
+            check(
+                `${name}: it opens within 80 % of the window${phone ? ' high, the whole width' : ''}`,
+                start.h <= 0.801 && (phone ? start.w > 0.95 : start.w <= 0.801),
+                start
+            );
+
             const shown = (selector) =>
                 page.$eval(
                     `${dialog} ${selector}`,
@@ -163,6 +174,17 @@ const measure = (page) =>
                     sticky.scrolled > 0 && sticky.listTop >= -1 && sticky.listBottom >= -1,
                     sticky
                 );
+            }
+            if (!phone) {
+                // resized from its bottom edge: higher than the 80 % it started within, up to the window
+                const handle = await page.$(`${dialog} .simple-html-resize-handle.handle-s`);
+                const box = await handle.boundingBox();
+                await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+                await page.mouse.down();
+                await page.mouse.move(box.x + box.width / 2, box.y + 200, { steps: 4 });
+                await page.mouse.up();
+                const grown = await page.$eval(dialog, (d) => d.getBoundingClientRect().height / innerHeight);
+                check(`${name}: resized, higher than 80 % of the window`, grown > 0.85, { grown });
             }
             if (shots) {
                 await page.screenshot({ path: `${shots}/dialog-small-${name.replace(/\W+/g, '-')}.png` });

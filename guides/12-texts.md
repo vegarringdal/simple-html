@@ -819,6 +819,10 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.rules.moveUp` | `Move up` | the button that moves a rule before the one above it: its name and tooltip |
 | `columnSettings.rules.moveDown` | `Move down` | after the one under it |
 | `columnSettings.rules.remove` | `Remove rule` | the ✕ of a rule |
+| `columnSettings.colours.rules` | `{count} rules` | the line of the Colour rules panel of a number column: how many it has |
+| `columnSettings.colours.oneRule` | `1 rule` | the line of the Colour rules panel with one rule |
+| `columnSettings.colours.on` | `On` | the line of the Data bar, Colour scale or Icons panel: it is set |
+| `columnSettings.colours.off` | `Off` | the line of the Data bar, Colour scale or Icons panel: it is not set |
 | `columnSettings.rules.open` | `Edit the rule` | the tooltip of a closed rule's line: a click opens it |
 | `columnSettings.rules.close` | `Close the rule` | the ▾ of the open rule: one line again |
 | `columnSettings.rules.sample` | `Abc` | the sample in a closed rule's colours |

@@ -128,6 +128,13 @@ function unzip(buffer) {
         };
         const dialogSel = 'dialog.column-settings';
         const byId = (part) => page.locator(`${dialogSel} [id$="-settings-${part}"]`);
+        /** opens a panel of the Colours tab (Data bar, Colour scale, Icons): one is open at a time */
+        const openPanel = async (kind) => {
+            const toggle = byId(`colours-${kind}`);
+            if ((await toggle.getAttribute('aria-expanded')) === 'false') {
+                await toggle.click();
+            }
+        };
 
         /** the grid shows the field's column: scrolled sideways to it */
         const scrollTo = async (field) => {
@@ -318,9 +325,13 @@ function unzip(buffer) {
                 document.querySelector('.stage simple-html-grid').grid.gridInterface.openColumnSettings('kpi2')
             );
             await page.waitForSelector(dialogSel);
+            await page.locator(`${dialogSel} .column-settings-sections [role="tab"]`, { hasText: 'Colours' }).click();
+            await openPanel('bar');
             await byId('bars-bar').click();
             await page.locator(`${dialogSel} input[name$="-settings-bars-bar-color"][aria-label="Green"]`).click();
+            await openPanel('scale');
             await byId('bars-scale').click();
+            await openPanel('icons');
             await byId('bars-icons').click();
             await page.locator(`${dialogSel} label[data-tooltip="Traffic lights"]`).click();
             await byId('bars-icons-low').fill('20');
@@ -351,6 +362,7 @@ function unzip(buffer) {
             }, dialogSel);
             await shot('data-bars-dialog', page.locator(dialogSel));
             // a number that is no number: the problem, Apply waits
+            await openPanel('bar');
             await byId('bars-bar-min').fill('abc');
             const problem = await page.locator(`${dialogSel} .column-settings-bars .column-settings-problem`).allTextContents();
             check(`${name}: a min that is no number is said`, problem.join() === 'abc is no number', problem);
@@ -545,7 +557,12 @@ function unzip(buffer) {
     }
     await page.evaluate(() => document.querySelector('.stage simple-html-grid').grid.gridInterface.openColumnSettings('kpi2'));
     await page.waitForSelector('dialog.column-settings');
+    await page.locator('dialog.column-settings .column-settings-sections [role="tab"]', { hasText: 'Colours' }).tap();
     for (const kind of ['bar', 'scale', 'icons']) {
+        const toggle = page.locator(`dialog.column-settings [id$="-settings-colours-${kind}"]`);
+        if ((await toggle.getAttribute('aria-expanded')) === 'false') {
+            await toggle.tap();
+        }
         await page.locator(`dialog.column-settings [id$="-settings-bars-${kind}"]`).tap();
     }
     await page.waitForTimeout(150);

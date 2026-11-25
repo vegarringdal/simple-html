@@ -369,16 +369,34 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
     check();
     // a data bar, a colour scale and icons: their parts, the five cells of the preview - with the icons'
     // words for a screen reader - and the badges. Then each problem of their numbers, the other choices
-    toggleText('columnSettings.bars.bar');
-    toggleText('columnSettings.bars.scale');
-    toggleText('columnSettings.bars.icons');
+    // the Colours tab of a number column: its panels' lines (Off, No rules), then each panel open in turn
     check();
+    const byIdButton = (part: string) => dialog().querySelector(`[id$="-settings-${part}"]`) as HTMLElement;
+    /** opens a panel of the Colours tab: a click on a closed one (a click on an open one closes it) */
+    const openPanel = (kind: string) => {
+        const toggle = byIdButton(`colours-${kind}`);
+        if (toggle.getAttribute('aria-expanded') === 'false') {
+            toggle.click();
+        }
+    };
+    // all three on: their parts, the five cells of the preview, the badges (an Error badge would hide them)
+    for (const kind of ['bar', 'scale', 'icons']) {
+        openPanel(kind);
+        toggleText(`columnSettings.bars.${kind}`);
+        check();
+    }
+    // each problem of their numbers, in its panel; the other choices of the icons
+    openPanel('bar');
     type('bars-bar-min', '«x»');
     check();
     type('bars-bar-min', '500');
     type('bars-bar-max', '1');
+    check();
+    openPanel('scale');
     type('bars-scale-max', '50');
     type('bars-scale-mid', '1000');
+    check();
+    openPanel('icons');
     type('bars-icons-low', '80');
     type('bars-icons-high', '20');
     check();
@@ -391,9 +409,20 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
     }
     toggleText('columnSettings.bars.reverse');
     check();
-    toggleText('columnSettings.bars.bar');
-    toggleText('columnSettings.bars.scale');
-    toggleText('columnSettings.bars.icons');
+    // off again, their problems with them
+    for (const kind of ['bar', 'scale', 'icons']) {
+        openPanel(kind);
+        toggleText(`columnSettings.bars.${kind}`);
+    }
+    // the line of the rules' panel with one rule and with two, then none again
+    openPanel('rules');
+    byIdButton('rules-add').click();
+    check();
+    byIdButton('rules-add').click();
+    check();
+    while (byIdButton('rule-0-remove')) {
+        byIdButton('rule-0-remove').click();
+    }
     // shown as checkboxes: the two values, their hint, each problem of them
     toggleText('columnSettings.checkbox');
     check();
@@ -569,6 +598,10 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
     check();
     // a data bar of a column without numbers in the rows: nothing to draw
     option('«Age»').click();
+    const barPanel = dialog().querySelector('[id$="-settings-colours-bar"]') as HTMLElement;
+    if (barPanel.getAttribute('aria-expanded') === 'false') {
+        barPanel.click();
+    }
     toggleText('columnSettings.bars.bar');
     check();
     datasource.filter(null);

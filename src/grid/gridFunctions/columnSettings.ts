@@ -43,7 +43,7 @@ import type { GridState } from '../gridConfig';
 import type { MenuItem } from '../gridMenus';
 import { numberOverrideOf, overrideNumberText, zeroText } from './cellText';
 import { defaultHeaderOperator, headerFilterType, headerOperators, isAlwaysCaseSensitive } from './columnFilterOptions';
-import { previewFill, valueFillProblems, valueFillSettings } from './columnSettingsBars';
+import { type FillKind, previewFill, valueFillProblems, valueFillSettings } from './columnSettingsBars';
 import { colorRuleSettings, colorRulesHaveProblem } from './columnSettingsRules';
 import { contextMenuAttributes } from './contextMenuAttributes';
 import { setHeaderFilterCaseSensitive } from './contextmenuFilter';
@@ -172,6 +172,11 @@ interface ColumnSettings {
      * (closed by the user); undefined: not picked yet - the first with a problem, else the first
      */
     openRule: number | null | undefined;
+    /**
+     * the panel of the Colours tab open on a number column - Colour rules, Data bar, Colour scale, Icons,
+     * one at a time; null: none. Kept when another column is picked
+     */
+    colourPanel: ColourPanel | null;
     /** the tab shown: the columns' settings, or the detail form's */
     tab: GridConfigTab;
     /**
@@ -214,6 +219,9 @@ interface Problem {
  * A calculated column waiting for Apply has General only, and no tabs. The preview is under every tab
  */
 type ColumnSection = 'general' | 'display' | 'filter' | 'colours';
+
+/** the panels of the Colours tab of a number column: its colour rules, and each kind of the section of bars */
+type ColourPanel = 'rules' | FillKind;
 
 /** the kind of a column, for its settings: its field's type, or a lookup column */
 type ColumnKind = 'text' | 'number' | 'boolean' | 'date' | 'datetime' | 'lookup';
@@ -263,6 +271,7 @@ export function openColumnSettings(ctx: Grid, field?: string, tab: GridConfigTab
         // opened on a column (its header menu): its settings, also on a phone
         detail: field !== undefined,
         openRule: undefined,
+        colourPanel: 'rules',
         tab,
         section: 'general',
         detailForm: detailFormDraft(ctx, ctx.gridInterface.getState().detailForm),
@@ -1293,19 +1302,81 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
      * The data bar, colour scale and icon set of a number column (ColumnFormat.bar, scale, icons):
      * columnSettingsBars.ts. Not for a column shown as checkboxes, it shows no number
      */
-    const barSettings = () =>
-        kind === 'number' && !format?.checkbox
-            ? valueFillSettings(ctx, {
-                  field,
-                  format,
-                  change,
-                  typed: settings.typedNumbers,
-                  idOf: (part) => idOf(ctx, part),
-                  formatNumber: (value) =>
-                      gridInterface.__getCellFormatter(field, undefined, undefined, shownFormat).format(value),
-                  shown: shownRange(datasource, field)
-              })
-            : nothing;
+    const hasFills = kind === 'number' && !format?.checkbox;
+    const barSettings = (only: FillKind) =>
+        valueFillSettings(
+            ctx,
+            {
+                field,
+                format,
+                change,
+                typed: settings.typedNumbers,
+                idOf: (part) => idOf(ctx, part),
+                formatNumber: (value) => gridInterface.__getCellFormatter(field, undefined, undefined, shownFormat).format(value),
+                shown: shownRange(datasource, field)
+            },
+            only
+        );
+
+    /**
+     * The Colours tab. A number column has four panels, one open at a time - Colour rules, Data bar,
+     * Colour scale, Icons: each a line saying what it has (2 rules, On, Off) and a red square for a problem
+     * in it, a click opens it. So the tab fits a small screen. Another column has its colour rules only
+     */
+    const colourSettings = () => {
+        if (!hasFills) {
+            return ruleSettings();
+        }
+        const open = settings.colourPanel;
+        const fillProblems = valueFillProblems(field, format, settings.typedNumbers);
+        const rules = format?.rules ?? [];
+        const onOff = (on: boolean) => text(on ? 'columnSettings.colours.on' : 'columnSettings.colours.off');
+        const panel = (id: ColourPanel, title: TextId, summary: string, problem: boolean, content: () => unknown) => {
+            const shown = open === id;
+            const bodyId = idOf(ctx, `colours-${id}-body`);
+            return html`<div class=${`column-settings-colour-panel${shown ? ' column-settings-colour-panel-open' : ''}`} data-panel=${id}>
+                <button
+                    type="button"
+                    id=${idOf(ctx, `colours-${id}`)}
+                    class="column-settings-colour-panel-toggle"
+                    aria-expanded=${shown ? 'true' : 'false'}
+                    aria-controls=${bodyId}
+                    @click=${() => {
+                        settings.colourPanel = shown ? null : id;
+                        update();
+                        dialog.querySelector<HTMLElement>(`#${idOf(ctx, `colours-${id}`)}`)?.focus();
+                    }}
+                >
+                    <span class="column-settings-rule-chevron" aria-hidden="true">${shown ? '▾' : '▸'}</span>
+                    <span class="column-settings-colour-panel-title">${text(title)}</span>
+                    <span class="column-settings-colour-panel-summary">${summary}</span>
+                    ${problem ? html`<span class="column-settings-tab-problem" role="img" aria-label=${text('columnSettings.badge.problem')}></span>` : nothing}
+                </button>
+                ${shown ? html`<div class="column-settings-colour-panel-body" id=${bodyId}>${content()}</div>` : nothing}
+            </div>`;
+        };
+        const fillPanel = (id: FillKind, title: TextId) =>
+            panel(
+                id,
+                title,
+                onOff(format?.[id] !== undefined),
+                fillProblems.some((problem) => problem.kinds.includes(id)),
+                () => barSettings(id)
+            );
+        return html`${panel(
+            'rules',
+            'columnSettings.rules',
+            rules.length === 1
+                ? text('columnSettings.colours.oneRule')
+                : rules.length
+                  ? text('columnSettings.colours.rules', { count: rules.length })
+                  : text('columnSettings.rules.empty'),
+            colorRulesHaveProblem(rules, fieldOf),
+            ruleSettings
+        )}
+        ${fillPanel('bar', 'columnSettings.bars.bar')} ${fillPanel('scale', 'columnSettings.bars.scale')}
+        ${fillPanel('icons', 'columnSettings.bars.icons')}`;
+    };
 
     /**
      * A calculated column of the draft (GridState.calculatedColumns): at the top of its settings, in place
@@ -1802,7 +1873,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                     )}
                     ${sectionPanel('display', hasDisplay ? settingsOf() : nothing)}
                     ${sectionPanel('filter', operatorSettings())}
-                    ${sectionPanel('colours', html`${ruleSettings()} ${barSettings()}`)}
+                    ${sectionPanel('colours', colourSettings())}
                     ${pending(field) ? nothing : preview()}
                 </div>
             </div>
