@@ -453,6 +453,37 @@ without a field or an operator (null, `''`), one without the value it needs (nul
 `Date`) and no `valueField`, a `BETWEEN` with both ends blank, an empty group. A field that is not in
 `columns` throws also then.
 
+## A column filtered on its template
+
+A text column with a template (`format.text`: `{first} {last}`, `order {value} ({id})`, the text of a link)
+is filtered on the text it shows. **`gridInterface.getShownFormulas()`** gives each such column's text as
+a formula - `CONCAT({first}, " ", {last})` - and **`toSqlWhere({ shown })`** compares that formula's SQL
+for a condition on the field, as the grid compares the text:
+
+```ts
+// in the browser
+const fields = ['first', 'last', 'order', 'id'];
+const body = JSON.stringify({ filter: gridInterface.getServerFilter({ fields }), shown: gridInterface.getShownFormulas({ fields }) });
+```
+
+```ts
+import { toSqlWhere } from '@simple-html/grid/sql';
+
+declare const body: { filter: unknown; shown: Record<string, string> };
+// in the backend: first = 'ann berg' is LOWER(first || ' ' || last) = $1
+const { sql, params } = toSqlWhere(body.filter, {
+    dialect: 'postgres',
+    columns: { first: 'first', last: 'last', order: 'order_no', id: { column: 'id', type: 'number' } },
+    shown: body.shown
+});
+```
+
+A formula writes a text as it is, a number as `12.5`, a date as `YYYY-MM-DD`, true / false as `true` /
+`false` - the default formatters'. A template with a field of another formatter (`numberComma`,
+`DDMMYYYY`, one of your own) or a `datetime` field gets no formula, nor does one that reads a field not in
+`fields`: `getServerFilter()` takes the conditions on that column out, and the browser filters them in the
+rows that come back. `filterAsShown: false` in a column's format filters its value, in the grid and in SQL.
+
 ## Calculated columns
 
 A [calculated column](23-calculated-columns.md) (`GridState.calculatedColumns`) is computed in the

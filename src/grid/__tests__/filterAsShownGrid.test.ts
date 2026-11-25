@@ -366,9 +366,8 @@ describe('filter as shown - turned off', () => {
         expect(check({ date: 'weekIso', filterAsShown: 'no' })).toThrow(
             'GridConfig: columns.due.format.filterAsShown is "no", it is true or false'
         );
-        expect(check({ filterAsShown: false }, 'text')).toThrow(
-            "GridConfig: columns.due.format.filterAsShown is for a date, datetime or number field with a format, 'due' is text"
-        );
+        // a text field: its template is filtered as shown, false filters the value
+        expect(check({ text: '{due} x', filterAsShown: false }, 'text')).not.toThrow();
         expect(check({ filterAsShown: false }, 'number', true)).toThrow("'due' is a lookup column");
     });
 

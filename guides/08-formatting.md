@@ -639,7 +639,7 @@ As a display format: only what the cells show, and what follows the cells.
 | the edited marker's tooltip, "Original value" | the template with the original value as `{value}` |
 | a renderer of your own | `text` is the template's text |
 | copy, paste, the CSV export, the Excel export | the value - no template, no link: a paste reads it back. Excel gets text, not a `HYPERLINK` |
-| the filter menu's value list, the header filter, the filter chips | the value: a template with other fields would show one value two ways in two rows |
+| the filters - the header filter, the filter menu's value list, the filter editor, IN | **the text shown** on a `text` field: `= Ann Berg`, *contains* `(12)` - what you see. `filterAsShown: false` in the format (*Filter as shown* in the grid config dialog) filters the value instead. A backend compares the same text: [`getShownFormulas()`](22-sql.md#a-column-filtered-on-its-template) |
 | sorting, grouping | the value |
 
 A template and a link are for a `text` field, and not for a lookup column (`editor`): a format with

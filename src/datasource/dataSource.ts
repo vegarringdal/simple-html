@@ -193,6 +193,9 @@ export class Datasource<T = any> {
     /** the grid's text of a value to group on, see __setGroupValue */
     private __groupValue: ((field: string, value: unknown) => string | undefined) | null = null;
 
+    /** the text a row shows in a text field, for its conditions: see __setFilterText */
+    private __filterText: ((field: string, row: Entity) => string | undefined) | null = null;
+
     /**
      * this holds the filtered data, used when sorting and grouping
      */
@@ -2744,6 +2747,26 @@ export class Datasource<T = any> {
      */
     public __setGroupValue(groupValue: ((field: string, value: unknown) => string | undefined) | null): void {
         this.__groupValue = groupValue;
+    }
+
+    /**
+     * @internal
+     * The text a row shows in a text field, as the filter compares it: a column with a text template
+     * (`ColumnFormat.text`, `{first} {last}`) is filtered on what it shows - its conditions, IN and NOT_IN
+     * too, compare the text the function gives, not the value. undefined for a field (or row) compared as
+     * its value. Set by the grid; the next filter run uses it
+     * @param filterText null: every field compared as its value again
+     */
+    public __setFilterText(filterText: ((field: string, row: Entity) => string | undefined) | null): void {
+        this.__filterText = filterText;
+    }
+
+    /**
+     * @internal
+     * the function __setFilterText() was given, null without one
+     */
+    public __getFilterText(): ((field: string, row: Entity) => string | undefined) | null {
+        return this.__filterText;
     }
 
     /**

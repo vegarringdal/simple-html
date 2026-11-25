@@ -737,6 +737,7 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.format.tooltip` | `How the cells show the value` | its tooltip |
 | `columnSettings.format.ofType` | `Default: {format}` | the format picker of a column without a format of its own whose type has one (the Defaults tab): `{format}` the type's format |
 | `columnSettings.filterAsShown` | `Filter as shown` | the checkbox under the format of a date or number column: the header filter takes the text as the cells show it |
+| `columnSettings.filterAsShown.template.hint` | `The filters compare the text the cells show, the template filled in - off: the value of the field` | under Filter as shown of a text column with a template |
 | `columnSettings.filterAsShown.hint` | `The header filter takes the text as the cells show it: a week, a month, a year is the whole of it` | under it |
 | `columnSettings.filterAsShown.off` | `Not for the day of the week or the time of day: the header filter takes the field's format` | under it instead, greyed out: a format that is no period of time |
 | `columnSettings.text` | `Text shown` | the label of a text column's template of its text |

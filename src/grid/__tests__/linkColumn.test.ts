@@ -401,8 +401,27 @@ describe('links in the grid - copy, export, Find, sorting, the value list', () =
         expect(datasource.getRows().map((row) => row.company)).toEqual(['" onmouseover="alert(1)', 'Acme & Co', 'Globex']);
     });
 
-    it('expect the value list of the filter menu to list the values, not the texts of the template', async () => {
+    it('expect the value list of the filter menu to list the texts of the template: the column is filtered on what it shows', async () => {
         const { element } = await mountGrid(config(), rows(), fields());
+        openFilterMenu(element, 'company');
+
+        expect(valueRow('Acme & Co (12)')).toBeTruthy();
+        expect(valueRow('Acme & Co')).toBeUndefined();
+    });
+
+    it('expect the values with filterAsShown: false - the column filtered on its value', async () => {
+        const columns = config().columns ?? {};
+        const { element } = await mountGrid(
+            {
+                ...config(),
+                columns: {
+                    ...columns,
+                    company: { ...columns.company, format: { ...columns.company?.format, filterAsShown: false } }
+                }
+            },
+            rows(),
+            fields()
+        );
         openFilterMenu(element, 'company');
 
         expect(valueRow('Acme & Co')).toBeTruthy();

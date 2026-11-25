@@ -397,7 +397,12 @@ export interface ColumnFormat {
      * shown as `weekIso` is the whole week, `≥ 2026-11` from November 1, `1 234,5` a number. `false`: the
      * header filter takes the text as the field's formatter reads it (`2026-11-16`), as it does without
      * a format. A format that shows no period of time - `'weekday'`, `'time'`, `'timeSeconds'` - is
-     * never filtered as shown. For a `date`, `datetime` or `number` field: true or false
+     * never filtered as shown. For a `date`, `datetime` or `number` field: true or false.
+     *
+     * A `text` field with a template (`text: '{first} {last}'`, a link's text too) is filtered on the
+     * text the template shows - its header filter, the filter menu's values, IN and every operator - by
+     * default; `false` filters it on the value. For a backend: `gridInterface.getShownFormulas()` and
+     * `toSqlWhere({ shown })` compare the same text in SQL
      *
      * @example
      * ```ts
@@ -1046,9 +1051,9 @@ function assertFilterAsShown(filterAsShown: unknown, field: string, type: FieldT
     if (typeof filterAsShown !== 'boolean') {
         throw new TypeError(`${name}.filterAsShown is ${JSON.stringify(filterAsShown)}, it is true or false`);
     }
-    if (lookup || (type !== 'date' && type !== 'datetime' && type !== 'number')) {
+    if (lookup || type === 'boolean') {
         throw new TypeError(
-            `${name}.filterAsShown is for a date, datetime or number field with a format, '${field}' is ${lookup ? 'a lookup column' : type}`
+            `${name}.filterAsShown is for a date, datetime or number field with a format, or a text field with a template, '${field}' is ${lookup ? 'a lookup column' : type}`
         );
     }
 }

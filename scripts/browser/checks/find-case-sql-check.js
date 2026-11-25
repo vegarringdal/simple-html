@@ -390,6 +390,23 @@ async function sqlSample(browser, mode) {
             shown[3].includes('DATEDIFF(day'),
         shown.join(' | ')
     );
+    // a column with a template: filtered on the text it shows, in the grid and in the SQL
+    await button('Clear filter');
+    await button('template: {company} ({country}) contains "(norway)"');
+    await page.waitForTimeout(300);
+    shown = await blocks();
+    check(
+        `${mode}: a template filtered as shown: company and country joined in the SQL of every dialect`,
+        shown.length === 4 &&
+            shown.every((b) => b.includes('company_name') && b.includes('country') && !b.includes('not one of the columns')) &&
+            shown[0].includes('(norway)'),
+        shown.join(' | ')
+    );
+    const norway = await gi(page, (g) => {
+        const rows = g.getDatasource().getRows();
+        return { count: rows.length, all: rows.every((row) => row.country === 'Norway') };
+    });
+    check(`${mode}: the grid shows the rows of Norway`, norway.count > 0 && norway.all, norway);
     check(`${mode}: SQL sample: no page errors`, page.__errors.length === 0, page.__errors.join(' | '));
     await page.close();
 }

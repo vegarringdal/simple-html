@@ -862,6 +862,23 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
             textProblems
         )}
         ${
+            // a text column with a template: its filters compare the text shown - Filter as shown
+            kind === 'text' && format?.text !== undefined
+                ? html`<div class="column-settings-field">
+                      ${checkbox('columnSettings.filterAsShown', format.filterAsShown !== false, (on) =>
+                          change((next) => {
+                              if (on) {
+                                  delete next.filterAsShown;
+                              } else {
+                                  next.filterAsShown = false;
+                              }
+                          })
+                      )}
+                      <div class="column-settings-hint">${text('columnSettings.filterAsShown.template.hint')}</div>
+                  </div>`
+                : nothing
+        }
+        ${
             withLink
                 ? checkbox('columnSettings.link', !!link, (on) =>
                       change((next) => {

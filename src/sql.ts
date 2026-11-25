@@ -279,6 +279,14 @@ export interface SqlOptions {
      * A formula with dates needs `timeZone`: a date is its day in the user's time zone, as in the grid.
      */
     calculated?: Record<string, string | SqlCalculatedColumn>;
+    /**
+     * The columns the grid filters on the text their template shows (a text column with `format.text`:
+     * `{first} {last}`), each as a formula of that text - `gridInterface.getShownFormulas()` gives them. A
+     * condition on such a field compares the formula's SQL, as the grid compares the text: `= 'Ann Berg'`
+     * is `CONCAT("first", ' ', "last")` in SQL. The formula reads the columns (the field's own too) and the
+     * calculated columns. What is wrong with one is a `TypeError` that `isSqlFilterError()` knows
+     */
+    shown?: Record<string, string>;
 }
 
 /**

@@ -23,7 +23,7 @@ export const sqlWhere: DemoSample = {
     title: 'SQL from the filter',
     group: 'Datasource',
     description:
-        'The grid filters in the browser; a backend that loads only the rows it lets through needs the filter as SQL. toSqlWhere() from @simple-html/grid/sql turns datasource.getFilter() - sent to the backend as JSON - into the condition of a WHERE and its parameters, for PostgreSQL, Oracle, SQLite and SQL Server: no value is ever in the SQL, only placeholders, and a field that is not in the columns it is given throws. Filter in the header, the menus or the filter editor: the WHERE below follows. Find (Ctrl+F in the grid) is not in it: its Filter rows filters the rows in the browser, also the rows loaded after. A calculated column (Add calculated column in the grid config dialog, or the button) is sent with the filter: its formula is written as SQL. The dates are read in the time zone of this browser, as the grid reads them.',
+        'The grid filters in the browser; a backend that loads only the rows it lets through needs the filter as SQL. toSqlWhere() from @simple-html/grid/sql turns datasource.getFilter() - sent to the backend as JSON - into the condition of a WHERE and its parameters, for PostgreSQL, Oracle, SQLite and SQL Server: no value is ever in the SQL, only placeholders, and a field that is not in the columns it is given throws. Filter in the header, the menus or the filter editor: the WHERE below follows. Find (Ctrl+F in the grid) is not in it: its Filter rows filters the rows in the browser, also the rows loaded after. A calculated column (Add calculated column in the grid config dialog, or the button) is sent with the filter: its formula is written as SQL. So is a column with a text template: it is filtered on the text it shows, `{company} ({country})`. The dates are read in the time zone of this browser, as the grid reads them.',
     run(stage) {
         const ui = createStage(stage);
         const { datasource, gridInterface } = mountGrid(ui.gridHost, baseGridConfig());
@@ -41,12 +41,14 @@ export const sqlWhere: DemoSample = {
             // writes the formula of a calculated column the filter uses as SQL
             const filter = JSON.parse(JSON.stringify(datasource.getFilter()));
             const calculated = JSON.parse(JSON.stringify(gridInterface.getState().calculatedColumns));
+            // a column with a template filters on the text it shows: the formula of that text, for SQL
+            const shown = gridInterface.getShownFormulas({ fields: Object.keys(COLUMNS) });
             output.replaceChildren(
                 ...DIALECTS.map((dialect) => {
                     const block = document.createElement('pre');
                     block.className = 'demo-sql-block';
                     try {
-                        const { sql, params } = toSqlWhere(filter, { dialect, columns: COLUMNS, timeZone, calculated });
+                        const { sql, params } = toSqlWhere(filter, { dialect, columns: COLUMNS, timeZone, calculated, shown });
                         block.textContent = `${dialect}\nWHERE ${sql}\nparams: ${JSON.stringify(params)}`;
                     } catch (error) {
                         // a field that is not in the columns, a filter over a limit: a 400 in a backend
@@ -91,6 +93,11 @@ export const sqlWhere: DemoSample = {
                 calculatedColumns: { ...calculatedColumns, daysSince: { formula: 'DAYS({date1}, TODAY())', label: 'Days since' } }
             });
             datasource.filter(where('daysSince', 'GREATER_THAN', 30));
+        });
+        ui.button('template: {company} ({country}) contains "(norway)"', () => {
+            const { formats } = gridInterface.getState();
+            gridInterface.setState({ formats: { ...formats, company: { ...formats.company, text: '{company} ({country})' } } });
+            datasource.filter(where('company', 'CONTAINS', '(norway)'));
         });
         ui.button('Clear filter', () => {
             datasource.filter(null);

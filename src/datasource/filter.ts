@@ -81,9 +81,13 @@ export class Filter {
             return null;
         }
         const type = ds.getField(expression.field).type;
+        // a text field filtered on what the row shows (a column's template, __setFilterText): the text
+        // in place of the value. valueField reads the row as it is
+        const shown = type === 'text' ? ds.__getFilterText()?.(expression.field, rowData) : undefined;
+        const data: Entity = shown === undefined ? rowData : ({ [expression.field]: shown } as Entity);
 
         if (expression.operator === 'IN' || expression.operator === 'NOT_IN') {
-            return this.inStatement(rowData, expression, type, ds);
+            return this.inStatement(data, expression, type, ds);
         }
 
         const caseSensitive = expression.caseSensitive === true;
@@ -94,13 +98,12 @@ export class Filter {
             const { field } = expression;
             return (
                 (isBlank(from) ||
-                    objectFilter(rowData, { field, operator: 'GREATER_THAN_OR_EQUAL_TO', value: from, type, caseSensitive })) &&
-                (isBlank(to) ||
-                    objectFilter(rowData, { field, operator: 'LESS_THAN_OR_EQUAL_TO', value: to, type, caseSensitive }))
+                    objectFilter(data, { field, operator: 'GREATER_THAN_OR_EQUAL_TO', value: from, type, caseSensitive })) &&
+                (isBlank(to) || objectFilter(data, { field, operator: 'LESS_THAN_OR_EQUAL_TO', value: to, type, caseSensitive }))
             );
         }
 
-        return objectFilter(rowData, {
+        return objectFilter(data, {
             field: expression.field,
             operator: expression.operator,
             value: expression.valueField ? rowData[expression.valueField] : expression.value,

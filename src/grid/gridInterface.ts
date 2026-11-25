@@ -20,7 +20,15 @@ import {
 } from './calculatedColumns';
 import type { CellRange } from './cellRange';
 import { getCellRenderer } from './cellRendererRegistry';
-import { cellFieldText, type FieldText, fieldTextOf, type LinkResult, linkOf, templateFormatter } from './cellTemplate';
+import {
+    cellFieldText,
+    type FieldText,
+    fieldTextOf,
+    fillTemplate,
+    type LinkResult,
+    linkOf,
+    templateFormatter
+} from './cellTemplate';
 import type { RuleFieldOf } from './colorRules';
 import {
     assertColumnFormat,
@@ -104,6 +112,7 @@ import type { MenuContext, MenuEntry, MenuPosition } from './gridMenus';
 import { assertViews, type GridView, newViewId, startViews, viewStateText, writeStoredViews } from './gridView';
 import { type ReadImportFileOptions, readImportFile } from './importFile';
 import { type ColumnsReport, type ReconcileOptions, reconcileColumns, type SourceColumn } from './reconcileColumns';
+import { templateFormula } from './templateFormula';
 import type { ExcelOptions } from './xlsx';
 import type { ImportCell } from './xlsxRead';
 
@@ -231,6 +240,19 @@ export class GridInterface<T> {
             return undefined;
         }
         return this.__getCellFormatter(field).format(value);
+    };
+
+    /**
+     * The text a row shows in a column filtered on its template (__shownTemplate): the template filled in,
+     * for the datasource's filter (`__setFilterText`). undefined for every other field
+     */
+    private readonly filterText = (field: string, row: Entity): string | undefined => {
+        const template = this.__shownTemplate(field);
+        if (template === null) {
+            return undefined;
+        }
+        const formatter = this.dataSource.getFormatter(field);
+        return fillTemplate(template, cellFieldText(field, row[field], formatter, this.__fieldTextOf(row)));
     };
 
     /**
@@ -379,6 +401,7 @@ export class GridInterface<T> {
         // before the start state is applied: it can sort on a lookup column, group by a week
         this.setSortValues();
         this.dataSource.__setGroupValue(this.groupValue);
+        this.dataSource.__setFilterText(this.filterText);
         // datasource.setFields() since: see syncFields
         this.fieldsVersion = this.dataSource.__getFieldsVersion();
         // the views of the config and the storage: the default one is the state the grid starts in
@@ -1665,6 +1688,9 @@ export class GridInterface<T> {
         if (this.dataSource.__getGroupValue() === this.groupValue) {
             this.dataSource.__setGroupValue(null);
         }
+        if (this.dataSource.__getFilterText() === this.filterText) {
+            this.dataSource.__setFilterText(null);
+        }
         this.registerCalculated({}, () => undefined);
     }
 
@@ -2485,6 +2511,62 @@ export class GridInterface<T> {
     }
 
     /**
+     * The columns filtered on the text their template shows - a text column with `format.text` (`{first}
+     * {last}`, a link's text), `filterAsShown` not `false` - each as a formula of that text, for
+     * `toSqlWhere({ shown })` (`@simple-html/grid/sql`): a filter on the column then compares that text in
+     * SQL, as the grid does. Send it with the filter of {@link getServerFilter}.
+     *
+     * Only templates a formula writes the same (templateFormula.ts): every field in it of the default
+     * formatter of its type, no `datetime` field. A column whose template is not, or that reads a field
+     * not in `fields`, is left out - and getServerFilter() takes its conditions out: the browser filters them.
+     *
+     * @param options.fields the fields the backend has a column for. Default every field
+     * @returns the formula of each column, by field: `{ order: 'CONCAT("order ", {order})' }`
+     *
+     * @example
+     * ```ts
+     * const fields = ['company', 'order', 'first', 'last'];
+     * const body = JSON.stringify({
+     *     filter: gridInterface.getServerFilter({ fields }),
+     *     shown: gridInterface.getShownFormulas({ fields })
+     * });
+     * // the backend: toSqlWhere(body.filter, { dialect: 'postgres', columns, shown: body.shown })
+     * ```
+     */
+    public getShownFormulas(options: { fields?: readonly string[] } = {}): Record<string, string> {
+        assertOptions('getShownFormulas', options, "getShownFormulas({ fields: ['first', 'last'] })");
+        const { fields } = options;
+        if (
+            fields !== undefined &&
+            (!Array.isArray(fields) || !fields.length || fields.some((field) => typeof field !== 'string'))
+        ) {
+            throw new TypeError(
+                `getShownFormulas({ fields }): fields is a list of the field names your backend has, e.g. ['first', 'last'], got ${JSON.stringify(fields)}`
+            );
+        }
+        const known = fields === undefined ? null : new Set(fields);
+        const formulas: Record<string, string> = {};
+        for (const field of Object.keys(this.gridConfig.columns)) {
+            const template = this.__shownTemplate(field);
+            if (template === null) {
+                continue;
+            }
+            const formula = templateFormula(template, field, (name) => {
+                if (known && !known.has(name)) {
+                    return undefined;
+                }
+                const own = this.dataSource.getField(name);
+                // a field of the datasource, not a calculated column of the grid or a field it has not
+                return own && !Object.hasOwn(this.calculated, name) ? { type: own.type, formatter: own.formatter } : undefined;
+            });
+            if (formula !== null) {
+                formulas[field] = formula;
+            }
+        }
+        return formulas;
+    }
+
+    /**
      * The filter to send to a backend - what every button that loads rows from it can call: the filter
      * (`datasource.getFilter()`), without the conditions the backend can not run - the calculated columns,
      * and the fields it has no column for (`withoutFields()`: a condition taken out matches every row, so the
@@ -2493,6 +2575,9 @@ export class GridInterface<T> {
      *
      * Find is not in it: *Filter rows* of the find bar filters the rows in the browser, also the rows loaded
      * after it was turned on.
+     *
+     * A column filtered on the text its template shows (`ColumnFormat.text`, `filterAsShown`) is kept when
+     * its template is a formula for the backend - send {@link getShownFormulas} with it - else taken out.
      *
      * @param options.fields the fields the backend has a column for: a condition on another field is
      * taken out - a calculated column kept (`calculated: 'keep'`) counts as one when the backend has every
@@ -2531,7 +2616,13 @@ export class GridInterface<T> {
         }
         const filter = this.dataSource.getFilter();
         const known = fields === undefined ? null : new Set(fields);
+        const shown = this.getShownFormulas(fields === undefined ? {} : { fields });
         const strip = (field: string) => {
+            // a column filtered on its template: kept with the formula of its text (getShownFormulas), else
+            // the backend can not compare what the user filtered
+            if (this.__shownTemplate(field) !== null) {
+                return !Object.hasOwn(shown, field);
+            }
             if (Object.hasOwn(this.calculated, field)) {
                 // kept when the backend has every field its formula reads, through the other calculated
                 // columns: it is no field of the backend itself. One with a problem has no formula to send
@@ -3509,6 +3600,20 @@ export class GridInterface<T> {
             return templateFormatter(shown, field, format.text, this.__fieldTextOf(row));
         }
         return shown;
+    }
+
+    /**
+     * @internal
+     * The template a column is filtered on: a text column (not a lookup column) with a text template
+     * (`ColumnFormat.text`) shows the template filled in, and its filters compare that text - unless its
+     * format says `filterAsShown: false`. null for a column filtered on its value
+     */
+    public __shownTemplate(field: string): string | null {
+        if (this.dataSource.getField(field).type !== 'text' || this.__getLookupColumn(field)) {
+            return null;
+        }
+        const format = this.__getColumnFormat(field);
+        return format?.text !== undefined && format.filterAsShown !== false ? format.text : null;
     }
 
     /**

@@ -5436,6 +5436,26 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * dialog-small-screens-check.js: opens within 80 % (a phone the whole width), resized from the bottom edge
   higher than 80 %
 
+### A column with a template is filtered on the text it shows, in the grid and in SQL (2026-11-25)
+
+* the user: "filter on shown value makes most sense? since that's what you see, but sql need to understand
+  it". A text column (not a lookup column) with `format.text` is filtered on the template filled in -
+  every operator, IN / NOT_IN, the filter menu's value list (its entries are the texts shown).
+  `filterAsShown: false` (allowed on a text field now; the dialog's *Filter as shown* under the template)
+  filters the value
+* datasource: `__setFilterText(fn)` - filter.ts compares the text it gives for a text field in place of
+  the value (valueField still reads the row). The grid sets it (gridInterface.filterText,
+  __shownTemplate); refilterChangedFormats runs the filter again when a template or its filterAsShown
+  changes (Apply, the Format menu)
+* SQL: templateFormula.ts makes a formula of a template - CONCAT of its texts and fields - when every field
+  in it has the default formatter of its type (text, number, date, boolean; not datetime: a formula's date
+  is its day). gridInterface.getShownFormulas({ fields }) gives them; getServerFilter() keeps a condition on
+  such a column only with its formula. toSqlWhere({ shown }): a condition on the field compares the
+  formula's SQL (buildWhere formulaColumn, shared with the calculated columns)
+* sqlShown.test.ts: ten filters through the grid and SQLite, the formulas, a template of another
+  formatter / a datetime (no formula, the browser filters), the value list's texts. The SQL sample sends
+  the formulas and has a button for `{company} ({country})`; find-case-sql-check.js clicks it
+
 ## Considered, not done
 
 ## Candidates / not started

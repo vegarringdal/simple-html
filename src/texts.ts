@@ -405,6 +405,8 @@ const DEFAULTS = {
     'columnSettings.filterAsShown': 'Filter as shown',
     'columnSettings.filterAsShown.hint':
         'The header filter takes the text as the cells show it: a week, a month, a year is the whole of it',
+    'columnSettings.filterAsShown.template.hint':
+        'The filters compare the text the cells show, the template filled in - off: the value of the field',
     'columnSettings.filterAsShown.off':
         "Not for the day of the week or the time of day: the header filter takes the field's format",
     // a text column: the text it shows and its link. The placeholders and hints show a template as it is

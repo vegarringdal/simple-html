@@ -113,12 +113,14 @@ export function dropDownFilterData(
     const byText = new Map<string, ValueListEntry>();
     const checked = new Set<ValueListEntry>();
 
+    // a column filtered on its template: the texts it shows are the values of the list, its IN compares them
+    const shownText = ctx.gridInterface.__shownTemplate(attribute) !== null ? datasource.__getFilterText() : null;
     for (const row of data) {
-        const value = row[attribute];
+        const value = shownText ? (shownText(attribute, row) ?? row[attribute]) : row[attribute];
         const key = inListKey(value, type, formatter, caseSensitive && type === 'text');
         let entry = byValue.get(key);
         if (!entry) {
-            const text = key === 'NULL' ? '' : textOf(row).text;
+            const text = key === 'NULL' ? '' : shownText ? String(value) : textOf(row).text;
             // '' is the blank entry
             const textKey = textKeyOf(text);
             entry = byText.get(textKey);

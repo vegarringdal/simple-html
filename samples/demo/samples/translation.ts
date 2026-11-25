@@ -377,6 +377,8 @@ const norwegian: Record<TextId, string> = {
     'columnSettings.filterAsShown': 'Filtrer slik det vises',
     'columnSettings.filterAsShown.hint':
         'Filteret i overskriften tar teksten slik cellene viser den: en uke, en måned, et år er hele perioden',
+    'columnSettings.filterAsShown.template.hint':
+        'Filtrene sammenligner teksten cellene viser, malen fylt ut - av: verdien i feltet',
     'columnSettings.filterAsShown.off': 'Ikke for ukedag eller klokkeslett: filteret i overskriften tar feltets format',
     'columnSettings.text': 'Tekst som vises',
     'columnSettings.text.placeholder': '{fornavn} {etternavn}',

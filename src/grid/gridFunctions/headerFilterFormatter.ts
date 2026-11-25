@@ -123,4 +123,17 @@ export function refilterChangedFormats(
     if (ran) {
         rebuildHeaderColumns(ctx);
     }
+    // a text column filtered on its template: another template, or filterAsShown turned, compares other
+    // texts - the filter runs again (__setFilterText reads the format as it is now)
+    const datasource = gridInterface.getDatasource();
+    const shownBefore = (field: string) => {
+        const was = before[field] ?? columns[field]?.format;
+        return datasource.getField(field).type === 'text' && was?.text !== undefined && was.filterAsShown !== false
+            ? was.text
+            : null;
+    };
+    const changed = Object.keys(columns).some((field) => shownBefore(field) !== gridInterface.__shownTemplate(field));
+    if (changed && datasource.getFilter()) {
+        datasource.filter(datasource.getFilter());
+    }
 }

@@ -1366,6 +1366,9 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 #### Helpers for an app with a backend: v5 filters, the columns from the fields, the filter to send, the 400 errors, fields known later, rows from JSON
 
 ##### Added
+- a text column with a template (`format.text`, a link's text) is filtered on the text it shows - every
+  operator, IN and the filter menu's values; `filterAsShown: false` filters the value. For a backend:
+  `gridInterface.getShownFormulas()` and `toSqlWhere({ shown })` compare the same text in SQL
 - the grid's dialogs open within 80 % of the window's height and width (a phone: its whole width), what does
   not fit scrolls inside; resized by the user, as large as the window
 - the Colours tab of a number column in four panels, one open at a time - Colour rules, Data bar, Colour scale,
