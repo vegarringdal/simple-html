@@ -504,8 +504,18 @@ export function formulaSql(
         }
     };
 
-    /** a value of any type as text, NULL for blank: a number as the grid writes it, true / false as `true` / `false` */
-    const textOf = (each: FormulaNode): string => {
+    /**
+     * a value of any type as text, NULL for blank: a number as the grid writes it, true / false as `true` /
+     * `false`. `emptyIsBlank`: the caller takes `''` as blank itself (LEFT, RIGHT, MID, TRIM, LEN, the text
+     * CONTAINS looks in), so a text column is given as it is - no `NULLIF(col, '')` inside the function
+     */
+    const textOf = (each: FormulaNode, emptyIsBlank = false): string => {
+        if (emptyIsBlank && each.kind === 'field') {
+            const field = fieldOf(each.name);
+            if (field.type === 'text' && !field.calculated) {
+                return field.sql;
+            }
+        }
         const sql = value(each);
         switch (typeOf(each)) {
             case 'number':
@@ -523,8 +533,12 @@ export function formulaSql(
     const joined = (parts: FormulaNode[]): string =>
         limit(d.blankToNull(`(${d.concat(parts.map((part) => `COALESCE(${textOf(part)}, ${d.text('')})`))})`));
 
-    /** a count or a position of the functions of text: NULL for blank */
+    /** a count or a position of the functions of text: NULL for blank. A number written in the formula as it is */
     const countOf = (each: FormulaNode): string => {
+        const constant = constantOf(each);
+        if (constant !== undefined) {
+            return String(Math.min(Math.max(Math.trunc(constant), 0), 1000000000));
+        }
         const sql = value(each);
         return `CASE WHEN ${sql} IS NULL THEN NULL ELSE ${count(d.whole, sql)} END`;
     };
@@ -560,25 +574,28 @@ export function formulaSql(
             case 'ISBLANK':
             case 'CONTAINS':
                 return asValue(callPredicate(name, args));
+            // LEFT, RIGHT, MID and TRIM of '' are '', made blank once outside
             case 'LEFT':
-                return d.blankToNull(d.substr(textOf(args[0]), '1', countOf(args[1])));
+                return d.blankToNull(d.substr(textOf(args[0], true), '1', countOf(args[1])));
             case 'RIGHT':
-                return d.blankToNull(d.right(textOf(args[0]), countOf(args[1])));
+                return d.blankToNull(d.right(textOf(args[0], true), countOf(args[1])));
             case 'MID':
             case 'SUBSTRING': {
                 const start = countOf(args[1]);
-                return d.blankToNull(
-                    d.substr(textOf(args[0]), `CASE WHEN ${start} < 1 THEN 1 ELSE ${start} END`, countOf(args[2]))
-                );
+                // a start below 1 is 1
+                const from = /^\d+$/.test(start)
+                    ? String(Math.max(Number(start), 1))
+                    : `CASE WHEN ${start} < 1 THEN 1 ELSE ${start} END`;
+                return d.blankToNull(d.substr(textOf(args[0], true), from, countOf(args[2])));
             }
             case 'LEN':
-                return `COALESCE(${d.length(textOf(args[0]))}, 0)`;
+                return `COALESCE(${d.length(textOf(args[0], true))}, 0)`;
             case 'UPPER':
                 return `UPPER(${textOf(args[0])})`;
             case 'LOWER':
                 return `LOWER(${textOf(args[0])})`;
             case 'TRIM':
-                return d.blankToNull(d.trim(textOf(args[0])));
+                return d.blankToNull(d.trim(textOf(args[0], true)));
             case 'TODAY': {
                 const day = today();
                 if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) {
@@ -636,7 +653,8 @@ export function formulaSql(
             return `${value(args[0])} IS NULL`;
         }
         // CONTAINS: a blank part is '', in every text
-        const haystack = textOf(args[0]);
+        // '' and NULL find the same in it: nothing but ''
+        const haystack = textOf(args[0], true);
         const needle = textOf(args[1]);
         return `(${needle} IS NULL OR (${haystack} IS NOT NULL AND ${d.contains(`LOWER(${haystack})`, `LOWER(${needle})`)}))`;
     };

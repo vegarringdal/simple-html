@@ -455,7 +455,7 @@ function calculatedColumn(context: Context, field: string): Column {
         return isoText(clockOf(context).wallOf(Date.now()), ' ').slice(0, 10);
     };
     const column: Column = {
-        sql: `(${formulaSql(read.node, read.type, context.dialectName, fieldOf, today)})`,
+        sql: bracketed(formulaSql(read.node, read.type, context.dialectName, fieldOf, today)),
         type: read.type as SqlColumnType,
         // a date of a formula is a day: a date column that holds wall clocks
         dateStorage: 'local',
@@ -938,6 +938,41 @@ function not(sql: string): string {
         return NO_CONDITION;
     }
     return `NOT ${wrap(sql)}`;
+}
+
+/**
+ * sql that is safe beside any operator: as it is when it is one name, number or call (`SUBSTR(...)`,
+ * `"price"`) or in one pair of brackets already, else in brackets
+ */
+function bracketed(sql: string): string {
+    const call = /^[A-Za-z_][A-Za-z0-9_]*\(/.exec(sql);
+    const open = call ? call[0].length - 1 : sql.startsWith('(') ? 0 : -1;
+    if (open >= 0 && closesAtEnd(sql, open)) {
+        return sql;
+    }
+    if (/^("[A-Za-z0-9_]+"|\[[A-Za-z0-9_]+\]|\d+(\.\d+)?)$/.test(sql)) {
+        return sql;
+    }
+    return `(${sql})`;
+}
+
+/** the bracket at `open` closes at the last character - a bracket in a quoted text (`'('`) is none */
+function closesAtEnd(sql: string, open: number): boolean {
+    let depth = 0;
+    let inText = false;
+    for (let index = open; index < sql.length; index++) {
+        const char = sql[index];
+        if (char === "'") {
+            // a doubled quote in a text leaves it and comes back in: the state stays right
+            inText = !inText;
+        } else if (!inText && (char === '(' || char === ')')) {
+            depth += char === '(' ? 1 : -1;
+            if (depth === 0) {
+                return index === sql.length - 1;
+            }
+        }
+    }
+    return false;
 }
 
 /** sql in brackets, unless one pair is around all of it already */

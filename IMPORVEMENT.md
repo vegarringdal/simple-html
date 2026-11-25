@@ -5338,6 +5338,21 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
   TODAY). find-case-sql-check.js clicks them: the formula's SQL in all four blocks, the rows shown - so the
   sample can not fall behind the library again unseen
 
+### Shorter SQL for a formula (2026-11-25)
+
+* the user, of `LEFT({company}, 3) = 'won'` on Oracle: "that's a lot of text for something that could just be
+  LOWER(SUBSTR(company_name, 1, 3)) = :1". Now `(SUBSTR("company_name", 1, 3) IS NOT NULL AND
+  LOWER(SUBSTR("company_name", 1, 3)) LIKE :1 ESCAPE '!')`:
+  - a count or start written in the formula is folded in JavaScript (the clamp CASE is for a count of the row)
+  - LEFT, RIGHT, MID, TRIM, LEN and the text CONTAINS looks in take a text column as it is: the `''` is made
+    blank once outside (`SUBSTR('', 1, 3)` is `''`) - no NULLIF inside on PostgreSQL, SQLite, SQL Server
+  - no brackets around one call or name (bracketed in buildWhere: quote-aware - a `(` in a text literal is
+    no bracket; the old wrap() is not, it only ever saw SQL with parameters)
+* kept on purpose: `IS NOT NULL AND` (every condition is true or false, never NULL, so NOT and OR groups
+  are right) and LIKE for EQUAL (the grid's `=` on text takes its wildcards)
+* revalidated on db<>fiddle: PostgreSQL 17 (49 text formulas), Oracle 23 (34), SQL Server 2022 (49, the
+  emoji rows only); SQLite in the tests
+
 ## Considered, not done
 
 ## Candidates / not started

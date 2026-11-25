@@ -60,15 +60,29 @@ describe('toSqlWhere - calculated columns, the SQL of each database', () => {
 
     it('expect a blank text to be NULL of a text type, and LEN to count the spaces at the end on SQL Server', () => {
         expect(where('mssql', 'LEFT("", 2)').sql).toContain('SUBSTRING(CAST(NULL AS nvarchar(max)), 1');
-        expect(where('mssql', 'LEN({name})', 'EQUAL', 1).sql).toContain(
-            "(LEN(CASE WHEN DATALENGTH([name]) = 0 THEN NULL ELSE [name] END + N'x') - 1)"
-        );
+        expect(where('mssql', 'LEN({name})', 'EQUAL', 1).sql).toContain("(LEN([name] + N'x') - 1)");
     });
 
     it('expect a filter on a true / false formula to compare 1 and 0', () => {
         const { sql, params } = where('postgres', '{price} != {qty}', 'EQUAL', true);
         expect(sql).toContain('NOT ((');
         expect(params).toEqual([1]);
+    });
+});
+
+describe('toSqlWhere - short SQL for a short formula', () => {
+    it('expect LEFT of a column with a count written in the formula as plain SUBSTR', () => {
+        expect(where('oracle', 'LEFT({name}, 3)', 'EQUAL', 'won').sql).toBe(
+            `(SUBSTR("name", 1, 3) IS NOT NULL AND LOWER(SUBSTR("name", 1, 3)) LIKE :1 ESCAPE '!')`
+        );
+        expect(where('postgres', 'LEFT({name}, 3)', 'EQUAL', 'won').sql).toBe(
+            `(NULLIF(SUBSTR("name", 1, 3), '') IS NOT NULL AND LOWER(NULLIF(SUBSTR("name", 1, 3), '')) LIKE $1 ESCAPE '!')`
+        );
+        expect(where('sqlite', 'MID({name}, 0, 2)', 'EQUAL', 'x').sql).toContain(`substr("name", 1, 2)`);
+        // a bracket in a quoted text is none of the SQL: the call NULLIF( ... ) is still one part
+        expect(where('sqlite', '"(" & {name} & ")"', 'EQUAL', 'x').sql).toMatch(
+            /^\(NULLIF\(\(COALESCE\(NULLIF\(\(COALESCE\('\(', ''\)/
+        );
     });
 });
 
