@@ -5353,6 +5353,17 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * revalidated on db<>fiddle: PostgreSQL 17 (49 text formulas), Oracle 23 (34), SQL Server 2022 (49, the
   emoji rows only); SQLite in the tests
 
+### `=` for a text EQUAL without wildcards (2026-11-25)
+
+* the user: "also see you use LIKE when there is no wildcard included, and operator is equal too". EQUAL and
+  NOT_EQUAL_TO of a text whose value has no wildcard (after the escapes: `50\%` is the text `50%`) are `=`
+  now - `LOWER(col) = $1`, an index on LOWER(col) is used. Dialect.plainEquals: PostgreSQL and Oracle the
+  column as it is (no COLLATE "C": = of a deterministic collation is equal bytes, and COLLATE would keep the
+  index out), SQLite COLLATE BINARY (a NOCASE column), SQL Server null - LIKE stays, its = ignores trailing
+  spaces. The filtering guide's table said `t = 'v'` already
+* the SQLite parity tests (thousands of filters against the grid) pass unchanged; the tests that pinned the
+  SQL text were updated, the escaping tests moved to BEGIN_WITH (still a pattern)
+
 ## Considered, not done
 
 ## Candidates / not started

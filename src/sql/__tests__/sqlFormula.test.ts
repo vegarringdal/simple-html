@@ -73,10 +73,10 @@ describe('toSqlWhere - calculated columns, the SQL of each database', () => {
 describe('toSqlWhere - short SQL for a short formula', () => {
     it('expect LEFT of a column with a count written in the formula as plain SUBSTR', () => {
         expect(where('oracle', 'LEFT({name}, 3)', 'EQUAL', 'won').sql).toBe(
-            `(SUBSTR("name", 1, 3) IS NOT NULL AND LOWER(SUBSTR("name", 1, 3)) LIKE :1 ESCAPE '!')`
+            `(SUBSTR("name", 1, 3) IS NOT NULL AND LOWER(SUBSTR("name", 1, 3)) = :1)`
         );
         expect(where('postgres', 'LEFT({name}, 3)', 'EQUAL', 'won').sql).toBe(
-            `(NULLIF(SUBSTR("name", 1, 3), '') IS NOT NULL AND LOWER(NULLIF(SUBSTR("name", 1, 3), '')) LIKE $1 ESCAPE '!')`
+            `(NULLIF(SUBSTR("name", 1, 3), '') IS NOT NULL AND LOWER(NULLIF(SUBSTR("name", 1, 3), '')) = $1)`
         );
         expect(where('sqlite', 'MID({name}, 0, 2)', 'EQUAL', 'x').sql).toContain(`substr("name", 1, 2)`);
         // a bracket in a quoted text is none of the SQL: the call NULLIF( ... ) is still one part

@@ -252,6 +252,7 @@ made. `NOT (sql)` of any WHERE selects exactly the other rows.
 | | PostgreSQL | Oracle | SQLite | SQL Server |
 | --- | --- | --- | --- | --- |
 | match | `LIKE $1 ESCAPE '!'` | `LIKE :1 ESCAPE '!'` | `GLOB ?` | `COLLATE Latin1_General_100_BIN2 LIKE @p1` |
+| `EQUAL` / `NOT_EQUAL_TO` without a wildcard | `= $1` | `= :1` | `COLLATE BINARY = ?` | `LIKE` as above: `=` ignores the spaces at the end |
 | one character (`_`) | `_` | `_` | `?` | `_` |
 | literal `!` | `!!` | `!!` | `!` | `!` |
 | literal `[`, `?` | as is | as is | `[[]`, `[?]` | `[[]` |

@@ -1366,6 +1366,8 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 #### Helpers for an app with a backend: v5 filters, the columns from the fields, the filter to send, the 400 errors, fields known later, rows from JSON
 
 ##### Added
+- `toSqlWhere()`: a text `EQUAL` / `NOT_EQUAL_TO` without wildcards is `=` (`LOWER(col) = $1`, an index is
+  used) on PostgreSQL, Oracle and SQLite; SQL Server keeps `LIKE`, its `=` ignores trailing spaces
 - `toSqlWhere(filter, { calculated })` (sql entry): the calculated columns of the grid (`getState().calculatedColumns`,
   or a formula by field) - a filter on one compares its formula written as SQL, the values the grid computes,
   on PostgreSQL (13 or later), Oracle, SQLite and SQL Server (2017 or later). Dates are their day in the

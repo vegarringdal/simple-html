@@ -518,13 +518,25 @@ function compareText(
             `${dialect.binary(fold(column.sql, exact))} ${comparison} ${foldedParam(context, text, exact)}`
         );
     }
-    // EQUAL, an operator of plain js that is none, CONTAINS, BEGIN_WITH, END_WITH and their NOT
+    // EQUAL and NOT_EQUAL_TO of a text without wildcards: `=` (an index is used), the escaped characters
+    // as they are (`50\%` is `50%`)
+    const parts = textPatternParts(text, literal);
+    if (
+        dialect.plainEquals !== null &&
+        (operator === 'EQUAL' || operator === 'NOT_EQUAL_TO') &&
+        parts.every((part) => part.type !== 'wildcard')
+    ) {
+        const plain = parts.map((part) => (part.type === 'text' ? part.text : part.type === 'char' ? part.char : '')).join('');
+        const equal = `${dialect.plainEquals(fold(column.sql, exact))} = ${foldedParam(context, plain, exact)}`;
+        return nullable(column.sql, blankMatches, operator === 'NOT_EQUAL_TO' ? `NOT (${equal})` : equal);
+    }
+    // EQUAL with wildcards, an operator of plain js that is none, CONTAINS, BEGIN_WITH, END_WITH and their NOT
     const fromStart = operator !== 'CONTAINS' && operator !== 'DOES_NOT_CONTAIN' && operator !== 'END_WITH';
     const toEnd = operator !== 'CONTAINS' && operator !== 'DOES_NOT_CONTAIN' && operator !== 'BEGIN_WITH';
     const any = dialect.anyText;
     // the same parts the grid's filter reads (textPatternParts): the plain text escaped for the dialect,
     // the wildcards the dialect's own, a `\_` (or every `_` with `literal`) a plain `_` of the pattern
-    const body = textPatternParts(text, literal)
+    const body = parts
         .map((part) => {
             if (part.type === 'text') {
                 return dialect.patternLiteral(part.text);

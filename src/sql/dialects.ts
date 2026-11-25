@@ -39,6 +39,12 @@ export interface Dialect {
     /** an expression compared code point by code point, case as it is: no collation of the database */
     binary(expression: string): string;
     /**
+     * EQUAL of a text without wildcards as `=`: the column side of it, so an index on the column (or on
+     * LOWER of it) is used. null on SQL Server: its `=` ignores trailing spaces, `'ann ' = 'ann'` - LIKE
+     * does not
+     */
+    plainEquals: ((column: string) => string) | null;
+    /**
      * `column` is one of the text parameters: the column in upper case, or as it is; the parameters are
      * folded already (`$1` bound in upper case, or `UPPER($1)`, see foldedParam in buildWhere.ts)
      */
@@ -113,6 +119,9 @@ const postgres: Dialect = {
     wildcardLiteral: bangWildcard,
     match: (column, pattern, caseSensitive) => `${fold(column, caseSensitive)} LIKE ${pattern} ESCAPE '!'`,
     binary: (expression) => `${expression} COLLATE "C"`,
+    // = of a deterministic collation (every one but those made with deterministic = false) is equal bytes:
+    // no COLLATE "C", which would keep an index on LOWER(col) from being used
+    plainEquals: (column) => column,
     inList: (column, placeholders, caseSensitive) =>
         `${postgres.binary(fold(column, caseSensitive, true))} IN (${placeholders.join(', ')})`,
     listValue: (text) => text,
@@ -146,6 +155,7 @@ const oracle: Dialect = {
     wildcardLiteral: bangWildcard,
     match: (column, pattern, caseSensitive) => `${fold(column, caseSensitive)} LIKE ${pattern} ESCAPE '!'`,
     binary: (expression) => expression,
+    plainEquals: (column) => column,
     inList: (column, placeholders, caseSensitive) => {
         const lists: string[] = [];
         for (let start = 0; start < placeholders.length; start += 1000) {
@@ -189,6 +199,8 @@ const sqlite: Dialect = {
     wildcardLiteral: (wildcard) => (wildcard === '*' ? '[*]' : wildcard),
     match: (column, pattern, caseSensitive) => `${fold(column, caseSensitive)} GLOB ${pattern}`,
     binary: (expression) => `${expression} COLLATE BINARY`,
+    // a column declared COLLATE NOCASE would ignore case with =
+    plainEquals: (column) => `${column} COLLATE BINARY`,
     inList: (column, placeholders, caseSensitive) =>
         `${sqlite.binary(fold(column, caseSensitive, true))} IN (${placeholders.join(', ')})`,
     listValue: (text) => text,
@@ -218,6 +230,7 @@ const mssql: Dialect = {
     wildcardLiteral: (wildcard) => (wildcard === '*' ? wildcard : `[${wildcard}]`),
     match: (column, pattern, caseSensitive) => `${mssql.binary(fold(column, caseSensitive))} LIKE ${pattern}`,
     binary: (expression) => `${expression} COLLATE Latin1_General_100_BIN2`,
+    plainEquals: null,
     inList: (column, placeholders, caseSensitive) => {
         const matches = placeholders.map((p) => `${mssql.binary(fold(column, caseSensitive, true))} LIKE ${p}`);
         return matches.length === 1 ? matches[0] : `(${matches.join(' OR ')})`;

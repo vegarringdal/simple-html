@@ -201,13 +201,17 @@ describe('placeholders, names and groups', () => {
 describe('text', () => {
     it('expect case to be ignored with LOWER on the column and the value folded before it is bound, kept with caseSensitive', () => {
         expect(sql(where('name', 'EQUAL', 'Ann'))).toEqual({
-            sql: `("name" IS NOT NULL AND LOWER("name") LIKE $1 ESCAPE '!')`,
+            sql: `("name" IS NOT NULL AND LOWER("name") = $1)`,
             params: ['ann']
         });
         expect(sql(where('name', 'EQUAL', 'Ann', { caseSensitive: true }))).toEqual({
-            sql: `("name" IS NOT NULL AND "name" LIKE $1 ESCAPE '!')`,
+            sql: `("name" IS NOT NULL AND "name" = $1)`,
             params: ['Ann']
         });
+        // with a wildcard: a pattern
+        expect(sql(where('name', 'EQUAL', 'An*')).sql).toBe(`("name" IS NOT NULL AND LOWER("name") LIKE $1 ESCAPE '!')`);
+        // SQL Server: LIKE always - its = ignores the spaces at the end
+        expect(sql(where('name', 'EQUAL', 'Ann'), 'mssql').sql).toContain('LIKE @p1');
         // caseSensitive false, null: ignoring case
         expect(sql(where('name', 'EQUAL', 'Ann', { caseSensitive: false })).sql).toContain('LOWER');
         expect(sql(where('name', 'EQUAL', 'Ann', { caseSensitive: null })).sql).toContain('LOWER');
@@ -256,9 +260,7 @@ describe('text', () => {
     });
 
     it('expect NOT_EQUAL_TO and DOES_NOT_CONTAIN to match the blank rows, in every dialect', () => {
-        expect(sql(where('name', 'NOT_EQUAL_TO', 'x'), 'oracle').sql).toBe(
-            `("name" IS NULL OR NOT (LOWER("name") LIKE :1 ESCAPE '!'))`
-        );
+        expect(sql(where('name', 'NOT_EQUAL_TO', 'x'), 'oracle').sql).toBe(`("name" IS NULL OR NOT (LOWER("name") = :1))`);
         expect(sql(where('name', 'DOES_NOT_CONTAIN', 'x'), 'mssql').sql).toBe(
             '([name] IS NULL OR NOT (LOWER([name]) COLLATE Latin1_General_100_BIN2 LIKE @p1))'
         );
@@ -342,8 +344,10 @@ describe('the escape `\\`: `\\_`, `\\%`, `\\*` and `\\\\` are characters, the ot
     });
 
     it('expect literal to take the backslash as it is too', () => {
-        expect(sql(where('name', 'EQUAL', 'a\\_b', { literal: true }), 'postgres').params).toEqual(['a\\!_b']);
-        expect(sql(where('name', 'EQUAL', 'a\\_b', { literal: true }), 'sqlite').params).toEqual(['a\\_b']);
+        expect(sql(where('name', 'BEGIN_WITH', 'a\\_b', { literal: true }), 'postgres').params).toEqual(['a\\!_b%']);
+        expect(sql(where('name', 'BEGIN_WITH', 'a\\_b', { literal: true }), 'sqlite').params).toEqual(['a\\_b*']);
+        // EQUAL without wildcards: = with the text as it is
+        expect(sql(where('name', 'EQUAL', 'a\\_b', { literal: true }), 'postgres').params).toEqual(['a\\_b']);
     });
 });
 
@@ -353,12 +357,15 @@ describe('literal: the wildcards of the grid as characters', () => {
     it("expect *, % and _ to be characters of each dialect's pattern, escaped where they are its wildcards", () => {
         const value = 'a*b%c_d!e[f]g?h';
         // LIKE ESCAPE '!': % and _ escaped, * is no wildcard of LIKE
-        expect(sql(where('name', 'EQUAL', value, literal), 'postgres').params).toEqual(['a*b!%c!_d!!e[f]g?h']);
-        expect(sql(where('name', 'EQUAL', value, literal), 'oracle').params).toEqual(['a*b!%c!_d!!e[f]g?h']);
+        expect(sql(where('name', 'BEGIN_WITH', value, literal), 'postgres').params).toEqual(['a*b!%c!_d!!e[f]g?h%']);
+        expect(sql(where('name', 'BEGIN_WITH', value, literal), 'oracle').params).toEqual(['a*b!%c!_d!!e[f]g?h%']);
         // LIKE without an escape: in brackets
-        expect(sql(where('name', 'EQUAL', value, literal), 'mssql').params).toEqual(['a*b[%]c[_]d!e[[]f]g?h']);
+        expect(sql(where('name', 'BEGIN_WITH', value, literal), 'mssql').params).toEqual(['a*b[%]c[_]d!e[[]f]g?h%']);
         // GLOB: * in brackets, % and _ are no wildcards of it
-        expect(sql(where('name', 'EQUAL', value, literal), 'sqlite').params).toEqual(['a[*]b%c_d!e[[]f]g[?]h']);
+        expect(sql(where('name', 'BEGIN_WITH', value, literal), 'sqlite').params).toEqual(['a[*]b%c_d!e[[]f]g[?]h*']);
+        // EQUAL: = with the text as it is, no escapes (SQL Server LIKE, as above)
+        expect(sql(where('name', 'EQUAL', value, literal), 'postgres').params).toEqual([value.toLowerCase()]);
+        expect(sql(where('name', 'EQUAL', value, literal), 'mssql').params).toEqual(['a*b[%]c[_]d!e[[]f]g?h']);
     });
 
     it('expect the pattern of each operator: the wildcards of the dialect around the text, the text as it is', () => {
@@ -366,7 +373,8 @@ describe('literal: the wildcards of the grid as characters', () => {
             (['EQUAL', 'NOT_EQUAL_TO', 'CONTAINS', 'DOES_NOT_CONTAIN', 'BEGIN_WITH', 'END_WITH'] as const).map(
                 (operator) => sql(where('name', operator, '50%', literal), dialect).params[0]
             );
-        expect(patterns('postgres')).toEqual(['50!%', '50!%', '%50!%%', '%50!%%', '50!%%', '%50!%']);
+        // EQUAL and NOT_EQUAL_TO: = with the text as it is
+        expect(patterns('postgres')).toEqual(['50%', '50%', '%50!%%', '%50!%%', '50!%%', '%50!%']);
         expect(patterns('sqlite')).toEqual(['50%', '50%', '*50%*', '*50%*', '50%*', '*50%']);
         expect(patterns('mssql')).toEqual(['50[%]', '50[%]', '%50[%]%', '%50[%]%', '50[%]%', '%50[%]']);
     });
