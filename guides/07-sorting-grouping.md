@@ -39,6 +39,9 @@ How values compare:
 - Text is compared with `localeCompare`. `datasource.setLocaleCompare('nb')` sorts it with the
   rules of a language (an `Intl.Collator`).
 - A `date` field sorts on the day, the time is ignored. A `datetime` field sorts on the full time.
+- In a grid, a `text` column with a [template or a link](08-formatting.md#what-a-template-and-a-link-change)
+  sorts on the text its cells show (`{last}, {first}` sorts by the last name), a column grouped by on
+  its value. A lookup column sorts on the name it shows.
 
 The sort is part of the grid's [state](03-state.md): `getState().sorting`. To start sorted, put it
 in the config's `initialState`.

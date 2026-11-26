@@ -108,6 +108,7 @@ export type FormulaProblemId =
     | 'depth'
     | 'size'
     | 'character'
+    | 'bigNumber'
     | 'unexpected'
     | 'end'
     | 'text'
@@ -286,6 +287,10 @@ function tokenize(text: string): Token[] {
                 fail('character', { text: char, position: at + 1 });
             }
             at += match[0].length;
+            // more digits than a number holds (Infinity): no number, also not in SQL
+            if (!Number.isFinite(Number(match[0]))) {
+                fail('bigNumber', { position: start + 1 });
+            }
             tokens.push({ kind: 'number', text: match[0], start, end: at });
         } else if (char === '"' || char === "'") {
             // the quote doubled is one quote in the text

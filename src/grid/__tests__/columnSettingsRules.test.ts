@@ -619,3 +619,30 @@ describe('column settings - colour rules: Apply, Cancel, Reset', () => {
         expect(byId<HTMLInputElement>('rule-0-bold').checked).toBe(true);
     });
 });
+
+describe('column settings - colour rules: the rule open stays open', () => {
+    it('expect the rule opened for its problem to stay open while the problem is typed away', async () => {
+        const { gridInterface } = await mount();
+        gridInterface.openColumnSettings('balance');
+        byId('rules-add').click();
+        // another column and back: the rule open is the one with a problem, the new one
+        option('name').click();
+        option('balance').click();
+        expect(byId('rule-1-value')).not.toBeNull();
+        expect(byId('rule-0-value')).toBeNull();
+        type('rule-1-value', '5');
+        // still the rule typed into, its input still there
+        expect(byId<HTMLInputElement>('rule-1-value')?.value).toEqual('5');
+        expect(byId('rule-0-value')).toBeNull();
+    });
+
+    it('expect Reset column to open the first of the rules it gives back', async () => {
+        const { gridInterface } = await mount();
+        gridInterface.openColumnSettings('balance');
+        byId('rules-add').click();
+        expect(byId('rule-1-value')).not.toBeNull();
+        button('Reset column').click();
+        expect(rules()).toHaveLength(1);
+        expect(byId<HTMLInputElement>('rule-0-value')?.value).toEqual('0');
+    });
+});

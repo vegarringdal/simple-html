@@ -41,7 +41,9 @@ describe('toSqlWhere - calculated columns, the SQL of each database', () => {
         expect(where('postgres', 'ROUND({price})', 'EQUAL', 3).sql).toContain('ROUND(CAST("price" AS numeric), 0)');
         expect(where('oracle', 'ROUND({price}, 1)', 'EQUAL', 3).sql).toContain('ROUND(CAST("price" AS NUMBER), 1)');
         expect(where('sqlite', 'ROUND({price}, -2)', 'EQUAL', 3).sql).toContain('(round("price" / 100.0) * 100)');
-        expect(where('mssql', 'ROUND({price}, 1)', 'EQUAL', 3).sql).toContain('ROUND(CAST([price] AS decimal(38, 10)), 1)');
+        expect(where('mssql', 'ROUND({price}, 1)', 'EQUAL', 3).sql).toContain(
+            'CASE WHEN ABS([price]) < 1e27 THEN ROUND(CAST([price] AS decimal(38, 10)), 1) ELSE [price] END'
+        );
         // digits of the row: each one as written, a wrong one blanks the value
         const rowDigits = where('postgres', 'ROUND({price}, {qty})', 'EQUAL', 3).sql;
         expect(rowDigits).toContain('CASE COALESCE("qty", 0) WHEN -10 THEN ROUND(CAST("price" AS numeric), -10)');
@@ -192,5 +194,16 @@ describe('toSqlWhere - calculated columns with dates', () => {
         );
         expect(sql).toContain('LEAST(CAST("due" AS date)');
         expect(params).toEqual(['2026-03-29 00:00:00', '2026-03-30 00:00:00']);
+    });
+});
+
+describe('toSqlWhere - calculated columns, what db<>fiddle found since', () => {
+    it('expect SQL Server to join texts as nvarchar(max): + of two nvarchar(3000) cuts at 4000', () => {
+        expect(where('mssql', '{name} & {name}').sql).toMatch(/\(CAST\(COALESCE\(.*?, N''\) AS nvarchar\(max\)\) \+ COALESCE\(/);
+    });
+
+    it('expect a number too large for a number a problem of the formula, not Infinity in the SQL', () => {
+        const big = `1${'0'.repeat(320)}`;
+        expect(() => where('postgres', `{price} < ${big}`, 'EQUAL', true)).toThrow(/too large|bigNumber/);
     });
 });

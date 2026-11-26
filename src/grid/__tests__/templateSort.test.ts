@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 
 import { beforeAll, describe, expect, it } from 'vitest';
+import { and, where } from '../../datasource/filterExpression';
 import type { GridConfig } from '../gridConfig';
 import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
 
@@ -54,5 +55,57 @@ describe('a column with a template sorts on the text it shows', () => {
             .filter((row) => row.__group)
             .map((row) => row.__groupName);
         expect(groups).toEqual(['First: Ann', 'First: Bob', 'First: Cid']);
+    });
+});
+
+describe('a template the column gets later sorts too', () => {
+    const plain = (): GridConfig => ({
+        columns: {},
+        layout: { center: ['id', 'first', 'last'].map((field) => ({ fields: [field], width: 100 })) }
+    });
+
+    it('expect a template of setState on a column without a columns entry sorted on its text', async () => {
+        const { datasource, gridInterface } = await mountGrid(plain(), rows(), { key: 'id' });
+        gridInterface.setState({ formats: { first: { text: '{last}' } } });
+        datasource.sort({ attribute: 'first', ascending: true });
+        // '' (Cid), Adams, Berg, Zed
+        expect(datasource.getRows().map((row) => row.id)).toEqual([4, 2, 3, 1]);
+    });
+
+    it('expect a template of initialState.formats sorted on its text', async () => {
+        const { datasource } = await mountGrid({ ...plain(), initialState: { formats: { first: { text: '{last}' } } } }, rows(), {
+            key: 'id'
+        });
+        datasource.sort({ attribute: 'first', ascending: true });
+        expect(datasource.getRows().map((row) => row.id)).toEqual([4, 2, 3, 1]);
+    });
+});
+
+describe('a second grid on the datasource, destroyed, leaves the first one as it was', () => {
+    it('expect the first grid’s template sort and filter used again', async () => {
+        const { datasource, gridInterface } = await mountGrid(config('{last}'), rows(), { key: 'id' });
+        const { GridInterface } = await import('../gridInterface');
+        const second = new GridInterface({ columns: {}, layout: { center: [{ fields: ['first'], width: 100 }] } }, datasource);
+        second.destroy();
+        datasource.sort({ attribute: 'first', ascending: true });
+        expect(datasource.getRows().map((row) => row.id)).toEqual([4, 2, 3, 1]);
+        datasource.filter(and(where('first', 'EQUAL', 'Zed')));
+        expect(datasource.getRows().map((row) => row.id)).toEqual([1]);
+        gridInterface.destroy();
+    });
+
+    it('expect the second grid’s template used while it is there, the first one’s after', async () => {
+        const { datasource } = await mountGrid(config('{last}'), rows(), { key: 'id' });
+        const { GridInterface } = await import('../gridInterface');
+        const second = new GridInterface(
+            { columns: { first: { format: { text: '{id}' } } }, layout: { center: [{ fields: ['first'], width: 100 }] } },
+            datasource
+        );
+        const filter = (value: string) => datasource.filter(and(where('first', 'EQUAL', value)));
+        filter('3');
+        expect(datasource.getRows().map((row) => row.id)).toEqual([3]);
+        second.destroy();
+        filter('Berg');
+        expect(datasource.getRows().map((row) => row.id)).toEqual([3]);
     });
 });

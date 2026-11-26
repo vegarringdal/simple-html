@@ -417,6 +417,7 @@ export class GridInterface<T> {
         this.setSortValues();
         this.dataSource.__setGroupValue(this.groupValue);
         this.dataSource.__setFilterText(this.filterText);
+        this.dataSource.__setSortText(this.sortText);
         // datasource.setFields() since: see syncFields
         this.fieldsVersion = this.dataSource.__getFieldsVersion();
         // the views of the config and the storage: the default one is the state the grid starts in
@@ -1109,6 +1110,8 @@ export class GridInterface<T> {
         assertConfigViews(config);
         // the calculated columns first, as in the constructor: the checks below read their types. Taken
         // back when one of them throws
+        // a column filtered on another template after it: the filter runs again (applyState)
+        const shownBefore = this.shownTemplates();
         let calculatedNext: Record<string, CalculatedColumn> | undefined;
         const fieldType = this.calculatedFieldType(
             config.columns ?? this.gridConfig.columns,
@@ -1211,7 +1214,7 @@ export class GridInterface<T> {
             next.layout = copyLayout(layout);
         }
         // rebuilds once, the rest of the state stays as it is
-        this.applyState(next);
+        this.applyState(next, shownBefore);
         if (keepStandard) {
             this.showView(null);
         }
@@ -1254,7 +1257,7 @@ export class GridInterface<T> {
      * @param state a copy, the datasource and the grid keep what they are given and change it in place
      * (shift+click sort, drag/drop, resizing)
      */
-    private applyState(state: Partial<GridState>) {
+    private applyState(state: Partial<GridState>, shownBefore = this.shownTemplates()) {
         // checked before anything changes: a wrong one throws and leaves the grid as it is. The calculated
         // columns are given to the datasource first, the aggregates and formats are checked with their
         // types - and taken back when one of them throws
@@ -1367,6 +1370,12 @@ export class GridInterface<T> {
         // new calculated columns: the rows are filtered, sorted and grouped on their values again
         const datasourceParts =
             calculated !== undefined || state.filter !== undefined || state.sorting || state.grouping || state.expandedGroups;
+        // a text column filtered on its template: another template, or Filter as shown turned, compares
+        // other texts - the filter runs again (__setFilterText reads the format as it is now)
+        const refilter = !datasourceParts && this.shownTemplates() !== shownBefore && this.getDatasource().getFilter() !== null;
+        if (refilter) {
+            this.getDatasource().filter(this.getDatasource().getFilter());
+        }
         if (datasourceParts) {
             // what is not given: the datasource's own, it replaces these when it is given new ones. A
             // calculated column that is gone is taken out of them
@@ -1401,7 +1410,7 @@ export class GridInterface<T> {
         // the displayed rows can be others now, the ranges of cells were made for the rows as they were.
         // The datasource's events that clear them otherwise were skipped. A new layout clears them in
         // __dataSourceUpdated()
-        if (datasourceParts) {
+        if (datasourceParts || refilter) {
             this.clearRanges();
         }
 
@@ -1410,6 +1419,17 @@ export class GridInterface<T> {
         } else {
             this.__dataSourceUpdated();
         }
+    }
+
+    /**
+     * The template each column is filtered on (__shownTemplate), as one text: applyState compares it
+     * before and after, to filter again when one changed
+     */
+    private shownTemplates(): string {
+        const fields = Object.keys(this.gridConfig.columns).sort();
+        return JSON.stringify(
+            fields.map((field) => [field, this.__shownTemplate(field)]).filter(([, template]) => template !== null)
+        );
     }
 
     /**
@@ -1697,15 +1717,12 @@ export class GridInterface<T> {
         // the element was not in the dom (then nothing calls it), or shows another interface now
         this.__disconnectGrid();
         this.events.clear();
-        // the datasource can be shown in another grid: it sorts its fields on their values again, and
-        // has no calculated fields of this grid
+        // the datasource can be shown in another grid: it sorts, groups and filters as that grid says
+        // (or on the values), and has no calculated fields of this grid
         this.clearSortValues();
-        if (this.dataSource.__getGroupValue() === this.groupValue) {
-            this.dataSource.__setGroupValue(null);
-        }
-        if (this.dataSource.__getFilterText() === this.filterText) {
-            this.dataSource.__setFilterText(null);
-        }
+        this.dataSource.__unsetGroupValue(this.groupValue);
+        this.dataSource.__unsetFilterText(this.filterText);
+        this.dataSource.__unsetSortText(this.sortText);
         this.registerCalculated({}, () => undefined);
     }
 
@@ -3741,10 +3758,8 @@ export class GridInterface<T> {
     }
 
     /**
-     * The datasource sorts the lookup columns on the label their cells show, and the text columns with a
-     * template (`format.text`) on the text they show - the template filled in for the row; see
-     * Datasource.__setSortValue. A template is read when the rows are sorted, so a template set later sorts
-     * too. A column grouped by sorts on its value: the groups are made from runs of one value
+     * The datasource sorts the lookup columns on the label their cells show, see
+     * Datasource.__setSortValue. The text columns with a template: sortText
      */
     private setSortValues() {
         for (const [field, column] of this.lookupColumns) {
@@ -3752,28 +3767,34 @@ export class GridInterface<T> {
             this.sortValues.set(field, sortValue);
             this.dataSource.__setSortValue(field, sortValue);
         }
-        for (const field of Object.keys(this.gridConfig.columns)) {
-            if (this.lookupColumns.has(field) || this.dataSource.getField(field).type !== 'text') {
-                continue;
-            }
-            const sortValue = (_value: unknown, row: Entity) => {
-                const grouped = this.dataSource.getGrouping().some((group) => group.attribute === field);
-                return grouped ? '' : (this.templateText(field, row) ?? '');
-            };
-            this.sortValues.set(field, sortValue);
-            this.dataSource.__setSortValue(field, sortValue);
-        }
     }
 
     /**
-     * Takes back what setSortValues() gave the datasource - not what another grid on the same
-     * datasource gave it since
+     * What the datasource sorts a text column with a template (`format.text`) on - the text it shows,
+     * the template filled in for the row (Datasource.__setSortText). Asked when the rows are sorted, so
+     * a template set later (setState, the grid config dialog) sorts too. undefined - sorted on the value
+     * - for another column, a lookup column (setSortValues) and a column grouped by: the groups are made
+     * from runs of one value
+     */
+    private readonly sortText = (field: string): ((value: unknown, row: Entity) => string) | undefined => {
+        if (
+            this.lookupColumns.has(field) ||
+            this.dataSource.getField(field).type !== 'text' ||
+            this.__getColumnFormat(field)?.text === undefined ||
+            this.dataSource.getGrouping().some((group) => group.attribute === field)
+        ) {
+            return undefined;
+        }
+        return (_value, row) => this.templateText(field, row) ?? '';
+    };
+
+    /**
+     * Takes back what setSortValues() gave the datasource: what another grid on the same datasource gave
+     * it is used again
      */
     private clearSortValues() {
         for (const [field, sortValue] of this.sortValues) {
-            if (this.dataSource.__getSortValue(field) === sortValue) {
-                this.dataSource.__setSortValue(field, null);
-            }
+            this.dataSource.__unsetSortValue(field, sortValue);
         }
         this.sortValues.clear();
     }

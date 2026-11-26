@@ -202,6 +202,9 @@ await request.query(`SELECT * FROM customer WHERE ${msWhere.sql}`);
 - **mssql** picks the type of a parameter from the JS value when `input()` gets none: a text is
   `NVarChar`, which the text comparisons need (see [Text](#text)), a boolean `Bit`, a whole number `Int`
   (`BigInt` past 32 bits), another number `Float`. With `tedious` itself, give a text `TYPES.NVarChar`.
+- **oracle**: a text equal to a value with no wildcard is `=` (`LOWER("NAME") = :1`), and Oracle
+  compares no `CLOB` with `=` (ORA-22848). Filter a `VARCHAR2` column, or a view that gives the CLOB
+  as one (`DBMS_LOB.SUBSTR(notes, 4000)`). *Contains* and the wildcards are `LIKE`, which takes a CLOB.
 - **sqlite**: the `?` are taken in order, `firstParam` does not change them: put your own values before
   or after the params as your `?` are before or after the WHERE.
 - **pg** sends every parameter as text and PostgreSQL takes the type of the column it is compared with
@@ -555,9 +558,12 @@ Where they still differ:
 | a number as text past 15 digits, or below 0.0001 | `1e+21`, `0.00001` | PostgreSQL and Oracle write the digits, SQLite `1e-05` |
 | `<` on text | the browser's order of letters | the database's (`COLLATE "C"`, binary): code points |
 | LEN, LEFT, MID of an emoji | one character | two on SQL Server, unless the column has a collation of supplementary characters (`_SC`) |
-| `=` on text with spaces at the end | they count | SQL Server ignores them |
+| `=` on text with spaces at the end | they count | SQL Server ignores them, Oracle too between two texts of the formula itself (`"a " = "a"`) |
 | TRIM | every white space of Unicode | spaces, tabs and line breaks |
 | case of letters that are not ASCII | JavaScript's | the database's `LOWER()` - SQLite folds ASCII only |
+| `=` on text in a formula | the browser's collator: `Ａ` is `a`, `ﬁ` is `fi`, `é` written in two code points is `é`, a soft hyphen is nothing | `LOWER()` of both: the characters as they are |
+| a text of more than 10 000 characters (`&`, CONCAT, LEFT, UPPER ...) | blank | the text |
+| a number past ±1.8 × 10³⁰⁸ (`{a} * {a}`) | blank | the database's: SQLite `Inf`, the others an overflow error |
 
 Without `calculated`, `toSqlWhere()` refuses a condition on a calculated column, as any field it does not
 know, with a `TypeError` that names it - it is never left out, that would load more rows than the user

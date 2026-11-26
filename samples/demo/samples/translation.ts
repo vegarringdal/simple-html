@@ -536,6 +536,7 @@ const norwegian: Record<TextId, string> = {
     'columnSettings.formula.problem.depth': 'Formelen er nestet dypere enn {max} nivåer',
     'columnSettings.formula.problem.size': 'Formelen har mer enn {max} deler',
     'columnSettings.formula.problem.character': '{text} ved {position} er ingen del av en formel',
+    'columnSettings.formula.problem.bigNumber': 'Tallet ved {position} er for stort',
     'columnSettings.formula.problem.unexpected': '{text} ved {position} kan ikke stå der',
     'columnSettings.formula.problem.end': 'Formelen slutter for tidlig',
     'columnSettings.formula.problem.text': 'Teksten ved {position} mangler avsluttende anførselstegn',

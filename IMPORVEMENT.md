@@ -5533,6 +5533,40 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
   its grid and tasks, none done before the reader does it, a header click ticks the sort tasks, typing in
   the filter row the filter task, Ctrl+F the find task, Start again clears them
 
+### A last check: three reviews and their fixes (2026-11-26)
+
+* the user: "have a last check on everything and fix if you find issues". Three reviews read the SQL formula
+  code, the grid's filter and sort on the shown text, and the dialog; each bug proved with a test, then fixed
+  with one that stays
+* **one hook the sort asks** (Datasource.__setSortText): the template's sort values were set per field of
+  `columns`, so a template on a field without an entry (setState, initialState) sorted on the value. The
+  grid's sortText(field) is asked once per sort and gives the row's text, or undefined for no template, a
+  lookup (its own __setSortValue), a column grouped by
+* **owners per hook**: the datasource kept one filter text, one group value and one sort value per field - a
+  second grid overwrote them and its destroy() cleared them. Now a list per hook, the last given used;
+  __unset… takes one back and the one before is used again
+* **mixed kinds sort as text**: a number to a number compared as numbers but to a Date as text, no order (3 <
+  10 but "10" < "2026-01-01" < "3"). runOrderBy looks once per sort argument whether a field has more than one
+  kind (blanks aside): then every value is its valueText
+* **filtering again on another template is applyState's**: it compares the shown templates before and after
+  (updateConfig gives its own before) - every way a format changes. refilterChangedFormats read a column
+  without a format before as its format now: `__getColumnFormat(field, undefined)` is the default parameter,
+  the format now; `before[field] ?? {}`. It also clears a header filter whose column turned to checkboxes or
+  back; filterCallback takes the header filter's own `true` / `false` (a number formatter had no text for it)
+* **the dialog**: the open rule worked out on every render ("first with a problem") moved while typing - it
+  is stored the first time; openRuleField resets it when the column changes any way, and when Reset leaves
+  fewer rules. Show as link off deletes filterAsShown on a text column only (a number's is its format's).
+  addCalculated sets detail, Remove clears it. A resize sets width and height before the class that lifts 80 %
+* **SQL**: valueField through columnOf(…, asShown false); a literal over 1.8e308 fails in formula.ts
+  (`bigNumber`) and formulaSql throws for a non-finite number. db<>fiddle, SQL Server 2022: `+` of two
+  nvarchar(3000) is 4000 long, with the first CAST to nvarchar(max) 6000; ROUND of 1e30 overflowed decimal(38,
+  10), now `CASE WHEN ABS(x) < 1e27`. Oracle 23: `LOWER(clob) = 'ann'` is ORA-22848, LIKE works - documented,
+  `=` kept (the user asked for it)
+* not changed, said in 22-sql.md: a text over 10 000 characters and a number overflow blank the value in the
+  grid, not in SQL; `=` on text in a formula is the collator's (`Ａ` = `a`)
+* suspected, left: a template of only blanks (`{first} {last}`) is `' '`, no Blank (the SQL gives the same);
+  importFile after the grid is destroyed still imports into the datasource
+
 ## Considered, not done
 
 ## Candidates / not started

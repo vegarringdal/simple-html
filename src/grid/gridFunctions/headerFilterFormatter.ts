@@ -114,8 +114,17 @@ export function refilterChangedFormats(
         if (value === null || value === undefined) {
             continue;
         }
-        const was = gridInterface.__getColumnFormat(field, before[field], typeFormatsBefore);
-        if (asShownKey(ctx, field, was) !== asShownKey(ctx, field, gridInterface.__getColumnFormat(field))) {
+        // no format before is none - not undefined, which __getColumnFormat reads as the format now
+        const was = gridInterface.__getColumnFormat(field, before[field] ?? {}, typeFormatsBefore);
+        const now = gridInterface.__getColumnFormat(field);
+        // shown as checkboxes now, or no longer: a text typed is no checkbox's state, nor true a text - the
+        // filter is cleared. Another value of a checked cell: the same state filters on it
+        const checkboxWas = checkboxKey(ctx, field, was);
+        const checkboxNow = checkboxKey(ctx, field, now);
+        if (checkboxWas !== checkboxNow) {
+            filterCallback(ctx, checkboxWas && checkboxNow && typeof value === 'boolean' ? value : '', field);
+            ran = true;
+        } else if (asShownKey(ctx, field, was) !== asShownKey(ctx, field, now)) {
             filterCallback(ctx, value, field);
             ran = true;
         }
@@ -123,17 +132,16 @@ export function refilterChangedFormats(
     if (ran) {
         rebuildHeaderColumns(ctx);
     }
-    // a text column filtered on its template: another template, or filterAsShown turned, compares other
-    // texts - the filter runs again (__setFilterText reads the format as it is now)
-    const datasource = gridInterface.getDatasource();
-    const shownBefore = (field: string) => {
-        const was = before[field] ?? columns[field]?.format;
-        return datasource.getField(field).type === 'text' && was?.text !== undefined && was.filterAsShown !== false
-            ? was.text
-            : null;
-    };
-    const changed = Object.keys(columns).some((field) => shownBefore(field) !== gridInterface.__shownTemplate(field));
-    if (changed && datasource.getFilter()) {
-        datasource.filter(datasource.getFilter());
+}
+
+/**
+ * the checkbox a column shows its values as, as text: '' when it shows none - a header filter of a text
+ * or number column is then a checkbox (filterCallback)
+ */
+function checkboxKey(ctx: Grid, field: string, format: ColumnFormat | undefined): string {
+    const { type } = ctx.gridInterface.getDatasource().getField(field);
+    if ((type !== 'text' && type !== 'number') || ctx.gridInterface.__getLookupColumn(field) || !format?.checkbox) {
+        return '';
     }
+    return JSON.stringify(format.checkbox);
 }

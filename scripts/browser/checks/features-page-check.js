@@ -1,7 +1,8 @@
 // Real browser check of the docs site's feature overview (guides/00-features.md, #guide/features):
 // - the sidebar: a section "Features" between "Status" and "Developer Guide", with the one page; the start page
 // - the page renders: its tables, the same three columns in each (the same widths), light and dark
-// - every link on it goes somewhere: a guide's heading exists on its page and is scrolled to, a #sample/<id>
+// - every link on it goes somewhere: a guide's heading exists on its page and is scrolled to, a page of the
+//   user guide (#user-guide/<id>) opens, a #sample/<id>
 //   opens the sample with a grid
 // - a phone (390px): no sideways scroll of the page, nor of the article; no cell's text spills out of it.
 //   Another guide's wide table scrolls in its own box (the .doc table rule of index.css)
@@ -178,6 +179,18 @@ async function goHash(page, hash) {
                     }));
                     if (!ok || got.active !== href || !got.title) {
                         bad.push(`${href}: ${JSON.stringify({ grid: ok, ...got })}`);
+                    }
+                    continue;
+                }
+                const userGuide = /^#user-guide\/([a-z0-9-]+)$/.exec(href);
+                if (userGuide) {
+                    guideLinks++;
+                    const got = await page.evaluate(() => ({
+                        active: document.querySelector('.nav-item.active')?.getAttribute('href'),
+                        h1: document.querySelector('.doc h1')?.textContent
+                    }));
+                    if (got.active !== href || !got.h1) {
+                        bad.push(`${href}: ${JSON.stringify(got)}`);
                     }
                     continue;
                 }

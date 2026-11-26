@@ -238,6 +238,8 @@ describe('formula - hostile input', () => {
             expect('problem' in result && result.problem.id, name).toEqual('function');
         }
         expect(read('{name}.length')).toMatchObject({ problem: { id: 'character' } });
+        // more digits than a number holds: Infinity is no number, nor a name in SQL
+        expect(read(`{price} < 1${'0'.repeat(320)}`)).toMatchObject({ problem: { id: 'bigNumber', values: { position: 11 } } });
         expect(read('{name}["length"]')).toMatchObject({ problem: { id: 'character' } });
         expect(read('constructor.constructor("alert(1)")()')).toMatchObject({ problem: { id: 'character' } });
         expect(read('constructor("alert(1)")')).toMatchObject({ problem: { id: 'function' } });

@@ -5,6 +5,9 @@ the guide that explains it and a live sample to try it in. The [Full grid](#samp
 most of it in one grid: 50 columns, 5 000 rows. New to the grid? Start with
 [Getting started](01-getting-started.md).
 
+For the people who use a grid there is the [user guide](#user-guide/getting-started): what to click, by
+kind of action, with a live grid to try it on each page.
+
 On a Mac, Ctrl is Cmd and Alt is Option.
 
 ## Data and setup
@@ -61,12 +64,14 @@ On a Mac, Ctrl is Cmd and Alt is Option.
 | Feature | What it does | See |
 | --- | --- | --- |
 | Header filters | A filter under each label: type and press Enter. `*` and `_` are wildcards | [guide](06-filtering.md#header-filters) · [sample](#sample/filtering) |
+| Checkbox filter | A yes/no column, or one shown as checkboxes, filters with a checkbox: checked, unchecked, no filter | [guide](06-filtering.md#header-filters) · [sample](#sample/full-grid) |
 | Operators | Equals, contains, begins with, greater than, between, blank ... picked from the symbol in the filter or its menu | [guide](06-filtering.md#the-operator-in-the-cell) · [sample](#sample/filter-operator-header) |
 | Value list | Tick the values to show, as in a spreadsheet, each with its count. A search narrows the list, or filters on the text | [guide](06-filtering.md#the-value-list) · [sample](#sample/filtering) |
 | Range block | For numbers and dates: an operator and a value, or from and to, in one go | [guide](06-filtering.md#the-range-block) · [sample](#sample/filtering) |
 | Date and range pickers | A calendar for a date filter; two months side by side for a range | [guide](06-filtering.md#the-range-picker) · [sample](#sample/filtering) |
 | Quick dates | One click for Today, This week, Last month, This quarter, Last 30 days, Overdue ... - kept as "this month", so a saved view still means this month next month | [guide](06-filtering.md#quick-dates) · [sample](#sample/filtering) |
 | Filter as shown | Type the filter as the cells show it: `2026-W47` is that week, `1 234,5` that number | [guide](06-filtering.md#filter-as-shown) · [sample](#sample/full-grid) |
+| Filter on the text you see | A column with a template or a link filters on the text its cells show - `*(12)*` finds `Acme Corp (12)` - and its value list lists those texts | [guide](08-formatting.md#what-a-template-and-a-link-change) · [sample](#sample/full-grid) |
 | Filter as you type | Filters after a short pause, no Enter needed - per column, turned on by the user or you | [guide](06-filtering.md#filter-as-you-type) · [sample](#sample/filter-operator-header) |
 | Match case | `Oslo` matches `Oslo`, not `OSLO`: upper and lower case as typed | [guide](06-filtering.md#match-case) · [sample](#sample/filtering) |
 | Filter on a cell | Right click a cell: filter on its value, or add it to the filter there is | [guide](06-filtering.md#filters-from-the-row-menu) · [sample](#sample/context-menu) |
@@ -81,6 +86,7 @@ On a Mac, Ctrl is Cmd and Alt is Option.
 | Feature | What it does | See |
 | --- | --- | --- |
 | Sort | Click a label; again for the other way; Shift+click to sort on one more column | [guide](07-sorting-grouping.md#sorting) · [sample](#sample/sorting-grouping) |
+| Sort on the text you see | A column with a template sorts on its text - `{last}, {first}` by the last name; grouped, on its value | [guide](07-sorting-grouping.md#sorting) · [sample](#sample/full-grid) |
 | Group | Drag a label to the panel above the header; group in groups, drag the chips to reorder them | [guide](07-sorting-grouping.md#grouping) · [sample](#sample/sorting-grouping) |
 | Expand and collapse | Each group, or all of them from the header menu | [guide](07-sorting-grouping.md#grouping) · [sample](#sample/sorting-grouping) |
 | Aggregates | Sum, average, min, max or count of a column, in every group row | [guide](18-aggregates.md#in-the-group-rows) · [sample](#sample/aggregates) |
@@ -141,6 +147,8 @@ On a Mac, Ctrl is Cmd and Alt is Option.
 | Feature | What it does | See |
 | --- | --- | --- |
 | Column settings | The gear in the footer: per column its label, display format, template and link, checkbox, multiline, read only, placeholder and colour rules | [guide](08-formatting.md#the-grid-config-dialog) · [sample](#sample/full-grid) |
+| Fits a small screen | Starts within 80 % of the window, scrolls inside, resized from its edges; on a phone the columns and a column's settings take turns. Colour rules fold, the colours are panels, one open at a time | [guide](08-formatting.md#the-grid-config-dialog) · [sample](#sample/full-grid) |
+| Insert a function | The **ƒ** button by a formula: the functions in a menu by kind, each with a tooltip of what it does | [guide](23-calculated-columns.md#in-the-grid-config-dialog) · [sample](#sample/calculated-columns) |
 | Detail form settings | The fields of the detail form and their order, its width | [guide](08-formatting.md#the-grid-config-dialog) · [sample](#sample/detail-form) |
 | Kept with the state | What the user sets there is saved and restored with the rest of the state | [guide](03-state.md#display-formats-in-the-state) · [sample](#sample/full-grid) |
 
@@ -167,6 +175,7 @@ On a Mac, Ctrl is Cmd and Alt is Option.
 | From the menu | Right click a cell: Export › Excel, all rows or the selected rows | [guide](15-export.md#from-the-row-menu) · [sample](#sample/export) |
 | What you see | The rows the filter lets through, sorted, the columns in their order - or the selected rows | [guide](15-export.md#the-rows) · [sample](#sample/export) |
 | Import | Rows pasted from Excel, or a CSV or Excel file, become new rows: see where each column goes, what is wrong, then import - one undo step | [guide](24-import.md) · [sample](#sample/import) |
+| Import a file from code | `importFile(file)`: an Excel workbook (its first sheet) or a CSV file into new rows, no library of your own | [guide](24-import.md#from-code) · [sample](#sample/import) |
 
 ## State
 
@@ -230,6 +239,9 @@ On the docs site the sidebar's *Grid theme* and *Toggle dark/light* switch every
 | Four databases | PostgreSQL, Oracle, SQLite and SQL Server | [guide](22-sql.md#the-dialects) · [sample](#sample/sql) |
 | Safe from SQL injection | Values are always parameters, the columns a list you give, names checked and quoted, the size limited | [guide](22-sql.md#security) · [sample](#sample/sql) |
 | The same rows as the grid | Case, blanks, dates and time zones compare as the grid compares them | [guide](22-sql.md#how-each-type-compares) · [sample](#sample/sql) |
+| Calculated columns in SQL | A formula as an SQL expression of the database - `LEFT({name}, 2)`, `DAYS(...)`, `IF(...)` - so a filter on a calculated column runs on the server too | [guide](22-sql.md#calculated-columns) · [sample](#sample/sql) |
+| Templates in SQL | A column filtered on the text its template shows, as an SQL expression: `getShownFormulas()` | [guide](22-sql.md#a-column-filtered-on-its-template) · [sample](#sample/sql) |
+| The filter to send | `getServerFilter()`: the filter without what the backend can not run - Find's rows, fields it does not have, calculated columns unless kept | [guide](22-sql.md#the-filter-to-send-getserverfilter) · [sample](#sample/sql) |
 
 ## Keyboard shortcuts
 

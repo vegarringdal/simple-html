@@ -354,3 +354,17 @@ describe('column settings - the kinds of a colour rule', () => {
         expect(preview.style.getPropertyValue('--simple-html-grid-rule-bg')).toEqual('#000000');
     });
 });
+
+describe('column settings - a calculated column added and removed in a narrow dialog', () => {
+    it('expect Add calculated column to show its settings, Remove the list again', async () => {
+        const { gridInterface } = await mount();
+        gridInterface.openColumnSettings();
+        const body = () => dialog().querySelector('.column-settings-body') as HTMLElement;
+        expect(body().classList.contains('column-settings-detail')).toBe(false);
+        button('Add calculated column').click();
+        // a phone shows the settings of the new column, its formula is typed next
+        expect(body().classList.contains('column-settings-detail')).toBe(true);
+        button('Remove calculated column').click();
+        expect(body().classList.contains('column-settings-detail')).toBe(false);
+    });
+});

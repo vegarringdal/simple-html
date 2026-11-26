@@ -109,7 +109,10 @@ function resizeDialog(dialog: HTMLElement, edge: ResizeHandle, event: PointerEve
     const style = window.getComputedStyle(dialog);
     const minWidth = Number.parseInt(style.minWidth, 10) || 200;
     const minHeight = Number.parseInt(style.minHeight, 10) || 120;
-    // resized by the user: as large as the window, not the 80 % it starts within (the css)
+    // resized by the user: as large as the window, not the 80 % it starts within (the css). Its size of
+    // now set first: a dialog of more than 80 % of content would grow at once, its buttons off screen
+    dialog.style.width = asPx(rect.width);
+    dialog.style.height = asPx(rect.height);
     dialog.classList.add('simple-html-dialog-resized');
 
     dragHandle(event, (dx, dy) => {

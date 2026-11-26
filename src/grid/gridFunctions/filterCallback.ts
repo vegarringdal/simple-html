@@ -66,7 +66,8 @@ export function filterCallback(ctx: Grid, value: unknown, field: string, filterA
             field,
             type === 'number' ? 'number' : 'text',
             checkbox.checked ?? '1',
-            text === 'true' ? true : text === 'false' ? false : null
+            // the header filter's own value run again: true or false as it is (a number column's formatter has no text for it)
+            typeof single === 'boolean' ? single : text === 'true' ? true : text === 'false' ? false : null
         );
         return;
     }

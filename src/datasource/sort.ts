@@ -18,7 +18,14 @@ export class Sort {
      * @param fieldType the type of a field, from the datasource's schema: a `date` field sorts on the
      * day, everything else on the value (a `datetime` on the full timestamp)
      */
-    constructor(private fieldType: (attribute: string) => FieldType) {
+    constructor(
+        private fieldType: (attribute: string) => FieldType,
+        /**
+         * the text a field's rows are sorted on, asked once per sort - for a field without a
+         * setSortValue: the text a grid's template shows (Datasource.__setSortText). undefined: on the value
+         */
+        private sortText: (attribute: string) => ((value: unknown, row: Entity) => string) | undefined = () => undefined
+    ) {
         this.lastSorting = [];
         this.currentSorting = [];
         this.localeCompareCode = null;
@@ -109,11 +116,15 @@ export class Sort {
         const thisSort = this.getOrderBy();
         // looked up once, not for every compare
         const dayOnly = thisSort.map((sortArg) => this.fieldType(sortArg.attribute) === 'date');
-        // the text of each row (setSortValue), made once per sort - not twice for every compare
+        // the text of each row (setSortValue, else sortText), made once per sort - not twice for every compare
         const texts = thisSort.map((sortArg) => {
-            const sortValue = this.sortValues.get(sortArg.attribute);
+            const sortValue = this.sortValues.get(sortArg.attribute) ?? this.sortText(sortArg.attribute);
             return sortValue ? new Map(array.map((row) => [row, sortValue(row[sortArg.attribute], row)])) : null;
         });
+        // a field with values of more than one kind (a number and a date in a text field, or a column
+        // of several types) compares every value as its text: a number to a number as numbers and to a
+        // date as text is no order - 3 < 10 but "10" < "2026-01-01" < "3" - and equal values end up apart
+        const asText = thisSort.map((sortArg) => mixedKinds(array, sortArg.attribute));
 
         array.sort((obj1: any, obj2: any) => {
             // first sort argument that tells the rows apart decides
@@ -125,7 +136,9 @@ export class Sort {
                 // values is no tie
                 let result = text ? this.compareAscending(text.get(obj1), text.get(obj2), false) : 0;
                 if (result === 0) {
-                    result = this.compareAscending(value1, value2, dayOnly[i]);
+                    result = asText[i]
+                        ? this.compareAscending(textOrBlank(value1), textOrBlank(value2), false)
+                        : this.compareAscending(value1, value2, dayOnly[i]);
                 }
                 if (result !== 0) {
                     // descending is the ascending result flipped, so blanks end up last
@@ -172,8 +185,7 @@ export class Sort {
         // a string against anything compares as text both ways round. Mixing `localeCompare` one
         // way and `<` the other way made the sort disagree with itself. So do two values of different
         // kinds - a number and a date of a column of several types (dynamicCellTypeColumn): as their text
-        const kind = (value: unknown) => (value instanceof Date ? 'date' : typeof value);
-        if (typeof v1 === 'string' || typeof v2 === 'string' || kind(v1) !== kind(v2)) {
+        if (typeof v1 === 'string' || typeof v2 === 'string' || kindOf(v1) !== kindOf(v2)) {
             const s1 = valueText(v1);
             const s2 = valueText(v2);
             if (s1 === s2) {
@@ -207,4 +219,35 @@ export class Sort {
         }
         return new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
     }
+}
+
+/** the kind of a value for the sort: a Date, else its typeof */
+function kindOf(value: unknown): string {
+    return value instanceof Date ? 'date' : typeof value;
+}
+
+/**
+ * true when the rows have values of more than one kind in a field - a number and a string, a date and
+ * a number - blanks left out
+ */
+function mixedKinds(rows: Entity[], attribute: string): boolean {
+    let kind: string | null = null;
+    for (const row of rows) {
+        const value = row[attribute];
+        if (isBlank(value)) {
+            continue;
+        }
+        const each = kindOf(value);
+        if (kind === null) {
+            kind = each;
+        } else if (each !== kind) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/** a value as its text for the sort (valueText), a blank stays blank */
+function textOrBlank(value: unknown): unknown {
+    return isBlank(value) ? value : valueText(value);
 }

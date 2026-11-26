@@ -326,6 +326,10 @@ export function colorRuleSettings(ctx: Grid, settings: RuleSettings): TemplateRe
         return withProblem !== -1 ? withProblem : rules.length ? 0 : null;
     };
     const open = openIndex();
+    if (settings.open === undefined) {
+        // the choice sticks: a problem fixed by typing does not open another rule under the cursor
+        settings.setOpen(open, false);
+    }
     /** the rules in the draft, each tidy */
     const write = (next: ColorRule[]) => settings.write(next.map(tidyRule));
     const text = (id: TextId, values?: Readonly<Record<string, unknown>>) => gridText(ctx, id, values);

@@ -643,8 +643,10 @@ As a display format: only what the cells show, and what follows the cells.
 | sorting | **the text shown** on a `text` field - `{last}, {first}` sorts by the last name - as it is filtered; the value of a column grouped by |
 | grouping | the value: a group is a run of one value |
 
-A template and a link are for a `text` field, and not for a lookup column (`editor`): a format with
-them on another type throws a `TypeError`. A cell of another type in a `dynamicCellTypeColumn` is
+A template is for a `text`, `number`, `date` or `datetime` field, a link for a `text` or `number`
+field, neither for a lookup column (`editor`): a format with them on another type throws a
+`TypeError`. The filters and the sort compare the text shown on a `text` field only - a number or a
+date is filtered and sorted as its value. A cell of another type in a `dynamicCellTypeColumn` is
 shown as its type, without them.
 
 ## The grid config dialog

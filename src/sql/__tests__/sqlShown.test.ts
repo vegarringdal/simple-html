@@ -141,3 +141,34 @@ describe('a column filtered on the text its template shows', () => {
         expect(datasource.getRows().map((row) => row.id)).toEqual([1]);
     });
 });
+
+describe('a valueField that is a column filtered on its template', () => {
+    it('expect the other column compared as the row has it, as in the grid: not its template', async () => {
+        const db = new DatabaseSync(':memory:');
+        db.exec('CREATE TABLE t (id INTEGER, first TEXT, last TEXT)');
+        db.exec("INSERT INTO t VALUES (1, 'Ann', 'Ann'), (2, 'Bob', 'Cid')");
+        const config: GridConfig = {
+            columns: { last: { format: { text: '[{last}]' } } },
+            layout: { center: ['id', 'first', 'last'].map((field) => ({ fields: [field], width: 100 })) }
+        };
+        const { datasource, gridInterface } = await mountGrid(
+            config,
+            [
+                { id: 1, first: 'Ann', last: 'Ann' },
+                { id: 2, first: 'Bob', last: 'Cid' }
+            ],
+            { key: 'id', fields: { id: 'number' } }
+        );
+        const filter = and({ field: 'first', operator: 'EQUAL', valueField: 'last' } as never);
+        datasource.filter(filter);
+        expect(datasource.getRows().map((row) => row.id)).toEqual([1]);
+        const columns = { id: { column: 'id', type: 'number' as const }, first: 'first', last: 'last' };
+        const sql = toSqlWhere(filter, {
+            dialect: 'sqlite',
+            columns,
+            shown: gridInterface.getShownFormulas({ fields: ['id', 'first', 'last'] })
+        });
+        const found = db.prepare(`SELECT id FROM t WHERE ${sql.sql} ORDER BY id`).all(...(sql.params as never[]));
+        expect(found.map((row) => row.id)).toEqual([1]);
+    });
+});

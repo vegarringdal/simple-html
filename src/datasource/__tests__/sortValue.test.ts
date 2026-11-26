@@ -65,3 +65,41 @@ describe('datasource - sorting on a text of the value', () => {
         expect(ds.getDataRows().map((row) => row.id)).toEqual([4, 5, 6, 2, 3, 1]);
     });
 });
+
+describe('datasource - two sort texts of grids on one datasource', () => {
+    it('expect the last given used, the one before it again when it is taken back', () => {
+        const ds = datasource();
+        const reversed = (value: unknown) => (typeof value === 'string' ? [...label(value)].reverse().join('') : '');
+        ds.__setSortValue('country', label);
+        ds.__setSortValue('country', reversed);
+        expect(ds.__getSortValue('country')).toBe(reversed);
+        ds.__unsetSortValue('country', reversed);
+        expect(ds.__getSortValue('country')).toBe(label);
+        ds.__unsetSortValue('country', label);
+        expect(ds.__getSortValue('country')).toBeUndefined();
+    });
+});
+
+describe('datasource - a field of values of more than one kind', () => {
+    it('expect every value compared as its text: equal values next to each other, one order', () => {
+        const ds = new Datasource();
+        const date = new Date(2026, 0, 1);
+        const values = [3, 10, date, 25, 100, 3, 10, null, 2];
+        ds.setData(values.map((value, id) => ({ id, value })));
+        ds.sort({ attribute: 'value', ascending: true });
+        const sorted = ds.getDataRows().map((row) => row.value);
+        // the text of each: "10" < "100" < "2" < "2026-01-01" < "25" < "3", the blank first
+        expect(sorted).toEqual([null, 10, 10, 100, 2, date, 25, 3, 3]);
+        // the same order whatever order the rows came in
+        ds.setData([...values].reverse().map((value, id) => ({ id, value })));
+        ds.sort({ attribute: 'value', ascending: true });
+        expect(ds.getDataRows().map((row) => row.value)).toEqual(sorted);
+    });
+
+    it('expect values of one kind still compared as that kind: 3 before 10', () => {
+        const ds = new Datasource({ fields: { value: 'number' } });
+        ds.setData([10, 3, null, 25].map((value, id) => ({ id, value })));
+        ds.sort({ attribute: 'value', ascending: true });
+        expect(ds.getDataRows().map((row) => row.value)).toEqual([null, 3, 10, 25]);
+    });
+});

@@ -551,7 +551,9 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
         '1 < 2 < 3',
         'ROUND(1, 1.5)',
         '{age} / 0',
+        // a number too large to read, and two that are larger than a number when multiplied
         `{age} * ${'9'.repeat(400)}`,
+        `{age} * ${'9'.repeat(300)} * ${'9'.repeat(300)}`,
         '{name} & ""',
         '{age} + 1'
     ]) {
@@ -1028,6 +1030,8 @@ async function showEverything({ element, datasource, gridInterface }: MountedGri
     clickIcon('«filterEditor.clearAll.tooltip»');
     check();
     clickIcon('«filterEditor.closeButton.tooltip»');
+    // the filter set for the editor, not run, matches no row: a template changed runs the filter again
+    datasource.setFilter(null);
 
     // the column settings dialog, see showColumnSettings
     showColumnSettings({ element, datasource, gridInterface }, check);

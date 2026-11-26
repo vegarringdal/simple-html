@@ -132,6 +132,8 @@ function checkReferences(guides, api) {
     const headings = new Map(guides.map((guide) => [guide.id, new Set(headingIds(guide.body))]));
     const pages = new Set([
         ...guides.map((guide) => `guide/${guide.id}`),
+        // a page of the user guide: #user-guide/<id>
+        ...readGuides(USER_GUIDE_DIR).map((page) => `user-guide/${page.id}`),
         ...[...samples].map((id) => `sample/${id}`),
         ...api.symbols.map((symbol) => `api/${symbol.name}`),
         ...api.symbols.flatMap((symbol) =>

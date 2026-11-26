@@ -1128,3 +1128,18 @@ describe('column settings - the tabs of a column', () => {
         expect(dialog().querySelector('.column-settings-section')?.hasAttribute('role')).toBe(false);
     });
 });
+
+describe('column settings - a number column’s link turned off', () => {
+    it('expect its Filter as shown kept: it is the number format’s, not the link’s', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.setState({
+            formats: { balance: { number: { decimals: 2 }, filterAsShown: false, link: { url: 'https://example.com/{id}' } } }
+        });
+        gridInterface.openColumnSettings('balance');
+        expect(checkbox('Filter as shown').checked).toBe(false);
+        toggle('Show as link');
+        expect(checkbox('Filter as shown').checked).toBe(false);
+        button('Apply').click();
+        expect(gridInterface.getState().formats.balance).toEqual({ number: { decimals: 2 }, filterAsShown: false });
+    });
+});

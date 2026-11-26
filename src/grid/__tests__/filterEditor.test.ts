@@ -1003,12 +1003,13 @@ describe('filter editor - resized from every edge and corner, pointer events', (
         element.dispatchEvent(pointer('pointerup', 300 + dx, 300 + dy));
     }
 
-    // the editor is at 100,80, 650 by 600. Moving a west or north edge moves left/top too
+    // the editor is at 100,80, 650 by 600. Moving a west or north edge moves left/top too. Its size is
+    // set when the resize starts: lifted from the 80 % it starts within, it does not grow by itself
     it.each([
-        ['e', { left: '', top: '', width: '690px', height: '' }],
-        ['w', { left: '140px', top: '', width: '610px', height: '' }],
-        ['s', { left: '', top: '', width: '', height: '630px' }],
-        ['n', { left: '', top: '110px', width: '', height: '570px' }],
+        ['e', { left: '', top: '', width: '690px', height: '600px' }],
+        ['w', { left: '140px', top: '', width: '610px', height: '600px' }],
+        ['s', { left: '', top: '', width: '650px', height: '630px' }],
+        ['n', { left: '', top: '110px', width: '650px', height: '570px' }],
         ['se', { left: '', top: '', width: '690px', height: '630px' }],
         ['sw', { left: '140px', top: '', width: '610px', height: '630px' }],
         ['ne', { left: '', top: '110px', width: '690px', height: '570px' }],

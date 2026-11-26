@@ -173,6 +173,11 @@ interface ColumnSettings {
      */
     openRule: number | null | undefined;
     /**
+     * the column openRule is of: picked another way (Reset, rename, remove, a new calculated column) the
+     * rules are another column's, the first open again
+     */
+    openRuleField: string;
+    /**
      * the panel of the Colours tab open on a number column - Colour rules, Data bar, Colour scale, Icons,
      * one at a time; null: none. Kept when another column is picked
      */
@@ -271,6 +276,7 @@ export function openColumnSettings(ctx: Grid, field?: string, tab: GridConfigTab
         // opened on a column (its header menu): its settings, also on a phone
         detail: field !== undefined,
         openRule: undefined,
+        openRuleField: '',
         colourPanel: 'rules',
         tab,
         section: 'general',
@@ -889,10 +895,13 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                               // a link from the dialog opens in a new tab at first: the grid's page stays
                               next.link = { url: '', newTab: true };
                           } else {
-                              // its text goes with it, and how it is filtered
+                              // its text goes with it, and on a text column how it is filtered: a number
+                              // column's Filter as shown is its number format's, it stays
                               delete next.link;
                               delete next.text;
-                              delete next.filterAsShown;
+                              if (kind === 'text') {
+                                  delete next.filterAsShown;
+                              }
                           }
                       })
                   )
@@ -1295,11 +1304,17 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
     };
 
     /** the colour rules of the column (ColumnFormat.rules), any column: columnSettingsRules.ts */
-    const ruleSettings = () =>
-        colorRuleSettings(ctx, {
+    const ruleSettings = () => {
+        const rules = format?.rules ?? [];
+        // the rule open is of another column, or no longer there (Reset): the first open again
+        if (settings.openRuleField !== field || (typeof settings.openRule === 'number' && settings.openRule >= rules.length)) {
+            settings.openRule = undefined;
+            settings.openRuleField = field;
+        }
+        return colorRuleSettings(ctx, {
             dialog,
             field,
-            rules: format?.rules ?? [],
+            rules,
             write: (rules) =>
                 change((next) => {
                     if (rules.length) {
@@ -1321,6 +1336,7 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                 }
             }
         });
+    };
 
     /**
      * The data bar, colour scale and icon set of a number column (ColumnFormat.bar, scale, icons):
@@ -1450,6 +1466,8 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
             settings.added = settings.added.filter((name) => name !== field);
             const left = fields.filter((name) => name !== field);
             settings.field = left[Math.min(index, left.length - 1)];
+            // back to the list it focuses, also on a phone
+            settings.detail = false;
             update();
             dialog.querySelector<HTMLElement>('.column-settings-list')?.focus();
         };
@@ -1721,6 +1739,8 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         settings.calculated[name] = { formula: '', label: text('columnSettings.calculated.defaultLabel', { number }) };
         settings.added.push(name);
         settings.field = name;
+        // its settings in view, also on a phone: the formula is typed next
+        settings.detail = true;
         update();
         dialog.querySelector<HTMLElement>(`#${idOf(ctx, 'calculated-formula')}`)?.focus();
         dialog.querySelector(`#${idOf(ctx, `option-${fields.length}`)}`)?.scrollIntoView({ block: 'nearest' });

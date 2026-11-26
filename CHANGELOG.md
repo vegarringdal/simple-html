@@ -1383,6 +1383,29 @@ rows); the vertical time is rendering every cell of every row on screen, which s
 - the **ƒ** button beside a formula (a calculated column's, a colour rule's): a menu of the functions by kind,
   each with a tooltip of what it does; picked, put in at the caret. `MenuItem.tooltip`: a tooltip on an
   item of a menu, its description for a screen reader too
+
+##### Fixed (a review of the above)
+- a template given by `setState()`, `initialState.formats` or the dialog to a column without a `columns`
+  entry sorts on its text too
+- another template - `setState()`, `updateConfig({ columns })`, a view, the Format menu - filters again on
+  the text it shows (only the dialog did); a template added to a column without a format did not
+- a second grid on the same datasource, once destroyed, took the first grid's template sort and filter, its
+  lookup labels and its grouping by weeks with it: the first grid's are used again
+- a field of values of more than one kind (numbers and a date in a text field) sorts every value as its text:
+  `3` and `10` against a date had no one order, equal values ended up apart
+- a header filter of a column turned to checkboxes, or back, is cleared: a text typed was no checkbox's state;
+  a number column's checked filter run again stays checked
+- the grid config dialog: the colour rule open for its problem stays open while the problem is typed away;
+  Reset column, a rename or a remove open the first rule again; Show as link turned off on a number column
+  keeps its Filter as shown; Add calculated column shows the new column's settings on a phone, Remove the list;
+  a resize does not let a tall dialog grow at once, its buttons off screen
+- `toSqlWhere()`: a `valueField` that is a column filtered on its template compares its value, as the grid; a
+  number of more digits than a number holds is a problem of the formula (`columnSettings.formula.problem.bigNumber`),
+  it was `Infinity` - a name - in the SQL; SQL Server joins texts as `nvarchar(max)` (two `nvarchar(3000)` were cut
+  at 4000) and ROUND of 10²⁷ or more is no overflow (Msg 8115)
+- the docs: the differences the SQL still has - a CLOB with `=` on Oracle, a text over 10 000 characters, a
+  number past 1.8 × 10³⁰⁸, `=` on text in a formula; the feature overview has the new features and links the user
+  guide
 - the grid config dialog on small screens: one colour rule open, the others a line each (a sample in their
   colours, what they match); on a phone the list of the columns and a column's settings take turns
   (‹ Columns); side by side the list stays in view. Checked at 1366x768 and 1280x720 at 150 % zoom

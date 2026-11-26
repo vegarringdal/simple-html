@@ -894,6 +894,7 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.formula.problem.depth` | `The formula nests deeper than {max} levels` | brackets, functions, a minus or NOT in front, 32 |
 | `columnSettings.formula.problem.size` | `The formula has more than {max} parts` | 500 |
 | `columnSettings.formula.problem.character` | `{text} at {position} is no part of a formula` | a character no part of the language: `$`, `;`. `{position}`: the character, 1 the first |
+| `columnSettings.formula.problem.bigNumber` | `The number at {position} is too large` | a number of more digits than a number holds, over 1.8 × 10³⁰⁸ |
 | `columnSettings.formula.problem.unexpected` | `{text} at {position} can not be there` | `1 2`, a `)` too many |
 | `columnSettings.formula.problem.end` | `The formula ends too soon` | `1 +`, `ROUND(1` |
 | `columnSettings.formula.problem.text` | `The text at {position} has no closing quote` | |

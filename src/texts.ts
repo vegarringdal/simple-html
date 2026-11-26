@@ -587,6 +587,7 @@ const DEFAULTS = {
     'columnSettings.formula.problem.depth': 'The formula nests deeper than {max} levels',
     'columnSettings.formula.problem.size': 'The formula has more than {max} parts',
     'columnSettings.formula.problem.character': '{text} at {position} is no part of a formula',
+    'columnSettings.formula.problem.bigNumber': 'The number at {position} is too large',
     'columnSettings.formula.problem.unexpected': '{text} at {position} can not be there',
     'columnSettings.formula.problem.end': 'The formula ends too soon',
     'columnSettings.formula.problem.text': 'The text at {position} has no closing quote',

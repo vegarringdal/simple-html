@@ -323,7 +323,8 @@ function buildCondition(node: Record<string, unknown>, context: Context, where: 
     // the names are checked first: a field that is not in the columns throws, also in a condition the
     // grid would leave out
     const column = field === undefined ? undefined : columnOf(context, field, `${where}.field`);
-    const other = valueField === undefined ? undefined : columnOf(context, valueField, `${where}.valueField`);
+    // the other field as the row has it, as the grid compares it: not the text its template shows
+    const other = valueField === undefined ? undefined : columnOf(context, valueField, `${where}.valueField`, false);
     if (!column || !operator) {
         return null;
     }
@@ -364,9 +365,13 @@ function readName(name: unknown, where: string): string | undefined {
     return name;
 }
 
-function columnOf(context: Context, field: string, where: string): Column {
+/**
+ * The column of a field, or the SQL expression of its calculated column
+ * @param asShown false: the column of a field filtered on its template (options.shown), not the text shown
+ */
+function columnOf(context: Context, field: string, where: string, asShown = true): Column {
     // filtered on the text its template shows: the formula of that text, not the column
-    if (context.shown.has(field)) {
+    if (asShown && context.shown.has(field)) {
         return shownColumn(context, field);
     }
     const column = context.columns.get(field);

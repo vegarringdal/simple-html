@@ -190,11 +190,21 @@ export class Datasource<T = any> {
      */
     private __grouping: Grouping;
 
-    /** the grid's text of a value to group on, see __setGroupValue */
-    private __groupValue: ((field: string, value: unknown) => string | undefined) | null = null;
+    /**
+     * the grids' texts of a value to group on, see __setGroupValue: each grid on the datasource gives
+     * one, the last given is used. A grid destroyed takes its own back (__unsetGroupValue), the one
+     * before it is used again
+     */
+    private __groupValues: ((field: string, value: unknown) => string | undefined)[] = [];
 
-    /** the text a row shows in a text field, for its conditions: see __setFilterText */
-    private __filterText: ((field: string, row: Entity) => string | undefined) | null = null;
+    /** the texts a row shows in a text field, for its conditions, the last given used: see __setFilterText */
+    private __filterTexts: ((field: string, row: Entity) => string | undefined)[] = [];
+
+    /** the grids' texts of a field's rows to sort on, the last given used: see __setSortText */
+    private __sortTexts: ((field: string) => ((value: unknown, row: Entity) => string) | undefined)[] = [];
+
+    /** the texts a field is sorted on, by field, the last given used: see __setSortValue */
+    private __sortValues = new Map<string, ((value: unknown, row: Entity) => string)[]>();
 
     /**
      * this holds the filtered data, used when sorting and grouping
@@ -349,7 +359,10 @@ export class Datasource<T = any> {
         this.__selection = new Selection(this);
         this.__filter = new Filter();
         // the type is looked up once per sort, not per row
-        this.__sorting = new Sort((attribute) => this.getField(attribute).type);
+        this.__sorting = new Sort(
+            (attribute) => this.getField(attribute).type,
+            (attribute) => this.__sortTexts.at(-1)?.(attribute)
+        );
         this.__grouping = new Grouping();
     }
 
@@ -2737,7 +2750,40 @@ export class Datasource<T = any> {
      * @param sortValue the text of a value, null to sort on the value again
      */
     public __setSortValue(field: string, sortValue: ((value: unknown, row: Entity) => string) | null): void {
-        this.__sorting.setSortValue(field, sortValue);
+        const given = sortValue ? [...(this.__sortValues.get(field) ?? []).filter((each) => each !== sortValue), sortValue] : [];
+        this.__sortValues.set(field, given);
+        this.__sorting.setSortValue(field, given.at(-1) ?? null);
+    }
+
+    /**
+     * @internal
+     * Takes back a function __setSortValue() was given: the one given before it is used again (another
+     * grid on the datasource), or the field sorts on its value
+     */
+    public __unsetSortValue(field: string, sortValue: (value: unknown, row: Entity) => string): void {
+        const given = (this.__sortValues.get(field) ?? []).filter((each) => each !== sortValue);
+        this.__sortValues.set(field, given);
+        this.__sorting.setSortValue(field, given.at(-1) ?? null);
+    }
+
+    /**
+     * @internal
+     * Sorts the fields without a __setSortValue on a text of their rows: the grid sorts a text column
+     * with a template on the text it shows. Asked once per sort, for each field sorted on: it gives the
+     * text of a row, or undefined to sort the field on its value - so a template set later sorts too.
+     * Each grid on the datasource gives one, the last given is used, see __unsetSortText
+     * @param sortText null: every field on its value again
+     */
+    public __setSortText(sortText: ((field: string) => ((value: unknown, row: Entity) => string) | undefined) | null): void {
+        this.__sortTexts = sortText ? [...this.__sortTexts.filter((each) => each !== sortText), sortText] : [];
+    }
+
+    /**
+     * @internal
+     * Takes back a function __setSortText() was given: the one given before it is used again
+     */
+    public __unsetSortText(sortText: (field: string) => ((value: unknown, row: Entity) => string) | undefined): void {
+        this.__sortTexts = this.__sortTexts.filter((each) => each !== sortText);
     }
 
     /**
@@ -2749,7 +2795,15 @@ export class Datasource<T = any> {
      * @param groupValue null to group every field by its formatter again
      */
     public __setGroupValue(groupValue: ((field: string, value: unknown) => string | undefined) | null): void {
-        this.__groupValue = groupValue;
+        this.__groupValues = groupValue ? [...this.__groupValues.filter((each) => each !== groupValue), groupValue] : [];
+    }
+
+    /**
+     * @internal
+     * Takes back a function __setGroupValue() was given: the one given before it is used again
+     */
+    public __unsetGroupValue(groupValue: (field: string, value: unknown) => string | undefined): void {
+        this.__groupValues = this.__groupValues.filter((each) => each !== groupValue);
     }
 
     /**
@@ -2761,7 +2815,15 @@ export class Datasource<T = any> {
      * @param filterText null: every field compared as its value again
      */
     public __setFilterText(filterText: ((field: string, row: Entity) => string | undefined) | null): void {
-        this.__filterText = filterText;
+        this.__filterTexts = filterText ? [...this.__filterTexts.filter((each) => each !== filterText), filterText] : [];
+    }
+
+    /**
+     * @internal
+     * Takes back a function __setFilterText() was given: the one given before it is used again
+     */
+    public __unsetFilterText(filterText: (field: string, row: Entity) => string | undefined): void {
+        this.__filterTexts = this.__filterTexts.filter((each) => each !== filterText);
     }
 
     /**
@@ -2769,7 +2831,7 @@ export class Datasource<T = any> {
      * the function __setFilterText() was given, null without one
      */
     public __getFilterText(): ((field: string, row: Entity) => string | undefined) | null {
-        return this.__filterText;
+        return this.__filterTexts.at(-1) ?? null;
     }
 
     /**
@@ -2777,7 +2839,7 @@ export class Datasource<T = any> {
      * the function __setGroupValue() was given, null without one
      */
     public __getGroupValue(): ((field: string, value: unknown) => string | undefined) | null {
-        return this.__groupValue;
+        return this.__groupValues.at(-1) ?? null;
     }
 
     /**

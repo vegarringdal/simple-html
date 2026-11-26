@@ -283,10 +283,12 @@ const mssql: FormulaDialect = {
     // G15 in en-US: 2.5, 4, 0.3; LOWER makes 1E+21 JavaScript's 1e+21
     numberText: (x) => `LOWER(FORMAT(CAST(${x} AS float), 'G15', 'en-US'))`,
     blankToNull: (x) => `CASE WHEN DATALENGTH(${x}) = 0 THEN NULL ELSE ${x} END`,
-    concat: (parts) => parts.join(' + '),
+    // the first part as nvarchar(max): + of two nvarchar(n) cuts the text at 4000 characters
+    concat: (parts) => parts.map((part, index) => (index === 0 ? `CAST(${part} AS nvarchar(max))` : part)).join(' + '),
     divide: (a, b) => `(CAST(${a} AS float) / NULLIF(${b}, 0))`,
     // as a decimal: ROUND of a literal 9.5 (decimal(2,1)) overflows to 10.0, a float's 1.005 is 1.00499...
-    round: (x, digits) => `ROUND(CAST(${x} AS decimal(38, 10)), ${digits})`,
+    // A number of 10^27 or more is no decimal(38, 10) (Msg 8115), and has no digits to round in a float
+    round: (x, digits) => `CASE WHEN ABS(${x}) < 1e27 THEN ROUND(CAST(${x} AS decimal(38, 10)), ${digits}) ELSE ${x} END`,
     whole: (x) => `CAST(${x} AS int)`,
     // an emoji is two characters here (UTF-16 units), unless the column has a collation of supplementary
     // characters (_SC): COLLATE ..._SC in the SQL conflicts with the collations of what it meets (Msg 468)
@@ -456,6 +458,10 @@ export function formulaSql(
     const value = (each: FormulaNode): string => {
         switch (each.kind) {
             case 'number':
+                // a number literal is finite (formula.ts reads no larger one): Infinity would be a name in SQL
+                if (!Number.isFinite(each.value)) {
+                    throw new TypeError(`toSqlWhere: the number ${each.value} is no number in SQL`);
+                }
                 return String(each.value);
             case 'text':
                 return each.value === '' ? d.nullText : d.text(checkedText(each.value));
