@@ -5560,8 +5560,8 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * **SQL**: valueField through columnOf(…, asShown false); a literal over 1.8e308 fails in formula.ts
   (`bigNumber`) and formulaSql throws for a non-finite number. db<>fiddle, SQL Server 2022: `+` of two
   nvarchar(3000) is 4000 long, with the first CAST to nvarchar(max) 6000; ROUND of 1e30 overflowed decimal(38,
-  10), now `CASE WHEN ABS(x) < 1e27`. Oracle 23: `LOWER(clob) = 'ann'` is ORA-22848, LIKE works - documented,
-  `=` kept (the user asked for it)
+  10), now `CASE WHEN ABS(x) < 1e27`. Oracle 23: `LOWER(clob) = 'ann'` is ORA-22848, LIKE works - `=` kept (the user
+  asked for it), and the user: "we will not support db blobs" - 22-sql.md says LOB columns are not supported
 * not changed, said in 22-sql.md: a text over 10 000 characters and a number overflow blank the value in the
   grid, not in SQL; `=` on text in a formula is the collator's (`Ａ` = `a`)
 * suspected, left: a template of only blanks (`{first} {last}`) is `' '`, no Blank (the SQL gives the same);

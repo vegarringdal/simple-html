@@ -202,9 +202,9 @@ await request.query(`SELECT * FROM customer WHERE ${msWhere.sql}`);
 - **mssql** picks the type of a parameter from the JS value when `input()` gets none: a text is
   `NVarChar`, which the text comparisons need (see [Text](#text)), a boolean `Bit`, a whole number `Int`
   (`BigInt` past 32 bits), another number `Float`. With `tedious` itself, give a text `TYPES.NVarChar`.
-- **oracle**: a text equal to a value with no wildcard is `=` (`LOWER("NAME") = :1`), and Oracle
-  compares no `CLOB` with `=` (ORA-22848). Filter a `VARCHAR2` column, or a view that gives the CLOB
-  as one (`DBMS_LOB.SUBSTR(notes, 4000)`). *Contains* and the wildcards are `LIKE`, which takes a CLOB.
+- **LOB columns are not supported** - `CLOB`, `BLOB`, `NCLOB`: a column is a text, number, date or
+  boolean of the database (`VARCHAR2`, `NVARCHAR`, `TEXT` ...). Oracle compares no CLOB with the `=` of a
+  text equal to a value (ORA-22848).
 - **sqlite**: the `?` are taken in order, `firstParam` does not change them: put your own values before
   or after the params as your `?` are before or after the WHERE.
 - **pg** sends every parameter as text and PostgreSQL takes the type of the column it is compared with

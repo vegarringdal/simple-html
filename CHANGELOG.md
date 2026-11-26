@@ -1403,7 +1403,7 @@ rows); the vertical time is rendering every cell of every row on screen, which s
   number of more digits than a number holds is a problem of the formula (`columnSettings.formula.problem.bigNumber`),
   it was `Infinity` - a name - in the SQL; SQL Server joins texts as `nvarchar(max)` (two `nvarchar(3000)` were cut
   at 4000) and ROUND of 10²⁷ or more is no overflow (Msg 8115)
-- the docs: the differences the SQL still has - a CLOB with `=` on Oracle, a text over 10 000 characters, a
+- the docs: LOB columns (`CLOB`, `BLOB`) are not supported by `toSqlWhere()`; the differences the SQL still has - a text over 10 000 characters, a
   number past 1.8 × 10³⁰⁸, `=` on text in a formula; the feature overview has the new features and links the user
   guide
 - the grid config dialog on small screens: one colour rule open, the others a line each (a sample in their
