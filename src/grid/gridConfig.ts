@@ -2,6 +2,7 @@ import type { AggregateFunction } from '../datasource/aggregate';
 import type { FilterExpression, FilterOperator } from '../datasource/filterExpression';
 import type { GroupArgument } from '../datasource/groupArgument';
 import type { SortArgument } from '../datasource/sortArgument';
+import type { ValidationRule } from '../datasource/validator';
 import type { IDateConfig } from '../date/interfaces';
 import type { Texts } from '../texts';
 import type { CalculatedColumn } from './calculatedColumns';
@@ -1041,6 +1042,35 @@ export type ColumnConfig = {
      * default the user can change, `GridConfig.edit` ({@link EditPermissions}) is what they may not
      */
     readonly?: boolean;
+
+    /**
+     * the column's validation rules, as a field's (`FieldConfig.validate`, see {@link ValidationRule}):
+     * `'required'`, `{ id: 'maxLength', value: 50 }`, `{ id: 'pattern', value: '^[A-Z]{2}-\\d+$' }`,
+     * `{ id: 'min', value: 0 }`, `'integer'`, `{ id: 'oneOf', value: ['Open', 'Closed'] }`, `'email'` ... or
+     * the id of one registered with `registerValidator()`. Added after the field's own rules: an edit of
+     * the cell, the detail form, an import and `datasource.validate()` check both, a required cell gets its
+     * stripes. **Set by code, the user can not change them**: they are not in the state (`GridState`), a
+     * view or the grid config dialog - `updateConfig({ columns })` replaces them. An id that is not
+     * registered, or wrong options, throw a `TypeError` when the grid is made. Not for a calculated column,
+     * it is not edited. Two grids on one datasource: the rules of the last one made (or given its columns) that
+     * has some are used, and its `destroy()` gives the other's back - a grid without any leaves the other's
+     *
+     * @sample validation
+     * @example
+     * ```ts
+     * import type { GridConfig } from '@simple-html/grid';
+     *
+     * const config: GridConfig = {
+     *     columns: {
+     *         projectCode: { validate: ['required', { id: 'pattern', value: '^[A-Z]{2}-\\d{3}$', message: 'Like AB-123' }] },
+     *         hours: { validate: [{ id: 'min', value: 0 }, { id: 'max', value: 24 }, { id: 'decimals', value: 1 }] },
+     *         status: { validate: [{ id: 'oneOf', value: ['Open', 'Closed'] }] }
+     *     },
+     *     layout: { center: [{ fields: ['projectCode'], width: 120 }, { fields: ['hours'], width: 80 }, { fields: ['status'], width: 100 }] }
+     * };
+     * ```
+     */
+    validate?: ValidationRule[];
 
     /**
      * for a number field, what a cell shows - the value is not changed: `'ZERO_TO_BLANK'` shows 0 as an

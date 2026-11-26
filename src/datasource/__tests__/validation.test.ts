@@ -110,7 +110,11 @@ describe('validation - the built-in validators', () => {
             'validation.max': 'Must be at most {value}',
             'validation.minLength': 'Must be at least {value} characters',
             'validation.maxLength': 'Must be at most {value} characters',
-            'validation.pattern': 'Not in the expected format'
+            'validation.pattern': 'Not in the expected format',
+            'validation.integer': 'Must be a whole number',
+            'validation.decimals': 'Must have at most {value} decimals',
+            'validation.oneOf': 'Must be one of {value}',
+            'validation.email': 'Not an email address'
         });
     });
 });
@@ -235,7 +239,9 @@ describe('validation - the rules in the fields', () => {
     });
 
     it('expect the options of a built-in to be checked when the datasource is made', () => {
-        expect(() => people({ age: { validate: [{ id: 'min' }] } })).toThrow(/rule 'min', which takes a number as its value/);
+        expect(() => people({ age: { validate: [{ id: 'min' }] } })).toThrow(
+            /rule 'min', which takes a number or a day \('YYYY-MM-DD'\) as its value/
+        );
         expect(() => people({ age: { validate: [{ id: 'maxLength', value: '3' }] } })).toThrow(TypeError);
         expect(() => people({ name: { validate: [{ id: 'pattern', value: 3 }] } })).toThrow(/regular expression as text/);
         expect(() => people({ name: { validate: [{ id: 'pattern', value: '[' }] } })).toThrow(/no regular expression/);

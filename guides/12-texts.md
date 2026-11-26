@@ -1351,6 +1351,10 @@ rule can be in a message by its name.
 | `validation.minLength` | `Must be at least {value} characters` | `minLength` |
 | `validation.maxLength` | `Must be at most {value} characters` | `maxLength` |
 | `validation.pattern` | `Not in the expected format` | `pattern` |
+| `validation.integer` | `Must be a whole number` | `integer` |
+| `validation.decimals` | `Must have at most {value} decimals` | `decimals` |
+| `validation.oneOf` | `Must be one of {value}` | `oneOf`: the list, `Norway, Sweden` |
+| `validation.email` | `Not an email address` | `email` |
 
 ### getFilterString()
 

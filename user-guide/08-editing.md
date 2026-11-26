@@ -143,7 +143,8 @@ number cell, deleting all the text may give 0; **Clear › Clear cell** leaves i
 ## Errors in what you typed
 
 Your app can have rules for the values: a field that must be filled in, a number that must be at least
-1, a text of at most 50 characters.
+1 or a whole number, a text of at most 50 characters, one of a list of values, an email address. You can
+not change them - the grid config dialog does not show them.
 
 - An **empty cell that must be filled in** has stripes (blue in the normal look) until it has a value.
 - A **cell with an error** has a red border. Point at it to read the message, such as **Required** or

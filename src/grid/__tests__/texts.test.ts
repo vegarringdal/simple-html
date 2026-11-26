@@ -139,7 +139,8 @@ registerLookup('texts-codes', { datasource: CODES, valueField: 'code', labelFiel
 const rows = () => [
     { name: '«ann»', country: COUNTRIES[0], age: 10, born: new Date(2026, 0, 5), active: true, notes: NOTES, code: 'k0' },
     // a blank name: "Blank" in the value list, and a validation error
-    { name: null, country: null, age: 20, born: null, active: false, notes: NOTES, code: null },
+    // and an age with a decimal: the errors of integer and decimals
+    { name: null, country: null, age: 20.5, born: null, active: false, notes: NOTES, code: null },
     ...COUNTRIES.slice(1).map((country, i) => ({
         name: '«bob»',
         country,
@@ -208,14 +209,18 @@ const config = (texts?: Texts): GridConfig => ({
 const fields = {
     fields: {
         name: {
-            validate: ['required', { id: 'minLength', value: 6 }, { id: 'maxLength', value: 3 }, { id: 'pattern', value: '^x$' }]
+            validate: [
+                'required',
+                { id: 'minLength', value: 6 },
+                { id: 'maxLength', value: 3 },
+                { id: 'pattern', value: '^x$' },
+                { id: 'oneOf', value: ['«x»', '«y»'] },
+                'email'
+            ]
         },
         age: {
             type: 'number' as const,
-            validate: [
-                { id: 'min', value: 15 },
-                { id: 'max', value: 25 }
-            ]
+            validate: [{ id: 'min', value: 15 }, { id: 'max', value: 25 }, 'integer', { id: 'decimals', value: 0 }]
         },
         born: 'date' as const,
         updated: { type: 'datetime' as const, formatter: 'texts-datetime' },

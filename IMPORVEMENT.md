@@ -5595,6 +5595,29 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * not done: a lookup column on a CLOB field (its IN of values) - nobody looks up a long text; SQL Server's
   kept case is `COLLATE … BIN2`, which an index of another collation does not serve (said in 22-sql.md)
 
+### Validation rules in the grid's config, more built-in rules (2026-11-26)
+
+* the user: "validation rules is something that should be part of gridconfig, but user should not be allowed
+  to change it. think regex, min lengt, max length, min value, not null etc is option, if yoy have
+  suggestions, then please add some"
+* **ColumnConfig.validate**, not ColumnFormat: the formats are the user's (state, the dialog), a column's
+  config is the code's - the dialog does not show or edit the rules, getState() has none
+* **how they get to the datasource**: Datasource.__setColumnRules(owner, rules) - a list of owners, the last
+  used, null takes one back (destroy), as the other hooks of a grid - but a grid without rules gives none:
+  a second view of the rows must not take the first one's rules away (rules are of the data). giveRules gives the container the
+  field's own rules with the column's after them, and keeps them for getField().validate (the stripes of
+  required and the detail form read it there). The container validates the rows with errors again when the
+  rules change. resolveRules takes a `where` for the messages: `GridConfig: columns.hours has ...`. The grid
+  sets them last in the constructor's and updateConfig's try: nothing after it throws
+* **the suggestions, added as built-ins**: `integer`, `decimals` (0 to 20; rounded with toFixed and compared
+  within a few units of the last place - 0.1 + 0.2 has two decimals), `oneOf` (a list, compared as text with
+  its case), `email` (a light check, `x@y.z` without spaces), and `min` / `max` of a date with a day
+  `'YYYY-MM-DD'` in local time (a datetime on the day of max is within it). errorMessage joins a list option
+  with `, ` (`Must be one of Open, Closed`). The doc example of a validator of one's own was `oneOf`: now
+  `afterStart` (a row's other field)
+* not added: a `required` that takes only spaces as missing (a change of what it does now); `unique` in the
+  column (reads every row on every key); showing the rules read only in the dialog - easy to add if wanted
+
 ## Considered, not done
 
 ## Candidates / not started
@@ -5622,7 +5645,9 @@ Checked against the code on 2026-11-21: what was fixed is in *Candidates checked
 ### On hold
 
 * **Validation rules in the grid config dialog** (required, min / max, length, a pattern, a formula of the
-  safe expression language): the user - "kinda like color expressions ... lets put this on hold for now"
+  safe expression language): the user - "kinda like color expressions ... lets put this on hold for now".
+  2026-11-26: the rules are in the grid's config now (`ColumnConfig.validate`), and the user "should not be
+  allowed to change it" - the dialog does not edit them
 
 ### Not wanted
 

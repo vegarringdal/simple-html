@@ -646,7 +646,8 @@ const people = new Datasource({
     fields: {
         name: { validate: ['required', { id: 'maxLength', value: 50 }] },
         age: { type: 'number', validate: ['required', { id: 'min', value: 0 }, { id: 'max', value: 150, message: 'too old' }] },
-        email: { validate: [{ id: 'pattern', value: '^[^@\\s]+@[^@\\s]+$', message: 'Not an email address' }] }
+        email: { validate: ['email'] },
+        code: { validate: [{ id: 'pattern', value: '^[A-Z]{2}-\\d{3}$', message: 'Like AB-123' }] }
     }
 });
 ```
@@ -659,6 +660,39 @@ expression). `getField(name).validate` gives the rules of a field, written out a
 ```sample validation
 ```
 
+### Rules of a grid's columns
+
+A column can have rules in the grid's config too, `ColumnConfig.validate` - the same rules, for what this
+grid edits: a datasource shared by two screens, a field of a backend's metadata without rules, a rule of
+the screen (a project code of this form). They are **set by code and the user can not change them**: they
+are not in the state, a view or the grid config dialog - `getState()` has none, `setState()` and
+`resetState()` keep them, `updateConfig({ columns })` replaces them.
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    readonly: false,
+    columns: {
+        projectCode: { validate: ['required', { id: 'pattern', value: '^[A-Z]{2}-\\d{3}$', message: 'Like AB-123' }] },
+        hours: { validate: [{ id: 'min', value: 0 }, { id: 'max', value: 24 }, { id: 'decimals', value: 1 }] },
+        status: { validate: [{ id: 'oneOf', value: ['Open', 'Closed'] }] }
+    },
+    layout: { center: [{ fields: ['projectCode'], width: 120 }, { fields: ['hours'], width: 80 }, { fields: ['status'], width: 100 }] }
+};
+```
+
+- They are **added after the field's own** (`FieldConfig.validate`): an edit of a cell or in the detail
+  form, an import and `datasource.validate()` check both, `getField(name).validate` lists both - a
+  `'required'` of a column gives its cells the stripes. The rows that have errors are validated again when
+  they change.
+- Checked when the grid is made, and by `updateConfig()`: an id that is not registered, or wrong options,
+  throw a `TypeError` that names the column (`GridConfig: columns.hours has the rule 'max', ...`). A
+  calculated column has none, it is not edited.
+- **Two grids on one datasource**: the rules of the last one made (or given its columns) that has some are
+  used, and its `destroy()` gives the other one's back. A grid without any - a second view of the rows -
+  leaves the other one's in place.
+
 ### The built-in rules
 
 They take their option as `value`:
@@ -666,8 +700,12 @@ They take their option as `value`:
 | rule | the value fails when | message |
 | --- | --- | --- |
 | `'required'` | it is `null`, `undefined`, `''`, an invalid Date, or 0 | `Required` |
-| `{ id: 'min', value: 0 }` | it is a number below `value` | `Must be at least {value}` |
-| `{ id: 'max', value: 150 }` | it is a number above `value` | `Must be at most {value}` |
+| `{ id: 'min', value: 0 }` | it is a number below `value` - or, with a day (`'2026-01-01'`), a date before it | `Must be at least {value}` |
+| `{ id: 'max', value: 150 }` | it is a number above `value` - or, with a day, a date after it (a datetime on the day is within) | `Must be at most {value}` |
+| `'integer'` | it is a number with decimals | `Must be a whole number` |
+| `{ id: 'decimals', value: 2 }` | it is a number with more decimals than `value` (0 to 20) | `Must have at most {value} decimals` |
+| `{ id: 'oneOf', value: ['Open', 'Closed'] }` | it is not in the list, compared as text (with its case) | `Must be one of {value}`: `Open, Closed` |
+| `'email'` | it is text that is no email address: something `@` something with a dot, no spaces | `Not an email address` |
 | `{ id: 'minLength', value: 2 }` | it is text shorter than `value` | `Must be at least {value} characters` |
 | `{ id: 'maxLength', value: 50 }` | it is text longer than `value` | `Must be at most {value} characters` |
 | `{ id: 'pattern', value: '^[A-Z]{2}$' }` | it is text the regular expression does not find | `Not in the expected format` |
@@ -678,7 +716,11 @@ They take their option as `value`:
   no empty state. For a number where 0 is a real value, use a rule of your own (`present` below).
 - **The other rules pass an empty value** (`null`, `undefined`, `''`): an optional field can be
   empty, add `'required'` to make it fail. They check the values of their kind only - `min` and
-  `max` numbers, the others text - and pass the rest.
+  `max` numbers and dates, `integer` and `decimals` numbers, `oneOf` any value, the others text - and
+  pass the rest.
+- **`decimals` takes the floating point as it is**: `0.1 + 0.2` (`0.30000000000000004`) has two decimals.
+- **`email` is a light check**, not every rule of RFC 5322: a typo like a missing `@` or `.com`. Use a
+  `pattern` or a rule of your own for a stricter one.
 - **`pattern` is not anchored**: `'[0-9]'` finds a digit anywhere in the text, `'^[0-9]+$'` is
   digits only. Written as text, so it stays JSON. In TypeScript a `\` is written twice.
 - Every rule runs: a value can fail more than one, and gets a message for each.
@@ -689,7 +731,9 @@ A rule's `message` replaces the default, and `{name}` in it is replaced by the r
 `{ id: 'max', value: 150, message: 'at most {value}' }` gives `at most 150`.
 
 The default messages are texts: `'validation.required'`, `'validation.min'`, `'validation.max'`,
-`'validation.minLength'`, `'validation.maxLength'` and `'validation.pattern'` in `TEXTS`. Translate
+`'validation.minLength'`, `'validation.maxLength'`, `'validation.pattern'`, `'validation.integer'`,
+`'validation.decimals'`, `'validation.oneOf'` and `'validation.email'` in `TEXTS`; a list option is its
+items with `, ` in a message. Translate
 them with `setTexts()` - for the page, the datasource has no grid, so a grid's `texts` do not change
 them. A rule's `message` can be a text id as well, see [Texts](12-texts.md#messages-of-your-own).
 

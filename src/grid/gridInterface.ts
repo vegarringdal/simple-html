@@ -8,6 +8,7 @@ import type { FieldType } from '../datasource/field';
 import { type FilterExpression, type FilterOperator, operatorsFor, where } from '../datasource/filterExpression';
 import { withoutFields } from '../datasource/filterFields';
 import type { Formatter } from '../datasource/formatter';
+import { type ResolvedRule, resolveRules } from '../datasource/validatorRegistry';
 import { Emitter, type EventHandler } from '../emitter';
 import { assertTexts } from '../texts';
 import {
@@ -389,6 +390,8 @@ export class GridInterface<T> {
             assertRenderers(gridConfig);
             assertFilterOptions(gridConfig, datasource);
             this.lookupColumns = lookupColumnsOf(gridConfig.columns, datasource);
+            // the last: it changes the datasource's rules, nothing after it throws
+            datasource.__setColumnRules(this, columnRulesOf(gridConfig.columns, datasource));
         } catch (error) {
             // the datasource is left as it was
             this.registerCalculated({}, fieldType);
@@ -1136,6 +1139,10 @@ export class GridInterface<T> {
             assertFilterOptions(config, this.dataSource);
             // checked before anything changes, like the rest
             lookupColumns = 'columns' in config ? lookupColumnsOf(config.columns, this.dataSource) : null;
+            // the last: it changes the datasource's rules, nothing after it throws
+            if ('columns' in config) {
+                this.dataSource.__setColumnRules(this, columnRulesOf(config.columns, this.dataSource));
+            }
         } catch (error) {
             if (calculatedNext) {
                 this.registerCalculated(this.calculated, fieldType);
@@ -1737,6 +1744,8 @@ export class GridInterface<T> {
         this.dataSource.__unsetGroupValue(this.groupValue);
         this.dataSource.__unsetFilterText(this.filterText);
         this.dataSource.__unsetSortText(this.sortText);
+        // the rules of the columns (ColumnConfig.validate) too: another grid's are used again
+        this.dataSource.__setColumnRules(this, null);
         this.registerCalculated({}, () => undefined);
     }
 
@@ -4343,6 +4352,33 @@ function assertFilterOptions(config: Partial<GridConfig>, datasource: Datasource
         }
         assertDatePresets(column, type, name);
     }
+}
+
+/**
+ * The validation rules of the columns (`ColumnConfig.validate`), resolved by field: an id that is not
+ * registered, wrong options throw (resolveRules). A calculated column has none, it is not edited
+ * @throws a `TypeError` naming the column
+ */
+function columnRulesOf(
+    columns: Record<string, ColumnConfig> | undefined,
+    datasource: Datasource<any>
+): Map<string, ResolvedRule[]> {
+    const rules = new Map<string, ResolvedRule[]>();
+    for (const [field, column] of Object.entries(columns ?? {})) {
+        const validate = column && typeof column === 'object' ? column.validate : undefined;
+        if (validate === undefined) {
+            continue;
+        }
+        const where = `GridConfig: columns.${field}`;
+        if (datasource.__getCalculatedField(field)) {
+            throw new TypeError(`${where}.validate is for a column that is edited, '${field}' is a calculated column`);
+        }
+        const resolved = resolveRules(validate, field, where);
+        if (resolved.length) {
+            rules.set(field, resolved);
+        }
+    }
+    return rules;
 }
 
 /**

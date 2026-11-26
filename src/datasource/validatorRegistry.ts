@@ -40,6 +40,78 @@ function checkNumber(rule: ValidationRuleObject): string | null {
 }
 
 /**
+ * the start of the day of a rule's date - `'2026-11-26'`, the day in local time as a date field holds it
+ * - or null when the value is no such text
+ */
+function dayOf(text: unknown): Date | null {
+    const match = typeof text === 'string' ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(text) : null;
+    if (!match) {
+        return null;
+    }
+    const [year, month, day] = [Number(match[1]), Number(match[2]) - 1, Number(match[3])];
+    const date = new Date(year, month, day);
+    // 2026-02-31 is no day
+    return date.getFullYear() === year && date.getMonth() === month && date.getDate() === day ? date : null;
+}
+
+/**
+ * the problem with the `value` of `min` / `max`: a number, or a day as `'YYYY-MM-DD'` for a date
+ */
+function checkLimit(rule: ValidationRuleObject): string | null {
+    return (typeof rule.value === 'number' && Number.isFinite(rule.value)) || dayOf(rule.value)
+        ? null
+        : `takes a number or a day ('YYYY-MM-DD') as its value: { id: '${rule.id}', value: 0 } or { id: '${rule.id}', value: '2026-01-01' }`;
+}
+
+/**
+ * true when a value is past a rule's limit: a number below (min) or above (max) it, a date before the
+ * day (min) or after it (max) - a datetime on the day is within. Other values pass
+ */
+function pastLimit(value: unknown, limit: unknown, side: 'min' | 'max'): boolean {
+    if (typeof value === 'number' && typeof limit === 'number') {
+        return side === 'min' ? value < limit : value > limit;
+    }
+    const day = value instanceof Date && !Number.isNaN(value.getTime()) ? dayOf(limit) : null;
+    if (!day) {
+        return false;
+    }
+    if (side === 'min') {
+        return (value as Date) < day;
+    }
+    const next = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
+    return (value as Date) >= next;
+}
+
+/** a whole number of decimals from 0 to 20, the value of `decimals` */
+function checkDecimals(rule: ValidationRuleObject): string | null {
+    return Number.isInteger(rule.value) && (rule.value as number) >= 0 && (rule.value as number) <= 20
+        ? null
+        : `takes the number of decimals, 0 to 20, as its value: { id: 'decimals', value: 2 }`;
+}
+
+/**
+ * true when a number has more decimals than `decimals`: rounded to them it is another number. A
+ * difference of a few units of the last place is none - 0.1 + 0.2 is 0.30000000000000004, two decimals
+ */
+function hasMoreDecimals(value: number, decimals: number): boolean {
+    const rounded = Number(value.toFixed(decimals));
+    return Math.abs(rounded - value) > 4 * Number.EPSILON * Math.max(1, Math.abs(value));
+}
+
+/** the list of `oneOf`: texts, numbers or booleans, at least one */
+function checkList(rule: ValidationRuleObject): string | null {
+    const list = rule.value;
+    return Array.isArray(list) &&
+        list.length > 0 &&
+        list.every((item) => typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean')
+        ? null
+        : `takes a list of the values allowed as its value: { id: 'oneOf', value: ['Norway', 'Sweden'] }`;
+}
+
+/** an email address: something, @, something with a dot in it - no spaces. Not every rule of RFC 5322 */
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
  * what the registry keeps per id: the validator, and for a built-in one the check of the rule's
  * options. A validator registered under a built-in id has no check: its options are its own
  */
@@ -58,19 +130,43 @@ const registry = new Map<string, RegisteredValidator>([
     ['required', { validate: (value) => (isMissingValue(value) ? 'validation.required' : null) }],
     [
         'min',
-        {
-            validate: (value, _row, rule) =>
-                typeof value === 'number' && typeof rule.value === 'number' && value < rule.value ? 'validation.min' : null,
-            check: checkNumber
-        }
+        { validate: (value, _row, rule) => (pastLimit(value, rule.value, 'min') ? 'validation.min' : null), check: checkLimit }
     ],
     [
         'max',
+        { validate: (value, _row, rule) => (pastLimit(value, rule.value, 'max') ? 'validation.max' : null), check: checkLimit }
+    ],
+    [
+        'integer',
+        {
+            validate: (value) =>
+                typeof value === 'number' && Number.isFinite(value) && !Number.isInteger(value) ? 'validation.integer' : null
+        }
+    ],
+    [
+        'decimals',
         {
             validate: (value, _row, rule) =>
-                typeof value === 'number' && typeof rule.value === 'number' && value > rule.value ? 'validation.max' : null,
-            check: checkNumber
+                typeof value === 'number' && Number.isFinite(value) && hasMoreDecimals(value, rule.value as number)
+                    ? 'validation.decimals'
+                    : null,
+            check: checkDecimals
         }
+    ],
+    [
+        'oneOf',
+        {
+            // a blank passes, as the others; a value is compared as text: 3 is '3'
+            validate: (value, _row, rule) =>
+                isBlank(value) || !Array.isArray(rule.value) || rule.value.some((item) => String(item) === String(value))
+                    ? null
+                    : 'validation.oneOf',
+            check: checkList
+        }
+    ],
+    [
+        'email',
+        { validate: (value) => (typeof value === 'string' && value !== '' && !EMAIL.test(value) ? 'validation.email' : null) }
     ],
     [
         'minLength',
@@ -125,8 +221,12 @@ const registry = new Map<string, RegisteredValidator>([
  * | id | the value fails when | message id |
  * | --- | --- | --- |
  * | `'required'` | it is `null`, `undefined`, `''`, an invalid Date or 0 | `'validation.required'` |
- * | `'min'` | it is a number below `value` | `'validation.min'` |
- * | `'max'` | it is a number above `value` | `'validation.max'` |
+ * | `'min'` | it is a number below `value`, or a date before the day `value` (`'2026-01-01'`) | `'validation.min'` |
+ * | `'max'` | it is a number above `value`, or a date after the day `value` | `'validation.max'` |
+ * | `'integer'` | it is a number with decimals | `'validation.integer'` |
+ * | `'decimals'` | it is a number with more decimals than `value` (0 to 20) | `'validation.decimals'` |
+ * | `'oneOf'` | it is not in the list `value` (`['Norway', 'Sweden']`), compared as text | `'validation.oneOf'` |
+ * | `'email'` | it is text that is no email address (something `@` something with a dot, no spaces) | `'validation.email'` |
  * | `'minLength'` | it is text shorter than `value` | `'validation.minLength'` |
  * | `'maxLength'` | it is text longer than `value` | `'validation.maxLength'` |
  * | `'pattern'` | it is text the regular expression `value` (as text) does not find | `'validation.pattern'` |
@@ -136,7 +236,8 @@ const registry = new Map<string, RegisteredValidator>([
  *   passes, it is a value. For a number where 0 is a real value, register a rule of your own (below).
  * - **The other built-ins pass a blank value** (`null`, `undefined`, `''`): an optional field can be
  *   empty, add `'required'` to make it fail. They check only values of their kind - `min` / `max`
- *   numbers, the others text - and pass the rest.
+ *   numbers and dates (a datetime on the day of `max` is within it), `integer` / `decimals` numbers,
+ *   `oneOf` any value, the others text - and pass the rest.
  * - **`pattern` is not anchored**: `'[0-9]'` finds a digit anywhere, write `'^[0-9]+$'` for the whole
  *   text. It is a `RegExp` without flags.
  * - **The messages are texts**: the built-ins return the ids `validation.*` of {@link TEXTS}, changed
@@ -204,37 +305,38 @@ export interface ResolvedRule {
  * The rules of a field, written out and with their validators looked up - once, when the datasource
  * is made.
  * @param rules the field's `validate`
- * @param field the field name, for the messages
+ * @param field the field name
+ * @param where how the messages name the rules: the datasource's field, a grid's column
  * @throws when `rules` is not a list, a rule is no id or object with an id, an id is not registered,
  * the `message` is not a text, or the options of a built-in rule are wrong
  */
-export function resolveRules(rules: readonly ValidationRule[], field: string): ResolvedRule[] {
+export function resolveRules(
+    rules: readonly ValidationRule[],
+    field: string,
+    where = `Datasource: field '${field}'`
+): ResolvedRule[] {
     // plain js and JSON can give anything: say so now, not on the first edit
     if (!Array.isArray(rules)) {
-        throw new TypeError(
-            `Datasource: field '${field}' takes a list of rules as validate, e.g. validate: ['required', { id: 'min', value: 0 }]`
-        );
+        throw new TypeError(`${where} takes a list of rules as validate, e.g. validate: ['required', { id: 'min', value: 0 }]`);
     }
     return rules.map((given: ValidationRule) => {
         const rule: ValidationRuleObject = typeof given === 'string' ? { id: given } : { ...given };
         if (typeof given !== 'string' && (typeof given !== 'object' || given === null || typeof rule.id !== 'string')) {
-            throw new TypeError(
-                `Datasource: field '${field}' has a rule that is no id or { id, ...options }: ${JSON.stringify(given)}`
-            );
+            throw new TypeError(`${where} has a rule that is no id or { id, ...options }: ${JSON.stringify(given)}`);
         }
         const registered = registry.get(rule.id);
         if (!registered) {
             const known = Array.from(registry.keys(), (key) => `'${key}'`).join(', ');
             throw new Error(
-                `Datasource: field '${field}' has the unknown validator '${rule.id}', register it with registerValidator() before the datasource is made. Registered: ${known}`
+                `${where} has the unknown validator '${rule.id}', register it with registerValidator() before the datasource (or the grid) is made. Registered: ${known}`
             );
         }
         if (rule.message !== undefined && typeof rule.message !== 'string') {
-            throw new TypeError(`Datasource: field '${field}' has the rule '${rule.id}' with a message that is not a text`);
+            throw new TypeError(`${where} has the rule '${rule.id}' with a message that is not a text`);
         }
         const problem = registered.check?.(rule);
         if (problem) {
-            throw new TypeError(`Datasource: field '${field}' has the rule '${rule.id}', which ${problem}`);
+            throw new TypeError(`${where} has the rule '${rule.id}', which ${problem}`);
         }
         return { rule, validate: registered.validate };
     });
@@ -244,12 +346,16 @@ export function resolveRules(rules: readonly ValidationRule[], field: string): R
  * @internal
  * The message for what a validator returned: the rule's own `message`, else what the validator
  * returned. Either is a text id or the message itself: the text of the id (setTexts(), else TEXTS)
- * when there is one. `{name}` is replaced by the rule's option `name`, a name the rule does not have
- * is left as it is
+ * when there is one. `{name}` is replaced by the rule's option `name` - a list as its items with `, ` -
+ * a name the rule does not have is left as it is
  */
 export function errorMessage(result: string, rule: ValidationRuleObject): string {
     const message = rule.message ?? result;
-    return fillText(findText(message) ?? message, rule);
+    // a list option is its items with a comma and a space: `Norway, Sweden`
+    const options = Object.fromEntries(
+        Object.entries(rule).map(([name, option]) => [name, Array.isArray(option) ? option.join(', ') : option])
+    );
+    return fillText(findText(message) ?? message, options);
 }
 
 /**

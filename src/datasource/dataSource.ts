@@ -258,6 +258,10 @@ export class Datasource<T = any> {
      * objects, for getField(). The validators are the container's, it validates the edits
      */
     private __fieldRules = new Map<string, ValidationRuleObject[]>();
+    /** the rules of the fields (FieldConfig.validate), resolved: the container has them with a grid's columns' */
+    private __ownRules = new Map<string, ResolvedRule[]>();
+    /** the rules of a grid's columns (ColumnConfig.validate) by the grid that gave them: the last one's are used */
+    private __columnRules: { owner: object; rules: ReadonlyMap<string, ResolvedRule[]> }[] = [];
 
     /**
      * the aggregates of the group rows asked so far, see aggregate() and keptAggregate(). A WeakMap: the
@@ -374,7 +378,6 @@ export class Datasource<T = any> {
     private applyFields(fields: DatasourceOptions['fields']) {
         const configs = new Map<string, FieldConfig>();
         const fieldFormatters = new Map<string, Formatter>();
-        const fieldRules = new Map<string, ValidationRuleObject[]>();
         const rules = new Map<string, ResolvedRule[]>();
         for (const [name, field] of Object.entries(fields || {})) {
             const config: FieldConfig = typeof field === 'string' ? { type: field } : { ...field };
@@ -407,22 +410,56 @@ export class Datasource<T = any> {
                 const resolved = resolveRules(config.validate, name);
                 if (resolved.length) {
                     rules.set(name, resolved);
-                    fieldRules.set(
-                        name,
-                        resolved.map(({ rule }) => rule)
-                    );
                 }
             }
             configs.set(name, config);
+        }
+        // the fields' rules and a grid's columns' after them: what throws changes nothing
+        this.giveRules(configs, rules, this.__columnRules.at(-1)?.rules);
+        this.__fields = configs;
+        this.__fieldFormatters = fieldFormatters;
+        this.__ownRules = rules;
+    }
+
+    /**
+     * Gives the container the types and the rules of the fields - each field's own (FieldConfig.validate),
+     * then a grid's of its column (ColumnConfig.validate) - and keeps the rules for getField().validate
+     * @throws as DataContainer.__addFields: a field with other rules in another datasource on the container
+     */
+    private giveRules(
+        configs: Map<string, FieldConfig>,
+        own: Map<string, ResolvedRule[]>,
+        columns: ReadonlyMap<string, ResolvedRule[]> | undefined
+    ) {
+        const rules = new Map(own);
+        for (const [field, added] of columns ?? []) {
+            rules.set(field, [...(own.get(field) ?? []), ...added]);
         }
         this.__dataContainer.__addFields(
             this,
             new Map(Array.from(configs, ([name, config]) => [name, config.type ?? 'text'])),
             rules
         );
-        this.__fields = configs;
-        this.__fieldFormatters = fieldFormatters;
-        this.__fieldRules = fieldRules;
+        this.__fieldRules = new Map(Array.from(rules, ([field, resolved]) => [field, resolved.map(({ rule }) => rule)]));
+    }
+
+    /**
+     * @internal
+     * The validation rules of a grid's columns (`ColumnConfig.validate`), resolved, by field: added after
+     * the field's own rules - an edit and `validate()` check both, `getField().validate` lists both. Each
+     * grid gives its own, the last one given is used - a grid without any (an empty map) gives none, the
+     * other's stay; `null` takes the grid's back (destroy), the one before is used again. The rows that
+     * have errors are validated again (DataContainer.__addFields)
+     * @throws as `setFields()`: a field with other rules in another datasource on the same container
+     */
+    public __setColumnRules(owner: object, rules: ReadonlyMap<string, ResolvedRule[]> | null) {
+        const columnRules = this.__columnRules.filter((entry) => entry.owner !== owner);
+        // a grid without rules leaves another grid's in place
+        if (rules?.size) {
+            columnRules.push({ owner, rules });
+        }
+        this.giveRules(this.__fields, this.__ownRules, columnRules.at(-1)?.rules);
+        this.__columnRules = columnRules;
     }
 
     /**

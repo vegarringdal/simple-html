@@ -1084,6 +1084,10 @@ const DEFAULTS = {
     'validation.minLength': 'Must be at least {value} characters',
     'validation.maxLength': 'Must be at most {value} characters',
     'validation.pattern': 'Not in the expected format',
+    'validation.integer': 'Must be a whole number',
+    'validation.decimals': 'Must have at most {value} decimals',
+    'validation.oneOf': 'Must be one of {value}',
+    'validation.email': 'Not an email address',
     // getFilterString(), which upper cases the whole string
     'filterString.and': 'AND',
     'filterString.or': 'OR',

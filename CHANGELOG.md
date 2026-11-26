@@ -1422,6 +1422,16 @@ rows); the vertical time is rendering every cell of every row on screen, which s
   (`columnSettings.formula.problem.clobField`), a template that reads it is filtered on the value.
   `SqlColumn.clobType`: `toSqlWhere()` writes each with `LIKE` (Equal is a `LIKE` of the whole text), any
   other operator throws a filter error. `sqlColumnsFromFields()` copies both; `getField()` has both
+
+##### Validation rules of a grid's columns, more built-in rules
+- `ColumnConfig.validate`: validation rules in the grid's config, as a field's - added after the field's own
+  (`FieldConfig.validate`): an edit, the detail form, an import and `datasource.validate()` check both,
+  `getField().validate` lists both. Set by code, the user can not change them: not in the state, a view or
+  the grid config dialog; `updateConfig({ columns })` replaces them, `destroy()` takes them back. An id that is
+  not registered or wrong options throw a `TypeError` naming the column
+- new built-in rules: `'integer'`, `{ id: 'decimals', value: 2 }`, `{ id: 'oneOf', value: ['Open', 'Closed'] }`,
+  `'email'` (texts `validation.integer`, `.decimals`, `.oneOf`, `.email`); `min` / `max` take a day
+  (`'2026-01-01'`) for a date or datetime. A list option in a message is its items with `, `
   (‹ Columns); side by side the list stays in view. Checked at 1366x768 and 1280x720 at 150 % zoom
 - a text field's date (a column of several types, `dynamicCellTypeColumn`) is filtered, sorted and grouped by
   the text its cell shows, `2026-11-25` - not JavaScript's `Thu May 17 1990 ...`: the same rows as

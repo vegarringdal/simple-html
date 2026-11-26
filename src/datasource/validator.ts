@@ -84,14 +84,14 @@ export type ValidationRule = string | ValidationRuleObject;
  * ```ts
  * import { registerValidator, type Validator } from '@simple-html/grid';
  *
- * // { id: 'oneOf', values: ['Norway', 'Sweden'] }
- * const oneOf: Validator = (value, _row, rule) => {
- *     if (value === null || value === undefined || value === '') {
+ * // { id: 'afterStart' }: a date field `end` not before the row's `start`
+ * const afterStart: Validator = (value, row) => {
+ *     if (!(value instanceof Date) || !(row.start instanceof Date)) {
  *         return null; // an empty value is the required rule's job
  *     }
- *     return Array.isArray(rule.values) && rule.values.includes(String(value)) ? null : 'Must be one of {values}';
+ *     return value < row.start ? 'Must not be before the start' : null;
  * };
- * registerValidator('oneOf', oneOf);
+ * registerValidator('afterStart', afterStart);
  * ```
  */
 export type Validator = (value: unknown, row: Entity, rule: ValidationRuleObject) => string | null;
