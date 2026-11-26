@@ -342,7 +342,7 @@ export function colorRuleSettings(ctx: Grid, settings: RuleSettings): TemplateRe
     const offeredFor = (name: string) => ruleOperatorsOf(columns[name], typeOf(name));
     /** the operator a new condition on a field starts with: its header filter's */
     const startOperator = (name: string) => {
-        const start = defaultHeaderOperator(columns[name], typeOf(name));
+        const start = defaultHeaderOperator(columns[name], typeOf(name), gridInterface.getDatasource().getField(name).clobType);
         const offered = offeredFor(name);
         return offered.includes(start) ? start : (offered[0] ?? start);
     };

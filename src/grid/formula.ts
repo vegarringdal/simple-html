@@ -94,7 +94,8 @@ export interface FormulaProblem {
  *   `name`: a name that is no keyword and is not followed by `(` (a field is written `{name}`)
  * - `internal`: a field of the grid's own (`{__KEY}`); `unknownField`: a field the grid does not know;
  *   `cycle`: a calculated column computed from itself; `fieldProblem`: a calculated column the formula
- *   reads has a problem of its own
+ *   reads has a problem of its own; `clobField`: a field with `clobType` (FieldConfig.clobType), a long
+ *   text no formula reads
  * - `number`, `date`, `boolean`: a part of another type where one of these is needed; `same`: two parts
  *   that must have one type (`=`, IF, COALESCE ...) have two; `order`: `<` on true / false; `chain`:
  *   `a < b < c`; `digits`: ROUND's digits not a whole number from -10 to 10
@@ -120,6 +121,7 @@ export type FormulaProblemId =
     | 'unknownField'
     | 'cycle'
     | 'fieldProblem'
+    | 'clobField'
     | 'number'
     | 'date'
     | 'boolean'
@@ -1056,6 +1058,15 @@ export function readFormula(
         }
         throw error;
     }
+}
+
+/**
+ * @internal
+ * The problem of a formula that reads a field with `clobType` (FieldConfig.clobType): a long text no
+ * formula reads, as SQL compares it with LIKE only - for the `typeOf` of readFormula and compileFormula
+ */
+export function clobFieldProblem(field: string): { problem: FormulaProblem } {
+    return { problem: { id: 'clobField', values: { field: `{${field}}` } } };
 }
 
 /**

@@ -372,7 +372,7 @@ Right click on a header filter.
 | `filter.operator.beginWith` | `Begins with` | a text field |
 | `filter.operator.endWith` | `Ends with` | a text field |
 | `filter.matchCase` | `Match case` | the toggle of a text column in the filter submenu, a ✓ while it is on |
-| `filter.matchCase.hint` | `always` | its hint, on a column that always matches case (`filterCaseSensitive`) |
+| `filter.matchCase.hint` | `always` | its hint, on a column that always matches case (`filterCaseSensitive`, a field's `caseSensitive`) |
 | `filter.filterOnType` | `Filter as you type` | the toggle of filter as you type, a ✓ while it is on: in the filter submenu and at the bottom of the operator choice, not a boolean field |
 
 ### The value list
@@ -508,7 +508,7 @@ Right click on a column number, the row of numbers under the header filters.
 | `filterEditor.useAttribute.tooltip` | `Compare against another column instead of a typed in value` | tooltip and name of the icon that switches to another field |
 | `filterEditor.matchCase` | `Aa` | the toggle of a condition on a text field, filled while the condition matches case |
 | `filterEditor.matchCase.tooltip` | `Match case` | its tooltip and name |
-| `filterEditor.matchCaseAlways.tooltip` | `Match case: always, for this column` | its tooltip and name on a column that always matches case (`filterCaseSensitive`): on, greyed out |
+| `filterEditor.matchCaseAlways.tooltip` | `Match case: always, for this column` | its tooltip and name on a column that always matches case (`filterCaseSensitive`, a field's `caseSensitive`): on, greyed out |
 | `filterEditor.undo` | `Undo` | the name of the undo icon in the footer: takes the last edit back |
 | `filterEditor.undo.tooltip` | `Undo (Ctrl+Z)` | its tooltip, with the key |
 | `filterEditor.undo.tooltip.mac` | `Undo (⌘Z)` | its tooltip on a Mac |
@@ -767,6 +767,7 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.matchCase` | `Match case` | the dialog's checkbox of a text column's header filter |
 | `columnSettings.matchCase.hint` | `Ann does not find ANN - the header shows Aa beside the operator` | under it |
 | `columnSettings.matchCase.always` | `Always for this column: filterCaseSensitive in its config` | under it when the column always matches case |
+| `columnSettings.matchCase.locked` | `Always for this column: set by the application` | under it when the field's case is locked (`FieldConfig.caseSensitive`) |
 | `columnSettings.rules` | `Colour rules` | the heading of the column's colour rules, every column, and their name for a screen reader. A rule's operator picker has the header filter's names of the operators (`filter.operator.*`, `filter.filter.isBlank`, `filter.filter.isNotBlank`), its label and the value inputs the filter editor's (`filterEditor.label.*`) |
 | `columnSettings.rules.hint` | `The first rule that matches colours the cell. The value is compared as the header filter compares it` | under it |
 | `columnSettings.rules.empty` | `No rules` | a column without rules |
@@ -906,6 +907,7 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.formula.problem.unknownField` | `No field {field}` | a field that is no column, no field of the datasource, no calculated column |
 | `columnSettings.formula.problem.cycle` | `{field} is computed from itself` | a calculated column read by its own formula, straight or through another |
 | `columnSettings.formula.problem.fieldProblem` | `{field} has a problem of its own` | a calculated column read whose formula has a problem |
+| `columnSettings.formula.problem.clobField` | `{field} is a long text: a formula can not read it` | a field with `clobType` (`FieldConfig.clobType`), filtered with LIKE only |
 | `columnSettings.formula.problem.number` | `{what} takes a number: {part} is {got}` | `{what}`: an operator or a function, `{part}`: the part as written, `{got}`: its type |
 | `columnSettings.formula.problem.date` | `{what} takes a date: {part} is {got}` | |
 | `columnSettings.formula.problem.boolean` | `{what} takes true / false: {part} is {got}` | |

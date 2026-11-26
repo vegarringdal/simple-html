@@ -15,7 +15,7 @@ import { TextFormatter } from '../../datasource/textFormatter';
 import { findText, type TextId } from '../../texts';
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
-import { editorOperators, isAlwaysCaseSensitive } from './columnFilterOptions';
+import { editorOperators, isAlwaysCaseSensitive, isClobField } from './columnFilterOptions';
 import { contextMenuAttributes } from './contextMenuAttributes';
 import { contextMenuOperator } from './contextMenuOperator';
 import { contextmenuDate } from './contextmenuDate';
@@ -353,10 +353,18 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft, history: Fi
                 text('filterEditor.pickValueAttribute'),
                 text('filterEditor.pickValueAttribute.tooltip'),
                 (button) =>
-                    contextMenuAttributes(ctx, button, arg.valueField, (attribute) =>
-                        edit(button, () => {
-                            arg.valueField = attribute;
-                        })
+                    contextMenuAttributes(
+                        ctx,
+                        button,
+                        arg.valueField,
+                        (attribute) =>
+                            edit(button, () => {
+                                arg.valueField = attribute;
+                            }),
+                        // a field with clobType is compared with a value only (FieldConfig.clobType)
+                        Object.keys(ctx.gridInterface.__getGridConfig().columns).filter(
+                            (name) => !isClobField(ctx.gridInterface, name)
+                        )
                     )
             );
         }
@@ -380,6 +388,10 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft, history: Fi
                             ) {
                                 arg.operator = undefined;
                             }
+                            // a field with clobType compares with a value only
+                            if (isClobField(ctx.gridInterface, attribute)) {
+                                arg.valueField = undefined;
+                            }
                             arg.field = attribute;
                         })
                     )
@@ -398,8 +410,8 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft, history: Fi
             <div class="filter-editor-value-slot">${value}</div>
             ${caseToggle(arg)}
             ${
-                // BETWEEN compares with its two values, not with a field
-                arg.operator === 'BETWEEN'
+                // BETWEEN compares with its two values, not with a field; a field with clobType with a value
+                arg.operator === 'BETWEEN' || (arg.field !== undefined && isClobField(ctx.gridInterface, arg.field))
                     ? ICON_SPACE
                     : iconButton(
                           SWAP_ICON,
@@ -427,7 +439,11 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft, history: Fi
         if (field?.type !== 'text' || arg.operator === 'IS_BLANK' || arg.operator === 'IS_NOT_BLANK') {
             return ICON_SPACE;
         }
-        const always = isAlwaysCaseSensitive(ctx.gridInterface.__getGridConfig().columns[field.name], field.type);
+        const always = isAlwaysCaseSensitive(
+            ctx.gridInterface.__getGridConfig().columns[field.name],
+            field.type,
+            field.caseSensitive
+        );
         const tooltip = text(always ? 'filterEditor.matchCaseAlways.tooltip' : 'filterEditor.matchCase.tooltip');
         return html`<button
             type="button"
@@ -551,7 +567,7 @@ export function renderFilterEditor(ctx: Grid, filterArg: GroupDraft, history: Fi
         const before = datasource.getFilter();
         const columns = ctx.gridInterface.__getGridConfig().columns;
         const filter = draftToFilter(structuredClone(filterArg), datasource, (field) =>
-            isAlwaysCaseSensitive(columns[field], datasource.getField(field).type)
+            isAlwaysCaseSensitive(columns[field], datasource.getField(field).type, datasource.getField(field).caseSensitive)
         );
         datasource.filter(filter.children.length ? filter : null);
         ctx.gridInterface.__clearChangedHeaderFilters(before, datasource.getFilter());

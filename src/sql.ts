@@ -173,6 +173,8 @@ export type SqlParam = string | number | boolean;
  *
  * const active: SqlColumn = { column: 'is_active', type: 'boolean', booleanValues: { true: 'Y', false: 'N' } };
  * const changed: SqlColumn = { column: 'audit.changes.changed_at', type: 'datetime', dateStorage: 'utc' };
+ * const code: SqlColumn = { column: 'PROJECT_CODE', caseSensitive: true }; // its index is used
+ * const notes: SqlColumn = { column: 'NOTES', clobType: true }; // an Oracle CLOB: LIKE only
  * ```
  */
 export interface SqlColumn {
@@ -198,6 +200,22 @@ export interface SqlColumn {
         /** what the column holds for false */
         false: SqlParam;
     };
+    /**
+     * `text` only: `true` - every condition on the column compares with its case, also one the filter
+     * sends without `caseSensitive` (or with `false`): `"PROJECT_CODE" = :1`, so an index on the column is
+     * used - `LOWER("PROJECT_CODE")` would not use it. The grid's `FieldConfig.caseSensitive`
+     */
+    caseSensitive?: boolean;
+    /**
+     * `text` only: `true` - the column is a LOB, an Oracle `CLOB` / `NCLOB`, which SQL compares with `LIKE`
+     * only. LOB columns are not supported as such; this filters one as plain text: `EQUAL` and
+     * `NOT_EQUAL_TO` are a `LIKE` of the whole text (its wildcards escaped), `CONTAINS`, `DOES_NOT_CONTAIN`,
+     * `BEGIN_WITH`, `END_WITH`, `IS_BLANK` and `IS_NOT_BLANK` as on any text. Any other operator (`IN`, `<`,
+     * `BETWEEN` ...), a `valueField` on either side and a formula that reads it (`calculated`, `shown`)
+     * throw a `TypeError` that `isSqlFilterError()` knows. The grid's `FieldConfig.clobType`, whose filters
+     * offer only those
+     */
+    clobType?: boolean;
 }
 
 /**
@@ -549,9 +567,11 @@ export interface SqlFieldsOptions {
  * The `columns` of {@link toSqlWhere} from the fields of the grid's datasource - the same object as
  * `DatasourceOptions.fields`: `{ born: 'date', age: { type: 'number', label: 'Age' } }`. Each field is a
  * column of its type (a field without one is `'text'`), named as the field - `nameCase` and `column`
- * change that. One list of the fields for the browser and the backend keeps their types the same.
+ * change that. A field's `caseSensitive` and `clobType` are the column's (SqlColumn). One list of the
+ * fields for the browser and the backend keeps their types the same.
  *
- * @param fields the datasource's fields: a type, or a config with `type` (the rest is not read)
+ * @param fields the datasource's fields: a type, or a config with `type`, `caseSensitive` and `clobType`
+ * (the rest is not read)
  * @throws a `TypeError` for fields that are no object, a type that is none, wrong options
  *
  * @example
@@ -567,7 +587,12 @@ export interface SqlFieldsOptions {
  * ```
  */
 export function sqlColumnsFromFields(
-    fields: Readonly<Record<string, SqlColumnType | { readonly type?: SqlColumnType }>>,
+    fields: Readonly<
+        Record<
+            string,
+            SqlColumnType | { readonly type?: SqlColumnType; readonly caseSensitive?: boolean; readonly clobType?: boolean }
+        >
+    >,
     options: SqlFieldsOptions = {}
 ): Record<string, SqlColumn> {
     return sqlColumnsOf(fields, options);

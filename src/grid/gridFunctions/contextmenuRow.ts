@@ -783,8 +783,8 @@ function pasteIntoCells(ctx: Grid, attribute: string, data: string, eventData: R
 function conditionForCell(ctx: Grid, attribute: string, rowData: Entity) {
     const value = rowData?.[attribute];
     const isBlank = value === null || value === undefined || value === '';
-    const type = ctx.gridInterface.getDatasource().getField(attribute).type;
-    const caseSensitive = isAlwaysCaseSensitive(ctx.gridInterface.__getGridConfig().columns[attribute], type);
+    const { type, caseSensitive: locked } = ctx.gridInterface.getDatasource().getField(attribute);
+    const caseSensitive = isAlwaysCaseSensitive(ctx.gridInterface.__getGridConfig().columns[attribute], type, locked);
     // the cell's text as it is: a `%` or `_` in it is no wildcard (`50%` does not find `500`)
     return isBlank ? where(attribute, 'IS_BLANK') : where(attribute, 'EQUAL', value, { caseSensitive, literal: type === 'text' });
 }

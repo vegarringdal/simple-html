@@ -3,6 +3,7 @@ import type { Entity } from '../datasource/entity';
 import type { FieldType } from '../datasource/field';
 import { fillText, TEXTS } from '../texts';
 import {
+    clobFieldProblem,
     compileFormula,
     FORMULA_TYPES,
     type Formula,
@@ -115,6 +116,12 @@ export function isCalculatedName(name: string): boolean {
     return NAME.test(name) && !OBJECT_NAMES.has(name);
 }
 
+/**
+ * The type of a field that is not calculated, as a formula reads it: its type, `'clob'` for a text field
+ * with `clobType` (FieldConfig.clobType) - a formula can not read it, the problem `clobField`
+ */
+export type FormulaFieldType = FieldType | 'clob';
+
 /** a calculated column read: its formula, or the problem it has */
 export type CompiledColumn = { formula: Formula } | { problem: FormulaProblem };
 
@@ -132,7 +139,7 @@ export type CompiledColumn = { formula: Formula } | { problem: FormulaProblem };
  */
 export function compileCalculatedColumns(
     columns: Readonly<Record<string, CalculatedColumn>>,
-    fieldType: (field: string) => FieldType | undefined
+    fieldType: (field: string) => FormulaFieldType | undefined
 ): Map<string, CompiledColumn> {
     const done = new Map<string, CompiledColumn>();
     const reading = new Set<string>();
@@ -160,6 +167,9 @@ export function compileCalculatedColumns(
                 return { type: other.formula.type };
             }
             const type = fieldType(field);
+            if (type === 'clob') {
+                return clobFieldProblem(field);
+            }
             return type ? { type: formulaTypeOf(type) } : undefined;
         });
         reading.delete(name);
@@ -271,7 +281,7 @@ function englishProblem(problem: FormulaProblem): string {
  */
 export function assertCalculatedColumns(
     columns: unknown,
-    fieldType: (field: string) => FieldType | undefined,
+    fieldType: (field: string) => FormulaFieldType | undefined,
     isTaken: (name: string) => boolean,
     name: string
 ): asserts columns is Record<string, CalculatedColumn> {

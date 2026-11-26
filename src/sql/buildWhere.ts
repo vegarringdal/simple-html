@@ -2,7 +2,7 @@ import { FILTER_OPERATORS, type FilterOperator } from '../datasource/filterExpre
 import { isBlank } from '../datasource/isBlank';
 import { objectFilter, rangeOperator } from '../datasource/objectFilter';
 import { textPatternParts } from '../datasource/textPattern';
-import { type FieldTypeResult, readFormula } from '../grid/formula';
+import { clobFieldProblem, type FieldTypeResult, readFormula } from '../grid/formula';
 import type {
     SqlCalculatedColumn,
     SqlColumn,
@@ -71,7 +71,26 @@ interface Column {
     type: SqlColumnType;
     dateStorage: SqlDateStorage;
     booleanValues: { true: SqlParam; false: SqlParam };
+    /** SqlColumn.caseSensitive: every condition compares with its case */
+    caseSensitive: boolean;
+    /** SqlColumn.clobType: a LOB, compared with LIKE only (CLOB_OPERATORS) */
+    clob: boolean;
 }
+
+/**
+ * the operators of a column with clobType: the ones SQL writes with LIKE (or IS NULL) - CLOB_OPERATORS
+ * of datasource/field.ts, which the sql entry does not bundle (a test keeps them one)
+ */
+export const SQL_CLOB_OPERATORS: readonly FilterOperator[] = [
+    'EQUAL',
+    'NOT_EQUAL_TO',
+    'CONTAINS',
+    'DOES_NOT_CONTAIN',
+    'BEGIN_WITH',
+    'END_WITH',
+    'IS_BLANK',
+    'IS_NOT_BLANK'
+];
 
 /** the options checked, and the parameters made so far */
 interface Context {
@@ -177,7 +196,7 @@ function readColumn(entry: unknown, dialect: Dialect, dateStorage: SqlDateStorag
     if (!column) {
         throw new TypeError(`toSqlWhere: ${where} is the column's name, or { column, type }, not ${show(entry)}`);
     }
-    checkKeys(column, ['column', 'type', 'dateStorage', 'booleanValues'], where);
+    checkKeys(column, ['column', 'type', 'dateStorage', 'booleanValues', 'caseSensitive', 'clobType'], where);
 
     const name = own(column, 'column');
     if (typeof name !== 'string' || !COLUMN_NAME.test(name)) {
@@ -197,13 +216,25 @@ function readColumn(entry: unknown, dialect: Dialect, dateStorage: SqlDateStorag
     if (booleanValues !== undefined && type !== 'boolean') {
         throw new TypeError(`toSqlWhere: ${where}.booleanValues is for a boolean column`);
     }
+    const [caseSensitive, clob] = (['caseSensitive', 'clobType'] as const).map((option) => {
+        const value = own(column, option);
+        if (value !== undefined && typeof value !== 'boolean') {
+            throw new TypeError(`toSqlWhere: ${where}.${option} is true or false, not ${show(value)}`);
+        }
+        if (value === true && type !== 'text') {
+            throw new TypeError(`toSqlWhere: ${where}.${option} is for a text column`);
+        }
+        return value === true;
+    });
 
     return {
         sql: name.split('.').map(dialect.quote).join('.'),
         type: type as SqlColumnType,
         dateStorage: columnStorage === undefined ? dateStorage : readDateStorage(columnStorage, `${where}.dateStorage`),
         booleanValues:
-            booleanValues === undefined ? dialect.booleanValues : readBooleanValues(booleanValues, `${where}.booleanValues`)
+            booleanValues === undefined ? dialect.booleanValues : readBooleanValues(booleanValues, `${where}.booleanValues`),
+        caseSensitive,
+        clob
     };
 }
 
@@ -329,8 +360,19 @@ function buildCondition(node: Record<string, unknown>, context: Context, where: 
         return null;
     }
     const op = operator as FilterOperator;
-    // case is for text only, as in the grid
-    const exact = caseSensitive === true && column.type === 'text';
+    // case is for text only, as in the grid. A column whose case is locked always compares with it
+    const exact = (caseSensitive === true || column.caseSensitive) && column.type === 'text';
+    // a LOB: LIKE only, and a value - not another column
+    if (column.clob && !SQL_CLOB_OPERATORS.includes(op)) {
+        throw new TypeError(
+            `toSqlWhere: ${where}.operator ${op} is not for ${show(field)}, a CLOB column (clobType): it takes ${SQL_CLOB_OPERATORS.join(', ')}`
+        );
+    }
+    if (other && op !== 'BETWEEN' && (column.clob || other.clob)) {
+        throw new TypeError(
+            `toSqlWhere: ${where}.valueField: ${show(column.clob ? field : valueField)} is a CLOB column (clobType), it is compared with a value only`
+        );
+    }
 
     switch (op) {
         case 'IS_BLANK':
@@ -484,6 +526,9 @@ function shownColumn(context: Context, field: string): Column {
 function formulaColumn(context: Context, formula: string, type: SqlCalculatedColumn['type'], where: string): Column {
     const typeOf = (name: string): FieldTypeResult => {
         const column = context.columns.get(name);
+        if (column?.clob) {
+            return clobFieldProblem(name);
+        }
         if (column) {
             return { type: column.type === 'datetime' ? 'date' : column.type };
         }
@@ -498,7 +543,9 @@ function formulaColumn(context: Context, formula: string, type: SqlCalculatedCol
         throw new TypeError(
             id === 'unknownField'
                 ? `toSqlWhere: ${where}.formula reads ${values.field}, which is not one of the columns`
-                : `toSqlWhere: ${where}.formula has a problem: ${id} ${JSON.stringify(values)}`
+                : id === 'clobField'
+                  ? `toSqlWhere: ${where}.formula reads ${values.field}, a CLOB column (clobType): no formula reads it`
+                  : `toSqlWhere: ${where}.formula has a problem: ${id} ${JSON.stringify(values)}`
         );
     }
     if (type !== undefined && type !== read.type) {
@@ -528,7 +575,9 @@ function formulaColumn(context: Context, formula: string, type: SqlCalculatedCol
         // a date of a formula is a day: a date column that holds wall clocks
         dateStorage: 'local',
         // a true / false formula is 1 / 0 in the SQL
-        booleanValues: { true: 1, false: 0 }
+        booleanValues: { true: 1, false: 0 },
+        caseSensitive: false,
+        clob: false
     };
 }
 
@@ -584,10 +633,11 @@ function compareText(
         );
     }
     // EQUAL and NOT_EQUAL_TO of a text without wildcards: `=` (an index is used), the escaped characters
-    // as they are (`50\%` is `50%`)
+    // as they are (`50\%` is `50%`). Not of a LOB: it has no `=`, its LIKE below is the whole text
     const parts = textPatternParts(text, literal);
     if (
         dialect.plainEquals !== null &&
+        !column.clob &&
         (operator === 'EQUAL' || operator === 'NOT_EQUAL_TO') &&
         parts.every((part) => part.type !== 'wildcard')
     ) {

@@ -52,7 +52,9 @@ describe('formatter registry - registerFormatter()', () => {
             label: 'price',
             formatter: money,
             validate: [],
-            multiline: false
+            multiline: false,
+            caseSensitive: false,
+            clobType: false
         });
     });
 

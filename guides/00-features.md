@@ -240,6 +240,8 @@ On the docs site the sidebar's *Grid theme* and *Toggle dark/light* switch every
 | Safe from SQL injection | Values are always parameters, the columns a list you give, names checked and quoted, the size limited | [guide](22-sql.md#security) · [sample](#sample/sql) |
 | The same rows as the grid | Case, blanks, dates and time zones compare as the grid compares them | [guide](22-sql.md#how-each-type-compares) · [sample](#sample/sql) |
 | Calculated columns in SQL | A formula as an SQL expression of the database - `LEFT({name}, 2)`, `DAYS(...)`, `IF(...)` - so a filter on a calculated column runs on the server too | [guide](22-sql.md#calculated-columns) · [sample](#sample/sql) |
+| A column that keeps its case | `caseSensitive` of a field, set by code: Match case always on, `toSqlWhere()` compares with the case - an index on the column is used | [guide](22-sql.md#a-column-that-keeps-its-case-casesensitive) · [sample](#sample/sql) |
+| A LOB column as text | `clobType` of a field: an Oracle `CLOB` filtered with `LIKE` only - Equal, Contains, Begins with ... no value list, no formula | [guide](22-sql.md#a-lob-column-clobtype) · [sample](#sample/sql) |
 | Templates in SQL | A column filtered on the text its template shows, as an SQL expression: `getShownFormulas()` | [guide](22-sql.md#a-column-filtered-on-its-template) · [sample](#sample/sql) |
 | The filter to send | `getServerFilter()`: the filter without what the backend can not run - Find's rows, fields it does not have, calculated columns unless kept | [guide](22-sql.md#the-filter-to-send-getserverfilter) · [sample](#sample/sql) |
 

@@ -220,7 +220,11 @@ const fields = {
         born: 'date' as const,
         updated: { type: 'datetime' as const, formatter: 'texts-datetime' },
         active: 'boolean' as const,
-        notes: { multiline: true }
+        notes: { multiline: true },
+        // a lookup column whose case is locked by code: the dialog's hint "set by the application"
+        code: { caseSensitive: true },
+        // a long text (a CLOB) no formula reads
+        '«memo»': { clobType: true }
     }
 };
 
@@ -350,6 +354,9 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
     check();
     // a column that always matches case (filterCaseSensitive): its Match case greyed out, its hint
     option('«Country»').click();
+    check();
+    // a field whose case is locked (FieldConfig.caseSensitive): greyed out, set by the application
+    option('«Code»').click();
     check();
     // a number column: its format picker and the menu of the formats - one picked, the badge
     option('«Age»').click();
@@ -555,6 +562,8 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
         `{age} * ${'9'.repeat(400)}`,
         `{age} * ${'9'.repeat(300)} * ${'9'.repeat(300)}`,
         '{name} & ""',
+        // a field with clobType: a long text no formula reads
+        '{«memo»} & ""',
         '{age} + 1'
     ]) {
         type('calculated-formula', formula);

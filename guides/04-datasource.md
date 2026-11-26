@@ -187,7 +187,12 @@ A `FieldConfig` can also have a `label` (the grid's column label falls back to i
 `getFilterString()`), a `formatter`: the id of a registered formatter, see
 [Formatting](08-formatting.md), `validate`: the field's validation rules, see below, and
 `multiline`: a text of several lines, a text field only - see [Multiline
-text](05-editing.md#multiline-text). `getField()` and `getFormatter()` give the formatter object.
+text](05-editing.md#multiline-text). Two text options lock a field, set by code and not by the grid's
+config: `caseSensitive` - every filter on it matches case, for a column with an index (see
+[Match case](06-filtering.md#match-case)) - and `clobType` - a long text the database holds as a LOB (an
+Oracle `CLOB`), filtered with `LIKE` only (see [the operators a column
+offers](06-filtering.md#the-operators-a-column-offers)). `getField()` and `getFormatter()` give the
+formatter object.
 
 ```ts
 import { Datasource } from '@simple-html/grid';
@@ -196,12 +201,14 @@ const datasource = new Datasource({
     fields: {
         born: { type: 'date', label: 'Born' },
         price: { type: 'number', formatter: 'numberComma', validate: ['required', { id: 'min', value: 0 }] },
-        notes: { multiline: true }
+        notes: { multiline: true },
+        projectCode: { caseSensitive: true }, // its index is used
+        memo: { clobType: true } // an Oracle CLOB: LIKE only
     }
 });
 
-datasource.getField('born'); // { name: 'born', type: 'date', label: 'Born', formatter: DateFormatterYYYYMMDD, validate: [], multiline: false }
-datasource.getField('name'); // { name: 'name', type: 'text', label: 'name', formatter: TextFormatter, validate: [], multiline: false }
+datasource.getField('born'); // { name: 'born', type: 'date', label: 'Born', formatter: DateFormatterYYYYMMDD, validate: [], multiline: false, caseSensitive: false, clobType: false }
+datasource.getField('name'); // { name: 'name', type: 'text', label: 'name', formatter: TextFormatter, validate: [], multiline: false, caseSensitive: false, clobType: false }
 datasource.getField('notes').multiline; // true
 datasource.getField('price').validate; // [{ id: 'required' }, { id: 'min', value: 0 }]
 datasource.getFormatter('born').format(new Date(2026, 10, 20)); // '2026-11-20'

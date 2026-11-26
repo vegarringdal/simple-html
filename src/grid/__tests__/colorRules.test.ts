@@ -245,7 +245,7 @@ function expectSameAsHeaderFilter(mounted: MountedGrid, field: string, texts: st
     const column = gridInterface.__getGridConfig().columns[field];
     const type = gridInterface.__getLookupColumn(field) ? 'text' : gridInterface.getDatasource().getField(field).type;
     let compared = 0;
-    for (const operator of headerOperators(column, type).filter((each) => !only || only.includes(each))) {
+    for (const operator of headerOperators(column, type, false).filter((each) => !only || only.includes(each))) {
         for (const text of texts) {
             // a Between of a text without `..`: both ends, as the header filter takes it
             const ends = text.includes('..') ? text.split('..') : [text, text];

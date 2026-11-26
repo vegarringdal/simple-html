@@ -60,7 +60,12 @@ In a text filter:
 A text filter ignores upper and lower case. To match the case exactly, right-click the filter box
 and pick **Filter › Match case** (a ✓ shows it is on), or pick **Match case** at the bottom of the
 operator list. The box then shows **Aa** before the operator: `Ann` no longer finds `ANN`. Your app
-can make a column always match case; **Match case** is then greyed out with the hint *always*.
+can make a column always match case - a code column, `AB-1` is not `ab-1`; **Match case** is then greyed
+out with the hint *always*, and in the grid config dialog its hint says *set by the application*.
+
+Some long text columns (notes, descriptions) can only be filtered on their text: Equal, Not equal,
+Contains, Does not contain, Begins with, Ends with and Blank. Their filter menu has no list of values, and a
+calculated column can not use them.
 
 ## Find blank values
 

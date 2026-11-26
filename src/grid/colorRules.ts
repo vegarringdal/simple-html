@@ -17,7 +17,7 @@ import { formulaTypeOf } from './calculatedColumns';
 import { type ColumnFormat, type FormatTexts, formatTexts } from './columnFormat';
 import { type DatePreset, datePresetDays, isDatePreset, weekStartOf } from './datePresets';
 import { type DatePeriod, type OpenDatePeriod, parseDateAs, periodConditions } from './filterAsShown';
-import { compileFormula, type FormulaProblem, formulaProblemText } from './formula';
+import { clobFieldProblem, compileFormula, type FormulaProblem, formulaProblemText } from './formula';
 import type { ColumnConfig } from './gridConfig';
 import { columnOperators, isAlwaysCaseSensitive } from './gridFunctions/columnFilterOptions';
 import type { LookupColumn } from './gridFunctions/lookupColumn';
@@ -405,7 +405,8 @@ export function ruleOperatorsFor(type: FieldType): FilterOperator[] {
  * (columnOperators: its type's, its `filterOperators`), not IN and NOT_IN
  */
 export function ruleOperatorsOf(column: ColumnConfig | undefined, type: FieldType): FilterOperator[] {
-    return columnOperators(column, type).filter((operator) => operator !== 'IN' && operator !== 'NOT_IN');
+    // a rule has no IN: a field's clobType takes nothing more away
+    return columnOperators(column, type, false).filter((operator) => operator !== 'IN' && operator !== 'NOT_IN');
 }
 
 /**
@@ -463,10 +464,11 @@ export function colorRuleProblem(rule: ColorRule): 'value' | 'conditions' | 'exp
 
 /**
  * What the colour rules know of a field of the row, for a condition and a formula: the type a condition
- * on it compares as (`lookup`: a lookup column, it compares its label as a text) - undefined for a field
+ * on it compares as (`lookup`: a lookup column, it compares its label as a text; `clob`: a field with
+ * `clobType`, no formula reads it) - undefined for a field
  * the grid does not know
  */
-export type RuleFieldOf = (field: string) => { type: FieldType; lookup: boolean } | undefined;
+export type RuleFieldOf = (field: string) => { type: FieldType; lookup: boolean; clob?: boolean } | undefined;
 
 /**
  * @internal
@@ -477,6 +479,10 @@ export type RuleFieldOf = (field: string) => { type: FieldType; lookup: boolean 
 export function formulaRuleProblem(expression: string, fieldOf: RuleFieldOf): FormulaProblem | null {
     const compiled = compileFormula(expression, (field) => {
         const known = fieldOf(field);
+        // a field with clobType: no formula reads it
+        if (known?.clob) {
+            return clobFieldProblem(field);
+        }
         return known ? { type: formulaTypeOf(known.type) } : undefined;
     });
     if ('problem' in compiled) {
@@ -943,7 +949,7 @@ function contextOf(gridInterface: GridInterface<any>, field: string): RuleContex
         field,
         type,
         formatter: own.formatter,
-        caseSensitive: isAlwaysCaseSensitive(gridInterface.__getGridConfig().columns[field], type),
+        caseSensitive: isAlwaysCaseSensitive(gridInterface.__getGridConfig().columns[field], type, own.caseSensitive),
         lookup
     };
 }

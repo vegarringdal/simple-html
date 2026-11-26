@@ -56,7 +56,8 @@ export function datePresetName(ctx: Grid, preset: DatePreset): string {
  */
 export function canFilterOnDatePresets(ctx: Grid, field: string): boolean {
     const type = headerFilterType(ctx.gridInterface, field);
-    return takesDatePresets(type, headerOperators(ctx.gridInterface.__getGridConfig().columns[field], type));
+    // a date is never a LOB: no clobType
+    return takesDatePresets(type, headerOperators(ctx.gridInterface.__getGridConfig().columns[field], type, false));
 }
 
 /**

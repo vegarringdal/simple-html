@@ -118,6 +118,44 @@ export interface FieldConfig {
      * @sample multiline
      */
     multiline?: boolean;
+
+    /**
+     * `true`: every filter on the field matches case - `ABC-1` does not find `abc-1`. For a column the
+     * database has an index on (a project code): `"PROJECT_CODE" = :1` uses it, `LOWER("PROJECT_CODE")`
+     * would not. Set in the fields only, by code - not in the grid's config, and the user can not turn it
+     * off: "Match case" is on and greyed out in the header filter's menu, the filter editor and the grid
+     * config dialog. A condition on the field set without `caseSensitive` (`datasource.filter()`, a saved
+     * state) is kept with `caseSensitive: true`, and `toSqlWhere()` compares the column with its case
+     * (`SqlColumn.caseSensitive`, which `sqlColumnsFromFields()` copies). Text fields only: `true` on another
+     * type throws when the datasource is made. Default `false`
+     *
+     * @example
+     * ```ts
+     * import { Datasource } from '@simple-html/grid';
+     *
+     * const datasource = new Datasource({ fields: { projectCode: { caseSensitive: true } } });
+     * ```
+     */
+    caseSensitive?: boolean;
+
+    /**
+     * `true`: the field is a long text the database holds as a LOB - an Oracle `CLOB` or `NCLOB` - that SQL
+     * compares with `LIKE` only. LOB columns are not supported as such; this lets a grid filter one as plain
+     * text: its filters offer Equal, Not equal, Contains, Does not contain, Begins with, Ends with and Blank
+     * - no value list (`IN`), no "compare with another field" - and a formula (a calculated column, a colour
+     * rule's) can not read it: `{notes}` is a problem of the formula. A template that reads it is filtered on
+     * the value, not on the text it shows. `toSqlWhere()` writes each condition with `LIKE`
+     * (`SqlColumn.clobType`, which `sqlColumnsFromFields()` copies). Set in the fields only, by code. Text
+     * fields only: `true` on another type throws when the datasource is made. Default `false`
+     *
+     * @example
+     * ```ts
+     * import { Datasource } from '@simple-html/grid';
+     *
+     * const datasource = new Datasource({ fields: { notes: { clobType: true, multiline: true } } });
+     * ```
+     */
+    clobType?: boolean;
 }
 
 /**
@@ -149,4 +187,23 @@ export interface Field {
      * break as multiline text, in any text field
      */
     multiline: boolean;
+    /** `true` when `fields` gave the field `caseSensitive: true`: every filter on it matches case */
+    caseSensitive: boolean;
+    /** `true` when `fields` gave the field `clobType: true`: a long text filtered with `LIKE` only */
+    clobType: boolean;
 }
+
+/**
+ * The operators of a field with `clobType` (FieldConfig.clobType): a text's that SQL writes with `LIKE` -
+ * not `IN` / `NOT_IN`
+ */
+export const CLOB_OPERATORS = [
+    'EQUAL',
+    'NOT_EQUAL_TO',
+    'CONTAINS',
+    'DOES_NOT_CONTAIN',
+    'BEGIN_WITH',
+    'END_WITH',
+    'IS_BLANK',
+    'IS_NOT_BLANK'
+] as const;

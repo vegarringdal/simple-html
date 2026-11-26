@@ -1,13 +1,22 @@
-import type { FieldType } from '../../datasource/field';
+import { CLOB_OPERATORS, type FieldType } from '../../datasource/field';
 import { type FilterOperator, operatorsFor } from '../../datasource/filterExpression';
 import type { ColumnConfig } from '../gridConfig';
 import type { GridInterface } from '../gridInterface';
 
 /**
  * The operators the grid offers for a column, from its type and its options `filterOperators`,
- * `operator` and `filterCaseSensitive` (ColumnConfig). Plain functions of the column and the type, so
- * the checks of a config (gridInterface.ts) and the menus use the same rules.
+ * `operator` and `filterCaseSensitive` (ColumnConfig), and its field's `clobType` and `caseSensitive`
+ * (FieldConfig, set by code). Plain functions of the column and the type, so the checks of a config
+ * (gridInterface.ts) and the menus use the same rules.
  */
+
+/**
+ * true for a field with `clobType` (FieldConfig.clobType): a long text filtered with LIKE only, see
+ * CLOB_OPERATORS
+ */
+export function isClobField(gridInterface: GridInterface<any>, field: string): boolean {
+    return gridInterface.getDatasource().getField(field).clobType;
+}
 
 /**
  * The type a column's header filter filters as: `'text'` for a lookup column (ColumnConfig.editor) -
@@ -28,19 +37,22 @@ export function isHeaderOperator(operator: FilterOperator): boolean {
 
 /**
  * The operators the column offers for a type: the type's (operatorsFor), only the ones in its
- * `filterOperators` when it has them - in the type's order
+ * `filterOperators` when it has them - in the type's order. A field with `clobType`: only those of
+ * CLOB_OPERATORS, no value list
+ * @param clob true for a field with `clobType` (isClobField)
  */
-export function columnOperators(column: ColumnConfig | undefined, type: FieldType): FilterOperator[] {
+export function columnOperators(column: ColumnConfig | undefined, type: FieldType, clob: boolean): FilterOperator[] {
     const own = column?.filterOperators;
-    const operators = operatorsFor(type);
+    const operators = operatorsFor(type).filter((operator) => !clob || CLOB_OPERATORS.some((offered) => offered === operator));
     return Array.isArray(own) ? operators.filter((operator) => own.includes(operator)) : operators;
 }
 
 /**
  * The operators of the header filter's Operator ›: the column's that take a typed value
+ * @param clob true for a field with `clobType` (isClobField)
  */
-export function headerOperators(column: ColumnConfig | undefined, type: FieldType): FilterOperator[] {
-    return columnOperators(column, type).filter(isHeaderOperator);
+export function headerOperators(column: ColumnConfig | undefined, type: FieldType, clob: boolean): FilterOperator[] {
+    return columnOperators(column, type, clob).filter(isHeaderOperator);
 }
 
 /**
@@ -49,8 +61,8 @@ export function headerOperators(column: ColumnConfig | undefined, type: FieldTyp
  * else the first operator of headerOperators. The config checks make sure the column has one; one
  * the column does not offer (a `filter-operator-change` handler can change the column) is passed by
  */
-export function defaultHeaderOperator(column: ColumnConfig | undefined, type: FieldType): FilterOperator {
-    const operators = headerOperators(column, type);
+export function defaultHeaderOperator(column: ColumnConfig | undefined, type: FieldType, clob: boolean): FilterOperator {
+    const operators = headerOperators(column, type, clob);
     if (column?.operator && operators.includes(column.operator)) {
         return column.operator;
     }
@@ -69,16 +81,19 @@ export function editorOperators(gridInterface: GridInterface<any>, field: string
     if (!field) {
         return operatorsFor('text');
     }
-    const type = gridInterface.getDatasource().getField(field).type;
+    const { type, clobType } = gridInterface.getDatasource().getField(field);
     const column = gridInterface.__getGridConfig().columns[field];
-    return gridInterface.__getLookupColumn(field) && type !== 'text' ? operatorsFor(type) : columnOperators(column, type);
+    return gridInterface.__getLookupColumn(field) && type !== 'text'
+        ? operatorsFor(type)
+        : columnOperators(column, type, clobType);
 }
 
 /**
  * true when the grid's own conditions on the column always match case: `filterCaseSensitive` on a
- * text column (a lookup column filters as text) - the header filter, its value list, the row menu's
- * filter and the filter editor
+ * text column (a lookup column filters as text), or a field whose case is locked (FieldConfig.caseSensitive)
+ * - the header filter, its value list, the row menu's filter and the filter editor
+ * @param locked true for a field with `caseSensitive` (`datasource.getField(field).caseSensitive`)
  */
-export function isAlwaysCaseSensitive(column: ColumnConfig | undefined, type: FieldType): boolean {
-    return type === 'text' && column?.filterCaseSensitive === true;
+export function isAlwaysCaseSensitive(column: ColumnConfig | undefined, type: FieldType, locked: boolean): boolean {
+    return type === 'text' && (locked || column?.filterCaseSensitive === true);
 }

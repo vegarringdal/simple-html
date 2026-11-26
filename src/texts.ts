@@ -443,6 +443,7 @@ const DEFAULTS = {
     'columnSettings.matchCase': 'Match case',
     'columnSettings.matchCase.hint': 'Ann does not find ANN - the header shows Aa beside the operator',
     'columnSettings.matchCase.always': 'Always for this column: filterCaseSensitive in its config',
+    'columnSettings.matchCase.locked': 'Always for this column: set by the application',
     // every column: its colour rules (ColumnFormat.rules). A rule's operators have the header filter's
     // names (filter.operator.*, filter.filter.isBlank / isNotBlank), its label and value inputs the filter
     // editor's (filterEditor.label.*). {number} is the rule's place, 1 the first; {value} the value as typed
@@ -599,6 +600,7 @@ const DEFAULTS = {
     'columnSettings.formula.problem.unknownField': 'No field {field}',
     'columnSettings.formula.problem.cycle': '{field} is computed from itself',
     'columnSettings.formula.problem.fieldProblem': '{field} has a problem of its own',
+    'columnSettings.formula.problem.clobField': '{field} is a long text: a formula can not read it',
     'columnSettings.formula.problem.number': '{what} takes a number: {part} is {got}',
     'columnSettings.formula.problem.date': '{what} takes a date: {part} is {got}',
     'columnSettings.formula.problem.boolean': '{what} takes true / false: {part} is {got}',

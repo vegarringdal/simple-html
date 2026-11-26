@@ -42,7 +42,13 @@ import type { Grid } from '../grid';
 import type { GridState } from '../gridConfig';
 import type { MenuItem } from '../gridMenus';
 import { numberOverrideOf, overrideNumberText, zeroText } from './cellText';
-import { defaultHeaderOperator, headerFilterType, headerOperators, isAlwaysCaseSensitive } from './columnFilterOptions';
+import {
+    defaultHeaderOperator,
+    headerFilterType,
+    headerOperators,
+    isAlwaysCaseSensitive,
+    isClobField
+} from './columnFilterOptions';
 import { type FillKind, previewFill, valueFillProblems, valueFillSettings } from './columnSettingsBars';
 import { colorRuleSettings, colorRulesHaveProblem } from './columnSettingsRules';
 import { contextMenuAttributes } from './contextMenuAttributes';
@@ -320,7 +326,11 @@ function hasOperator(ctx: Grid, field: string): boolean {
  * (config), else the default of its type
  */
 function startOperator(ctx: Grid, field: string): FilterOperator {
-    return defaultHeaderOperator(ctx.gridInterface.__getGridConfig().columns[field], headerFilterType(ctx.gridInterface, field));
+    return defaultHeaderOperator(
+        ctx.gridInterface.__getGridConfig().columns[field],
+        headerFilterType(ctx.gridInterface, field),
+        isClobField(ctx.gridInterface, field)
+    );
 }
 
 /**
@@ -1043,9 +1053,12 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         if (!Object.hasOwn(settings.caseSensitive, field)) {
             return nothing;
         }
+        // locked: the field's caseSensitive, set by the application's code - not the column's config
+        const locked = gridInterface.getDatasource().getField(field).caseSensitive;
         const always = isAlwaysCaseSensitive(
             gridInterface.__getGridConfig().columns[field],
-            headerFilterType(gridInterface, field)
+            headerFilterType(gridInterface, field),
+            locked
         );
         const hintId = idOf(ctx, 'match-case-hint');
         return html`<div class="column-settings-field">
@@ -1063,7 +1076,13 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                 /><span>${text('columnSettings.matchCase')}</span>
             </label>
             <div class="column-settings-hint" id=${hintId}>
-                ${text(always ? 'columnSettings.matchCase.always' : 'columnSettings.matchCase.hint')}
+                ${text(
+                    locked
+                        ? 'columnSettings.matchCase.locked'
+                        : always
+                          ? 'columnSettings.matchCase.always'
+                          : 'columnSettings.matchCase.hint'
+                )}
             </div>
         </div>`;
     };
@@ -1084,7 +1103,8 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
         };
         const offered = headerOperators(
             ctx.gridInterface.__getGridConfig().columns[field],
-            headerFilterType(gridInterface, field)
+            headerFilterType(gridInterface, field),
+            isClobField(gridInterface, field)
         );
         const label = text('columnSettings.operator');
         const hintId = idOf(ctx, 'operator-hint');
@@ -2062,8 +2082,12 @@ function takesMatchCase(ctx: Grid, field: string): boolean {
 
 /**
  * Match case as the column starts, as startOperator is the column's operator: on for a column that always
- * matches case (`filterCaseSensitive`), else off - Reset column and Reset all
+ * matches case (`filterCaseSensitive`, a field's `caseSensitive`), else off - Reset column and Reset all
  */
 function startCaseSensitive(ctx: Grid, field: string): boolean {
-    return isAlwaysCaseSensitive(ctx.gridInterface.__getGridConfig().columns[field], headerFilterType(ctx.gridInterface, field));
+    return isAlwaysCaseSensitive(
+        ctx.gridInterface.__getGridConfig().columns[field],
+        headerFilterType(ctx.gridInterface, field),
+        ctx.gridInterface.getDatasource().getField(field).caseSensitive
+    );
 }

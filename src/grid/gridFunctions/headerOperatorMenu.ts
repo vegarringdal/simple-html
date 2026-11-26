@@ -2,7 +2,7 @@ import type { FilterOperator } from '../../datasource/filterExpression';
 import type { TextId } from '../../texts';
 import type { Grid } from '../grid';
 import type { MenuItem } from '../gridMenus';
-import { headerFilterType, headerOperators } from './columnFilterOptions';
+import { headerFilterType, headerOperators, isClobField } from './columnFilterOptions';
 import { filterCallback } from './filterCallback';
 import { getHeaderFilterOperator } from './getHeaderFilterOperator';
 import { gridText } from './gridText';
@@ -41,7 +41,11 @@ export const HEADER_OPERATOR_TEXTS: Partial<Record<FilterOperator, TextId>> = {
 export function headerOperatorItems(ctx: Grid, attribute: string): MenuItem[] {
     // a lookup column filters on its labels: the operators of a text (filterCallback)
     const type = headerFilterType(ctx.gridInterface, attribute);
-    const offered = headerOperators(ctx.gridInterface.__getGridConfig().columns[attribute], type);
+    const offered = headerOperators(
+        ctx.gridInterface.__getGridConfig().columns[attribute],
+        type,
+        isClobField(ctx.gridInterface, attribute)
+    );
     // the operator picked before (state), else the column's, else the type's default
     const current = getHeaderFilterOperator(ctx, attribute);
 

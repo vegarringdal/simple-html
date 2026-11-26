@@ -5,7 +5,7 @@ import type { Grid } from '../grid';
 import type { MenuContext, MenuEntry } from '../gridMenus';
 import { sectionColumns } from './cellRowKeyNavigationCellRowHandler';
 import type { ColType } from './colType';
-import { headerFilterType, headerOperators } from './columnFilterOptions';
+import { headerFilterType, headerOperators, isClobField } from './columnFilterOptions';
 import { matchCaseItem } from './contextmenuFilter';
 import { filterOnTypeItem } from './filterOnType';
 import { getHeaderFilterOperator, isHeaderFilterCaseSensitive } from './getHeaderFilterOperator';
@@ -171,7 +171,11 @@ export function operatorIndicator(
  */
 export function canChooseOperator(ctx: Grid, attribute: string): boolean {
     const type = headerFilterType(ctx.gridInterface, attribute);
-    return type !== 'boolean' && headerOperators(ctx.gridInterface.__getGridConfig().columns[attribute], type).length > 1;
+    return (
+        type !== 'boolean' &&
+        headerOperators(ctx.gridInterface.__getGridConfig().columns[attribute], type, isClobField(ctx.gridInterface, attribute))
+            .length > 1
+    );
 }
 
 /**

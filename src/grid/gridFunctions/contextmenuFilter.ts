@@ -8,7 +8,7 @@ import type { Grid } from '../grid';
 import type { MenuBlock, MenuContext, MenuEntry, MenuItem } from '../gridMenus';
 import { clearAllColumnFilters } from './clearAllColumnFilters';
 import type { ColType } from './colType';
-import { columnOperators, headerFilterType, headerOperators, isAlwaysCaseSensitive } from './columnFilterOptions';
+import { columnOperators, headerFilterType, headerOperators, isAlwaysCaseSensitive, isClobField } from './columnFilterOptions';
 import { type DateRange, filterDate, openDateInMenu, openDateRangeInMenu, rangeEndTexts } from './contextmenuDate';
 import { datePresetBlock } from './datePresetBlock';
 import { activeDatePreset } from './datePresetFilter';
@@ -75,7 +75,9 @@ function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
     // a lookup column filters on its labels: the operators of a text (filterCallback)
     const type = headerFilterType(ctx.gridInterface, attribute);
     const column = ctx.gridInterface.__getGridConfig().columns[attribute];
-    const offered = columnOperators(column, type);
+    // a field with clobType: no value list (IN)
+    const clob = isClobField(ctx.gridInterface, attribute);
+    const offered = columnOperators(column, type, clob);
 
     // the operator picked before (state), else the column's, else the type's default: the range block's
     const current = getHeaderFilterOperator(ctx, attribute);
@@ -132,7 +134,7 @@ function filterMenuEntries(ctx: Grid, attribute: string): MenuEntry[] {
             ]
         },
         valueListBlock(ctx, attribute, offered),
-        rangeBlock(ctx, attribute, type, headerOperators(column, type), current),
+        rangeBlock(ctx, attribute, type, headerOperators(column, type, clob), current),
         datePresetBlock(ctx, attribute)
     ];
 }
@@ -732,12 +734,17 @@ function withoutField(filter: FilterExpression | null, field: string): FilterExp
 /**
  * "Match case" of a column's header filter, a toggle with a check mark - the filter menu's Filter › and
  * the operator choice of the header (filterOperatorIndicator.ts) have it. For a text column (a lookup
- * column too). On and greyed out when the column always matches case (`filterCaseSensitive`), with the
+ * column too). On and greyed out when the column always matches case (`filterCaseSensitive`, a field's
+ * `caseSensitive`), with the
  * hint "always"
  */
 export function matchCaseItem(ctx: Grid, attribute: string): MenuItem {
     const type = headerFilterType(ctx.gridInterface, attribute);
-    const always = isAlwaysCaseSensitive(ctx.gridInterface.__getGridConfig().columns[attribute], type);
+    const always = isAlwaysCaseSensitive(
+        ctx.gridInterface.__getGridConfig().columns[attribute],
+        type,
+        ctx.gridInterface.getDatasource().getField(attribute).caseSensitive
+    );
     const on = isHeaderFilterCaseSensitive(ctx, attribute);
     return {
         id: 'filter.matchCase',
@@ -757,7 +764,13 @@ export function matchCaseItem(ctx: Grid, attribute: string): MenuItem {
  */
 export function setHeaderFilterCaseSensitive(ctx: Grid, attribute: string, on: boolean) {
     const type = headerFilterType(ctx.gridInterface, attribute);
-    if (isAlwaysCaseSensitive(ctx.gridInterface.__getGridConfig().columns[attribute], type)) {
+    if (
+        isAlwaysCaseSensitive(
+            ctx.gridInterface.__getGridConfig().columns[attribute],
+            type,
+            ctx.gridInterface.getDatasource().getField(attribute).caseSensitive
+        )
+    ) {
         return;
     }
     ctx.gridInterface.__setHeaderFilterCaseSensitive(attribute, on);

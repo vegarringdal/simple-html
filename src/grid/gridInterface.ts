@@ -16,6 +16,7 @@ import {
     calculatedFields,
     calculatedLabel,
     compileCalculatedColumns,
+    type FormulaFieldType,
     readerOf
 } from './calculatedColumns';
 import type { CellRange } from './cellRange';
@@ -27,6 +28,7 @@ import {
     fillTemplate,
     type LinkResult,
     linkOf,
+    templateFields,
     templateFormatter
 } from './cellTemplate';
 import type { RuleFieldOf } from './colorRules';
@@ -48,7 +50,7 @@ import { convertGridConfig, type ExportedGrid, GRID_CONFIG_VERSION } from './con
 import type { CsvOptions } from './csv';
 import { DATE_PRESETS, type DatePreset, datePresetRange, isDatePreset, takesDatePresets, weekStartOf } from './datePresets';
 import type { FindResult } from './findResult';
-import { compileFormula, type Formula } from './formula';
+import { clobFieldProblem, compileFormula, type Formula } from './formula';
 import type { Grid } from './grid';
 import type {
     ColumnConfig,
@@ -1469,7 +1471,10 @@ export class GridInterface<T> {
      * whose formula has a problem gets none (the checks keep such a column out of the state)
      * @param fieldType the type of a field that is not calculated, see calculatedFieldType
      */
-    private registerCalculated(columns: Record<string, CalculatedColumn>, fieldType: (field: string) => FieldType | undefined) {
+    private registerCalculated(
+        columns: Record<string, CalculatedColumn>,
+        fieldType: (field: string) => FormulaFieldType | undefined
+    ) {
         const compiled = compileCalculatedColumns(columns, fieldType);
         const fields = calculatedFields(compiled, (name) => calculatedLabel(columns[name], name, prettyPrintString));
         for (const [name, field] of this.calculatedFieldsSet) {
@@ -1499,9 +1504,11 @@ export class GridInterface<T> {
         return (field) => {
             // the calculated columns given to the datasource: the state's, or the new ones while they are checked
             const known = this.calculatedFieldsSet.has(field) || fieldType(field) !== undefined;
-            return known
-                ? { type: this.dataSource.getField(field).type, lookup: columns[field]?.editor !== undefined }
-                : undefined;
+            if (!known) {
+                return undefined;
+            }
+            const { type, clobType } = this.dataSource.getField(field);
+            return { type, lookup: columns[field]?.editor !== undefined, clob: clobType };
         };
     }
 
@@ -1526,6 +1533,9 @@ export class GridInterface<T> {
             const fieldOf = this.__ruleFieldOf();
             const compiled = compileFormula(expression, (field) => {
                 const known = fieldOf(field);
+                if (known?.clob) {
+                    return clobFieldProblem(field);
+                }
                 return known ? { type: known.type === 'datetime' ? 'date' : known.type } : undefined;
             });
             formula = 'formula' in compiled && compiled.formula.type === 'boolean' ? compiled.formula : null;
@@ -1540,22 +1550,23 @@ export class GridInterface<T> {
 
     /**
      * The type a formula reads a field that is not calculated with (compileCalculatedColumns): the
-     * datasource's `fields`, else text for a field of a column or of the layout. undefined for a field
-     * the grid does not know - and for a calculated column that is gone
+     * datasource's `fields` - `'clob'` for a field with `clobType`, no formula reads it - else text for a
+     * field of a column or of the layout. undefined for a field the grid does not know - and for a
+     * calculated column that is gone
      * @param columns the columns of the config
      * @param layout the layout
      */
     private calculatedFieldType(
         columns: Record<string, ColumnConfig>,
         layout: GridLayout
-    ): (field: string) => FieldType | undefined {
+    ): (field: string) => FormulaFieldType | undefined {
         const inLayout = new Set(
             [...(layout.left ?? []), ...(layout.center ?? []), ...(layout.right ?? [])].flatMap((column) => column.fields ?? [])
         );
         return (field) => {
             const listed = this.dataSource.__getListedField(field);
             if (listed) {
-                return listed.type ?? 'text';
+                return listed.clobType === true ? 'clob' : (listed.type ?? 'text');
             }
             if (this.everCalculated.has(field)) {
                 return undefined;
@@ -1602,7 +1613,10 @@ export class GridInterface<T> {
      * For the grid config dialog: the type a formula reads a field that is not calculated with, and
      * whether a name is taken - as setState() checks them
      */
-    public __calculatedNames(): { fieldType: (field: string) => FieldType | undefined; isTaken: (name: string) => boolean } {
+    public __calculatedNames(): {
+        fieldType: (field: string) => FormulaFieldType | undefined;
+        isTaken: (name: string) => boolean;
+    } {
         return {
             fieldType: this.calculatedFieldType(this.gridConfig.columns, this.gridConfig.layout),
             isTaken: this.isTakenName
@@ -3359,7 +3373,8 @@ export class GridInterface<T> {
             return undefined;
         }
         const type = this.__getLookupColumn(field) ? 'text' : this.getDatasource().getField(field).type;
-        return takesDatePresets(type, headerOperators(this.gridConfig.columns[field], type)) ? datePreset : undefined;
+        // a date is never a LOB: no clobType
+        return takesDatePresets(type, headerOperators(this.gridConfig.columns[field], type, false)) ? datePreset : undefined;
     }
 
     /**
@@ -3638,14 +3653,21 @@ export class GridInterface<T> {
      * @internal
      * The template a column is filtered on: a text column (not a lookup column) with a text template
      * (`ColumnFormat.text`) shows the template filled in, and its filters compare that text - unless its
-     * format says `filterAsShown: false`. null for a column filtered on its value
+     * format says `filterAsShown: false`, or the template reads a field with `clobType` (its own too): SQL
+     * can not make a text of a LOB, the column is filtered on its value then. null for a column filtered on
+     * its value
      */
     public __shownTemplate(field: string): string | null {
         if (this.dataSource.getField(field).type !== 'text' || this.__getLookupColumn(field)) {
             return null;
         }
         const format = this.__getColumnFormat(field);
-        return format?.text !== undefined && format.filterAsShown !== false ? format.text : null;
+        if (format?.text === undefined || format.filterAsShown === false) {
+            return null;
+        }
+        // {value} is the column's own field
+        const reads = templateFields(format.text).map((name) => (name === 'value' ? field : name));
+        return reads.some((name) => this.dataSource.getField(name).clobType) ? null : format.text;
     }
 
     /**
@@ -4300,7 +4322,7 @@ function assertFilterOptions(config: Partial<GridConfig>, datasource: Datasource
             }
         }
         if (operator !== undefined) {
-            const offered = headerOperators(column, type);
+            const offered = headerOperators(column, type, datasource.getField(field).clobType);
             if (!offered.some((op) => op === operator)) {
                 throw new TypeError(
                     `${name}.operator is ${JSON.stringify(operator)}, the header filter of this ${type} column takes ${list(offered)}`
@@ -4341,7 +4363,7 @@ function assertDatePresets(column: ColumnConfig, type: FieldType, name: string) 
     if (type !== 'date' && type !== 'datetime') {
         throw new TypeError(`${name}.datePresets is for a date or datetime column, this one filters as ${type}`);
     }
-    if (datePresets.length && !takesDatePresets(type, headerOperators(column, type))) {
+    if (datePresets.length && !takesDatePresets(type, headerOperators(column, type, false))) {
         throw new TypeError(`${name}.datePresets needs 'BETWEEN' in its filterOperators: a quick date is a range of days`);
     }
 }

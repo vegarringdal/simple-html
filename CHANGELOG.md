@@ -1408,6 +1408,20 @@ rows); the vertical time is rendering every cell of every row on screen, which s
   guide
 - the grid config dialog on small screens: one colour rule open, the others a line each (a sample in their
   colours, what they match); on a phone the list of the columns and a column's settings take turns
+
+##### Locked by code: a field's case, a LOB as text
+- `FieldConfig.caseSensitive: true` - every filter on the field matches case, for a column with an index (a
+  project code). Set in the datasource's fields, not in the grid's config: Match case is on and greyed out in
+  the filter menu, the filter editor and the grid config dialog (its hint *Always for this column: set by the
+  application*, `columnSettings.matchCase.locked`); a condition set without it is kept with
+  `caseSensitive: true`. `SqlColumn.caseSensitive`: `toSqlWhere()` compares the column with its case, also
+  when the filter sends `caseSensitive: false` - `"PROJECT_CODE" = :1`, its index used
+- `FieldConfig.clobType: true` - a long text the database holds as a LOB (an Oracle `CLOB` / `NCLOB`). LOB
+  columns are still not supported as such; this filters one as plain text: Equal, Not equal, Contains, Does not
+  contain, Begins with, Ends with, Blank - no value list, no "compare with a field", no formula reads it
+  (`columnSettings.formula.problem.clobField`), a template that reads it is filtered on the value.
+  `SqlColumn.clobType`: `toSqlWhere()` writes each with `LIKE` (Equal is a `LIKE` of the whole text), any
+  other operator throws a filter error. `sqlColumnsFromFields()` copies both; `getField()` has both
   (‹ Columns); side by side the list stays in view. Checked at 1366x768 and 1280x720 at 150 % zoom
 - a text field's date (a column of several types, `dynamicCellTypeColumn`) is filtered, sorted and grouped by
   the text its cell shows, `2026-11-25` - not JavaScript's `Thu May 17 1990 ...`: the same rows as

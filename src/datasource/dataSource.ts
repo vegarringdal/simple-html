@@ -389,6 +389,17 @@ export class Datasource<T = any> {
             if (config.multiline && (config.type ?? 'text') !== 'text') {
                 throw new Error(`Datasource: field '${name}' is multiline, that is for text fields only, not '${config.type}'`);
             }
+            // a locked case and a LOB are of text: on another type they would do nothing
+            for (const option of ['caseSensitive', 'clobType'] as const) {
+                if (config[option] !== undefined && typeof config[option] !== 'boolean') {
+                    throw new Error(`Datasource: field '${name}' has ${option} '${config[option]}', it is true or false`);
+                }
+                if (config[option] && (config.type ?? 'text') !== 'text') {
+                    throw new Error(
+                        `Datasource: field '${name}' has ${option}, that is for text fields only, not '${config.type}'`
+                    );
+                }
+            }
             if (config.formatter !== undefined) {
                 fieldFormatters.set(name, getRegisteredFormatter(config.formatter, `field '${name}'`));
             }
@@ -441,6 +452,8 @@ export class Datasource<T = any> {
      */
     public setFields(fields: DatasourceOptions['fields']) {
         this.applyFields(fields);
+        // a field whose case is locked now: its conditions match case
+        this.__filter.setFilter(this.withLockedCase(this.__filter.getFilter()));
         this.__fieldsVersion++;
         this.__callSubscribers('fields-change', {});
         this.reloadDatasource();
@@ -525,8 +538,8 @@ export class Datasource<T = any> {
      *
      * const datasource = new Datasource({ fields: { born: { type: 'date', label: 'Born' } } });
      *
-     * datasource.getField('born'); // { name: 'born', type: 'date', label: 'Born', formatter: DateFormatterYYYYMMDD, validate: [], multiline: false }
-     * datasource.getField('name'); // { name: 'name', type: 'text', label: 'name', formatter: TextFormatter, validate: [], multiline: false }
+     * datasource.getField('born'); // { name: 'born', type: 'date', label: 'Born', formatter: DateFormatterYYYYMMDD, validate: [], multiline: false, caseSensitive: false, clobType: false }
+     * datasource.getField('name'); // { name: 'name', type: 'text', label: 'name', formatter: TextFormatter, validate: [], multiline: false, caseSensitive: false, clobType: false }
      * // formatter: the formatter object, looked up by its id when the datasource was made
      * ```
      */
@@ -540,7 +553,9 @@ export class Datasource<T = any> {
                 label: calculated.label,
                 formatter: this.__formatters[calculated.type],
                 validate: NO_RULES,
-                multiline: false
+                multiline: false,
+                caseSensitive: false,
+                clobType: false
             };
         }
         const config = this.__fields.get(name);
@@ -550,7 +565,9 @@ export class Datasource<T = any> {
             label: config?.label || name,
             formatter: this.getFormatter(name),
             validate: this.__fieldRules.get(name) ?? NO_RULES,
-            multiline: config?.multiline === true
+            multiline: config?.multiline === true,
+            caseSensitive: config?.caseSensitive === true,
+            clobType: config?.clobType === true
         };
     }
 
@@ -2094,7 +2111,8 @@ export class Datasource<T = any> {
      *
      * The root can be a group or a single condition. Conditions without a field or operator, date
      * conditions without the value they need and empty groups are ignored. The datasource keeps the
-     * object it is given, `getFilter()` returns it.
+     * object it is given, `getFilter()` returns it - a condition on a field that always matches case
+     * (`FieldConfig.caseSensitive`) is a copy with `caseSensitive: true`.
      *
      * @param expression a condition or a group of them, see {@link FilterExpression}. Build it with
      * {@link and}, {@link or} and {@link where}.
@@ -2117,7 +2135,7 @@ export class Datasource<T = any> {
      */
     public filter(expression?: FilterExpression | null) {
         if (expression !== undefined) {
-            this.__filter.setFilter(expression);
+            this.__filter.setFilter(this.withLockedCase(expression));
         }
         const eventTriggered = this.__internalUpdate(true);
         if (!eventTriggered) {
@@ -3102,7 +3120,27 @@ export class Datasource<T = any> {
      * ```
      */
     public setFilter(expression: FilterExpression | null) {
-        this.__filter.setFilter(expression);
+        this.__filter.setFilter(this.withLockedCase(expression));
+    }
+
+    /**
+     * The filter with every condition on a field whose case is locked (`FieldConfig.caseSensitive`)
+     * matching case: a copy of such a condition with `caseSensitive: true`, of the groups it is in. The
+     * same object when there is none
+     */
+    private withLockedCase<T extends FilterExpression | null>(expression: T): T {
+        if (!expression || ![...this.__fields.values()].some((config) => config.caseSensitive === true)) {
+            return expression;
+        }
+        const lock = (node: FilterExpression): FilterExpression => {
+            if (isFilterGroup(node)) {
+                const children = node.children.map(lock);
+                return children.every((child, index) => child === node.children[index]) ? node : { ...node, children };
+            }
+            const locked = typeof node.field === 'string' && this.__fields.get(node.field)?.caseSensitive === true;
+            return locked && node.caseSensitive !== true ? { ...node, caseSensitive: true } : node;
+        };
+        return lock(expression) as T;
     }
 
     /**

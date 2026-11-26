@@ -34,6 +34,18 @@ export function sqlColumnsOf(fields: unknown, options: SqlFieldsOptions = {}): R
             );
         }
         const entry: SqlColumn = { column: nameOf(field), type: type as SqlColumnType };
+        // a locked case and a LOB of the field: the column's too. toSqlWhere checks they are of text
+        for (const option of ['caseSensitive', 'clobType'] as const) {
+            const value: unknown = typeof config === 'object' && config !== null ? (config as SqlColumn)[option] : undefined;
+            if (value !== undefined) {
+                if (typeof value !== 'boolean') {
+                    throw new TypeError(`sqlColumnsFromFields: fields.${field}.${option} is true or false, not ${show(value)}`);
+                }
+                if (value) {
+                    entry[option] = true;
+                }
+            }
+        }
         if (dateStorage !== undefined && (type === 'date' || type === 'datetime')) {
             entry.dateStorage = dateStorage as SqlDateStorage;
         }

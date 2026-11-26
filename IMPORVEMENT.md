@@ -5567,6 +5567,34 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * suspected, left: a template of only blanks (`{first} {last}`) is `' '`, no Blank (the SQL gives the same);
   importFile after the grid is destroyed still imports into the datasource
 
+### Locked by code: a field's case, a LOB as text (2026-11-26)
+
+* the user: "Lets just say clobs/blobs are not supported, but to allow som query, we can add option to some
+  columns we we lock to type on column to be just text, nit allowed in expression. We could use clobType:true.
+  Also like us to be able to define columns where we can force case sensitivity, and lock it from column
+  config. This can be useful we we know there are indexes, like project_code etc. so lockdown is smothing only
+  done by api, not gridconfig, and caseinsensitiv is blocked in grid too"
+* **where**: both in `FieldConfig` (the datasource's fields - code), not `ColumnConfig`, which the grid config
+  dialog, updateConfig and saved configs change. `sqlColumnsFromFields()` copies them to `SqlColumn`, so the
+  backend enforces them too: a filter from a browser is not trusted to have `caseSensitive`
+* **caseSensitive**: the datasource keeps a condition on such a field as a copy with `caseSensitive: true`
+  (withLockedCase in filter() / setFilter(), and setFields that locks one) - one place, getFilter() and
+  getServerFilter() show it. isAlwaysCaseSensitive(column, type, locked) takes the field's lock: every
+  reader of filterCaseSensitive (menu, editor, row menu, rules, dialog) has it. The dialog's hint names who
+  locked it (`columnSettings.matchCase.locked`). toSqlWhere: `exact` is the condition's or the column's
+* **clobType**: CLOB_OPERATORS - the text operators without IN / NOT_IN (a text has no `<` in the grid).
+  columnOperators / headerOperators / defaultHeaderOperator take `clob`; the value list shows when IN is
+  offered, so it is gone. The filter editor: no swap to "compare with a field" on it, not in the field list
+  of another's. Formulas: calculatedFieldType gives `'clob'` (FormulaFieldType), RuleFieldOf `clob` - the
+  problem `clobField`. `__shownTemplate` is null when the template reads one: the grid and the SQL both
+  filter on the value (SQL can not make a text of a LOB in a formula)
+* **SQL**: EQUAL / NOT_EQUAL_TO skip the plain `=` for a LOB, the LIKE path is the whole text with its
+  wildcards escaped. Other operators and a valueField on either side throw. db<>fiddle, Oracle 23 (CLOB rows
+  incl. one of 8004 characters): `LOWER("NOTES") LIKE 'ann'`, its NOT, exact LIKE, `%50!%%`, IS NULL and
+  `LIKE '%z ann'` at char 8000 all right; `"NOTES" = 'Ann'` ORA-22848
+* not done: a lookup column on a CLOB field (its IN of values) - nobody looks up a long text; SQL Server's
+  kept case is `COLLATE … BIN2`, which an index of another collation does not serve (said in 22-sql.md)
+
 ## Considered, not done
 
 ## Candidates / not started

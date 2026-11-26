@@ -75,7 +75,9 @@ const { sql } = toSqlWhere({ field: 'project', operator: 'EQUAL', value: 'x' }, 
 Each field is a column of its type, `'text'` without one, named as the field. `nameCase` (`'upper'`,
 `'lower'`, `'asIs'`) sets the case of the names - they are quoted, and Oracle's unquoted names are upper
 case - `column: (field) => ...` names them another way (`'crm.' + field`), and `dateStorage` is the
-[storage](#dates-and-time-zones) of every date and datetime column. Only `type` of a field is read.
+[storage](#dates-and-time-zones) of every date and datetime column. Of a field `type`, `caseSensitive`
+and `clobType` are read - the column's [locked case](#a-column-that-keeps-its-case-casesensitive) and
+[LOB](#a-lob-column-clobtype), as the grid has them.
 
 ### Errors: answer with a 400
 
@@ -204,7 +206,8 @@ await request.query(`SELECT * FROM customer WHERE ${msWhere.sql}`);
   (`BigInt` past 32 bits), another number `Float`. With `tedious` itself, give a text `TYPES.NVarChar`.
 - **LOB columns are not supported** - `CLOB`, `BLOB`, `NCLOB`: a column is a text, number, date or
   boolean of the database (`VARCHAR2`, `NVARCHAR`, `TEXT` ...). Oracle compares no CLOB with the `=` of a
-  text equal to a value (ORA-22848).
+  text equal to a value (ORA-22848). A `CLOB` / `NCLOB` can be filtered as plain text with `LIKE` only,
+  see [A LOB column: `clobType`](#a-lob-column-clobtype).
 - **sqlite**: the `?` are taken in order, `firstParam` does not change them: put your own values before
   or after the params as your `?` are before or after the WHERE.
 - **pg** sends every parameter as text and PostgreSQL takes the type of the column it is compared with
@@ -441,6 +444,36 @@ type (a `date` and a `datetime` go together), and supported are:
   `dateStorage: 'local'` (the day of an instant is in the user's time zone, which the SQL does not have):
   `CAST(col AS date)` on PostgreSQL and SQL Server, `TRUNC(col)` on Oracle, `date(col)` on SQLite. With
   another storage it throws
+
+### A column that keeps its case: `caseSensitive`
+
+`{ column: 'PROJECT_CODE', caseSensitive: true }` - a text column every condition compares with its
+case, also one the filter sends without `caseSensitive` or with `false`: `"PROJECT_CODE" = :1`, not
+`LOWER("PROJECT_CODE") = :1`, so an index on the column is used (on SQL Server the case is kept with
+`COLLATE Latin1_General_100_BIN2`, which an index of another collation does not serve). The grid's field
+has it too (`fields: { projectCode: { caseSensitive: true } }`, [Filtering](06-filtering.md#match-case)):
+Match case is always on there, the user can not turn it off. Set it in both, or once in the fields with
+`sqlColumnsFromFields()`. A column that is no text throws.
+
+### A LOB column: `clobType`
+
+`{ column: 'NOTES', clobType: true }` - an Oracle `CLOB` or `NCLOB`, which SQL compares with `LIKE` only:
+`=`, `<>`, `IN`, `<`, `BETWEEN` on one are an error (ORA-22848). LOB columns are not supported as such;
+this lets a filter compare one as plain text:
+
+| operator | SQL (oracle) |
+| --- | --- |
+| `EQUAL` / `NOT_EQUAL_TO` | `LOWER("NOTES") LIKE :1 ESCAPE '!'` - the whole text, its `%` and `_` escaped - / its `NOT` |
+| `CONTAINS`, `BEGIN_WITH`, `END_WITH`, `DOES_NOT_CONTAIN` | `LIKE` as on any text |
+| `IS_BLANK` / `IS_NOT_BLANK` | `"NOTES" IS NULL` / `IS NOT NULL` |
+
+Every other operator (`IN`, `NOT_IN`, `<`, `BETWEEN` ...), a `valueField` on either side, and a
+[calculated column](#calculated-columns) or a [template](#a-column-filtered-on-its-template) whose formula
+reads it throw a `TypeError` that `isSqlFilterError()` knows - a 400. Run on Oracle 23: `LIKE` finds the
+text at the end of a CLOB of 8004 characters, there is no limit of 4000. The grid's field has it too
+(`fields: { notes: { clobType: true } }`): its filters offer only these operators - no value list -, no
+formula reads it, and a template that reads it is filtered on the value. A column that is no text throws.
+`BLOB` holds bytes, not text: not supported.
 
 ### The operators a type does not offer
 

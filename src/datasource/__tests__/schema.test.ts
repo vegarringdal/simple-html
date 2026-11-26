@@ -24,7 +24,9 @@ describe('schema - getField', () => {
             label: 'name',
             formatter: TextFormatter,
             validate: [],
-            multiline: false
+            multiline: false,
+            caseSensitive: false,
+            clobType: false
         });
     });
 
@@ -36,7 +38,9 @@ describe('schema - getField', () => {
             label: 'born',
             formatter: DateFormatterYYYYMMDD,
             validate: [],
-            multiline: false
+            multiline: false,
+            caseSensitive: false,
+            clobType: false
         });
         expect(ds.getField('died')).toEqual({
             name: 'died',
@@ -44,7 +48,9 @@ describe('schema - getField', () => {
             label: 'died',
             formatter: DateFormatterYYYYMMDD,
             validate: [],
-            multiline: false
+            multiline: false,
+            caseSensitive: false,
+            clobType: false
         });
     });
 
@@ -56,7 +62,9 @@ describe('schema - getField', () => {
             label: 'Price',
             formatter: NumberFormatterComma,
             validate: [],
-            multiline: false
+            multiline: false,
+            caseSensitive: false,
+            clobType: false
         });
     });
 

@@ -166,6 +166,14 @@ In the grid:
   the value list, the row menu's "Filter:" and the filter editor. Its Match case is shown on, greyed
   out, with the hint *(always)*; the filter editor's toggle too. For a text column (and a lookup column),
   `true` on another type throws a `TypeError` when the grid is made.
+- **A field's `caseSensitive: true`** (`new Datasource({ fields: { code: { caseSensitive: true } } })`): the
+  same, locked by code - not in the grid's config, which the grid config dialog, `updateConfig()` or a
+  saved config can change. For a column the database has an index on (a project code): its conditions
+  always have `caseSensitive: true` - the datasource keeps a condition set without it (`filter()`,
+  `setFilter()`, a saved state) as a copy with it - and `toSqlWhere()` compares the column with its case
+  ([SQL](22-sql.md#a-column-that-keeps-its-case-casesensitive)). Match case is on and greyed out, the
+  dialog's hint says *Always for this column: set by the application*
+  (`columnSettings.matchCase.locked`). Text fields only, else the datasource throws.
 - **Aa in the header**: a header filter that matches case - `filterCaseSensitive`, or Match case on -
   shows **Aa** before its operator, `Aa =`, in the link colour, so it is seen before anything is typed;
   its name for a screen reader says "match case" (`filter.indicator.matchCase`). The operator choice (a
@@ -195,6 +203,15 @@ const config: GridConfig = {
 Each type has its operators, `operatorsFor(type)` - see [Operators](#operators). The header filter
 menu's Operator › offers the ones its input takes (not `IN` / `NOT_IN`, the value list's, nor
 `IS_BLANK` / `IS_NOT_BLANK`, the Blank submenu's), the filter editor's operator picker all of them.
+
+A field with **`clobType: true`** (`fields: { notes: { clobType: true } }`, set by code) is a long text the
+database holds as a LOB - an Oracle `CLOB` - that SQL compares with `LIKE` only: it offers `EQUAL`,
+`NOT_EQUAL_TO`, `CONTAINS`, `DOES_NOT_CONTAIN`, `BEGIN_WITH`, `END_WITH`, `IS_BLANK` and `IS_NOT_BLANK`
+(`CLOB_OPERATORS`) - no value list, an `IN` of `filterOperators` is not offered -, the filter editor has no
+"compare with a field" for it, no formula reads it (a calculated column's, a colour rule's: the problem
+`clobField`, *{notes} is a long text: a formula can not read it*), and a column whose template reads it is
+filtered on the value. See [SQL](22-sql.md#a-lob-column-clobtype). Text fields only, else the datasource
+throws.
 
 `filterOperators` on a column offers fewer, in the type's order:
 
