@@ -6,14 +6,16 @@ const { renderMarkdown } = require('./markdown');
 const ROOT = path.resolve(__dirname, '../..');
 
 /**
- * The "Work in progress" page of the docs site and the build line in its sidebar: what the site was
- * built from, and what is still open - made from the repo when the site is built, so it is never
- * behind (esbuildPlugin.js gives it as `docs:status`):
+ * The "Known limits" page of the docs site and the build line in its sidebar: what the site was
+ * built from, and what is known not to work yet - made from the repo when the site is built, so it is
+ * never behind (esbuildPlugin.js gives it as `docs:status`):
  * - the branch, the commit and its date (git; in a github action its own variables: the action checks
  *   out the commit alone, git sees no branch there), and whether there were local changes
- * - the open items of V6_PLAN.md (`[ ]`) under their headings, and its "Now:" line
- * - the "Candidates / not started" section of IMPORVEMENT.md: the known issues and what is left
+ * - the "Known limits and next" section of DESIGN.md: the known issues and what could come next
  */
+
+/** the heading of DESIGN.md the page shows */
+const KNOWN_LIMITS = 'Known limits and next';
 
 /**
  * runs git in the repo, '' when it fails (no git, no repo: a copy of the files)
@@ -87,59 +89,6 @@ function packageVersion() {
 }
 
 /**
- * The open items of a plan: the `[ ]` items (`12. [ ] ...` or `- [ ] ...`, with the lines that go on
- * under them) under the `##` heading they are in, and the text after `**Now:**`. An item marked
- * "(moved to item N)" is left out: it is done there
- * @param {string} plan the markdown of V6_PLAN.md
- * @returns {{ now: string, sections: { heading: string, items: string[] }[] }} items: the markdown of each
- */
-function openPlanItems(plan) {
-    const lines = plan.split(/\r?\n/);
-    const sections = [];
-    let heading = '';
-    let now = '';
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        const headingMatch = /^## (.+)$/.exec(line);
-        if (headingMatch) {
-            heading = headingMatch[1].trim();
-            continue;
-        }
-        const nowMatch = /^\*\*Now:\*\*\s*(.+)$/.exec(line);
-        if (nowMatch) {
-            now = nowMatch[1].trim();
-            continue;
-        }
-        const item = /^(\s*)(?:\d+\.|-) \[ \] (.*)$/.exec(line);
-        if (!item) {
-            continue;
-        }
-        // the lines under it: indented more than the item, up to an empty line or the next item
-        const indent = item[1].length;
-        const text = [item[2]];
-        while (i + 1 < lines.length && lines[i + 1].trim() && /^\s*/.exec(lines[i + 1])[0].length > indent) {
-            if (/^\s*(?:\d+\.|-) \[[ x]\] /.test(lines[i + 1])) {
-                break;
-            }
-            text.push(lines[++i].trim());
-        }
-        // an item the plan moved elsewhere is not open: it is done where it went
-        if (/\(moved to item \d+\)/i.test(text[0])) {
-            continue;
-        }
-        const number = /^\s*(\d+)\./.exec(line);
-        const markdown = `${number ? `**${number[1]}.** ` : ''}${text.join(' ')}`;
-        const section = sections.find((s) => s.heading === heading);
-        if (section) {
-            section.items.push(markdown);
-        } else {
-            sections.push({ heading, items: [markdown] });
-        }
-    }
-    return { now, sections };
-}
-
-/**
  * A section of a markdown file, by its `## ` heading: the lines after the heading up to the next one
  * (or the end). '' when it has no such heading
  * @param {string} markdown
@@ -160,8 +109,8 @@ function markdownSection(markdown, title) {
 
 /**
  * The links of a markdown file at the root of the repo as the guides write them (renderMarkdown takes
- * links from guides/): `guides/05-editing.md` is `05-editing.md`, a page of the site, `MIGRATION.md`
- * is `../MIGRATION.md`, the file on github
+ * links from guides/): `guides/05-editing.md` is `05-editing.md`, a page of the site, `MIGRATION2V6.md`
+ * is `../MIGRATION2V6.md`, the file on github
  * @param {string} markdown
  */
 function rootLinks(markdown) {
@@ -171,32 +120,15 @@ function rootLinks(markdown) {
 }
 
 /**
- * The status of the site: the build line and the work in progress page, as `docs:status` gives them
+ * The status of the site: the build line and the known limits page, as `docs:status` gives them
  * @param {{ env?: NodeJS.ProcessEnv, root?: string }} [options] the environment and the folder of
- *   V6_PLAN.md and IMPORVEMENT.md, for the tests
- * @returns {{ build: ReturnType<typeof buildInfo>, now: string, html: string }}
+ *   DESIGN.md, for the tests
+ * @returns {{ build: ReturnType<typeof buildInfo>, html: string }}
  */
 function readStatus({ env = process.env, root = ROOT } = {}) {
-    const read = (file) => (fs.existsSync(path.join(root, file)) ? fs.readFileSync(path.join(root, file), 'utf8') : '');
-    const plan = openPlanItems(read('V6_PLAN.md'));
-    const candidates = markdownSection(read('IMPORVEMENT.md'), 'Candidates / not started');
-
-    const parts = ['## Open in the plan', '', 'The items of `V6_PLAN.md` that are not done yet.', ''];
-    if (!plan.sections.length) {
-        parts.push('Nothing: every item of the plan is done.', '');
-    }
-    for (const section of plan.sections) {
-        parts.push(`### ${section.heading}`, '', ...section.items.map((item) => `- ${item}`), '');
-    }
-    parts.push(
-        '## Known issues and candidates',
-        '',
-        'From the "Candidates / not started" section of `IMPORVEMENT.md`: what was found and is not fixed yet,',
-        'and what could be done next.',
-        '',
-        candidates || 'None.'
-    );
-    return { build: buildInfo(env), now: plan.now, html: renderMarkdown(rootLinks(parts.join('\n'))) };
+    const file = path.join(root, 'DESIGN.md');
+    const limits = markdownSection(fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '', KNOWN_LIMITS);
+    return { build: buildInfo(env), html: renderMarkdown(rootLinks(limits || 'None known.')) };
 }
 
-module.exports = { buildInfo, httpsUrl, markdownSection, openPlanItems, readStatus, rootLinks };
+module.exports = { buildInfo, httpsUrl, markdownSection, readStatus, rootLinks };

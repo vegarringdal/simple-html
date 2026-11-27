@@ -116,7 +116,7 @@ const { sql } = toSqlWhere(filter, { dialect: 'postgres', columns: { name: 'name
 
 They take hostile input as `toSqlWhere()` does: what is neither shape throws a `TypeError`
 (`isSqlFilterError` is true for it) - it is not taken as no filter, which would select every row. See
-[Migration](../MIGRATION.md#saved-configs).
+[Migration](../MIGRATION2V6.md#saved-configs).
 
 ## Security
 

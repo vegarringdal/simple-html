@@ -138,8 +138,8 @@ gridInterface.destroy(); // done with it
 
 ## Migrating from v5
 
-v6 changes the API. [MIGRATION.md](MIGRATION.md) lists every breaking change with code before and
-after, and [CHANGELOG.md](CHANGELOG.md) what changed in each phase. The
+v6 changes the API. [MIGRATION2V6.md](MIGRATION2V6.md) lists every breaking change with code before and
+after, and [CHANGELOG.md](CHANGELOG.md) what is new in 6.0. The
 [migration guide](guides/11-migrating-from-v5.md) shows the ten changes almost every app needs.
 
 ## Development
@@ -151,11 +151,11 @@ npm i
 npm start # the docs and samples site on http://localhost:8080
 ```
 
-- `PORT=8090 npm start` serves it on another port, `npm start <folder>` another folder under
-  `samples/`
+- `PORT=8090 npm start` serves it on another port
 - `npm test` runs the tests, `npm run check:docs` checks the guides, the JSDoc and their examples
 - `npm run build` builds `dist`, `npm run build:tgz` the tgz
 - publishing and the docs site: see [Releases](#releases) below
+- how the code is built and why, and what is known not to work yet: [DESIGN.md](DESIGN.md)
 
 ### Releases
 

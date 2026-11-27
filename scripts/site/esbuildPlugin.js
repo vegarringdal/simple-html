@@ -14,8 +14,8 @@ const { readStatus } = require('./status');
  * - `import userGuide from 'docs:user-guide'` user-guide/*.md, the guide for the people using a grid:
  *                                          the same, its links to #user-guide/..
  * - `import api from 'docs:api'`           the API pages, from typedoc, see api.js
- * - `import status from 'docs:status'`     what the site is built from (branch, commit) and the work
- *                                          in progress page, from V6_PLAN.md and IMPORVEMENT.md, see status.js
+ * - `import status from 'docs:status'`     what the site is built from (branch, commit) and the known
+ *                                          limits page, from DESIGN.md, see status.js
  */
 function docsPlugin({ guidesDir = GUIDES_DIR, userGuideDir = USER_GUIDE_DIR } = {}) {
     return {

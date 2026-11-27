@@ -11,7 +11,7 @@ import { mountGrid, shownRowElements, simpleConfig, stubCanvas, stubElementSizes
  * the +/- of a group row a box in the column of its level, and the line of a group from under its box
  * down through its rows - in a group row the lines of the groups it is in, and in a data row the lines
  * of all the levels. grid.css draws the lines; here: which elements are there, their sizes and places.
- * The real browser look is checked with screenshots, see IMPORVEMENT.md
+ * The real browser look is checked with screenshots, by the browser checks (scripts/browser/checks)
  */
 
 beforeAll(() => {

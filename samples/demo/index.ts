@@ -18,7 +18,7 @@ initTheme();
 /**
  * The docs site: a sidebar with the guides, the samples and the API, and the page picked in it.
  * Every page has its own link (hash routing, so it works as static files on github pages):
- * - #status/work-in-progress   what is still open, from V6_PLAN.md and IMPORVEMENT.md (status.js)
+ * - #status/known-limits   what is known not to work yet, from DESIGN.md (status.js)
  * - #user-guide/<id> a page of the user guide, user-guide/NN-<id>.md, with its sections as a guide's
  * - #guide/<id>    a guide, guides/NN-<id>.md, #guide/<id>/<section> goes to one of its headings. The
  *                  feature overview, #guide/features, is the start page
@@ -136,10 +136,8 @@ function navSection(
     nav.appendChild(section);
 }
 
-// first in the sidebar, so what is still open is easy to find. Not the start page, see fromHash
-navSection('Status', [
-    { route: 'status/work-in-progress', label: 'Work in progress', render: (main) => renderStatusPage(main, status) }
-]);
+// first in the sidebar, so what does not work yet is easy to find. Not the start page, see fromHash
+navSection('Status', [{ route: 'status/known-limits', label: 'Known limits', render: (main) => renderStatusPage(main, status) }]);
 
 // the link and the page of a guide
 const guideItem = (guide: Guide) => ({

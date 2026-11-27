@@ -1,4 +1,4 @@
-// Real browser check of the fixes of "Candidates checked" (IMPORVEMENT.md, 2026-11-21) that show on the
+// Real browser check of the fixes of the candidates of the v5 review (checked 2026-11-21) that show on the
 // docs site:
 // - the date picker of a header filter (#sample/basic-grid, the date1 column): it opens on the date typed
 //   in the filter, not on what the cell had when it was rendered (empty: today); a date picked filters as a

@@ -1,4 +1,4 @@
-// Real browser check of custom cells (#sample/custom-cells, plan item 39, custom_render.md steps 1 and 2):
+// Real browser check of custom cells (#sample/custom-cells, DESIGN.md custom cells: rendering and editing):
 // the hosts and what the renderers drew, the focus ring on a custom cell, the plain arrows and Tab,
 // 10 000 rows scrolled with five custom columns (the renderers in use stay at the pool of cell elements,
 // no errors), sideways too, the select editing a value (edited marker, Ctrl+Z), copy from a custom cell,

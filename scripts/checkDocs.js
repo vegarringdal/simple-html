@@ -20,7 +20,7 @@ const { headingIds, repoFile, siteHref, tsCodeBlocks } = require('./site/markdow
  * 3. the samples a guide (```sample <id>) or a JSDoc (@sample <id>) names exist, and so do the
  *    pages and headings the links in the guides go to (NN-slug.md, NN-slug.md#heading, #heading,
  *    #guide/<id>, #sample/<id>, #api/<name>, #api/<name>.<member>), and the files of the repo they
- *    link to (../MIGRATION.md, ../MIGRATION.md#heading - the site links those to github).
+ *    link to (../MIGRATION2V6.md, ../MIGRATION2V6.md#heading - the site links those to github).
  * 4. the user guide (user-guide/*.md): no code in it (a ```tryit <id> box of samples/demo/tryIt.ts is fine,
  *    its id must be there), its links go to its own pages and headings (NN-slug.md, NN-slug.md#heading,
  *    #heading) or a sample (#sample/<id>).

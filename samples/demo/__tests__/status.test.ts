@@ -1,60 +1,54 @@
 // the status of the docs site (scripts/site/status.js) runs in node when the site is built
 /// <reference types="node" />
 
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 // a commonjs script of the build, as the build loads it
 const status = require('../../../scripts/site/status.js');
 
 /**
- * The work in progress page and the build line of the docs site: made from V6_PLAN.md, IMPORVEMENT.md
- * and git when the site is built. site.test.ts shows them in the site.
+ * The known limits page and the build line of the docs site: made from DESIGN.md and git when the site
+ * is built. site.test.ts shows them in the site.
  */
 
-describe('docs site status - the plan', () => {
-    const plan = [
-        '# Plan',
-        '- [x] **Done** in the intro',
-        '- [ ] **Guides**, written as the areas land',
-        '      keyboard and accessibility come later',
-        '## Phase 1 - datasource',
-        '5. [x] **Schema**: done',
-        '6. [ ] **Fields**: the types',
-        '        and the formatters',
-        '7. [x] **Events**',
-        '## Phase 2 - grid',
-        '15. [ ] **Columns** keyed',
-        '16. [ ] **(moved to item 47)** **Validation**',
-        '## Order',
-        '**Now:** phase 2 (phase 1 is done).'
-    ].join('\n');
-
-    it('expect the open items under their headings, numbered, their lines joined', () => {
-        expect(status.openPlanItems(plan)).toEqual({
-            now: 'phase 2 (phase 1 is done).',
-            sections: [
-                { heading: '', items: ['**Guides**, written as the areas land keyboard and accessibility come later'] },
-                { heading: 'Phase 1 - datasource', items: ['**6.** **Fields**: the types and the formatters'] },
-                { heading: 'Phase 2 - grid', items: ['**15.** **Columns** keyed'] }
-            ]
-        });
-    });
-
-    it('expect a plan with nothing open to have no sections', () => {
-        expect(status.openPlanItems('## Phase 1\n1. [x] **Done**').sections).toEqual([]);
-    });
-});
-
-describe('docs site status - the candidates and the links', () => {
+describe('docs site status - the known limits and the links', () => {
     it('expect a section by its heading, up to the next one', () => {
-        const markdown = '# Log\n## Done\nold\n## Candidates / not started\n\n* one\n* two\n## Later\nx';
-        expect(status.markdownSection(markdown, 'Candidates / not started')).toBe('* one\n* two');
+        const markdown = '# Design\n## Datasource\nold\n## Known limits and next\n\n* one\n* two\n## Later\nx';
+        expect(status.markdownSection(markdown, 'Known limits and next')).toBe('* one\n* two');
         expect(status.markdownSection(markdown, 'Missing')).toBe('');
     });
 
+    it('expect the page to be the "Known limits and next" section of DESIGN.md, its links as the guides links', () => {
+        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'status-'));
+        try {
+            fs.writeFileSync(
+                path.join(root, 'DESIGN.md'),
+                '# Design\n## Grid\nnot this\n## Known limits and next\n### Bugs\n* see [editing](guides/05-editing.md)\n'
+            );
+            const { html } = status.readStatus({ env: {}, root });
+            expect(html).toContain('Bugs</h3>');
+            expect(html).toContain('href="#guide/editing"');
+            expect(html).not.toContain('not this');
+        } finally {
+            fs.rmSync(root, { recursive: true, force: true });
+        }
+    });
+
+    it('expect "None known." without DESIGN.md', () => {
+        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'status-'));
+        try {
+            expect(status.readStatus({ env: {}, root }).html).toContain('None known.');
+        } finally {
+            fs.rmSync(root, { recursive: true, force: true });
+        }
+    });
+
     it('expect the links of a file at the root to go where the guides links go', () => {
-        expect(status.rootLinks('see [editing](guides/05-editing.md#undo) and [the migration](MIGRATION.md)')).toBe(
-            'see [editing](05-editing.md#undo) and [the migration](../MIGRATION.md)'
+        expect(status.rootLinks('see [editing](guides/05-editing.md#undo) and [the migration](MIGRATION2V6.md)')).toBe(
+            'see [editing](05-editing.md#undo) and [the migration](../MIGRATION2V6.md)'
         );
         expect(status.rootLinks('[a site](https://x.no) [a place](#here)')).toBe('[a site](https://x.no) [a place](#here)');
     });

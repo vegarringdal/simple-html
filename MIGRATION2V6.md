@@ -460,8 +460,7 @@ v5 had a different text for a readonly cell (`fromSourceDisplay`) and for the ed
 it is edited (its input has the focus) - left out, `format`.
 
 The formatters are fixed once the datasource is made. To switch, make a new datasource - or give
-it a formatter that hands every call on to the one picked last (the `samples/grid01` playground
-does that).
+it a formatter that hands every call on to the one picked last.
 
 ### Formatters are named by id: `registerFormatter()`
 

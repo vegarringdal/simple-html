@@ -13,7 +13,7 @@ import { mountGrid, selectorRowOf, stubCanvas, stubElementSizes } from './gridTe
  * (GridConfig.mergeHighlight, showCellMerged.ts), and a conflict - the marker of a field in conflict
  * (showCellEdited.ts) and the arrows on the row number with the conflicts in its tooltip
  * (renderRowSelector.ts). The data part - when a merge changes a value, when it is a conflict - is
- * tested in the datasource's tests; the css animation in the real browser (IMPORVEMENT.md).
+ * tested in the datasource's tests; the css animation in the real browser (scripts/browser/checks).
  *
  * happy-dom runs a requestAnimationFrame callback in the next task: frame() waits for the grid's frame.
  */

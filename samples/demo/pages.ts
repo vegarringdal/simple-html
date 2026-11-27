@@ -231,11 +231,11 @@ export function buildLine(build: BuildInfo): HTMLElement {
 }
 
 /**
- * The work in progress page: what the site is built from, what the plan is on now, the open items
- * of the plan and the known issues (made when the site is built, scripts/site/status.js)
+ * The known limits page: what the site is built from, the known issues and what could come next
+ * (made when the site is built, scripts/site/status.js)
  */
-export function renderStatusPage(main: HTMLElement, status: { build: BuildInfo; now: string; html: string }) {
-    const doc = article(main, 'Work in progress');
+export function renderStatusPage(main: HTMLElement, status: { build: BuildInfo; html: string }) {
+    const doc = article(main, 'Known limits');
     const intro = document.createElement('p');
     intro.className = 'doc-status';
     intro.append('Built from ', buildLine(status.build), '. Made from the repo when the site is built: ');
@@ -244,14 +244,8 @@ export function renderStatusPage(main: HTMLElement, status: { build: BuildInfo; 
         el.textContent = text;
         return el;
     };
-    intro.append(code('V6_PLAN.md'), ' and ', code('IMPORVEMENT.md'), '.');
+    intro.append('the "Known limits and next" section of ', code('DESIGN.md'), '.');
     doc.appendChild(intro);
-    if (status.now) {
-        const now = document.createElement('p');
-        now.innerHTML = '<strong>Now:</strong> ';
-        now.append(status.now);
-        doc.appendChild(now);
-    }
     doc.insertAdjacentHTML('beforeend', status.html);
     highlightCodeBlocks(doc);
 }

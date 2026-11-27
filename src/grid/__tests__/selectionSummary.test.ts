@@ -12,7 +12,7 @@ import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
  * The summary of the selected cells in the footer (plan item 35), like the status bar of a spreadsheet:
  * for ranges of more than one cell, how many cells have a value, and of the numbers of the number
  * fields the sum, average, smallest and largest (selectionSummary.ts, rebuildFooter.ts). The real
- * browser places it at the footer's right, clear of the filter chips (IMPORVEMENT.md).
+ * browser places it at the footer's right, clear of the filter chips (footer-summary-check.js).
  */
 
 beforeAll(() => {

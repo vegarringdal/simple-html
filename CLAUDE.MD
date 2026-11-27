@@ -3,7 +3,8 @@
 * we want simple code and well documented
 * we want everything well tested (datasource)
 * always format code with biomejs when we are done
-* always update IMPORVEMENT.md for each task we do
+* always update DESIGN.md when a task changes how the code works or why, and its "Known limits and next"
+  section when something is found and not fixed, or fixed
 
 ## Checks - after every change, before we are done
 
@@ -21,5 +22,5 @@
     * the user guide in `user-guide/` - for the people who use a grid, by kind of action (filtering, sorting, grouping, columns, formatting, editing, export, import ...): what they see and click, the names of the buttons and menus as the grid shows them (src/texts.ts), no code
     * each page has a "Try it" box (```` ```tryit <id> ````, samples/demo/tryIt.ts): a live grid and tasks that tick when done - a new feature a user can try gets a task, its check must not tick before the user does it (user-guide-check.js)
     * a new text id: src/texts.ts, its row in guides/12-texts.md, and the Norwegian of the demo (samples/demo/samples/translation.ts)
-    * CHANGELOG.md for what a user of the package sees, IMPORVEMENT.md for how and why
+    * CHANGELOG.md for what a user of the package sees, DESIGN.md for how and why
 * `npm run check:docs` checks the guides, the API examples and the user guide's links: it is part of verify
