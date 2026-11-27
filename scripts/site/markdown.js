@@ -2,7 +2,7 @@ const path = require('node:path');
 const { Marked } = require('marked');
 
 // where a link to a file of the repo goes on the site: the file on github, on the docs' branch
-const REPO_FILE_URL = 'https://github.com/airemote/simple-html/blob/v6_maybe/';
+const REPO_FILE_URL = 'https://github.com/vegarringdal/simple-html/blob/master/';
 
 /**
  * Markdown -> html for the docs site: the guides, and the JSDoc text on the API pages.
@@ -84,7 +84,7 @@ function repoFile(href, folder = 'guides') {
  * - 02-datasource.md#selection  -> #guide/datasource/selection
  * - #selection, in the guide    -> #guide/<guideId>/selection
  * - ../MIGRATION.md#package, a file of the repo that is no guide (MIGRATION.md, CHANGELOG.md,
- *   README.md ...) -> the file on github: https://github.com/airemote/simple-html/blob/v6_maybe/MIGRATION.md#package.
+ *   README.md ...) -> the file on github: https://github.com/vegarringdal/simple-html/blob/master/MIGRATION.md#package.
  *   The site has no page for it, the relative link would 404
  * - #guide/.., #sample/.., #api/.., and links to other sites stay as they are
  */

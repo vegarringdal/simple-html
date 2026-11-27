@@ -42,20 +42,21 @@ The highlights. Every feature, each linked to its guide and a live sample:
 ## Install
 
 The package is not on npmjs.com. It is published to **GitHub Packages** as
-`@airemote/simple-html-grid` (the scope of the repository's owner): install it under its usual name
+[`@vegarringdal/simple-html-grid`](https://github.com/vegarringdal/simple-html/pkgs/npm/simple-html-grid)
+(the scope of the repository's owner): install it under its usual name
 with an npm alias, so the imports stay `@simple-html/grid`. GitHub Packages needs a token that may read
 packages (a personal access token with `read:packages`), in an `.npmrc` next to your package.json:
 
 ```ini
-@airemote:registry=https://npm.pkg.github.com
+@vegarringdal:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
 ```
 
 ```sh
-npm install @simple-html/grid@npm:@airemote/simple-html-grid              # the last release
-npm install @simple-html/grid@npm:@airemote/simple-html-grid@next          # the last dev build
-npm install @simple-html/grid@npm:@airemote/simple-html-grid@6.0.0-next.3  # one dev build
-npm install @simple-html/grid@npm:@airemote/simple-html-grid@beta-v6-maybe # the last beta of a branch
+npm install @simple-html/grid@npm:@vegarringdal/simple-html-grid                # the last release
+npm install @simple-html/grid@npm:@vegarringdal/simple-html-grid@6.0.0          # one version
+npm install @simple-html/grid@npm:@vegarringdal/simple-html-grid@next           # the last dev build
+npm install @simple-html/grid@npm:@vegarringdal/simple-html-grid@beta-<branch>  # the last beta of a branch
 ```
 
 A release is published from master by hand (the `publish` workflow, see [Releases](#releases)). A
@@ -67,7 +68,7 @@ Or install it from a git branch, the `prepare` script builds `dist` on install:
 
 ```json
 "dependencies": {
-    "@simple-html/grid": "github:airemote/simple-html#<branch>"
+    "@simple-html/grid": "github:vegarringdal/simple-html#<branch>"
 }
 ```
 
@@ -144,7 +145,7 @@ after, and [CHANGELOG.md](CHANGELOG.md) what changed in each phase. The
 ## Development
 
 ```sh
-git clone https://github.com/airemote/simple-html
+git clone https://github.com/vegarringdal/simple-html
 cd simple-html
 npm i
 npm start # the docs and samples site on http://localhost:8080
