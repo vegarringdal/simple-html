@@ -109,17 +109,15 @@ describe('docs site status - what it is built from', () => {
         ]);
     });
 
-    it('expect DOCS_SHA to be the commit over GITHUB_SHA (the release), DOCS_DEV=1 a dev build', () => {
+    it('expect DOCS_DEV=1 to be a dev build, the version of package.json when none is given', () => {
         const env = {
             GITHUB_ACTIONS: 'true',
             GITHUB_REF_NAME: 'master',
-            GITHUB_SHA: '1111111111111111111111111111111111111111',
-            DOCS_SHA: '2222222222222222222222222222222222222222',
+            GITHUB_SHA: '2222222222222222222222222222222222222222',
             DOCS_DEV: '1'
         };
         const build = status.buildInfo(env, () => '');
         expect([build.commit, build.dev]).toEqual(['2222222', true]);
-        // the version of the repo's package.json when none is given
         expect(build.version).toMatch(/^\d+\.\d+\.\d+/);
     });
 

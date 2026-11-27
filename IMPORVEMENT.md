@@ -5656,42 +5656,34 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * left: the server can still have the value (a row not loaded) - the guide says keep the constraint in the
   database
 
-### Releases from pull request titles, docs of branches under dev/ (2026-11-27)
+### Pull request titles, tag and publish by hand, docs of branches under dev/ (2026-11-27)
 
 * the user: "do gh pages update when we push to main? possible to manually update from any branch, so we
   have dev docs? ... a push from a branch should be under dev in ghpages, and on root only the main ...
-  shows on page what build/branch ... push out npm package from main ... pr only check version isnt
-  changed, and pr starts with fix:, feat:, !fix:, !feat: and our release ups the version, set tag and push
-  out a npm package on github". Asked: release on every merge (chore: and the like release nothing),
-  `dev/<branch>/` per branch, dev docs by hand only
-* **scripts/releaseVersion.js**: parseTitle (conventional commits; `!` only on fix/feat - `!fix:` as the
-  user wrote it is refused, the message says `fix!:`), bumpVersion, releaseOf (the biggest bump of the
-  titles, notes by Breaking / Features / Fixes, a title that is not conventional left out), checkPullRequest.
-  `next`: the first-parent subjects since the tag `v<package.json version>` (no tag: the last commit only -
-  master has no v5.0.1 tag), a `Merge pull request #N` looked up on the API (fails if it can not be read,
-  rather than leave a feat: out), writes package.json and package-lock.json (top level and packages[""])
-* **.github/workflows/pr.yml**: pull_request to master, opened/edited/synchronize/reopened - renaming runs
-  it again. Compares the version of the merge checkout with `origin/<base>`
-* **release.yml**: push to master instead of workflow_dispatch. Checks out master's tip (a queued run sees
-  the release commit before it), `next`, then only on a release: npm ci, the checks, commit
-  `chore(release): <v>` of the two files, tag, `git push --atomic`, githubPackage.js release, npm publish,
-  `gh release create --notes-file $RELEASE_NOTES` (runner.temp). Then pages.yml as a reusable workflow with the release
-  commit. The commit is pushed with GITHUB_TOKEN: no workflow starts from it (no loop); master is not
-  protected now - if it is made so, github-actions has to be let through. If the publish fails after the
-  push, the tag is there and the package is not: publish it by hand (nothing retries it)
-* **pages.yml** (demo.yml removed): workflow_dispatch (+ input remove), workflow_call (ref), delete (a
-  branch's dev docs go). Checks out gh-pages into site/, scripts/pages.js places the build (the root: all
-  but dev/ replaced; dev/<slug>: only that folder) and writes dev/index.html from each build's build.json;
-  then one fresh commit, force pushed, as before. Job-level concurrency `pages`, never cancelled: a cancelled
-  run would not lose a folder, but one waiting must not be dropped
-* **the build line**: buildInfo has `version`, `dev` (DOCS_DEV=1), `built`; DOCS_SHA is the commit over
-  GITHUB_SHA (GITHUB_* can not be set in a workflow, and a called workflow has the caller's sha, not the
-  release commit). buildDemo writes build.json. The sidebar: a DEV badge (a link to ../../, the released
-  docs), then `v<version> · branch @ commit · date`
-* tests: scripts/__tests__/releaseVersion.test.ts, pages.test.ts; site.test (the version, no badge,
-  build.json), status.test (version, dev, built, DOCS_SHA). The workflows themselves are not run here
-* before the v6 pull request: master has a commit v6_maybe lacks (5.0.1 (#63)) - merge master in - and the
-  version check wants v6_maybe's package.json at master's 5.0.1, the release makes it 6.0.0 from `feat!:`
+  shows on page what build/branch ... push out npm package from main ...". Asked: dev/<branch>/ per
+  branch, dev docs by hand only
+* first made as a release on every merge (the title's bump, a version commit pushed to master), then
+  changed by the user: "force/check title only / setting tag is manual process/dispatch action. it will
+  then just read out from package, and dont need push to main / creating npm package is manual process,
+  dispatch action. It will only check we have not already created the npm package with same tag"
+* **pr.yml** + scripts/prTitle.js: the title only - conventional commit types, a scope, `!` on fix/feat only
+  (`!fix:` as the user wrote it is refused, the message says `fix!:`). Runs again on a rename (edited). No
+  version check: the version is set by hand, in a pull request
+* **tag.yml**: workflow_dispatch, the default branch only; package.json's version (a final x.y.z), stops if
+  `v<version>` is on origin, pushes the tag only - no commit, master is not pushed to
+* **publish.yml** (release.yml before): workflow_dispatch, the default branch only; githubPackage.js
+  release, then `npm view <name>@<version>`: output - published, stop; nothing or E404 - go on; any other
+  failure stops (can not tell). Then npm ci, the checks, npm publish --tag latest. Does not need the git tag,
+  the summary says when it is missing. Concurrency `publish`, so two runs can not both find it unpublished
+* **pages.yml** (demo.yml removed): push to master (the root), workflow_dispatch (+ input remove; any other
+  branch under dev/<slug>), delete (a branch's dev docs go). Checks out gh-pages into site/,
+  scripts/pages.js places the build (the root: all but dev/ replaced; dev/<slug>: only that folder) and
+  writes dev/index.html from each build's build.json; then one fresh commit, force pushed, as before.
+  Job-level concurrency `pages`, never cancelled: a run waiting must not be dropped
+* **the build line**: buildInfo has `version`, `dev` (DOCS_DEV=1), `built`. buildDemo writes build.json.
+  The sidebar: a DEV badge (a link to ../../, the released docs), then `v<version> · branch @ commit · date`
+* tests: scripts/__tests__/prTitle.test.ts, pages.test.ts; site.test (the version, no badge, build.json),
+  status.test (version, dev, built). The workflows themselves are not run here
 
 ## Considered, not done
 

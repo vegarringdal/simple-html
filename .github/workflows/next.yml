@@ -2,7 +2,7 @@
 # "next", "Run workflow", pick the branch. The version is <package.json version>-next.<run> - 6.0.0-next.1,
 # 6.0.0-next.2 ... the run number of this workflow, a new version every run - with the npm tag `next`, so
 #   npm install @simple-html/grid@npm:@<owner>/simple-html-grid@next
-# gets the last one. `latest` stays the last release (release.yml). See scripts/githubPackage.js.
+# gets the last one. `latest` stays the last release (publish.yml). See scripts/githubPackage.js.
 #
 # GitHub shows "Run workflow" for a workflow that is on the default branch: this file has to be on it too.
 name: next

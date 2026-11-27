@@ -1443,13 +1443,14 @@ rows); the vertical time is rendering every cell of every row on screen, which s
   and the column's, each as its message (texts `columnSettings.validation`, `.hint`, `.pattern`, `.unique`,
   `.uniqueWith`, `.ignoreCase`)
 
-##### Releases from the titles of pull requests, the docs of branches under dev/ (user request)
-- **a release on merge**: a pull request to master is titled `fix:` (a patch), `feat:` (a minor version),
-  `fix!:` / `feat!:` (a major one) or `chore:` / `docs:` / `test:` / `refactor:` / `ci:` / `build:` /
-  `perf:` / `style:` (no release), and leaves the version alone - the `pull request` check fails otherwise.
-  On the push to master the `release` workflow bumps the version by the biggest title since the last tag,
-  commits it, tags it, publishes the package to GitHub Packages and makes a GitHub release. It is no
-  longer run by hand; `next` and `beta` are as they were. See README, *Releases*
+##### Titles of pull requests checked, releases tagged and published by hand, the docs of branches under dev/ (user request)
+- **pull requests to master** are titled as conventional commits - `fix:`, `feat:`, `fix!:` / `feat!:`,
+  `chore:`, `docs:`, `test:`, `refactor:`, `ci:`, `build:`, `perf:`, `style:` - the `pull request` check
+  fails otherwise
+- **a release** is two workflows run by hand on master, reading the version of package.json (set by hand):
+  `tag` pushes the git tag `v<version>` and stops when it is there; `publish` (it was `release`) runs the
+  checks and publishes to GitHub Packages, and stops when that version is published already. See README,
+  *Releases*
 - **the docs site**: master's at the root of GitHub Pages after every push to master; any other branch's
   under `dev/<branch>/` when the `pages` workflow is run on it, `dev/` lists them, deleting the branch
   takes them down. A push to `v6_maybe` no longer deploys by itself. The sidebar shows the version before

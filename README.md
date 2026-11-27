@@ -58,11 +58,10 @@ npm install @simple-html/grid@npm:@airemote/simple-html-grid@6.0.0-next.3  # one
 npm install @simple-html/grid@npm:@airemote/simple-html-grid@beta-v6-maybe # the last beta of a branch
 ```
 
-A release is published when a pull request with `fix:` or `feat:` is merged to master (the `release`
-workflow, see [Releases](#releases)). A dev build from any branch (the `next` workflow,
-`<version>-next.<run>`, npm tag `next`) and a beta from any branch (the `beta` workflow,
-`<version>-beta.<branch>.<run>`, npm tag `beta-<branch>`) are run from the Actions tab. All of them only
-publish what passes the checks. See `scripts/githubPackage.js`.
+A release is published from master by hand (the `publish` workflow, see [Releases](#releases)). A
+dev build from any branch (the `next` workflow, `<version>-next.<run>`, npm tag `next`) and a beta from
+any branch (the `beta` workflow, `<version>-beta.<branch>.<run>`, npm tag `beta-<branch>`) are run from
+the Actions tab too. All of them only publish what passes the checks. See `scripts/githubPackage.js`.
 
 Or install it from a git branch, the `prepare` script builds `dist` on install:
 
@@ -159,27 +158,20 @@ npm start # the docs and samples site on http://localhost:8080
 
 ### Releases
 
-Every change goes to master through a pull request. Its title says what merging it releases, the
-`pull request` check (`.github/workflows/pr.yml`) fails until it is one of:
+Every change goes to master through a pull request. Its title is a conventional commit, the
+`pull request` check (`.github/workflows/pr.yml`, `scripts/prTitle.js`) fails until it starts with one
+of `fix:`, `feat:`, `fix!:` / `feat!:` (something breaks), `chore:`, `docs:`, `test:`, `refactor:`,
+`ci:`, `build:`, `perf:` or `style:`. A scope is fine (`feat(grid): a find bar`). The tests run on it as
+on every push (`checks.yml`).
 
-| Title | Release |
-| --- | --- |
-| `fix: ...` | a patch, 6.0.0 -> 6.0.1 |
-| `feat: ...` | a minor version, 6.0.0 -> 6.1.0 |
-| `fix!: ...`, `feat!: ...` | a major version, something breaks: 6.0.0 -> 7.0.0 |
-| `chore:`, `docs:`, `test:`, `refactor:`, `ci:`, `build:`, `perf:`, `style:` | none |
+The version is set by hand in package.json (and package-lock.json, `npm version 6.1.0
+--no-git-tag-version`), in a pull request like any other change. A release is then two workflows, both
+run by hand from the Actions tab on master; neither pushes a commit:
 
-A scope is fine (`feat(grid): a find bar`). The pull request leaves the version in package.json
-alone, the check fails if it changes it: the release sets it. The tests run on it as on every push
-(`checks.yml`). Merge it with **Squash and merge**, the title as the commit's (Settings -> General ->
-Pull Requests -> squash merging: "Default to pull request title"): the release reads the titles from
-master's commits. A merge commit works too, its pull request's title is looked up.
-
-On each push to master the `release` workflow (`release.yml`, `scripts/releaseVersion.js`) reads the
-titles merged since the last tag: the biggest of them bumps the version. A release runs the checks,
-commits the new version to master (`chore(release): 6.1.0`), tags it `v6.1.0`, publishes the package
-to GitHub Packages (npm tag `latest`) and makes a GitHub release with the titles as its notes. Then the
-docs site of master goes to the root of GitHub Pages, released or not.
+- `tag` (`tag.yml`): tags the commit `v<version>`, the version of package.json. Stops when the tag is
+  there already
+- `publish` (`publish.yml`): the checks, then the package to GitHub Packages with the npm tag `latest`.
+  Stops when that version is published already
 
 ### The docs site
 

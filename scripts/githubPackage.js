@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 /**
- * Gets package.json ready for GitHub Packages (npm.pkg.github.com), for the workflows release.yml
+ * Gets package.json ready for GitHub Packages (npm.pkg.github.com), for the workflows publish.yml
  * and beta.yml - it is changed in the checkout of the workflow only, never committed:
  *
  * - **the name**: GitHub Packages takes a package only in the scope of the repository's owner, so

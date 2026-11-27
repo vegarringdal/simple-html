@@ -47,9 +47,8 @@ function httpsUrl(remote) {
 /**
  * What the site is built from
  * @param {NodeJS.ProcessEnv} [env] the environment: in a github action GITHUB_REF_NAME, GITHUB_SHA,
- *   GITHUB_SERVER_URL and GITHUB_REPOSITORY say it. DOCS_SHA, when set, is the commit instead of
- *   GITHUB_SHA: the release builds the site from the commit it made, after the one that started it.
- *   DOCS_DEV=1: the docs of a branch, deployed under dev/ (pages.yml)
+ *   GITHUB_SERVER_URL and GITHUB_REPOSITORY say it. DOCS_DEV=1: the docs of a branch, deployed under
+ *   dev/ (pages.yml)
  * @param {(args: string[]) => string} [runGit] for the tests
  * @param {string} [version] the version in package.json
  * @returns {{ branch: string, commit: string, sha: string, date: string, localChanges: boolean, url: string,
@@ -58,7 +57,7 @@ function httpsUrl(remote) {
  *   built: when the site was built (ISO, UTC)
  */
 function buildInfo(env = process.env, runGit = git, version = packageVersion()) {
-    const sha = env.DOCS_SHA || env.GITHUB_SHA || runGit(['rev-parse', 'HEAD']);
+    const sha = env.GITHUB_SHA || runGit(['rev-parse', 'HEAD']);
     const repo =
         env.GITHUB_SERVER_URL && env.GITHUB_REPOSITORY
             ? `${env.GITHUB_SERVER_URL}/${env.GITHUB_REPOSITORY}`

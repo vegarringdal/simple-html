@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 const { branchSlug, packageFor } = require('../githubPackage.js');
 
 /**
- * scripts/githubPackage.js: what release.yml, beta.yml and next.yml publish to GitHub Packages - the name in the
+ * scripts/githubPackage.js: what publish.yml, beta.yml and next.yml publish to GitHub Packages - the name in the
  * scope of the repository's owner, the version, the npm tag
  */
 

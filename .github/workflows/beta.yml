@@ -2,7 +2,7 @@
 # "Run workflow", and pick the branch. The version is <package.json version>-beta.<branch>.<run>
 # (6.0.0-beta.v6-maybe.42) - a new one every run - with the npm tag beta-<branch>, so
 #   npm install @simple-html/grid@npm:@<owner>/simple-html-grid@beta-v6-maybe
-# gets the latest beta of that branch. `latest` stays the last release (release.yml, from the default
+# gets the latest beta of that branch. `latest` stays the last release (publish.yml, from the default
 # branch only). See scripts/githubPackage.js.
 name: beta
 
