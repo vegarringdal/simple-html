@@ -39,7 +39,10 @@ jobs:
     # `npm run verify` leaves them out - run them with `npm run build:demo && npm run check:browser`
     browser:
         name: browser checks
-        runs-on: ubuntu-latest
+        # not ubuntu-latest: playwright 1.55 has no browsers or system packages for a newer ubuntu than
+        # 24.04 (`playwright install --with-deps` fails), and a newer playwright breaks the checks
+        # (page.accessibility is gone, scripts/browser/sections.js patches internals that moved)
+        runs-on: ubuntu-24.04
         steps:
             - uses: actions/checkout@v7
 

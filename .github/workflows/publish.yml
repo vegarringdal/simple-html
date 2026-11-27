@@ -10,26 +10,37 @@
 # (an .npmrc with `@<owner>:registry=https://npm.pkg.github.com` and a token that may read packages).
 # See scripts/githubPackage.js.
 #
+# A pull request to master runs it too (pr.yml), with dry_run: the same steps from any branch,
+# `npm publish --dry-run`, and "published already" a warning - a release that would fail fails there.
+#
 # GitHub shows "Run workflow" for a workflow that is on the default branch: this file has to be on it.
 name: publish
 
 on:
     workflow_dispatch:
+    workflow_call:
+        inputs:
+            dry_run:
+                type: boolean
+                default: false
 
 permissions:
     contents: read
     packages: write
 
-# one at a time: two runs of one version must not both find it unpublished
+# one at a time: two runs of one version must not both find it unpublished. A dry run waits for none
 concurrency:
-    group: publish
+    group: ${{ inputs.dry_run && format('publish-dry-run-{0}', github.run_id) || 'publish' }}
     cancel-in-progress: false
 
 jobs:
     publish:
         runs-on: ubuntu-latest
+        env:
+            DRY_RUN: ${{ inputs.dry_run == true }}
         steps:
             - name: only from the default branch
+              if: env.DRY_RUN != 'true'
               env:
                   BRANCH: ${{ github.ref_name }}
                   DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
@@ -47,33 +58,11 @@ jobs:
                   cache: npm
                   registry-url: https://npm.pkg.github.com
 
-            # the name and the registry of GitHub Packages, in the checkout only - and the version check
-            - id: package
-              run: node scripts/githubPackage.js release
-
-            # npm view of a version that is not there prints nothing (the package is there) or fails with
-            # E404 (it is not); anything else - no access, the registry down - stops it too
-            - name: not published already
-              env:
-                  NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  NAME: ${{ steps.package.outputs.name }}
-                  VERSION: ${{ steps.package.outputs.version }}
-              run: |
-                  if out=$(npm view "$NAME@$VERSION" version 2>&1); then
-                      if [ -n "$out" ]; then
-                          echo "::error::$NAME@$VERSION is published already - change the version in package.json"
-                          exit 1
-                      fi
-                  elif ! grep -q E404 <<< "$out"; then
-                      echo "$out"
-                      echo "::error::could not tell whether $NAME@$VERSION is published"
-                      exit 1
-                  fi
-
             # npm ci builds dist too (the prepare script)
             - run: npm ci
 
-            # the checks of checks.yml: nothing is published that does not pass them
+            # the checks of checks.yml: nothing is published that does not pass them. Before the package step:
+            # its name (@<owner>/simple-html-grid) breaks the imports of @simple-html/grid/sql
             - name: checks
               run: |
                   npm run typecheck
@@ -82,7 +71,36 @@ jobs:
                   npm run check:typings
                   npm run check:docs
 
-            - run: npm publish --tag latest
+            # the name and the registry of GitHub Packages, in the checkout only - and the version check
+            - id: package
+              run: node scripts/githubPackage.js release
+
+            # npm view of a version that is not there prints nothing (the package is there) or fails with
+            # E404 (it is not); anything else - no access, the registry down - stops it too. A dry run warns
+            - name: not published already
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  NAME: ${{ steps.package.outputs.name }}
+                  VERSION: ${{ steps.package.outputs.version }}
+              run: |
+                  stop() {
+                      if [ "$DRY_RUN" = "true" ]; then
+                          echo "::warning::$1"
+                          exit 0
+                      fi
+                      echo "::error::$1"
+                      exit 1
+                  }
+                  if out=$(npm view "$NAME@$VERSION" version 2>&1); then
+                      if [ -n "$out" ]; then
+                          stop "$NAME@$VERSION is published already - change the version in package.json"
+                      fi
+                  elif ! grep -q E404 <<< "$out"; then
+                      echo "$out"
+                      stop "could not tell whether $NAME@$VERSION is published"
+                  fi
+
+            - run: npm publish --tag latest ${{ env.DRY_RUN == 'true' && '--dry-run' || '' }}
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -91,6 +109,10 @@ jobs:
                   NAME: ${{ steps.package.outputs.name }}
                   VERSION: ${{ steps.package.outputs.version }}
               run: |
+                  if [ "$DRY_RUN" = "true" ]; then
+                      echo "Dry run: publish would publish $NAME@$VERSION (latest)" >> "$GITHUB_STEP_SUMMARY"
+                      exit 0
+                  fi
                   echo "Published $NAME@$VERSION (latest)" >> "$GITHUB_STEP_SUMMARY"
                   echo '```' >> "$GITHUB_STEP_SUMMARY"
                   echo "npm install @simple-html/grid@npm:$NAME@$VERSION" >> "$GITHUB_STEP_SUMMARY"
