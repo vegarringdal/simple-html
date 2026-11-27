@@ -60,7 +60,22 @@ jobs:
                   if [ "$BRANCH" != "$DEFAULT_BRANCH" ]; then export DOCS_DEV=1; fi
                   npm run build:demo
 
+            # the first run on a repository: no gh-pages yet, the push step makes it
+            - id: gh-pages
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  # 2: no such branch. Anything else failing stops here, a fresh gh-pages would drop dev/
+                  status=0
+                  git ls-remote --exit-code --heads "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages > /dev/null || status=$?
+                  case "$status" in
+                      0) echo "exists=true" >> "$GITHUB_OUTPUT" ;;
+                      2) echo "exists=false" >> "$GITHUB_OUTPUT"; mkdir -p site ;;
+                      *) exit "$status" ;;
+                  esac
+
             - uses: actions/checkout@v7
+              if: steps.gh-pages.outputs.exists == 'true'
               with:
                   ref: gh-pages
                   path: site
