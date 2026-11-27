@@ -92,6 +92,31 @@ describe('calculated columns - the values', () => {
         expect(column(element, 'size')).toEqual(['big', 'small', 'small']);
     });
 
+    it("expect # in a field name: a field of the rows (Oracle's LINE#) read by a formula, a calculated column named with it", async () => {
+        const { element, datasource } = await mountGrid(
+            {
+                calculatedColumns: { 'total#': { formula: '{qty#} * {price}', label: 'Total #' } },
+                layout: { center: ['qty#', 'price', 'total#'].map((field) => ({ fields: [field], width: 90 })) }
+            },
+            [
+                { id: 1, 'qty#': 3, price: 10 },
+                { id: 2, 'qty#': 4, price: 2.5 }
+            ],
+            { key: 'id', fields: { id: 'number', 'qty#': 'number', price: 'number' } }
+        );
+        expect(column(element, 'total#')).toEqual(['30', '10']);
+        datasource.filter(where('total#', 'GREATER_THAN', 20));
+        expect(datasource.getRows().map((row) => (row as { id: number }).id)).toEqual([1]);
+        // # first is no name: as a digit first
+        expect(
+            () =>
+                new GridInterface(
+                    { calculatedColumns: { '#x': { formula: '1', label: 'x' } }, layout: { center: [] } },
+                    datasource
+                )
+        ).toThrow('a field name is a letter, then letters, digits, _ and #, 64 at most');
+    });
+
     it('expect the datasource to have their types and labels, the rows to answer them - and nothing stored on a row', async () => {
         const { datasource } = await mount();
         const row = datasource.getAllData()[0];

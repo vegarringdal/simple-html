@@ -48,7 +48,7 @@ createGrid(host, { config, datasource });
 
 | part | |
 | --- | --- |
-| the key | its field name: a letter, then letters, digits and `_`, 64 at most - `total`, `days_late`. Not a field of the datasource (`fields`) or of the rows, not one of the grid's own (`__...`), not a name every object has (`constructor`, `toString` ...) |
+| the key | its field name: a letter, then letters, digits, `_` and `#`, 64 at most - `total`, `days_late`, `line#`. Not a field of the datasource (`fields`) or of the rows, not one of the grid's own (`__...`), not a name every object has (`constructor`, `toString` ...) |
 | `formula` | the formula, see [The formulas](#the-formulas). At most 1000 characters |
 | `label` | its label, default the field name made readable (`days_late` is *Days Late*). `ColumnConfig.label` and the user's label (`ColumnFormat.label`) win over it, as over a field's label |
 | `type` | the type of its values: `'number'`, `'text'`, `'date'` or `'boolean'`. Left out, the type the formula gives; given, it must be that one - a saved state keeps saying what it holds |
@@ -306,7 +306,7 @@ taken as hostile input.
   (`escapeFormulas`, see [Formulas (CSV injection)](15-export.md#formulas-csv-injection)), a calculated
   value as any. The Excel export writes text as text, never as a formula. The clipboard does not escape
   it: a copy is pasted by the user, see [Selection and clipboard](17-selection-and-clipboard.md).
-- **A field name** of a calculated column is a strict pattern (a letter, then letters, digits and `_`),
+- **A field name** of a calculated column is a strict pattern (a letter, then letters, digits, `_` and `#`),
   never the name of a field of the rows or of every object.
 - **The colours** of a colour rule are a name of the palette or `#` and six hex digits - nothing else
   reaches css, and a custom colour is set as the value of a css custom property.

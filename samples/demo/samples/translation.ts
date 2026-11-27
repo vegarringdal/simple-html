@@ -521,7 +521,7 @@ const norwegian: Record<TextId, string> = {
     'columnSettings.calculated.add.tooltip': 'En kolonne regnet ut fra de andre feltene i raden',
     'columnSettings.calculated.defaultLabel': 'Beregnet {number}',
     'columnSettings.calculated.name': 'Feltnavn',
-    'columnSettings.calculated.name.hint': 'En bokstav, så bokstaver, sifre og _. Endres ikke når den er tatt i bruk',
+    'columnSettings.calculated.name.hint': 'En bokstav, så bokstaver, sifre, _ og #. Endres ikke når den er tatt i bruk',
     'columnSettings.calculated.formula': 'Formel',
     'columnSettings.calculated.formula.placeholder': '{pris} * {antall}',
     'columnSettings.calculated.formula.hint':
@@ -531,7 +531,7 @@ const norwegian: Record<TextId, string> = {
     'columnSettings.calculated.blank': '(tom)',
     'columnSettings.calculated.applyFirst': 'Bruk først: så formatet og fargereglene til en kolonne av typen {type}',
     'columnSettings.calculated.remove': 'Fjern beregnet kolonne',
-    'columnSettings.calculated.problem.name': 'Feltnavnet er en bokstav, så bokstaver, sifre og _ - høyst 64',
+    'columnSettings.calculated.problem.name': 'Feltnavnet er en bokstav, så bokstaver, sifre, _ og # - høyst 64',
     'columnSettings.calculated.problem.taken': 'Feltnavnet er et felt allerede: gi kolonnen et eget navn',
     'columnSettings.badge.calculated': 'Beregnet',
     'columnSettings.formula.type.number': 'et tall',

@@ -51,9 +51,10 @@ const DEFAULT_LIMITS: Readonly<Required<SqlLimits>> = {
 const COLUMN_TYPES: readonly SqlColumnType[] = ['text', 'number', 'boolean', 'date', 'datetime'];
 const DATE_STORAGES: readonly SqlDateStorage[] = ['local', 'utc', 'zoned', 'epochSeconds', 'epochMillis'];
 
-// letters, digits and _, not first a digit; up to 128 (the longest name SQL Server and Oracle take), and
-// up to two prefixes: schema.table.column
-const COLUMN_NAME = /^[A-Za-z_][A-Za-z0-9_]{0,127}(\.[A-Za-z_][A-Za-z0-9_]{0,127}){0,2}$/;
+// letters, digits, _ and # (Oracle's PROJECT#), first a letter or _ - not a digit, not # (a temporary
+// table in SQL Server); up to 128 (the longest name SQL Server and Oracle take), and up to two prefixes:
+// schema.table.column. Quoted in every dialect, so # is safe in it
+const COLUMN_NAME = /^[A-Za-z_][A-Za-z0-9_#]{0,127}(\.[A-Za-z_][A-Za-z0-9_#]{0,127}){0,2}$/;
 
 /** the comparisons, as SQL */
 const COMPARISON: Partial<Record<FilterOperator, string>> = {
@@ -201,7 +202,7 @@ function readColumn(entry: unknown, dialect: Dialect, dateStorage: SqlDateStorag
     const name = own(column, 'column');
     if (typeof name !== 'string' || !COLUMN_NAME.test(name)) {
         throw new TypeError(
-            `toSqlWhere: ${where}: the column ${show(name)} is letters, digits and _ (not first a digit), with up to two prefixes: schema.table.column`
+            `toSqlWhere: ${where}: the column ${show(name)} is letters, digits, _ and # (first a letter or _), with up to two prefixes: schema.table.column`
         );
     }
     const type = own(column, 'type') ?? 'text';
@@ -1077,7 +1078,7 @@ function bracketed(sql: string): string {
     if (open >= 0 && closesAtEnd(sql, open)) {
         return sql;
     }
-    if (/^("[A-Za-z0-9_]+"|\[[A-Za-z0-9_]+\]|\d+(\.\d+)?)$/.test(sql)) {
+    if (/^("[A-Za-z0-9_#]+"|\[[A-Za-z0-9_#]+\]|\d+(\.\d+)?)$/.test(sql)) {
         return sql;
     }
     return `(${sql})`;

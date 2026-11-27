@@ -5685,6 +5685,19 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * tests: scripts/__tests__/prTitle.test.ts, pages.test.ts; site.test (the version, no badge, build.json),
   status.test (version, dev, built). The workflows themselves are not run here
 
+### `#` in the names of columns (2026-11-27)
+
+* the user: "column names should also support # in name"
+* a field of the rows with `#` worked already: the grid builds no css selector of a field name, a formula's
+  `{...}` takes anything but braces
+* **toSqlWhere**: COLUMN_NAME takes `#` after the first character of each part (letters or `_` first - `#`
+  first is a temporary table on SQL Server); every dialect quotes the parts, so no escaping is needed.
+  bracketed() takes `"A#"` / `[A#]` as one name
+* **calculated columns**: NAME is a letter, then letters, digits, `_` and `#`; the texts of the dialog
+  (en, the Norwegian sample) and the guides say so
+* tests: sqlInjection (oracle / mssql quoting, a formula reading it, SQLite for real; `#temp`, `schema.#temp`
+  refused), calculatedColumns (`{qty#}` read, `total#` shown and filtered, `#x` refused)
+
 ## Considered, not done
 
 ## Candidates / not started

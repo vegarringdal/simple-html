@@ -880,7 +880,7 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.calculated.add.tooltip` | `A column computed from the other fields of the row` | its tooltip |
 | `columnSettings.calculated.defaultLabel` | `Calculated {number}` | the label of a calculated column added, `{number}` the one of its field `calc_<number>` |
 | `columnSettings.calculated.name` | `Field name` | the label of its field name - an input while it is new, its name after |
-| `columnSettings.calculated.name.hint` | `A letter, then letters, digits and _. Not changed once applied` | under the input |
+| `columnSettings.calculated.name.hint` | `A letter, then letters, digits, _ and #. Not changed once applied` | under the input |
 | `columnSettings.calculated.formula` | `Formula` | the label of its formula |
 | `columnSettings.calculated.formula.placeholder` | `{price} * {qty}` | its placeholder, a formula as it is written |
 | `columnSettings.calculated.formula.hint` | `Fields in braces, numbers, "text", + - * / &, = <> != < <= > >=, AND OR NOT, IF ROUND ABS MIN MAX TODAY DAYS YEAR MONTH CONCAT COALESCE ISBLANK LEFT RIGHT MID SUBSTRING LEN UPPER LOWER TRIM CONTAINS` | under it: the language. The keywords and the names of the functions are the language's, keep them |
@@ -889,7 +889,7 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.calculated.blank` | `(blank)` | the value when it is blank |
 | `columnSettings.calculated.applyFirst` | `Apply first: then the format and the colour rules of a {type} column` | a calculated column new, or of another type now: its other settings after Apply |
 | `columnSettings.calculated.remove` | `Remove calculated column` | the button: it leaves the draft, and on Apply the layout |
-| `columnSettings.calculated.problem.name` | `The field name is a letter, then letters, digits and _ - 64 at most` | a field name typed that a calculated column can not have |
+| `columnSettings.calculated.problem.name` | `The field name is a letter, then letters, digits, _ and # - 64 at most` | a field name typed that a calculated column can not have |
 | `columnSettings.calculated.problem.taken` | `The field name is a field already: give the column a name of its own` | the name typed is a field of the datasource, of the rows or of another column |
 | `columnSettings.badge.calculated` | `Calculated` | in the list of the columns: a calculated column |
 | `columnSettings.formula.type.number` | `a number` | the name of a type in a problem of a formula (`{got}`, `{expected}`, `{type}`) |

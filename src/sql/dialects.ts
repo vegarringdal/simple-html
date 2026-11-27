@@ -12,7 +12,7 @@ import { isoText } from './sqlDates';
 export interface Dialect {
     /** the placeholder of the n'th parameter, counted from 1: `$1`, `:1`, `?`, `@p1` */
     placeholder(n: number): string;
-    /** one part of a name, quoted. The part is checked already: letters, digits and `_` only */
+    /** one part of a name, quoted. The part is checked already: letters, digits, `_` and `#` only */
     quote(name: string): string;
 
     /** the wildcard of a pattern, "any text": `%` for LIKE, `*` for GLOB */

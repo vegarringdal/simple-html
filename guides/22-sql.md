@@ -129,8 +129,8 @@ The filter comes from a browser, so `toSqlWhere()` takes it as hostile JSON.
   never left out, which would show more rows than the filter asks for. Only own properties count:
   `__proto__`, `constructor` and `toString` are unknown fields unless you list them, and a polluted
   `Object.prototype` adds none.
-- **The names are checked and quoted.** A column is letters (a-z, A-Z), digits and `_`, not first a
-  digit, at most 128, with up to two prefixes (`schema.table.column`); anything else throws when the
+- **The names are checked and quoted.** A column is letters (a-z, A-Z), digits, `_` and `#` (Oracle's
+  `PROJECT#`), first a letter or `_` - not a digit, not `#`, a temporary table on SQL Server - at most 128, with up to two prefixes (`schema.table.column`); anything else throws when the
   options are read. It is quoted - `"name"` on PostgreSQL, Oracle and SQLite, `[name]` on SQL Server - and
   can hold no quote or bracket that would need escaping. A quoted name keeps its case: PostgreSQL folds a
   name made without quotes to lower case, Oracle to upper case, so on **Oracle write the name in upper

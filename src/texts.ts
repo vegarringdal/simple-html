@@ -570,7 +570,7 @@ const DEFAULTS = {
     'columnSettings.calculated.add.tooltip': 'A column computed from the other fields of the row',
     'columnSettings.calculated.defaultLabel': 'Calculated {number}',
     'columnSettings.calculated.name': 'Field name',
-    'columnSettings.calculated.name.hint': 'A letter, then letters, digits and _. Not changed once applied',
+    'columnSettings.calculated.name.hint': 'A letter, then letters, digits, _ and #. Not changed once applied',
     'columnSettings.calculated.formula': 'Formula',
     'columnSettings.calculated.formula.placeholder': '{price} * {qty}',
     'columnSettings.calculated.formula.hint':
@@ -580,7 +580,7 @@ const DEFAULTS = {
     'columnSettings.calculated.blank': '(blank)',
     'columnSettings.calculated.applyFirst': 'Apply first: then the format and the colour rules of a {type} column',
     'columnSettings.calculated.remove': 'Remove calculated column',
-    'columnSettings.calculated.problem.name': 'The field name is a letter, then letters, digits and _ - 64 at most',
+    'columnSettings.calculated.problem.name': 'The field name is a letter, then letters, digits, _ and # - 64 at most',
     'columnSettings.calculated.problem.taken': 'The field name is a field already: give the column a name of its own',
     'columnSettings.badge.calculated': 'Calculated',
     // the problems of a formula, of a calculated column and of a colour rule. {position} is the character,

@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { DatabaseSync } from 'node:sqlite';
 import { describe, expect, it } from 'vitest';
-import { FILTER_OPERATORS } from '../../datasource/filterExpression';
+import { and, FILTER_OPERATORS, where } from '../../datasource/filterExpression';
 import { type SqlDialect, type SqlOptions, toSqlWhere } from '../../sql';
 
 /**
@@ -322,10 +322,13 @@ describe('only the columns of the options get into the SQL', () => {
             'name\u0000',
             'x'.repeat(129),
             '',
-            'LOWER(name)'
+            'LOWER(name)',
+            '#temp',
+            'schema.#temp',
+            'name#"'
         ]) {
             for (const dialect of DIALECTS) {
-                expect(() => toSqlWhere(null, { dialect, columns: { a: column } }), column).toThrow(/letters, digits and _/);
+                expect(() => toSqlWhere(null, { dialect, columns: { a: column } }), column).toThrow(/letters, digits, _ and #/);
             }
         }
         expect(
@@ -344,6 +347,38 @@ describe('only the columns of the options get into the SQL', () => {
         } finally {
             delete prototype.polluted;
         }
+    });
+
+    it("expect # in a name after its first character (Oracle's PROJECT#), quoted in every dialect, on SQLite for real", () => {
+        const columns = { project: 'HR.EMP#.PROJECT#', line: { column: 'LINE#', type: 'number' as const } };
+        const filter = and(where('project', 'EQUAL', 'P-1'), where('line', 'GREATER_THAN', 1));
+        expect(toSqlWhere(filter, { dialect: 'oracle', columns }).sql).toContain('"HR"."EMP#"."PROJECT#"');
+        expect(toSqlWhere(filter, { dialect: 'mssql', columns }).sql).toContain('[HR].[EMP#].[PROJECT#]');
+        // a calculated column reads it: bracketed as one name, no extra brackets
+        expect(
+            toSqlWhere({ field: 'calc', operator: 'GREATER_THAN', value: 2 } as never, {
+                dialect: 'postgres',
+                columns,
+                calculated: { calc: '{line} * 2' }
+            }).sql
+        ).toContain('"LINE#" * 2');
+
+        const db = new DatabaseSync(':memory:');
+        db.exec('CREATE TABLE t ("PROJECT#" TEXT, "LINE#" INTEGER)');
+        const insert = db.prepare('INSERT INTO t VALUES (?, ?)');
+        insert.run('P-1', 1);
+        insert.run('P-1', 2);
+        insert.run('P-2', 3);
+        const { sql, params } = toSqlWhere(filter, {
+            dialect: 'sqlite',
+            columns: { project: 'PROJECT#', line: { column: 'LINE#', type: 'number' } }
+        });
+        expect(
+            db
+                .prepare(`SELECT "LINE#" AS line FROM t WHERE ${sql}`)
+                .all(...(params as (string | number)[]))
+                .map((row) => row.line)
+        ).toEqual([2]);
     });
 
     it('expect a field named __proto__ to work when the options list it as an own property', () => {

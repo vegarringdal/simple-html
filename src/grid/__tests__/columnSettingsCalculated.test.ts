@@ -182,13 +182,13 @@ describe('column settings - a calculated column', () => {
         type('calculated-formula', '{qty} * 2');
 
         type('calculated-name', '2x');
-        expect(problems()).toEqual(['The field name is a letter, then letters, digits and _ - 64 at most']);
+        expect(problems()).toEqual(['The field name is a letter, then letters, digits, _ and # - 64 at most']);
         type('calculated-name', 'price');
         expect(problems()).toEqual(['The field name is a field already: give the column a name of its own']);
         type('calculated-name', 'total');
         expect(problems()).toEqual(['The field name is a field already: give the column a name of its own']);
         type('calculated-name', 'constructor');
-        expect(problems()).toEqual(['The field name is a letter, then letters, digits and _ - 64 at most']);
+        expect(problems()).toEqual(['The field name is a letter, then letters, digits, _ and # - 64 at most']);
         expect(button('Apply').getAttribute('aria-disabled')).toEqual('true');
 
         type('calculated-name', 'double_qty');

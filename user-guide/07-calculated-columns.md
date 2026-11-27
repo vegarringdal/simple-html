@@ -17,8 +17,8 @@ never saved as data - the value is worked out again whenever the row changes.
 2. On the **Columns** tab, click **Add calculated column** under the list of columns. A new column,
    **Calculated 1**, is added and picked.
 3. Fill in:
-   - **Field name**: the column's name inside the grid - a letter, then letters, digits and `_`, such
-     as `total` or `days_late`. It can not be changed once applied.
+   - **Field name**: the column's name inside the grid - a letter, then letters, digits, `_` and `#`,
+     such as `total`, `days_late` or `line#`. It can not be changed once applied.
    - **Label**: the name shown in the header, such as *Total*.
    - **Formula**: what to calculate, such as `{price} * {qty}`.
 4. Click **Apply**. The column is added at the end of the columns.

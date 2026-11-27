@@ -1455,6 +1455,13 @@ rows); the vertical time is rendering every cell of every row on screen, which s
   under `dev/<branch>/` when the `pages` workflow is run on it, `dev/` lists them, deleting the branch
   takes them down. A push to `v6_maybe` no longer deploys by itself. The sidebar shows the version before
   the branch and the commit, and a *dev* badge on a branch's docs
+
+##### `#` in the names of columns (user request)
+- `toSqlWhere()`: a column's name may have `#` after its first character - Oracle's `PROJECT#`,
+  `HR.EMP#.PROJECT#`. Quoted as any name; `#` first still throws (a temporary table on SQL Server)
+- a calculated column's field name may have `#` after its first letter (`line#`); a formula reads a field
+  with `#` in its name as any, `{qty#}` (texts `columnSettings.calculated.name.hint` and
+  `.problem.name` say so)
   (‹ Columns); side by side the list stays in view. Checked at 1366x768 and 1280x720 at 150 % zoom
 - a text field's date (a column of several types, `dynamicCellTypeColumn`) is filtered, sorted and grouped by
   the text its cell shows, `2026-11-25` - not JavaScript's `Thu May 17 1990 ...`: the same rows as

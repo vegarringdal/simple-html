@@ -904,7 +904,7 @@ describe('the options', () => {
     });
 
     it('expect the options to be checked also when there is no filter', () => {
-        expect(() => toSqlWhere(null, { dialect: 'postgres', columns: { a: 'a b' } })).toThrow(/letters, digits and _/);
+        expect(() => toSqlWhere(null, { dialect: 'postgres', columns: { a: 'a b' } })).toThrow(/letters, digits, _ and #/);
     });
 });
 

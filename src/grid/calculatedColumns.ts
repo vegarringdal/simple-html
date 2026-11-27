@@ -43,7 +43,7 @@ export type CalculatedType = 'number' | 'text' | 'date' | 'boolean';
 /**
  * A calculated column: its values computed from the other fields of the row by a formula - plain JSON,
  * in the state. Its field is the key it has in `GridConfig.calculatedColumns` /
- * `GridState.calculatedColumns`: a letter, then letters, digits and `_` (64 at most), no field of the
+ * `GridState.calculatedColumns`: a letter, then letters, digits, `_` and `#` (64 at most), no field of the
  * datasource or of the rows. Put it in the layout as any field.
  *
  * - **`formula`**: `{price} * {qty}`, `DAYS({due}, TODAY())`, `IF({qty} > 10, "bulk", "single")` - see
@@ -94,10 +94,10 @@ export interface CalculatedColumn {
 export const MAX_CALCULATED_COLUMNS = 50;
 
 /**
- * the field name of a calculated column: a letter, then letters, digits and `_`, 64 at most. Not `__`
+ * the field name of a calculated column: a letter, then letters, digits, `_` and `#`, 64 at most. Not `__`
  * first (the grid's own), not `__proto__` or anything else that is no plain name
  */
-const NAME = /^[A-Za-z][A-Za-z0-9_]{0,63}$/;
+const NAME = /^[A-Za-z][A-Za-z0-9_#]{0,63}$/;
 
 /**
  * the names of the properties every object has (`constructor`, `toString`, `hasOwnProperty` ...): a
@@ -270,7 +270,7 @@ function englishProblem(problem: FormulaProblem): string {
  * Throws when calculated columns from plain JavaScript or JSON - a config, a saved state - are not what
  * they must be, before anything changes:
  * - an object of columns by field name, MAX_CALCULATED_COLUMNS at most
- * - each name a letter, then letters, digits and `_` (64 at most) - not a field of the rows
+ * - each name a letter, then letters, digits, `_` and `#` (64 at most) - not a field of the rows
  *   (`isTaken`): the column would hide its values
  * - each column an object of `formula` (text), `label` (text, not empty) and `type` (a CalculatedType)
  * - every formula without a problem (compileCalculatedColumns): its syntax, its fields, its types
@@ -298,7 +298,7 @@ export function assertCalculatedColumns(
         const at = `${name}.${field}`;
         if (!isCalculatedName(field)) {
             throw new TypeError(
-                `${name} has the field ${JSON.stringify(field.slice(0, 70))}: a field name is a letter, then letters, digits and _, 64 at most - not a name every object has (constructor, toString ...)`
+                `${name} has the field ${JSON.stringify(field.slice(0, 70))}: a field name is a letter, then letters, digits, _ and #, 64 at most - not a name every object has (constructor, toString ...)`
             );
         }
         if (isTaken(field)) {
