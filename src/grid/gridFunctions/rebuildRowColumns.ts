@@ -1,12 +1,44 @@
 import type { Grid } from '../grid';
-import type { Columns } from '../gridConfig';
+import type { LayoutColumn } from '../gridConfig';
+import { ariaId } from './ariaGrid';
 import { asPx } from './asPx';
 import type { ColType, ColumnCache } from './colType';
-import { creatElement } from './createElement';
+import { createElement } from './createElement';
+import { releaseAllRenderers } from './customCell';
 import { DIV } from './DIV';
-import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGH_PINNED_COLTYPE } from './GROUP_COLTYPE';
+import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGHT_PINNED_COLTYPE } from './GROUP_COLTYPE';
 import { getElementByClassName } from './getElementByClassName';
 import { getGroupingWidth } from './getGroupingWidth';
+
+/**
+ * How many column elements the middle (scrolling) section needs, so every column that can be
+ * on screen at the same time has one, whatever the scroll position.
+ * Used for both the rows and the header, they must have the same number.
+ *
+ * horizontalScrollHandler asks for every column that starts inside the viewport, plus the one
+ * before it. Columns starting inside the viewport are at most "how many of the narrowest columns
+ * fit in it" + 1, so that + 2 is always enough.
+ *
+ * Returns 0 when there are no center columns (addColumns treats 0 as "all", which is 0 then too).
+ */
+export function getMiddleColumnsNeeded(ctx: Grid) {
+    const columns = ctx.gridInterface.__getGridConfig().layout.center;
+    // same element/width horizontalScrollHandler uses to decide what is on screen
+    const viewportWidth = getElementByClassName(ctx.element, 'simple-html-grid-middle-scroller').clientWidth;
+
+    const widths = columns.map((column) => column.width).sort((a, b) => a - b);
+    let fits = 0;
+    let total = 0;
+    for (const width of widths) {
+        total = total + width;
+        if (total >= viewportWidth) {
+            break;
+        }
+        fits++;
+    }
+
+    return Math.min(columns.length, fits + 2);
+}
 
 export function rebuildRowColumns(ctx: Grid) {
     const config = ctx.gridInterface.__getGridConfig();
@@ -14,7 +46,7 @@ export function rebuildRowColumns(ctx: Grid) {
     /**
      * helper to generate cols and rows elements
      */
-    const addColumns = (rowId: string, columns: Columns[], maxColumns: number, coltype: ColType) => {
+    const addColumns = (rowId: string, columns: LayoutColumn[], maxColumns: number, coltype: ColType) => {
         const parent = ctx.rows.get(rowId);
 
         const columnCache: ColumnCache[] = [];
@@ -23,16 +55,15 @@ export function rebuildRowColumns(ctx: Grid) {
             columnsNeeded = columns.length;
         }
 
-        if (!parent) {
-            console.log('err');
-        } else {
+        // always there: the row and header containers are made before the columns
+        if (parent) {
             let left = getGroupingWidth(ctx, coltype);
             while (parent.firstChild) {
                 parent.removeChild(parent.firstChild);
             }
 
             if (coltype === 'left-pinned') {
-                const columnElement = creatElement(DIV, 'simple-html-grid-grouping-row');
+                const columnElement = createElement(DIV, 'simple-html-grid-grouping-row');
                 columnElement.style.width = asPx(left);
                 if (left === 0) {
                     columnElement.style.display = 'none';
@@ -44,10 +75,13 @@ export function rebuildRowColumns(ctx: Grid) {
                 /**
                  * generate column
                  */
-                const columnElement = creatElement(DIV, 'simple-html-grid-col');
+                const columnElement = createElement(DIV, 'simple-html-grid-col');
 
                 const id = `${rowId}:${i.toString()}`;
                 ctx.columns.set(id, columnElement);
+                // owned by the row, its cells are the gridcells of the row (see ariaGrid.ts)
+                columnElement.id = ariaId(ctx, `${rowId}-${i}`);
+                columnElement.setAttribute('role', 'none');
                 columnElement.style.transform = `translate3d(${left}px, 0px, 0px)`;
                 columnElement.style.width = asPx(columns[i].width);
                 columnElement.setAttribute('refID', i.toString());
@@ -61,10 +95,12 @@ export function rebuildRowColumns(ctx: Grid) {
                  */
 
                 for (let y = 0; y < config.__columnCells; y++) {
-                    const cellElement = creatElement(DIV, 'simple-html-grid-col-cell');
+                    const cellElement = createElement(DIV, 'simple-html-grid-col-cell');
                     cellElement.style.top = asPx(config.cellHeight * y);
                     cellElement.style.height = asPx(config.cellHeight);
                     cellElement.setAttribute('type', 'row-cell');
+                    // a gridcell when it shows a field, renderRowCell sets it
+                    cellElement.setAttribute('role', 'none');
                     columnElement.appendChild(cellElement);
                 }
             }
@@ -73,22 +109,20 @@ export function rebuildRowColumns(ctx: Grid) {
         return columnCache;
     };
 
-    // clear old config
+    // clear old config. The old cells are thrown away: their renderers are done
+    releaseAllRenderers(ctx);
     ctx.columns.clear();
 
     ctx.containerLeftRowCache.forEach((e) => {
-        ctx.containerLeftColumnCache = addColumns(e.id, config.columnsPinnedLeft, 0, LEFT_PINNED_COLTYPE);
+        ctx.containerLeftColumnCache = addColumns(e.id, config.layout.left, 0, LEFT_PINNED_COLTYPE);
     });
 
-    // get params we will use to apply max columns
-    const bodyWidth = getElementByClassName(ctx.element, 'simple-html-grid-body').clientWidth;
-    const middleWidth = bodyWidth - (config.__leftWidth + config.__scrollbarSize + config.__rightWidth + config.selectSizeHeight);
-
+    const middleColumnsNeeded = getMiddleColumnsNeeded(ctx);
     ctx.containerMiddleRowCache.forEach((e) => {
-        ctx.containerMiddleColumnCache = addColumns(e.id, config.columnsCenter, middleWidth / 50, MIDDLE_PINNED_COLTYPE);
+        ctx.containerMiddleColumnCache = addColumns(e.id, config.layout.center, middleColumnsNeeded, MIDDLE_PINNED_COLTYPE);
     });
 
     ctx.containerRightRowCache.forEach((e) => {
-        ctx.containerRightColumnCache = addColumns(e.id, config.columnsPinnedRight, 0, RIGH_PINNED_COLTYPE);
+        ctx.containerRightColumnCache = addColumns(e.id, config.layout.right, 0, RIGHT_PINNED_COLTYPE);
     });
 }

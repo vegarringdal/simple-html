@@ -1,0 +1,6 @@
+#!/bin/sh
+# Runs the checks of GitHub Actions before a push (scripts/verify.js): a commit that fails one is not
+# pushed. Turned on with `npm run hooks` (git config core.hooksPath .githooks). Skip it once, knowingly:
+# git push --no-verify
+echo "pre-push: npm run verify (the checks of .github/workflows/checks.yml)"
+npm run verify --silent

@@ -1,0 +1,109 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`the SQL of a find filter > expect the SQL of mssql to be the snapshot 1`] = `
+"acme
+  {"group":"OR","children":[{"field":"name","operator":"CONTAINS","value":"acme","literal":true},{"field":"notes","operator":"CONTAINS","value":"acme","literal":true}]}
+  (([name] IS NOT NULL AND LOWER([name]) COLLATE Latin1_General_100_BIN2 LIKE @p1) OR ([notes] IS NOT NULL AND LOWER([notes]) COLLATE Latin1_General_100_BIN2 LIKE @p2))
+  ["%acme%","%acme%"]
+Oslo caseSensitive
+  {"group":"OR","children":[{"field":"name","operator":"CONTAINS","value":"Oslo","caseSensitive":true,"literal":true},{"field":"notes","operator":"CONTAINS","value":"Oslo","caseSensitive":true,"literal":true},{"field":"office","operator":"IN","value":["k0"],"caseSensitive":true},{"field":"team","operator":"IN","value":[1]}]}
+  (([name] IS NOT NULL AND [name] COLLATE Latin1_General_100_BIN2 LIKE @p1) OR ([notes] IS NOT NULL AND [notes] COLLATE Latin1_General_100_BIN2 LIKE @p2) OR ([office] IS NOT NULL AND [office] COLLATE Latin1_General_100_BIN2 LIKE @p3) OR ([team] IS NOT NULL AND [team] IN (@p4)))
+  ["%Oslo%","%Oslo%","k0",1]
+50%_*
+  {"group":"OR","children":[{"field":"name","operator":"CONTAINS","value":"50%_*","literal":true},{"field":"notes","operator":"CONTAINS","value":"50%_*","literal":true}]}
+  (([name] IS NOT NULL AND LOWER([name]) COLLATE Latin1_General_100_BIN2 LIKE @p1) OR ([notes] IS NOT NULL AND LOWER([notes]) COLLATE Latin1_General_100_BIN2 LIKE @p2))
+  ["%50[%][_]*%","%50[%][_]*%"]
+30
+  {"group":"OR","children":[{"field":"name","operator":"CONTAINS","value":"30","literal":true},{"field":"notes","operator":"CONTAINS","value":"30","literal":true},{"field":"age","operator":"EQUAL","value":30}]}
+  (([name] IS NOT NULL AND LOWER([name]) COLLATE Latin1_General_100_BIN2 LIKE @p1) OR ([notes] IS NOT NULL AND LOWER([notes]) COLLATE Latin1_General_100_BIN2 LIKE @p2) OR ([age] IS NOT NULL AND [age] = @p3))
+  ["%30%","%30%",30]
+2026-03-14
+  {"group":"OR","children":[{"field":"name","operator":"CONTAINS","value":"2026-03-14","literal":true},{"field":"notes","operator":"CONTAINS","value":"2026-03-14","literal":true},{"field":"born","operator":"EQUAL","value":"2026-03-13T23:00:00.000Z"}]}
+  (([name] IS NOT NULL AND LOWER([name]) COLLATE Latin1_General_100_BIN2 LIKE @p1) OR ([notes] IS NOT NULL AND LOWER([notes]) COLLATE Latin1_General_100_BIN2 LIKE @p2) OR ([born] IS NOT NULL AND [born] >= CAST(@p3 AS datetime2(0)) AND [born] < CAST(@p4 AS datetime2(0))))
+  ["%2026-03-14%","%2026-03-14%","2026-03-14T00:00:00","2026-03-15T00:00:00"]
+true
+  {"group":"OR","children":[{"field":"name","operator":"CONTAINS","value":"true","literal":true},{"field":"notes","operator":"CONTAINS","value":"true","literal":true}]}
+  (([name] IS NOT NULL AND LOWER([name]) COLLATE Latin1_General_100_BIN2 LIKE @p1) OR ([notes] IS NOT NULL AND LOWER([notes]) COLLATE Latin1_General_100_BIN2 LIKE @p2))
+  ["%true%","%true%"]"
+`;
+
+exports[`the SQL of a find filter > expect the SQL of oracle to be the snapshot 1`] = `
+"acme
+  {"group":"OR","children":[{"field":"name","operator":"CONTAINS","value":"acme","literal":true},{"field":"notes","operator":"CONTAINS","value":"acme","literal":true}]}
+  (("name" IS NOT NULL AND LOWER("name") LIKE :1 ESCAPE '!') OR ("notes" IS NOT NULL AND LOWER("notes") LIKE :2 ESCAPE '!'))
+  ["%acme%","%acme%"]
+Oslo caseSensitive
+  {"group":"OR","children":[{"field":"name","operator":"CONTAINS","value":"Oslo","caseSensitive":true,"literal":true},{"field":"notes","operator":"CONTAINS","value":"Oslo","caseSensitive":true,"literal":true},{"field":"office","operator":"IN","value":["k0"],"caseSensitive":true},{"field":"team","operator":"IN","value":[1]}]}
+  (("name" IS NOT NULL AND "name" LIKE :1 ESCAPE '!') OR ("notes" IS NOT NULL AND "notes" LIKE :2 ESCAPE '!') OR ("office" IS NOT NULL AND "office" IN (:3)) OR ("team" IS NOT NULL AND "team" IN (:4)))
+  ["%Oslo%","%Oslo%","k0",1]
+50%_*
+  {"group":"OR","children":[{"field":"name","operator":"CONTAINS","value":"50%_*","literal":true},{"field":"notes","operator":"CONTAINS","value":"50%_*","literal":true}]}
+  (("name" IS NOT NULL AND LOWER("name") LIKE :1 ESCAPE '!') OR ("notes" IS NOT NULL AND LOWER("notes") LIKE :2 ESCAPE '!'))
+  ["%50!%!_*%","%50!%!_*%"]
+30
+  {"group":"OR","children":[{"field":"name","operator":"CONTAINS","value":"30","literal":true},{"field":"notes","operator":"CONTAINS","value":"30","literal":true},{"field":"age","operator":"EQUAL","value":30}]}
+  (("name" IS NOT NULL AND LOWER("name") LIKE :1 ESCAPE '!') OR ("notes" IS NOT NULL AND LOWER("notes") LIKE :2 ESCAPE '!') OR ("age" IS NOT NULL AND "age" = :3))
+  ["%30%","%30%",30]
+2026-03-14
+  {"group":"OR","children":[{"field":"name","operator":"CONTAINS","value":"2026-03-14","literal":true},{"field":"notes","operator":"CONTAINS","value":"2026-03-14","literal":true},{"field":"born","operator":"EQUAL","value":"2026-03-13T23:00:00.000Z"}]}
+  (("name" IS NOT NULL AND LOWER("name") LIKE :1 ESCAPE '!') OR ("notes" IS NOT NULL AND LOWER("notes") LIKE :2 ESCAPE '!') OR ("born" IS NOT NULL AND "born" >= TO_DATE(:3, 'YYYY-MM-DD HH24:MI:SS') AND "born" < TO_DATE(:4, 'YYYY-MM-DD HH24:MI:SS')))
+  ["%2026-03-14%","%2026-03-14%","2026-03-14 00:00:00","2026-03-15 00:00:00"]
+true
+  {"group":"OR","children":[{"field":"name","operator":"CONTAINS","value":"true","literal":true},{"field":"notes","operator":"CONTAINS","value":"true","literal":true}]}
+  (("name" IS NOT NULL AND LOWER("name") LIKE :1 ESCAPE '!') OR ("notes" IS NOT NULL AND LOWER("notes") LIKE :2 ESCAPE '!'))
+  ["%true%","%true%"]"
+`;
+
+exports[`the SQL of a find filter > expect the SQL of postgres to be the snapshot 1`] = `
+"acme
+  {"group":"OR","children":[{"field":"name","operator":"CONTAINS","value":"acme","literal":true},{"field":"notes","operator":"CONTAINS","value":"acme","literal":true}]}
+  (("name" IS NOT NULL AND LOWER("name") LIKE $1 ESCAPE '!') OR ("notes" IS NOT NULL AND LOWER("notes") LIKE $2 ESCAPE '!'))
+  ["%acme%","%acme%"]
+Oslo caseSensitive
+  {"group":"OR","children":[{"field":"name","operator":"CONTAINS","value":"Oslo","caseSensitive":true,"literal":true},{"field":"notes","operator":"CONTAINS","value":"Oslo","caseSensitive":true,"literal":true},{"field":"office","operator":"IN","value":["k0"],"caseSensitive":true},{"field":"team","operator":"IN","value":[1]}]}
+  (("name" IS NOT NULL AND "name" LIKE $1 ESCAPE '!') OR ("notes" IS NOT NULL AND "notes" LIKE $2 ESCAPE '!') OR ("office" IS NOT NULL AND "office" COLLATE "C" IN ($3)) OR ("team" IS NOT NULL AND "team" IN ($4)))
+  ["%Oslo%","%Oslo%","k0",1]
+50%_*
+  {"group":"OR","children":[{"field":"name","operator":"CONTAINS","value":"50%_*","literal":true},{"field":"notes","operator":"CONTAINS","value":"50%_*","literal":true}]}
+  (("name" IS NOT NULL AND LOWER("name") LIKE $1 ESCAPE '!') OR ("notes" IS NOT NULL AND LOWER("notes") LIKE $2 ESCAPE '!'))
+  ["%50!%!_*%","%50!%!_*%"]
+30
+  {"group":"OR","children":[{"field":"name","operator":"CONTAINS","value":"30","literal":true},{"field":"notes","operator":"CONTAINS","value":"30","literal":true},{"field":"age","operator":"EQUAL","value":30}]}
+  (("name" IS NOT NULL AND LOWER("name") LIKE $1 ESCAPE '!') OR ("notes" IS NOT NULL AND LOWER("notes") LIKE $2 ESCAPE '!') OR ("age" IS NOT NULL AND "age" = $3))
+  ["%30%","%30%",30]
+2026-03-14
+  {"group":"OR","children":[{"field":"name","operator":"CONTAINS","value":"2026-03-14","literal":true},{"field":"notes","operator":"CONTAINS","value":"2026-03-14","literal":true},{"field":"born","operator":"EQUAL","value":"2026-03-13T23:00:00.000Z"}]}
+  (("name" IS NOT NULL AND LOWER("name") LIKE $1 ESCAPE '!') OR ("notes" IS NOT NULL AND LOWER("notes") LIKE $2 ESCAPE '!') OR ("born" IS NOT NULL AND "born" >= CAST($3 AS timestamp) AND "born" < CAST($4 AS timestamp)))
+  ["%2026-03-14%","%2026-03-14%","2026-03-14 00:00:00","2026-03-15 00:00:00"]
+true
+  {"group":"OR","children":[{"field":"name","operator":"CONTAINS","value":"true","literal":true},{"field":"notes","operator":"CONTAINS","value":"true","literal":true}]}
+  (("name" IS NOT NULL AND LOWER("name") LIKE $1 ESCAPE '!') OR ("notes" IS NOT NULL AND LOWER("notes") LIKE $2 ESCAPE '!'))
+  ["%true%","%true%"]"
+`;
+
+exports[`the SQL of a find filter > expect the SQL of sqlite to be the snapshot 1`] = `
+"acme
+  {"group":"OR","children":[{"field":"name","operator":"CONTAINS","value":"acme","literal":true},{"field":"notes","operator":"CONTAINS","value":"acme","literal":true}]}
+  (("name" IS NOT NULL AND LOWER("name") GLOB ?) OR ("notes" IS NOT NULL AND LOWER("notes") GLOB ?))
+  ["*acme*","*acme*"]
+Oslo caseSensitive
+  {"group":"OR","children":[{"field":"name","operator":"CONTAINS","value":"Oslo","caseSensitive":true,"literal":true},{"field":"notes","operator":"CONTAINS","value":"Oslo","caseSensitive":true,"literal":true},{"field":"office","operator":"IN","value":["k0"],"caseSensitive":true},{"field":"team","operator":"IN","value":[1]}]}
+  (("name" IS NOT NULL AND "name" GLOB ?) OR ("notes" IS NOT NULL AND "notes" GLOB ?) OR ("office" IS NOT NULL AND "office" COLLATE BINARY IN (?)) OR ("team" IS NOT NULL AND "team" IN (?)))
+  ["*Oslo*","*Oslo*","k0",1]
+50%_*
+  {"group":"OR","children":[{"field":"name","operator":"CONTAINS","value":"50%_*","literal":true},{"field":"notes","operator":"CONTAINS","value":"50%_*","literal":true}]}
+  (("name" IS NOT NULL AND LOWER("name") GLOB ?) OR ("notes" IS NOT NULL AND LOWER("notes") GLOB ?))
+  ["*50%_[*]*","*50%_[*]*"]
+30
+  {"group":"OR","children":[{"field":"name","operator":"CONTAINS","value":"30","literal":true},{"field":"notes","operator":"CONTAINS","value":"30","literal":true},{"field":"age","operator":"EQUAL","value":30}]}
+  (("name" IS NOT NULL AND LOWER("name") GLOB ?) OR ("notes" IS NOT NULL AND LOWER("notes") GLOB ?) OR ("age" IS NOT NULL AND "age" = ?))
+  ["*30*","*30*",30]
+2026-03-14
+  {"group":"OR","children":[{"field":"name","operator":"CONTAINS","value":"2026-03-14","literal":true},{"field":"notes","operator":"CONTAINS","value":"2026-03-14","literal":true},{"field":"born","operator":"EQUAL","value":"2026-03-13T23:00:00.000Z"}]}
+  (("name" IS NOT NULL AND LOWER("name") GLOB ?) OR ("notes" IS NOT NULL AND LOWER("notes") GLOB ?) OR (julianday("born") IS NOT NULL AND julianday("born") >= julianday(?) AND julianday("born") < julianday(?)))
+  ["*2026-03-14*","*2026-03-14*","2026-03-14 00:00:00","2026-03-15 00:00:00"]
+true
+  {"group":"OR","children":[{"field":"name","operator":"CONTAINS","value":"true","literal":true},{"field":"notes","operator":"CONTAINS","value":"true","literal":true}]}
+  (("name" IS NOT NULL AND LOWER("name") GLOB ?) OR ("notes" IS NOT NULL AND LOWER("notes") GLOB ?))
+  ["*true*","*true*"]"
+`;

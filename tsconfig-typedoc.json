@@ -21,7 +21,7 @@
         "removeComments": true,
         "emitDecoratorMetadata": false,
         "importHelpers": false,
-        "strictNullChecks": false,
+        "strict": true,
         "experimentalDecorators": true,
         "paths": {
             "@simple-html/grid": ["./src"]

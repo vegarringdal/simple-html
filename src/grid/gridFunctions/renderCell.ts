@@ -4,7 +4,7 @@ import {
     GROUP_COLTYPE,
     LEFT_PINNED_COLTYPE,
     MIDDLE_PINNED_COLTYPE,
-    RIGH_PINNED_COLTYPE,
+    RIGHT_PINNED_COLTYPE,
     SELECTOR_COLTYPE
 } from './GROUP_COLTYPE';
 import type { HTMLCellElement } from './HTMLCellElement';
@@ -27,7 +27,7 @@ export function renderCell(ctx: Grid, cell: HTMLElement, row: number, column: nu
     const type = cell.getAttribute('type');
     const rowdata = ctx.gridInterface.getDatasource().getRow(row);
 
-    let attribute: string;
+    let attribute: string | null;
     switch (colType) {
         case GROUP_COLTYPE:
             attribute = null;
@@ -36,13 +36,13 @@ export function renderCell(ctx: Grid, cell: HTMLElement, row: number, column: nu
             attribute = null;
             break;
         case LEFT_PINNED_COLTYPE:
-            attribute = ctx.gridInterface.__getGridConfig().columnsPinnedLeft[column]?.rows[celno];
+            attribute = ctx.gridInterface.__getGridConfig().layout.left[column]?.fields[celno];
             break;
         case MIDDLE_PINNED_COLTYPE:
-            attribute = ctx.gridInterface.__getGridConfig().columnsCenter[column]?.rows[celno];
+            attribute = ctx.gridInterface.__getGridConfig().layout.center[column]?.fields[celno];
             break;
-        case RIGH_PINNED_COLTYPE:
-            attribute = ctx.gridInterface.__getGridConfig().columnsPinnedRight[column]?.rows[celno];
+        case RIGHT_PINNED_COLTYPE:
+            attribute = ctx.gridInterface.__getGridConfig().layout.right[column]?.fields[celno];
             break;
     }
 
@@ -58,11 +58,11 @@ export function renderCell(ctx: Grid, cell: HTMLElement, row: number, column: nu
     }
 
     if (type === 'label') {
-        renderHeaderLabel(ctx, cell as HTMLCellElement, row, column, celno, colType, type, attribute, rowdata);
+        renderHeaderLabel(ctx, cell as HTMLCellElement, row, column, celno, colType, type, attribute);
     }
 
     if (type === 'filter') {
-        renderHeaderFilter(ctx, cell as HTMLCellElement, row, column, celno, colType, type, attribute, rowdata);
+        renderHeaderFilter(ctx, cell as HTMLCellElement, row, column, celno, colType, type, attribute);
     }
 
     if (type === SELECTOR_COLTYPE) {
@@ -74,6 +74,7 @@ export function renderCell(ctx: Grid, cell: HTMLElement, row: number, column: nu
     }
 
     if (type === 'row-cell') {
-        renderRowCell(ctx, cell as HTMLCellElement, row, column, celno, colType, type, attribute, rowdata);
+        // row-cell cells are only made in the pinned sections (rebuildRowColumns), so not null
+        renderRowCell(ctx, cell as HTMLCellElement, row, column, celno, colType, type, attribute!, rowdata);
     }
 }

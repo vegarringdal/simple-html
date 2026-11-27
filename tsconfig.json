@@ -23,12 +23,13 @@
         "removeComments": true,
         "emitDecoratorMetadata": false,
         "importHelpers": false,
-        "strictNullChecks": false,
+        "strict": true,
         "experimentalDecorators": true,
         "rootDir": ".",
         "paths": {
-            "@simple-html/grid": ["./src"]
+            "@simple-html/grid": ["./src"],
+            "@simple-html/grid/sql": ["./src/sql.ts"]
         }
     },
-    "exclude": ["node_modules", "dist", "dist_dev", "docs", "config_devserver.ts", "typecheck.js", "scripts"]
+    "exclude": ["node_modules", "dist", "dist_dev", "docs", "config_devserver.ts", "typecheck.js", "scripts", ".claude"]
 }

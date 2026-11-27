@@ -1,11 +1,12 @@
 import { html, render } from 'lit-html';
 import type { Grid } from '../grid';
 import { asPx } from './asPx';
-import { creatElement } from './createElement';
+import { createElement } from './createElement';
 import { DIV } from './DIV';
 import { dragEvent } from './dragEvent';
 import { getElementByClassName } from './getElementByClassName';
 import { getTextWidth } from './getTextWidth';
+import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
 
 /**
@@ -15,17 +16,8 @@ import type { HTMLCellElement } from './HTMLCellElement';
  * hoving left side of grouping box
  */
 export function rebuildTopPanel(ctx: Grid) {
+    // the panel is a drop target while a column is dragged, dragEvent highlights it under the pointer
     const panel = getElementByClassName(ctx.element, 'simple-html-grid-panel');
-    panel.onmousemove = () => {
-        if (panel.classList.contains('dragdrop-state') && !panel.classList.contains('simple-html-grid-col-resize-hover')) {
-            panel.classList.toggle('simple-html-grid-col-resize-hover');
-        }
-    };
-    panel.onmouseleave = () => {
-        if (panel.classList.contains('dragdrop-state')) {
-            panel.classList.remove('simple-html-grid-col-resize-hover');
-        }
-    };
 
     while (panel.firstChild) {
         panel.removeChild(panel.firstChild);
@@ -34,46 +26,46 @@ export function rebuildTopPanel(ctx: Grid) {
     const grouping = ctx.gridInterface.getDatasource().getGrouping();
 
     grouping.forEach((group) => {
-        const label = creatElement('DIV', 'simple-html-grid-panel-label');
+        const label = createElement('DIV', 'simple-html-grid-panel-label');
         (label as HTMLCellElement).$attribute = group.attribute;
         label.style.width = asPx(getTextWidth(ctx, group.title) + 20);
 
         dragEvent(ctx, label as HTMLCellElement, false);
 
-        const addEvent = (child: HTMLElement, parent: HTMLElement) => {
-            child.onmouseenter = () => {
-                if ((parent as HTMLCellElement).$attribute) {
-                    child.classList.toggle('simple-html-grid-col-resize-hover');
-                }
-            };
-            child.onmouseleave = () => {
-                if ((parent as HTMLCellElement).$attribute) {
-                    child.classList.toggle('simple-html-grid-col-resize-hover');
-                }
-            };
-            parent.appendChild(child);
+        // drop zone: a field or chip dropped here is grouped on before this chip. It only has a size
+        // while a column is dragged
+        label.appendChild(createElement(DIV, 'simple-html-grid-drop-zone-left-panel'));
+
+        const removeGroup = () => {
+            // TODO: look into group logic
+            const updateGrouping = ctx.gridInterface
+                .getDatasource()
+                .getGrouping()
+                .filter((e) => e.attribute !== group.attribute);
+            if (updateGrouping.length === 0) {
+                ctx.gridInterface.getDatasource().group([]);
+            } else {
+                ctx.gridInterface.getDatasource().group(updateGrouping);
+            }
+
+            ctx.rebuild();
         };
 
-        addEvent(creatElement(DIV, 'simple-html-grid-drop-zone-left-panel'), label);
-
+        // the x is a button, in the tab order: Enter and Space remove the grouping like a click
         render(
             html`<div>
                 <span class="simple-html-grid-panel-label-text">${group.title}</span>
                 <i
                     class="simple-html-grid-icon-group"
-                    @click=${() => {
-                        // TODO: look into group logic
-                        const updateGrouping = ctx.gridInterface
-                            .getDatasource()
-                            .getGrouping()
-                            .filter((e) => e.attribute !== group.attribute);
-                        if (updateGrouping.length === 0) {
-                            ctx.gridInterface.getDatasource().group([]);
-                        } else {
-                            ctx.gridInterface.getDatasource().group(updateGrouping);
+                    role="button"
+                    tabindex="0"
+                    aria-label=${gridText(ctx, 'grid.removeGroup', { title: group.title })}
+                    @click=${removeGroup}
+                    @keydown=${(e: KeyboardEvent) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            removeGroup();
                         }
-
-                        ctx.rebuild();
                     }}
                 >
                     <svg

@@ -1,0 +1,1145 @@
+// @vitest-environment happy-dom
+
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { Datasource } from '../../datasource/dataSource';
+import type { DatasourceOptions } from '../../datasource/datasourceOptions';
+import type { GridConfig } from '../gridConfig';
+import type { GridElement } from '../gridElement';
+import type { GridInterface } from '../gridInterface';
+import { MENU_IDS } from '../gridMenus';
+import { registerLookup } from '../lookup';
+import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
+import { gridOf, headerFilterInput, labelCell, menuEntry, openLabelMenu } from './interactionTestHelpers';
+
+/**
+ * The column settings dialog (columnSettings.ts) and the gear that opens it (rebuildFooter.ts): the
+ * button in the footer and its option, the header menu's Column settings…, gridInterface.openColumnSettings();
+ * the list of the columns and its keys, the settings of each type - the format picker of a date and a
+ * number column (the entries of Format ›), the template and the link of a text column, none for a checkbox
+ * and a lookup column - the preview, the field menu of a template, the problems that hold Apply back, and
+ * Apply, Apply & close, Cancel, Reset column, Reset all. happy-dom has the dialog's showModal() and close(),
+ * not the browser's focus around them (see filterEditor.test.ts): the browser check has those.
+ */
+
+// local dates: a time zone with summer time. Node reads TZ again when it is set
+const originalTimeZone = process.env.TZ;
+beforeAll(() => {
+    process.env.TZ = 'Europe/Oslo';
+    stubCanvas();
+    stubElementSizes();
+});
+afterAll(() => {
+    if (originalTimeZone === undefined) {
+        delete process.env.TZ;
+    } else {
+        process.env.TZ = originalTimeZone;
+    }
+});
+
+beforeEach(() => {
+    document.body.innerHTML = '';
+});
+
+const CODES = new Datasource();
+CODES.setData([{ code: 1, label: 'One' }]);
+registerLookup('settings-test-codes', { datasource: CODES, valueField: 'code', labelField: 'label' });
+
+const LAYOUT = ['name', 'company', 'born', 'updated', 'balance', 'active', 'code'];
+
+// id is no column: a field of the rows only
+const rows = () => [
+    {
+        id: 12,
+        name: 'Ann',
+        company: 'Acme & Co',
+        born: new Date(2026, 10, 22),
+        updated: new Date(2026, 10, 22, 13, 45),
+        balance: 1234.5,
+        active: true,
+        code: 1
+    },
+    { id: 13, name: 'Bob', company: '', born: null, updated: null, balance: 0, active: false, code: null }
+];
+
+const fields = (): DatasourceOptions => ({
+    fields: { id: 'number', born: 'date', updated: 'datetime', balance: 'number', active: 'boolean', code: 'number' }
+});
+
+const config = (more: Partial<GridConfig> = {}): GridConfig => ({
+    readonly: false,
+    columns: {
+        name: { label: 'Name' },
+        company: { label: 'Company' },
+        born: { label: 'Born', format: { date: 'norwegian' } },
+        code: { label: 'Code', editor: { type: 'select', lookup: 'settings-test-codes' } }
+    },
+    layout: { center: LAYOUT.map((field) => ({ fields: [field], width: 100 })) },
+    ...more
+});
+
+const dialog = () => document.querySelector('dialog.column-settings') as HTMLDialogElement;
+const options = () => Array.from(dialog().querySelectorAll<HTMLElement>('[role="option"]'));
+const selected = () => dialog().querySelector('[role="option"][aria-selected="true"]') as HTMLElement;
+const list = () => dialog().querySelector('[role="listbox"]') as HTMLElement;
+const heading = () => dialog().querySelector('.column-settings-heading')?.textContent?.replace(/\s+/g, ' ').trim();
+const input = (part: string) => dialog().querySelector(`input[id$="-settings-${part}"]`) as HTMLInputElement | null;
+const checkboxes = () => Array.from(dialog().querySelectorAll<HTMLInputElement>('.column-settings-check input'));
+/** the checkbox of a setting, by its text */
+const checkbox = (label: string) =>
+    checkboxes().find((each) => each.parentElement?.textContent?.trim() === label) as HTMLInputElement;
+const button = (text: string) =>
+    Array.from(dialog().querySelectorAll<HTMLButtonElement>('button')).find(
+        (each) => each.textContent?.trim() === text
+    ) as HTMLButtonElement;
+const problems = () =>
+    Array.from(dialog().querySelectorAll('.column-settings-problem'), (problem) => problem.textContent?.trim());
+const previewCell = () => dialog().querySelector('.column-settings-preview-cell') as HTMLElement;
+const picker = () => dialog().querySelector('.column-settings-format') as HTMLButtonElement;
+
+/** types a template, as the user: the value, then its input event */
+function type(part: string, value: string) {
+    showText(part);
+    const element = input(part) as HTMLInputElement;
+    element.value = value;
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+/**
+ * Text shown is the text of a link: before it is typed into, Show as link is turned on (with an address,
+ * or the dialog says to write one) when the column has no template yet
+ */
+function showText(part: string) {
+    if (part === 'text' && !input('text') && checkbox('Show as link')) {
+        toggle('Show as link');
+        type('url', 'https://example.com/{id}');
+    }
+}
+
+/** turns a checkbox on or off, as a click: checked, then its change event */
+function toggle(label: string) {
+    const element = checkbox(label);
+    element.checked = !element.checked;
+    element.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+/** a keydown on an element, returns the event */
+function press(target: Element, key: string) {
+    const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+    target.dispatchEvent(event);
+    return event;
+}
+
+const gear = (element: GridElement) => element.querySelector('.footer-settings') as HTMLButtonElement | null;
+
+describe('column settings - the gear in the footer', () => {
+    it('expect a button at the end of the footer, named and with a tooltip, that says it opens a dialog', async () => {
+        const { element } = await mountGrid(config(), rows(), fields());
+        const settings = gear(element) as HTMLButtonElement;
+
+        expect(settings.tagName).toEqual('BUTTON');
+        expect(settings.type).toEqual('button');
+        expect(settings.getAttribute('aria-label')).toEqual('Grid config');
+        expect(settings.getAttribute('title')).toEqual('Grid config');
+        expect(settings.getAttribute('aria-haspopup')).toEqual('dialog');
+        // the icon is decoration
+        expect(settings.querySelector('svg')?.getAttribute('aria-hidden')).toEqual('true');
+        // the last of the footer, after "No filter" (the last stop of Tab, see accessibility.test.ts)
+        const buttons = Array.from(element.querySelectorAll('.simple-html-grid-footer button'));
+        expect(buttons.at(-1)).toBe(settings);
+        // the footer keeps room for it: the filter's row stays in the middle
+        expect(element.querySelector('.footer-inner')?.classList.contains('has-settings')).toBe(true);
+    });
+
+    it('expect no button with settingsButton: false, nor in a footer of no height; updateConfig() turns it on', async () => {
+        const { element, gridInterface } = await mountGrid(config({ settingsButton: false }), rows(), fields());
+        expect(gear(element)).toBeNull();
+        expect(element.querySelector('.footer-inner')?.classList.contains('has-settings')).toBe(false);
+
+        gridInterface.updateConfig({ settingsButton: undefined });
+        expect(gear(element)).not.toBeNull();
+        gridInterface.updateConfig({ footerHeight: 0 });
+        expect(gear(element)).toBeNull();
+    });
+
+    it('expect a click to open the dialog on the column of the cell that had the focus', async () => {
+        const { element } = await mountGrid(config(), rows(), fields());
+        const cell = element.querySelector('input[data-attribute="balance"]') as HTMLInputElement;
+        cell.focus();
+        // the press of the click: the grid remembers the cell with the focus then
+        (gear(element) as HTMLButtonElement).dispatchEvent(
+            new PointerEvent('pointerdown', { bubbles: true, pointerType: 'mouse' })
+        );
+        (gear(element) as HTMLButtonElement).click();
+
+        expect(dialog().open).toBe(true);
+        expect(heading()).toEqual('Balance Number');
+    });
+
+    it('expect the first column without a cell with the focus', async () => {
+        const { element } = await mountGrid(config(), rows(), fields());
+        (gear(element) as HTMLButtonElement).click();
+
+        expect(heading()).toEqual('Name Text');
+    });
+});
+
+describe('column settings - opening and closing', () => {
+    it('expect Column settings… in the header menu, opening it on that column', async () => {
+        const { element } = await mountGrid(config(), rows(), fields());
+        expect(MENU_IDS.header).toContain('header.settings');
+
+        openLabelMenu(element, 'company');
+        menuEntry('header.settings').click();
+
+        expect(dialog().open).toBe(true);
+        expect(heading()).toEqual('Company Text');
+        expect(selected().textContent).toContain('Company');
+    });
+
+    it('expect openColumnSettings() on a column, the first for a field that is no column, nothing without a grid', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+
+        gridInterface.openColumnSettings('born');
+        expect(heading()).toEqual('Born Date');
+        gridInterface.openColumnSettings('nothing');
+        expect(heading()).toEqual('Name Text');
+        // open already: the same dialog, started again
+        expect(document.querySelectorAll('dialog.column-settings')).toHaveLength(1);
+
+        const datasource = new Datasource();
+        const { GridInterface } = await import('../gridInterface');
+        expect(() => new GridInterface(config({ columns: {} }), datasource).openColumnSettings()).not.toThrow();
+    });
+
+    it('expect a modal dialog named by its title, the focus on the dialog itself, of the filter editor look', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        const showModal = vi.spyOn(HTMLDialogElement.prototype, 'showModal');
+
+        gridInterface.openColumnSettings();
+
+        expect(showModal).toHaveBeenCalledTimes(1);
+        expect(dialog().classList.contains('filter-editor-content')).toBe(true);
+        expect(dialog().hasAttribute('autofocus')).toBe(true);
+        expect(document.activeElement).toBe(dialog());
+        const title = document.getElementById(dialog().getAttribute('aria-labelledby') as string);
+        expect(title?.textContent?.trim()).toEqual('Grid config');
+        expect(dialog().querySelectorAll('.simple-html-resize-handle')).toHaveLength(8);
+        showModal.mockRestore();
+    });
+
+    it('expect Cancel, the ✕ and a close by the browser (Esc) to take it off the page without applying', async () => {
+        const { element, gridInterface } = await mountGrid(config(), rows(), fields());
+        const before = gridInterface.getState().formats;
+
+        for (const close of [
+            () => button('Cancel').click(),
+            () => (dialog().querySelector('.filter-editor-close') as HTMLElement).click(),
+            () => dialog().close()
+        ]) {
+            gridInterface.openColumnSettings('name');
+            type('text', '{name}!');
+            close();
+            expect(dialog()).toBeNull();
+            expect(gridOf(element).columnSettings).toBeNull();
+        }
+        expect(gridInterface.getState().formats).toEqual(before);
+    });
+
+    it('expect the dialog closed when the grid leaves the page', async () => {
+        const { element, gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings();
+        element.remove();
+        expect(dialog()).toBeNull();
+    });
+});
+
+describe('column settings - the list of the columns', () => {
+    it('expect the columns of the layout in their order, each with its type and what it has set', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings();
+
+        expect(list().getAttribute('aria-label')).toEqual('Columns');
+        expect(options().map((option) => option.textContent?.replace(/\s+/g, ' ').trim())).toEqual([
+            'Name Text',
+            'Company Text',
+            'Born Date Format',
+            'Updated Date and time',
+            'Balance Number',
+            'Active Checkbox',
+            'Code Lookup'
+        ]);
+        expect(list().getAttribute('aria-activedescendant')).toEqual(options()[0].id);
+        expect(options()[0].getAttribute('aria-selected')).toEqual('true');
+    });
+
+    it('expect a column pinned as a copy (in the layout twice) once in the list', async () => {
+        const pinned = config();
+        pinned.layout = { ...pinned.layout, left: [{ fields: ['company'], width: 100 }] };
+        const { gridInterface } = await mountGrid(pinned, rows(), fields());
+        gridInterface.openColumnSettings('company');
+
+        expect(options().filter((option) => option.dataset.field === 'company')).toHaveLength(1);
+        expect(options()).toHaveLength(LAYOUT.length);
+        expect(selected().dataset.field).toEqual('company');
+    });
+
+    it('expect the arrows, Home, End, PageDown and a letter to pick a column, a click too', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings();
+
+        expect(press(list(), 'ArrowDown').defaultPrevented).toBe(true);
+        expect(heading()).toEqual('Company Text');
+        press(list(), 'End');
+        expect(heading()).toEqual('Code Lookup');
+        press(list(), 'ArrowDown');
+        expect(heading()).toEqual('Code Lookup');
+        press(list(), 'Home');
+        expect(heading()).toEqual('Name Text');
+        press(list(), 'ArrowUp');
+        expect(heading()).toEqual('Name Text');
+        press(list(), 'PageDown');
+        expect(heading()).toEqual('Code Lookup');
+        // a letter: the next column whose label starts with it, around the end
+        press(list(), 'b');
+        expect(heading()).toEqual('Born Date');
+        press(list(), 'b');
+        expect(heading()).toEqual('Balance Number');
+        expect(press(list(), 'x').defaultPrevented).toBe(false);
+        expect(list().getAttribute('aria-activedescendant')).toEqual(selected().id);
+
+        options()[5].click();
+        expect(heading()).toEqual('Active Checkbox');
+    });
+});
+
+describe('column settings - the settings of each type', () => {
+    it('expect a date column: its format in the picker, the entries of Format › in its menu, the preview', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('born');
+
+        expect(picker().textContent?.trim()).toEqual('Norwegian');
+        expect(picker().getAttribute('aria-label')).toEqual('Format: Norwegian');
+        expect(previewCell().textContent?.trim()).toEqual('22.11.2026');
+
+        picker().click();
+        // the menu is in the dialog (a modal dialog makes the page inert)
+        expect(dialog().querySelector('[data-menu-id="header.format.date.weekIso"]')).not.toBeNull();
+        menuEntry('header.format.date.weekIso').click();
+
+        expect(picker().textContent?.trim()).toEqual('Week, ISO');
+        expect(previewCell().textContent?.trim()).toEqual('2026-W47');
+        // not applied yet
+        expect(gridInterface.getState().formats.born).toEqual({ date: 'norwegian' });
+    });
+
+    it('expect a number column: the example of its format in the picker, Default without one', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('balance');
+
+        expect(picker().textContent?.trim()).toEqual('Default');
+        expect(previewCell().textContent?.trim()).toEqual('1234.5');
+        picker().click();
+        menuEntry('header.format.number.norwegian').click();
+
+        expect(picker().textContent?.trim()).toEqual('1 234 567,891');
+        expect(previewCell().textContent?.trim()).toEqual('1 234,5');
+        expect(selected().textContent).toContain('Format');
+    });
+
+    it('expect a checkbox and a lookup column to have no settings and no preview', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+
+        gridInterface.openColumnSettings('active');
+        expect(dialog().querySelector('.column-settings-none')?.textContent?.trim()).toEqual('A checkbox column has no format');
+        expect(dialog().querySelector('.column-settings-preview')).toBeNull();
+        gridInterface.openColumnSettings('code');
+        expect(dialog().querySelector('.column-settings-none')?.textContent?.trim()).toEqual(
+            'A lookup column shows the label of its value: it has no format'
+        );
+    });
+
+    it('expect a text column: its template, a placeholder and a hint, the preview of the first row', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('name');
+
+        // Text shown is under Show as link, while it is on
+        expect(input('text')).toBeNull();
+        showText('text');
+        const text = input('text') as HTMLInputElement;
+        expect(text.placeholder).toEqual('{firstname} {lastname}');
+        expect(document.querySelector(`label[for="${text.id}"]`)?.textContent?.trim()).toEqual('Text shown');
+        const hint = document.getElementById((text.getAttribute('aria-describedby') as string).split(' ')[0]);
+        expect(hint?.textContent).toContain('{value}');
+        expect(dialog().querySelector('.column-settings-preview-title')?.textContent?.trim()).toEqual('Preview, the first row');
+        type('text', '{name} ({id})');
+        expect(previewCell().textContent?.trim()).toEqual('Ann (12)');
+        expect(selected().textContent).toContain('Text');
+        // emptied: no template, the link stays
+        type('text', '');
+        expect(Array.from(selected().querySelectorAll('.column-settings-badge'), (badge) => badge.textContent?.trim())).toEqual([
+            'Link'
+        ]);
+    });
+
+    it('expect a number column to have a link with its text, a date column neither', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('balance');
+        expect(input('text')).toBeNull();
+        expect(checkbox('Show as link')).toBeDefined();
+        type('text', '{value} kg');
+        expect(previewCell().textContent?.trim()).toContain('kg');
+
+        gridInterface.openColumnSettings('born');
+        expect(input('text')).toBeNull();
+        expect(checkbox('Show as link')).toBeUndefined();
+    });
+
+    it("expect a template the column has without a link (the config's) to be shown, to be seen and emptied", async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.setState({ formats: { born: { date: 'norwegian', text: 'born {value}' } } });
+        gridInterface.openColumnSettings('born');
+        expect(input('text')?.value).toEqual('born {value}');
+        // {value} in the column's date format
+        expect(previewCell().textContent?.trim()).toEqual('born 22.11.2026');
+    });
+
+    it('expect Show as link turned off to take its text with it', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('name');
+        type('text', '{name} ({id})');
+        expect(input('text')?.value).toEqual('{name} ({id})');
+        toggle('Show as link');
+        expect(input('text')).toBeNull();
+        expect(previewCell().textContent?.trim()).toEqual('Ann');
+    });
+
+    it('expect the preview of the current row when there is one', async () => {
+        const { gridInterface, datasource } = await mountGrid(config(), rows(), fields());
+        datasource.setRowAsCurrentEntity(1);
+        gridInterface.openColumnSettings('name');
+
+        expect(dialog().querySelector('.column-settings-preview-title')?.textContent?.trim()).toEqual('Preview, the current row');
+        expect(previewCell().textContent?.trim()).toEqual('Bob');
+    });
+
+    it('expect no preview without rows', async () => {
+        const { gridInterface } = await mountGrid(config(), [], fields());
+        gridInterface.openColumnSettings('name');
+
+        expect(dialog().querySelector('.column-settings-preview-title')?.textContent?.trim()).toEqual('No rows to preview');
+        expect(previewCell()).toBeNull();
+    });
+});
+
+describe('column settings - a link', () => {
+    it('expect Show as link to show the address and Open in a new tab, on at first; off to take the link away', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('company');
+        expect(input('url')).toBeNull();
+
+        toggle('Show as link');
+        expect(input('url')?.placeholder).toEqual('https://example.com/customer/{id}');
+        expect(checkbox('Open in a new tab').checked).toBe(true);
+        expect(checkbox('Open in a new tab').parentElement?.textContent?.trim()).toEqual('Open in a new tab');
+
+        toggle('Show as link');
+        expect(input('url')).toBeNull();
+        expect(selected().querySelector('.column-settings-badge')).toBeNull();
+    });
+
+    it('expect the problems of an address at once, the column marked Error, Apply held back', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('company');
+        toggle('Show as link');
+
+        expect(problems()).toEqual(['Write the address']);
+        expect(input('url')?.getAttribute('aria-invalid')).toEqual('true');
+        expect(selected().textContent).toContain('Error');
+        expect(button('Apply').getAttribute('aria-disabled')).toEqual('true');
+        expect(button('Apply & close').getAttribute('aria-disabled')).toEqual('true');
+
+        type('url', 'crm.example.com/{id}');
+        expect(problems()).toEqual(['Start the address with https://, http://, mailto: or tel: - or give one field alone']);
+        type('url', 'javascript:alert({id})');
+        expect(problems()).toEqual(['Not a link the grid opens: only https:, http:, mailto: and tel:']);
+        type('url', 'https://x.com/{__rowState}');
+        expect(problems()).toEqual(["{__rowState} is the grid's own, not a field"]);
+
+        // held back: nothing applied, the dialog stays
+        button('Apply').click();
+        button('Apply & close').click();
+        expect(dialog()).not.toBeNull();
+        expect(gridInterface.getState().formats.company).toBeUndefined();
+    });
+
+    it('expect a valid address: the preview a link in a new tab, its address under it, no problem', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('company');
+        toggle('Show as link');
+        type('url', 'https://crm.example.com/customer/{id}');
+
+        expect(problems()).toEqual([]);
+        expect(input('url')?.getAttribute('aria-invalid')).toEqual('false');
+        const link = previewCell().querySelector('a') as HTMLAnchorElement;
+        expect(link.textContent?.trim()).toEqual('Acme & Co');
+        expect(link.getAttribute('href')).toEqual('https://crm.example.com/customer/12');
+        expect(link.getAttribute('target')).toEqual('_blank');
+        expect(link.getAttribute('rel')).toEqual('noopener noreferrer');
+        expect(dialog().querySelector('.column-settings-preview-address')?.textContent?.trim()).toEqual(
+            'https://crm.example.com/customer/12'
+        );
+        expect(selected().textContent).toContain('Link');
+        expect(button('Apply').hasAttribute('aria-disabled')).toBe(false);
+    });
+
+    it('expect the problems of the row: a field that is empty in it, one that does not exist, a value that is no address', async () => {
+        const { gridInterface, datasource } = await mountGrid(config(), rows(), fields());
+        datasource.setRowAsCurrentEntity(1);
+        gridInterface.openColumnSettings('company');
+        toggle('Show as link');
+
+        // Bob has no company
+        type('url', 'https://duckduckgo.com/?q={company}');
+        expect(problems()).toEqual(['Company is empty in this row: no link, the text only']);
+        expect(previewCell().querySelector('a')).toBeNull();
+        type('url', 'https://x.com/{compnay}/{id}');
+        expect(problems()).toEqual(['No field {compnay} in this row', 'Compnay is empty in this row: no link, the text only']);
+        type('url', '{name}');
+        expect(problems()).toEqual(['No valid address in this row: no link, the text only']);
+    });
+
+    it('expect a hostile address in the row: not a link in the preview, the problem said', async () => {
+        const { gridInterface, datasource } = await mountGrid(config(), rows(), fields());
+        datasource.getRows()[0].company = 'javascript:alert(1)';
+        gridInterface.openColumnSettings('company');
+        toggle('Show as link');
+        type('url', '{company}');
+
+        expect(previewCell().querySelector('a')).toBeNull();
+        expect(previewCell().textContent?.trim()).toEqual('javascript:alert(1)');
+        expect(problems()).toEqual(['Not a link the grid opens: only https:, http:, mailto: and tel:']);
+    });
+
+    it('expect the field button to list the fields of the columns and of the row, and to put the one picked at the caret', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('company');
+        toggle('Show as link');
+        type('url', 'https://crm.example.com/customer/');
+        const url = input('url') as HTMLInputElement;
+        url.setSelectionRange(url.value.length, url.value.length);
+
+        const insert = url.parentElement?.querySelector('.column-settings-insert') as HTMLButtonElement;
+        expect(insert.getAttribute('aria-label')).toEqual('Insert a field');
+        insert.click();
+        const fieldsListed = Array.from(
+            document.querySelectorAll<HTMLElement>('[data-menu-id^="filterEditor.field."]'),
+            (entry) => entry.getAttribute('data-menu-id')?.replace('filterEditor.field.', '')
+        );
+        // id is in the rows only, no column
+        expect(fieldsListed).toEqual(expect.arrayContaining(['id', 'name', 'company', 'born']));
+        menuEntry('filterEditor.field.id').click();
+
+        expect(input('url')?.value).toEqual('https://crm.example.com/customer/{id}');
+        expect(document.activeElement).toBe(input('url'));
+        expect(input('url')?.selectionStart).toEqual(input('url')?.value.length);
+
+        // in the middle of the text template: at its caret, replacing what is selected
+        type('text', 'A  B');
+        (input('text') as HTMLInputElement).setSelectionRange(2, 2);
+        (dialog().querySelector(`#${(input('text') as HTMLInputElement).id} + .column-settings-insert`) as HTMLElement).click();
+        menuEntry('filterEditor.field.name').click();
+        expect(input('text')?.value).toEqual('A {name} B');
+    });
+});
+
+describe('column settings - Apply and Reset', () => {
+    it('expect Apply to set the formats of the state, the dialog open; Apply & close to close it', async () => {
+        const { element, gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('company');
+        // the link on first (the helper), then its text and its address
+        type('text', '{company} ({id})');
+        type('url', 'mailto:{company}');
+
+        button('Apply').click();
+        expect(gridInterface.getState().formats).toEqual({
+            born: { date: 'norwegian' },
+            company: { text: '{company} ({id})', link: { url: 'mailto:{company}', newTab: true } }
+        });
+        expect(dialog()).not.toBeNull();
+        // the cell is a link now
+        expect(element.querySelector('a.simple-html-grid-cell-link')?.textContent).toEqual('Acme & Co (12)');
+
+        toggle('Open in a new tab');
+        button('Apply & close').click();
+        expect(dialog()).toBeNull();
+        expect(gridInterface.getState().formats.company).toEqual({ text: '{company} ({id})', link: { url: 'mailto:{company}' } });
+    });
+
+    it('expect the state saved as JSON to give the same settings back, also in the dialog', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.setState({ formats: { company: { link: { url: '{company}', newTab: true } } } });
+        const saved = JSON.parse(JSON.stringify(gridInterface.getState()));
+
+        const other = await mountGrid(config(), rows(), fields());
+        other.gridInterface.setState(saved);
+        other.gridInterface.openColumnSettings('company');
+        expect(input('url')?.value).toEqual('{company}');
+        expect(checkbox('Open in a new tab').checked).toBe(true);
+    });
+
+    it('expect Reset column to go back to the format the column starts with, Reset all to every one', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.setState({ formats: { born: { date: 'weekIso' }, name: { text: '{name}!' } } });
+        gridInterface.openColumnSettings('born');
+
+        expect(picker().textContent?.trim()).toEqual('Week, ISO');
+        expect(button('Reset column').getAttribute('data-tooltip')).toEqual('The settings the column starts with');
+        button('Reset column').click();
+        expect(picker().textContent?.trim()).toEqual('Norwegian');
+        // the dialog's, until Apply
+        expect(gridInterface.getState().formats.born).toEqual({ date: 'weekIso' });
+
+        options()[0].click();
+        expect(input('text')?.value).toEqual('{name}!');
+        button('Reset all').click();
+        // no template and no link: no Text shown
+        expect(input('text')).toBeNull();
+        button('Apply').click();
+        expect(gridInterface.getState().formats).toEqual({ born: { date: 'norwegian' } });
+    });
+
+    it('expect Reset to go back to initialState.formats when the config has them', async () => {
+        const { gridInterface } = await mountGrid(
+            config({ initialState: { formats: { name: { text: '#{name}' } } } }),
+            rows(),
+            fields()
+        );
+        gridInterface.setState({ formats: {} });
+        gridInterface.openColumnSettings('name');
+
+        button('Reset all').click();
+        expect(input('text')?.value).toEqual('#{name}');
+    });
+});
+
+describe('column settings - the filter operator', () => {
+    const operatorPicker = () => dialog().querySelector('.column-settings-operator') as HTMLButtonElement | null;
+    const operatorField = () =>
+        Array.from(dialog().querySelectorAll('.column-settings-field')).find((field) =>
+            field.textContent?.includes('Filter operator')
+        ) as HTMLElement | undefined;
+    const hint = () => operatorField()?.querySelector('.column-settings-hint')?.textContent?.trim();
+    const items = () => Array.from(dialog().querySelectorAll<HTMLElement>('[data-menu-id^="filter.operator."]'));
+
+    it('expect a number column: the operator in use in the picker, the default under it, the operators of a number in its menu', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('balance');
+
+        expect(operatorPicker()?.textContent?.trim()).toEqual('Greater than or equal');
+        expect(operatorPicker()?.getAttribute('aria-label')).toEqual('Filter operator: Greater than or equal');
+        expect(operatorPicker()?.getAttribute('data-tooltip')).toEqual('The operator the header filter of the column uses');
+        expect(hint()).toEqual('Default: Greater than or equal');
+
+        operatorPicker()?.click();
+        expect(items().map((item) => item.dataset.menuId)).toEqual([
+            'filter.operator.equal',
+            'filter.operator.notEqualTo',
+            'filter.operator.lessThan',
+            'filter.operator.lessThanOrEqualTo',
+            'filter.operator.greaterThan',
+            'filter.operator.greaterThanOrEqualTo',
+            'filter.operator.between'
+        ]);
+        // the one in use is checked
+        expect(menuEntry('filter.operator.greaterThanOrEqualTo').getAttribute('aria-checked')).toEqual('true');
+        menuEntry('filter.operator.lessThan').click();
+
+        expect(operatorPicker()?.textContent?.trim()).toEqual('Less than');
+        // the default stays what it is, and nothing is applied yet
+        expect(hint()).toEqual('Default: Greater than or equal');
+        expect(gridInterface.getState().headerFilters.balance?.operator).toBeUndefined();
+    });
+
+    it('expect the column default from its operator (config), the text operators for a text and a lookup column', async () => {
+        const { gridInterface } = await mountGrid(
+            config({
+                columns: {
+                    ...config().columns,
+                    name: { label: 'Name', operator: 'BEGIN_WITH' }
+                }
+            }),
+            rows(),
+            fields()
+        );
+        gridInterface.openColumnSettings('name');
+        expect(operatorPicker()?.textContent?.trim()).toEqual('Begins with');
+        expect(hint()).toEqual('Default: Begins with');
+        operatorPicker()?.click();
+        expect(items().map((item) => item.dataset.menuId)).toContain('filter.operator.contains');
+        expect(items().map((item) => item.dataset.menuId)).not.toContain('filter.operator.lessThan');
+
+        // a lookup column filters its labels: the operators of a text
+        gridInterface.openColumnSettings('code');
+        expect(operatorPicker()?.textContent?.trim()).toEqual('Equal');
+    });
+
+    it('expect no operator for a checkbox column, the name only for a column with one operator', async () => {
+        const { gridInterface } = await mountGrid(
+            config({
+                columns: {
+                    ...config().columns,
+                    company: { label: 'Company', filterOperators: ['CONTAINS', 'IN'] }
+                }
+            }),
+            rows(),
+            fields()
+        );
+        gridInterface.openColumnSettings('active');
+        expect(operatorField()).toBeUndefined();
+
+        gridInterface.openColumnSettings('company');
+        expect(operatorPicker()).toBeNull();
+        expect(operatorField()?.querySelector('.column-settings-input-row')?.textContent?.trim()).toEqual('Contains');
+        expect(hint()).toEqual('Default: Contains');
+    });
+
+    it('expect Apply to switch the header filter as Operator › does: the filter again, the state, the event', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        const events: string[] = [];
+        gridInterface.on('filter-operator-change', (data) => events.push(`${data.field} ${data.operator}`));
+        // the header filter of balance has 100: ≥ 100 lets Ann through
+        gridInterface.getDatasource().filter(null);
+        gridInterface.setState({ headerFilters: { balance: { value: 100 } } });
+        gridInterface.openColumnSettings('balance');
+        operatorPicker()?.click();
+        menuEntry('filter.operator.lessThan').click();
+
+        button('Apply').click();
+        expect(gridInterface.getState().headerFilters.balance?.operator).toEqual('LESS_THAN');
+        expect(events).toEqual(['balance LESS_THAN']);
+        // < 100: Bob, his balance is 0
+        expect(
+            gridInterface
+                .getDatasource()
+                .getRows()
+                .map((row) => row.name)
+        ).toEqual(['Bob']);
+        // the filter has it
+        expect(JSON.stringify(gridInterface.getDatasource().getFilter())).toContain(
+            '"field":"balance","operator":"LESS_THAN","value":100'
+        );
+
+        // Apply again: nothing changed, no event
+        button('Apply').click();
+        expect(events).toEqual(['balance LESS_THAN']);
+    });
+
+    it('expect Cancel to leave the operator as it was', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('balance');
+        operatorPicker()?.click();
+        menuEntry('filter.operator.equal').click();
+        button('Cancel').click();
+
+        gridInterface.openColumnSettings('balance');
+        expect(operatorPicker()?.textContent?.trim()).toEqual('Greater than or equal');
+        expect(gridInterface.getState().headerFilters.balance?.operator).toBeUndefined();
+    });
+
+    it('expect the operator picked before (state) in the picker; Reset column and Reset all back to the default', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.setState({
+            headerFilters: { balance: { value: null, operator: 'BETWEEN' }, born: { value: null, operator: 'LESS_THAN' } }
+        });
+        gridInterface.openColumnSettings('balance');
+        expect(operatorPicker()?.textContent?.trim()).toEqual('Between');
+        button('Reset column').click();
+        expect(operatorPicker()?.textContent?.trim()).toEqual('Greater than or equal');
+
+        options()[LAYOUT.indexOf('born')].click();
+        expect(operatorPicker()?.textContent?.trim()).toEqual('Less than');
+        button('Reset all').click();
+        expect(operatorPicker()?.textContent?.trim()).toEqual('Greater than or equal');
+
+        button('Apply').click();
+        expect(gridInterface.getState().headerFilters.balance?.operator).toEqual('GREATER_THAN_OR_EQUAL_TO');
+        expect(gridInterface.getState().headerFilters.born?.operator).toEqual('GREATER_THAN_OR_EQUAL_TO');
+    });
+});
+
+describe('column settings - the label, the placeholder, blank / 0, the checkboxes', () => {
+    const badges = () => Array.from(selected().querySelectorAll('.column-settings-badge'), (badge) => badge.textContent?.trim());
+    const formats = (gridInterface: GridInterface<any>) => gridInterface.getState().formats;
+
+    it("expect the label: the column's own in the input; the list, the heading, the badge and a letter follow it; Apply", async () => {
+        const { element, gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('company');
+
+        expect(input('label')?.placeholder).toEqual('Company');
+        expect(input('label')?.value).toEqual('');
+        expect(document.querySelector(`label[for="${input('label')?.id}"]`)?.textContent?.trim()).toEqual('Label');
+        type('label', 'Firm');
+        expect(selected().querySelector('.column-settings-option-label')?.textContent).toEqual('Firm');
+        expect(heading()).toEqual('Firm Text');
+        expect(badges()).toEqual(['Label']);
+        // a letter finds the label typed
+        press(list(), 'n');
+        expect(selected().dataset.field).toEqual('name');
+        press(list(), 'f');
+        expect(selected().dataset.field).toEqual('company');
+        // the dialog's, until Apply
+        expect(formats(gridInterface).company).toBeUndefined();
+
+        button('Apply').click();
+        expect(formats(gridInterface).company).toEqual({ label: 'Firm' });
+        expect(labelCell(element, 'company').textContent?.trim()).toEqual('Firm');
+        // emptied, spaces only: the column's own again
+        type('label', ' ');
+        expect(badges()).toEqual([]);
+        button('Apply & close').click();
+        expect(formats(gridInterface).company).toBeUndefined();
+        expect(labelCell(element, 'company').textContent?.trim()).toEqual('Company');
+    });
+
+    it('expect the placeholder of the empty cells: the one it has in the input, a text, or the label - the input off; none for a checkbox column', async () => {
+        const { element, gridInterface } = await mountGrid(
+            config({
+                columns: { ...config().columns, name: { label: 'Name', placeholderRow: 'required' } },
+                placeholderRowCurrentEntityOnly: false
+            }),
+            [{ ...rows()[0], name: null }, rows()[1]],
+            fields()
+        );
+        gridInterface.openColumnSettings('name');
+
+        // the column's own placeholderRow
+        expect(input('placeholder')?.placeholder).toEqual('required');
+        type('placeholder', 'Search');
+        expect(badges()).toEqual(['Placeholder']);
+        type('label', 'Who');
+        toggle('Use the column label');
+        expect(input('placeholder')?.disabled).toBe(true);
+        expect(input('placeholder')?.placeholder).toEqual('Who');
+        expect(input('placeholder')?.value).toEqual('');
+
+        button('Apply').click();
+        expect(formats(gridInterface).name).toEqual({ label: 'Who', placeholderRowLabel: true });
+        // the empty cell shows it; the header filter keeps its own
+        const nameCell = element.querySelector<HTMLInputElement>('input[data-attribute="name"]');
+        expect(nameCell?.placeholder).toEqual('Who');
+        expect(headerFilterInput(element, 'name').placeholder).toEqual('Text');
+        toggle('Use the column label');
+        expect(input('placeholder')?.disabled).toBe(false);
+        expect(input('placeholder')?.placeholder).toEqual('required');
+
+        // a checkbox column: its label only
+        options()[LAYOUT.indexOf('active')].click();
+        expect(input('placeholder')).toBeNull();
+        expect(input('label')?.placeholder).toEqual('Active');
+        expect(dialog().querySelector('.column-settings-none')?.textContent?.trim()).toEqual('A checkbox column has no format');
+        // a lookup column: its label and placeholder, no checkboxes
+        options()[LAYOUT.indexOf('code')].click();
+        expect(input('placeholder')?.placeholder).toEqual('');
+        expect(checkbox('Show as checkbox')).toBeUndefined();
+    });
+
+    it("expect Show blank as 0 and Show 0 as blank, one or the other, in the preview; over the column's own numberOverride", async () => {
+        const { datasource, gridInterface } = await mountGrid(
+            config({ columns: { ...config().columns, balance: { numberOverride: 'ZERO_TO_BLANK' } } }),
+            rows(),
+            fields()
+        );
+        // Bob's balance is 0
+        datasource.setRowAsCurrentEntity(1);
+        gridInterface.openColumnSettings('balance');
+
+        expect([checkbox('Show blank as 0').checked, checkbox('Show 0 as blank').checked]).toEqual([false, true]);
+        expect(previewCell().textContent?.trim()).toEqual('');
+        expect(badges()).toEqual([]);
+        toggle('Show blank as 0');
+        expect([checkbox('Show blank as 0').checked, checkbox('Show 0 as blank').checked]).toEqual([true, false]);
+        expect(previewCell().textContent?.trim()).toEqual('0');
+        expect(badges()).toEqual(['Blank / 0']);
+
+        // both off over the column's own: NONE
+        toggle('Show blank as 0');
+        expect([checkbox('Show blank as 0').checked, checkbox('Show 0 as blank').checked]).toEqual([false, false]);
+        button('Apply').click();
+        expect(formats(gridInterface).balance).toEqual({ numberOverride: 'NONE' });
+        // the column's own again: nothing of the user's
+        toggle('Show 0 as blank');
+        button('Apply').click();
+        expect(formats(gridInterface).balance).toBeUndefined();
+    });
+
+    it('expect Show as checkbox on a text column: its values, the template and the link gone, the problems, Apply', async () => {
+        const { element, gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('company');
+        type('text', '{company}!');
+        type('url', 'https://x.com/{id}');
+
+        toggle('Show as checkbox');
+        expect([input('text'), input('url'), checkbox('Show as link')]).toEqual([null, null, undefined]);
+        expect([input('checked')?.value, input('unchecked')?.value]).toEqual(['1', '0']);
+        expect(badges()).toEqual(['Checkbox']);
+        const previewBox = () => previewCell().querySelector('input[type="checkbox"]') as HTMLInputElement;
+        expect(previewBox().checked).toBe(false);
+
+        type('checked', '');
+        expect(problems()).toEqual(['Write the checked value']);
+        expect(input('checked')?.getAttribute('aria-invalid')).toEqual('true');
+        expect(badges()).toEqual(['Error']);
+        expect(button('Apply').getAttribute('aria-disabled')).toEqual('true');
+        type('checked', '0');
+        expect(problems()).toEqual(['The checked and the unchecked value are the same: a click could not uncheck a cell']);
+        // Ann's company: checked
+        type('checked', 'Acme & Co');
+        expect(problems()).toEqual([]);
+        expect(previewBox().checked).toBe(true);
+
+        button('Apply').click();
+        expect(formats(gridInterface).company).toEqual({ checkbox: { checked: 'Acme & Co', unchecked: '0' } });
+        const cell = element.querySelector('input[data-attribute="company"]') as HTMLInputElement;
+        expect([cell.type, cell.checked]).toEqual(['checkbox', true]);
+
+        // off: the text settings again, empty
+        toggle('Show as checkbox');
+        // the text settings again: Show as link, off - its text under it when it is on
+        expect([checkbox('Show as link')?.checked, input('text')]).toEqual([false, null]);
+        expect(input('checked')).toBeNull();
+    });
+
+    it('expect Show as checkbox on a number column: the format and blank / 0 gone, numbers only', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('balance');
+        picker().click();
+        menuEntry('header.format.number.norwegian').click();
+        toggle('Show 0 as blank');
+
+        toggle('Show as checkbox');
+        expect([picker(), checkbox('Show 0 as blank'), checkbox('Show blank as 0')]).toEqual([null, undefined, undefined]);
+        type('checked', 'yes');
+        expect(problems()).toEqual(['yes is no number: a number column writes numbers']);
+        type('checked', '1');
+        type('unchecked', 'no');
+        expect(problems()).toEqual(['no is no number: a number column writes numbers']);
+        type('unchecked', '');
+        expect(problems()).toEqual([]);
+
+        button('Apply').click();
+        expect(formats(gridInterface).balance).toEqual({ checkbox: { checked: '1', unchecked: '' } });
+    });
+
+    it('expect Cancel to apply nothing, the state as JSON in the dialog, Reset column and Reset all back to the start', async () => {
+        const { gridInterface } = await mountGrid(
+            config({ columns: { ...config().columns, name: { label: 'Name', format: { label: 'Person' } } } }),
+            rows(),
+            fields()
+        );
+        gridInterface.openColumnSettings('name');
+        expect(input('label')?.value).toEqual('Person');
+        type('label', 'Who');
+        button('Cancel').click();
+        expect(formats(gridInterface).name).toEqual({ label: 'Person' });
+
+        gridInterface.setState({
+            formats: { name: { label: 'Who', placeholderRow: 'Find' }, company: { checkbox: { checked: 'Y', unchecked: 'N' } } }
+        });
+        const saved = JSON.parse(JSON.stringify(gridInterface.getState()));
+        const other = await mountGrid(config(), rows(), fields());
+        other.gridInterface.setState(saved);
+        other.gridInterface.openColumnSettings('company');
+        expect(checkbox('Show as checkbox').checked).toBe(true);
+        expect([input('checked')?.value, input('unchecked')?.value]).toEqual(['Y', 'N']);
+        button('Reset column').click();
+        expect(checkbox('Show as checkbox').checked).toBe(false);
+        expect(input('checked')).toBeNull();
+        button('Cancel').click();
+
+        gridInterface.openColumnSettings('name');
+        expect([input('label')?.value, input('placeholder')?.value]).toEqual(['Who', 'Find']);
+        button('Reset all').click();
+        expect([input('label')?.value, input('placeholder')?.value]).toEqual(['Person', '']);
+        button('Apply').click();
+        expect(formats(gridInterface)).toEqual({ born: { date: 'norwegian' }, name: { label: 'Person' } });
+    });
+});
+
+describe('column settings - multiline and read only', () => {
+    const badgesOf = (field: string) =>
+        Array.from(
+            options()
+                .find((option) => option.dataset.field === field)
+                ?.querySelectorAll('.column-settings-badge') ?? [],
+            (badge) => badge.textContent?.trim()
+        );
+
+    it('expect Multiline and Read only on a text column, as the column has them; set back, left out of the format', async () => {
+        const { gridInterface } = await mountGrid(
+            config({ columns: { ...config().columns, name: { label: 'Name', readonly: true } } }),
+            rows(),
+            fields()
+        );
+        gridInterface.openColumnSettings('name');
+        expect([checkbox('Multiline').checked, checkbox('Read only').checked]).toEqual([false, true]);
+
+        toggle('Multiline');
+        toggle('Read only');
+        expect(badgesOf('name')).toEqual(['Multiline']);
+        button('Apply').click();
+        expect(gridInterface.getState().formats.name).toEqual({ multiline: true, readonly: false });
+
+        // back to what the column has: nothing of the user's
+        toggle('Multiline');
+        toggle('Read only');
+        button('Apply').click();
+        expect(gridInterface.getState().formats.name).toBeUndefined();
+    });
+
+    it('expect Read only on every column, Multiline on a text column only - not while it is shown as checkboxes', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        for (const field of ['born', 'balance', 'active', 'code']) {
+            gridInterface.openColumnSettings(field);
+            expect([field, checkbox('Read only') !== undefined, checkbox('Multiline') !== undefined]).toEqual([
+                field,
+                true,
+                false
+            ]);
+        }
+        gridInterface.openColumnSettings('company');
+        toggle('Read only');
+        expect(badgesOf('company')).toEqual(['Read only']);
+        toggle('Multiline');
+        // shown as checkboxes: no text of several lines - the setting goes with it
+        toggle('Show as checkbox');
+        expect(checkbox('Multiline')).toBeUndefined();
+        button('Apply').click();
+        expect(gridInterface.getState().formats.company).toEqual({ readonly: true, checkbox: { checked: '1', unchecked: '0' } });
+    });
+});
+
+/**
+ * The tabs of a column's settings (ColumnSection in columnSettings.ts): General, Display, Header filter,
+ * Colours - the form was too big in one. The preview under every tab
+ */
+describe('column settings - the tabs of a column', () => {
+    const sectionList = () => dialog().querySelector('.column-settings-sections') as HTMLElement | null;
+    const sectionTabs = () => Array.from(sectionList()?.querySelectorAll<HTMLElement>('[role="tab"]') ?? []);
+    const tabTexts = () => sectionTabs().map((tab) => tab.textContent?.replace(/\s+/g, ' ').trim());
+    const sectionTab = (text: string) => sectionTabs().find((tab) => tab.textContent?.trim().startsWith(text)) as HTMLElement;
+    const shownSection = () =>
+        Array.from(dialog().querySelectorAll<HTMLElement>('.column-settings-section')).find((each) => !each.hidden);
+    const key = (target: HTMLElement, name: string) =>
+        target.dispatchEvent(new KeyboardEvent('keydown', { key: name, bubbles: true, cancelable: true }));
+
+    it('expect General, Display, Header filter and Colours for a text column, General first, the others hidden', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('company');
+
+        expect(tabTexts()).toEqual(['General', 'Display', 'Header filter', 'Colours']);
+        expect(sectionList()?.getAttribute('aria-label')).toEqual('Settings of Company');
+        expect(sectionTabs().map((tab) => tab.getAttribute('aria-selected'))).toEqual(['true', 'false', 'false', 'false']);
+        expect(sectionTabs().map((tab) => tab.tabIndex)).toEqual([0, -1, -1, -1]);
+        // each tab controls its panel, named by the tab
+        for (const tab of sectionTabs()) {
+            const panel = document.getElementById(tab.getAttribute('aria-controls') as string) as HTMLElement;
+            expect(panel.getAttribute('role')).toEqual('tabpanel');
+            expect(panel.getAttribute('aria-labelledby')).toEqual(tab.id);
+        }
+        // General: the label; the link is on Display, hidden
+        expect(shownSection()?.contains(input('label'))).toBe(true);
+        expect(shownSection()?.contains(checkbox('Show as link'))).toBe(false);
+        // the preview under the tabs
+        expect(previewCell()?.closest('.column-settings-section')).toBeNull();
+    });
+
+    it('expect a click and the arrows, Home and End to show a tab, the focus on it', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('company');
+
+        sectionTab('Display').click();
+        expect(sectionTab('Display').getAttribute('aria-selected')).toEqual('true');
+        expect(shownSection()?.contains(checkbox('Show as link'))).toBe(true);
+
+        key(sectionTab('Display'), 'ArrowRight');
+        expect(sectionTab('Header filter').getAttribute('aria-selected')).toEqual('true');
+        expect(document.activeElement).toBe(sectionTab('Header filter'));
+        expect(shownSection()?.querySelector('.column-settings-operator')).not.toBeNull();
+        key(sectionTab('Header filter'), 'End');
+        expect(document.activeElement).toBe(sectionTab('Colours'));
+        key(sectionTab('Colours'), 'ArrowRight');
+        expect(document.activeElement).toBe(sectionTab('General'));
+        key(sectionTab('General'), 'ArrowLeft');
+        expect(document.activeElement).toBe(sectionTab('Colours'));
+        key(sectionTab('Colours'), 'Home');
+        expect(document.activeElement).toBe(sectionTab('General'));
+        // the dialog's tab stays Columns
+        expect(dialog().querySelector(':scope > [role="tablist"] [aria-selected="true"]')?.textContent?.trim()).toEqual(
+            'Columns'
+        );
+    });
+
+    it('expect the tab kept when another column is picked, General for a column without it', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('company');
+        sectionTab('Display').click();
+
+        options()[0].click();
+        expect(heading()).toContain('Name');
+        expect(sectionTab('Display').getAttribute('aria-selected')).toEqual('true');
+
+        // a checkbox column has no Display tab, and no Header filter: General and Colours
+        sectionTab('Header filter').click();
+        options()[LAYOUT.indexOf('active')].click();
+        expect(tabTexts()).toEqual(['General', 'Colours']);
+        expect(sectionTab('General').getAttribute('aria-selected')).toEqual('true');
+        // General says it has no format
+        expect(shownSection()?.querySelector('.column-settings-none')?.textContent).toEqual('A checkbox column has no format');
+
+        // back on a text column: the tab picked last
+        options()[0].click();
+        expect(sectionTab('Header filter').getAttribute('aria-selected')).toEqual('true');
+    });
+
+    it('expect a mark on the tab with a problem, said as Error, gone once it is fixed', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('company');
+        sectionTab('Display').click();
+        toggle('Show as link');
+
+        sectionTab('General').click();
+        // the problem is on Display: its tab has the mark, Apply waits
+        expect(sectionTab('Display').querySelector('.column-settings-tab-problem')).not.toBeNull();
+        expect(tabTexts()).toEqual(['General', 'Display Error', 'Header filter', 'Colours']);
+        expect(sectionTab('General').querySelector('.column-settings-tab-problem')).toBeNull();
+        expect(button('Apply').getAttribute('aria-disabled')).toEqual('true');
+
+        type('url', 'https://x.com/{id}');
+        expect(sectionTab('Display').querySelector('.column-settings-tab-problem')).toBeNull();
+    });
+
+    it('expect no tabs for a calculated column waiting for Apply: its own settings only', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.openColumnSettings('company');
+        button('Add calculated column').click();
+
+        expect(sectionList()).toBeNull();
+        expect(dialog().querySelectorAll('.column-settings-section')).toHaveLength(1);
+        expect(dialog().querySelector('.column-settings-section')?.hasAttribute('role')).toBe(false);
+    });
+});
+
+describe('column settings - a number column’s link turned off', () => {
+    it('expect its Filter as shown kept: it is the number format’s, not the link’s', async () => {
+        const { gridInterface } = await mountGrid(config(), rows(), fields());
+        gridInterface.setState({
+            formats: { balance: { number: { decimals: 2 }, filterAsShown: false, link: { url: 'https://example.com/{id}' } } }
+        });
+        gridInterface.openColumnSettings('balance');
+        expect(checkbox('Filter as shown').checked).toBe(false);
+        toggle('Show as link');
+        expect(checkbox('Filter as shown').checked).toBe(false);
+        button('Apply').click();
+        expect(gridInterface.getState().formats.balance).toEqual({ number: { decimals: 2 }, filterAsShown: false });
+    });
+});

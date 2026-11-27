@@ -1,13 +1,15 @@
 import type { Grid } from '../grid';
+import { ariaId } from './ariaGrid';
 import { asPx } from './asPx';
 import type { RowCache } from './colType';
-import { creatElement } from './createElement';
+import { createElement } from './createElement';
+import { releaseAllRenderers } from './customCell';
 import { DIV } from './DIV';
 import {
     GROUP_COLTYPE,
     LEFT_PINNED_COLTYPE,
     MIDDLE_PINNED_COLTYPE,
-    RIGH_PINNED_COLTYPE,
+    RIGHT_PINNED_COLTYPE,
     SELECTOR_COLTYPE
 } from './GROUP_COLTYPE';
 import { getElementByClassName } from './getElementByClassName';
@@ -34,10 +36,14 @@ export function rebuildRows(ctx: Grid) {
         }
 
         for (let i = 0; i < rowsNeeded; i++) {
-            const element = creatElement(DIV, 'simple-html-grid-row');
+            const element = createElement(DIV, 'simple-html-grid-row');
             const top = i * config.__rowHeight;
             const id = prefix + i.toString();
             element.setAttribute('row-id', id);
+            // the row element of the row selector is the row for a screen reader, it owns the cells of
+            // the row elements of the other sections (see ariaGrid.ts): those are not rows themselves
+            element.id = ariaId(ctx, id);
+            element.setAttribute('role', prefix === SELECTOR_COLTYPE ? 'row' : 'none');
             element.style.transform = `translate3d(0px, ${top}px, 0px)`;
             element.style.height = asPx(ctx.gridInterface.__getScrollState().scrollHeights[i]);
 
@@ -55,6 +61,8 @@ export function rebuildRows(ctx: Grid) {
         return rowCache;
     };
 
+    // the cells of the old row elements are thrown away with them: their renderers are done
+    releaseAllRenderers(ctx);
     ctx.rows.clear();
 
     const containerGroup = getElementByClassName(ctx.element, 'simple-html-grid-body-row-container-group');
@@ -70,5 +78,5 @@ export function rebuildRows(ctx: Grid) {
     ctx.containerMiddleRowCache = addRows(containerMiddle, MIDDLE_PINNED_COLTYPE);
 
     const containerRight = getElementByClassName(ctx.element, 'simple-html-grid-body-row-container-pinned-right');
-    ctx.containerRightRowCache = addRows(containerRight, RIGH_PINNED_COLTYPE);
+    ctx.containerRightRowCache = addRows(containerRight, RIGHT_PINNED_COLTYPE);
 }

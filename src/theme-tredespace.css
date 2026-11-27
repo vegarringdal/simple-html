@@ -1,0 +1,211 @@
+/**
+ * The TreDeSpace theme: the grid and the date picker in the colours of the TreDeSpace UI widget
+ * library (@treDeSpaceUI). Load it after grid.css and date.css, and turn it on with an attribute on
+ * the root of the page:
+ *
+ *     <html data-grid-theme="tredespace">
+ *
+ * Every grid and date picker under the attribute takes it. On <html> or <body>, not on the grid's
+ * container: the menus, the tooltips and the filter editor are put on the body (or in the dialog or
+ * popover the grid is in), like color-scheme they only get it from there. Without the attribute the
+ * grid has its default theme, so both files can be loaded and the attribute switches.
+ *
+ * Each colour is light-dark(<light>, <dark>), as in grid.css: light or dark follows the
+ * color-scheme of the page. The widget library sets it itself (`color-scheme: dark` on :root, light
+ * with `data-theme="light"`), so the grid switches with it.
+ *
+ * The colours are the library's tokens (src/treDeSpaceUI/styles.css of TreDeSpaceSource and the
+ * Tailwind 4.3.3 palette it remaps), named in the comments: the light colour is the token in its
+ * light theme, the dark one in its dark theme. A Tailwind colour the library does not remap is
+ * written as Tailwind's own oklch(), so it is the same colour as in the widgets. Where the grid has
+ * a part the widgets do not, the colour is made from the library's scale (said where). The grid stays
+ * square, the widgets have no rounded corners either. Text has a contrast of at least 4.5:1 to its
+ * background, lines and marks at least 3:1 - the same pairs as the default theme (WCAG AA).
+ *
+ * The selectors are stronger than grid.css's (.simple-html-grid, .simple-html-date), so the theme
+ * wins wherever it is loaded. To change a colour of it, use the same selector, after this file.
+ */
+[data-grid-theme='tredespace'] .simple-html-grid {
+    /* slate-900: the bars - the labels, the panel, the footer, the row selector, group rows - and the
+       menus and the filter editor (the library's Menu, DialogFrame and side bars) */
+    --simple-html-grid-main-bg-color: light-dark(#f8fafc, #172033);
+    /* slate-950: an input in a bar or a menu (the search field of the library's Select): the filter
+       row, the inputs, the value list, the filter chips */
+    --simple-html-grid-sec-bg-color: light-dark(#f1f5f9, #080f21);
+    /* slate-900: the scrollbar tracks (the library's scrollbars) */
+    --simple-html-grid-alt-bg-color: light-dark(#f8fafc, #172033);
+    /* slate-950: the rows, on the ground of the page (--dock-bg). The other rows half a step lighter:
+       midway to slate-900, as the library lifts its own surfaces */
+    --simple-html-grid-main-bg-even: light-dark(#f1f5f9, #080f21);
+    --simple-html-grid-main-bg-odd: light-dark(color-mix(in srgb, #f1f5f9, #f8fafc), color-mix(in srgb, #080f21, #172033));
+    /* slate-800: the lines (--dock-line) */
+    --simple-html-grid-main-bg-border: light-dark(#e2e8f0, #283548);
+    --simple-html-grid-sec-bg-border: light-dark(#e2e8f0, #283548);
+    /* slate-700: the stronger lines - pinned columns, under the header, the frames (--dock-line-hi) */
+    --simple-html-grid-pinned-border: light-dark(#cbd5e1, oklch(37.2% 0.044 257.287));
+    /* blue-950: a selected row, a list item under the pointer (the library's TreeView and Select).
+       The other selected rows half a step to blue-900, like the rows */
+    --simple-html-grid-main-bg-selected-even: light-dark(#dbeafe, oklch(28.2% 0.091 267.935));
+    --simple-html-grid-main-bg-selected-odd: light-dark(
+        color-mix(in srgb, #dbeafe, #bfdbfe),
+        color-mix(in srgb, oklch(28.2% 0.091 267.935), oklch(37.9% 0.146 265.522))
+    );
+    /* slate-200: the text (--dock-text) */
+    --simple-html-grid-main-font-color: light-dark(#1e293b, oklch(92.9% 0.013 255.508));
+    /* slate-400: placeholders and quiet text (--dock-text-dim). The library's placeholders are
+       slate-500, under 4.5:1 to slate-950 */
+    --simple-html-grid-sec-font-color: light-dark(#475569, oklch(70.4% 0.04 256.788));
+    /* blue-400 at 50%: where a dragged column can go (the library's splitter under the pointer) */
+    --simple-html-grid-dropzone-color: light-dark(rgb(37 99 235 / 0.5), oklch(70.7% 0.165 254.624 / 0.5));
+    /* slate-900, the bars' own colour: flat, the library has no inset shadows */
+    --simple-html-grid-boxshadow: light-dark(#f8fafc, #172033);
+    /* not used by grid.css: slate-700 and slate-800, the lines */
+    --simple-html-grid-grouping-border: light-dark(#cbd5e1, oklch(37.2% 0.044 257.287));
+    --simple-html-grid-main-hr-border: light-dark(#e2e8f0, #283548);
+    /* red-400 and a red-500 tint at 15% (the library's danger chip): a validation error */
+    --simple-html-grid-error-color: light-dark(#dc2626, oklch(70.4% 0.191 22.216));
+    --simple-html-grid-error-bg-color: oklch(63.7% 0.237 25.331 / 0.15);
+    /* the row state: amber-400 edited, green-400 new, slate-400 deleted. A conflict violet-400; the
+       library has no light violet, so Tailwind's violet-600 as it darkens blue-400 and red-400 */
+    --simple-html-grid-edited-color: light-dark(#b45309, oklch(82.8% 0.189 84.429));
+    --simple-html-grid-new-color: light-dark(#15803d, oklch(79.2% 0.209 151.711));
+    --simple-html-grid-deleted-color: light-dark(#475569, oklch(70.4% 0.04 256.788));
+    --simple-html-grid-conflict-color: light-dark(#7c3aed, oklch(70.2% 0.183 293.541));
+    /* amber-500 at 35%: the flash of a merged cell */
+    --simple-html-grid-merged-color: oklch(76.9% 0.188 70.08 / 0.35);
+    /* slate-400: the marker of a cell of several lines */
+    --simple-html-grid-multiline-color: light-dark(#475569, oklch(70.4% 0.04 256.788));
+    /* a lookup column: the library's Button (slate-800) with a slate-400 triangle, the active option
+       blue-950 as the Select's */
+    --simple-html-grid-lookup-button-bg-color: light-dark(#e2e8f0, #283548);
+    --simple-html-grid-lookup-icon-color: light-dark(#475569, oklch(70.4% 0.04 256.788));
+    --simple-html-grid-lookup-active-bg-color: light-dark(#dbeafe, oklch(28.2% 0.091 267.935));
+    /* the text of a link, underlined: blue-800 in light, blue-100 in dark - the library's blue-400
+       accent is under 4.5:1 to the tints of Find and a range on a selected row, its blue-600 in light */
+    --simple-html-grid-link-color: light-dark(#1e40af, oklch(93.2% 0.032 255.585));
+    /* the palette of the colour rules (ColumnFormat.rules), its 14 colours from the library's Tailwind
+       scale: the text red, blue, indigo, purple and pink 800, orange, amber, yellow, lime, green, teal and
+       cyan 900, slate-700 in light - their 800 is under 4.5:1 under a range's tint on a grey background -
+       and 300 in dark; the backgrounds 200 and slate-300 in light (amber and cyan 300, apart from yellow
+       and blue), 950 and slate-800 in dark. Blue's background is sky: blue-200 and blue-950 are the
+       selected rows. Tailwind has no brown: it is made of orange's hue (50-60) with less chroma, at the
+       lightness of the others - oklch(40% 0.07 50) text and oklch(87% 0.04 60) background in light,
+       oklch(86% 0.05 60) and oklch(27% 0.045 45) in dark. The contrasts of grid.css's palette */
+    --simple-html-grid-palette-red-color: light-dark(oklch(44.4% 0.177 26.899), oklch(80.8% 0.114 19.571));
+    --simple-html-grid-palette-orange-color: light-dark(oklch(40.8% 0.123 38.172), oklch(83.7% 0.128 66.29));
+    --simple-html-grid-palette-amber-color: light-dark(oklch(41.4% 0.112 45.904), oklch(87.9% 0.169 91.605));
+    --simple-html-grid-palette-yellow-color: light-dark(oklch(42.1% 0.095 57.708), oklch(90.5% 0.182 98.111));
+    --simple-html-grid-palette-lime-color: light-dark(oklch(40.5% 0.101 131.063), oklch(89.7% 0.196 126.665));
+    --simple-html-grid-palette-green-color: light-dark(oklch(39.3% 0.095 152.535), oklch(87.1% 0.15 154.449));
+    --simple-html-grid-palette-teal-color: light-dark(oklch(38.6% 0.063 188.416), oklch(85.5% 0.138 181.071));
+    --simple-html-grid-palette-cyan-color: light-dark(oklch(39.8% 0.07 227.392), oklch(86.5% 0.127 207.078));
+    --simple-html-grid-palette-blue-color: light-dark(oklch(42.4% 0.199 265.638), oklch(80.9% 0.105 251.813));
+    --simple-html-grid-palette-indigo-color: light-dark(oklch(39.8% 0.195 277.366), oklch(78.5% 0.115 274.713));
+    --simple-html-grid-palette-purple-color: light-dark(oklch(43.8% 0.218 303.724), oklch(82.7% 0.119 306.383));
+    --simple-html-grid-palette-pink-color: light-dark(oklch(45.9% 0.187 3.815), oklch(82.3% 0.12 346.018));
+    --simple-html-grid-palette-brown-color: light-dark(oklch(40% 0.07 50), oklch(86% 0.05 60));
+    --simple-html-grid-palette-grey-color: light-dark(oklch(37.2% 0.044 257.287), oklch(86.9% 0.022 252.894));
+    --simple-html-grid-palette-red-bg-color: light-dark(oklch(88.5% 0.062 18.334), oklch(25.8% 0.092 26.042));
+    --simple-html-grid-palette-orange-bg-color: light-dark(oklch(90.1% 0.076 70.697), oklch(26.6% 0.079 36.259));
+    --simple-html-grid-palette-amber-bg-color: light-dark(oklch(87.9% 0.169 91.605), oklch(27.9% 0.077 45.635));
+    --simple-html-grid-palette-yellow-bg-color: light-dark(oklch(94.5% 0.129 101.54), oklch(28.6% 0.066 53.813));
+    --simple-html-grid-palette-lime-bg-color: light-dark(oklch(93.8% 0.127 124.321), oklch(27.4% 0.072 132.109));
+    --simple-html-grid-palette-green-bg-color: light-dark(oklch(92.5% 0.084 155.995), oklch(26.6% 0.065 152.934));
+    --simple-html-grid-palette-teal-bg-color: light-dark(oklch(91% 0.096 180.426), oklch(27.7% 0.046 192.524));
+    --simple-html-grid-palette-cyan-bg-color: light-dark(oklch(86.5% 0.127 207.078), oklch(30.2% 0.056 229.695));
+    --simple-html-grid-palette-blue-bg-color: light-dark(oklch(90.1% 0.058 230.902), oklch(29.3% 0.066 243.157));
+    --simple-html-grid-palette-indigo-bg-color: light-dark(oklch(87% 0.065 274.039), oklch(25.7% 0.09 281.288));
+    --simple-html-grid-palette-purple-bg-color: light-dark(oklch(90.2% 0.063 306.703), oklch(29.1% 0.149 302.717));
+    --simple-html-grid-palette-pink-bg-color: light-dark(oklch(89.9% 0.061 343.231), oklch(28.4% 0.109 3.907));
+    --simple-html-grid-palette-brown-bg-color: light-dark(oklch(87% 0.04 60), oklch(27% 0.045 45));
+    --simple-html-grid-palette-grey-bg-color: light-dark(oklch(86.9% 0.022 252.894), oklch(27.9% 0.041 260.031));
+    /* the icons of an icon set (ColumnFormat.icons): green-800, amber-800 and red-700 in light, their 300 in
+       dark - as grid.css's, 3:1 to the rows, the selected rows and the palette's backgrounds */
+    --simple-html-grid-icon-green-color: light-dark(#166534, oklch(87.1% 0.15 154.449));
+    --simple-html-grid-icon-amber-color: light-dark(#92400e, oklch(87.9% 0.169 91.605));
+    --simple-html-grid-icon-red-color: light-dark(#b91c1c, oklch(80.8% 0.114 19.571));
+    /* the totals row: slate-800 as the library's title bars, its text slate-100 (--dock-text-hi) */
+    --simple-html-grid-totals-bg-color: light-dark(#e2e8f0, #283548);
+    --simple-html-grid-totals-font-color: light-dark(#0f172a, oklch(96.8% 0.007 247.896));
+    /* slate-400: the label of an aggregate */
+    --simple-html-grid-aggregate-label-color: light-dark(#475569, oklch(70.4% 0.04 256.788));
+    /* slate-500: the lines of the grouping columns, 3:1 to the group rows */
+    --simple-html-grid-group-line-color: light-dark(#64748b, oklch(55.4% 0.046 257.417));
+    /* amber-400: a warning (the library's warning accent) */
+    --simple-html-grid-warning-font-color: light-dark(#b45309, oklch(82.8% 0.189 84.429));
+    /* red-300 text and a red-600 border: the danger entry of the library's Menu and danger Button */
+    --simple-html-grid-danger-font-color: light-dark(#b91c1c, oklch(80.8% 0.114 19.571));
+    --simple-html-grid-danger-border: light-dark(#dc2626, oklch(57.7% 0.245 27.325));
+    /* the stripes of a readonly and an empty required cell: red-500 and blue-500, the tints of the
+       library's chips - the same in light and dark - with nothing between them */
+    --simple-html-grid-readonly-stripe-color: oklch(63.7% 0.237 25.331);
+    --simple-html-grid-required-stripe-color: oklch(62.3% 0.214 259.815);
+    --simple-html-grid-stripe-bg-color: transparent;
+    /* blue-400 (--dock-accent): the focus outline, as the library's */
+    --simple-html-grid-focus-color: light-dark(#2563eb, oklch(70.7% 0.165 254.624));
+    /* blue-400 with slate-950 text on it: the filled controls, as the library's checked box and
+       picked day */
+    --simple-html-grid-accent-color: light-dark(#2563eb, oklch(70.7% 0.165 254.624));
+    --simple-html-grid-accent-font-color: light-dark(#f1f5f9, #080f21);
+    /* slate-500: the frame of the controls of the value list and the filter editor. The library's
+       fields have slate-700, under 3:1 to the menus: slate-500 is the first of its scale with 3:1 */
+    --simple-html-grid-control-border-color: light-dark(#64748b, oklch(55.4% 0.046 257.417));
+    /* slate-700 (slate-300 in light): the frame of a field of the detail form at rest - the library's
+       fields have it, the field is seen by its background. slate-500 under the pointer, as above */
+    --simple-html-grid-detail-input-border-color: light-dark(#cbd5e1, oklch(37.2% 0.044 257.287));
+    /* a range of cells: a blue-500 tint at 15% (the library's info chip) and a blue-400 line */
+    --simple-html-grid-range-bg-color: oklch(62.3% 0.214 259.815 / 0.15);
+    --simple-html-grid-range-border-color: light-dark(#2563eb, oklch(70.7% 0.165 254.624));
+    /* Find: amber-500 tints, the current match stronger, with an amber-200 line (the text of the
+       library's warning chip: amber-400 is under 3:1 to the tint on a selected row) */
+    --simple-html-grid-find-match-color: oklch(76.9% 0.188 70.08 / 0.25);
+    --simple-html-grid-find-current-color: oklch(76.9% 0.188 70.08 / 0.45);
+    --simple-html-grid-find-current-border-color: light-dark(#92400e, oklch(92.4% 0.12 95.746));
+    /* the shadows of the library: black at 50% under a menu and a dialog, 45% under a tooltip. The
+       library's scrollbar thumbs have none */
+    --simple-html-grid-menu-shadow-color: rgb(0 0 0 / 0.5);
+    /* the line around a menu: slate-300 / slate-600 - the menus are the colour of the rows, and a shadow
+       of black hardly shows on slate-900: the line a step lighter than the grid's lines sets them off */
+    --simple-html-grid-menu-border-color: light-dark(#cbd5e1, oklch(44.6% 0.043 257.281));
+    --simple-html-grid-dialog-shadow-color: rgb(0 0 0 / 0.5);
+    --simple-html-grid-tooltip-shadow-color: rgb(0 0 0 / 0.45);
+    --simple-html-grid-scrollbar-shadow-color: transparent;
+    /* black at 40%: behind the filter editor (the library's Modal) */
+    --simple-html-grid-backdrop-color: rgb(0 0 0 / 0.4);
+    /* the library's scrollbar thumb: blue-400 45% into slate-800 */
+    --simple-html-grid-scrollbar-thumb-color: light-dark(
+        color-mix(in srgb, #2563eb 45%, #e2e8f0),
+        color-mix(in srgb, oklch(70.7% 0.165 254.624) 45%, #283548)
+    );
+    /* the library's Tooltip: dark in light and dark */
+    --simple-html-grid-tooltip-bg-color: #242933;
+    --simple-html-grid-tooltip-font-color: #c9cfd8;
+    --simple-html-grid-tooltip-border-color: #3a4250;
+    /* the font of the library (its panels and tooltips); the grid keeps its sizes */
+    --simple-html-grid-font-family: ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-grid-theme='tredespace'] .simple-html-date {
+    /* slate-900 with slate-200 text: the library's date picker */
+    --simple-html-date-main-bg-color: light-dark(#f8fafc, #172033);
+    --simple-html-date-main-color: light-dark(#1e293b, oklch(92.9% 0.013 255.508));
+    /* slate-400: the days of the months before and after, the week numbers, the names of the days.
+       The library's slate-500 is under 4.5:1 to slate-900 */
+    --simple-html-date-dimmed-color: light-dark(#475569, oklch(70.4% 0.04 256.788));
+    --simple-html-date-week-color: light-dark(#475569, oklch(70.4% 0.04 256.788));
+    /* slate-700: the lines, the frames of the buttons and inputs, a day under the pointer */
+    --simple-html-date-header-bg-border: light-dark(#cbd5e1, oklch(37.2% 0.044 257.287));
+    --simple-html-date-main-bg-border: light-dark(#cbd5e1, oklch(37.2% 0.044 257.287));
+    --simple-html-date-button-border: light-dark(#cbd5e1, oklch(37.2% 0.044 257.287));
+    --simple-html-date-hover-bg-color: light-dark(#cbd5e1, oklch(37.2% 0.044 257.287));
+    /* the selected day blue-950 in a blue-400 frame, today's bar blue-400: the library's span and
+       today. Its picked day is blue-400 with slate-950 text, the date picker's text is slate-200 */
+    --simple-html-date-main-bg-selected: light-dark(#dbeafe, oklch(28.2% 0.091 267.935));
+    /* the days between From and To of a range picker: blue-950, the library's span - its ends have the
+       blue-400 frame of the selected day */
+    --simple-html-date-in-range-bg-color: light-dark(#dbeafe, oklch(28.2% 0.091 267.935));
+    --simple-html-date-selected-border: light-dark(#2563eb, oklch(70.7% 0.165 254.624));
+    --simple-html-date-today-color: light-dark(#2563eb, oklch(70.7% 0.165 254.624));
+    --simple-html-date-focus-color: light-dark(#2563eb, oklch(70.7% 0.165 254.624));
+    --simple-html-date-font-family: ui-sans-serif, system-ui, sans-serif;
+}

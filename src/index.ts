@@ -1,39 +1,116 @@
-// just incase anyone want to use it
-export { html, render } from 'lit-html';
-export { DateFormaterDDMMYYYY } from './datasource/DateFormaterDDMMYYYY';
-export { DateFormaterDDMMYYYYTHHMMSS } from './datasource/DateFormaterDDMMYYYYTHHMMSS';
-export { DateFormaterYYYYMMDD } from './datasource/DateFormaterYYYYMMDD';
-export { DateFormaterYYYYMMDDTHHMMSS } from './datasource/DateFormaterYYYYMMDDTHHMMSS';
+export type { AggregateFunction } from './datasource/aggregate';
+export { BooleanFormatter } from './datasource/booleanFormatter';
+export type { ChangeKinds, Changes, ModifiedEntity } from './datasource/changes';
+export { DateFormatterDDMMYYYY } from './datasource/DateFormatterDDMMYYYY';
+export { DateFormatterDDMMYYYYTHHMMSS } from './datasource/DateFormatterDDMMYYYYTHHMMSS';
+export { DateFormatterYYYYMMDD } from './datasource/DateFormatterYYYYMMDD';
+export { DateFormatterYYYYMMDDTHHMMSS } from './datasource/DateFormatterYYYYMMDDTHHMMSS';
 export { DataContainer } from './datasource/dataContainer';
-export { Datasource } from './datasource/dataSource';
 export type { FilterConditionNode, FilterGroupNode, FilterNode } from './datasource/dataSource';
-export type { Entity } from './datasource/entity';
-export { EntityHandler } from './datasource/entityHandler';
-export type {
-    DataTypes,
-    FilterArgument,
-    FilterAttributeSimple,
-    FilterExpressionType,
-    FilterLogicalOperator,
-    FilterValueType
-} from './datasource/filterArgument';
-export type { FilterComparisonOperator } from './datasource/filterComparisonOperator';
+export { Datasource, type EntityUnion } from './datasource/dataSource';
+export type { DatasourceEvents } from './datasource/datasourceEvents';
+export type { DatasourceOptions } from './datasource/datasourceOptions';
+export { type DataEntity, type Entity, type GroupRow, isGroupRow } from './datasource/entity';
+export type { EntityHandler } from './datasource/entityHandler';
+export type { Field, FieldConfig, FieldType } from './datasource/field';
+export {
+    and,
+    type FilterCondition,
+    type FilterExpression,
+    type FilterGroup,
+    type FilterOperator,
+    operatorsFor,
+    or,
+    where
+} from './datasource/filterExpression';
+export { withoutFields } from './datasource/filterFields';
+export type { Formatter } from './datasource/formatter';
+export { registerFormatter } from './datasource/formatterRegistry';
 export type { GroupArgument } from './datasource/groupArgument';
-export { NumberFormaterComma } from './datasource/numberFormaterComma';
-export { NumberFormaterDot } from './datasource/numberFormaterDot';
-export { OPERATORS } from './datasource/OPERATORS';
+export type { Conflict, RemovedConflict, UpsertOptions, UpsertResult, ValueConflict } from './datasource/liveData';
+export { NumberFormatterComma } from './datasource/numberFormatterComma';
+export { NumberFormatterDot } from './datasource/numberFormatterDot';
 export type { SelectionMode } from './datasource/selectionMode';
 export type { SortArgument } from './datasource/sortArgument';
-export type { ValueFormater } from './datasource/valueFormater';
+export { TextFormatter } from './datasource/textFormatter';
+export { escapeTextPattern } from './datasource/textPattern';
+export { convertV5Filter, isV5Filter, normalizeFilter, type V5Filter } from './datasource/v5Filter';
+export type {
+    ValidationError,
+    ValidationOption,
+    ValidationRule,
+    ValidationRuleObject,
+    Validator
+} from './datasource/validator';
+export { registerValidator } from './datasource/validatorRegistry';
 export { DateElement } from './date/dateElement';
+export type { DateEvents } from './date/dateEvents';
 export { DateInterface } from './date/dateInterface';
 /**
  * date picker
  */
 export type { IDateConfig, IStyle } from './date/interfaces';
-export { Grid } from './grid/grid';
-export type { Attribute, GridConfig } from './grid/gridConfig';
+export type { EventHandler } from './emitter';
+export type { CalculatedColumn, CalculatedType } from './grid/calculatedColumns';
+export type { CellRange } from './grid/cellRange';
+export {
+    type CellRenderContext,
+    type CellRenderer,
+    type CellRendererInstance,
+    registerCellRenderer
+} from './grid/cellRendererRegistry';
+export type { ColorRule, PaletteColor, RuleColor, RuleCondition, RuleWeek } from './grid/colorRules';
+export type { CheckboxFormat, ColumnFormat, DateFormat, LinkFormat, NumberFormat, TypeFormats } from './grid/columnFormat';
+export { convertGridConfig, type ExportedGrid, GRID_CONFIG_VERSION } from './grid/configVersion';
+export { type CreateGridOptions, createGrid } from './grid/createGrid';
+export type { CsvOptions, CsvSeparator } from './grid/csv';
+export type { ColorScaleFormat, DataBarFormat, IconSetFormat, IconSetName } from './grid/dataBars';
+export { DATE_PRESETS, type DatePreset } from './grid/datePresets';
+export type { FindResult } from './grid/findResult';
+export type {
+    ColumnConfig,
+    ColumnEditor,
+    DetailForm,
+    DetailFormFieldOptions,
+    DetailFormSection,
+    EditPermissions,
+    GridConfig,
+    GridLayout,
+    GridState,
+    HeaderFilter,
+    LayoutColumn
+} from './grid/gridConfig';
 export { GridElement } from './grid/gridElement';
-export { HTMLCellElement } from './grid/gridFunctions/HTMLCellElement';
-export { TOOLTIPS } from './grid/gridFunctions/tooltip';
+export type { GridCellEventData, GridEvents } from './grid/gridEvents';
+export type { ColType } from './grid/gridFunctions/colType';
+export type { HTMLCellElement } from './grid/gridFunctions/HTMLCellElement';
+export type { ImportOptions, ImportProblem, ImportResult } from './grid/gridFunctions/importRows';
+export type { CellClass, GridHooks } from './grid/gridHooks';
 export { GridInterface } from './grid/gridInterface';
+export {
+    type GridMenus,
+    MENU_IDS,
+    type MenuBlock,
+    type MenuContext,
+    type MenuEntry,
+    type MenuItem,
+    type MenuPosition,
+    type MenuSection,
+    type MenuSeparator,
+    type MenuSubmenu
+} from './grid/gridMenus';
+export type { GridView } from './grid/gridView';
+export { type ImportTable, type ReadImportFileOptions, readImportFile } from './grid/importFile';
+export { IMPORT_LIMITS, ImportFileError, type ImportFileProblem } from './grid/importLimits';
+export { type Lookup, type LookupFromDatasource, type LookupFromGridInterface, registerLookup } from './grid/lookup';
+export {
+    type ColumnsReport,
+    type ReconciledGrid,
+    type ReconcileOptions,
+    type RemovedRule,
+    reconcileColumns,
+    type SourceColumn
+} from './grid/reconcileColumns';
+export type { ExcelOptions } from './grid/xlsx';
+export type { ImportCell } from './grid/xlsxRead';
+export { setTexts, TEXTS, type TextId, type Texts } from './texts';

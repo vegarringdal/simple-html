@@ -1,12 +1,13 @@
-import type { Entity } from '../../datasource/entity';
+import { isGroupRow } from '../../datasource/entity';
 import type { Grid } from '../grid';
+import { cellTextOf } from './cellText';
 
 /**
  * True when this cell shows the same thing as the row directly above it, and should be
  * dimmed.
  *
  * The comparison is on the **displayed** value, not the raw one. This is a visual feature -
- * if a value formater makes two different source values render as the same text, they look
+ * if the field's formatter makes two different source values render as the same text, they look
  * repeated to the user and should dim. Comparing the raw values would leave a column of
  * identical looking text undimmed.
  *
@@ -26,35 +27,25 @@ export function isRepeatedValue(ctx: Grid, row: number, attribute: string): bool
 
     const previous = datasource.getRow(row - 1);
     // start of a group, or nothing above - show it
-    if (!previous || previous.__group) {
+    if (!previous || isGroupRow(previous)) {
         return false;
     }
 
     const current = datasource.getRow(row);
-    if (!current || current.__group) {
+    if (!current || isGroupRow(current)) {
         return false;
     }
 
-    const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
-    const valueFormater = datasource.getValueFormater();
+    // the text the cell shows, as renderRowCell shows it: the type of a dynamic type column, the
+    // column's numberOverride, a lookup column's label (the formatter's text alone missed the last two)
+    const displayed = cellTextOf(ctx, attribute);
 
-    /**
-     * same type resolution the cell rendering uses, so a dynamic type column is honoured
-     */
-    const displayed = (entity: Entity) => {
-        let type = cellConfig?.type || 'text';
-        if (cellConfig?.dynamicCellTypeColumn) {
-            type = entity[cellConfig.dynamicCellTypeColumn] || type;
-        }
-        return valueFormater.fromSource(entity[attribute], type, attribute, false);
-    };
-
-    const previousValue = displayed(previous);
+    const previousValue = displayed(previous).text;
 
     // a run of blanks is not something worth collapsing, it just looks broken
-    if (previousValue === null || previousValue === undefined || previousValue === '') {
+    if (previousValue === '') {
         return false;
     }
 
-    return previousValue === displayed(current);
+    return previousValue === displayed(current).text;
 }

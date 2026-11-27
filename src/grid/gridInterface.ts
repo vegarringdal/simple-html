@@ -1,205 +1,2100 @@
-import type { Datasource } from '../datasource/dataSource';
-import type { Entity } from '../datasource/entity';
-import type { FilterArgument } from '../datasource/filterArgument';
+import { AGGREGATE_FUNCTIONS, type AggregateFunction, isAggregateFunction } from '../datasource/aggregate';
+import { assertOptions } from '../datasource/assertOptions';
+import type { CalculatedField } from '../datasource/calculatedField';
+import type { Datasource, EntityUnion } from '../datasource/dataSource';
+import type { DatasourceEvents } from '../datasource/datasourceEvents';
+import { type Entity, isGroupRow } from '../datasource/entity';
+import type { FieldType } from '../datasource/field';
+import { type FilterExpression, type FilterOperator, operatorsFor, where } from '../datasource/filterExpression';
+import { withoutFields } from '../datasource/filterFields';
+import type { Formatter } from '../datasource/formatter';
+import { type ResolvedRule, resolveRules } from '../datasource/validatorRegistry';
+import { Emitter, type EventHandler } from '../emitter';
+import { assertTexts } from '../texts';
+import {
+    assertCalculatedColumns,
+    type CalculatedColumn,
+    calculatedFields,
+    calculatedLabel,
+    compileCalculatedColumns,
+    type FormulaFieldType,
+    readerOf
+} from './calculatedColumns';
+import type { CellRange } from './cellRange';
+import { getCellRenderer } from './cellRendererRegistry';
+import {
+    cellFieldText,
+    type FieldText,
+    fieldTextOf,
+    fillTemplate,
+    type LinkResult,
+    linkOf,
+    templateFields,
+    templateFormatter
+} from './cellTemplate';
+import type { RuleFieldOf } from './colorRules';
+import {
+    assertColumnFormat,
+    assertTypeFormats,
+    type ColumnFormat,
+    displayFormatter,
+    formatTexts,
+    GROUP_BY_FORMATS,
+    hasDisplayFormat,
+    hasValueFormat,
+    readonlyOf,
+    type TypeFormats,
+    withTypeFormat
+} from './columnFormat';
+import { nullsAsDefaults } from './configNulls';
+import { convertGridConfig, type ExportedGrid, GRID_CONFIG_VERSION } from './configVersion';
+import type { CsvOptions } from './csv';
+import { DATE_PRESETS, type DatePreset, datePresetRange, isDatePreset, takesDatePresets, weekStartOf } from './datePresets';
+import type { FindResult } from './findResult';
+import { clobFieldProblem, compileFormula, type Formula } from './formula';
 import type { Grid } from './grid';
-import type { GridConfig } from './gridConfig';
-import { autoResizeColumns } from './gridFunctions/autoResizeColumns';
-import { contextMenuCustom } from './gridFunctions/contextMenuCustom';
-import { getAttributeColumns } from './gridFunctions/getAttributeColumns';
+import type {
+    ColumnConfig,
+    DetailForm,
+    DetailFormSection,
+    GridConfig,
+    GridLayout,
+    GridOptions,
+    GridState,
+    HeaderFilter,
+    LayoutColumn,
+    ParsedGridConfig,
+    ParsedGridOptions
+} from './gridConfig';
+import type { GridEvents } from './gridEvents';
+import { aggregateRowHeights, normalizeAggregates } from './gridFunctions/aggregates';
+import { filterWithout, layoutWithout } from './gridFunctions/calculatedState';
+import { assertRanges, layoutKey, type RangeState, rangeState, sameRanges } from './gridFunctions/cellRanges';
+import { headerOperators, isHeaderOperator } from './gridFunctions/columnFilterOptions';
+import { renderColumnNumbers } from './gridFunctions/columnNumbers';
+import { type ColumnSelection, clickColumn, NO_COLUMNS, numberedColumns } from './gridFunctions/columnSelection';
+import { openColumnSettings } from './gridFunctions/columnSettings';
+import { assertDetailForm, copyDetailForm, noDetailForm } from './gridFunctions/detailForm';
+import {
+    assertEditPermissions,
+    editPermissionsOf,
+    mayChangeRow,
+    mayChangeValues,
+    mayDeleteRow
+} from './gridFunctions/editPermissions';
+import { fillDown } from './gridFunctions/fillDown';
+import { columnConditions, sameConditions, withColumnConditions } from './gridFunctions/filterCallback';
+import { closeFind, findDataChanged, findStep, getFindResult, openFind } from './gridFunctions/findBar';
+import { DEFAULT_COLUMN_WIDTH, fitColumns } from './gridFunctions/fitColumns';
 import { getCellHeight } from './gridFunctions/getCellHeight';
 import { getElementByClassName } from './gridFunctions/getElementByClassName';
+import { getLayoutFields } from './gridFunctions/getLayoutFields';
 import { getTextWidth } from './gridFunctions/getTextWidth';
+import { downloadGridCsv, gridCsv } from './gridFunctions/gridCsv';
+import { downloadGridExcel, gridExcel } from './gridFunctions/gridExcel';
+import { openImportDialog } from './gridFunctions/importDialog';
+import { assertImportOptions, type ImportOptions, type ImportResult, importRows } from './gridFunctions/importRows';
+import { type LookupColumn, lookupColumnsOf } from './gridFunctions/lookupColumn';
+import { TOOLTIP_LINES } from './gridFunctions/multilineText';
 import { openFilterEditor } from './gridFunctions/openFilterEditor';
-import { rebuildHeaderColumns } from './gridFunctions/rebuildHeaderColumns';
+import { prettyPrintString } from './gridFunctions/prettyPrintString';
+import { focusedCell, pointOf, renderRangeClasses } from './gridFunctions/rangeSelection';
+import { rebuildFooter, renderFooter } from './gridFunctions/rebuildFooter';
 import { removeContextMenu } from './gridFunctions/removeContextMenu';
+import { requestRowsRender } from './gridFunctions/renderChangedRows';
+import { fitRowLinesOf, layoutColumns, MULTILINE_LINE_HEIGHT, rowHeightOf } from './gridFunctions/rowHeights';
+import { ROW_STATUS_WIDTH } from './gridFunctions/rowStatus';
+import { openShortcutHelp } from './gridFunctions/shortcutHelp';
+import { placeAt, showMenu } from './gridFunctions/showMenu';
+import { closeTextEditor } from './gridFunctions/textEditor';
 import { triggerScrollEvent } from './gridFunctions/triggerScrollEvent';
+import { updateMainElementSizes } from './gridFunctions/updateMainElementSizes';
 import { updateVerticalScrollHeight } from './gridFunctions/updateVerticalScrollHeight';
-
-export type callF = (...args: any[]) => any;
-export type callO = { handleEvent: (...args: any[]) => any };
-export type callable = callF | callO;
-
-/* declare const DEVELOPMENT: boolean; */
+import type { CellClass, GridHooks } from './gridHooks';
+import type { MenuContext, MenuEntry, MenuPosition } from './gridMenus';
+import { assertViews, type GridView, newViewId, startViews, viewStateText, writeStoredViews } from './gridView';
+import { type ReadImportFileOptions, readImportFile } from './importFile';
+import { type ColumnsReport, type ReconcileOptions, reconcileColumns, type SourceColumn } from './reconcileColumns';
+import { templateFormula } from './templateFormula';
+import type { ExcelOptions } from './xlsx';
+import type { ImportCell } from './xlsxRead';
 
 /**
- * grid interface is what user have access to controll grid behavior
+ * The grid: its config, its datasource and its state. What you call to work with a grid - read and
+ * set the state, change an option, subscribe to events, re-render.
+ *
+ * Make one with {@link createGrid}, which also puts the grid on the page. `new GridInterface()` is for
+ * a `<simple-html-grid>` element you place yourself, see {@link GridElement}.
+ *
+ * @typeParam T the type of the rows, from the datasource: a `Datasource<Person>` gives a
+ * `GridInterface<Person>`
+ *
+ * @sample basic-grid
+ * @example
+ * ```ts
+ * import { createGrid, type GridConfig } from '@simple-html/grid';
+ *
+ * declare const config: GridConfig;
+ *
+ * const gridInterface = createGrid(document.getElementById('grid')!, { config, datasource });
+ *
+ * gridInterface.on('cell-click', (data) => console.log(data.attribute, data.rowData));
+ * gridInterface.updateConfig({ readonly: false });
+ * gridInterface.updateHooks({ cellClass: (row, field) => (field === 'age' && row.age < 18 ? { input: 'minor' } : null) });
+ * const state = gridInterface.getState();
+ *
+ * gridInterface.destroy(); // done with it
+ * ```
  */
 export class GridInterface<T> {
-    private grid: Grid;
-    private gridConfig: GridConfig;
+    // not there until connectGrid, null after __disconnectGrid
+    private grid?: Grid | null;
+    // the grid connectGrid was given last. Kept while its element is out of the dom (__disconnectGrid
+    // clears `grid`, it connects again when the element is put back), so destroy() can remove it then too
+    private lastGrid?: Grid | null;
+    // a copy of the config with every default filled in, __parseConfig() computes the sizes.
+    // Its layout is the state's: the user changes it
+    private gridConfig: ParsedGridConfig;
+    // the options as written - the config without columns, layout and initialState - so updateConfig()
+    // can fill in the defaults again: cellHeaderLabelHeight follows cellHeight ...
+    private options: GridOptions;
+    // copies of the config's layout and initialState: the state resetState() goes back to
+    private configLayout: Required<GridLayout>;
+    // the aggregates of the config's columns: what resetState() goes back to, see GridState.aggregates
+    private configAggregates: Record<string, AggregateFunction[]> = {};
+    // the display formats of the config's columns: what resetState() goes back to, see GridState.formats
+    private configFormats: Record<string, ColumnFormat> = {};
+    private initialState: Partial<GridState>;
+    /** the config as the app gave it - the constructor's, with what updateConfig() changed since: exportConfig() */
+    private givenConfig: GridConfig;
+    // the functions: isReadonly, cellClass, menus. A copy, updateHooks() changes it
+    private hooks: GridHooks<T>;
     private dataSource: Datasource<T>;
-    private columnsSelected: Set<number>;
+    // the columns selected with the column numbers under the header filters, see columnSelection.ts
+    private columnSelection: ColumnSelection = NO_COLUMNS;
+    // the layout they were selected in (layoutKey): their numbers are other columns in another one
+    private columnSelectionKey = '';
 
-    // for variable scroll
-    private scrollTops: number[];
-    private scrollHeights: number[];
-    private scrollHeight: number;
-
-    /**
-     * for skipping events during setting gridconfig
-     */
-    private suppressEvents: boolean;
+    // for variable scroll, set by __dataSourceUpdated, called from the constructor
+    private scrollTops!: number[];
+    private scrollHeights!: number[];
+    private scrollHeight!: number;
 
     /**
-     * for setting readonly based on row values
+     * for skipping the datasource events while applyState() changes the datasource, it rebuilds once
+     * when done
      */
-    private readonlySetterFn: (attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) => boolean | null;
+    private suppressEvents = false;
 
     /**
-     * for adding classes on row lvl
+     * the handlers subscribed with on(), called on cell clicks, copy/paste etc
      */
-    private cellAppendClassSetterFn: (
-        attribute: string,
-        rowData: Entity,
-        cellReadOnlyConfig: boolean
-    ) => {
-        inputClass: string;
-        dimmedClass: string;
+    private events = new Emitter<GridEvents>();
+
+    /**
+     * unsubscribe functions of the grid's handlers on the datasource events,
+     * set by connectGrid and called by __disconnectGrid
+     */
+    private datasourceSubscriptions: (() => void)[] = [];
+
+    /**
+     * what the header filter cells show, see GridState.headerFilters. Only the columns that have
+     * a value or a picked operator are in it
+     */
+    private headerFilters: Record<string, HeaderFilter> = {};
+
+    /**
+     * the lines of the rows made taller by fitRows(), by the row's key (`String(row.__KEY)`). A row
+     * that is not in it is as high as the layout makes a row. See rowHeights.ts
+     */
+    private rowLines = new Map<string, number>();
+
+    /**
+     * the ranges of cells, see getRanges(): copies of what was set
+     */
+    private ranges: CellRange[] = [];
+
+    /**
+     * the ranges in indexes, with the layout they were made in - what the cells need to show them.
+     * null without ranges. See cellRanges.ts
+     */
+    private rangeState: RangeState | null = null;
+
+    /**
+     * the columns with an `editor`, by field: their lookups, see lookupColumn.ts. Made from the config's
+     * columns when the interface is made and by updateConfig()
+     */
+    private lookupColumns: Map<string, LookupColumn>;
+
+    /**
+     * what this interface sorts its lookup columns on, given to the datasource (__setSortValue): the
+     * label the cell shows. Kept to take them back, see clearSortValues
+     */
+    private sortValues = new Map<string, (value: unknown, row: Entity) => string>();
+
+    /**
+     * what this interface groups a date column on, given to the datasource (__setGroupValue): the week,
+     * month, quarter or year its cells show (GROUP_BY_FORMATS) - undefined for other columns, they group
+     * by the field's formatter. Read when the rows are grouped: the column's format of that moment
+     */
+    private readonly groupValue = (field: string, value: unknown): string | undefined => {
+        const date = this.__getColumnFormat(field)?.date;
+        if (date === undefined || !GROUP_BY_FORMATS.includes(date)) {
+            return undefined;
+        }
+        return this.__getCellFormatter(field).format(value);
     };
 
     /**
-     * subscribed listerners, gets called when collection changes/is sorted/filtered etc
+     * The text a row shows in a column filtered on its template (__shownTemplate): the template filled in,
+     * for the datasource's filter (`__setFilterText`). undefined for every other field
      */
-    private listeners: Set<callable> = new Set();
-    private initConfig: GridConfig;
+    private readonly filterText = (field: string, row: Entity): string | undefined => {
+        const template = this.__shownTemplate(field);
+        if (template === null) {
+            return undefined;
+        }
+        return this.templateText(field, row);
+    };
 
     /**
+     * The text a row shows in a text column with a template (`format.text`) - whether it is filtered as
+     * shown or not: what its sort compares. undefined for a column without one, or a lookup column
+     */
+    private templateText(field: string, row: Entity): string | undefined {
+        if (this.__getLookupColumn(field)) {
+            return undefined;
+        }
+        const template = this.__getColumnFormat(field)?.text;
+        if (template === undefined) {
+            return undefined;
+        }
+        const formatter = this.dataSource.getFormatter(field);
+        return fillTemplate(template, cellFieldText(field, row[field], formatter, this.__fieldTextOf(row)));
+    }
+
+    /**
+     * the named views, see getViews(): copies of what was given (GridConfig.views, the storage,
+     * setViews()). The grid changes them: saveView(), renameView() ...
+     */
+    private views: GridView[] = [];
+
+    /**
+     * the id of the view shown, see getCurrentView(). null: none, "Standard" - the config's state
+     */
+    private currentViewId: string | null = null;
+
+    /**
+     * the state as text (viewStateText) right after the view shown - or Standard - was applied or saved:
+     * what isViewModified() compares the state with. null when it is not known - the view shown was
+     * deleted, the state shown is no view's: modified
+     */
+    private viewBaseline: string | null = null;
+
+    /**
+     * the calculated columns of the state, by field (GridState.calculatedColumns): the grid's own copy
+     */
+    private calculated: Record<string, CalculatedColumn> = {};
+
+    /** the config's calculated columns: what resetState() goes back to, see GridState.calculatedColumns */
+    private configCalculated: Record<string, CalculatedColumn> = {};
+
+    /**
+     * the calculated fields this interface gave the datasource (__setCalculatedField), by field: kept to
+     * take them back - not what another grid on the same datasource gave it since
+     */
+    private calculatedFieldsSet = new Map<string, CalculatedField>();
+
+    /**
+     * every field that was a calculated column of this grid (the config's too): one that is not anymore
+     * is no field of the rows - its column options stay, the column chooser does not list it
+     */
+    private everCalculated = new Set<string>();
+    // the version of the datasource's fields this interface's formats were checked against (fieldsChanged)
+    private fieldsVersion: number;
+
+    /**
+     * the formulas of the formula colour rules (`ColorRule.expression`), read once each: null for one with
+     * a problem or that is not true / false. Read again when the fields can be others - new calculated
+     * columns, new columns
+     */
+    private ruleFormulas = new Map<string, Formula | null>();
+
+    /**
+     * Most of the time {@link createGrid} makes the interface. Make it yourself for a
+     * `<simple-html-grid>` element you place on your own, and connect it with
+     * `element.connectInterface()`.
      *
-     * @param gridConfig
-     * @param datasource
+     * @param gridConfig the columns, the layout and the options, see {@link GridConfig}. The object is
+     * not changed, the grid copies the parts it changes
+     * @param datasource the rows. The grid applies `gridConfig.initialState` to it: its sorting,
+     * grouping and filter are replaced (left out, they are cleared). `null` is an option left out: the
+     * default - for the options of the grid, of a column and of its `format` (a config from a backend)
+     * @param hooks optional: the functions - `isReadonly`, `cellClass`, `menus`, see {@link GridHooks}.
+     * The grid keeps a copy of the object, change them later with {@link updateHooks}
+     * @throws a `TypeError` when `gridConfig` has `isReadonly`, `cellClass` or `menus` (those are
+     * hooks), a column has v5's `mandatory` (it is the field's `required` rule), `texts` is not an
+     * object of strings, `multilineTooltipLines` or `multilineLineHeight` is not a whole number of 1 or
+     * more, a column's `aggregate` is no aggregate function or needs a number field, a column's
+     * `format` does not fit its field (see {@link ColumnFormat}), a column's `editor` is wrong - its
+     * lookup not registered, see {@link ColumnEditor} - a column's `renderer` is not the id of a
+     * registered cell renderer, or is given with an `editor`, or a column's `filterOperators`,
+     * `operator`, `filterCaseSensitive` or `datePresets` does not fit its type, see {@link ColumnConfig} - when
+     * `detailForm` is not a {@link DetailForm}, and when `edit` is not an object of the permissions
+     * `add`, `change` and `delete`, each true or false (see {@link EditPermissions})
+     *
+     * @example
+     * ```ts
+     * import { type GridConfig, type GridElement, type GridHooks, GridInterface } from '@simple-html/grid';
+     *
+     * declare const config: GridConfig;
+     * declare const hooks: GridHooks;
+     *
+     * const gridInterface = new GridInterface(config, datasource, hooks);
+     * const element = document.createElement('simple-html-grid') as GridElement;
+     * element.connectInterface(gridInterface);
+     * host.appendChild(element);
+     * ```
      */
-    constructor(gridConfig: GridConfig, datasource: Datasource) {
-        this.columnsSelected = new Set();
+    constructor(gridConfig: GridConfig, datasource: Datasource<T>, hooks: GridHooks<T> = {}) {
+        // null is an option left out: a config from a backend has null for what is not set
+        gridConfig = nullsAsDefaults(gridConfig);
+        assertNoHooks(gridConfig);
+        assertNoV5Options(gridConfig);
+        assertConfigTexts(gridConfig);
+        assertTooltipLines(gridConfig);
+        assertLineHeight(gridConfig);
+        assertConfigDetailForm(gridConfig);
+        assertEditPermissions(gridConfig.edit);
+        assertConfigViews(gridConfig);
         this.dataSource = datasource;
-        this.initConfig = JSON.parse(JSON.stringify(gridConfig)) as GridConfig;
-        if (
-            this.initConfig.autoRemoveContextMenuOnScrollEvent === null ||
-            this.initConfig.autoRemoveContextMenuOnScrollEvent === undefined
-        ) {
-            this.initConfig.autoRemoveContextMenuOnScrollEvent = false;
+        // the calculated columns first: the checks of the formats, the aggregates and the filters read
+        // their types from the datasource
+        const fieldType = this.calculatedFieldType(gridConfig.columns ?? {}, gridConfig.layout);
+        if (gridConfig.calculatedColumns !== undefined) {
+            assertCalculatedColumns(gridConfig.calculatedColumns, fieldType, this.isTakenName, 'GridConfig: calculatedColumns');
         }
-        this.loadConfig(gridConfig, true);
-        this.__dataSourceUpdated();
+        if (gridConfig.initialState?.calculatedColumns !== undefined) {
+            assertCalculatedColumns(
+                gridConfig.initialState.calculatedColumns,
+                fieldType,
+                this.isTakenName,
+                'GridConfig: initialState.calculatedColumns'
+            );
+        }
+        const startCalculated = structuredClone(gridConfig.initialState?.calculatedColumns ?? gridConfig.calculatedColumns ?? {});
+        this.registerCalculated(startCalculated, fieldType);
+        try {
+            assertAggregates(gridConfig, datasource);
+            assertFormats(gridConfig, datasource, this.ruleFieldOf(gridConfig.columns ?? {}, gridConfig.layout));
+            assertRenderers(gridConfig);
+            assertFilterOptions(gridConfig, datasource);
+            this.lookupColumns = lookupColumnsOf(gridConfig.columns, datasource);
+            // the last: it changes the datasource's rules, nothing after it throws
+            datasource.__setColumnRules(this, columnRulesOf(gridConfig.columns, datasource));
+        } catch (error) {
+            // the datasource is left as it was
+            this.registerCalculated({}, fieldType);
+            throw error;
+        }
+        this.hooks = { ...hooks };
+
+        const { columns, layout, initialState, calculatedColumns, ...options } = gridConfig;
+        this.options = options;
+        this.givenConfig = structuredClone(gridConfig);
+        this.gridConfig = {
+            ...withDefaults(options),
+            columns: structuredClone(columns ?? {}),
+            layout: copyLayout(layout),
+            ...NO_SIZES
+        };
+        this.configLayout = copyLayout(layout);
+        this.configAggregates = aggregatesOfColumns(this.gridConfig.columns);
+        this.configFormats = formatsOfColumns(this.gridConfig.columns);
+        // structuredClone, not JSON: it keeps the Dates of a filter
+        this.initialState = structuredClone(initialState ?? {});
+        this.configCalculated = structuredClone(calculatedColumns ?? {});
+        for (const name of [...Object.keys(this.configCalculated), ...Object.keys(startCalculated)]) {
+            this.everCalculated.add(name);
+        }
+
+        // before the start state is applied: it can sort on a lookup column, group by a week
+        this.setSortValues();
+        this.dataSource.__setGroupValue(this.groupValue);
+        this.dataSource.__setFilterText(this.filterText);
+        this.dataSource.__setSortText(this.sortText);
+        // datasource.setFields() since: see syncFields
+        this.fieldsVersion = this.dataSource.__getFieldsVersion();
+        // the views of the config and the storage: the default one is the state the grid starts in
+        this.views = startViews(gridConfig.views, gridConfig.viewsStorageKey);
+        this.applyStartView();
     }
 
     /**
-     * loads init config, useful when saved/loaded many different configs
+     * The state of the grid now: what the user changed - column order, pinning and widths, sorting,
+     * grouping, expanded groups, the filter and what the header filters show, the aggregates, the
+     * totals row, the display formats of the columns and the detail form. See {@link GridState}.
+     *
+     * It is a copy: changing it changes nothing in the grid, and what the user does later does not
+     * change it. Give it to {@link setState} to go back to it.
+     *
+     * @sample grid-state
+     * @example
+     * ```ts
+     * const state = gridInterface.getState();
+     * state.layout.center.map((column) => column.fields); // [['name'], ['age', 'born']]
+     * state.sorting; // [{ attribute: 'name', ascending: true }]
+     *
+     * // later, e.g. after the user moved columns and changed the filter
+     * gridInterface.setState(state);
+     * ```
      */
-    public loadInitConfig() {
-        this.loadConfig(this.initConfig, false);
+    public getState(): GridState {
+        const datasource = this.getDatasource();
+        // copies: the datasource and the grid keep changing these objects in place (shift+click sort,
+        // drag/drop, resizing). structuredClone keeps Dates; it throws on a proxy, and none of these
+        // hold one - the rows are the only proxies, and only their values go into a filter
+        return {
+            layout: copyLayout(this.gridConfig.layout),
+            sorting: structuredClone(datasource.getLastSorting()),
+            grouping: structuredClone(datasource.getGrouping()),
+            expandedGroups: structuredClone(datasource.getExpanded()),
+            filter: structuredClone(datasource.getFilter()),
+            headerFilters: structuredClone(this.headerFilters),
+            aggregates: aggregatesOfColumns(this.gridConfig.columns),
+            totalsRow: this.gridConfig.totalsRow,
+            formats: formatsOfColumns(this.gridConfig.columns),
+            typeFormats: structuredClone(this.gridConfig.typeFormats),
+            detailForm: copyDetailForm(this.gridConfig.detailForm),
+            calculatedColumns: structuredClone(this.calculated)
+        };
     }
 
     /**
-     * in case you need to set new init config, to be used with loadInitConfig()
-     * @param gridConfig
-     * @param load = false, but can be usedful if you want to update and load it
+     * Sets the state: column order, pinning and widths, sorting, grouping, expanded groups, the filter
+     * and what the header filters show, the aggregates, the totals row, the display formats of the
+     * columns and the detail form. See {@link GridState}.
+     *
+     * **Applies what is given and keeps the rest**: `setState({ sorting })` changes the sort and
+     * nothing else. To set everything, pass a whole state, e.g. one from {@link getState}. Within a
+     * part nothing is merged: `layout` replaces the whole layout, `headerFilters` every header filter.
+     *
+     * The grid keeps a copy, the object passed in is not changed later. It must be plain data (no
+     * functions, no rows from the datasource): it is copied with `structuredClone`. A state stored as
+     * JSON can be given as it is; its `Date`s came back as ISO text, which is kept as text - see
+     * {@link GridState}.
+     *
+     * `filter` is what the rows are filtered by, `headerFilters` only what the header filter cells show.
+     * Set both to have a header filter's condition and its cell agree, as `getState()` gives them.
+     *
+     * @param state the parts to set
+     * @throws a `TypeError` for aggregates or display formats (`formats`) that do not fit their fields,
+     * see {@link ColumnConfig} `aggregate` and {@link ColumnFormat}, and a `detailForm` that is no
+     * {@link DetailForm} - before anything changes
+     *
+     * @sample grid-state
+     * @example
+     * ```ts
+     * import type { GridState } from '@simple-html/grid';
+     *
+     * declare const savedState: GridState;
+     *
+     * // a whole state, saved before
+     * gridInterface.setState(savedState);
+     *
+     * // only some parts, the rest stays as it is
+     * gridInterface.setState({ sorting: [{ attribute: 'age', ascending: false }] });
+     * gridInterface.setState({ grouping: [{ attribute: 'country', title: 'Country' }], expandedGroups: [] });
+     * gridInterface.setState({ filter: null, headerFilters: {} }); // no filter
+     * ```
      */
-    public updateInitConfig(gridConfig: GridConfig, load = false) {
-        this.initConfig = JSON.parse(JSON.stringify(gridConfig)) as GridConfig;
-        if (load) {
-            this.loadConfig(this.initConfig, false);
+    public setState(state: Partial<GridState>) {
+        this.applyState(structuredClone(state));
+    }
+
+    /**
+     * Goes back to the state the grid started in: `GridConfig.initialState`, with the config's
+     * `layout` (unless `initialState` has one). What `initialState` leaves out is cleared - no sorting,
+     * no grouping, no filter, no header filters. A `layout` or `initialState` given to
+     * {@link updateConfig} since is the one it goes back to.
+     *
+     * It is the view "Standard" of the views menu: no named view is shown after it
+     * ({@link getCurrentView} is null) - also when the grid started in a default view
+     * (`GridView.default`). `applyView(id)` goes back to a view.
+     *
+     * @sample grid-state
+     * @example
+     * ```ts
+     * import { GridInterface } from '@simple-html/grid';
+     *
+     * const gridInterface = new GridInterface(
+     *     {
+     *         layout: { center: [{ fields: ['name'], width: 100 }, { fields: ['age'], width: 100 }] },
+     *         initialState: { sorting: [{ attribute: 'name', ascending: true }] }
+     *     },
+     *     datasource
+     * );
+     *
+     * // the user sorts, filters and moves columns around ...
+     * gridInterface.resetState(); // sorted on name again, no filter, the config's columns
+     * ```
+     */
+    public resetState() {
+        this.applyState(this.getStartState());
+        this.showView(null);
+    }
+
+    /**
+     * The grid as plain JSON, to save and give back to `importConfig()`: `{ version, config, state, views }`
+     * - the version of the format ({@link GRID_CONFIG_VERSION}), the config as the app gave it (the
+     * constructor's, with what `updateConfig()` changed since), `getState()` - what the user did with it -
+     * and the named views (`getViews()`: the config's and the ones the user saved with the views button,
+     * left out when there are none). The hooks and the datasource are not in it. See {@link ExportedGrid}
+     *
+     * @example
+     * ```ts
+     * localStorage.setItem('my-grid', JSON.stringify(gridInterface.exportConfig()));
+     * // { "version": 2, "config": { "layout": ..., "columns": ... }, "state": { "sorting": [] ... } }
+     * ```
+     */
+    public exportConfig(): ExportedGrid {
+        const exported: ExportedGrid = {
+            version: GRID_CONFIG_VERSION,
+            config: structuredClone(this.givenConfig),
+            state: this.getState()
+        };
+        // the views the user saved too: a grid saved and given back has them, wherever it is stored
+        const views = this.getViews();
+        if (views.length) {
+            exported.views = views;
         }
+        return exported;
+    }
+
+    /**
+     * The grid with the columns its source has now - a database view the grid was made from got columns
+     * and lost some: {@link reconcileColumns} on what the grid has (`exportConfig()`), given back
+     * (`importConfig()`). A field that is gone leaves the layout, the sort, the grouping, the filters, the
+     * formats, the colour rules (a rule that needed it goes), the detail form, the views - the config's and
+     * the ones the user saved (written back, `setViews()`) - and a calculated column whose formula named it
+     * goes; a new field is listed by the column chooser (shown with `showNew`). Returns what changed.
+     *
+     * The datasource keeps its fields: a new field it has no type of is shown as text - make the datasource
+     * with the new fields' types when it can be made again.
+     * @param columns the columns of the source now, in their order: `{ field, label?, ...ColumnConfig }`
+     * @sample reconcile-columns
+     * @example
+     * ```ts
+     * // the view's columns now: city is gone, region is new
+     * const report = gridInterface.updateColumns([{ field: 'company' }, { field: 'country' }, { field: 'region', label: 'Region' }]);
+     * if (report.removed.length) {
+     *     alert(`Gone from the view: ${report.removed.join(', ')}`);
+     * }
+     * ```
+     */
+    public updateColumns(columns: readonly SourceColumn[], options: ReconcileOptions = {}): ColumnsReport {
+        // the views - the config's and the ones saved since (viewsStorageKey) - are in it, cleaned with the
+        // rest and given back by importConfig
+        const { grid, report } = reconcileColumns(this.exportConfig(), columns, options);
+        this.importConfig(grid);
+        return report;
+    }
+
+    /**
+     * Takes a saved grid back: one `exportConfig()` made, or an older one - a saved grid without a
+     * `version` is a config v5 saved (`saveConfig()`) or was written for, converted on the way in
+     * ({@link convertGridConfig}). Its config is given to `updateConfig()` - an option it leaves out stays
+     * as it is - then its state to `setState()`; without a state the grid goes to the config's start
+     * (`resetState()`). Its views to `setViews()` - stored with `viewsStorageKey` - when it has them.
+     *
+     * A v5 column's `type` and `mandatory` are the datasource's fields' in v6: they are left out, give the
+     * datasource the field's type and its `required` rule.
+     * @throws a `TypeError` for what is no saved grid, a version newer than this grid's, and what
+     * `updateConfig()` and `setState()` throw for - the config is checked first: a config that throws
+     * changes nothing
+     * @example
+     * ```ts
+     * const saved = JSON.parse(localStorage.getItem('my-grid') ?? 'null');
+     * if (saved) {
+     *     gridInterface.importConfig(saved);
+     * }
+     * ```
+     */
+    public importConfig(saved: unknown) {
+        const { config, state, views } = convertGridConfig(saved);
+        this.updateConfig(config);
+        if (state) {
+            this.setState(state);
+        } else {
+            this.resetState();
+        }
+        if (views) {
+            this.setViews(views);
+        }
+    }
+
+    /**
+     * The named views, in their order: the views of the config and the storage (`GridConfig.views`,
+     * `viewsStorageKey`), with what the user saved, renamed and deleted since - or the list given to
+     * {@link setViews}. See {@link GridView}. Copies: changing them changes nothing in the grid.
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * gridInterface.getViews().map((view) => view.name); // ['Late deliveries', 'My open orders']
+     * ```
+     */
+    public getViews(): GridView[] {
+        return structuredClone(this.views);
+    }
+
+    /**
+     * Replaces the list of named views: loaded from a backend, say. The view shown stays shown when the
+     * list has its id, else none is ("Standard", marked as changed: the state shown is the old view's) -
+     * nothing is applied, the grid shows what it showed. Written to localStorage with
+     * `GridConfig.viewsStorageKey`. Sends no `views-change`: you gave the list.
+     *
+     * The grid keeps a copy, the list passed in is not changed later.
+     *
+     * @param views the views, see {@link GridView}
+     * @throws a `TypeError` when `views` is no list of views - an id or a name that is no text, a state
+     * that is no object, two views of one id, two defaults - before anything changes
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * import type { GridView } from '@simple-html/grid';
+     *
+     * const response = await fetch('/api/settings/orders-grid-views');
+     * const views: GridView[] = await response.json();
+     * gridInterface.setViews(views);
+     * ```
+     */
+    public setViews(views: GridView[]) {
+        assertViews(views, 'setViews()');
+        this.views = structuredClone(views);
+        if (this.currentViewId !== null && !this.views.some((view) => view.id === this.currentViewId)) {
+            this.currentViewId = null;
+            this.viewBaseline = null;
+        }
+        this.viewsChanged(false);
+    }
+
+    /**
+     * The named view the grid shows: the one applied last (the views menu, {@link applyView}, the
+     * default view when the grid was made) or saved last. A copy, null when none is - "Standard" in the
+     * views menu, the config's state: after {@link resetState}, and when the view shown was deleted.
+     *
+     * A change of the state after it - a filter, a column resized, `setState()` - keeps it the view shown:
+     * {@link isViewModified} says the state is not the view's any more.
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * const view = gridInterface.getCurrentView();
+     * console.log(view ? `${view.name}${gridInterface.isViewModified() ? ' *' : ''}` : 'Standard');
+     * ```
+     */
+    public getCurrentView(): GridView | null {
+        const view = this.views.find((each) => each.id === this.currentViewId);
+        return view ? structuredClone(view) : null;
+    }
+
+    /**
+     * `true` when the state changed since the view shown was applied or saved - or, with none shown,
+     * since the grid started in the config's state or went back to it: the `*` after the name on the
+     * views button. A filter, a column moved or resized, a sort, a format, `setState()` ... - the state
+     * compared as JSON, with the expanded groups left out (opening a group changes no view). The
+     * current row, the scroll position and Find are no state.
+     *
+     * Going back: `applyView(id)` the view again, `resetState()` with none shown. `true` too when the
+     * view shown was deleted: the state is no view's.
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * gridInterface.applyView('late');
+     * gridInterface.isViewModified(); // false
+     * gridInterface.setState({ sorting: [{ attribute: 'company', ascending: true }] });
+     * gridInterface.isViewModified(); // true
+     * ```
+     */
+    public isViewModified(): boolean {
+        return this.viewBaseline === null || viewStateText(this.getState()) !== this.viewBaseline;
+    }
+
+    /**
+     * Shows a named view: applies its state, and it is the view shown ({@link getCurrentView}) - as a
+     * click on it in the views menu. What its `state` leaves out is the state the grid starts in
+     * (`GridConfig.initialState` and the config's `layout`): a view is all of the state, not a change of
+     * the state shown. Applied again, it takes back what changed since.
+     *
+     * `null` is "Standard": the config's state, as {@link resetState}.
+     *
+     * @param id the view's `id`, see {@link getViews}
+     * @throws a `TypeError` when no view has the id, and when its state does not fit the grid - aggregates
+     * or a display format of a field that is not of their type, a detail form that is none - as
+     * `setState()` throws, before anything changes
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * gridInterface.applyView('late'); // the view "Late deliveries"
+     * gridInterface.applyView(null); // Standard: the config's state
+     * ```
+     */
+    public applyView(id: string | null) {
+        if (id === null) {
+            this.resetState();
+            return;
+        }
+        const view = this.viewOf(id, 'applyView()');
+        this.applyState({ ...this.getStartState(), ...structuredClone(view.state) });
+        this.showView(id);
+    }
+
+    /**
+     * Saves the state now over the view shown - *Save* in the views menu - and sends `views-change`. Its
+     * name, id and default stay as they are; it is not modified any more.
+     *
+     * @returns the view saved, a copy
+     * @throws a `TypeError` when no view is shown ("Standard", the config's state: {@link saveViewAs}
+     * makes a view of it) and when the view shown is `readonly`
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * gridInterface.applyView('mine');
+     * gridInterface.setState({ sorting: [{ attribute: 'dueDate', ascending: true }] });
+     * gridInterface.saveView(); // "My open orders" sorted on the due date from now on
+     * ```
+     */
+    public saveView(): GridView {
+        if (this.currentViewId === null) {
+            throw new TypeError("saveView(): no view is shown - Standard is the config's state, saveViewAs() makes a view of it");
+        }
+        const view = this.ownView(this.currentViewId, 'saveView()');
+        const state = this.getState();
+        view.state = state;
+        this.viewBaseline = viewStateText(state);
+        this.viewsChanged(true);
+        return structuredClone(view);
+    }
+
+    /**
+     * Saves the state now as a new view, at the end of the list - *Save as new view…* in the views menu -
+     * and sends `views-change`. It is the view shown from then on. Its id is made by the grid (`view-`
+     * and a random part), see the view returned.
+     *
+     * The name can be one another view has, the views menu does not let the user give one.
+     *
+     * @param name the view's name, its spaces at the ends taken off
+     * @returns the view saved, a copy
+     * @throws a `TypeError` when `name` is no text, or only spaces
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * const view = gridInterface.saveViewAs('Late deliveries');
+     * view.id; // 'view-mi3x0h2k-4fz9qa', for applyView(), renameView() ...
+     * ```
+     */
+    public saveViewAs(name: string): GridView {
+        const view: GridView = { id: newViewId(this.views), name: viewName(name, 'saveViewAs()'), state: this.getState() };
+        this.views.push(view);
+        this.showView(view.id, false);
+        this.viewsChanged(true);
+        return structuredClone(view);
+    }
+
+    /**
+     * Gives a view another name - *Rename…* in the views menu - and sends `views-change`.
+     *
+     * @param id the view's `id`
+     * @param name its new name, its spaces at the ends taken off. It can be one another view has
+     * @throws a `TypeError` when no view has the id, when the view is `readonly`, and when `name` is no
+     * text, or only spaces
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * gridInterface.renameView('mine', 'My orders');
+     * ```
+     */
+    public renameView(id: string, name: string) {
+        const view = this.ownView(id, 'renameView()');
+        view.name = viewName(name, 'renameView()');
+        this.viewsChanged(true);
+    }
+
+    /**
+     * Deletes a view - *Delete* in the views menu - and sends `views-change`. The view shown deleted, the
+     * grid shows what it showed: no view is shown then ("Standard", marked as changed), and *Save as new
+     * view…* still makes a view of it.
+     *
+     * @param id the view's `id`
+     * @throws a `TypeError` when no view has the id, and when the view is `readonly`
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * gridInterface.deleteView('mine');
+     * ```
+     */
+    public deleteView(id: string) {
+        const view = this.ownView(id, 'deleteView()');
+        this.views = this.views.filter((each) => each !== view);
+        if (this.currentViewId === id) {
+            this.currentViewId = null;
+            this.viewBaseline = null;
+        }
+        this.viewsChanged(true);
+    }
+
+    /**
+     * Makes a view the default - the one the grid applies when it is made (`GridView.default`), *Default
+     * view* in the views menu - and sends `views-change`. One at a time: the default before is not any
+     * more. A readonly view can be the default. Nothing is applied now.
+     *
+     * @param id the view's `id`, null for none: the grid starts in the config's state ("Standard")
+     * @throws a `TypeError` when no view has the id
+     *
+     * @sample views
+     * @example
+     * ```ts
+     * gridInterface.setDefaultView('late'); // the next time the grid is made it shows "Late deliveries"
+     * gridInterface.setDefaultView(null); // the config's state
+     * ```
+     */
+    public setDefaultView(id: string | null) {
+        if (id !== null) {
+            this.viewOf(id, 'setDefaultView()');
+        }
+        for (const view of this.views) {
+            if (view.id === id) {
+                view.default = true;
+            } else {
+                delete view.default;
+            }
+        }
+        this.viewsChanged(true);
+    }
+
+    /**
+     * The state the grid starts in: the default view (`GridView.default`) applied on top of the start
+     * state (getStartState), else the start state. A default view that can not be applied - stored by a
+     * version of the app of before, say - is passed by with a warning: the grid starts all the same
+     */
+    private applyStartView() {
+        const view = this.views.find((each) => each.default);
+        if (view) {
+            try {
+                this.applyState({ ...this.getStartState(), ...structuredClone(view.state) });
+                this.showView(view.id, false);
+                return;
+            } catch (error) {
+                console.warn(
+                    `GridConfig.views: the default view '${view.name}' could not be applied, the grid starts without it`,
+                    error
+                );
+            }
+        }
+        this.applyState(this.getStartState());
+        this.showView(null, false);
+    }
+
+    /**
+     * Makes `id` the view shown, the state now its own (not modified) - after it was applied or saved -
+     * and renders the views button again: the rebuild of applyState() showed the view before
+     * @param render false when the caller renders it (viewsChanged) or the grid is being made
+     */
+    private showView(id: string | null, render = true) {
+        this.currentViewId = id;
+        this.viewBaseline = viewStateText(this.getState());
+        if (render) {
+            this.__refreshViewsButton();
+        }
+    }
+
+    /**
+     * The view of the id, the grid's own object
+     * @param where the caller, for the message
+     * @throws a `TypeError` when no view has the id
+     */
+    private viewOf(id: string, where: string): GridView {
+        const view = this.views.find((each) => each.id === id);
+        if (!view) {
+            throw new TypeError(`${where}: no view has the id '${id}'`);
+        }
+        return view;
+    }
+
+    /**
+     * The view of the id, to change: not a readonly one
+     * @throws a `TypeError` when no view has the id, and when it is readonly
+     */
+    private ownView(id: string, where: string): GridView {
+        const view = this.viewOf(id, where);
+        if (view.readonly) {
+            throw new TypeError(`${where}: the view '${view.name}' is readonly - saveViewAs() makes a view of the user's of it`);
+        }
+        return view;
+    }
+
+    /**
+     * After the list of views changed: it is written to localStorage (GridConfig.viewsStorageKey), sent
+     * with `views-change` when it was the user's change - not the list given by the app - and the views
+     * button shows it
+     */
+    private viewsChanged(send: boolean) {
+        if (this.options.viewsStorageKey) {
+            writeStoredViews(this.options.viewsStorageKey, this.views);
+        }
+        if (send) {
+            this.__callSubscribers('views-change', { views: this.getViews() });
+        }
+        this.__refreshViewsButton();
+    }
+
+    /**
+     * @internal
+     * Renders the footer again when it shows the views button: its name and its `*` follow the state.
+     * A rebuild renders it anyway; this is for a change of the state that does not rebuild - the width
+     * of the detail form dragged, filter as you type turned on - and for a change of the views
+     */
+    public __refreshViewsButton() {
+        if (this.grid?.domCreated && this.gridConfig.viewsButton) {
+            renderFooter(this.grid);
+        }
+    }
+
+    /**
+     * Computes the quick date filters of the header filters from today again (`HeaderFilter.datePreset`:
+     * Today, This week ... picked in a date column's filter menu) and filters the rows again when their
+     * days changed - the day changed since they filtered. Nothing when none changed. On a new day the cells
+     * of a column with a colour rule on a quick date (`ColorRule.datePreset`) are rendered again too.
+     *
+     * The grid calls it when the window gets the focus back and when the page is shown again: the user
+     * back the next morning sees today's rows. A grid that is looked at over midnight without either - a
+     * screen on the wall - calls it from a timer of the app's.
+     *
+     * @sample filtering
+     * @example
+     * ```ts
+     * // a minute past midnight, every night
+     * const msToMidnight = () => {
+     *     const now = new Date();
+     *     return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 1).getTime() - now.getTime();
+     * };
+     * const nightly = () => {
+     *     gridInterface.refreshDatePresets();
+     *     setTimeout(nightly, msToMidnight());
+     * };
+     * setTimeout(nightly, msToMidnight());
+     * ```
+     */
+    public refreshDatePresets() {
+        // colour rules with a quick date: their days are today's when the cells are rendered - again, a new day
+        const day = new Date().toDateString();
+        if (day !== this.rulesDay) {
+            this.rulesDay = day;
+            if (this.hasDatePresetRules()) {
+                this.refresh();
+            }
+        }
+        const fields = Object.keys(this.headerFilters).filter((field) => this.headerFilters[field].datePreset);
+        if (!fields.length) {
+            return;
+        }
+        const datasource = this.getDatasource();
+        const before = datasource.getFilter();
+        const after = this.withDatePresets(before);
+        if (fields.some((field) => !sameConditions(columnConditions(before, field), columnConditions(after, field)))) {
+            datasource.filter(after);
+        }
+    }
+
+    /** the day the colour rules were last rendered for, see refreshDatePresets(): a new day renders them again */
+    private rulesDay = new Date().toDateString();
+
+    /** true when a column has a colour rule with a quick date (`datePreset`), its own or in a condition */
+    private hasDatePresetRules(): boolean {
+        return Object.values(this.gridConfig.columns).some((column) =>
+            column?.format?.rules?.some((rule) => rule.datePreset || rule.conditions?.some((condition) => condition.datePreset))
+        );
+    }
+
+    /**
+     * The state the grid starts in and resetState() goes back to: the config's initialState, with the
+     * config's layout and empty values for what it leaves out. A new copy every call, applyState()
+     * hands its parts on to the datasource and the grid, and they change them in place
+     */
+    private getStartState(): GridState {
+        const initialState = structuredClone(this.initialState);
+        return {
+            layout: initialState.layout ?? copyLayout(this.configLayout),
+            sorting: initialState.sorting ?? [],
+            grouping: initialState.grouping ?? [],
+            expandedGroups: initialState.expandedGroups ?? [],
+            filter: initialState.filter ?? null,
+            headerFilters: initialState.headerFilters ?? {},
+            aggregates: initialState.aggregates ?? structuredClone(this.configAggregates),
+            totalsRow: initialState.totalsRow ?? this.options.totalsRow ?? false,
+            formats: initialState.formats ?? structuredClone(this.configFormats),
+            typeFormats: initialState.typeFormats ?? structuredClone(this.options.typeFormats ?? {}),
+            // applyState checks it and keeps a copy
+            detailForm: initialState.detailForm ?? this.options.detailForm ?? noDetailForm(),
+            calculatedColumns: initialState.calculatedColumns ?? structuredClone(this.configCalculated)
+        };
+    }
+
+    /**
+     * Changes options of the config while the grid is shown: `readonly`, `hideLabels`, the sizes,
+     * `tooltips`, `columns` ... and rebuilds the grid once. The functions - `isReadonly`, `cellClass`,
+     * `menus` - are not part of the config, change them with {@link updateHooks}.
+     *
+     * - **Only the keys given change**, the rest stay as they are. A key given as `undefined` or `null` goes
+     *   back to its default - `layout` excepted, a grid always has one.
+     * - **`columns` replaces the options of every column**, nothing is merged: a field left out gets
+     *   the defaults.
+     * - **`layout` is shown right away**, as `setState({ layout })` does: the column order, pinning and
+     *   widths the user made are replaced. It is also the layout `resetState()` goes back to from now
+     *   on (unless `initialState` has a layout).
+     * - **`initialState` changes nothing now**: it is the state a later `resetState()` goes back to.
+     *   Call `resetState()` after to apply it.
+     * - **`texts` replaces the grid's texts as a whole**, the ids are not merged: an id left out shows
+     *   the page's text again (`setTexts()`). A menu or the filter editor shows them the next time it
+     *   opens.
+     * - **`edit` replaces the permissions as a whole**: a permission left out is allowed again -
+     *   `updateConfig({ edit: { delete: false } })` allows adding and changing. The cells follow at
+     *   once; an open menu, date picker, lookup list or editor of a multiline cell is closed - what was
+     *   typed in the editor is not saved. See {@link EditPermissions}.
+     * - **`views` and `viewsStorageKey` make the list of views again**, as when the grid is made: the
+     *   config's and the stored ones. Nothing is applied; the view shown stays shown when the list still
+     *   has it. See {@link GridView}. With no view shown ("Standard") and the state the config's, the
+     *   grid still shows the config's state after a new `layout` or `columns`: not marked as changed.
+     *
+     * The rest of the state - sorting, grouping, filter, header filters - is kept, and so are the
+     * handlers subscribed with {@link on}. The object passed in is not changed, the grid copies
+     * `columns`, `layout` and `initialState`.
+     *
+     * @param config the parts of the config to change
+     * @throws a `TypeError` when `config` has `isReadonly`, `cellClass` or `menus` (those are hooks),
+     * a column has v5's `mandatory` (it is the field's `required` rule), `texts` is not an object of
+     * strings, `multilineTooltipLines` or `multilineLineHeight` is not a whole number of 1 or more, a
+     * column's `aggregate` is no aggregate function or needs a number field, a column's `format` does
+     * not fit its field (see {@link ColumnFormat}), a column's `editor` is wrong - its lookup not
+     * registered, see {@link ColumnEditor} - a column's `renderer` is not the id of a registered cell
+     * renderer, or is given with an `editor`, or a column's `filterOperators`, `operator`,
+     * `filterCaseSensitive` or `datePresets` does not fit its type, see {@link ColumnConfig} - when `detailForm` is
+     * not a {@link DetailForm}, and when `edit` is not an object of the permissions `add`, `change` and
+     * `delete`, each true or false (see {@link EditPermissions})
+     *
+     * @sample misc-options
+     * @example
+     * ```ts
+     * gridInterface.updateConfig({ readonly: false }); // editing on
+     * gridInterface.updateConfig({ edit: { add: true, change: false, delete: false } }); // new rows only
+     * gridInterface.updateConfig({ hideFilter: true, cellHeight: 30 });
+     * gridInterface.updateConfig({ tooltips: undefined }); // back to the default, true
+     *
+     * // the columns the config starts with, shown now and what resetState() goes back to
+     * gridInterface.updateConfig({ layout: { center: [{ fields: ['name'], width: 200 }] } });
+     * ```
+     */
+    public updateConfig(config: Partial<GridConfig>) {
+        // null is an option left out (here: back to its default), as in the constructor
+        config = nullsAsDefaults(config);
+        assertNoHooks(config);
+        assertNoV5Options(config);
+        assertConfigTexts(config);
+        assertTooltipLines(config);
+        assertLineHeight(config);
+        assertConfigDetailForm(config);
+        assertEditPermissions(config.edit);
+        assertConfigViews(config);
+        // the calculated columns first, as in the constructor: the checks below read their types. Taken
+        // back when one of them throws
+        // a column filtered on another template after it: the filter runs again (applyState)
+        const shownBefore = this.shownTemplates();
+        let calculatedNext: Record<string, CalculatedColumn> | undefined;
+        const fieldType = this.calculatedFieldType(
+            config.columns ?? this.gridConfig.columns,
+            config.layout ?? this.gridConfig.layout
+        );
+        if ('calculatedColumns' in config) {
+            calculatedNext = structuredClone(config.calculatedColumns ?? {});
+            assertCalculatedColumns(calculatedNext, fieldType, this.isTakenName, 'GridConfig: calculatedColumns');
+            this.registerCalculated(calculatedNext, fieldType);
+        }
+        let lookupColumns: Map<string, LookupColumn> | null;
+        try {
+            assertAggregates(config, this.dataSource);
+            assertFormats(
+                config,
+                this.dataSource,
+                this.ruleFieldOf(config.columns ?? this.gridConfig.columns, config.layout ?? this.gridConfig.layout)
+            );
+            assertRenderers(config);
+            assertFilterOptions(config, this.dataSource);
+            // checked before anything changes, like the rest
+            lookupColumns = 'columns' in config ? lookupColumnsOf(config.columns, this.dataSource) : null;
+            // the last: it changes the datasource's rules, nothing after it throws
+            if ('columns' in config) {
+                this.dataSource.__setColumnRules(this, columnRulesOf(config.columns, this.dataSource));
+            }
+        } catch (error) {
+            if (calculatedNext) {
+                this.registerCalculated(this.calculated, fieldType);
+            }
+            throw error;
+        }
+        const { columns, layout, initialState, calculatedColumns, ...options } = config;
+        // Standard (no view shown) as the config's state stays unchanged: the config's layout or columns
+        // are what it shows from now on, see isViewModified
+        const keepStandard = this.currentViewId === null && !this.isViewModified();
+
+        // other edit permissions: what is open was opened under the old ones - a menu, the date picker, the
+        // editor of a multiline cell, a lookup's list - and could still write into a row they lock now.
+        // Closed, what was typed in the editor not saved
+        if ('edit' in config && this.grid) {
+            closeTextEditor(this.grid, false);
+            this.grid.lookupEditor?.close(false);
+            removeContextMenu(this.grid);
+        }
+
+        this.options = { ...this.options, ...options };
+        this.givenConfig = { ...this.givenConfig, ...structuredClone(config) };
+        // the totals row is state too (the header menu turns it on and off): only a totalsRow given
+        // here changes it
+        const totalsRow = 'totalsRow' in config ? withDefaults(this.options).totalsRow : this.gridConfig.totalsRow;
+        // and so is the detail form (the grid config dialog changes it)
+        const detailForm = 'detailForm' in config ? withDefaults(this.options).detailForm : this.gridConfig.detailForm;
+        // and so are the formats by type (the Defaults tab of the dialog)
+        const typeFormats = 'typeFormats' in config ? withDefaults(this.options).typeFormats : this.gridConfig.typeFormats;
+        // in place, so code that got the parsed config before reads the new options too
+        Object.assign(this.gridConfig, withDefaults(this.options), { totalsRow, detailForm, typeFormats });
+
+        // `in`, so that `columns: undefined` gives every column the defaults, as it does for an option.
+        // Their aggregates are the ones resetState() goes back to from now on
+        if ('columns' in config) {
+            // a formula of a colour rule can read other columns now
+            this.ruleFormulas.clear();
+            this.gridConfig.columns = structuredClone(columns ?? {});
+            this.configAggregates = aggregatesOfColumns(this.gridConfig.columns);
+            this.configFormats = formatsOfColumns(this.gridConfig.columns);
+            // the formats of the columns: a date column grouped by what it shows
+            this.dataSource.__regroup();
+        }
+        if (lookupColumns) {
+            // the list open for a column of the old config is closed, the cells are rendered anew
+            this.grid?.lookupEditor?.close(false);
+            this.clearSortValues();
+            this.lookupColumns = lookupColumns;
+            this.setSortValues();
+            // the grid follows the datasources of the lookups, the new ones now
+            if (this.grid) {
+                this.subscribeToDatasource();
+            }
+        }
+        if ('initialState' in config) {
+            this.initialState = structuredClone(initialState ?? {});
+        }
+        // the views made again, as when the grid was made: the config's and the stored ones. The view
+        // shown stays shown when it is still there
+        if ('views' in config || 'viewsStorageKey' in config) {
+            this.views = startViews(this.options.views, this.options.viewsStorageKey);
+            if (this.currentViewId !== null && !this.views.some((view) => view.id === this.currentViewId)) {
+                this.currentViewId = null;
+                this.viewBaseline = null;
+            }
+        }
+
+        // shown now, as a layout, and what resetState() goes back to
+        const next: Partial<GridState> = {};
+        if (calculatedNext) {
+            this.configCalculated = structuredClone(calculatedNext);
+            next.calculatedColumns = calculatedNext;
+        }
+
+        // a grid always has a layout, `layout: undefined` keeps it
+        if (layout) {
+            this.configLayout = copyLayout(layout);
+            next.layout = copyLayout(layout);
+        }
+        // rebuilds once, the rest of the state stays as it is
+        this.applyState(next, shownBefore);
+        if (keepStandard) {
+            this.showView(null);
+        }
+    }
+
+    /**
+     * Changes the hooks while the grid is shown: `isReadonly`, `cellClass` and `menus`, see
+     * {@link GridHooks}. **Only the keys given change**, a key given as `undefined` removes that hook -
+     * the cells follow the config again, the menus show their defaults. The visible cells are rendered
+     * again once (as {@link refresh} does); a menu uses its new function the next time it opens.
+     *
+     * The object passed in is not kept: the grid copies its keys.
+     *
+     * @param hooks the hooks to set, or to remove with `undefined`
+     *
+     * @sample cell-styling
+     * @example
+     * ```ts
+     * // company can not be edited on an inactive row
+     * gridInterface.updateHooks({ isReadonly: (row, field) => (field === 'company' && !row.isActive ? true : null) });
+     *
+     * // color the balance cells, the readonly rule stays
+     * gridInterface.updateHooks({ cellClass: (row, field) => (field === 'balance' && row.balance < 0 ? { input: 'red' } : null) });
+     *
+     * gridInterface.updateHooks({ isReadonly: undefined }); // removed: the column config decides again
+     * gridInterface.updateHooks({ menus: undefined }); // the menus show their defaults
+     * ```
+     */
+    public updateHooks(hooks: GridHooks<T>) {
+        this.hooks = { ...this.hooks, ...hooks };
+        // isReadonly, cellClass and rowClass are called when a row or cell is rendered, menus when a menu
+        // opens
+        this.refresh();
+    }
+
+    /**
+     * Applies the parts of the state that are given and rebuilds the grid once. The datasource parts
+     * (filter, sorting, grouping, expanded groups) are applied together: what is not given is applied
+     * again as it is now, the datasource needs them in this order.
+     * @param state a copy, the datasource and the grid keep what they are given and change it in place
+     * (shift+click sort, drag/drop, resizing)
+     */
+    private applyState(state: Partial<GridState>, shownBefore = this.shownTemplates()) {
+        // checked before anything changes: a wrong one throws and leaves the grid as it is. The calculated
+        // columns are given to the datasource first, the aggregates and formats are checked with their
+        // types - and taken back when one of them throws
+        const calculatedBefore = this.calculated;
+        const calculated = state.calculatedColumns;
+        const fieldType = this.calculatedFieldType(this.gridConfig.columns, state.layout ?? this.gridConfig.layout);
+        if (calculated !== undefined) {
+            assertCalculatedColumns(calculated, fieldType, this.isTakenName, 'setState: calculatedColumns');
+            this.registerCalculated(calculated, fieldType);
+        }
+        try {
+            if (state.aggregates) {
+                assertAggregates({ columns: columnsWithAggregates(state.aggregates) }, this.dataSource, 'setState: aggregates');
+            }
+            if (state.formats) {
+                this.assertStateFormats(state.formats);
+            }
+            assertTypeFormats(state.typeFormats, 'setState: typeFormats');
+            if (state.detailForm !== undefined) {
+                assertDetailForm(state.detailForm, 'setState: detailForm');
+            }
+        } catch (error) {
+            if (calculated !== undefined) {
+                this.registerCalculated(calculatedBefore, fieldType);
+            }
+            throw error;
+        }
+        // the calculated columns the grid had and has not anymore: no field of the rows now
+        const removed = new Set(
+            calculated === undefined ? [] : Object.keys(calculatedBefore).filter((name) => !Object.hasOwn(calculated, name))
+        );
+        if (calculated !== undefined) {
+            this.calculated = calculated;
+        }
+        this.suppressEvents = true;
+
+        if (state.layout) {
+            this.gridConfig.layout = copyLayout(state.layout);
+        }
+
+        // every column gets the functions listed for it, the others none
+        if (state.aggregates) {
+            for (const column of Object.values(this.gridConfig.columns)) {
+                delete column.aggregate;
+            }
+            for (const [field, fns] of Object.entries(state.aggregates)) {
+                const list = normalizeAggregates(fns);
+                if (list.length) {
+                    this.gridConfig.columns[field] = { ...this.gridConfig.columns[field], aggregate: list };
+                }
+            }
+        }
+        if (state.totalsRow !== undefined) {
+            this.gridConfig.totalsRow = state.totalsRow === true;
+        }
+        if (state.detailForm) {
+            this.gridConfig.detailForm = copyDetailForm(state.detailForm);
+        }
+
+        // every column gets the format listed for it, the others none
+        if (state.formats) {
+            for (const column of Object.values(this.gridConfig.columns)) {
+                delete column.format;
+            }
+            for (const [field, format] of Object.entries(state.formats)) {
+                if (hasDisplayFormat(format)) {
+                    this.gridConfig.columns[field] = { ...this.gridConfig.columns[field], format };
+                }
+            }
+            // a date column grouped by what it shows: the weeks now, not the days. A grouping in the state
+            // groups below
+            if (!state.grouping) {
+                this.dataSource.__regroup();
+            }
+        }
+        // the formats by type: a column without a format of its own shows its type's
+        if (state.typeFormats) {
+            this.gridConfig.typeFormats = structuredClone(state.typeFormats);
+            if (!state.grouping) {
+                this.dataSource.__regroup();
+            }
+        }
+
+        if (state.headerFilters) {
+            this.headerFilters = {};
+            for (const [field, headerFilter] of Object.entries(state.headerFilters)) {
+                // a quick date the column can take is a BETWEEN, its days computed below
+                const datePreset = this.datePresetOf(field, headerFilter.datePreset);
+                this.storeHeaderFilter(
+                    field,
+                    headerFilter.value,
+                    datePreset ? 'BETWEEN' : headerFilter.operator,
+                    headerFilter.caseSensitive === true,
+                    typeof headerFilter.filterOnType === 'boolean' ? headerFilter.filterOnType : undefined,
+                    datePreset
+                );
+            }
+            // the quick dates are relative: computed from today, their conditions replace the columns' in
+            // the filter set - the state's, else the datasource's. A state saved yesterday with Today filters
+            // on today
+            if (Object.values(this.headerFilters).some((headerFilter) => headerFilter.datePreset)) {
+                state.filter = this.withDatePresets(state.filter !== undefined ? state.filter : this.getDatasource().getFilter());
+            }
+        }
+
+        if (calculated !== undefined) {
+            this.applyCalculatedColumns(removed);
+        }
+
+        // new calculated columns: the rows are filtered, sorted and grouped on their values again
+        const datasourceParts =
+            calculated !== undefined || state.filter !== undefined || state.sorting || state.grouping || state.expandedGroups;
+        // a text column filtered on its template: another template, or Filter as shown turned, compares
+        // other texts - the filter runs again (__setFilterText reads the format as it is now)
+        const refilter = !datasourceParts && this.shownTemplates() !== shownBefore && this.getDatasource().getFilter() !== null;
+        if (refilter) {
+            this.getDatasource().filter(this.getDatasource().getFilter());
+        }
+        if (datasourceParts) {
+            // what is not given: the datasource's own, it replaces these when it is given new ones. A
+            // calculated column that is gone is taken out of them
+            const datasource = this.getDatasource();
+            const filter = filterWithout(state.filter !== undefined ? state.filter : datasource.getFilter(), removed);
+            const sorting = (state.sorting ?? datasource.getLastSorting()).filter((sort) => !removed.has(sort.attribute));
+            const grouping = (state.grouping ?? datasource.getGrouping()).filter((group) => !removed.has(group.attribute));
+            const expandedGroups = state.expandedGroups ?? datasource.getExpanded();
+
+            if (!sorting.length) {
+                // or filter() below sorts again: without a sort the rows go back to their own order
+                datasource.resetSort();
+            }
+
+            // null clears a filter that was set before
+            datasource.filter(filter);
+
+            if (grouping.length) {
+                datasource.setExpanded(expandedGroups);
+                datasource.group(grouping);
+            } else {
+                datasource.removeGroup();
+            }
+            // grouping resets the sort to the grouped fields, so it is set after
+            if (sorting.length) {
+                datasource.sort(sorting);
+            }
+        }
+
+        this.suppressEvents = false;
+
+        // the displayed rows can be others now, the ranges of cells were made for the rows as they were.
+        // The datasource's events that clear them otherwise were skipped. A new layout clears them in
+        // __dataSourceUpdated()
+        if (datasourceParts || refilter) {
+            this.clearRanges();
+        }
+
+        if (this.grid) {
+            this.grid.rebuild();
+        } else {
+            this.__dataSourceUpdated();
+        }
+    }
+
+    /**
+     * The template each column is filtered on (__shownTemplate), as one text: applyState compares it
+     * before and after, to filter again when one changed
+     */
+    private shownTemplates(): string {
+        const fields = Object.keys(this.gridConfig.columns).sort();
+        return JSON.stringify(
+            fields.map((field) => [field, this.__shownTemplate(field)]).filter(([, template]) => template !== null)
+        );
+    }
+
+    /**
+     * The calculated columns of the state are new (applyState): each has an entry in `columns` (the
+     * column chooser lists it); one that is gone leaves the layout, the header filters and the detail
+     * form, and its format and aggregates - its entry stays, for the options of the config, the column
+     * chooser does not list it (__isGoneCalculated)
+     * @param removed the calculated columns the grid had and has not anymore
+     */
+    private applyCalculatedColumns(removed: ReadonlySet<string>) {
+        const columns = this.gridConfig.columns;
+        for (const name of Object.keys(this.calculated)) {
+            columns[name] ??= {};
+        }
+        if (!removed.size) {
+            return;
+        }
+        this.gridConfig.layout = layoutWithout(this.gridConfig.layout, removed);
+        for (const name of removed) {
+            if (columns[name]) {
+                delete columns[name].format;
+                delete columns[name].aggregate;
+            }
+            delete this.headerFilters[name];
+        }
+        const detailForm = this.gridConfig.detailForm;
+        // its sections stay
+        const kept = (entry: string | DetailFormSection) => typeof entry !== 'string' || !removed.has(entry);
+        if (!detailForm.fields.every(kept)) {
+            this.gridConfig.detailForm = { ...detailForm, fields: detailForm.fields.filter(kept) };
+        }
+    }
+
+    /**
+     * Gives the datasource a calculated field for each calculated column (CalculatedField) and takes back
+     * the ones this grid gave it that are not among them - not what another grid gave it since. A column
+     * whose formula has a problem gets none (the checks keep such a column out of the state)
+     * @param fieldType the type of a field that is not calculated, see calculatedFieldType
+     */
+    private registerCalculated(
+        columns: Record<string, CalculatedColumn>,
+        fieldType: (field: string) => FormulaFieldType | undefined
+    ) {
+        const compiled = compileCalculatedColumns(columns, fieldType);
+        const fields = calculatedFields(compiled, (name) => calculatedLabel(columns[name], name, prettyPrintString));
+        for (const [name, field] of this.calculatedFieldsSet) {
+            if (!fields.has(name) && this.dataSource.__getCalculatedField(name) === field) {
+                this.dataSource.__setCalculatedField(name, null);
+            }
+        }
+        for (const [name, field] of fields) {
+            this.dataSource.__setCalculatedField(name, field);
+            this.everCalculated.add(name);
+        }
+        this.calculatedFieldsSet = fields;
+        // a formula of a colour rule reads the calculated columns: read them again
+        this.ruleFormulas.clear();
+    }
+
+    /**
+     * What a colour rule's condition or formula knows of a field (RuleFieldOf): a field of the datasource,
+     * a calculated column, a column of the config or the layout - its type in the datasource, and whether
+     * it is a lookup column (`editor`). undefined for another field, and for a calculated column that is
+     * gone
+     * @param columns the columns of the config
+     * @param layout the layout
+     */
+    private ruleFieldOf(columns: Record<string, ColumnConfig>, layout: GridLayout): RuleFieldOf {
+        const fieldType = this.calculatedFieldType(columns, layout);
+        return (field) => {
+            // the calculated columns given to the datasource: the state's, or the new ones while they are checked
+            const known = this.calculatedFieldsSet.has(field) || fieldType(field) !== undefined;
+            if (!known) {
+                return undefined;
+            }
+            const { type, clobType } = this.dataSource.getField(field);
+            return { type, lookup: columns[field]?.editor !== undefined, clob: clobType };
+        };
+    }
+
+    /**
+     * @internal
+     * What a colour rule's condition or formula knows of a field now, see ruleFieldOf - for the grid config
+     * dialog
+     */
+    public __ruleFieldOf(): RuleFieldOf {
+        return this.ruleFieldOf(this.gridConfig.columns, this.gridConfig.layout);
+    }
+
+    /**
+     * @internal
+     * true when the formula of a colour rule (`ColorRule.expression`) is true in the row. A formula with a
+     * problem, or that is not true / false, is never true - nor is it in a row where it can not be
+     * computed. Never throws
+     */
+    public __ruleFormulaMatches(expression: string, row: Entity): boolean {
+        let formula = this.ruleFormulas.get(expression);
+        if (formula === undefined) {
+            const fieldOf = this.__ruleFieldOf();
+            const compiled = compileFormula(expression, (field) => {
+                const known = fieldOf(field);
+                if (known?.clob) {
+                    return clobFieldProblem(field);
+                }
+                return known ? { type: known.type === 'datetime' ? 'date' : known.type } : undefined;
+            });
+            formula = 'formula' in compiled && compiled.formula.type === 'boolean' ? compiled.formula : null;
+            this.ruleFormulas.set(expression, formula);
+        }
+        if (!formula) {
+            return false;
+        }
+        const result = formula.evaluate(readerOf(row, this.calculatedFieldsSet));
+        return 'value' in result && result.value === true;
+    }
+
+    /**
+     * The type a formula reads a field that is not calculated with (compileCalculatedColumns): the
+     * datasource's `fields` - `'clob'` for a field with `clobType`, no formula reads it - else text for a
+     * field of a column or of the layout. undefined for a field the grid does not know - and for a
+     * calculated column that is gone
+     * @param columns the columns of the config
+     * @param layout the layout
+     */
+    private calculatedFieldType(
+        columns: Record<string, ColumnConfig>,
+        layout: GridLayout
+    ): (field: string) => FormulaFieldType | undefined {
+        const inLayout = new Set(
+            [...(layout.left ?? []), ...(layout.center ?? []), ...(layout.right ?? [])].flatMap((column) => column.fields ?? [])
+        );
+        return (field) => {
+            const listed = this.dataSource.__getListedField(field);
+            if (listed) {
+                return listed.clobType === true ? 'clob' : (listed.type ?? 'text');
+            }
+            if (this.everCalculated.has(field)) {
+                return undefined;
+            }
+            return Object.hasOwn(columns, field) || inLayout.has(field) ? 'text' : undefined;
+        };
+    }
+
+    /**
+     * true for a name a calculated column can not have: a field of the datasource (its `fields`, on its
+     * container too) or of its rows (an own property of a row) - the column would hide its values
+     */
+    private isTakenName = (name: string): boolean =>
+        this.dataSource.__isListedField(name) || this.dataSource.getAllData().some((row) => Object.hasOwn(row, name));
+
+    /**
+     * @internal
+     * true for a field that is a calculated column of the state (GridState.calculatedColumns)
+     */
+    public __isCalculated(field: string): boolean {
+        return Object.hasOwn(this.calculated, field);
+    }
+
+    /**
+     * @internal
+     * true for a field that was a calculated column and is not anymore: no field of the rows, the column
+     * chooser does not list it
+     */
+    public __isGoneCalculated(field: string): boolean {
+        return this.everCalculated.has(field) && !this.__isCalculated(field);
+    }
+
+    /**
+     * @internal
+     * The calculated columns the grid starts with - `initialState.calculatedColumns`, else the config's:
+     * what resetState() goes back to, and the grid config dialog's "Reset all". A copy
+     */
+    public __getStartCalculated(): Record<string, CalculatedColumn> {
+        return structuredClone(this.initialState.calculatedColumns ?? this.configCalculated);
+    }
+
+    /**
+     * @internal
+     * For the grid config dialog: the type a formula reads a field that is not calculated with, and
+     * whether a name is taken - as setState() checks them
+     */
+    public __calculatedNames(): {
+        fieldType: (field: string) => FormulaFieldType | undefined;
+        isTaken: (name: string) => boolean;
+    } {
+        return {
+            fieldType: this.calculatedFieldType(this.gridConfig.columns, this.gridConfig.layout),
+            isTaken: this.isTakenName
+        };
     }
 
     /**
      * do not use - used by grid to connect
      * @param grid
+     * @internal
      */
     public connectGrid(grid: Grid) {
         this.grid = grid;
-        this.dataSource.addEventListener(this);
-        this.__callSubscribers('gridConnected', {});
-    }
-
-    public autoResizeColumns() {
-        if (this.grid) {
-            autoResizeColumns(this.grid);
-        }
-    }
-
-    /**
-     * contextMenu element can be used to attach own context menus
-     * practical since it will be removed if new is open/scroll happens
-     * @returns
-     */
-    public getContextMenuElement() {
-        return this.grid?.contextMenu;
+        this.lastGrid = grid;
+        // the datasource was not followed while no grid was connected: its displayed rows can be
+        // others than the ranges of cells were made for
+        this.clearRanges();
+        this.subscribeToDatasource();
+        this.__callSubscribers('grid-connected', {});
     }
 
     /**
-     * small helper function to show context menu in same style as the rest
-     * @param event
-     * @param options
-     * @param cell
-     * @param callback
+     * Renders the visible cells again, with the values the rows have now. For when something the
+     * cells show changed without a row changing: what the `isReadonly` / `cellClass` hooks read, a
+     * value written to an object of your own instead of the row. A value set on a row shows on its
+     * own (the datasource's `rows-changed`, rendered in the next animation frame), and a scroll only
+     * renders the rows that scroll in. Cheap, the columns and the header are not built again - that
+     * is {@link rebuild}.
+     *
+     * The cell input the user has typed in since it got the focus is not rendered, so its text is
+     * kept: it is rendered once the focus leaves it.
+     *
+     * Does nothing while the grid is not on the page.
+     *
+     * Was `triggerScrollEvent()` in v5.
+     *
+     * @example
+     * ```ts
+     * let highlighted = 'ACME CORP';
+     * gridInterface.updateHooks({ cellClass: (row) => (row.company === highlighted ? { input: 'highlight' } : null) });
+     *
+     * highlighted = 'GLOBEX'; // the hook reads it, the grid does not know
+     * gridInterface.refresh();
+     * ```
      */
-    public contextMenuCustom(
-        event: MouseEvent,
-        options: { label: string; value: string; isHeader?: boolean }[],
-        cell: HTMLElement,
-        callback: (attribute: string) => void
-    ) {
-        contextMenuCustom(this.grid, event, cell, callback, options);
-    }
-
-    /**
-     * contextMenu element can be used to attach own context menus
-     * practical since it will be removed if new is open/scroll happens
-     * @param el
-     */
-    public setContextMenuElement(el: HTMLElement) {
-        if (this.grid) {
-            this.grid.contextMenu = el;
-        }
-    }
-
-    /**
-     * contextMenu element can be used to attach own context menus
-     * practical since it will be removed if new is open/scroll happens
-     */
-    public removeContextMenuElement() {
-        removeContextMenu(this.grid);
-    }
-
-    /**
-     * this will force scroll event and update cells
-     * usefull if you have done any manual edits to datasource data and want grid updated
-     */
-    public triggerScrollEvent() {
+    public refresh() {
         if (this.grid) {
             triggerScrollEvent(this.grid);
         }
     }
 
     /**
-     * when you need to save a copy
+     * Builds the grid again: sizes, rows, columns, header, grouping panel and footer, then renders the
+     * cells. For when more than the visible cells changed: what a formatter returns (the header
+     * filters show it too), the texts of the page ({@link setTexts}), the size of the element without a
+     * resize event, a column's options changed in place. To change an option, use {@link updateConfig} - it rebuilds too. For the cells only,
+     * {@link refresh} is cheaper.
+     *
+     * Does nothing while the grid is not on the page, it is built when it is put there.
+     *
+     * Was `triggerRebuild()` in v5.
+     *
+     * @example
+     * ```ts
+     * import { Datasource, type Formatter, registerFormatter } from '@simple-html/grid';
+     *
+     * // a formatter that reads a setting of your own
+     * let decimals = 2;
+     * const price: Formatter = {
+     *     format: (value) => (typeof value === 'number' ? value.toFixed(decimals) : ''),
+     *     parse: (text) => (text.trim() === '' ? null : Number(text))
+     * };
+     * registerFormatter('price', price);
+     * const datasource = new Datasource({ fields: { price: { type: 'number', formatter: 'price' } } });
+     * // ...
+     * decimals = 0;
+     * gridInterface.rebuild(); // the cells and the header filter show the prices without decimals
+     * ```
      */
-    public saveConfig(): GridConfig {
-        const config = JSON.parse(JSON.stringify(this.gridConfig)) as GridConfig;
-
-        // convert attributes
-        const keys = Object.keys(config.__attributes);
-        config.attributes = [];
-        keys.forEach((key) => {
-            config.attributes.push(config.__attributes[key]);
-        });
-
-        delete config.__attributes;
-        delete config.__rowHeight;
-        delete config.__columnCells;
-        delete config.__leftWidth;
-        delete config.__rightWidth;
-        delete config.__scrollbarSize;
-        delete config.__selectSizeWidth;
-
-        config.expandedGroups = this.getDatasource().getExpanded();
-        config.sorting = this.getDatasource().getLastSorting();
-        config.grouping = this.getDatasource().getGrouping();
-        config.filter = this.getDatasource().getFilter();
-
-        return config;
+    public rebuild() {
+        this.grid?.rebuild();
     }
 
+    /**
+     * Removes the grid from the page and disconnects it: from the datasource, the document and the
+     * handlers subscribed with {@link on}. For a grid made with {@link createGrid}, when you are done
+     * with it. The datasource is not changed, it can be shown again in a new grid.
+     *
+     * The element is removed also when you placed it yourself (`element.connectInterface()`). Removing
+     * such an element from the page disconnects the grid as well: there `destroy()` is not needed.
+     *
+     * Do not use the interface after this: make a new one.
+     *
+     * @example
+     * ```ts
+     * import { createGrid, type GridConfig } from '@simple-html/grid';
+     *
+     * declare const config: GridConfig;
+     *
+     * const gridInterface = createGrid(host, { config, datasource });
+     * // ...
+     * gridInterface.destroy(); // host is empty again
+     * ```
+     */
+    public destroy() {
+        const grid = this.lastGrid;
+        this.lastGrid = null;
+        // connectInterface() can have put another interface in the element since: not ours to remove
+        if (grid && grid.gridInterface === this) {
+            grid.destroy();
+        }
+        // the element was not in the dom (then nothing calls it), or shows another interface now
+        this.__disconnectGrid();
+        this.events.clear();
+        // the datasource can be shown in another grid: it sorts, groups and filters as that grid says
+        // (or on the values), and has no calculated fields of this grid
+        this.clearSortValues();
+        this.dataSource.__unsetGroupValue(this.groupValue);
+        this.dataSource.__unsetFilterText(this.filterText);
+        this.dataSource.__unsetSortText(this.sortText);
+        // the rules of the columns (ColumnConfig.validate) too: another grid's are used again
+        this.dataSource.__setColumnRules(this, null);
+        this.registerCalculated({}, () => undefined);
+    }
+
+    /**
+     * `datasource.setFields()` gave the fields other types: a display format of a column that its new type
+     * does not take - a date format on what is a text now - is dropped, with a warning, all but its
+     * label, placeholder and read only: from the formats
+     * shown, and from the ones resetState() and the dialog's Reset go back to. The formats by type stay
+     * (`typeFormats`, per type). The rows are filtered and rendered again after it (collection-filtered)
+     */
+    /**
+     * `datasource.setFields()` since the formats were checked last (the datasource's fields version): they
+     * are checked again, fieldsChanged. On `fields-change` while a grid is connected, and when one connects:
+     * a disconnected interface holds no subscription of the datasource
+     */
+    private syncFields() {
+        const version = this.dataSource.__getFieldsVersion();
+        if (version !== this.fieldsVersion) {
+            this.fieldsVersion = version;
+            this.fieldsChanged();
+        }
+    }
+
+    /** see syncFields: the formats checked against the fields of the datasource now */
+    private fieldsChanged() {
+        const fits = (field: string, format: ColumnFormat | undefined, warn = false) => {
+            try {
+                assertColumnFormat(
+                    format,
+                    field,
+                    this.dataSource.getField(field).type,
+                    this.lookupColumns.has(field),
+                    `columns.${field}.format`,
+                    this.ruleFieldOf(this.gridConfig.columns, this.gridConfig.layout)
+                );
+                return true;
+            } catch (error) {
+                if (warn) {
+                    console.warn(
+                        `simple-html-grid: setFields() - the format of '${field}' is dropped: ${(error as Error).message}`
+                    );
+                }
+                return false;
+            }
+        };
+        /** a format that does not fit: the parts of it every column takes - its label, placeholder, read only */
+        const kept = (format: ColumnFormat): ColumnFormat | undefined => {
+            const rest: ColumnFormat = {};
+            for (const key of ['label', 'placeholderRow', 'placeholderRowLabel', 'readonly'] as const) {
+                if (format[key] !== undefined) {
+                    Object.assign(rest, { [key]: format[key] });
+                }
+            }
+            return hasDisplayFormat(rest) ? rest : undefined;
+        };
+        for (const [field, column] of Object.entries(this.gridConfig.columns)) {
+            if (column.format && !fits(field, column.format, true)) {
+                column.format = kept(column.format);
+                if (!column.format) {
+                    delete column.format;
+                }
+            }
+        }
+        for (const formats of [this.configFormats, this.initialState.formats ?? {}]) {
+            for (const [field, format] of Object.entries(formats)) {
+                if (!fits(field, format)) {
+                    const rest = kept(format);
+                    if (rest) {
+                        formats[field] = rest;
+                    } else {
+                        delete formats[field];
+                    }
+                }
+            }
+        }
+        // a lookup column sorts on its labels, a date column on its days: the sort values of the types now
+        this.clearSortValues();
+        this.setSortValues();
+    }
+
+    /**
+     * Fits the width of columns to their content, like Excel's AutoFit: each column as wide as the
+     * widest text of its fields - for a column with stacked fields the widest of them, every line of a
+     * multiline text - and its header label. At least 25px, at most 750px. Then rebuilds the grid. A
+     * column with nothing to measure keeps its width. The user does the same from the header menu
+     * ("Fit column width", "Fit all columns") and with a double click on a column's resize handle.
+     *
+     * - **The text** is what the cells show: formatted, with `numberOverride`. A checkbox cell needs
+     *   the room of its checkbox. By default the rows the filter lets through (the rows of collapsed
+     *   groups too), and the header label.
+     * - **Measured** with the grid's font (the labels with theirs) on a canvas: the 20 longest texts of
+     *   each field, by their number of characters - every text of 100 000 rows would take the browser
+     *   half a second per field. The widest text is one of the longest, unless a short text of wide
+     *   letters is wider than 20 longer ones of narrow letters.
+     * - **`options.rows`**: only the text of these rows, and not the header label - a column fitted to
+     *   cells, as the row menu's "Fit column to this cell" does.
+     * - The widths are part of the state (`getState().layout`). {@link resetColumnWidths} goes back to
+     *   the widths of the config.
+     *
+     * Measures with the grid's font, so call it once the grid is on the page: right after
+     * {@link createGrid}, or from a `grid-connected` handler for an element you connect yourself. It
+     * does nothing before the interface is connected to an element.
+     *
+     * @param fields the columns that show one of these fields, every column when left out. A field
+     * that is not in the layout is skipped
+     * @param options.rows fit to the cells of these rows only, see above
+     * @throws a `TypeError` when `fields` is not an array of field names, or `options.rows` not an array
+     *
+     * @sample multiline
+     * @sample misc-options
+     * @example
+     * ```ts
+     * import { createGrid, type GridConfig, isGroupRow } from '@simple-html/grid';
+     *
+     * declare const config: GridConfig;
+     *
+     * const gridInterface = createGrid(host, { config, datasource });
+     * gridInterface.fitColumns(); // every column
+     * gridInterface.fitColumns(['name', 'notes']); // the columns of these fields
+     *
+     * // the name column as wide as the name of the current row
+     * const row = datasource.currentEntity;
+     * if (row && !isGroupRow(row)) {
+     *     gridInterface.fitColumns(['name'], { rows: [row] });
+     * }
+     * ```
+     */
+    public fitColumns(fields?: string[], options: { rows?: EntityUnion<T>[] } = {}) {
+        assertFields('fitColumns', fields);
+        assertOptions('fitColumns', options, "fitColumns(['name'], { rows: [row] })");
+        if (options.rows !== undefined && !Array.isArray(options.rows)) {
+            throw new TypeError("fitColumns(): options.rows is an array of rows: fitColumns(['name'], { rows: [row] })");
+        }
+        if (this.grid) {
+            fitColumns(this.grid, fields, options.rows);
+        }
+    }
+
+    /**
+     * Fits every column to its content: the same as {@link fitColumns} without arguments.
+     *
+     * @deprecated use `fitColumns()`. Before v6 it measured the values as they are stored, not as the
+     * cells show them, of every row - also the rows the filter hides
+     */
+    public autoResizeColumns() {
+        this.fitColumns();
+    }
+
+    /**
+     * Gives columns back the width they start with: the width of the field's column in the layout
+     * `resetState()` goes back to - `initialState.layout` when the config has one, else the config's
+     * `layout`. A field that is not in it (added from the column chooser) gets 100px, as when it is
+     * added. For a column with stacked fields, the width of its first field that is in it. Then
+     * rebuilds the grid. The header menu has it too: "Reset column width", "Reset all column widths".
+     *
+     * Only the widths change: the columns stay where the user put them.
+     *
+     * @param fields the columns that show one of these fields, every column when left out
+     * @throws a `TypeError` when `fields` is not an array of field names
+     *
+     * @example
+     * ```ts
+     * gridInterface.fitColumns();
+     * gridInterface.resetColumnWidths(['notes']); // the notes column as wide as in the config again
+     * gridInterface.resetColumnWidths(); // every column
+     * ```
+     */
+    public resetColumnWidths(fields?: string[]) {
+        assertFields('resetColumnWidths', fields);
+        const start = layoutColumns({ layout: copyLayout(this.getStartState().layout) });
+        for (const column of layoutColumns(this.gridConfig)) {
+            if (fields && !column.fields.some((field) => fields.includes(field))) {
+                continue;
+            }
+            const startColumn = column.fields
+                .map((field) => start.find((candidate) => candidate.fields.includes(field)))
+                .find((candidate) => candidate !== undefined);
+            column.width = startColumn?.width ?? DEFAULT_COLUMN_WIDTH;
+        }
+        if (this.grid) {
+            this.grid.rebuild();
+        } else {
+            this.__dataSourceUpdated();
+        }
+    }
+
+    /**
+     * Makes rows as high as their multiline cells need to show every line, like Excel's AutoFit of a
+     * row: each row as many lines as its tallest column needs - a multiline cell the lines of its text
+     * (the empty lines at its end left out), every other cell one line, the fields of a column with
+     * stacked fields added up. At most 20 lines. A row that needs no more lines than the layout gives a
+     * row goes back to that height. The user does the same from the row menu: "Fit row height", "Fit
+     * all rows".
+     *
+     * - **The height**: the lines of the layout's row are `cellHeight` px each, every line more is a
+     *   line of text, `multilineLineHeight` px (default 15): the lines of a note read as a paragraph. A
+     *   row of one field with a note of three lines is `cellHeight + 2 * multilineLineHeight` px, 52 by
+     *   default.
+     *
+     * - **Cheap**: it counts the line breaks of the cells' text, nothing is measured. A long line is
+     *   not wrapped, it is cut at the cell's edge as in a row of one line.
+     * - **In a taller row** a multiline cell shows as many of its lines as it has room for, the marker
+     *   when there are more. Every other cell has its text on the first line. The editor of a
+     *   multiline cell is the same.
+     * - **Kept by the row's key** (`__KEY`: the datasource's `key` field, or the key it generated), so
+     *   a row keeps its height through a sort, a filter, grouping and new data with the same keys
+     *   (`setData()`, `upsert()`). A row whose text changes keeps its height: fit it again.
+     * - **Not part of the state** (`getState()`): the heights belong to the rows loaded now.
+     *   {@link resetRowHeights} takes them back.
+     *
+     * Works before the grid is on the page too.
+     *
+     * @param rows the rows to fit, a row or a list. Left out: the rows the filter lets through (the
+     * rows of collapsed groups too) - and the heights of rows that are no longer in the data are
+     * dropped. Group rows are skipped
+     * @throws a `TypeError` when `rows` is not a row or an array of rows
+     *
+     * @sample multiline
+     * @example
+     * ```ts
+     * import { isGroupRow } from '@simple-html/grid';
+     *
+     * gridInterface.fitRows(); // every row the filter lets through
+     * gridInterface.fitRows(datasource.getSelectedRows());
+     *
+     * const row = datasource.currentEntity;
+     * if (row && !isGroupRow(row)) {
+     *     gridInterface.fitRows(row);
+     * }
+     * ```
+     */
+    public fitRows(rows?: EntityUnion<T> | EntityUnion<T>[]) {
+        const list = this.rowList('fitRows', rows);
+        if (rows === undefined) {
+            // a full fit: the heights of rows that are gone are dropped, they would never be used again
+            const kept = new Map<string, number>();
+            for (const row of this.dataSource.getAllData()) {
+                const key = String(row.__KEY);
+                const lines = this.rowLines.get(key);
+                if (lines !== undefined) {
+                    kept.set(key, lines);
+                }
+            }
+            this.rowLines = kept;
+        }
+
+        const fitLines = fitRowLinesOf({ gridInterface: this });
+        const cells = this.gridConfig.__columnCells;
+        for (const row of list) {
+            const key = rowKey(row);
+            if (key === undefined) {
+                continue;
+            }
+            const lines = fitLines(row);
+            if (lines > cells) {
+                this.rowLines.set(key, lines);
+            } else {
+                this.rowLines.delete(key);
+            }
+        }
+        this.updateRowHeights();
+    }
+
+    /**
+     * Gives rows back the height the layout gives a row, after {@link fitRows}. The row menu has it
+     * too: "Reset row height", "Reset all row heights".
+     *
+     * @param rows a row or a list of rows. Left out: every row
+     * @throws a `TypeError` when `rows` is not a row or an array of rows
+     *
+     * @sample multiline
+     * @example
+     * ```ts
+     * gridInterface.resetRowHeights(); // every row back to the height of the layout
+     * gridInterface.resetRowHeights(datasource.getSelectedRows());
+     * ```
+     */
+    public resetRowHeights(rows?: EntityUnion<T> | EntityUnion<T>[]) {
+        if (rows === undefined) {
+            this.rowLines.clear();
+        } else {
+            for (const row of this.rowList('resetRowHeights', rows)) {
+                const key = rowKey(row);
+                if (key !== undefined) {
+                    this.rowLines.delete(key);
+                }
+            }
+        }
+        this.updateRowHeights();
+    }
+
+    /**
+     * @internal
+     * true when the row has a height of its own (fitRows), for the row menu. Left out: any row
+     */
+    public __hasRowHeight(row?: Entity): boolean {
+        if (row === undefined) {
+            return this.rowLines.size > 0;
+        }
+        const key = rowKey(row);
+        return key !== undefined && this.rowLines.has(key);
+    }
+
+    /**
+     * the rows given to fitRows() / resetRowHeights() as a list: the rows the filter lets through when
+     * none are given
+     * @throws a `TypeError` when it is not a row or an array of rows
+     */
+    private rowList(method: string, rows: EntityUnion<T> | EntityUnion<T>[] | undefined): readonly Entity[] {
+        if (rows === undefined) {
+            return this.dataSource.getDataRows();
+        }
+        if (Array.isArray(rows)) {
+            return rows;
+        }
+        if (rows && typeof rows === 'object') {
+            return [rows];
+        }
+        throw new TypeError(`${method}(): rows is a row or an array of rows, not ${JSON.stringify(rows)}`);
+    }
+
+    /**
+     * the rows have other heights: the tops of the rows again, and the rows on screen rendered
+     */
+    private updateRowHeights() {
+        this.__dataSourceUpdated();
+        if (this.grid) {
+            triggerScrollEvent(this.grid);
+        }
+    }
+
+    /**
+     * Opens the filter editor, the dialog where the user builds a filter of conditions and AND/OR
+     * groups. It starts with the filter the datasource has now. The user opens it from the header
+     * filter's menu ("Advanced Filter") or by clicking the filter shown in the footer - or "No filter"
+     * there while the rows are not filtered; call this from a button of your own.
+     *
+     * It is a modal `<dialog>` (`showModal()`): over everything on the page, the page behind it can
+     * not be used while it is open. The focus moves to the dialog when it opens and goes back to where
+     * it was when it closes; Esc closes it (a menu open in it first). The user drags it by its title
+     * bar and resizes it from every edge and corner, with the mouse, a finger or a pen.
+     *
+     * Does nothing while the grid is not on the page.
+     *
+     * @example
+     * ```ts
+     * document.getElementById('advanced-filter')!.onclick = () => gridInterface.openFilterEditor();
+     * ```
+     */
     public openFilterEditor() {
         if (this.grid) {
             openFilterEditor(this.grid);
@@ -207,281 +2102,1309 @@ export class GridInterface<T> {
     }
 
     /**
-     * when you need load grid config
+     * Opens the grid config dialog on its *Columns* tab: the columns of the layout on the left, the
+     * settings of the one picked on the right - its label, a date or number column's display format (as
+     * Format › in the header menu), a number column's blank / 0, a text column's template and link, a text
+     * or number column as checkboxes, the placeholder and the operator of the header filter, with a
+     * preview of the current row (see {@link ColumnFormat}). The user opens it with the gear at the right
+     * end of the footer (`GridConfig.settingsButton`) or *Column settings…* in the header menu; call this
+     * from a button of your own. Its other tabs are the detail form, see {@link openDetailFormSettings},
+     * and Defaults: the formats by type (`GridState.typeFormats`) and the default view.
+     *
+     * Its Apply sets the formats of the state (`setState({ formats })`, {@link GridState}): `getState()`
+     * has them, to save. Reset column / Reset all go back to the formats the grid starts with -
+     * `ColumnConfig.format`, or `initialState.formats`.
+     *
+     * A modal `<dialog>`, as the filter editor: the focus moves into it, Esc closes it (a menu open in it
+     * first), the focus goes back to where it was; the user drags it by its title bar and resizes it from
+     * every edge and corner.
+     *
+     * Does nothing while the grid is not on the page.
+     *
+     * @param field the column it shows first. Left out: the column of the cell with the focus, else the
+     * first column of the layout
+     *
+     * @sample full-grid
+     * @example
+     * ```ts
+     * document.getElementById('settings')!.onclick = () => gridInterface.openColumnSettings('company');
+     * ```
      */
-    public loadConfig(gridConfig: GridConfig, skipRebuild = false) {
-        this.suppressEvents = true;
-
-        const sortOrder = gridConfig.sorting;
-        const grouping = gridConfig.grouping;
-        const filter = gridConfig.filter;
-        const exspandedGroups = gridConfig.expandedGroups;
-
-        this.gridConfig = JSON.parse(JSON.stringify(gridConfig));
-        this.gridConfig.sorting = null;
-        this.gridConfig.grouping = null;
-        this.gridConfig.filter = null;
-        this.gridConfig.expandedGroups = null;
-
-        this.__parseConfig();
-
-        if (filter) {
-            this.getDatasource().setFilter(filter as FilterArgument);
-        } else {
-            this.getDatasource().setFilter(null);
-        }
-        this.getDatasource().filter();
-
-        if (grouping?.length) {
-            this.getDatasource().setExpanded(exspandedGroups);
-            this.getDatasource().group(grouping);
-            if (sortOrder?.length) {
-                // we asume they have control what they are sending in
-                this.getDatasource().sort(sortOrder);
-            }
-        } else {
-            this.getDatasource().removeGroup();
-            if (sortOrder?.length && !grouping?.length) {
-                this.getDatasource().sort(sortOrder);
-            }
-        }
-
-        this.suppressEvents = false;
-
-        if (!skipRebuild) {
-            if (this.grid) {
-                this.grid.rebuild();
-            } else {
-                this.__dataSourceUpdated();
-            }
-        } else {
-            this.__dataSourceUpdated();
-        }
-    }
-
-    /**
-     * gets columns in order
-     * by default it filters out selected columns only
-     * @param filterSelectedColumns = true by default
-     */
-    public getAttributeColumns(filterSelectedColumns = true) {
-        return getAttributeColumns(this.grid, filterSelectedColumns);
-    }
-
-    public getOptionalAttributes() {
-        const attributes = new Set(Object.keys(this.gridConfig.__attributes));
-        this.getAttributeColumns(false).forEach((e) => {
-            attributes.delete(e);
-        });
-        return Array.from(attributes);
-    }
-
-    /**
-     * trigger rebuild of all
-     */
-    public triggerRebuild() {
-        this.grid?.rebuild();
-    }
-
-    /**
-     * adds event listener, useful when you need to do stuff based on
-     * @param callable
-     */
-    public addEventListener(callable: callable): void {
-        if (typeof callable !== 'function' && typeof callable?.handleEvent !== 'function') {
-            throw new Error('callable sent to datasource event listner is wrong type');
-        }
-
-        if (!this.listeners.has(callable)) {
-            this.listeners.add(callable);
-        }
-    }
-
-    /**
-     * this is for enabling readonly based on row data
-     * @param callback
-     */
-    public readonlySetter(callback: (attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) => boolean | null) {
-        this.readonlySetterFn = callback;
+    public openColumnSettings(field?: string) {
         if (this.grid) {
-            triggerScrollEvent(this.grid);
+            openColumnSettings(this.grid, field);
         }
     }
 
     /**
-     * this is for enabling class append to input element and dimmed cell behind it
-     * dimmed cell can be used for graphics in class
-     * @param callback
+     * Opens the grid config dialog on its *Detail form* tab: *Show the detail form*, its width, and the
+     * fields it shows - the columns of the layout and the other columns of the config - each with a
+     * checkbox, in the order of the form: Move up / Move down (Alt+↑ / Alt+↓) change it. See
+     * {@link DetailForm}.
+     *
+     * Its Apply sets the detail form of the state (`setState({ detailForm })`, {@link GridState}):
+     * `getState()` has it, to save. *Reset form* goes back to the one the grid starts with -
+     * `GridConfig.detailForm`, or `initialState.detailForm`. The dialog's other tab, *Columns*, is
+     * {@link openColumnSettings}; Apply applies both.
+     *
+     * Does nothing while the grid is not on the page.
+     *
+     * @sample detail-form
+     * @example
+     * ```ts
+     * document.getElementById('detail-form')!.onclick = () => gridInterface.openDetailFormSettings();
+     * ```
      */
-    public cellAppendClassSetter(
-        callback: (attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) => { inputClass: string; dimmedClass: string }
-    ) {
-        this.cellAppendClassSetterFn = callback;
+    public openDetailFormSettings() {
         if (this.grid) {
-            triggerScrollEvent(this.grid);
+            openColumnSettings(this.grid, undefined, 'detailForm');
         }
     }
 
     /**
-     * removes listener from datasource
-     * @param callable
+     * Opens the keyboard shortcuts help: a dialog that lists the keys of the grid in groups, with a
+     * search - as `?` (where it types nothing) and Ctrl+/ in the grid do, and *Keyboard shortcuts…* in
+     * the header menu. The keys as the platform names them, ⌘ on a Mac; a key that does nothing in this
+     * grid is left out - the editing keys of a readonly grid. For a help button of your own: it opens the
+     * help also with `GridConfig.shortcutHelp: false`, which turns the grid's own ways to open it off.
+     *
+     * A modal `<dialog>`, as the filter editor: the focus moves into it - into its search when a key
+     * opened it - Esc closes it, the focus goes back to where it was; the user drags it by its title bar
+     * and resizes it from every edge and corner. Its texts are `shortcuts.*`.
+     *
+     * Does nothing while the grid is not on the page.
+     *
+     * @example
+     * ```ts
+     * document.getElementById('keys-help')!.onclick = () => gridInterface.openShortcutHelp();
+     * ```
      */
-    public removeEventListener(callable: callable): void {
-        if (this.listeners.has(callable)) {
-            this.listeners.delete(callable);
+    public openShortcutHelp() {
+        if (this.grid) {
+            openShortcutHelp(this.grid);
         }
     }
 
     /**
-     * current datasource
-     * @returns
+     * The fields in the layout now, in the order the user sees them: pinned left, center, pinned right,
+     * left to right, and top to bottom within a column of stacked fields.
+     *
+     * With `selectedOnly`, only the fields of the columns the user selected - by clicking the column
+     * numbers under the header filters, Ctrl/Cmd+click for more, Shift+click for the ones between, see
+     * {@link getSelectedColumns}. None selected gives `[]`.
+     *
+     * Was `getAttributeColumns(filterSelectedColumns)` in v5, which gave the selected columns by default
+     * and every column when none was selected.
+     *
+     * @param options.selectedOnly only the fields of the selected columns, default `false`
+     *
+     * @example
+     * ```ts
+     * gridInterface.getLayoutFields(); // ['name', 'age', 'born', 'company']
+     * gridInterface.getLayoutFields({ selectedOnly: true }); // ['age', 'born'] - one column, two fields
+     *
+     * // the selected columns, or every column when none is selected
+     * const selected = gridInterface.getLayoutFields({ selectedOnly: true });
+     * const toExport = selected.length ? selected : gridInterface.getLayoutFields();
+     * ```
      */
-    public getDatasource() {
+    public getLayoutFields(options: { selectedOnly?: boolean } = {}): string[] {
+        assertOptions('getLayoutFields', options, 'getLayoutFields({ selectedOnly: true })');
+        return getLayoutFields(this, options);
+    }
+
+    /**
+     * The columns the user selected, by their numbers: the row of numbers under the header filters,
+     * 1 based, counted across the pinned left, the center and the pinned right columns - a column of
+     * stacked fields is one number. A click on a number selects that column, Ctrl/Cmd+click adds or
+     * removes one, Shift+click selects the columns from the one clicked before, as on the row numbers.
+     * Ascending, `[]` when none is selected. {@link getLayoutFields} with `selectedOnly` gives their
+     * fields.
+     *
+     * The numbers are good for the layout they were selected in: the selection is cleared when the
+     * fields of the layout change - a column moved, pinned, hidden or added - and
+     * `column-selection-change` is sent. A column resized keeps it. It is not part of the state.
+     *
+     * @sample ranges
+     * @example
+     * ```ts
+     * gridInterface.getSelectedColumns(); // [2, 3, 4]
+     * gridInterface.getLayoutFields({ selectedOnly: true }); // ['city', 'age', 'born', 'active']
+     * ```
+     */
+    public getSelectedColumns(): number[] {
+        return [...this.columnSelection.selected];
+    }
+
+    /**
+     * Selects columns by their numbers (see {@link getSelectedColumns}), replacing the ones selected:
+     * the numbers show it, `column-selection-change` is sent when it changed. `[]` selects none. A
+     * Shift+click after it selects from the last number given.
+     *
+     * @param columns the numbers, 1 based as the header shows them
+     * @throws a `TypeError` for a number that is no column: not a whole number from 1 to the number of
+     * columns of the layout
+     *
+     * @sample ranges
+     * @example
+     * ```ts
+     * gridInterface.selectColumns([1, 2]); // the first two columns
+     * gridInterface.selectColumns([]); // none
+     *
+     * gridInterface.on('column-selection-change', ({ columns, fields }) => {
+     *     console.log(columns.length ? `columns ${columns.join(', ')}: ${fields.join(', ')}` : 'no column selected');
+     * });
+     * ```
+     */
+    public selectColumns(columns: number[]) {
+        const count = numberedColumns(this.gridConfig).length;
+        if (!Array.isArray(columns) || columns.some((n) => !Number.isInteger(n) || n < 1 || n > count)) {
+            throw new TypeError(
+                `selectColumns() takes column numbers from 1 to ${count}, the columns of the layout - got ${JSON.stringify(columns)}`
+            );
+        }
+        const selected = Array.from(new Set(columns)).sort((a, b) => a - b);
+        this.setColumnSelection({ selected, anchor: columns.at(-1) ?? null, kept: [] }, true);
+    }
+
+    /**
+     * The fields the grid knows that are not in the layout now: the ones the column chooser can add
+     * back. The grid knows the keys of `GridConfig.columns`, and every field that has been in the
+     * layout.
+     *
+     * Was `getOptionalAttributes()` in v5.
+     *
+     * @example
+     * ```ts
+     * import { createGrid } from '@simple-html/grid';
+     *
+     * const gridInterface = createGrid(host, {
+     *     config: { columns: { phone: {} }, layout: { center: [{ fields: ['name'], width: 100 }] } },
+     *     datasource
+     * });
+     * gridInterface.getHiddenFields(); // ['phone']
+     * ```
+     */
+    public getHiddenFields(): string[] {
+        const fields = new Set(Object.keys(this.gridConfig.columns));
+        for (const field of getLayoutFields(this)) {
+            fields.delete(field);
+        }
+        return Array.from(fields);
+    }
+
+    /**
+     * The ranges of cells the user selected - by dragging over the cells, Shift+click, Ctrl/Cmd+click
+     * for another one, Alt+Shift+arrows - or that {@link setRanges} set. See {@link CellRange}: rows
+     * are indexes in the displayed rows, fields are field names. The last range is the one made last,
+     * its `fromRow` / `fromField` is the active cell. `[]` when no cells are selected.
+     *
+     * Copies: changing them changes nothing in the grid.
+     *
+     * The ranges are cleared when the displayed rows change - a filter, a sort, grouping, a group
+     * expanded or collapsed, rows added or removed (`setData()`, `upsert()` that adds or removes
+     * rows, rows marked for deletion) - and when the fields of the layout change: a column moved,
+     * pinned, hidden or added. A column resized keeps them, and so does an edit: the rows stay where
+     * they are. `range-change` is sent every time they change.
+     *
+     * The row selection of the datasource (`datasource.getSelectedRows()`) is something else: a
+     * range does not select rows, selecting rows changes no range.
+     *
+     * @sample ranges
+     * @example
+     * ```ts
+     * const ranges = gridInterface.getRanges();
+     * if (ranges.length) {
+     *     const { fromRow, fromField, toRow, toField } = ranges[ranges.length - 1];
+     *     console.log(`from row ${fromRow} ${fromField} to row ${toRow} ${toField}`);
+     * }
+     * ```
+     */
+    public getRanges(): CellRange[] {
+        return this.ranges.map((range) => ({ ...range }));
+    }
+
+    /**
+     * Selects ranges of cells, replacing the ones there are - as if the user had selected them. See
+     * {@link CellRange}. The cells show them, `range-change` is sent. The focus does not move and the
+     * grid does not scroll to them.
+     *
+     * The grid keeps copies, with only the four keys of a range. They are cleared when the displayed
+     * rows or the layout change, see {@link getRanges}.
+     *
+     * @param ranges the ranges, the last one is the active one. `[]` clears them, as {@link clearRanges}
+     * @throws a `TypeError` for a range with a row that is not displayed (0 to `datasource.length() - 1`)
+     * or a field that is not in the layout
+     *
+     * @sample ranges
+     * @example
+     * ```ts
+     * // rows 0 to 4, the fields from name to age
+     * gridInterface.setRanges([{ fromRow: 0, fromField: 'name', toRow: 4, toField: 'age' }]);
+     *
+     * // two ranges, as Ctrl+click makes them
+     * gridInterface.setRanges([
+     *     { fromRow: 0, fromField: 'name', toRow: 0, toField: 'name' },
+     *     { fromRow: 5, fromField: 'age', toRow: 9, toField: 'age' }
+     * ]);
+     * ```
+     */
+    public setRanges(ranges: CellRange[]) {
+        assertRanges(this, ranges);
+        this.__setRanges(ranges);
+    }
+
+    /**
+     * Clears the ranges of cells: no cell is selected. Sends `range-change` when there were ranges.
+     * The rows selected in the datasource stay selected.
+     *
+     * @sample ranges
+     * @example
+     * ```ts
+     * document.getElementById('clear-selection')!.onclick = () => gridInterface.clearRanges();
+     * ```
+     */
+    public clearRanges() {
+        this.__setRanges([]);
+    }
+
+    /**
+     * Fill down, as Ctrl+D (Cmd+D) in a cell does: in every range the values of its top row go into the
+     * rows under it, a range of one row gets the values of the data row above it. Without a range, the
+     * cell with the focus gets the value of the cell above it. The values are copied as they are; cells
+     * that can not be edited are skipped (the grid's `readonly`, the column's, the `isReadonly` hook),
+     * group rows have no cells. One step of the undo history. See the guide "Selection and clipboard".
+     *
+     * @sample ranges
+     * @example
+     * ```ts
+     * // the status of the first row into the next four
+     * gridInterface.setRanges([{ fromRow: 0, fromField: 'status', toRow: 4, toField: 'status' }]);
+     * gridInterface.fillDown();
+     * ```
+     */
+    public fillDown() {
+        const focused = this.grid ? focusedCell(this.grid) : null;
+        fillDown(this, focused ? pointOf(focused.cell) : null);
+    }
+
+    /**
+     * @internal
+     * Sets the ranges, for the grid's mouse and keys and for setRanges() (which checks them first): the
+     * cells on screen show them, and `range-change` is sent. Nothing happens when they are the ranges
+     * there are - a pointer moving within a cell
+     */
+    public __setRanges(ranges: CellRange[]) {
+        const copies = ranges.map(({ fromRow, fromField, toRow, toField }) => ({ fromRow, fromField, toRow, toField }));
+        if (sameRanges(this.ranges, copies)) {
+            return;
+        }
+        this.ranges = copies;
+        this.rangeState = rangeState(this.gridConfig, copies);
+        if (this.grid) {
+            renderRangeClasses(this.grid);
+            // the summary of the selected cells
+            if (this.grid.domCreated) {
+                renderFooter(this.grid);
+            }
+        }
+        this.__callSubscribers('range-change', { ranges: this.getRanges() });
+    }
+
+    /**
+     * @internal
+     * the ranges in indexes, for the cells: see RangeState. null without ranges
+     */
+    public __getRangeState(): RangeState | null {
+        return this.rangeState;
+    }
+
+    /**
+     * Finds a text in the cells, as Ctrl+F in the grid does: opens the find bar with the text, marks
+     * every cell that shows it and scrolls to the current match. See {@link FindResult} for what a
+     * match is and their order - the text a cell shows, formatted, in any case (or as it is, with
+     * `caseSensitive`).
+     *
+     * The current match is the first one at or after the cell that has the focus (or the first one);
+     * while the bar is open, the current match stays while it still matches, else it is the next one.
+     * The focus does not move: {@link openFind} puts it in the bar, as Ctrl+F does. `find-change` is
+     * sent. Does nothing while the grid is not on the page.
+     *
+     * **`filterRows`** turns "Filter rows" of the find bar on or off, as its toggle does: only the rows
+     * with a match are shown - on top of the filter, not part of it (`getFilter()` and the state do not
+     * have it, nor `getServerFilter()`: it filters in the browser, also rows set later). Left out, it stays as it is. It is turned
+     * off when the bar closes ({@link closeFind}, Esc), and by the footer's Clear. See
+     * {@link FindResult.filterRows}.
+     *
+     * **`caseSensitive`** turns "Match case" of the find bar on or off, as its toggle `Aa` does: the
+     * text is found as it is - `Acme` does not find `ACME`. The matches, the count and "Filter rows"
+     * follow it. Left out, it stays as it is; it is kept when the bar closes. See
+     * {@link FindResult.caseSensitive}.
+     *
+     * @param text the text to find. `''` opens the bar with no matches (and every row)
+     * @param options.filterRows `true` for only the rows with a match, `false` for every row
+     * @param options.caseSensitive `true` to find the text as it is, `false` to find it in any case
+     * @returns how many cells show the text
+     * @throws a `TypeError` when the text is not a string
+     *
+     * @sample find
+     * @example
+     * ```ts
+     * const count = gridInterface.find('acme');
+     * console.log(`${count} cells`, gridInterface.getFind().current); // { row: 3, field: 'company' }
+     * gridInterface.findNext();
+     *
+     * // only the rows with a cell that shows "acme", then every row again with the bar still open
+     * gridInterface.find('acme', { filterRows: true });
+     * gridInterface.find('acme', { filterRows: false });
+     *
+     * // "Acme" as it is: not "ACME" or "acme"
+     * gridInterface.find('Acme', { caseSensitive: true });
+     * gridInterface.closeFind();
+     * ```
+     */
+    public find(text: string, options: { filterRows?: boolean; caseSensitive?: boolean } = {}): number {
+        if (typeof text !== 'string') {
+            throw new TypeError(`find(text): the text is a string, e.g. find('acme'), got ${String(text)}`);
+        }
+        assertOptions('find', options, "find('acme', { filterRows: true, caseSensitive: true })");
+        if (this.grid) {
+            openFind(this.grid, {
+                text,
+                focus: false,
+                filterRows: options.filterRows,
+                caseSensitive: options.caseSensitive
+            });
+        }
+        return this.getFind().count;
+    }
+
+    /**
+     * Opens the find bar as Ctrl+F does: the focus goes into its input, with the text it had selected,
+     * and the matches of that text show. For a button or a menu entry of your own. Does nothing while
+     * the grid is not on the page.
+     *
+     * @sample find
+     * @example
+     * ```ts
+     * document.getElementById('find-button')!.onclick = () => gridInterface.openFind();
+     * ```
+     */
+    public openFind() {
+        if (this.grid) {
+            openFind(this.grid, { focus: true });
+        }
+    }
+
+    /**
+     * Goes to the next match, as Enter and F3 in the find bar: it is the current one, the grid scrolls
+     * to it. After the last one, the first. Nothing while the find bar is closed or nothing matches.
+     *
+     * @returns the cell of the current match - its row in the displayed rows and its field - or `null`
+     *
+     * @sample find
+     * @example
+     * ```ts
+     * gridInterface.find('norway');
+     * const cell = gridInterface.findNext(); // { row: 12, field: 'country' }
+     * ```
+     */
+    public findNext(): FindResult['current'] {
+        return this.grid ? findStep(this.grid, 1) : null;
+    }
+
+    /**
+     * Goes to the previous match, as Shift+Enter and Shift+F3 in the find bar. Before the first one, the
+     * last. See {@link findNext}.
+     *
+     * @returns the cell of the current match, or `null`
+     *
+     * @example
+     * ```ts
+     * gridInterface.find('norway');
+     * gridInterface.findPrevious(); // the last match: the first one comes before it
+     * ```
+     */
+    public findPrevious(): FindResult['current'] {
+        return this.grid ? findStep(this.grid, -1) : null;
+    }
+
+    /**
+     * Closes the find bar, as Esc in it does: the cells are not marked any more. Its text is kept, Ctrl+F
+     * shows it again. "Filter rows" is turned off: every row the filter lets through is shown again. When
+     * the focus was in the bar it goes to the cell of the current match. `find-change` is sent.
+     *
+     * @example
+     * ```ts
+     * document.getElementById('close-find')!.onclick = () => gridInterface.closeFind();
+     * ```
+     */
+    public closeFind() {
+        if (this.grid) {
+            closeFind(this.grid);
+        }
+    }
+
+    /**
+     * What Find has found now: whether the bar is open, its text, whether "Filter rows" and "Match case"
+     * are on, how many cells match and the current match, see {@link FindResult}. A copy. The
+     * `find-change` event sends the same each time it changes.
+     *
+     * @example
+     * ```ts
+     * const { open, count, position, filterRows, caseSensitive } = gridInterface.getFind();
+     * if (open) {
+     *     console.log(count ? `${position} of ${count}` : 'no matches', filterRows ? '(rows filtered)' : '');
+     *     console.log(caseSensitive ? 'match case' : 'any case');
+     * }
+     * ```
+     */
+    public getFind(): FindResult {
+        return this.grid
+            ? getFindResult(this.grid)
+            : { open: false, text: '', filterRows: false, caseSensitive: false, count: 0, position: 0, current: null };
+    }
+
+    /**
+     * The columns filtered on the text their template shows - a text column with `format.text` (`{first}
+     * {last}`, a link's text), `filterAsShown` not `false` - each as a formula of that text, for
+     * `toSqlWhere({ shown })` (`@simple-html/grid/sql`): a filter on the column then compares that text in
+     * SQL, as the grid does. Send it with the filter of {@link getServerFilter}.
+     *
+     * Only templates a formula writes the same (templateFormula.ts): every field in it of the default
+     * formatter of its type, no `datetime` field. A column whose template is not, or that reads a field
+     * not in `fields`, is left out - and getServerFilter() takes its conditions out: the browser filters them.
+     *
+     * @param options.fields the fields the backend has a column for. Default every field
+     * @returns the formula of each column, by field: `{ order: 'CONCAT("order ", {order})' }`
+     *
+     * @example
+     * ```ts
+     * const fields = ['company', 'order', 'first', 'last'];
+     * const body = JSON.stringify({
+     *     filter: gridInterface.getServerFilter({ fields }),
+     *     shown: gridInterface.getShownFormulas({ fields })
+     * });
+     * // the backend: toSqlWhere(body.filter, { dialect: 'postgres', columns, shown: body.shown })
+     * ```
+     */
+    public getShownFormulas(options: { fields?: readonly string[] } = {}): Record<string, string> {
+        assertOptions('getShownFormulas', options, "getShownFormulas({ fields: ['first', 'last'] })");
+        const { fields } = options;
+        if (
+            fields !== undefined &&
+            (!Array.isArray(fields) || !fields.length || fields.some((field) => typeof field !== 'string'))
+        ) {
+            throw new TypeError(
+                `getShownFormulas({ fields }): fields is a list of the field names your backend has, e.g. ['first', 'last'], got ${JSON.stringify(fields)}`
+            );
+        }
+        const known = fields === undefined ? null : new Set(fields);
+        const formulas: Record<string, string> = {};
+        for (const field of Object.keys(this.gridConfig.columns)) {
+            const template = this.__shownTemplate(field);
+            if (template === null) {
+                continue;
+            }
+            const formula = templateFormula(template, field, (name) => {
+                if (known && !known.has(name)) {
+                    return undefined;
+                }
+                const own = this.dataSource.getField(name);
+                // a field of the datasource, not a calculated column of the grid or a field it has not
+                return own && !Object.hasOwn(this.calculated, name) ? { type: own.type, formatter: own.formatter } : undefined;
+            });
+            if (formula !== null) {
+                formulas[field] = formula;
+            }
+        }
+        return formulas;
+    }
+
+    /**
+     * The filter to send to a backend - what every button that loads rows from it can call: the filter
+     * (`datasource.getFilter()`), without the conditions the backend can not run - the calculated columns,
+     * and the fields it has no column for (`withoutFields()`: a condition taken out matches every row, so the
+     * backend sends every row the grid shows, maybe more - load them, the datasource's filter drops the rest).
+     * `toSqlWhere()` (`@simple-html/grid/sql`) makes SQL of it.
+     *
+     * Find is not in it: *Filter rows* of the find bar filters the rows in the browser, also the rows loaded
+     * after it was turned on.
+     *
+     * A column filtered on the text its template shows (`ColumnFormat.text`, `filterAsShown`) is kept when
+     * its template is a formula for the backend - send {@link getShownFormulas} with it - else taken out.
+     *
+     * @param options.fields the fields the backend has a column for: a condition on another field is
+     * taken out - a calculated column kept (`calculated: 'keep'`) counts as one when the backend has every
+     * field its formula reads. Default every field
+     * @param options.calculated `'keep'`: the conditions on the calculated columns stay - for
+     * `toSqlWhere({ calculated })`, which makes SQL of their formulas (send `getState().calculatedColumns`
+     * with the filter), or a database that computes them too. Default `'strip'`, they go
+     * @returns the filter, `null` for every row
+     * @throws a `TypeError` for options that are wrong: `fields` that is no list of at least one field name
+     *
+     * @sample sql
+     * @example
+     * ```ts
+     * import { toSqlWhere } from '@simple-html/grid/sql';
+     *
+     * const columns = { company: 'company', country: 'country', age: { column: 'age', type: 'number' as const } };
+     * const filter = gridInterface.getServerFilter({ fields: Object.keys(columns) });
+     * const body = JSON.stringify({ filter }); // the backend: toSqlWhere(filter, { dialect: 'postgres', columns })
+     * ```
+     */
+    public getServerFilter(options: { fields?: readonly string[]; calculated?: 'strip' | 'keep' } = {}): FilterExpression | null {
+        assertOptions('getServerFilter', options, "getServerFilter({ fields: ['company', 'country'], calculated: 'strip' })");
+        const { fields, calculated = 'strip' } = options;
+        if (calculated !== 'strip' && calculated !== 'keep') {
+            throw new TypeError(
+                `getServerFilter({ calculated }): calculated is 'strip' or 'keep', got ${JSON.stringify(calculated)}`
+            );
+        }
+        if (
+            fields !== undefined &&
+            (!Array.isArray(fields) || !fields.length || fields.some((field) => typeof field !== 'string'))
+        ) {
+            throw new TypeError(
+                `getServerFilter({ fields }): fields is a list of the field names your backend has, e.g. ['company', 'country'], got ${JSON.stringify(fields)}`
+            );
+        }
+        const filter = this.dataSource.getFilter();
+        const known = fields === undefined ? null : new Set(fields);
+        const shown = this.getShownFormulas(fields === undefined ? {} : { fields });
+        const strip = (field: string) => {
+            // a column filtered on its template: kept with the formula of its text (getShownFormulas), else
+            // the backend can not compare what the user filtered
+            if (this.__shownTemplate(field) !== null) {
+                return !Object.hasOwn(shown, field);
+            }
+            if (Object.hasOwn(this.calculated, field)) {
+                // kept when the backend has every field its formula reads, through the other calculated
+                // columns: it is no field of the backend itself. One with a problem has no formula to send
+                const uses = this.calculatedFieldsSet.get(field)?.uses;
+                return calculated === 'strip' || !uses || (known !== null && uses.some((each) => !known.has(each)));
+            }
+            return known !== null && !known.has(field);
+        };
+        return withoutFields(filter, strip);
+    }
+
+    /**
+     * The rows as an Excel workbook (.xlsx), a Blob: one sheet with a header row of the column labels
+     * (bold, frozen, with an autofilter over it and every row), then a row per data row. By default
+     * every row the filter lets through, in the sort order, and the columns of the layout in the
+     * order the user sees them, as wide as in the grid. See {@link ExcelOptions} for what can be
+     * changed: the selected rows, the selected range of cells, the fields, the sheet name, the colours.
+     *
+     * - **Typed cells**, so Excel can sum, sort and filter: a number field gives numbers, a date or
+     *   datetime field Excel dates (the local date and time the grid shows), a boolean field TRUE /
+     *   FALSE, text text - with wrapped lines when it has a line break. A value that is not of its
+     *   field's type (text in a number field) is written as the text the cell shows. Blanks are empty
+     *   cells.
+     * - **A flat list**: when grouped, every data row in the grouped order - the rows of collapsed
+     *   groups too - and no group rows, no outline, no totals. Rows marked for deletion are rows of the
+     *   grid until they are saved, they are exported too.
+     * - **No formulas**: text is never a formula in an .xlsx file, a value a user typed
+     *   (`=HYPERLINK(...)`) shows as the text it is.
+     * - **The colours and formats of the columns**: a display format as an Excel number format, a colour
+     *   rule's text colour, background and bold as the cell's own, a data bar, colour scale and icon set
+     *   as Excel's own conditional formatting - in the light look. `colors: false` leaves the colours out.
+     * - **The values when called**: the rows and values are read before the promise is returned, the
+     *   file is zipped after (with the browser's `CompressionStream`, so this is async).
+     *
+     * Works without the grid on the page too: it reads the config and the datasource.
+     *
+     * @param options what to export, see {@link ExcelOptions}. Every option is optional
+     * @returns the .xlsx file, of the type `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
+     * @throws (the promise rejects with) a `TypeError` for an option it does not know or a value an
+     * option does not take (`rows: 'some'`, a sheet name Excel does not take), a `RangeError` for more
+     * rows (1 048 576 with the header) or columns (16 384) than an Excel sheet holds
+     *
+     * @sample export
+     * @example
+     * ```ts
+     * // the file, for code of your own: upload it, attach it to a mail ...
+     * const blob = await gridInterface.getExcel();
+     * await fetch('/api/reports', { method: 'POST', body: blob });
+     *
+     * // the selected rows, two fields, on a sheet named People
+     * const people = await gridInterface.getExcel({ rows: 'selected', fields: ['name', 'born'], sheetName: 'People' });
+     *
+     * // the cells the user selected (the last range of cells)
+     * const cells = await gridInterface.getExcel({ rows: 'range' });
+     *
+     * // the values without the grid's colours
+     * const plain = await gridInterface.getExcel({ colors: false });
+     * ```
+     */
+    public getExcel(options: ExcelOptions = {}): Promise<Blob> {
+        return gridExcel(this, 'getExcel', options);
+    }
+
+    /**
+     * Saves the rows as an Excel file (.xlsx): the browser downloads it, as from a link. The file is
+     * {@link getExcel}'s. The row menu's *Excel, all rows* and *Excel, selected rows* call this.
+     *
+     * @param filename the name the file is saved as, default `'export.xlsx'`. Give it the `.xlsx`
+     * ending yourself, it is not added
+     * @param options what to export, see {@link ExcelOptions}
+     * @returns a promise that is fulfilled once the download is started
+     * @throws (the promise rejects with) a `TypeError` when the filename is not a text
+     * (`downloadExcel({ rows: 'selected' })`: the filename comes first), for an option it does not
+     * know or a value an option does not take
+     *
+     * @sample export
+     * @example
+     * ```ts
+     * document.getElementById('export')!.onclick = () => gridInterface.downloadExcel();
+     *
+     * // the selected rows, on a sheet named Orders
+     * await gridInterface.downloadExcel('orders.xlsx', { rows: 'selected', sheetName: 'Orders' });
+     * ```
+     */
+    public downloadExcel(filename: string = 'export.xlsx', options: ExcelOptions = {}): Promise<void> {
+        return downloadGridExcel(this, filename, options);
+    }
+
+    /**
+     * The rows as CSV text (RFC 4180): a header line with the column labels, then a line per row,
+     * every line ended with CRLF. By default every row the filter lets through, in the sort order, and
+     * the columns of the layout in the order the user sees them, each value as the grid shows it. See
+     * {@link CsvOptions} for what can be changed: the selected rows, the selected range of cells, the
+     * fields, the separator (`';'` for Excel in Norway), raw values ...
+     *
+     * - **The rows**: when grouped, every data row in the grouped order - the rows of collapsed groups
+     *   too, no group rows. Rows marked for deletion are rows of the grid until they are saved, they
+     *   are exported too.
+     * - **Formulas**: text starting with `=`, `+`, `-`, `@` ... gets a `'` in front, so a spreadsheet
+     *   does not run a formula a user typed in (`escapeFormulas`).
+     * - **No BOM** by default, unlike {@link downloadCsv}: the text is for code of your own.
+     *
+     * Works without the grid on the page too: it reads the config and the datasource.
+     *
+     * @param options what to export and how, see {@link CsvOptions}. Every option is optional
+     * @returns the CSV text, `''` when there are no columns
+     * @throws a `TypeError` for an option it does not know or a value an option does not take
+     * (`rows: 'some'`)
+     *
+     * @sample export
+     * @example
+     * ```ts
+     * const text = gridInterface.getCsv(); // 'Name,Born\r\nAnn,2001-05-17\r\n...'
+     *
+     * // the selected rows, semicolons for Excel in Norway, the values as they are stored
+     * const selected = gridInterface.getCsv({ rows: 'selected', separator: ';', formatted: false });
+     *
+     * // two fields, no header line
+     * const names = gridInterface.getCsv({ fields: ['name', 'email'], header: false });
+     *
+     * // the cells of the range the user selected, see getRanges()
+     * const range = gridInterface.getCsv({ rows: 'range' });
+     * ```
+     */
+    public getCsv(options: CsvOptions = {}): string {
+        return gridCsv(this, 'getCsv', options);
+    }
+
+    /**
+     * Saves the rows as a CSV file: the browser downloads it, as from a link. The text is
+     * {@link getCsv}'s, with a UTF-8 byte order mark (BOM) first by default - Excel needs it to read
+     * `æøå` (`bom: false` leaves it out).
+     *
+     * For Excel in a locale with a decimal comma (Norwegian, German ...), use `separator: ';'`:
+     * Excel splits a .csv file on the list separator of the computer's locale, and with `','` every
+     * row ends up in one column.
+     *
+     * @param filename the name the file is saved as, default `'export.csv'`. Give it the `.csv`
+     * ending yourself, it is not added
+     * @param options what to export and how, see {@link CsvOptions}
+     * @throws a `TypeError` when the filename is not a text (`downloadCsv({ rows: 'selected' })`: the
+     * filename comes first), for an option it does not know or a value an option does not take
+     *
+     * @sample export
+     * @example
+     * ```ts
+     * document.getElementById('export')!.onclick = () => gridInterface.downloadCsv();
+     *
+     * // the selected rows, for Excel in Norway
+     * gridInterface.downloadCsv('selected.csv', { rows: 'selected', separator: ';' });
+     * ```
+     */
+    public downloadCsv(filename: string = 'export.csv', options: CsvOptions = {}): void {
+        downloadGridCsv(this, filename, options);
+    }
+
+    /**
+     * Opens the import dialog: rows from a CSV or Excel (.xlsx) file, or pasted from a spreadsheet,
+     * become new rows. The user picks or drops a file - or pastes rows (Ctrl+V) - sees the first rows with
+     * a field picked over each column (matched by the header's names, else by position), the problems
+     * found (a value that is not a number, a date ..., a validation rule broken), and imports them: new
+     * rows, one step of the undo history. See the import guide.
+     *
+     * The grid's own menus open it with `GridConfig.importMenu`; call this from a button of your own, or
+     * with a file of your own drop zone. A modal `<dialog>`, as the filter editor.
+     *
+     * Does nothing while the grid is not on the page, in a readonly grid and when the user may not add
+     * rows (`GridConfig.edit.add`).
+     *
+     * @param source the rows to start with: a file (any `Blob`: a CSV file or an .xlsx workbook), or text
+     * (CSV or tab separated, as a spreadsheet copies it). Left out, the user picks a file
+     *
+     * @sample import
+     * @example
+     * ```ts
+     * document.getElementById('import')!.onclick = () => gridInterface.openImport();
+     *
+     * // a file dropped on a zone of your own
+     * const zone = document.getElementById('drop-zone')!;
+     * zone.ondragover = (event) => event.preventDefault();
+     * zone.ondrop = (event) => {
+     *     event.preventDefault();
+     *     const file = event.dataTransfer?.files[0];
+     *     if (file) {
+     *         gridInterface.openImport(file);
+     *     }
+     * };
+     * ```
+     */
+    public openImport(source?: Blob | string) {
+        if (source !== undefined && typeof source !== 'string' && !(source instanceof Blob)) {
+            throw new TypeError(`openImport(): source is a File, a Blob or text, not ${JSON.stringify(source)}`);
+        }
+        if (this.grid) {
+            openImportDialog(this.grid, source);
+        }
+    }
+
+    /**
+     * Adds rows of cells as new rows - what the import dialog does, from code: rows read from a file
+     * ({@link readImportFile}), from the clipboard, from an API. Each column goes to a field (`fields`, or
+     * the names of a header row, or by position), each value is read as the user types it - through the
+     * field's formatter, a number with its separators, a date - and the rows are validated. See
+     * {@link ImportOptions}.
+     *
+     * - The rows are new rows (`getChanges().newEntities`), added at once at the end (`datasource.addNewRows()`)
+     *   and the first one selected: the grid scrolls to it. A row with nothing in it is left out
+     * - **One step of the undo history**: undo takes the rows out again - marks them for deletion, as
+     *   Delete takes out a new row, so they are in none of the lists of `getChanges()` - redo brings them
+     *   back
+     * - **Problems**: a value that is not of its field's type (`abc` for a number) leaves the field
+     *   empty and is put in the row's error (`__rowError`, shown on its row number, replaced by
+     *   `setErrors()`); a validation rule broken shows on the cell. `invalidRows: 'skip'` leaves those
+     *   rows out. Every problem is in the result
+     *
+     * Code is not stopped by the grid's `readonly` or the edit permissions (as `addNewEmpty()` is not):
+     * check them yourself when the rows come from the user. Works without the grid on the page too.
+     *
+     * @param rows the rows, a cell for each column: text, a number, a boolean, a `Date` or `null` - as
+     * {@link readImportFile} gives them
+     * @param options the header, the fields, how numbers and dates are written, the rows with problems
+     * @returns the new rows, the problems found and how many rows were skipped
+     *
+     * @sample import
+     * @example
+     * ```ts
+     * // the first row names the columns
+     * const result = gridInterface.importRows(
+     *     [
+     *         ['Name', 'Age'],
+     *         ['Ann', '36'],
+     *         ['Bob', 'abc']
+     *     ],
+     *     { header: true }
+     * );
+     * result.rows.length; // 2
+     * result.problems; // [{ row: 2, field: 'age', value: 'abc', kind: 'value', message: 'Not a number: abc' }]
+     *
+     * // no header: the columns by position
+     * gridInterface.importRows([['Cid', 41]], { fields: ['name', 'age'] });
+     * ```
+     */
+    public importRows(rows: ImportCell[][], options: ImportOptions = {}): ImportResult<T> {
+        assertOptions('importRows', options, "importRows(rows, { header: true, fields: ['name', 'age'] })");
+        if (!Array.isArray(rows) || !rows.every(Array.isArray)) {
+            throw new TypeError('importRows(): rows is an array of rows, each an array of cells');
+        }
+        assertImportOptions(options);
+        return importRows(this, rows, options);
+    }
+
+    /**
+     * Imports a file in one call: an Excel workbook (.xlsx) or a CSV file, read by {@link readImportFile}
+     * and added by {@link importRows} - so an app needs no reader of its own. By default the first sheet,
+     * and the first row that is not empty is the header: its names go to the columns' labels or the
+     * fields' names, as the import dialog matches them.
+     *
+     * The rows are new rows, one step of the undo history, see {@link importRows}. To replace the data
+     * instead, read the file with {@link readImportFile}.
+     *
+     * Code is not stopped by the grid's `readonly` or the edit permissions: check them yourself when the
+     * file comes from the user. Works without the grid on the page too.
+     *
+     * @param file the file: from an `<input type="file">`, a drop, `fetch()` - any `Blob`
+     * @param options `sheet` (its index from 0 or its name, default the first) and `separator` (a CSV
+     * file's, default the one found) of {@link ReadImportFileOptions}, and the options of
+     * {@link importRows} - `header` is `true` by default here
+     * @returns (a promise of) the new rows, the problems found and how many rows were skipped
+     * @throws (the promise rejects with) an `ImportFileError` for a file it does not read (over a limit,
+     * an .xls file, a damaged one), a `RangeError` for a sheet the workbook has not, a `TypeError` for an
+     * option that is wrong
+     *
+     * @sample import
+     * @example
+     * ```ts
+     * const input = document.querySelector<HTMLInputElement>('#file')!;
+     * input.onchange = async () => {
+     *     const result = await gridInterface.importFile(input.files![0]); // the first sheet, a header row
+     *     console.log(`${result.rows.length} rows imported, ${result.problems.length} problems`);
+     * };
+     *
+     * // another sheet, the rows with problems left out
+     * await gridInterface.importFile(input.files![0], { sheet: 'Customers', invalidRows: 'skip' });
+     * ```
+     */
+    public async importFile(file: Blob, options: ReadImportFileOptions & ImportOptions = {}): Promise<ImportResult<T>> {
+        assertOptions('importFile', options, 'importFile(file, { sheet: 0, header: true })');
+        if (!(file instanceof Blob)) {
+            throw new TypeError(`importFile(): file is a File or a Blob, not ${JSON.stringify(file)}`);
+        }
+        const { sheet, separator, header = true, ...rest } = options;
+        const importOptions: ImportOptions = { header, ...rest };
+        // the options checked before the file is read
+        assertImportOptions(importOptions);
+        const read: ReadImportFileOptions = {};
+        if (sheet !== undefined) {
+            read.sheet = sheet;
+        }
+        if (separator !== undefined) {
+            read.separator = separator;
+        }
+        const table = await readImportFile(file, read);
+        return importRows(this, table.rows, importOptions);
+    }
+
+    /**
+     * Opens a menu of your own, in the grid's menu style: a value picker for a cell, the actions of a
+     * button, a second grid as a dropdown ({@link MenuBlock}). See {@link MenuEntry} for what it can
+     * show, submenus too ({@link MenuSubmenu}). To change the grid's own right click menus, use the
+     * `menus` hook ({@link GridHooks}).
+     *
+     * The menu is a popover: shown in the top layer, over everything on the page - a container with
+     * `overflow: hidden` does not cut it off, no z-index covers it. Opened from an element in a
+     * `<dialog>` or a popover of your own, it is put inside that element, so it can be used there
+     * (everything outside a modal dialog is inert).
+     *
+     * The menu open before is closed: there is one menu at a time. The grid closes this one, as its
+     * own, on a click outside it, on Esc, when another menu opens, on scroll (with
+     * `autoRemoveContextMenuOnScrollEvent`) and when the grid leaves the page. Clicking an item closes
+     * it too, with its submenus, then calls the item's action; clicking in a block does not.
+     * {@link closeMenu} closes it from code. When the focus is in the menu as it closes (an item, a
+     * field in a block), it goes back to the element that had it when the menu opened.
+     *
+     * The keyboard: called after a key (a button pressed with Enter) the menu takes the focus, on its
+     * first item, and the arrows, Enter, Esc work as in the grid's menus - the WAI-ARIA menu pattern.
+     * Called after a pointer press the focus stays where it is, ArrowDown gets into the menu.
+     *
+     * Called from a click handler the menu stays open: the click that opened it does not count as a
+     * click outside it.
+     *
+     * The callbacks of the entries get a {@link MenuContext} with `menu: 'custom'`, the grid and the
+     * datasource; it has no field, row or cell - your entries know what they were made for.
+     *
+     * Does nothing while the grid is not on the page.
+     *
+     * Replaces v5's `contextMenuCustom()` and `setContextMenuElement()`.
+     *
+     * @param at where it opens:
+     * - a mouse event: its top left corner at the mouse
+     * - a {@link MenuPosition} `{ x, y }`: its top left corner there, in px from the window's left and
+     *   top edges
+     * - an element: under the element, lined up with its left edge
+     *
+     * It is kept in the window: opened above the point (or the element) when there is no room below,
+     * moved left when it sticks out on the right.
+     * @param entries what the menu shows, in order. Entries whose `visible` returns `false` are left out
+     *
+     * @sample context-menu
+     * @sample dropdown-grid
+     * @example
+     * ```ts
+     * // a value picker on a cell
+     * gridInterface.on('cell-click', (data) => {
+     *     if (data.attribute === 'fruit') {
+     *         const pick = (fruit: string) => {
+     *             data.rowData.fruit = fruit;
+     *             gridInterface.refresh();
+     *         };
+     *         gridInterface.openMenu(data.originalEvent, [
+     *             { type: 'section', id: 'fruit', label: 'Pick a fruit:' },
+     *             { id: 'fruit.apple', label: 'Apple', action: () => pick('Apple') },
+     *             { id: 'fruit.banana', label: 'Banana', action: () => pick('Banana') }
+     *         ]);
+     *     }
+     * });
+     *
+     * // an element of your own under a cell, closed with the grid's menus
+     * declare const cell: HTMLElement;
+     * declare const myPicker: HTMLElement;
+     * gridInterface.openMenu(cell, [{ type: 'block', id: 'picker', element: myPicker }]);
+     * ```
+     */
+    public openMenu(at: MouseEvent | MenuPosition | HTMLElement, entries: MenuEntry[]) {
+        // no grid connected (not in the dom yet, or removed): nothing to open the menu in
+        if (this.grid) {
+            const context: MenuContext = {
+                menu: 'custom',
+                field: '',
+                row: undefined,
+                rowIndex: -1,
+                cell: undefined,
+                gridInterface: this,
+                datasource: this.dataSource
+            };
+            showMenu(this.grid, entries, context, placeAt(at));
+        }
+    }
+
+    /**
+     * Closes the menu that is open: one opened with {@link openMenu}, or one of the grid's own right
+     * click menus. Does nothing when no menu is open. The focus goes back as when the user closes it,
+     * see {@link openMenu}.
+     *
+     * Replaces v5's `removeContextMenuElement()`.
+     *
+     * @sample dropdown-grid
+     * @example
+     * ```ts
+     * // moving to another cell closes a dropdown opened from a cell
+     * gridInterface.on('cell-row-focus', () => gridInterface.closeMenu());
+     * ```
+     */
+    public closeMenu() {
+        // no grid connected: there is no menu to close
+        if (this.grid) {
+            removeContextMenu(this.grid);
+        }
+    }
+
+    /**
+     * Subscribes to an event of the grid: cell clicks and focus, copy/paste from the row menu ...
+     * The handler gets the event's payload, typed from {@link GridEvents} - see there for every
+     * event and what it sends. Sorting, filtering, selection and data changes are events of the
+     * datasource: `gridInterface.getDatasource().on(...)`, see {@link DatasourceEvents}.
+     *
+     * The handler stays subscribed until you call the function this returns. What the handler
+     * returns is ignored (in v5 it had to return `true` to stay subscribed).
+     *
+     * @param type the event name
+     * @param handler called with the payload every time the event is sent
+     * @returns a function that unsubscribes the handler
+     *
+     * @sample events
+     * @example
+     * ```ts
+     * const off = gridInterface.on('cell-click', (data) => {
+     *     if (data.attribute === 'company') {
+     *         console.log('company clicked:', data.rowData.company);
+     *     }
+     * });
+     *
+     * off(); // unsubscribe
+     * ```
+     */
+    public on<Type extends keyof GridEvents>(type: Type, handler: EventHandler<GridEvents[Type]>): () => void {
+        return this.events.on(type, handler);
+    }
+
+    /**
+     * The datasource the grid shows: its rows, selection, sorting, filter and the events for them.
+     *
+     * @example
+     * ```ts
+     * const datasource = gridInterface.getDatasource();
+     * datasource.on('selection-change', () => console.log(datasource.getSelectedRows().length, 'selected'));
+     * ```
+     */
+    public getDatasource(): Datasource<T> {
         return this.dataSource;
     }
 
     /**
      * @internal
      * @private
+     * computes what depends on the layout and the rows: the sizes, and a `columns` entry for every
+     * field of the layout. Called on every rebuild, the user changes the layout
      */
     public __parseConfig() {
-        if (!this.gridConfig.__attributes) {
-            this.gridConfig.__attributes = {};
-        }
+        const config = this.gridConfig;
+        const layout = config.layout;
 
-        if (!Array.isArray(this.gridConfig.columnsPinnedLeft)) {
-            this.gridConfig.columnsPinnedLeft = [];
-        }
-        if (!Array.isArray(this.gridConfig.columnsPinnedRight)) {
-            this.gridConfig.columnsPinnedRight = [];
-        }
-        if (!Array.isArray(this.gridConfig.columnsCenter)) {
-            this.gridConfig.columnsCenter = [];
-        }
-
-        if (this.gridConfig.footerHeight === null || this.gridConfig.footerHeight === undefined) {
-            this.gridConfig.footerHeight = 45;
-        }
-
-        if (this.gridConfig.panelHeight === null || this.gridConfig.panelHeight === undefined) {
-            this.gridConfig.panelHeight = 25;
-        }
-        if (this.gridConfig.cellHeight === null || this.gridConfig.cellHeight === undefined) {
-            this.gridConfig.cellHeight = 22;
-        }
-
-        if (this.gridConfig.cellHeaderLabelHeight === null || this.gridConfig.cellHeaderLabelHeight === undefined) {
-            this.gridConfig.cellHeaderLabelHeight = this.gridConfig.cellHeight;
-        }
-
-        if (this.gridConfig.panelHeight === null || this.gridConfig.panelHeight === undefined) {
-            this.gridConfig.panelHeight = 0;
-        }
-        if (this.gridConfig.selectSizeHeight === null || this.gridConfig.selectSizeHeight === undefined) {
-            this.gridConfig.selectSizeHeight = 18;
-        }
-        if (this.gridConfig.readonly === null || this.gridConfig.readonly === undefined) {
-            this.gridConfig.readonly = true;
-        }
-        if (this.gridConfig.selectionMode === null || this.gridConfig.selectionMode === undefined) {
-            this.gridConfig.selectionMode = 'multiple';
-        }
-
-        if (this.gridConfig.tooltips === null || this.gridConfig.tooltips === undefined) {
-            this.gridConfig.tooltips = true;
-        }
-
-        this.dataSource.setSelectionMode(this.gridConfig.selectionMode);
-
-        if (
-            this.gridConfig.placeHolderRowCurrentEnityOnly === null ||
-            this.gridConfig.placeHolderRowCurrentEnityOnly === undefined
-        ) {
-            this.gridConfig.placeHolderRowCurrentEnityOnly = true;
-        }
+        // a column without fields is left out (drag/drop and hiding can empty a column)
+        layout.left = layout.left.filter((e) => e.fields?.length);
+        layout.right = layout.right.filter((e) => e.fields?.length);
+        layout.center = layout.center.filter((e) => e.fields?.length);
 
         /**
          * height
          */
-        let cells = getCellHeight(this.gridConfig.columnsPinnedLeft, 1);
-        cells = getCellHeight(this.gridConfig.columnsPinnedRight, cells);
-        cells = getCellHeight(this.gridConfig.columnsCenter, cells);
+        let cells = getCellHeight(layout.left, 1);
+        cells = getCellHeight(layout.right, cells);
+        cells = getCellHeight(layout.center, cells);
 
-        this.gridConfig.__rowHeight = cells * this.gridConfig.cellHeight;
-        this.gridConfig.__rowHeaderHeight = cells * this.gridConfig.cellHeight + cells * this.gridConfig.cellHeaderLabelHeight;
-        this.gridConfig.__columnCells = cells;
-
-        this.gridConfig.columnsPinnedLeft = this.gridConfig.columnsPinnedLeft.filter((e) => e.rows?.length);
-        this.gridConfig.columnsPinnedRight = this.gridConfig.columnsPinnedRight.filter((e) => e.rows?.length);
-        this.gridConfig.columnsCenter = this.gridConfig.columnsCenter.filter((e) => e.rows?.length);
+        config.__rowHeight = cells * config.cellHeight;
+        config.__rowHeaderHeight = cells * config.cellHeight + cells * config.cellHeaderLabelHeight;
+        config.__columnCells = cells;
 
         /**
          * widths pinned
          */
-        this.gridConfig.__leftWidth =
-            this.gridConfig.columnsPinnedLeft?.map((col) => col.width || 100).reduce((value, curvalue) => value + curvalue, 0) ||
-            0;
+        config.__leftWidth = layout.left.map((col) => col.width || 100).reduce((value, curvalue) => value + curvalue, 0) || 0;
+        config.__rightWidth = layout.right.map((col) => col.width || 100).reduce((value, curvalue) => value + curvalue, 0) || 0;
 
-        this.gridConfig.__rightWidth =
-            this.gridConfig.columnsPinnedRight?.map((col) => col.width || 100).reduce((value, curvalue) => value + curvalue, 0) ||
-            0;
+        config.__scrollbarSize = 10;
 
-        this.gridConfig.__scrollbarSize = 10;
-
-        if (this.gridConfig.selectSizeHeight === undefined) {
-            this.gridConfig.selectSizeHeight = this.gridConfig.cellHeight;
+        config.__selectSizeWidth = Math.floor(getTextWidth(this.grid, this.dataSource.getRows().length.toString()) || 10);
+        if (config.__selectSizeWidth < 25) {
+            config.__selectSizeWidth = 25;
         }
-
-        this.gridConfig.__selectSizeWidth = Math.floor(
-            getTextWidth(this.grid, this.dataSource.getRows().length.toString()) || 10
-        );
-        if (this.gridConfig.__selectSizeWidth < 25) {
-            this.gridConfig.__selectSizeWidth = 25;
+        // room for the icon of the row's state in front of the number, see renderRowSelector
+        if (config.rowStatus) {
+            config.__selectSizeWidth += ROW_STATUS_WIDTH;
         }
 
         /**
-         * build up internal object with attributes
+         * a field in the layout without an entry in columns gets the defaults. The entry stays when the
+         * field leaves the layout, so the column chooser can add it back
          */
+        for (const column of [...layout.left, ...layout.center, ...layout.right]) {
+            for (const field of column.fields) {
+                if (!config.columns[field]) {
+                    config.columns[field] = {};
+                }
+            }
+        }
 
-        this.gridConfig.columnsPinnedLeft.forEach((e) => {
-            if (Array.isArray(e.rows)) {
-                e.rows.forEach((att) => {
-                    if (!this.gridConfig.__attributes[att]) {
-                        this.gridConfig.__attributes[att] = { attribute: att };
-                    }
-                });
-            }
-        });
-        this.gridConfig.columnsPinnedRight.forEach((e) => {
-            if (Array.isArray(e.rows)) {
-                e.rows.forEach((att) => {
-                    if (!this.gridConfig.__attributes[att]) {
-                        this.gridConfig.__attributes[att] = { attribute: att };
-                    }
-                });
-            }
-        });
-        this.gridConfig.columnsCenter.forEach((e) => {
-            if (Array.isArray(e.rows)) {
-                e.rows.forEach((att) => {
-                    if (!this.gridConfig.__attributes[att]) {
-                        this.gridConfig.__attributes[att] = { attribute: att };
-                    }
-                });
-            }
-        });
-
-        this.gridConfig.attributes?.forEach((att) => {
-            this.gridConfig.__attributes[att.attribute] = att;
-        });
+        /**
+         * the aggregates (aggregates.ts): a group row with aggregates is its name's line and a line for
+         * each function of the column that has the most; the totals row has those lines
+         */
+        const heights = aggregateRowHeights(config);
+        config.__groupRowHeight = heights.group;
+        config.__totalsRowHeight = heights.totals;
     }
 
     /**
      * @internal
      * @private
      */
-    public __getGridConfig() {
+    public __getGridConfig(): ParsedGridConfig {
         return this.gridConfig;
+    }
+
+    /**
+     * @internal
+     * the hooks as they are now, for the menus
+     */
+    public __getHooks(): GridHooks<T> {
+        return this.hooks;
+    }
+
+    /**
+     * @internal
+     * the header filter of a column: what its cell shows, the operator picked in its menu, its "Match
+     * case" and its filter as you type
+     */
+    public __getHeaderFilter(field: string): HeaderFilter | undefined {
+        return this.headerFilters[field];
+    }
+
+    /**
+     * @internal
+     * sets what a column's header filter cell shows, keeps the operator picked and "Match case".
+     * null/'' is empty. A quick date (`datePreset`) is replaced: the value is the user's now
+     */
+    public __setHeaderFilterValue(field: string, value: unknown) {
+        const headerFilter = this.headerFilters[field];
+        this.storeHeaderFilter(
+            field,
+            value,
+            headerFilter?.operator,
+            headerFilter?.caseSensitive === true,
+            headerFilter?.filterOnType
+        );
+    }
+
+    /**
+     * @internal
+     * sets the operator picked in a column's header filter menu, keeps the value and "Match case" - and a
+     * quick date when it is `BETWEEN` (a quick date is one), filterCallback runs it again then
+     */
+    public __setHeaderFilterOperator(field: string, operator: FilterOperator) {
+        const headerFilter = this.headerFilters[field];
+        this.storeHeaderFilter(
+            field,
+            headerFilter?.value,
+            operator,
+            headerFilter?.caseSensitive === true,
+            headerFilter?.filterOnType,
+            operator === 'BETWEEN' ? headerFilter?.datePreset : undefined
+        );
+    }
+
+    /**
+     * @internal
+     * sets a quick date as a column's header filter (datePresetFilter.ts): the operator `BETWEEN`, the
+     * `[from, to]` of its days as the value, and the quick date. Keeps "Match case" and filter as you type
+     */
+    public __setHeaderFilterDatePreset(field: string, datePreset: DatePreset, value: [Date | null, Date]) {
+        const headerFilter = this.headerFilters[field];
+        this.storeHeaderFilter(
+            field,
+            value,
+            'BETWEEN',
+            headerFilter?.caseSensitive === true,
+            headerFilter?.filterOnType,
+            datePreset
+        );
+        // no rebuild may follow: the views button shows the change
+        this.__refreshViewsButton();
+    }
+
+    /**
+     * @internal
+     * turns a column's "Match case" (its header filter menu) on or off, keeps the value and the operator
+     */
+    public __setHeaderFilterCaseSensitive(field: string, caseSensitive: boolean) {
+        const headerFilter = this.headerFilters[field];
+        this.storeHeaderFilter(
+            field,
+            headerFilter?.value,
+            headerFilter?.operator,
+            caseSensitive,
+            headerFilter?.filterOnType,
+            headerFilter?.datePreset
+        );
+        // no rebuild may follow: the views button shows the change
+        this.__refreshViewsButton();
+    }
+
+    /**
+     * @internal
+     * sets a column's filter as you type (filterOnType.ts), keeps the value, the operator and "Match
+     * case". undefined: the column's default, left out of the state
+     */
+    public __setHeaderFilterOnType(field: string, filterOnType: boolean | undefined) {
+        const headerFilter = this.headerFilters[field];
+        this.storeHeaderFilter(
+            field,
+            headerFilter?.value,
+            headerFilter?.operator,
+            headerFilter?.caseSensitive === true,
+            filterOnType,
+            headerFilter?.datePreset
+        );
+        // no rebuild may follow: the views button shows the change
+        this.__refreshViewsButton();
+    }
+
+    /**
+     * @internal
+     * empties every header filter cell, for when the filter is replaced as a whole. The operators
+     * picked are kept
+     */
+    public __clearHeaderFilterValues() {
+        for (const field of Object.keys(this.headerFilters)) {
+            this.__setHeaderFilterValue(field, null);
+        }
+    }
+
+    /**
+     * @internal
+     * For the filter editor's Apply: empties the header filter cells whose column's conditions it
+     * changed - the ones a header filter owns, its top level conditions (columnConditions). A cell whose
+     * conditions are as they were keeps its text: the filter still has what it shows. The operators
+     * picked are kept
+     * @param before the filter before it was applied
+     * @param after the filter it applied
+     */
+    public __clearChangedHeaderFilters(before: FilterExpression | null, after: FilterExpression | null) {
+        for (const field of Object.keys(this.headerFilters)) {
+            if (!sameConditions(columnConditions(before, field), columnConditions(after, field))) {
+                this.__setHeaderFilterValue(field, null);
+            }
+        }
+    }
+
+    /**
+     * stores a column's header filter, or removes it when it has no value, no operator, no "Match
+     * case" and no filter as you type of the user's - so getState() lists only the header filters in
+     * use. An empty value ('' or undefined) is stored as null, `operator`, `caseSensitive`,
+     * `filterOnType` and `datePreset` only when they are set
+     * @param datePreset the quick date the value was computed from, see `HeaderFilter.datePreset`
+     */
+    private storeHeaderFilter(
+        field: string,
+        value: unknown,
+        operator: FilterOperator | undefined,
+        caseSensitive: boolean,
+        filterOnType?: boolean,
+        datePreset?: DatePreset
+    ) {
+        const empty = value === null || value === undefined || value === '';
+        if (empty && !operator && !caseSensitive && filterOnType === undefined) {
+            delete this.headerFilters[field];
+            return;
+        }
+        const headerFilter: HeaderFilter = { value: empty ? null : value };
+        if (operator) {
+            headerFilter.operator = operator;
+        }
+        if (caseSensitive) {
+            headerFilter.caseSensitive = true;
+        }
+        if (filterOnType !== undefined) {
+            headerFilter.filterOnType = filterOnType;
+        }
+        if (datePreset) {
+            headerFilter.datePreset = datePreset;
+        }
+        this.headerFilters[field] = headerFilter;
+    }
+
+    /**
+     * `datePreset` of a state's header filter when the column can take it: a quick date (datePresets.ts)
+     * on a date or datetime column - not a lookup column - whose header filter offers `BETWEEN`. Else
+     * undefined: the header filter is kept without it. It need not be one the column's `datePresets`
+     * offers, as an operator of the state is not checked against `filterOperators` either
+     */
+    private datePresetOf(field: string, datePreset: unknown): DatePreset | undefined {
+        if (!isDatePreset(datePreset)) {
+            return undefined;
+        }
+        const type = this.__getLookupColumn(field) ? 'text' : this.getDatasource().getField(field).type;
+        // a date is never a LOB: no clobType
+        return takesDatePresets(type, headerOperators(this.gridConfig.columns[field], type, false)) ? datePreset : undefined;
+    }
+
+    /**
+     * The quick dates of the header filters computed from today (datePresetRange, the week from the date
+     * picker's `weekStart`): each one's value is set to its days now, and its `BETWEEN` replaces the
+     * column's conditions in `filter` (withColumnConditions, as a header filter does). The filter as it
+     * is when no header filter is a quick date
+     */
+    private withDatePresets(filter: FilterExpression | null): FilterExpression | null {
+        const now = new Date();
+        const weekStart = weekStartOf(this.gridConfig.datePickerConfig);
+        let result = filter;
+        for (const [field, headerFilter] of Object.entries(this.headerFilters)) {
+            if (!headerFilter.datePreset) {
+                continue;
+            }
+            const range = datePresetRange(headerFilter.datePreset, this.getDatasource().getField(field).type, now, weekStart);
+            headerFilter.value = range;
+            result = withColumnConditions(result, field, [where(field, 'BETWEEN', range)]);
+        }
+        return result;
     }
 
     /**
@@ -489,7 +3412,7 @@ export class GridInterface<T> {
      * @private
      */
     public __disconnectGrid() {
-        this.dataSource.removeEventListener(this);
+        this.unsubscribeFromDatasource();
         this.grid = null;
     }
 
@@ -497,35 +3420,48 @@ export class GridInterface<T> {
      * @internal
      * @private
      */
-    public __setSelectedColumn(number: number, add = false) {
-        if (!add) {
-            this.columnsSelected.clear();
-        }
-        if (this.__isColumnSelected(number)) {
-            this.columnsSelected.delete(number);
-        } else {
-            this.columnsSelected.add(number);
-        }
-        if (this.grid) {
-            rebuildHeaderColumns(this.grid);
-            this.grid.gridInterface.triggerScrollEvent();
-        }
+    public __clickColumn(number: number, keys: { toggle: boolean; range: boolean }) {
+        this.setColumnSelection(clickColumn(this.columnSelection, number, keys), true);
     }
 
     /**
      * @internal
      * @private
+     * the column number a Shift+click selects from (the last one clicked without Shift), null before
+     * any: the column menu's Select › Columns from N to here
+     */
+    public __getColumnAnchor(): number | null {
+        return this.columnSelection.anchor;
+    }
+
+    /**
+     * @internal
+     * @private
+     * true when the column with this number (1 based, as the header shows it) is selected
      */
     public __isColumnSelected(number: number) {
-        return this.columnsSelected.has(number);
+        return this.columnSelection.selected.includes(number);
     }
 
     /**
-     * @internal
-     * @private
+     * The column selection changes: the numbers on screen show it (`render`, not while the layout is
+     * being rebuilt - the rebuild renders them), and `column-selection-change` is sent when the
+     * selected columns changed
      */
-    public __selectedColumns() {
-        return this.columnsSelected.size;
+    private setColumnSelection(selection: ColumnSelection, render: boolean) {
+        const before = this.columnSelection.selected;
+        this.columnSelection = selection;
+        this.columnSelectionKey = layoutKey(this.gridConfig);
+        if (render && this.grid) {
+            renderColumnNumbers(this.grid);
+        }
+        const changed = before.length !== selection.selected.length || before.some((n, i) => n !== selection.selected[i]);
+        if (changed) {
+            this.__callSubscribers('column-selection-change', {
+                columns: this.getSelectedColumns(),
+                fields: getLayoutFields(this, { selectedOnly: true })
+            });
+        }
     }
 
     /**
@@ -542,18 +3478,41 @@ export class GridInterface<T> {
      */
     public __dataSourceUpdated() {
         this.__parseConfig();
+        // the layout changed since the ranges of cells were made - a column moved, pinned, hidden: the
+        // fields between their ends are others now. Every change of the layout comes here (a rebuild,
+        // or applyState() without a grid)
+        if (this.rangeState && this.rangeState.key !== layoutKey(this.gridConfig)) {
+            this.clearRanges();
+        }
+        // the selected columns too: their numbers are other columns now. The rebuild renders the numbers
+        const columns = this.columnSelection;
+        if ((columns.selected.length || columns.anchor !== null) && this.columnSelectionKey !== layoutKey(this.gridConfig)) {
+            this.setColumnSelection(NO_COLUMNS, false);
+        }
         this.scrollTops = [];
         this.scrollHeights = [];
         this.scrollHeight = 0;
 
         // lets make a index if datasource is > 1000k, and store top for each k
 
-        const cell = this.gridConfig.cellHeight;
+        const groupRow = this.gridConfig.__groupRowHeight;
         const row = this.gridConfig.__rowHeight;
+        // the rows made taller by fitRows(): their lines, a row is at least as high as the layout makes it.
+        // A line more than the layout's is a line of text, multilineLineHeight px (rowHeightOf)
+        const rowLines = this.rowLines;
+        const cells = this.gridConfig.__columnCells;
         let count = 0;
 
-        this.dataSource.getRows().forEach((ent: Entity) => {
-            const height = ent.__group ? cell : row;
+        this.dataSource.getRows().forEach((ent) => {
+            let height = row;
+            if (isGroupRow(ent)) {
+                height = groupRow;
+            } else if (rowLines.size) {
+                const lines = rowLines.get(String(ent.__KEY));
+                if (lines !== undefined && lines > cells) {
+                    height = rowHeightOf(this.gridConfig, lines);
+                }
+            }
             this.scrollTops.push(count);
             this.scrollHeights.push(height);
             count = count + height;
@@ -581,112 +3540,954 @@ export class GridInterface<T> {
 
     /**
      * @internal
-     * @private
-     * called by grid calss
+     * Is the cell readonly: a calculated column's always; on a row the edit permissions (`GridConfig.edit`)
+     * do not let the user change, every cell is - whatever the hook says. Else the `isReadonly` hook decides, and when it gives no
+     * answer (anything but `true` / `false`) the column's `readonly` option. The grid's own `readonly`
+     * is not part of it, the callers check that first
+     * @param row a row of the datasource, so one of its `EntityUnion<T>` rows
      */
-    public __callReadonlySetter(attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) {
-        if (this.readonlySetterFn) {
-            return this.readonlySetterFn(attribute, rowData, cellReadOnlyConfig);
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * @internal
-     * @private
-     * called by grid calss
-     */
-    public __callCellAppendClass(attribute: string, rowData: Entity, cellReadOnlyConfig: boolean) {
-        if (this.cellAppendClassSetterFn) {
-            return this.cellAppendClassSetterFn(attribute, rowData, cellReadOnlyConfig);
-        } else {
-            return {
-                inputClass: '',
-                dimmedClass: ''
-            };
-        }
-    }
-
-    /**
-     * @internal
-     * @private
-     * do not use - used to handle event from datasource
-     * cant use __ since datasource wants it without
-     */
-    public handleEvent(e: any) {
-        if (this.suppressEvents) {
+    public __isCellReadonly(row: Entity, field: string): boolean {
+        // a calculated column is computed, never edited; a row the edit permissions lock, every cell
+        if (this.__isCalculated(field) || !mayChangeRow(this.gridConfig.edit, row)) {
             return true;
         }
-
-        switch (true) {
-            case e.type === 'collection-filtered' &&
-                (e.data?.info === 'filter' || e.data?.info === 'markForDeletion' || e.data?.info === 'resetData'):
-                this.grid.rebuild(false);
-                break;
-            case e.type === 'collection-sorted':
-            case e.type === 'collection-grouped':
-            case e.type === 'collection-expand':
-            case e.type === 'collection-collapse':
-            case e.type === 'collection-changed':
-                this.grid.rebuild();
-
-                break;
-            case e.type === 'currentEntity':
-            case e.type === 'selectionChange':
-                this.__dataSourceUpdated();
-                triggerScrollEvent(this.grid);
-                break;
-            case e.type === 'select': {
-                this.__dataSourceUpdated();
-
-                const scrollEl = getElementByClassName(this.grid.getElement(), 'simple-html-grid-body-scroller');
-                const scrollElHeight = scrollEl?.clientHeight;
-                const scrollElScrollTop = scrollEl?.scrollTop;
-
-                const newTop = this.__getScrollState().scrollTops[e.data?.row];
-
-                if (newTop - this.__getGridConfig().__rowHeight < scrollElScrollTop) {
-                    scrollEl.scrollTop = Math.floor(newTop - scrollElHeight / 2);
-                }
-
-                if (newTop + this.__getGridConfig().__rowHeight > scrollElHeight + scrollElScrollTop) {
-                    scrollEl.scrollTop = Math.floor(newTop - scrollElHeight / 2);
-                }
-
-                break;
-            }
-            default:
-            /* if (DEVELOPMENT === true) {
-                    console.log('skipping:', e.type, e.data);
-                } */
-        }
-
-        return true; // to hold active
+        // the user's (format.readonly) over the column's
+        const readonlyByConfig = readonlyOf(this.gridConfig.columns[field]);
+        const readonly = this.hooks.isReadonly?.(row as EntityUnion<T>, field, readonlyByConfig);
+        return typeof readonly === 'boolean' ? readonly : readonlyByConfig;
     }
 
     /**
      * @internal
-     * @private
-     * used to call subscribers, used by selection/sorting/filter/grouping controller
-     * @param event
-     * @param data
+     * Can the user change the values of the row: the grid is editable (`readonly: false`) and the edit
+     * permissions allow it - `change`, or `add` for a new row (editPermissions.ts). The grid's `readonly`
+     * for one row: what the cells of a row the user may not change look like. A cell can still be
+     * readonly on its own, see __isCellReadonly
+     * @param row a data row of the datasource
      */
-    public __callSubscribers(event: string, data = {}): void {
-        const keeping: any = [];
-        this.listeners.forEach((callable) => {
-            let keep: boolean;
-            if (typeof callable === 'function') {
-                keep = callable({ type: event, data: data });
-            } else {
-                if (typeof callable?.handleEvent === 'function') {
-                    keep = callable.handleEvent({ type: event, data: data });
+    public __canChangeRow(row: Entity): boolean {
+        return !this.gridConfig.readonly && mayChangeRow(this.gridConfig.edit, row);
+    }
+
+    /**
+     * @internal
+     * Can the user change some values: the grid is editable and `change` or `add` is allowed. The paste,
+     * clear and fill of the grid start with it - nothing to do when no row can be changed, the keys are
+     * the browser's as in a readonly grid - and check each cell after (__isCellReadonly)
+     */
+    public __canChangeValues(): boolean {
+        return !this.gridConfig.readonly && mayChangeValues(this.gridConfig.edit);
+    }
+
+    /**
+     * @internal
+     * Can the user mark the row for deletion: the grid is editable and `delete` is allowed, or the row is
+     * new - taking out a row that is not saved deletes nothing (editPermissions.ts). The isReadonly hook
+     * can lock it too, see isLockedByHook in deleteRows.ts
+     * @param row a data row of the datasource
+     */
+    public __canDeleteRow(row: Entity): boolean {
+        return !this.gridConfig.readonly && mayDeleteRow(this.gridConfig.edit, row);
+    }
+
+    /**
+     * @internal
+     * Can the user add rows: the grid is editable and `edit.add` allows it. The import dialog opens only
+     * then (openImport(), the menus' import entries)
+     */
+    public __canAddRows(): boolean {
+        return !this.gridConfig.readonly && this.gridConfig.edit.add;
+    }
+
+    /**
+     * @internal
+     * Are the import entries of the grid's menus shown: `GridConfig.importMenu`, and the user can add rows
+     */
+    public __showImportMenu(): boolean {
+        return this.gridConfig.importMenu === true && this.__canAddRows();
+    }
+
+    /**
+     * @internal
+     * The column's editor and lookup when it has an `editor` (ColumnConfig.editor), see lookupColumn.ts
+     */
+    public __getLookupColumn(field: string): LookupColumn | undefined {
+        return this.lookupColumns.get(field);
+    }
+
+    /**
+     * @internal
+     * The formatter the grid shows a value of a field with - the one place the grid turns a value into
+     * the text of a cell (renderRowCell, cellTextOf, the aggregates, the footer's summary): the field's
+     * formatter (`datasource.getFormatter(field, type)`), with the column's display format when it has
+     * one (`ColumnConfig.format`, `GridState.formats`, see columnFormat.ts) - its `format` is the display
+     * format's text, `formatForEdit` and `parse` stay the field's. The names of a date format are in
+     * the language of the text `format.locale`, a week and a quarter written as `format.weekIso`,
+     * `format.weekUs` and `format.quarter` say.
+     *
+     * The template of a column (`ColumnFormat.text`) needs the row - its placeholders are fields of the
+     * row - so it is only there with `row` (the cells, cellTextOf): `format(value)` is the template filled
+     * in, `{value}` the value it is given, in the column's number or date format when it has one
+     * (templateFormatter, cellTemplate.ts).
+     *
+     * Not for a lookup column (its lookup's formatter shows a label), nor for a cell whose type is not
+     * the field's (`dynamicCellTypeColumn` on a text field: its other types have no format)
+     * @param type the cell's type, see getCellType. Left out, the field's
+     * @param row the cell's row: for the template of a text column. Left out, the template is not used
+     * @param format the format to show it with: the column's when left out. The grid config dialog
+     * gives the one it edits, for its preview
+     */
+    public __getCellFormatter(
+        field: string,
+        type?: FieldType,
+        row?: Entity,
+        format: ColumnFormat | undefined = this.__getColumnFormat(field)
+    ): Formatter {
+        const formatter = this.dataSource.getFormatter(field, type);
+        if (type !== undefined && type !== this.dataSource.getField(field).type) {
+            return formatter;
+        }
+        // the value as the display format shows it, then the template around it: {value} in that format
+        const shown =
+            format && hasValueFormat(format)
+                ? displayFormatter(formatter, format, formatTexts(this.gridConfig.texts))
+                : formatter;
+        if (format?.text !== undefined && row) {
+            return templateFormatter(shown, field, format.text, this.__fieldTextOf(row));
+        }
+        return shown;
+    }
+
+    /**
+     * @internal
+     * The template a column is filtered on: a text column (not a lookup column) with a text template
+     * (`ColumnFormat.text`) shows the template filled in, and its filters compare that text - unless its
+     * format says `filterAsShown: false`, or the template reads a field with `clobType` (its own too): SQL
+     * can not make a text of a LOB, the column is filtered on its value then. null for a column filtered on
+     * its value
+     */
+    public __shownTemplate(field: string): string | null {
+        if (this.dataSource.getField(field).type !== 'text' || this.__getLookupColumn(field)) {
+            return null;
+        }
+        const format = this.__getColumnFormat(field);
+        if (format?.text === undefined || format.filterAsShown === false) {
+            return null;
+        }
+        // {value} is the column's own field
+        const reads = templateFields(format.text).map((name) => (name === 'value' ? field : name));
+        return reads.some((name) => this.dataSource.getField(name).clobType) ? null : format.text;
+    }
+
+    /**
+     * @internal
+     * The format a column shows its values with: its own (`ColumnConfig.format`, `GridState.formats`),
+     * with the format of its type (`GridState.typeFormats`, withTypeFormat) when it has no date or number
+     * format of its own. Every reader of a column's date or number format reads it here: the cells, the
+     * header filter as shown, the colour rules, the export, the grouping by a period
+     * @param format the column's own format: its current one when left out. The grid config dialog
+     * gives the one it edits
+     * @param typeFormats the formats by type: the grid's when left out. The dialog gives the ones it edits
+     */
+    public __getColumnFormat(
+        field: string,
+        format: ColumnFormat | undefined = this.gridConfig.columns[field]?.format,
+        typeFormats: TypeFormats = this.gridConfig.typeFormats
+    ): ColumnFormat | undefined {
+        return withTypeFormat(format, this.dataSource.getField(field).type, typeFormats, this.lookupColumns.has(field));
+    }
+
+    /**
+     * @internal
+     * The formats by type the grid starts with - `initialState.typeFormats`, else the config's
+     * `typeFormats`: the Reset of the dialog's Defaults tab. A copy
+     */
+    public __getStartTypeFormats(): TypeFormats {
+        return structuredClone(this.initialState.typeFormats ?? this.options.typeFormats ?? {});
+    }
+
+    /**
+     * @internal
+     * The link of a cell: its address and whether it opens in a new tab - for a column with a link
+     * (`ColumnFormat.link`), when the row's address is one the grid links to (linkOf, cellTemplate.ts).
+     * null for a column without a link, a group row, and a row whose address is empty or not allowed: the
+     * cell shows its text then
+     */
+    public __getCellLink(field: string, row: Entity): { href: string; newTab: boolean } | null {
+        const link = this.gridConfig.columns[field]?.format?.link;
+        const result = this.__getLinkResult(field, row);
+        return link && result && 'href' in result ? { href: result.href, newTab: link.newTab === true } : null;
+    }
+
+    /**
+     * @internal
+     * The address of a cell's link, or why the row has none (linkOf, cellTemplate.ts): `{value}` is the
+     * cell's value, the other placeholders the row's fields. null for a format without a link and a group
+     * row
+     * @param format the format: the column's when left out. The grid config dialog gives the one it
+     * edits, for its preview
+     */
+    public __getLinkResult(
+        field: string,
+        row: Entity,
+        format: ColumnFormat | undefined = this.gridConfig.columns[field]?.format
+    ): LinkResult | null {
+        if (!format?.link || isGroupRow(row)) {
+            return null;
+        }
+        const formatter = this.dataSource.getFormatter(field);
+        return linkOf(format.link.url, cellFieldText(field, row[field], formatter, this.__fieldTextOf(row)));
+    }
+
+    /**
+     * @internal
+     * The text of the fields of a row for a template's placeholders: each through its field's formatter,
+     * see fieldTextOf (cellTemplate.ts)
+     */
+    public __fieldTextOf(row: Entity): FieldText {
+        return fieldTextOf(row, (name) => this.dataSource.getFormatter(name));
+    }
+
+    /**
+     * @internal
+     * The display formats the grid starts with, by field - the config's columns, or `initialState.formats`:
+     * what resetState() goes back to, and the grid config dialog's "Reset". A copy
+     */
+    public __getStartFormats(): Record<string, ColumnFormat> {
+        return structuredClone(this.initialState.formats ?? this.configFormats);
+    }
+
+    /**
+     * @internal
+     * The detail form the grid starts with - `initialState.detailForm`, else the config's `detailForm`:
+     * what resetState() goes back to, and the grid config dialog's "Reset form". A copy
+     */
+    public __getStartDetailForm(): DetailForm {
+        return copyDetailForm(this.initialState.detailForm ?? this.options.detailForm ?? noDetailForm());
+    }
+
+    /**
+     * The display formats of a state given to setState() fit their fields, see assertColumnFormat
+     * @throws a `TypeError` naming the field, before anything changes
+     */
+    private assertStateFormats(formats: unknown) {
+        if (typeof formats !== 'object' || formats === null || Array.isArray(formats)) {
+            throw new TypeError(`setState: formats is an object of formats by field, got ${JSON.stringify(formats)}`);
+        }
+        const fieldOf = this.__ruleFieldOf();
+        for (const [field, format] of Object.entries(formats)) {
+            const lookup = this.gridConfig.columns[field]?.editor !== undefined;
+            assertColumnFormat(
+                format,
+                field,
+                this.dataSource.getField(field).type,
+                lookup,
+                `setState: formats.${field}`,
+                fieldOf
+            );
+        }
+    }
+
+    /**
+     * The datasource sorts the lookup columns on the label their cells show, see
+     * Datasource.__setSortValue. The text columns with a template: sortText
+     */
+    private setSortValues() {
+        for (const [field, column] of this.lookupColumns) {
+            const sortValue = (value: unknown) => column.formatter.format(value);
+            this.sortValues.set(field, sortValue);
+            this.dataSource.__setSortValue(field, sortValue);
+        }
+    }
+
+    /**
+     * What the datasource sorts a text column with a template (`format.text`) on - the text it shows,
+     * the template filled in for the row (Datasource.__setSortText). Asked when the rows are sorted, so
+     * a template set later (setState, the grid config dialog) sorts too. undefined - sorted on the value
+     * - for another column, a lookup column (setSortValues) and a column grouped by: the groups are made
+     * from runs of one value
+     */
+    private readonly sortText = (field: string): ((value: unknown, row: Entity) => string) | undefined => {
+        if (
+            this.lookupColumns.has(field) ||
+            this.dataSource.getField(field).type !== 'text' ||
+            this.__getColumnFormat(field)?.text === undefined ||
+            this.dataSource.getGrouping().some((group) => group.attribute === field)
+        ) {
+            return undefined;
+        }
+        return (_value, row) => this.templateText(field, row) ?? '';
+    };
+
+    /**
+     * Takes back what setSortValues() gave the datasource: what another grid on the same datasource gave
+     * it is used again
+     */
+    private clearSortValues() {
+        for (const [field, sortValue] of this.sortValues) {
+            this.dataSource.__unsetSortValue(field, sortValue);
+        }
+        this.sortValues.clear();
+    }
+
+    /**
+     * @internal
+     * The css classes the `cellClass` hook gives the cell, '' for the ones it leaves out
+     * @param row a row of the datasource, so one of its `EntityUnion<T>` rows
+     */
+    public __getCellClass(row: Entity, field: string): Required<CellClass> {
+        const classes = this.hooks.cellClass?.(row as EntityUnion<T>, field);
+        return { input: classes?.input ?? '', background: classes?.background ?? '' };
+    }
+
+    /**
+     * @internal
+     * The css classes the `rowClass` hook gives a data row, one name each: [] without the hook or when
+     * it gives none
+     * @param row a data row of the datasource
+     * @param rowIndex its index in the displayed rows
+     */
+    public __getRowClass(row: Entity, rowIndex: number): string[] {
+        const classes = this.hooks.rowClass?.(row as EntityUnion<T>, rowIndex);
+        return classes ? classes.split(/\s+/).filter((name) => name !== '') : [];
+    }
+
+    /**
+     * Subscribes the connected grid to the datasource events it has to follow.
+     * Unsubscribes first, so a second connectGrid does not subscribe twice.
+     */
+    private subscribeToDatasource() {
+        this.unsubscribeFromDatasource();
+        // the fields changed while no grid was connected (datasource.setFields())
+        this.syncFields();
+
+        // the handlers do nothing while applyState runs (suppressEvents), it rebuilds once when
+        // done, or when no grid is connected
+        const follow = <Type extends keyof DatasourceEvents>(
+            type: Type,
+            handler: (data: DatasourceEvents[Type], grid: Grid) => void
+        ) =>
+            this.dataSource.on(type, (data) => {
+                if (!this.suppressEvents && this.grid) {
+                    handler(data, this.grid);
+                }
+            });
+
+        // the displayed rows are others after these: the ranges of cells were made for the rows as they
+        // were, they are cleared first
+        this.datasourceSubscriptions = [
+            follow('collection-filtered', (data, grid) => {
+                this.clearRanges();
+                // '__internalUpdate, forced' comes before a collection-changed, that one rebuilds
+                if (data.info !== '__internalUpdate, forced') {
+                    grid.rebuild(false);
+                }
+            }),
+            // before the rows are filtered again by the new types (collection-filtered)
+            follow('fields-change', () => this.syncFields()),
+            follow('collection-sorted', (_data, grid) => {
+                this.clearRanges();
+                grid.rebuild();
+            }),
+            follow('collection-grouped', (_data, grid) => {
+                this.clearRanges();
+                grid.rebuild();
+            }),
+            follow('collection-expand', (_data, grid) => {
+                this.clearRanges();
+                grid.rebuild();
+            }),
+            follow('collection-collapse', (_data, grid) => {
+                this.clearRanges();
+                grid.rebuild();
+            }),
+            // an upsert keeps the row elements: the input the user types in stays, with its focus. One
+            // that only changed values sends rows-changed, not this: the ranges stay
+            follow('collection-changed', (data, grid) => {
+                this.clearRanges();
+                if (data.info === 'upsert') {
+                    this.updateAfterMerge(grid);
+                } else {
+                    grid.rebuild();
+                }
+            }),
+            follow('current-entity', (_data, grid) => this.updateRows(grid)),
+            follow('selection-change', (_data, grid) => this.updateRows(grid)),
+            follow('select', (data, grid) => this.scrollToRow(grid, data.row)),
+            // the errors are shown on the cells and the row selectors
+            follow('validate', (_data, grid) => this.updateRows(grid)),
+            // undo and redo changed values the cells show, the displayed rows stay as they are. Not
+            // on 'edit': the cells show the edit the user made, and rendering the cell being typed in
+            // would put the formatted value into its input
+            follow('history-changed', (data, grid) => {
+                if (data.info === 'undo' || data.info === 'redo') {
+                    this.updateRows(grid);
+                }
+            }),
+            // values set from code, by undo, by an upsert ...: the rows on screen, in the next frame. An
+            // open find bar finds its text again
+            follow('rows-changed', (data, grid) => {
+                requestRowsRender(grid, data.rows);
+                findDataChanged(grid);
+            })
+        ];
+
+        // the rows of a lookup came, went or changed: a cell of any row can show another label now
+        const lookupDatasources = new Set(Array.from(this.lookupColumns.values(), (column) => column.lookup.datasource));
+        for (const lookupDatasource of lookupDatasources) {
+            // once per run of code: rows-changed comes in a microtask. As refresh(), every row on screen
+            const refresh = () => {
+                if (this.grid) {
+                    triggerScrollEvent(this.grid);
+                }
+            };
+            this.datasourceSubscriptions.push(
+                lookupDatasource.on('collection-changed', refresh),
+                lookupDatasource.on('rows-changed', refresh)
+            );
+        }
+    }
+
+    /**
+     * Unsubscribes the grid from the datasource events, see subscribeToDatasource
+     */
+    private unsubscribeFromDatasource() {
+        for (const unsubscribe of this.datasourceSubscriptions) {
+            unsubscribe();
+        }
+        this.datasourceSubscriptions = [];
+    }
+
+    /**
+     * renders the rows again, for a new current entity or selection
+     */
+    private updateRows(grid: Grid) {
+        this.__dataSourceUpdated();
+        triggerScrollEvent(grid);
+    }
+
+    /**
+     * after an upsert added or removed rows, or moved them: the sizes, the footer's counts and every
+     * row on screen - not a rebuild, the row and column elements stay. They do not depend on the rows,
+     * and rebuilding them would take the input the user types in away, with its focus
+     */
+    private updateAfterMerge(grid: Grid) {
+        // connected with connectInterface, but not put in the dom yet: it is built when it is
+        if (!grid.domCreated) {
+            return;
+        }
+        this.__dataSourceUpdated();
+        updateMainElementSizes(grid);
+        rebuildFooter(grid);
+        triggerScrollEvent(grid);
+        // rows added, removed or moved: an open find bar finds its text again
+        findDataChanged(grid);
+    }
+
+    /**
+     * scrolls the row into view when it is outside of it, for the datasource select event
+     * @param row index in the displayed rows
+     */
+    private scrollToRow(grid: Grid, row: number) {
+        this.__dataSourceUpdated();
+
+        // connected with connectInterface, but not put in the dom yet - nothing to scroll
+        if (!grid.domCreated) {
+            return;
+        }
+
+        const scrollEl = getElementByClassName(grid.getElement(), 'simple-html-grid-body-scroller');
+        const scrollElHeight = scrollEl?.clientHeight;
+        const scrollElScrollTop = scrollEl?.scrollTop;
+
+        const newTop = this.__getScrollState().scrollTops[row];
+        // the row's own height: a row can be taller than the layout makes a row (fitRows)
+        const rowHeight = this.__getScrollState().scrollHeights[row] ?? this.__getGridConfig().__rowHeight;
+
+        if (newTop - rowHeight < scrollElScrollTop) {
+            scrollEl.scrollTop = Math.floor(newTop - scrollElHeight / 2);
+        }
+
+        if (newTop + rowHeight > scrollElHeight + scrollElScrollTop) {
+            scrollEl.scrollTop = Math.floor(newTop - scrollElHeight / 2);
+        }
+    }
+
+    /**
+     * @internal
+     * sends an event to the handlers subscribed with on(), used by the grid's cells and menus
+     */
+    public __callSubscribers<Type extends keyof GridEvents>(type: Type, data: GridEvents[Type]): void {
+        this.events.emit(type, data);
+    }
+}
+
+/**
+ * The options with every default filled in, for the grid to work with. A shallow copy: the options are
+ * only read. `columns` and `layout` are copied deep by the interface itself, the grid changes them
+ * (the user moves columns around, a `filter-operator-change` handler can change a column).
+ */
+function withDefaults(options: GridOptions): ParsedGridOptions {
+    const cellHeight = options.cellHeight ?? 22;
+    return {
+        ...options,
+        cellHeight,
+        multilineLineHeight: options.multilineLineHeight ?? MULTILINE_LINE_HEIGHT,
+        cellHeaderLabelHeight: options.cellHeaderLabelHeight ?? cellHeight,
+        panelHeight: options.panelHeight ?? 25,
+        footerHeight: options.footerHeight ?? 45,
+        selectSizeHeight: options.selectSizeHeight ?? 18,
+        readonly: options.readonly ?? true,
+        tooltips: options.tooltips ?? true,
+        multilineTooltipLines: options.multilineTooltipLines ?? TOOLTIP_LINES,
+        rowStatus: options.rowStatus ?? true,
+        editedMarker: options.editedMarker ?? true,
+        mergeHighlight: options.mergeHighlight ?? true,
+        copyHeaders: options.copyHeaders ?? true,
+        filterOperatorIndicator: options.filterOperatorIndicator ?? true,
+        settingsButton: options.settingsButton ?? true,
+        // shown when the grid has views to keep
+        viewsButton: options.viewsButton ?? (options.views !== undefined || options.viewsStorageKey !== undefined),
+        shortcutHelp: options.shortcutHelp ?? true,
+        placeholderRowCurrentEntityOnly: options.placeholderRowCurrentEntityOnly ?? true,
+        groupAggregates: options.groupAggregates ?? true,
+        totalsRow: options.totalsRow ?? false,
+        typeFormats: structuredClone(options.typeFormats ?? {}),
+        detailForm: options.detailForm ? copyDetailForm(options.detailForm) : noDetailForm(),
+        edit: editPermissionsOf(options.edit)
+    };
+}
+
+/**
+ * The keys of the hooks, which a config must not have
+ */
+const HOOK_KEYS = ['isReadonly', 'cellClass', 'rowClass', 'menus'] as const satisfies readonly (keyof GridHooks)[];
+
+/**
+ * The functions of a grid are hooks, given next to the config. TypeScript catches one in the config,
+ * plain JavaScript does not - the grid would ignore it without a word.
+ * @throws a `TypeError` naming the hook and where it goes
+ */
+function assertNoHooks(config: Partial<GridConfig>) {
+    for (const key of HOOK_KEYS) {
+        if (key in config) {
+            throw new TypeError(
+                `GridConfig: '${key}' is a hook, not part of the config: createGrid(host, { config, datasource, hooks: { ${key} } }), or gridInterface.updateHooks({ ${key} })`
+            );
+        }
+    }
+}
+
+/**
+ * v5 options that are gone or moved in v6, with where they went. TypeScript catches them, a config
+ * from plain JavaScript or one stored in a backend does not - the grid would drop the option without
+ * a word, and e.g. a column would silently stop being checked or translated.
+ */
+const V5_CONFIG_OPTIONS: Record<string, string> = {
+    attributes: "'columns', keyed by field",
+    columnsPinnedLeft: "'layout.left'",
+    columnsCenter: "'layout.center'",
+    columnsPinnedRight: "'layout.right'",
+    sorting: "'initialState.sorting'",
+    grouping: "'initialState.grouping'",
+    expandedGroups: "'initialState.expandedGroups'",
+    filter: "'initialState.filter'",
+    tooltipText: "'texts' (a tooltip id ends in '.tooltip')",
+    selectionMode: 'the datasource: new Datasource({ selectionMode })',
+    placeHolderRowCurrentEnityOnly: "'placeholderRowCurrentEntityOnly'",
+    placeHolderRowCurrentEntityOnly: "'placeholderRowCurrentEntityOnly'"
+};
+
+/**
+ * the same for the options of a column, `{field}` is filled in
+ */
+const V5_COLUMN_OPTIONS: Record<string, string> = {
+    mandatory: "the required rule of the datasource field: new Datasource({ fields: { {field}: { validate: ['required'] } } })",
+    type: "the datasource field: new Datasource({ fields: { {field}: 'date' } })",
+    attribute: "the key of 'columns'",
+    currentFilterValue: 'the state: setState({ headerFilters: { {field}: { value } } })',
+    placeHolderRow: "'placeholderRow'",
+    placeHolderFilter: "'placeholderFilter'"
+};
+
+/**
+ * @throws a `TypeError` naming the v5 option and where it went in v6
+ */
+function assertNoV5Options(config: Partial<GridConfig>) {
+    for (const [key, where] of Object.entries(V5_CONFIG_OPTIONS)) {
+        if (key in config) {
+            throw new TypeError(`GridConfig: '${key}' is gone in v6, it is ${where}`);
+        }
+    }
+    for (const [field, column] of Object.entries(config.columns ?? {})) {
+        if (!column || typeof column !== 'object') {
+            continue;
+        }
+        for (const [key, where] of Object.entries(V5_COLUMN_OPTIONS)) {
+            if (key in column) {
+                throw new TypeError(
+                    `GridConfig: columns.${field}.${key} is gone in v6, it is ${where.replaceAll('{field}', field)}`
+                );
+            }
+        }
+    }
+}
+
+/**
+ * `texts` is an object of strings, see assertTexts. Left out or undefined is no texts of its own
+ * @throws a `TypeError` naming the id whose text is not a string
+ */
+function assertConfigTexts(config: Partial<GridConfig>) {
+    if (config.texts !== undefined) {
+        assertTexts(config.texts, 'GridConfig.texts');
+    }
+}
+
+/**
+ * `multilineTooltipLines` is a whole number of 1 or more: TypeScript does not catch `0`, `-1` or `2.5`,
+ * nor a text from plain JavaScript or JSON - the tooltip would show no line, or all of them. Left out or
+ * undefined is the default
+ * @throws a `TypeError` naming the option and what it takes
+ */
+function assertTooltipLines(config: Partial<GridConfig>) {
+    const lines: unknown = config.multilineTooltipLines;
+    if (lines !== undefined && !(Number.isInteger(lines) && (lines as number) >= 1)) {
+        throw new TypeError(`GridConfig: multilineTooltipLines is ${JSON.stringify(lines)}, it is a whole number of 1 or more`);
+    }
+}
+
+/**
+ * `multilineLineHeight` is a whole number of px, 1 or more: TypeScript does not catch `0`, `-1` or
+ * `15.5`, nor a text from plain JavaScript or JSON - a row would be no taller than its first line, the
+ * lines of a cell on top of each other, or the rows at half px (blurred lines between them). Left out or
+ * undefined is the default
+ * @throws a `TypeError` naming the option and what it takes
+ */
+function assertLineHeight(config: Partial<GridConfig>) {
+    const height: unknown = config.multilineLineHeight;
+    if (height !== undefined && !(Number.isInteger(height) && (height as number) >= 1)) {
+        throw new TypeError(
+            `GridConfig: multilineLineHeight is ${JSON.stringify(height)}, it is a whole number of px, 1 or more`
+        );
+    }
+}
+
+/**
+ * `detailForm` is a {@link DetailForm}: TypeScript does not catch a config from plain JavaScript or
+ * JSON - `fields` that is no list would break the form. Left out or undefined is none
+ * @throws a `TypeError` that says what is wrong, see assertDetailForm
+ */
+function assertConfigDetailForm(config: Partial<GridConfig>) {
+    if (config.detailForm !== undefined) {
+        assertDetailForm(config.detailForm, 'GridConfig: detailForm');
+    }
+}
+
+/**
+ * `views` is a list of {@link GridView}s (see assertViews) and `viewsStorageKey` a text: TypeScript does
+ * not catch a config from plain JavaScript or JSON. Left out or undefined is none
+ * @throws a `TypeError` that says what is wrong
+ */
+function assertConfigViews(config: Partial<GridConfig>) {
+    if (config.views !== undefined) {
+        assertViews(config.views, 'GridConfig.views');
+    }
+    if (config.viewsStorageKey !== undefined && (typeof config.viewsStorageKey !== 'string' || config.viewsStorageKey === '')) {
+        throw new TypeError(
+            `GridConfig.viewsStorageKey is the key of localStorage, a text, got ${JSON.stringify(config.viewsStorageKey)}`
+        );
+    }
+}
+
+/**
+ * The name of a view: the text with its spaces at the ends taken off
+ * @param where the caller, for the message
+ * @throws a `TypeError` when it is no text, or only spaces
+ */
+function viewName(name: unknown, where: string): string {
+    if (typeof name !== 'string' || name.trim() === '') {
+        throw new TypeError(`${where}: the name of a view is a text, not empty - got ${JSON.stringify(name)}`);
+    }
+    return name.trim();
+}
+
+/**
+ * A column's `aggregate` is one of the functions or a list of them, and `sum`, `avg`, `min` and `max`
+ * are for a number field: TypeScript catches neither in a config from plain JavaScript or JSON, and the
+ * grid would show nothing (a text field has no numbers to sum) without a word
+ * @param where how the message names it: the config's columns, or the state given to setState()
+ * @throws a `TypeError` naming the column and what it takes
+ */
+function assertAggregates(config: Partial<GridConfig>, datasource: Datasource<any>, where = 'GridConfig: columns') {
+    for (const [field, column] of Object.entries(config.columns ?? {})) {
+        const value: unknown = column?.aggregate;
+        if (value === undefined) {
+            continue;
+        }
+        const name = where.endsWith('columns') ? `${where}.${field}.aggregate` : `${where}.${field}`;
+        const list: unknown[] = Array.isArray(value) ? value : [value];
+        for (const fn of list) {
+            if (!isAggregateFunction(fn)) {
+                throw new TypeError(
+                    `${name} is ${JSON.stringify(value)}, it is one of ${AGGREGATE_FUNCTIONS.map((fnName) => `'${fnName}'`).join(', ')} or a list of them`
+                );
+            }
+            const type = datasource.getField(field).type;
+            if (fn !== 'count' && type !== 'number') {
+                throw new TypeError(
+                    `${name} '${fn}' is for a number field, '${field}' is ${type}: new Datasource({ fields: { ${field}: 'number' } }), or 'count'`
+                );
+            }
+        }
+    }
+}
+
+/**
+ * A column's `format` fits its field, see assertColumnFormat: a date part for a date or datetime field,
+ * a number part for a number field, of the values they take, and none on a lookup column
+ * @throws a `TypeError` naming the column and what it takes
+ */
+function assertFormats(config: Partial<GridConfig>, datasource: Datasource<any>, fieldOf: RuleFieldOf) {
+    assertTypeFormats(config.typeFormats, 'GridConfig: typeFormats');
+    assertTypeFormats(config.initialState?.typeFormats, 'GridConfig: initialState.typeFormats');
+    for (const [field, column] of Object.entries(config.columns ?? {})) {
+        if (!column || typeof column !== 'object') {
+            continue;
+        }
+        const type = datasource.getField(field).type;
+        assertColumnFormat(
+            column.format,
+            field,
+            type,
+            column.editor !== undefined,
+            `GridConfig: columns.${field}.format`,
+            fieldOf
+        );
+    }
+}
+
+/**
+ * A column's `renderer` is the id of a registered cell renderer: a typo, or a renderer registered after
+ * the grid is made, would else show the default cell without a word. And not next to an `editor`: a
+ * lookup column draws its cell itself, its label and its button
+ * @throws a `TypeError` naming the column, see getCellRenderer
+ */
+function assertRenderers(config: Partial<GridConfig>) {
+    for (const [field, column] of Object.entries(config.columns ?? {})) {
+        if (column?.renderer === undefined) {
+            continue;
+        }
+        getCellRenderer(column.renderer, `GridConfig: columns.${field}.renderer`);
+        if (column.editor !== undefined) {
+            throw new TypeError(
+                `GridConfig: columns.${field} has a renderer and an editor: a lookup column draws its own cell (the label and its button), leave one of them out`
+            );
+        }
+    }
+}
+
+/**
+ * A column's `filterOperators`, `operator` and `filterCaseSensitive` fit its type (a lookup column's is
+ * text, it filters on its labels): TypeScript catches neither an operator of another type nor a text
+ * option on a number, and a config from plain JavaScript or JSON can have anything - the menus would
+ * offer what the column can not filter on, or nothing
+ * - `filterOperators`: a list of the type's operators (operatorsFor), with one the header filter's
+ *   input takes (isHeaderOperator)
+ * - `operator`: one of those the header filter takes, of `filterOperators` when it is given
+ * - `filterCaseSensitive`: a boolean, `true` for a text column only
+ * - `filterOnType`: a boolean
+ * - `datePresets`: see assertDatePresets
+ * @throws a `TypeError` naming the column, what it has and what it takes
+ */
+function assertFilterOptions(config: Partial<GridConfig>, datasource: Datasource<any>) {
+    for (const [field, column] of Object.entries(config.columns ?? {})) {
+        if (!column || typeof column !== 'object') {
+            continue;
+        }
+        const { operator, filterOperators, filterCaseSensitive } = column as Record<string, unknown>;
+        // a lookup column filters on its labels, as text (headerFilterType)
+        const type = column.editor !== undefined ? 'text' : datasource.getField(field).type;
+        const name = `GridConfig: columns.${field}`;
+        const list = (operators: string[]) => operators.map((op) => `'${op}'`).join(', ');
+        if (filterOperators !== undefined) {
+            const ofType = operatorsFor(type);
+            if (!Array.isArray(filterOperators) || filterOperators.length === 0) {
+                throw new TypeError(
+                    `${name}.filterOperators is a list of operators of a ${type} column (${list(ofType)}), got ${JSON.stringify(filterOperators)}`
+                );
+            }
+            for (const op of filterOperators) {
+                if (!ofType.some((ofTypeOp) => ofTypeOp === op)) {
+                    throw new TypeError(
+                        `${name}.filterOperators has ${JSON.stringify(op)}, not an operator of a ${type} column: ${list(ofType)}`
+                    );
                 }
             }
-            if (keep) {
-                keeping.push(callable);
+            // each of them is an operator now
+            if (!(filterOperators as FilterOperator[]).some(isHeaderOperator)) {
+                throw new TypeError(
+                    `${name}.filterOperators needs an operator for the header filter's input: one of ${list(ofType.filter(isHeaderOperator))}`
+                );
             }
-        });
-        this.listeners = new Set(keeping);
+        }
+        if (operator !== undefined) {
+            const offered = headerOperators(column, type, datasource.getField(field).clobType);
+            if (!offered.some((op) => op === operator)) {
+                throw new TypeError(
+                    `${name}.operator is ${JSON.stringify(operator)}, the header filter of this ${type} column takes ${list(offered)}`
+                );
+            }
+        }
+        if (filterCaseSensitive !== undefined && typeof filterCaseSensitive !== 'boolean') {
+            throw new TypeError(`${name}.filterCaseSensitive is true or false, got ${JSON.stringify(filterCaseSensitive)}`);
+        }
+        const { filterOnType } = column as Record<string, unknown>;
+        if (filterOnType !== undefined && typeof filterOnType !== 'boolean') {
+            throw new TypeError(`${name}.filterOnType is true or false, got ${JSON.stringify(filterOnType)}`);
+        }
+        if (filterCaseSensitive === true && type !== 'text') {
+            throw new TypeError(
+                `${name}.filterCaseSensitive is for a text column, '${field}' is ${type}: its filters have no case`
+            );
+        }
+        assertDatePresets(column, type, name);
     }
+}
+
+/**
+ * The validation rules of the columns (`ColumnConfig.validate`), resolved by field: an id that is not
+ * registered, wrong options throw (resolveRules). A calculated column has none, it is not edited
+ * @throws a `TypeError` naming the column
+ */
+function columnRulesOf(
+    columns: Record<string, ColumnConfig> | undefined,
+    datasource: Datasource<any>
+): Map<string, ResolvedRule[]> {
+    const rules = new Map<string, ResolvedRule[]>();
+    for (const [field, column] of Object.entries(columns ?? {})) {
+        const validate = column && typeof column === 'object' ? column.validate : undefined;
+        if (validate === undefined) {
+            continue;
+        }
+        const where = `GridConfig: columns.${field}`;
+        if (datasource.__getCalculatedField(field)) {
+            throw new TypeError(`${where}.validate is for a column that is edited, '${field}' is a calculated column`);
+        }
+        const resolved = resolveRules(validate, field, where);
+        if (resolved.length) {
+            rules.set(field, resolved);
+        }
+    }
+    return rules;
+}
+
+/**
+ * `ColumnConfig.datePresets`: `false`, or a list of quick dates (DATE_PRESETS) - for a date or datetime
+ * column. A list that is not empty needs `BETWEEN` among the column's operators: a quick date is one
+ * @param type the type the column filters as: a lookup column's is text
+ * @param name the column, for the message
+ */
+function assertDatePresets(column: ColumnConfig, type: FieldType, name: string) {
+    const { datePresets } = column as Record<string, unknown>;
+    if (datePresets === undefined || datePresets === false) {
+        return;
+    }
+    const ids = DATE_PRESETS.map((id) => `'${id}'`).join(', ');
+    if (!Array.isArray(datePresets) || !datePresets.every(isDatePreset)) {
+        throw new TypeError(`${name}.datePresets is false or a list of quick dates (${ids}), got ${JSON.stringify(datePresets)}`);
+    }
+    if (type !== 'date' && type !== 'datetime') {
+        throw new TypeError(`${name}.datePresets is for a date or datetime column, this one filters as ${type}`);
+    }
+    if (datePresets.length && !takesDatePresets(type, headerOperators(column, type, false))) {
+        throw new TypeError(`${name}.datePresets needs 'BETWEEN' in its filterOperators: a quick date is a range of days`);
+    }
+}
+
+/**
+ * The aggregates of the columns, for the state: the fields that have some, a list each
+ */
+function aggregatesOfColumns(columns: Record<string, ColumnConfig>): Record<string, AggregateFunction[]> {
+    const aggregates: Record<string, AggregateFunction[]> = {};
+    for (const [field, column] of Object.entries(columns)) {
+        const list = normalizeAggregates(column?.aggregate);
+        if (list.length) {
+            aggregates[field] = list;
+        }
+    }
+    return aggregates;
+}
+
+/**
+ * The display formats of the columns, for the state: the fields whose format shows something, a copy
+ * each
+ */
+function formatsOfColumns(columns: Record<string, ColumnConfig>): Record<string, ColumnFormat> {
+    const formats: Record<string, ColumnFormat> = {};
+    for (const [field, column] of Object.entries(columns)) {
+        if (hasDisplayFormat(column?.format)) {
+            formats[field] = structuredClone(column.format);
+        }
+    }
+    return formats;
+}
+
+/**
+ * The state's aggregates as columns, to check them as a config's
+ */
+function columnsWithAggregates(aggregates: Record<string, unknown>): Record<string, ColumnConfig> {
+    return Object.fromEntries(
+        Object.entries(aggregates).map(([field, fns]) => [field, { aggregate: fns as AggregateFunction[] }])
+    );
+}
+
+/**
+ * The fields of fitColumns() / resetColumnWidths(): left out, or an array of field names. A field
+ * name on its own, from plain JavaScript, would be read as a list of its letters
+ * @throws a `TypeError` naming the method
+ */
+function assertFields(method: string, fields: unknown) {
+    if (fields !== undefined && !(Array.isArray(fields) && fields.every((field) => typeof field === 'string'))) {
+        throw new TypeError(`${method}(): fields is an array of field names, not ${JSON.stringify(fields)}: ${method}(['name'])`);
+    }
+}
+
+/**
+ * The key fitRows() keeps a row's height by, as text: `7` and `'7'` are the same key, as the datasource
+ * compares them. undefined for what is no data row of a datasource: a group row, an object of your own
+ */
+function rowKey(row: Entity | null | undefined): string | undefined {
+    if (!row || typeof row !== 'object' || isGroupRow(row) || !row.__controller) {
+        return undefined;
+    }
+    return String(row.__KEY);
+}
+
+/**
+ * The internal sizes before `__parseConfig()` computes them
+ */
+const NO_SIZES = {
+    __rowHeight: 0,
+    __rowHeaderHeight: 0,
+    __columnCells: 0,
+    __leftWidth: 0,
+    __rightWidth: 0,
+    __scrollbarSize: 0,
+    __selectSizeWidth: 0,
+    __groupRowHeight: 0,
+    __totalsRowHeight: 0
+};
+
+/**
+ * A copy of a layout, with `left` and `right` always there. A list that is missing (plain js) is
+ * empty, and so is a column's `fields`.
+ */
+function copyLayout(layout: GridLayout | undefined): Required<GridLayout> {
+    const copyColumns = (columns: LayoutColumn[] | undefined): LayoutColumn[] =>
+        Array.isArray(columns) ? columns.map((column) => ({ fields: [...(column.fields ?? [])], width: column.width })) : [];
+    return {
+        left: copyColumns(layout?.left),
+        center: copyColumns(layout?.center),
+        right: copyColumns(layout?.right)
+    };
 }

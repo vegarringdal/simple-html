@@ -7,3 +7,6 @@ docs/
 dist/
 build/
 coverage
+dist_demo/
+# git worktrees of work in progress (Claude Code agents)
+.claude/worktrees/

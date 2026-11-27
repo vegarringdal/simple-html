@@ -1,0 +1,59 @@
+# Publishes a beta of any branch to GitHub Packages (npm.pkg.github.com): run it from the Actions tab,
+# "Run workflow", and pick the branch. The version is <package.json version>-beta.<branch>.<run>
+# (6.0.0-beta.v6-maybe.42) - a new one every run - with the npm tag beta-<branch>, so
+#   npm install @simple-html/grid@npm:@<owner>/simple-html-grid@beta-v6-maybe
+# gets the latest beta of that branch. `latest` stays the last release (publish.yml, from the default
+# branch only). See scripts/githubPackage.js.
+name: beta
+
+on:
+    workflow_dispatch:
+
+permissions:
+    contents: read
+    packages: write
+
+# one beta of a branch at a time
+concurrency:
+    group: beta-${{ github.ref_name }}
+    cancel-in-progress: false
+
+jobs:
+    beta:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+
+            - uses: actions/setup-node@v7
+              with:
+                  node-version: 24
+                  cache: npm
+                  registry-url: https://npm.pkg.github.com
+
+            # npm ci builds dist too (the prepare script)
+            - run: npm ci
+
+            # the checks of checks.yml: a beta is tried by others, it must pass them too
+            - run: npm run typecheck
+            - run: npx vitest run
+            - run: npx biome check . --diagnostic-level=error
+            - run: npm run check:typings
+            - run: npm run check:docs
+
+            - id: package
+              run: node scripts/githubPackage.js beta
+
+            - run: npm publish --tag "${{ steps.package.outputs.tag }}"
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: summary
+              env:
+                  NAME: ${{ steps.package.outputs.name }}
+                  VERSION: ${{ steps.package.outputs.version }}
+                  TAG: ${{ steps.package.outputs.tag }}
+              run: |
+                  echo "Published $NAME@$VERSION ($TAG)" >> "$GITHUB_STEP_SUMMARY"
+                  echo '```' >> "$GITHUB_STEP_SUMMARY"
+                  echo "npm install @simple-html/grid@npm:$NAME@$TAG" >> "$GITHUB_STEP_SUMMARY"
+                  echo '```' >> "$GITHUB_STEP_SUMMARY"

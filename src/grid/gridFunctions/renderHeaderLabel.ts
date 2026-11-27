@@ -1,10 +1,10 @@
 import { html, render, svg } from 'lit-html';
-import type { Entity } from '../../datasource/entity';
 import type { Grid } from '../grid';
+import { ariaColIndex, setAria } from './ariaGrid';
 import type { ColType } from './colType';
 import { contextmenuLabel } from './contextmenuLabel';
+import { getColumnLabel } from './getColumnLabel';
 import type { HTMLCellElement } from './HTMLCellElement';
-import { prettyPrintString } from './prettyPrintString';
 
 export function renderHeaderLabel(
     ctx: Grid,
@@ -14,8 +14,7 @@ export function renderHeaderLabel(
     celno: number,
     colType: ColType,
     cellType: string,
-    attribute: string,
-    rowData: Entity
+    attribute: string | null
 ) {
     /**
      * first get sort logic
@@ -26,7 +25,8 @@ export function renderHeaderLabel(
         .getLastSorting()
         .forEach((sort, i) => {
             if (sort.attribute === attribute) {
-                iconAsc = html`<i class="simple-html-grid-sort-number" data-sortno=${i + 1}>
+                // hidden from a screen reader, the column header's aria-sort says it
+                iconAsc = html`<i class="simple-html-grid-sort-number" data-sortno=${i + 1} aria-hidden="true">
                     <svg class="simple-html-grid-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
                         ${
                             sort.ascending
@@ -38,9 +38,24 @@ export function renderHeaderLabel(
             }
         });
 
+    // the cell element is the column header of the field, and says how the rows are sorted on it:
+    // only on the first sort, a grid has one sorted column for a screen reader (WAI-ARIA 1.2,
+    // aria-sort). Focusable (not in the tab order): Enter and Space sort, see rebuildHeaderColumns.
+    // A column with fewer fields than the tallest one has empty label cells, they are no header
+    const sorting = ctx.gridInterface.getDatasource().getLastSorting();
+    const first = sorting[0];
+    const config = ctx.gridInterface.__getGridConfig();
+    setAria(cell, 'role', attribute ? 'columnheader' : 'none');
+    setAria(cell, 'aria-colindex', attribute ? String(ariaColIndex(config, colType, column, celno)) : null);
+    setAria(
+        cell,
+        'aria-sort',
+        attribute && first?.attribute === attribute ? (first.ascending ? 'ascending' : 'descending') : null
+    );
+    setAria(cell, 'tabindex', attribute ? '-1' : null);
+
     if (attribute) {
-        const cellConfig = ctx.gridInterface.__getGridConfig().__attributes[attribute];
-        const label = cellConfig.label || prettyPrintString(cellConfig.attribute);
+        const label = getColumnLabel(ctx, attribute);
 
         render(
             html`<div
@@ -48,7 +63,7 @@ export function renderHeaderLabel(
                 data-attribute-header=${attribute}
                 @contextmenu=${(e: MouseEvent) => {
                     e.preventDefault();
-                    contextmenuLabel(ctx, e, cell, row, column, celno, colType, cellType, attribute, rowData);
+                    contextmenuLabel(ctx, e, cell, row, column, celno, colType, cellType, attribute);
                 }}
             >
                 ${label} ${iconAsc}

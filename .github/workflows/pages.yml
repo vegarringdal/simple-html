@@ -1,0 +1,100 @@
+# The docs site (samples/demo) on GitHub Pages, the gh-pages branch:
+# - master's at the root, https://<owner>.github.io/<repo>/ - after each push to master
+# - any other branch's under dev/<branch>/, by hand: the Actions tab, "pages", "Run workflow", pick the
+#   branch. dev/ lists them. Tick "remove" to take a branch's docs down; deleting the branch does too
+# Each build shows what it is built from in the sidebar: the version, the branch, the commit, and a
+# "dev" badge on a branch's docs. See scripts/pages.js.
+#
+# gh-pages holds the sites, not their history: one commit, force pushed, the other folders kept.
+# GitHub shows "Run workflow" for a workflow that is on the default branch: this file has to be on it.
+# GitHub Pages serves gh-pages once Settings -> Pages -> Source is that branch, / (root).
+name: pages
+
+on:
+    workflow_dispatch:
+        inputs:
+            remove:
+                description: take this branch's dev docs down instead
+                type: boolean
+                default: false
+    push:
+        branches: [master]
+    # a branch deleted: its dev docs go
+    delete:
+
+permissions:
+    contents: write
+
+jobs:
+    pages:
+        # a tag deleted is no branch
+        if: github.event_name != 'delete' || github.event.ref_type == 'branch'
+        runs-on: ubuntu-latest
+        # one at a time, none cancelled: each keeps the folders of the others
+        concurrency:
+            group: pages
+            cancel-in-progress: false
+        env:
+            BRANCH: ${{ github.event_name == 'delete' && github.event.ref || github.ref_name }}
+            DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+            REMOVE: ${{ github.event_name == 'delete' || inputs.remove == true }}
+            SHA: ${{ github.sha }}
+        steps:
+            - uses: actions/checkout@v7
+              with:
+                  ref: ${{ env.SHA }}
+
+            - uses: actions/setup-node@v7
+              if: env.REMOVE != 'true'
+              with:
+                  node-version: 24
+                  cache: npm
+
+            - run: npm ci
+              if: env.REMOVE != 'true'
+
+            # DOCS_DEV: the dev badge of a branch's docs
+            - name: build the site
+              if: env.REMOVE != 'true'
+              run: |
+                  if [ "$BRANCH" != "$DEFAULT_BRANCH" ]; then export DOCS_DEV=1; fi
+                  npm run build:demo
+
+            - uses: actions/checkout@v7
+              with:
+                  ref: gh-pages
+                  path: site
+
+            - id: place
+              run: |
+                  if [ "$REMOVE" = "true" ]; then
+                      node scripts/pages.js remove site "$BRANCH"
+                  else
+                      node scripts/pages.js place site dist_demo "$BRANCH" "$DEFAULT_BRANCH"
+                  fi
+
+            - name: push gh-pages
+              if: steps.place.outputs.changed == 'true'
+              working-directory: site
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  rm -rf .git
+                  git init -q -b gh-pages
+                  git add -A
+                  git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -q -m "docs: $BRANCH at $SHA"
+                  git push --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
+
+            - name: summary
+              if: steps.place.outputs.changed == 'true'
+              env:
+                  TARGET: ${{ steps.place.outputs.target }}
+                  OWNER: ${{ github.repository_owner }}
+                  REPO: ${{ github.event.repository.name }}
+              run: |
+                  url="https://${OWNER,,}.github.io/${REPO}/${TARGET:+$TARGET/}"
+                  if [ "$REMOVE" = "true" ]; then
+                      echo "Took down the docs of $BRANCH ($url)" >> "$GITHUB_STEP_SUMMARY"
+                  else
+                      echo "The docs of $BRANCH: $url" >> "$GITHUB_STEP_SUMMARY"
+                  fi

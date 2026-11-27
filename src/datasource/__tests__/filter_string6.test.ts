@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
+import { where } from '../filterExpression';
 
 // localCompare corrent ordder with norwegial letters: æ ø å
 const simpleArray = [
@@ -20,11 +21,7 @@ describe('string filter', () => {
     });
 
     it('string not equal to', () => {
-        ds.filter({
-            attribute: 'name',
-            operator: 'EQUAL',
-            value: 'Nil(wow)*'
-        });
+        ds.filter(where('name', 'EQUAL', 'Nil(wow)*'));
 
         expect(ds.getRows()).toEqual([{ name: 'Nil(wow)_sman', group: 'group1', age: 56, born: new Date(1995, 0, 1), index: 4 }]);
     });

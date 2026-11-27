@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 
 import { beforeAll, describe, expect, it } from 'vitest';
+import { and, where } from '../../datasource/filterExpression';
 import {
     footerText,
     mountGrid,
@@ -76,7 +77,7 @@ describe('grid rendering - reacting to data changes', () => {
     it('expect appended data to be rendered', async () => {
         const { element, datasource } = await mountGrid();
 
-        datasource.setData([{ firstname: 'first6', lastname: 'last6', age: 60 }], true);
+        datasource.setData([{ firstname: 'first6', lastname: 'last6', age: 60 }], { add: true });
 
         expect(renderedRows(element)).toHaveLength(6);
         expect(renderedColumn(element, 'firstname')).toContain('first6');
@@ -94,7 +95,7 @@ describe('grid rendering - reacting to data changes', () => {
         const { element, datasource, gridInterface } = await mountGrid();
 
         datasource.getRow(0).firstname = 'edited';
-        gridInterface.triggerScrollEvent();
+        gridInterface.refresh();
 
         expect(renderedColumn(element, 'firstname')[0]).toEqual('edited');
     });
@@ -136,7 +137,7 @@ describe('grid rendering - filtering', () => {
     it('expect a filter to reduce the rendered rows', async () => {
         const { element, datasource } = await mountGrid();
 
-        datasource.filter([{ attribute: 'firstname', operator: 'EQUAL', value: 'first2' }] as any);
+        datasource.filter(and(where('firstname', 'EQUAL', 'first2')));
 
         expect(renderedColumn(element, 'firstname')).toEqual(['first2']);
     });
@@ -144,7 +145,7 @@ describe('grid rendering - filtering', () => {
     it('expect the footer to show filtered count against the total', async () => {
         const { element, datasource } = await mountGrid();
 
-        datasource.filter([{ attribute: 'firstname', operator: 'EQUAL', value: 'first2' }] as any);
+        datasource.filter(and(where('firstname', 'EQUAL', 'first2')));
 
         expect(footerText(element)).toContain('1/5');
     });
@@ -152,7 +153,7 @@ describe('grid rendering - filtering', () => {
     it('expect clearing the filter to bring every row back', async () => {
         const { element, datasource } = await mountGrid();
 
-        datasource.filter([{ attribute: 'firstname', operator: 'EQUAL', value: 'first2' }] as any);
+        datasource.filter(and(where('firstname', 'EQUAL', 'first2')));
         datasource.setFilter(null);
         datasource.filter();
 
@@ -162,7 +163,7 @@ describe('grid rendering - filtering', () => {
     it('expect a filter matching nothing to render no rows', async () => {
         const { element, datasource } = await mountGrid();
 
-        datasource.filter([{ attribute: 'firstname', operator: 'EQUAL', value: 'nope' }] as any);
+        datasource.filter(and(where('firstname', 'EQUAL', 'nope')));
 
         expect(renderedRows(element)).toHaveLength(0);
         expect(footerText(element)).toContain('0/5');
@@ -171,7 +172,7 @@ describe('grid rendering - filtering', () => {
     it('expect a wildcard filter to match by prefix', async () => {
         const { element, datasource } = await mountGrid();
 
-        datasource.filter([{ attribute: 'lastname', operator: 'EQUAL', value: 'last*' }] as any);
+        datasource.filter(and(where('lastname', 'EQUAL', 'last*')));
 
         expect(renderedRows(element)).toHaveLength(5);
     });
@@ -241,11 +242,11 @@ describe('grid rendering - selection', () => {
         });
     });
 
-    it('expect deSelectAll to clear the marks', async () => {
+    it('expect deselectAll to clear the marks', async () => {
         const { element, datasource } = await mountGrid();
 
         datasource.selectAll();
-        datasource.deSelectAll(true);
+        datasource.deselectAll({ notify: true });
 
         renderedRows(element).forEach((row) => {
             expect(row.classes).not.toContain('selected-row');
@@ -271,7 +272,7 @@ describe('grid rendering - config', () => {
 
     it('expect only configured columns to be rendered', async () => {
         const config = simpleConfig();
-        config.columnsCenter = [{ rows: ['firstname'], width: 100 }];
+        config.layout = { center: [{ fields: ['firstname'], width: 100 }] };
         const { element } = await mountGrid(config);
 
         expect(Object.keys(renderedRows(element)[0].values)).toEqual(['firstname']);

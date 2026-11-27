@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
+import { where } from '../filterExpression';
 
 // localCompare corrent ordder with norwegial letters: æ ø å
 const simpleArray = [
@@ -25,11 +26,7 @@ describe('string filter', () => {
     });
 
     it('string with EQUAL - wildcard multiline', () => {
-        ds.filter({
-            attribute: 'name',
-            operator: 'EQUAL',
-            value: '*som*'
-        });
+        ds.filter(where('name', 'EQUAL', '*som*'));
 
         expect(ds.getRows()).toEqual([
             {
@@ -47,11 +44,7 @@ describe('string filter', () => {
     });
 
     it('string with NOT_EQUAL_TO - wildcard multiline', () => {
-        ds.filter({
-            attribute: 'name',
-            operator: 'NOT_EQUAL_TO',
-            value: '*som*'
-        });
+        ds.filter(where('name', 'NOT_EQUAL_TO', '*som*'));
 
         expect(ds.getRows()).toEqual([
             { name: 'abcd', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
@@ -62,11 +55,7 @@ describe('string filter', () => {
     });
 
     it('string with NOT_EQUAL_TO - wildcard multiline', () => {
-        ds.filter({
-            attribute: 'name',
-            operator: 'NOT_EQUAL_TO',
-            value: '*ef*'
-        });
+        ds.filter(where('name', 'NOT_EQUAL_TO', '*ef*'));
 
         expect(ds.getRows()).toEqual([
             { name: 'abcd', group: 'group2', age: 34, born: new Date(1985, 0, 1), index: 2 },
@@ -75,11 +64,7 @@ describe('string filter', () => {
     });
 
     it('string with EQUAL - wildcard multiline', () => {
-        ds.filter({
-            attribute: 'name',
-            operator: 'EQUAL',
-            value: '*ef*'
-        });
+        ds.filter(where('name', 'EQUAL', '*ef*'));
 
         expect(ds.getRows()).toEqual([
             {

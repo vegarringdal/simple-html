@@ -1,0 +1,1070 @@
+# Editing
+
+The grid is readonly by default. With editing on, the user changes values in the cells, and the
+datasource tracks every change: which rows are new, edited or marked for deletion, and what changed.
+The rules of the fields validate the edits, `validate()` checks every row before a save.
+`getChanges()` collects the changes for a server, and `acceptChanges()` takes them in once they are
+saved.
+
+## Editing on
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    readonly: false, // the default is true
+    columns: {
+        id: { readonly: true } // this column stays readonly
+    },
+    layout: {
+        center: [
+            { fields: ['id'], width: 60 },
+            { fields: ['name'], width: 150 },
+            { fields: ['born'], width: 110 }
+        ]
+    }
+};
+```
+
+Or turn it on and off while the grid is shown: `gridInterface.updateConfig({ readonly: false })`.
+
+In an editable grid, a cell is readonly when the `isReadonly(row, field)` hook returns `true`,
+and editable when it returns `false`. When it returns nothing (or there is none), the column's
+`readonly` option decides. See [Grid config](02-grid-config.md#readonly-and-css-classes-from-the-row)
+for `isReadonly`. Readonly cells of an editable grid are shown with stripes. What the user may do at
+all - add rows, change values, delete rows - is `edit`, see [Edit permissions](#edit-permissions-add-change-delete).
+
+```sample editing
+```
+
+## Edit permissions: add, change, delete
+
+`readonly: false` lets the user edit, `edit` says what of it they may do: add rows, change values,
+delete rows - any of them. Each is `true` when it is left out:
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    readonly: false,
+    // new rows only: the user adds rows and fills them in, the rows that are there stay as they are
+    edit: { add: true, change: false, delete: false },
+    layout: { center: [{ fields: ['name'], width: 150 }] }
+};
+```
+
+```ts
+declare const user: { isAdmin: boolean };
+
+// after a login check: an admin may delete too
+gridInterface.updateConfig({ edit: { add: true, change: false, delete: user.isAdmin } });
+```
+
+- **A permission is yours, not the user's**: it is not part of the state (`getState()` has none), and
+  no menu or dialog changes it. A column's `readonly` is different: it is a default the user can turn
+  off in the grid config dialog (*Read only*).
+- **`updateConfig({ edit })` replaces all three**: one left out is allowed again. The cells follow at
+  once; what is open - a menu, the date picker, a lookup's list, the editor of a multiline cell - is
+  closed, what was typed in the editor is not saved.
+- **A `TypeError`** for anything but an object of `add`, `change` and `delete`, each `true` or `false`:
+  a misspelt `chnage: false` would leave the user allowed without a word.
+
+| permission | `false` stops | still allowed |
+| --- | --- | --- |
+| `change` | changing a value of a row that was there: typing, the editor of a multiline cell, the date picker, a lookup's list or grid, a checkbox, the editor of a custom cell (its renderer is told `readonly`), paste (Ctrl+V, *Paste ›*), clear (Delete on ranges, *Clear ›*), fill down (Ctrl+D, the fill handle, `fillDown()`), the [detail form](02-grid-config.md#the-detail-form). The cells look as in a readonly grid: no stripes | **a new row** (`__rowState` `'N'`) is filled in as any row while `add` is allowed - who may add a row may fill it in. Once `acceptChanges()` took it in it is a row that was there, locked like the rest |
+| `delete` | marking a row that was there for deletion: *Delete › Row* and *Rows (selected rows)* are greyed out on them - the menu keeps its shape - and Delete on a row number leaves them | taking out **a new row**: it is not on the server, nothing is deleted - it is the undo of an add. *Undo (selected rows)* takes a mark off |
+| `add` | nothing in the grid: the grid has no add of its own. Your add button follows it (below), and with `change: false` too the new rows your code adds can not be filled in | |
+
+With `change` and `add` both `false` no value can change at all: the row menu has no *Paste ›* and
+*Clear ›*, there is no fill handle, and Ctrl+V, Delete and Ctrl+D are the browser's - as in a
+readonly grid. *Delete ›* stays in an editable grid: a new row can always be taken out.
+
+**What every permission leaves**: undo and redo (Ctrl+Z, Ctrl+Y, *Undo / Redo ›*), the reverts
+(*Undo cell edit*, *Undo row edits*, a click on the marker of an edited cell) and taking a deletion
+mark off. They put back what was, they make nothing new - and the history has only what the user was
+allowed to do, and the edits of your code. A permission taken away while the grid is shown leaves the
+history as it is: call `datasource.clearHistory()` with it when a redo must not bring back what was done
+before.
+
+**Your code is not stopped**: the permissions are about the grid's own ways of editing - the user's
+typing, the menus, the keys. A value set from code, `addNewEmpty()`, `markForDeletion()`, `undo()` go
+through as before, so an "Add row" or "Delete" button of your own follows the permissions as you make it.
+`gridInterface.fillDown()` goes through the grid, it follows them:
+
+```ts
+declare const addButton: HTMLButtonElement;
+declare const canAdd: boolean;
+
+gridInterface.updateConfig({ edit: { add: canAdd } });
+addButton.hidden = !canAdd;
+addButton.onclick = () => datasource.addNewEmpty();
+```
+
+The `isReadonly` hook, a column's `readonly` and `allowPasteClearOnly` still make cells readonly where
+a permission allows the change. The hook can not make a cell of a locked row editable.
+
+```sample edit-permissions
+```
+
+## How the user edits
+
+- **Text, number and date cells** are inputs. What the user types is parsed with the field's
+  formatter (`parse`) and stored in the row as they type: a number field stores a number, a date
+  field a `Date`. See [Formatting](08-formatting.md).
+- **Emptying a cell** stores what the formatter's `parse('')` gives: `''` for text, `null` for a
+  date, and **`0` for a number** - the number formatters parse text that is no number as 0. The row
+  menu's clear (below) stores `null` in any field. For an emptied number cell to store `null`, give
+  the field a formatter of your own, see [Formatting](08-formatting.md#the-defaults-per-type).
+- **Enter** in an editable cell moves to the cell below - in a cell of several lines it opens the
+  editor, see [Multiline text](#multiline-text).
+- **Date cells** also open a date picker on click, when they are editable: "Use" stores the picked
+  date and time, "Clear" stores `null`. The picker needs `@simple-html/grid/date.css`.
+- **Boolean cells** are checkboxes.
+- **Paste and clear** are in the row menu (right click a cell): paste puts the clipboard text into
+  that column of every selected row, clear sets it to `null`. Rows where the cell is readonly are
+  skipped. The grid sends a `paste` event per row and a `clear` event, see [Events](09-events.md).
+- **Lookup columns** (`editor`): the value is picked from a list - a select, or a dropdown grid - of
+  a lookup registered with `registerLookup()`. The cell shows the label of the value (`Norway` for
+  `NO`) and is not typed in: a character, the button at its right, Alt+ArrowDown or F4 open the list.
+  A pick, with the other fields its `set` copies, is one step of the undo history. See
+  [Lookups](20-lookups.md).
+- **Custom cells** (`renderer`): a renderer of your own draws the cell. Where it only draws, Enter, F2,
+  typing or a double click open the grid's editor of one line over the cell (Enter saves), and a click
+  on a date cell the date picker; a renderer can also edit the value itself, a select say. See
+  [Custom cells](21-custom-cells.md).
+
+A column with `allowPasteClearOnly: true` can not be typed in, only pasted into and cleared. Use it
+for a field the user sets with a picker of your own, such as a [dropdown grid](10-menus.md#a-dropdown-grid-as-a-block).
+
+The grid sends no event with the edit itself. Read the changes when you need them, with
+`getChanges()` or the row's `__rowState` (below). `history-changed` says that an edit was recorded
+for undo, see [Undo and redo](#undo-and-redo).
+
+## Multiline text
+
+Notes, an address, a comment: a text of several lines. The input of a cell can not hold a line break -
+the browser strips them from the value of `<input type="text">` - so a cell of several lines shows its
+first line, and is edited in an editor over the cell, a bigger textarea.
+
+```ts
+import { Datasource } from '@simple-html/grid';
+
+const datasource = new Datasource({
+    fields: {
+        notes: { label: 'Notes', multiline: true }
+    }
+});
+```
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    layout: { center: [{ fields: ['notes'], width: 220 }] },
+    multilineTooltipLines: 10 // the tooltip shows 10 lines, then how many more there are
+};
+
+// every row as high as its notes need, after the data is loaded
+gridInterface.fitRows();
+```
+
+- **The option**: `multiline: true` in the field's `FieldConfig`, for a text field only - on another
+  type it throws when the datasource is made. `getField('notes').multiline` says it.
+- **Automatic**: a text cell whose value has a line break is multiline for that value, without the
+  option. CR LF, CR and LF are line breaks. The option is for a field whose values have no line break
+  yet: its cells are edited in the editor from the start.
+- **The cell** shows the first line, readonly (no typing in it), with a marker at its right when there
+  are more lines. The rows keep their height, unless they are made taller (below).
+- **The tooltip** of the cell shows the first 5 lines of the text, then how many more there are -
+  `… 7 more lines` (the text `cell.multiline.moreLines`), one line more is shown instead. The empty
+  lines count, the ones at the end are left out; a line longer than 100 characters is cut with `…`.
+  The validation errors come first when the cell has any, an empty line between them. More or fewer
+  lines: `multilineTooltipLines` in the config, a whole number of 1 or more (anything else throws a
+  `TypeError`). The tooltip of the [edited marker](#showing-the-row-state) shows the original value
+  the same way.
+- **Taller rows**: `gridInterface.fitRows()`, or "Fit row height" / "Fit all rows" in the row menu,
+  makes a row as many lines high as its multiline cells have (at most 20); `resetRowHeights()` and
+  "Reset row height" take it back. In a taller row the cell shows its lines under the first one, as
+  many as there is room for, and the marker only when some are not shown. The lines read as a
+  paragraph: the first is the cell's input, `cellHeight` high, each line after it
+  `multilineLineHeight` (15px, about 1.35 times the font) - so a note of three lines is a row of
+  52px. The editor has the same line height. See
+  [Column widths and row heights](02-grid-config.md#column-widths-and-row-heights).
+- **Opening the editor**: Enter, F2, a double click - or typing a character, in a cell that can be
+  edited: the editor opens with the text and the character at its end (nothing is replaced). A click
+  only focuses the cell; Tab, Alt+arrows and the row menu (Shift+F10) work as in any cell.
+- **In the editor** the textarea has the text and the focus, the caret at the end. It is as wide as
+  the cell, at least 300px, six lines high, and can be resized. It is put over the cell, its top left
+  corner on the cell's, and kept in the window.
+
+| in the editor | does |
+| --- | --- |
+| Enter | a new line |
+| Ctrl+Enter, Cmd+Enter | saves and closes, the focus back in the cell |
+| Esc | closes without saving, the focus back in the cell |
+| Tab / Shift+Tab | saves and closes, and goes on to the next / previous cell |
+| a click outside it | saves and closes, the focus goes where the click put it |
+| the ✕ at the right of the hint under it | saves and closes, the focus back in the cell - for a mouse and a finger, which has no Ctrl+Enter. In a readonly editor it closes |
+| scrolling the grid (the wheel, a swipe, the scrollbars) | saves and closes |
+
+Opening a menu or another editor saves and closes it too - one is open at a time - and so does
+`destroy()`, or the grid leaving the page.
+
+- **Saving** writes the row once, and only when the text changed: one step of the [undo
+  history](#undo-and-redo) (Ctrl+Z in the cell takes it back), validated as an edit, and the cell gets
+  the edited marker. The line breaks of a saved text are LF (`\n`): the textarea gives them so (the
+  HTML spec normalises the value of a textarea to LF), a text from a server with CR LF keeps them
+  until the user changes it. The value goes through the field's formatter (`parse`), as what is typed
+  in a cell.
+- **Readonly**: in a readonly grid, a readonly column or cell (`readonly`, the `isReadonly` hook) and
+  a column with `allowPasteClearOnly`, Enter, F2 and a double click open the editor read-only, to read
+  the whole text: Esc (or Ctrl+Enter, Tab, a click outside) closes it. Typing opens nothing.
+- **Paste** from the row menu writes the clipboard text as it is, line breaks and all.
+- The texts of the editor are `cell.multiline.*`, see [Texts](12-texts.md#multiline-cells), the
+  colour of the marker `--simple-html-grid-multiline-color`, see [Theming](13-theming.md#multiline-text).
+
+```sample multiline
+```
+
+## Edits from code
+
+Set the value on a row you got from the datasource. The grid shows it on its own, in the next
+animation frame (see [Live data](16-live-data.md)) - no `refresh()`:
+
+```ts
+const row = datasource.getDataRows()[0];
+row.name = 'Anna';
+```
+
+The datasource wraps your objects in proxies that track the edits. A value set on the object you
+gave to `setData()` reaches the row, but it is not tracked as an edit. Always use the rows the
+datasource hands out: `getDataRows()`, `getSelectedRows()`, `currentEntity`, the `rowData` of an
+event.
+
+## New rows
+
+```ts
+datasource.addNewEmpty(); // an empty row at the end, selected, and the grid scrolls to it
+datasource.addNewEmpty({ company: 'NEW COMPANY' }); // with values
+datasource.addNewEmpty({ company: 'NEW COMPANY' }, { scrollTo: false }); // selection unchanged
+```
+
+A new row is listed in `getChanges().newEntities`. When the datasource has a `key`, the key field
+of the new row gets a generated negative number. When grouped, the row goes into its group and the
+group is expanded.
+
+Many rows at once: `addNewRows()` - the rows are sorted and grouped once, not once per row. The grid's
+[import](24-import.md) adds its rows with it.
+
+```ts
+const added = datasource.addNewRows([{ company: 'NEW 1' }, { company: 'NEW 2' }]); // the first one selected
+datasource.validate(added); // new rows are not validated until they are edited
+```
+
+## Deleting rows
+
+Deleting a row marks it, so the delete can be undone:
+
+```ts
+datasource.markForDeletion(datasource.getSelectedRows()); // a row or a list of rows
+datasource.unmarkForDeletion(datasource.getSelectedRows()); // undo
+datasource.markAllForDeletion(); // every row
+datasource.unmarkAllForDeletion(); // undo for every row
+```
+
+A row marked for deletion stays in the grid, with the state `'D'` - struck through, with a trash can
+on its row number, see [Showing the row state](#showing-the-row-state) - until the changes are saved.
+It is listed in `getChanges().deletedEntities`. Unmarked, it is as it was before: its edits are kept.
+
+A new row is marked too. While it is marked it is in none of the lists of `getChanges()`: it was
+never saved, there is nothing to send. Unmarked, it is a new row again.
+
+**From the keyboard**: a click on a row number selects the row and puts the focus on the number, as a
+spreadsheet's row header (Shift+click and Ctrl+click select more). There **Delete** or **Backspace**
+marks the selected rows for deletion - the number's row alone when it is not selected - and Ctrl+Z on
+the number takes it back. In a cell Delete stays the input's own key (or empties a range of cells).
+A row the `isReadonly` hook locks is left out, as below, and with `edit: { delete: false }` every row
+but a new one, see [Edit permissions](#edit-permissions-add-change-delete). Only in an editable grid.
+
+In an editable grid the row menu (right click a cell) has a **Delete ›** submenu: *Rows (selected
+rows)* marks the selected rows, *Undo (selected rows)* takes the mark off - shown when a selected row
+is marked. Ctrl+Z takes a delete back too, see [Undo and redo](#undo-and-redo). A row the `isReadonly` hook returns `true` for in every column is locked: the menu does not
+mark it. The columns' `readonly` option does not lock a row, so a grid of readonly columns can still
+delete rows - `edit: { delete: false }` is what stops deleting. The entries are `row.delete`, `row.delete.rows` and `row.delete.undo`, change or hide
+them with the [menus hook](10-menus.md).
+
+- `datasource.acceptChanges()` removes the marked rows once the deletes are saved, see
+  [Saving](#saving). `clearMarkedForDeletion()` removes them too, and leaves the other changes.
+- `datasource.removeData(rows)` and `removeAllData()` remove rows for good, without marking them:
+  no undo, and not listed in `getChanges()`. Use them for rows that never came from a server.
+
+## Change tracking
+
+Every row has a state, `row.__rowState`:
+
+| state | the row |
+| --- | --- |
+| `'N'` | is new: `addNewEmpty()` |
+| `'M'` | has a field whose value differs from the original |
+| `'D'` | is marked for deletion |
+| `undefined` | is as it was set |
+
+`getChanges()` returns copies of the changed rows, what to send to a server:
+
+```ts
+import { Datasource } from '@simple-html/grid';
+
+interface Person {
+    id: number;
+    name: string;
+    born: Date | null;
+}
+
+const people = new Datasource<Person>({ key: 'id', fields: { born: 'date' } });
+people.setData([
+    { id: 1, name: 'Ann', born: new Date(1990, 4, 17) },
+    { id: 2, name: 'Bob', born: new Date(1985, 0, 2) }
+]);
+
+const [ann, bob] = people.getDataRows();
+ann.name = 'Anna';
+bob.born = new Date(1985, 0, 2, 13, 30); // the same day: no edit on a date field
+people.addNewEmpty({ name: 'Cid' }, { scrollTo: false });
+
+const { newEntities, modifiedEntities, deletedEntities } = people.getChanges();
+// newEntities:      [{ name: 'Cid', id: -1 }] - a generated key, the number varies
+// modifiedEntities: [{ id: 1, name: 'Anna' }] - the key and the changed fields
+// deletedEntities:  []
+```
+
+- `newEntities` and `deletedEntities` are copies of the whole rows. A row in `modifiedEntities` has
+  the key (under the key field's name, or `__KEY` without a key) and only the fields that changed.
+- The copies are shallow and keep the types: a `Date` stays a `Date`. `JSON.stringify()` turns it
+  into its ISO text.
+- A field set back to its original value is not a change any more. Setting an empty field
+  (`null` or `undefined`) to `''` is not a change either.
+- A `date` field compares on the day: a date typed into a cell gets the current time of day, and
+  typing the same day again is no change. A `datetime` field, and a field not listed in `fields`,
+  compares to the second: a change of the time only is a change.
+
+After a save, `acceptChanges()` makes the changes the new starting point, see [Saving](#saving).
+Before it, `validate()` checks the rows, see [Validation](#validation).
+
+### One kind of change, the rows, the fields
+
+`getChanges()`, `hasChanges()` and `getChangedRows()` take the kinds of change they look at,
+`{ new?, modified?, deleted? }` (`ChangeKinds`):
+
+| kinds | |
+| --- | --- |
+| left out, `null`, `{}` | all of them |
+| `{ deleted: true }` | only those set to `true`: the rows marked for deletion |
+| `{ new: true, modified: true }` | the new and edited rows |
+| `{ deleted: false }` | only kinds `false`: all but those - the new and edited rows too |
+
+```ts
+import { Datasource } from '@simple-html/grid';
+
+interface Person {
+    id: number;
+    name: string;
+    city: string;
+}
+declare const datasource: Datasource<Person>;
+
+// the lists not asked for are []: one request for the deletions, one for the rest
+const { deletedEntities } = datasource.getChanges({ deleted: true });
+const { newEntities, modifiedEntities } = datasource.getChanges({ deleted: false });
+
+// a confirm only when something is deleted
+const confirmFirst = datasource.hasChanges({ deleted: true });
+
+// the rows themselves, not copies: validate what a save sends
+datasource.validate(datasource.getChangedRows({ deleted: false }));
+
+// a row's edited fields and what they were
+const [ann] = datasource.getDataRows();
+datasource.getChangedFields(ann); // ['name', 'city'] - in the order they were edited
+datasource.getOriginalValue(ann, 'name'); // 'Ann' - the value now when the field is not edited
+```
+
+- `getChangedRows()` lists the rows `getChanges()` would - a new row marked for deletion is in none, a
+  row edited back to its original values neither - in the order of the data.
+- `getChangedFields(row)` is `[]` for a new row (it has no original) and a row not edited;
+  `getOriginalValue(row, field)` is undefined for a new row. After `acceptChanges()` the values now are
+  the originals.
+- Kinds that are not `{ new?, modified?, deleted? }` of booleans (or `null`) throw a `TypeError`.
+
+### Throwing changes away
+
+```ts
+datasource.resetData(); // every edit undone, marked rows unmarked, new rows removed
+datasource.resetDataSelectionOnly(); // the same, for the selected rows only
+```
+
+To undo a delete and keep the edits, use `unmarkForDeletion(rows)`. To revert one cell, or rows
+without removing the new ones, see [Reverting a cell or a row](#reverting-a-cell-or-a-row).
+`resetData()` clears the undo history; `resetDataSelectionOnly()` is a step of it, see
+[Undo and redo](#undo-and-redo).
+
+### Showing the row state
+
+The grid shows the state of each row on its row number, and marks the edited cells. Both are on by
+default:
+
+| the row | its row number | its cells |
+| --- | --- | --- |
+| new | a plus | |
+| edited | a pencil | an edited cell: a small triangle in its top left corner |
+| marked for deletion | a trash can, the number struck through | the text struck through |
+| with an error | an exclamation mark, and a red bar | a cell with an error: a red border and a tint |
+| in conflict with the server | two arrows | a field in conflict: a larger triangle in the conflict colour |
+
+- **One icon**: a row marked for deletion shows the trash can (it is not saved, its errors do not
+  stop a save), else a row with an error the exclamation mark, else a row in conflict the arrows,
+  else the plus or the pencil.
+- **A conflict** is a value the server changed while the user had it edited, see
+  [Live data](16-live-data.md#how-the-grid-shows-them): the marker's tooltip has the server's value, a
+  click takes it.
+- **The tooltip of the row number** has the state, the conflicts, then the errors, a line each: `Edited` and
+  `Age: Must be at least 18`. A screen reader reads them with the row number, see
+  [Accessibility](14-accessibility.md#what-a-screen-reader-gets).
+- **An edited cell** is a cell whose value differs from its original value, as `getChanges()` compares
+  them: a cell edited back is not edited. A new row has no markers, all of it is new.
+- **The marker's tooltip** has the original value, shown with the field's formatter (a boolean as
+  `true` / `false`: give the field a formatter of your own for other words, see
+  [Formatting](08-formatting.md)), after the cell's errors. A blank value is `(blank)`.
+- **A click on the marker** puts the original value back - the row menu's *Undo cell edit*, see
+  [Reverting a cell or a row](#reverting-a-cell-or-a-row). In an editable grid only: a readonly grid
+  shows the markers of the rows it is given, a click does nothing. The marker is not a stop of Tab
+  and a screen reader does not see it; Ctrl+Z takes an edit back from the keyboard.
+- **They follow the edits**: as the user types, after undo and redo, a paste, a delete, and an edit
+  from code.
+
+The [editing sample](#sample/editing) shows them. Both can be turned off:
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    readonly: false,
+    rowStatus: false, // the plain row number: no icon, no state in its tooltip
+    editedMarker: false, // no markers
+    layout: { center: [{ fields: ['name'], width: 150 }] }
+};
+```
+
+- `rowStatus` makes the row numbers 14px wider, for the icon. `rowStatus: false` gives them the width
+  they had.
+- **The classes are there either way**, for a look of your own: `row-is-new`, `row-is-modified` and
+  `row-is-deleted` on the element around the row number, `simple-html-row-error` on the row number of
+  a row with an error, `simple-html-cell-edited` on an edited cell. With `rowStatus` the cells of a row
+  marked for deletion get `simple-html-cell-deleted`.
+- **The colours are variables of the theme**: `--simple-html-grid-new-color`,
+  `--simple-html-grid-edited-color` (the pencil and the markers), `--simple-html-grid-deleted-color`
+  and `--simple-html-grid-error-color`, each with a light and a dark colour - see
+  [Theming](13-theming.md#the-row-state-and-errors).
+
+A look of your own, with `rowStatus: false`:
+
+```css
+.row-is-modified .simple-html-selector-text {
+    color: light-dark(#4f46e5, #a5b4fc);
+}
+.row-is-deleted .simple-html-selector-text {
+    text-decoration: line-through;
+}
+```
+
+Or show `__rowState` in a column of its own: put `'__rowState'` in the layout.
+
+### Changed rows only
+
+`filterChangedOnly(true)` shows only the changed rows - new, edited and marked for deletion - of the
+rows the filter lets through: the changes made before a save, to check them.
+
+```ts
+import { where } from '@simple-html/grid';
+
+datasource.filter(where('country', 'EQUAL', 'Norway'));
+datasource.filterChangedOnly(true); // the changed rows in Norway
+datasource.isChangedOnly(); // true
+datasource.filterChangedOnly(false); // every row in Norway
+```
+
+- **In the grid**: the row menu's *View › Changed rows only* turns it on and off (a ✓ while it is
+  on), and the footer shows a chip *Changed rows only* in front of the filter's. The footer's *Clear*
+  and the filter menu's *Clear All Filters* turn it off with the filter.
+- **It is not part of the filter**, it is ANDed with it: `getFilter()`, `getFilterString()`, the filter
+  editor and the grid's state (`GridState`) do not have it, and a header filter, the filter editor
+  and `filter()` leave it on. It is not saved with the state: the changes are not either.
+- **It is applied when the rows are filtered**, as the filter is: `filter()`, a header filter,
+  `setData()`, `reloadDatasource()`, `markForDeletion()`, `acceptChanges()` ... An edit, undo and a
+  revert do not filter the rows: **a row edited back to its original values stays shown until the
+  rows are filtered next**, it does not disappear while the user types in it. A row changed from code
+  while it is not shown comes in on the next filter run too.
+- After `setData()` with the rows from the server, or `acceptChanges()`, no row is changed: nothing
+  is shown until it is turned off. The footer's chip says why.
+- It is the datasource's, as the filter is: other datasources on the same container are not filtered.
+- The filter menu's value list, with *Only values in filtered rows*, lists the values of the
+  changed rows.
+
+For one state only, filter on `__rowState`: `where('__rowState', 'IN', ['N'])` is the new rows. That
+is a condition of the filter, in `getFilter()` and the state.
+
+## Undo and redo
+
+The datasource keeps a history of the edits: `undo()` takes the last step back, `redo()` does it
+again. In the grid the user has them too:
+
+- **Ctrl+Z** (Cmd+Z on a Mac) undoes, **Ctrl+Y** and **Ctrl+Shift+Z** (Cmd+Y, Cmd+Shift+Z) redo - with
+  the focus in a cell of an editable grid. Not in the header filters: the keys are the input's own
+  there. The filter editor has an undo history of its own, see
+  [Filtering](06-filtering.md#undo-and-redo-in-the-filter-editor).
+- **The focus goes to what changed**, as in a spreadsheet: after Ctrl+Z, Ctrl+Y and the row menu's
+  *Undo last change* / *Redo* the grid scrolls to the first cell of the step - the first change made
+  (the top left cell of a paste) whose row is displayed - puts it in the middle of the view when it was
+  out of it, focuses it and makes its row the current row. A deletion mark, or a field that is not in
+  the layout, is its row in the column of the cell the key was pressed in (the menu opened on). When
+  no row of the step is displayed - filtered out, in a collapsed group - the focus stays.
+  `datasource.undo()` / `redo()` from code (an Undo button of your own) do not move it.
+- **While the user types in a cell, Ctrl+Z is the input's own undo** of the typing. The grid writes
+  every key to the row as it is typed, so what was typed in the cell is the last step of the history;
+  once the typing is undone back to the value the cell started with, or the focus left the cell,
+  Ctrl+Z undoes the history.
+- The row menu (right click a cell) starts with the submenu *Undo / Redo ›*: *Undo last change
+  (Ctrl+Z)* and *Redo (Ctrl+Y)* - *(⌘Z)* and *(⇧⌘Z)* on a Mac, see
+  [Texts](12-texts.md#the-ids) - greyed out when there is nothing to undo or redo, and the reverts, see
+  [Reverting a cell or a row](#reverting-a-cell-or-a-row). The ids are `row.edit` (the submenu),
+  `row.edit.undo`, `row.edit.redo`, `row.edit.revertCell`, `row.edit.revertRow` and
+  `row.edit.revertRows`, change or hide them with the [menus hook](10-menus.md).
+
+```ts
+const row = datasource.getDataRows()[0];
+row.name = 'Changed';
+
+datasource.canUndo(); // true
+datasource.undo(); // the name it had
+datasource.redo(); // 'Changed' again
+```
+
+**A step** is what one undo takes back:
+
+- what the user typed in one cell, from when it got the focus until the focus left it
+- a paste or a clear from the row menu, over every selected row
+- a paste (Ctrl+V), a Delete or a clear of ranges of cells, see
+  [Selection and clipboard](17-selection-and-clipboard.md)
+- a delete or its undo: `markForDeletion()`, `markAllForDeletion()`, `unmarkForDeletion()`,
+  `unmarkAllForDeletion()` - from the row menu or from code
+- a revert: `resetField()`, `resetRows()`, `resetDataSelectionOnly()`
+- **what code sets on the rows in one synchronous run**: `row.name = 'x'` is an edit like the user's,
+  and is recorded. The changes made before the code awaits are one step, after an `await` the next
+  one starts.
+
+A value set that does not change the field - as the change tracking compares, so a `date` field on
+the day - is not recorded.
+
+**Undo sets the values back the way an edit does**: the change tracking follows (a value back at its
+original is no change, the `__rowState` goes back with it) and so does the validation - an error an
+edit made goes away when it is undone. The displayed rows are not filtered, sorted or grouped again,
+the rows stay where they are, as after an edit. The grid renders its cells again.
+
+**What is not in it**: new rows - `addNewEmpty()`, `setData(rows, { add: true })`. Undo never removes
+a row and never adds one back; the edits of a new row are steps like any other. Rows removed for good
+(`removeData()`, `clearMarkedForDeletion()`, a new row `resetDataSelectionOnly()` removed) take their
+changes out of the history, and a step left without changes is dropped.
+
+**It is cleared** - nothing to undo or redo, the edits stay as they are - by `setData()` without
+`add`, `removeAllData()`, `resetData()`, `acceptChanges()` (after a save the saved values are the
+originals, also when only some rows were accepted) and `clearHistory()`.
+
+**The last 100 steps** are kept. A new step empties what there is to redo.
+
+The history is the `DataContainer`'s, like the edits: datasources that share a container share it.
+
+`history-changed` is sent when the history changes - for Undo and Redo buttons of your own:
+
+```ts
+declare const undoButton: HTMLButtonElement;
+declare const redoButton: HTMLButtonElement;
+
+const showHistory = () => {
+    undoButton.disabled = !datasource.canUndo();
+    redoButton.disabled = !datasource.canRedo();
+};
+datasource.on('history-changed', showHistory);
+showHistory();
+undoButton.onclick = () => datasource.undo();
+redoButton.onclick = () => datasource.redo();
+```
+
+Its `info` says what changed it, see [Events](09-events.md#datasource-events). A new step is told once
+the code that made it is done (`'edit'`, in a microtask): a paste over many rows is one event, and so
+is what is typed in a cell.
+
+## Reverting a cell or a row
+
+`resetField(row, field)` puts one field back to its original value: the value it had when the data
+was set, or when the changes were last accepted. `resetRows(rows)` does it for every field of the
+rows, and takes their deletion marks off:
+
+```ts
+const row = datasource.getDataRows()[0];
+datasource.resetField(row, 'name');
+datasource.resetRows(datasource.getSelectedRows());
+```
+
+- A revert is a step of the history: `undo()` brings the edits back.
+- **A new row is marked for deletion**, with the values it was added with: it is not on the server,
+  so that is where a revert takes it. Struck through, it is left out of `getChanges()`, and it goes
+  with the other marked rows when the changes are saved. It is not removed at once: a revert can be
+  undone, and `undo()` brings the new row back with its edits. `resetDataSelectionOnly()` removes the
+  new rows it resets, and undo does not bring those back.
+- The fields are validated as for an edit.
+- A field that is not edited (`getChanges()` would not list it) is left as it is.
+
+In an editable grid the row menu (right click a cell) starts with the submenu *Undo / Redo ›*:
+*Undo last change* (Ctrl+Z) and *Redo* (Ctrl+Y) go through the undo history; *Undo cell edit* puts
+the original value of the cell right clicked back, greyed out while it is not edited - a click on the
+marker of an edited cell does the same, see [Showing the row state](#showing-the-row-state);
+*Undo row edits* puts the row right clicked back - no need to select it first - and
+*Undo row edits (selected rows)* the selected rows, each greyed out while none of its rows is edited
+or marked for deletion. Like the delete's undo they also work on readonly cells: they put values back,
+readonly is about typing new ones.
+
+## Validation
+
+The rules are part of the datasource's fields, plain JSON like the rest of them - they can be
+stored in a backend with the fields. A field lists its rules in `validate`: the id of a validator as
+text, or an object with the id, its options and a message of its own.
+
+```ts
+import { Datasource } from '@simple-html/grid';
+
+const people = new Datasource({
+    key: 'id',
+    fields: {
+        name: { validate: ['required', { id: 'maxLength', value: 50 }] },
+        age: { type: 'number', validate: ['required', { id: 'min', value: 0 }, { id: 'max', value: 150, message: 'too old' }] },
+        email: { validate: ['email'] },
+        code: { validate: [{ id: 'pattern', value: '^[A-Z]{2}-\\d{3}$', message: 'Like AB-123' }] }
+    }
+});
+```
+
+The validators are named by id, like the formatters: the built-in ones below, and your own with
+`registerValidator()`. An id that is not registered throws when the datasource is made, and so does
+a built-in rule with a wrong option (`min` without a number, a `pattern` that is no regular
+expression). `getField(name).validate` gives the rules of a field, written out as objects.
+
+```sample validation
+```
+
+### Rules of a grid's columns
+
+A column can have rules in the grid's config too, `ColumnConfig.validate` - the same rules, for what this
+grid edits: a datasource shared by two screens, a field of a backend's metadata without rules, a rule of
+the screen (a project code of this form). They are **set by code and the user can not change them**: they
+are not in the state or a view - `getState()` has none, `setState()` and `resetState()` keep them,
+`updateConfig({ columns })` replaces them. The grid config dialog shows them, read only: see
+[The rules in the dialog](#the-rules-in-the-dialog).
+
+```ts
+import type { GridConfig } from '@simple-html/grid';
+
+const config: GridConfig = {
+    readonly: false,
+    columns: {
+        projectCode: { validate: ['required', { id: 'pattern', value: '^[A-Z]{2}-\\d{3}$', message: 'Like AB-123' }] },
+        hours: { validate: [{ id: 'min', value: 0 }, { id: 'max', value: 24 }, { id: 'decimals', value: 1 }] },
+        status: { validate: [{ id: 'oneOf', value: ['Open', 'Closed'] }] }
+    },
+    layout: { center: [{ fields: ['projectCode'], width: 120 }, { fields: ['hours'], width: 80 }, { fields: ['status'], width: 100 }] }
+};
+```
+
+- They are **added after the field's own** (`FieldConfig.validate`): an edit of a cell or in the detail
+  form, an import and `datasource.validate()` check both, `getField(name).validate` lists both - a
+  `'required'` of a column gives its cells the stripes. The rows that have errors are validated again when
+  they change.
+- Checked when the grid is made, and by `updateConfig()`: an id that is not registered, or wrong options,
+  throw a `TypeError` that names the column (`GridConfig: columns.hours has the rule 'max', ...`). A
+  calculated column has none, it is not edited.
+- **Two grids on one datasource**: the rules of the last one made (or given its columns) that has some are
+  used, and its `destroy()` gives the other one's back. A grid without any - a second view of the rows -
+  leaves the other one's in place.
+
+### The built-in rules
+
+They take their option as `value`:
+
+| rule | the value fails when | message |
+| --- | --- | --- |
+| `'required'` | it is `null`, `undefined`, `''`, only spaces, an invalid Date, or 0 | `Required` |
+| `{ id: 'min', value: 0 }` | it is a number below `value` - or, with a day (`'2026-01-01'`), a date before it | `Must be at least {value}` |
+| `{ id: 'max', value: 150 }` | it is a number above `value` - or, with a day, a date after it (a datetime on the day is within) | `Must be at most {value}` |
+| `'integer'` | it is a number with decimals | `Must be a whole number` |
+| `{ id: 'decimals', value: 2 }` | it is a number with more decimals than `value` (0 to 20) | `Must have at most {value} decimals` |
+| `{ id: 'oneOf', value: ['Open', 'Closed'] }` | it is not in the list, compared as text (with its case) | `Must be one of {value}`: `Open, Closed` |
+| `'email'` | it is text that is no email address: something `@` something with a dot, no spaces | `Not an email address` |
+| `{ id: 'minLength', value: 2 }` | it is text shorter than `value` | `Must be at least {value} characters` |
+| `{ id: 'maxLength', value: 50 }` | it is text longer than `value` | `Must be at most {value} characters` |
+| `{ id: 'pattern', value: '^[A-Z]{2}$' }` | it is text the regular expression does not find | `Not in the expected format` |
+| `'unique'` | another row has the same value - see [Unique](#unique-no-two-rows-with-the-same-value) | `Another row has the same value` |
+| `{ id: 'unique', with: ['year'] }` | another row has the same value and the same `year` | `Another row has the same value and {with}`: `Year` |
+
+- **Only spaces fail `required`**: `'  '` is as empty as `''` - tabs and line breaks too. The stripes
+  of a required cell show it as empty.
+- **0 fails `required`.** The filter takes 0 as blank too (see [0 is blank](06-filtering.md#0-is-blank)),
+  and an emptied number cell stores 0 - the number formatters parse `''` as 0 - so with 0 as a value
+  a required number would never fail in the grid. `false` passes: it is a value, and a checkbox has
+  no empty state. For a number where 0 is a real value, use a rule of your own (`present` below).
+- **The other rules pass an empty value** (`null`, `undefined`, `''`): an optional field can be
+  empty, add `'required'` to make it fail. They check the values of their kind only - `min` and
+  `max` numbers and dates, `integer` and `decimals` numbers, `oneOf` any value, the others text - and
+  pass the rest.
+- **`decimals` takes the floating point as it is**: `0.1 + 0.2` (`0.30000000000000004`) has two decimals.
+- **`email` is a light check**, not every rule of RFC 5322: a typo like a missing `@` or `.com`. Use a
+  `pattern` or a rule of your own for a stricter one.
+- **`pattern` is not anchored**: `'[0-9]'` finds a digit anywhere in the text, `'^[0-9]+$'` is
+  digits only. Written as text, so it stays JSON. In TypeScript a `\` is written twice.
+- Every rule runs: a value can fail more than one, and gets a message for each.
+
+### Unique: no two rows with the same value
+
+`'unique'` compares the rows: a value that another row has fails, in **every** row that has it - the
+user sees both, and fixes the one that is wrong. Change one of them (or delete it) and the error goes
+from the others too, without a `validate()`.
+
+```ts
+import { Datasource } from '@simple-html/grid';
+
+const datasource = new Datasource({
+    fields: {
+        email: { validate: ['required', 'email', { id: 'unique', ignoreCase: true }] },
+        // a code once per year: the error on the code
+        code: { validate: [{ id: 'unique', with: ['year'] }] },
+        year: { type: 'number', label: 'Year' }
+    }
+});
+```
+
+- **`with`** lists other fields whose values go with it, two or more columns as one check: `code` with
+  `with: ['year']` is unique per year. The error is on the field that has the rule; give the rule to
+  `year` as well (`with: ['code']`) to mark both cells. The message names the other fields by their
+  labels: `Another row has the same value and Year`.
+- **A blank value is no duplicate**, as NULL in a UNIQUE constraint of SQL: two empty rows pass - add
+  `'required'` to make them fail. With `with`, a row with a blank in one of the fields passes.
+- **How values compare**: text as it is, with its case - `ignoreCase: true` takes `Ann` and `ANN` as the
+  same; dates by their time; numbers and other values as text (`3` and `'3'` are the same). 0 is a value.
+- **The rows** are the rows of the datasource's container, also the ones a filter hides. A row marked for
+  deletion does not count: it is not saved. Rows set with `setData()` are not validated (below), and
+  neither is a loaded duplicate - until a row is edited to its value, or `validate()` runs.
+- **An edit checks the other rows too**: the rows with the old value lose the error when it was theirs,
+  the rows with the new value get it - they are validated again on that field, and the grid repaints them.
+  It looks the value up in an index of the rows, not by going through them on every key.
+- **An import** compares the rows of the file with the grid's rows and with each other: two rows of the
+  file with the same code both have the problem.
+- The datasource checks the rows it has. A value can still be taken on the server - by a row that is
+  not loaded, or saved by another user meanwhile: keep the unique constraint in the database.
+
+### The rules in the dialog
+
+The grid config dialog shows a column's rules on its General tab, under *Read only*: a list under
+*Validation*, read only, with the hint that the application sets them - the field's own rules
+(`FieldConfig.validate`) and the grid's (`ColumnConfig.validate`). A rule is shown as its own `message`
+(`Like AB-123`), else as the built-in's message (`Must be at least 0`) - a `pattern` as its expression,
+`unique` as `Unique` (`Unique together with Year`) - and a rule of your own as the text of
+`validation.<its id>` when `setTexts()` has one, else its id. There is no control to change one.
+
+### Messages
+
+A rule's `message` replaces the default, and `{name}` in it is replaced by the rule's option `name`:
+`{ id: 'max', value: 150, message: 'at most {value}' }` gives `at most 150`.
+
+The default messages are texts: `'validation.required'`, `'validation.min'`, `'validation.max'`,
+`'validation.minLength'`, `'validation.maxLength'`, `'validation.pattern'`, `'validation.integer'`,
+`'validation.decimals'`, `'validation.oneOf'`, `'validation.email'`, `'validation.unique'` and
+`'validation.uniqueWith'` in `TEXTS`; a list option is its items with `, ` in a message. Translate
+them with `setTexts()` - for the page, the datasource has no grid, so a grid's `texts` do not change
+them. A rule's `message` can be a text id as well, see [Texts](12-texts.md#messages-of-your-own).
+
+```ts
+import { setTexts } from '@simple-html/grid';
+
+setTexts({ 'validation.required': 'Må fylles ut', 'validation.max': 'Kan være høyst {value}' });
+```
+
+A message is made when the value is validated: after `setTexts()` an error already there keeps its
+text until the field is validated again.
+
+### Rules of your own
+
+A validator is a function `(value, row, rule) => message | null`: `null` when the value is valid,
+else the message - or a text id, the way the built-ins return `'validation.required'`. An id of your
+own gets its text from `setTexts()`, so it can be translated. `rule` is
+the rule written out, so a rule can carry options of its own. Register it before the datasource that
+names it is made:
+
+```ts
+import { Datasource, registerValidator } from '@simple-html/grid';
+
+// a number that must be there, 0 included
+registerValidator('present', (value) => (value === null || value === undefined ? 'validation.required' : null));
+
+// { id: 'inList', values: [...] }: the options come from the rule (the built-in oneOf does this)
+registerValidator('inList', (value, _row, rule) => {
+    if (value === null || value === undefined || value === '') {
+        return null; // an empty value is the required rule's job
+    }
+    return Array.isArray(rule.values) && rule.values.includes(String(value)) ? null : 'Must be one of {values}';
+});
+
+// another field of the row: the end can not be before the start
+registerValidator('afterStart', (value, row) =>
+    value instanceof Date && row.start instanceof Date && value < row.start ? 'Before the start' : null
+);
+
+const datasource = new Datasource({
+    fields: {
+        discount: { type: 'number', validate: ['present'] },
+        country: { validate: [{ id: 'inList', values: ['Norway', 'Sweden'] }] },
+        start: 'date',
+        end: { type: 'date', validate: ['afterStart'] }
+    }
+});
+```
+
+Keep a validator fast, it runs on every key the user types. Registering an id again replaces it, for
+the datasources made after.
+
+### When it runs
+
+- **An edit is validated**, from the grid as the user types and from code (`row.age = -1`): the
+  field's rules run, and so do the rules of the row's fields that have an error - an error that
+  depends on the edited value (`afterStart` above) clears once it is fixed. An edit that makes the
+  field valid clears its error.
+- **The rows set with `setData()` are not validated, and neither are the fields of a new row from
+  `addNewEmpty()`** until they are edited: an empty new row would be all errors before the user
+  typed anything. The stripes of the required fields show what to fill in, and `validate()` before
+  the save checks the fields never edited.
+- **`validate()` checks every row**, or the rows given: every field with rules. It keeps the errors,
+  the grid shows them, and returns them - one `{ row, field, messages }` per field with an error.
+- `getErrors(rows?)` and `hasErrors()` read the errors there are now, without validating.
+- `acceptChanges()` and `resetData()` clear the errors, `resetDataSelectionOnly()` those of the
+  selected rows.
+- Undo, redo, `resetField()` and `resetRows()` set values the way an edit does: the fields they set
+  are validated.
+- A row marked for deletion is not saved, so it has no errors: `validate()` skips it, `getErrors()`
+  and `hasErrors()` leave it out. Its errors are back when it is unmarked.
+
+Validate before a save:
+
+```ts
+declare function showErrors(lines: string[]): void;
+
+const errors = datasource.validate();
+if (errors.length) {
+    showErrors(errors.map(({ row, field, messages }) => `${row.name}, ${datasource.getField(field).label}: ${messages.join(', ')}`));
+} else {
+    const response = await fetch('/api/save', { method: 'POST', body: JSON.stringify(datasource.getChanges()) });
+    if (response.ok) {
+        datasource.acceptChanges();
+    }
+}
+
+// only what a save sends: the new and edited rows
+datasource.validate(datasource.getAllData().filter((row) => row.__rowState === 'N' || row.__rowState === 'M'));
+```
+
+`validate()` checks every row, also the rows the filter leaves out and the rows that were not
+edited: data from a server that breaks a rule blocks the save too. Pass the new and edited rows to
+check what the save sends only.
+
+### How the grid shows the errors
+
+- **A cell with an error** gets the class `simple-html-cell-error` - a red border inside the cell
+  and a tint - and its messages as the tooltip, one per line.
+- **The row number** of a row with an error gets `simple-html-row-error` - a red bar on its left and
+  a tint - and an exclamation mark (`rowStatus`, see [Showing the row state](#showing-the-row-state)).
+  Its tooltip lists the row's state, then the server's error, then a line per field:
+  `Age: Must be at least 0`.
+- The colors are css variables: `--simple-html-grid-error-color` and
+  `--simple-html-grid-error-bg-color`.
+- The tooltips are the grid's own, as on the filter editor's buttons: `tooltips: false` in the
+  config turns them off. The `data-tooltip` attribute is written either way, for a tooltip library
+  of your own.
+- An edit in the grid shows its errors at once, and so does `validate()`. An edit from code shows
+  them in the next animation frame, with its value.
+- A field with the `required` rule shows stripes on its empty editable cells, see
+  [Required fields and placeholders](#required-fields-and-placeholders).
+
+## Saving
+
+A save usually sends everything in one transaction: the deleted, edited and new rows of
+`getChanges()`. After a successful save, `acceptChanges()` makes the grid show what was saved:
+
+- the rows marked for deletion are removed
+- the new rows become ordinary rows
+- the values the rows have now become their original values: nothing counts as edited
+- the row errors (`setErrors()`) and the validation errors are cleared
+
+The displayed rows are rebuilt once, and `hasChanges()` is `false` after.
+
+**Keys of new rows.** Until it is saved, a new row has a temporary key: a generated negative number,
+in the key field (`id: -1`), or as `__KEY` in `getChanges().newEntities` when the datasource has no
+`key`. The server gives the row its real key. `acceptChanges({ newKeys })` takes a `Map` from each
+temporary key to the server's key, and puts the server's key in the row - in the key field, or as the
+row's `__KEY`. Setting it is no edit, and a selected row stays selected.
+
+```ts
+import { Datasource } from '@simple-html/grid';
+
+interface Person {
+    id: number;
+    name: string;
+}
+
+// what the server answers: the id it gave each new row
+interface SaveResult {
+    newIds: { temporaryId: number; id: number }[];
+}
+
+const people = new Datasource<Person>({ key: 'id' });
+people.setData([
+    { id: 1, name: 'Ann' },
+    { id: 2, name: 'Bob' }
+]);
+
+// the user edits, deletes and adds rows
+const [ann, bob] = people.getDataRows();
+ann.name = 'Anna';
+people.markForDeletion(bob);
+people.addNewEmpty({ name: 'Cid' }, { scrollTo: false }); // a temporary id: -1, say
+
+// one transaction
+const changes = people.getChanges();
+// newEntities:      [{ name: 'Cid', id: -1 }]
+// modifiedEntities: [{ id: 1, name: 'Anna' }]
+// deletedEntities:  [{ id: 2, name: 'Bob' }]
+const response = await fetch('/api/people/save', { method: 'POST', body: JSON.stringify(changes) });
+if (response.ok) {
+    const result: SaveResult = await response.json();
+    people.acceptChanges({ newKeys: new Map(result.newIds.map((row) => [row.temporaryId, row.id])) });
+}
+
+people.getDataRows().map((row) => [row.id, row.name]); // [[1, 'Anna'], [7, 'Cid']] - Cid has the server's id
+people.hasChanges(); // false
+```
+
+- `newKeys` compares the keys as text: `-1` and `'-1'` are the same key, so a map made from the keys
+  of a JSON object works too - `new Map(Object.entries(json))`.
+- A key in `newKeys` that is not the key of a new row throws, and so does a blank server key - before
+  anything changes. A map the wrong way round (server key to temporary key) is caught that way. A
+  new row that is not in `newKeys` keeps its key.
+- When only some rows were saved, pass them: `acceptChanges({ rows: savedRows, newKeys })`. The
+  other rows keep their changes.
+- Keep the grid readonly while the save runs - `gridInterface.updateConfig({ readonly: true })`, and
+  `false` after - or an edit made in between is accepted without being saved.
+- Validate first: `validate()` returns the errors, see [Validation](#validation).
+- When the save fails, do not call `acceptChanges()`: the changes stay, to be saved again. Show the
+  server's errors on the rows with [`setErrors()`](#errors-from-a-server).
+- Without a `key`, the server's key becomes the row's `__KEY`: a later edit of the row is sent with
+  it, as `__KEY` in `modifiedEntities`.
+
+`hasChanges()` is `true` while there is something to save, for an "unsaved changes" indicator. The
+grid sends no event for an edit, so check it when it matters:
+
+```ts
+window.addEventListener('beforeunload', (event) => {
+    if (datasource.hasChanges()) {
+        event.preventDefault();
+    }
+});
+```
+
+Setting the data again with the rows from the server works too: `setData(freshRows)` starts the state
+of every row over, and with a `key` the selection is kept. `acceptChanges()` keeps the rows, so the
+current row, the scroll position and the expanded groups stay as they are.
+
+```sample saving
+```
+
+## Errors from a server
+
+`setErrors()` on the datasource's container puts an error text on rows, by key - what a server said
+about a save it refused. It is a `Map` from the key as text to the message. Every row not in the map
+gets `null`:
+
+```ts
+import { createGrid, type GridConfig, type GridHooks } from '@simple-html/grid';
+
+const config: GridConfig = {
+    readonly: false,
+    layout: { center: [{ fields: ['name'], width: 150 }] }
+};
+const hooks: GridHooks = {
+    // the cells of the row too: .row-error { position: absolute; inset: 0; background: rgba(220, 38, 38, 0.2); }
+    cellClass: (row) => (row.__rowError ? { background: 'row-error' } : null)
+};
+const grid = createGrid(host, { config, datasource, hooks });
+
+datasource.getDataContainer().setErrors(new Map([['2', 'The name is taken']]));
+
+const row = datasource.getDataRows()[0];
+console.log(row.__rowError); // the message, or null
+```
+
+The grid shows `__rowError` on the row number, with the row's validation errors: the class
+`simple-html-row-error`, and the message as the first line of its tooltip, in the next animation
+frame after `setErrors()`. To mark the cells of the row too, use the `cellClass` hook as above.
+
+**Server errors and validation errors are kept apart.** A server error is the row's `__rowError`,
+set with `setErrors()`; a validation error is a field's, from the rules (`getErrors()`). `setErrors()`
+does not change the validation errors, and `validate()`, `getErrors()` and `hasErrors()` do not read
+`__rowError` - a row the server refused is not invalid by the rules, and the next save may well work.
+`acceptChanges()` clears both.
+
+## Required fields and placeholders
+
+- A field with the `required` rule (`validate: ['required']` in the datasource's `fields`, see
+  [Validation](#validation)) shows its empty cells with stripes, until they have a value - empty as
+  the rule sees it, so 0 too. Only in an editable grid, and only on editable cells. Restyle the
+  stripes with the `simple-html-mandatory` class. It replaces the `mandatory` column option of v5.
+- `placeholderRow` is text shown in an empty cell. By default only on the current row, set
+  `placeholderRowCurrentEntityOnly: false` in the config to show it on every row.
+- `placeholderFilter` is text shown in the empty header filter.
+
+```ts
+import { createGrid, Datasource, type GridConfig } from '@simple-html/grid';
+
+const companies = new Datasource({ fields: { company: { validate: ['required'] } } });
+
+const config: GridConfig = {
+    readonly: false,
+    placeholderRowCurrentEntityOnly: false,
+    columns: {
+        company: { placeholderRow: 'required' },
+        phone: { placeholderRow: '+47 ...', placeholderFilter: 'search phone' }
+    },
+    layout: {
+        center: [
+            { fields: ['company'], width: 150 },
+            { fields: ['phone'], width: 120 }
+        ]
+    }
+};
+createGrid(host, { config, datasource: companies });
+```
+
+```sample required-placeholders
+```
+
+## Edits and live data
+
+A value set from code shows in the grid on its own, in the next animation frame: the datasource sends
+`rows-changed` with the rows changed, and the grid renders the ones on screen - `refresh()` is not
+needed after an edit from code, an undo or a revert. The cell the user is typing in is never rendered
+over. When rows from a server are merged with `upsert()`, an edit the user has not saved stays: a
+field the server changed too is a conflict, resolved with `resolveConflict()`. See
+[Live data](16-live-data.md).

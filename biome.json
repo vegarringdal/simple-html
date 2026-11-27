@@ -13,8 +13,10 @@
             "!**/*.d.ts",
             "!dist",
             "!dist_dev",
+            "!dist_demo",
             "!docs",
             "!node_modules",
+            "!.claude",
             "!**/dist",
             "!samples/grid01/dummyData.ts"
         ]

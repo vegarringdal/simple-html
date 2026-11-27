@@ -1,33 +1,73 @@
 import './index.css';
 import {
+    createGrid,
     Datasource,
-    DateFormaterDDMMYYYY,
-    DateFormaterDDMMYYYYTHHMMSS,
-    DateFormaterYYYYMMDD,
-    DateFormaterYYYYMMDDTHHMMSS,
+    type DatasourceEvents,
+    DateFormatterDDMMYYYY,
+    DateFormatterDDMMYYYYTHHMMSS,
+    DateFormatterYYYYMMDD,
+    DateFormatterYYYYMMDDTHHMMSS,
+    type EventHandler,
+    type Formatter,
     type GridConfig,
     type GridElement,
+    type GridEvents,
     GridInterface,
-    type HTMLCellElement,
-    NumberFormaterComma,
-    NumberFormaterDot
+    type GridState,
+    NumberFormatterComma,
+    NumberFormatterDot,
+    registerFormatter
 } from '@simple-html/grid';
 import '../../src/grid.css';
 import '../../src/date.css';
-import { DateFormaterCustom } from './dateFormaterCustom';
+import { DateFormatterCustom } from './dateFormatterCustom';
 import { dummydata } from './dummyData';
-import { gridConfig } from './gridConfig';
-import { NumberFormaterCustom } from './numberFormaterCustom';
-import { toggelDarkGrid } from './toggelDarkGrid';
+import { gridConfig, gridFields } from './gridConfig';
+import { NumberFormatterCustom } from './numberFormatterCustom';
+import { toggleDarkGrid } from './toggleDarkGrid';
 
 /**
  * WARNING, this will be weird while I get main parts working
  */
 
 /**
+ * the number and date formatters the buttons switch between. The datasource gets the two
+ * formatters below once, they hand every call on to the one picked last - a formatter is just an
+ * object with format and parse. The datasource options name them by id, so they are registered first
+ */
+let numberFormatter: Formatter = NumberFormatterDot;
+let dateFormatter: Formatter = DateFormatterYYYYMMDD;
+const switchable = (current: () => Formatter): Formatter => ({
+    format: (value) => current().format(value),
+    parse: (text) => current().parse(text),
+    parseFilter: (text) => {
+        const formatter = current();
+        return formatter.parseFilter ? formatter.parseFilter(text) : formatter.parse(text);
+    },
+    get placeholder() {
+        return current().placeholder;
+    }
+});
+
+registerFormatter(
+    'grid01.number',
+    switchable(() => numberFormatter)
+);
+registerFormatter(
+    'grid01.date',
+    switchable(() => dateFormatter)
+);
+
+/**
  * create datasource
  */
-const datasource = new Datasource();
+const datasource = new Datasource({
+    fields: gridFields,
+    formatters: {
+        number: 'grid01.number',
+        date: 'grid01.date'
+    }
+});
 datasource.setData(
     structuredClone(dummydata).map((e: any) => {
         e.date1 = new Date(e.date1);
@@ -35,29 +75,6 @@ datasource.setData(
         return e;
     })
 );
-
-const oldFormater = datasource.getValueFormater();
-const oldFormaterFromSource = oldFormater.fromSource;
-oldFormater.fromSource = (value: any, type: any, attribute: string, isFilter) => {
-    if (attribute?.startsWith('country') && !isFilter) {
-        return 'Open D';
-    } else {
-        return oldFormaterFromSource.apply(oldFormater, [value, type, attribute, isFilter]);
-    }
-};
-
-/**
- * create interface
- */
-const gridInterface = new GridInterface(gridConfig, datasource);
-
-gridInterface.addEventListener({
-    handleEvent: (msg) => {
-        if (msg.type === 'gridConnected') {
-            gridInterface.autoResizeColumns();
-        }
-    }
-});
 
 /**
  * create container to how buttons and grid
@@ -69,6 +86,13 @@ containerGrid.style.top = '10px';
 containerGrid.style.left = '510px';
 containerGrid.style.right = '10px';
 containerGrid.style.bottom = '10px';
+document.body.appendChild(containerGrid);
+
+/**
+ * create the grid in its container, and size the columns to their content
+ */
+const gridInterface = createGrid(containerGrid, { config: gridConfig, datasource });
+gridInterface.fitColumns();
 
 const containerbuttons = document.createElement('div');
 containerbuttons.style.position = 'absolute';
@@ -89,13 +113,6 @@ containerbuttons2.style.left = '250px';
 containerbuttons2.style.bottom = '0px';
 document.body.appendChild(containerbuttons2);
 
-const element = document.createElement('simple-html-grid') as GridElement;
-element.style.width = '100%';
-element.style.height = '100%';
-element.style.display = 'flex';
-element.classList.add('simple-html-grid');
-element.connectInterface(gridInterface);
-
 function createButton(title: string, callback: () => void) {
     const btn = document.createElement('button');
     btn.onclick = callback;
@@ -109,9 +126,9 @@ function createButton(title: string, callback: () => void) {
         containerbuttons.appendChild(btn);
     }
 }
-toggelDarkGrid();
+toggleDarkGrid();
 createButton('toggle dark/light mode', () => {
-    toggelDarkGrid();
+    toggleDarkGrid();
 });
 
 createButton('set to 10 rows', () => {
@@ -133,7 +150,7 @@ createButton('add to 10 rows', () => {
             e.date2 = new Date(e.date2);
             return e;
         }),
-        true
+        { add: true }
     );
 });
 
@@ -145,7 +162,7 @@ createButton('add to 100 rows', () => {
             e.date2 = new Date(e.date2);
             return e;
         }),
-        true
+        { add: true }
     );
 });
 
@@ -182,23 +199,31 @@ createButton('add new with data', () => {
 });
 
 createButton('add new with data and do not scroll to it', () => {
-    datasource.addNewEmpty({ company: 'Who Im I' }, false);
+    datasource.addNewEmpty({ company: 'Who Im I' }, { scrollTo: false });
 });
 
-createButton('save config', () => {
-    (globalThis as any).griconfig = gridInterface.saveConfig();
+// what the user changed: column order/widths, sorting, grouping, filter, header filters
+let savedState: GridState | null = null;
+
+createButton('save state', () => {
+    savedState = gridInterface.getState();
 });
 
-createButton('load config', () => {
-    if (!(globalThis as any)) {
-        alert('no config saved, save on first');
+createButton('load state', () => {
+    if (!savedState) {
+        alert('no state saved, save one first');
     } else {
-        gridInterface.loadConfig((globalThis as any).griconfig);
+        gridInterface.setState(savedState);
     }
 });
 
+// deleting is a tag: the rows stay (RS column D) until the changes are accepted, and can be unmarked
 createButton('markForDeletion (selection)', () => {
     datasource.markForDeletion(datasource.getSelectedRows());
+});
+
+createButton('unmarkForDeletion (selection)', () => {
+    datasource.unmarkForDeletion(datasource.getSelectedRows());
 });
 
 createButton('get markForDeletion (see console)', () => {
@@ -214,188 +239,178 @@ createButton('reset data/changes -selection', () => {
 });
 
 createButton('get changes (ses console)', () => {
-    console.log(datasource.getChanges());
+    console.log(datasource.getChanges(), 'hasChanges:', datasource.hasChanges());
+});
+
+// what to call after a save: marked rows removed, new rows ordinary, edits the new originals.
+// No key field here: a server's keys would go in acceptChanges({ newKeys })
+createButton('accept changes (as after a save)', () => {
+    datasource.acceptChanges();
 });
 
 createButton('remove marked for deleted (no undo)', () => {
-    datasource.getDataContainer().clearMarkedForDeletion();
-    datasource.reloadDatasource();
+    datasource.clearMarkedForDeletion();
 });
 
-createButton('use init config', () => {
-    gridInterface.loadConfig(gridConfig);
+// country and favoriteFruit are required (gridFields): the errors show on the cells and row numbers
+createButton('validate (see console)', () => {
+    console.log(datasource.validate(), 'hasErrors:', datasource.hasErrors());
 });
 
+createButton('reset state (initialState)', () => {
+    gridInterface.resetState();
+});
+
+/**
+ * readonly is config, updateConfig() changes it while the grid is shown. The state stays as it is
+ */
 createButton('set as readonly', () => {
-    const config = gridInterface.saveConfig();
-    config.readonly = true;
-    gridInterface.loadConfig(config);
+    gridInterface.updateConfig({ readonly: true });
 });
 
 createButton('set as editmode', () => {
-    const config = gridInterface.saveConfig();
-    config.readonly = false;
-    gridInterface.loadConfig(config);
+    gridInterface.updateConfig({ readonly: false });
 });
 
 createButton('Open Filter Editor', () => {
     gridInterface.openFilterEditor();
 });
 
-const datasourceEvents = {
-    handleEvent: (e: any) => {
-        console.log('DATASOURCE EVENTS:', e.type, e.data);
-        return true; // to keep subscribing
+// the unsubscribe functions on() returned, called by the "off" buttons
+let datasourceEventsOff: (() => void)[] = [];
+let gridInterfaceEventsOff: (() => void)[] = [];
+
+const datasourceEventNames: (keyof DatasourceEvents)[] = [
+    'collection-changed',
+    'collection-filtered',
+    'collection-sorted',
+    'collection-grouped',
+    'collection-expand',
+    'collection-collapse',
+    'current-entity',
+    'selection-change',
+    'select',
+    'validate'
+];
+
+createButton('datasource.on\n (see console - F12)', () => {
+    for (const off of datasourceEventsOff) {
+        off();
     }
-};
+    datasourceEventsOff = datasourceEventNames.map((type) =>
+        datasource.on(type, (data) => {
+            console.log('DATASOURCE EVENTS:', type, data);
+        })
+    );
+});
 
-const gridInterfaceEvents = {
-    handleEvent: (e: any) => {
-        /* console.log('GRIDINTERFACE EVENTS:', e.type, e.data); */
+createButton('datasource events off\n (see console - F12)', () => {
+    for (const off of datasourceEventsOff) {
+        off();
+    }
+    datasourceEventsOff = [];
+});
 
-        if (e.type === 'filter-operator-change') {
+createButton('gridInterface.on\n (see console - F12)', () => {
+    for (const off of gridInterfaceEventsOff) {
+        off();
+    }
+    gridInterfaceEventsOff = [
+        gridInterface.on('filter-operator-change', (data) => {
             // sample on how you  would edit config and rerender headers
-            e.data.cellConfig.placeHolderFilter = e.data.cellConfig.operator;
-            e.data.rebuildHeaderColumns(e.data.ctx);
-        }
+            data.column.placeholderFilter = data.operator;
+            data.rebuildHeader();
+        })
+    ];
+});
 
-        return true; // to keep subscribing
+createButton('gridInterface events off\n (see console - F12)', () => {
+    for (const off of gridInterfaceEventsOff) {
+        off();
     }
-};
-
-createButton('datasource.addEventListener\n (see console - F12)', () => {
-    datasource.addEventListener(datasourceEvents);
+    gridInterfaceEventsOff = [];
 });
 
-createButton('datasource.removeEventListener\n (see console - F12)', () => {
-    datasource.removeEventListener(datasourceEvents);
+createButton('overide default numberformatter (comma)', () => {
+    numberFormatter = NumberFormatterComma;
+    gridInterface.rebuild();
 });
 
-createButton('gridInterface.addEventListener\n (see console - F12)', () => {
-    gridInterface.addEventListener(gridInterfaceEvents);
+createButton('overide default numberformatter (comma-custom)', () => {
+    numberFormatter = NumberFormatterCustom;
+    gridInterface.rebuild();
 });
 
-createButton('gridInterface.removeEventListener\n (see console - F12)', () => {
-    gridInterface.removeEventListener(gridInterfaceEvents);
+createButton('use default numberformatter (dot)', () => {
+    numberFormatter = NumberFormatterDot;
+    gridInterface.rebuild();
 });
 
-createButton('overide default numberformater (comma)', () => {
-    datasource.setNumberFormater(NumberFormaterComma);
-    gridInterface.triggerRebuild();
+createButton('overide default Dateformatter (DD.MM.YYYY)', () => {
+    dateFormatter = DateFormatterDDMMYYYY;
+    gridInterface.rebuild();
 });
 
-createButton('overide default numberformater (comma-custom)', () => {
-    datasource.setNumberFormater(NumberFormaterCustom);
-    gridInterface.triggerRebuild();
+createButton('overide default Dateformatter (DD.MM.YYYYTHH:MM:SS)', () => {
+    dateFormatter = DateFormatterDDMMYYYYTHHMMSS;
+    gridInterface.rebuild();
 });
 
-createButton('use default numberformater (dot)', () => {
-    datasource.setNumberFormater(NumberFormaterDot);
-    gridInterface.triggerRebuild();
+createButton('overide default Dateformatter (DD.MM.YYYY/custom)', () => {
+    dateFormatter = DateFormatterCustom;
+    gridInterface.rebuild();
 });
 
-createButton('overide default Dateformater (DD.MM.YYYY)', () => {
-    datasource.setDateFormater(DateFormaterDDMMYYYY);
-    gridInterface.triggerRebuild();
+createButton('use default Dateformatter (YYYY-MM-DD)', () => {
+    dateFormatter = DateFormatterYYYYMMDD;
+    gridInterface.rebuild();
 });
 
-createButton('overide default Dateformater (DD.MM.YYYYTHH:MM:SS)', () => {
-    datasource.setDateFormater(DateFormaterDDMMYYYYTHHMMSS);
-    gridInterface.triggerRebuild();
-});
-
-createButton('overide default Dateformater (DD.MM.YYYY/custom)', () => {
-    datasource.setDateFormater(DateFormaterCustom);
-    gridInterface.triggerRebuild();
-});
-
-createButton('use default Dateformater (YYYY-MM-DD)', () => {
-    datasource.setDateFormater(DateFormaterYYYYMMDD);
-    gridInterface.triggerRebuild();
-});
-
-createButton('use default Dateformater (YYYY-MM-DDTHH:MM:SS)', () => {
-    datasource.setDateFormater(DateFormaterYYYYMMDDTHHMMSS);
-    gridInterface.triggerRebuild();
+createButton('use default Dateformatter (YYYY-MM-DDTHH:MM:SS)', () => {
+    dateFormatter = DateFormatterYYYYMMDDTHHMMSS;
+    gridInterface.rebuild();
 });
 
 createButton('set readonlyf favoriteFruit based on cell isDumb', () => {
-    gridInterface.readonlySetter((attribute: string, rowData: any, configReadonlySetting: boolean) => {
-        if (rowData.isDumb === true && attribute === 'favoriteFruit') {
-            return true;
-        } else {
-            return configReadonlySetting;
-        }
+    gridInterface.updateHooks({
+        // null: the column config decides
+        isReadonly: (row, field) => (row.isDumb === true && field === 'favoriteFruit' ? true : null)
     });
 });
 
 createButton('remove readonly favoriteFruit based on cell isDumb', () => {
-    gridInterface.readonlySetter(null);
+    // no hook: the column config decides
+    gridInterface.updateHooks({ isReadonly: undefined });
 });
 
 createButton('cell focus custom menu 1 time', () => {
-    gridInterface.addEventListener({
-        handleEvent: (e) => {
-            if (e.type === 'cell-click') {
-                gridInterface.contextMenuCustom(
-                    e.data.originalEvent,
-                    [
-                        {
-                            value: '1',
-                            isHeader: true,
-                            label: 'label1'
-                        },
-                        {
-                            value: '2',
-                            isHeader: false,
-                            label: 'label2'
-                        },
-                        {
-                            value: '3',
-                            isHeader: false,
-                            label: 'label3'
-                        },
-                        {
-                            value: '11',
-                            isHeader: true,
-                            label: 'label11'
-                        },
-                        {
-                            value: '12',
-                            isHeader: false,
-                            label: 'label12'
-                        },
-                        {
-                            value: '13',
-                            isHeader: false,
-                            label: 'label13'
-                        }
-                    ],
-                    e.data.cell,
-                    (result) => {
-                        datasource.currentEntity[e.data.attribute] = result;
-                        gridInterface.triggerScrollEvent();
-                        return true;
-                    }
-                );
-            }
-            return true;
-        }
+    const off = gridInterface.on('cell-click', (data) => {
+        // 1 time: unsubscribe on the first click
+        off();
+        const pick = (value: string) => {
+            data.rowData[data.attribute] = value;
+            gridInterface.refresh();
+        };
+        gridInterface.openMenu(data.cell, [
+            { type: 'section', id: 'label1', label: 'label1:' },
+            { id: 'label2', label: 'label2', action: () => pick('2') },
+            { id: 'label3', label: 'label3', action: () => pick('3') },
+            { type: 'section', id: 'label11', label: 'label11:' },
+            { id: 'label12', label: 'label12', action: () => pick('12') },
+            { id: 'label13', label: 'label13', action: () => pick('13') }
+        ]);
     });
 });
 
-createButton('append class dimmed favoriteFruit based on cell isDumb', () => {
-    gridInterface.cellAppendClassSetter((attribute: string, rowData: any, _isReadOnly: boolean) => {
-        if (rowData.isDumb === false && attribute === 'favoriteFruit') {
-            return { dimmedClass: 'yellow', inputClass: '' };
-        } else {
-            return { dimmedClass: '', inputClass: '' };
-        }
+createButton('append class background favoriteFruit based on cell isDumb', () => {
+    gridInterface.updateHooks({
+        cellClass: (row, field) => (row.isDumb === false && field === 'favoriteFruit' ? { background: 'yellow' } : null)
     });
 });
 
-createButton('remove class dimmed  favoriteFruit based on cell isDumb', () => {
-    gridInterface.cellAppendClassSetter(null);
+createButton('remove class background favoriteFruit based on cell isDumb', () => {
+    // no extra classes
+    gridInterface.updateHooks({ cellClass: undefined });
 });
 
 {
@@ -403,113 +418,96 @@ createButton('remove class dimmed  favoriteFruit based on cell isDumb', () => {
      * dropdown sample
      */
 
-    const gridInterfaceDropdownEventSample = {
-        handleEvent: (e: any) => {
-            gridInterface.removeContextMenuElement();
+    const openDropdown: EventHandler<GridEvents['cell-focus-button-click']> = (data) => {
+        if (data.attribute === 'company') {
+            const element = document.createElement('simple-html-grid') as GridElement;
+            const height = 300;
+            const width = 500;
 
-            if (e.type === 'cell-focus-button-click' && e.data?.attribute === 'company') {
-                const cell = e.data.cell as HTMLCellElement;
-                const rect = cell.getBoundingClientRect();
-                const element = document.createElement('simple-html-grid') as GridElement;
-                const height = 300;
-                const width = 500;
+            /**
+             * the size: openMenu() places it under the cell and keeps it within the screen
+             * you might want to add some loading icon..
+             */
+            element.style.width = `${width}px`;
+            element.style.height = `${height}px`;
 
-                /**
-                 * first part here is to just keep it within screen size
-                 */
+            const gridConfig: GridConfig = {
+                panelHeight: 0,
+                selectSizeHeight: 1,
+                hideLabels: false,
+                hideFilter: false,
+                footerHeight: 10, // if you wan the scrollbar..
+                columns: {
+                    WOW: { label: 'select cable' }
+                },
+                layout: { center: [{ width: width - 45, fields: ['WOW'] }] }
+            };
 
-                let top = rect.bottom;
-                let left = rect.left;
+            const datasourceLocal = new Datasource();
 
-                if (window.innerHeight < rect.bottom + height) {
-                    top = rect.top - height - 3;
-                }
-                if (window.innerWidth < rect.right + width) {
-                    left = window.innerWidth - width - 3;
-                }
-
-                /**
-                 * add syle/calculated top/left
-                 * you might want to add some loading icon..
-                 */
-
-                element.style.width = `${width}px`;
-                element.style.height = `${height}px`;
-                element.style.display = 'absolute';
-                element.style.top = `${top}px`;
-                element.style.left = `${left}px`;
-                element.style.boxShadow = '16px 17px 8px 0px rgb(0 0 0 / 20%), 0 6px 20px 0 rgb(0 0 0 / 19%)';
-
-                const gridConfig: GridConfig = {
-                    panelHeight: 0,
-                    selectSizeHeight: 1,
-                    hideLabels: false,
-                    hideFilter: false,
-                    footerHeight: 10, // if you wan the scrollbar..
-                    columnsCenter: [{ width: width - 45, rows: ['WOW'] }],
-                    attributes: [
-                        {
-                            attribute: 'WOW',
-                            label: 'select cable'
-                        }
-                    ]
-                };
-
-                const datasourceLocal = new Datasource();
-
-                // dummy data for sample
-                for (let i = 0; i < 1000; i++) {
-                    datasourceLocal.setData([{ WOW: `wow${i}` }], true);
-                }
-
-                const gridInterfaceLocal = new GridInterface(gridConfig, datasourceLocal);
-                element.classList.add('simple-html-grid');
-                element.connectInterface(gridInterfaceLocal);
-                document.body.appendChild(element);
-
-                element.onclick = (x: any) => {
-                    if (x.target?.classList.contains('simple-html-grid-cell-input')) {
-                        gridInterface.removeContextMenuElement();
-                        datasource.currentEntity.company = datasourceLocal.currentEntity.WOW;
-                        e.data.target?.focus();
-                    }
-                };
-
-                element.onkeydown = (x: any) => {
-                    if (x.code === 'Enter' && x.target?.classList.contains('simple-html-grid-cell-input')) {
-                        gridInterface.removeContextMenuElement();
-                        datasource.currentEntity.company = datasourceLocal.currentEntity.WOW;
-                        e.data.target?.focus();
-                    }
-                };
-
-                setTimeout(() => {
-                    // set focus to first filter
-                    // but we want a timeout, so we do not get space clicked
-
-                    gridInterface.setContextMenuElement(element);
-                    (element.getElementsByTagName('INPUT')[0] as HTMLInputElement)?.focus();
-                });
+            // dummy data for sample
+            const rows = [];
+            for (let i = 0; i < 1000; i++) {
+                rows.push({ WOW: `wow${i}` });
             }
+            datasourceLocal.setData(rows);
 
-            return true; // to keep subscribing
+            // placed by hand, openMenu() puts it on the page. The grid adds its css class itself
+            const gridInterfaceLocal = new GridInterface(gridConfig, datasourceLocal);
+            element.connectInterface(gridInterfaceLocal);
+
+            element.onclick = (x: any) => {
+                if (x.target?.classList.contains('simple-html-grid-cell-input')) {
+                    gridInterface.closeMenu();
+                    data.rowData.company = datasourceLocal.currentEntity?.WOW;
+                    data.target.focus();
+                }
+            };
+
+            element.onkeydown = (x: any) => {
+                if (x.code === 'Enter' && x.target?.classList.contains('simple-html-grid-cell-input')) {
+                    gridInterface.closeMenu();
+                    data.rowData.company = datasourceLocal.currentEntity?.WOW;
+                    data.target.focus();
+                }
+            };
+
+            // a menu with the grid as a block: closed on scroll, outside click, Esc, another menu
+            gridInterface.openMenu(data.cell, [{ type: 'block', id: 'cable-picker', element }]);
+
+            setTimeout(() => {
+                // set focus to first filter
+                // but we want a timeout, so we do not get space clicked
+                (element.getElementsByTagName('INPUT')[0] as HTMLInputElement)?.focus();
+            });
         }
     };
 
-    createButton('gridInterface.addEventListener - popup - company', () => {
-        gridInterface.addEventListener(gridInterfaceDropdownEventSample);
+    // the unsubscribe functions on() returned, called by the "off" button
+    let dropdownEventsOff: (() => void)[] = [];
+
+    createButton('gridInterface.on - popup - company', () => {
+        for (const off of dropdownEventsOff) {
+            off();
+        }
+        dropdownEventsOff = [
+            // moving to another cell closes an open dropdown
+            gridInterface.on('cell-row-focus', () => gridInterface.closeMenu()),
+            gridInterface.on('cell-focus-button-click', openDropdown)
+        ];
     });
 
-    createButton('gridInterface.removeEventListener  - popup - company', () => {
-        gridInterface.removeEventListener(gridInterfaceDropdownEventSample);
+    createButton('gridInterface off - popup - company', () => {
+        for (const off of dropdownEventsOff) {
+            off();
+        }
+        dropdownEventsOff = [];
     });
 }
 
 /**
  * add to document
  */
-containerGrid.appendChild(element);
-document.body.appendChild(containerGrid);
 document.body.appendChild(containerbuttons);
 
 document.body.addEventListener(

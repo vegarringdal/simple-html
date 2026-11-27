@@ -1,73 +1,38 @@
-import { html, render } from 'lit-html';
+import type { FilterOperator } from '../../datasource/filterExpression';
 import type { Grid } from '../grid';
-import { asPx } from './asPx';
-import { creatElement } from './createElement';
-import { prettyPrintString } from './prettyPrintString';
-import { removeContextMenu } from './removeContextMenu';
+import type { MenuEntry } from '../gridMenus';
+import { gridText } from './gridText';
 
 /**
- * ctx is part of filter editor
- * @param cell
- * @param callback
+ * The operator picker of the filter editor: a menu of the operators of the condition's field under
+ * the picker's button, the one in use with a ✓. A menu of the grid (showMenu, as `openMenu()` opens
+ * it): one at a time, the keyboard as in the other menus - opened from the keyboard the focus is on its
+ * first item, Enter picks. It is put in the editor's dialog: a menu outside a modal dialog can not be
+ * used, see popoverParent
+ * @param button the picker, the menu opens under it
+ * @param current the operator picked, undefined for none. One that is not in `operators` (a v5 filter,
+ * CONTAINS on a number) has no ✓
+ * @param operators what the menu offers, in order: the field's (editorOperators)
+ * @param callback gets the picked operator, after the menu has closed
  */
-export function contextMenuOperator(ctx: Grid, event: MouseEvent, cell: HTMLElement, callback: (operator: string) => void) {
-    removeContextMenu(ctx);
-
-    const contextMenu = creatElement('div', 'simple-html-grid');
-    contextMenu.classList.add('simple-html-grid-reset');
-    const rect = cell.getBoundingClientRect();
-
-    contextMenu.style.position = 'absolute';
-    contextMenu.style.top = asPx(rect.bottom + 2);
-    contextMenu.style.left = asPx(event.clientX - 65);
-    contextMenu.style.minWidth = asPx(130);
-
-    if (event.clientX + 70 > window.innerWidth) {
-        contextMenu.style.left = asPx(window.innerWidth - 150);
-    }
-    if (event.clientX - 65 < 0) {
-        contextMenu.style.left = asPx(5);
-    }
-
-    const operators = [
-        'EQUAL',
-        'LESS_THAN_OR_EQUAL_TO',
-        'GREATER_THAN_OR_EQUAL_TO',
-        'LESS_THAN',
-        'GREATER_THAN',
-        'CONTAINS',
-        'NOT_EQUAL_TO',
-        'DOES_NOT_CONTAIN',
-        'BEGIN_WITH',
-        'END_WITH',
-        'IN',
-        'NOT_IN',
-        'IS_BLANK',
-        'IS_NOT_BLANK'
+export function contextMenuOperator(
+    ctx: Grid,
+    button: HTMLElement,
+    current: FilterOperator | undefined,
+    operators: readonly FilterOperator[],
+    callback: (operator: FilterOperator) => void
+) {
+    const entries: MenuEntry[] = [
+        { type: 'section', id: 'filterEditor.operatorMenu', label: gridText(ctx, 'filterEditor.operatorMenu') },
+        ...operators.map(
+            (operator): MenuEntry => ({
+                id: `filterEditor.operator.${operator}`,
+                label: gridText(ctx, `filterEditor.operator.${operator}`),
+                selected: () => operator === current,
+                action: () => callback(operator)
+            })
+        )
     ];
 
-    render(
-        html`<div class="simple-html-grid-menu">
-            <div class="simple-html-grid-menu-section">Operator:</div>
-            <hr class="hr-solid" />
-            <div class="simple-html-grid-menu-sub simple-html-dialog-scroller">
-                ${operators.map((operator) => {
-                    const prettytext = prettyPrintString(operator);
-
-                    return html`<div
-                        class="simple-html-grid-menu-item"
-                        @click=${() => {
-                            callback(prettytext);
-                        }}
-                    >
-                        ${prettytext}
-                    </div>`;
-                })}
-            </div>
-        </div>`,
-        contextMenu
-    );
-
-    document.body.appendChild(contextMenu);
-    ctx.contextMenu = contextMenu;
+    ctx.gridInterface.openMenu(button, entries);
 }

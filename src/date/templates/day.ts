@@ -1,6 +1,21 @@
 import { html } from 'lit-html';
 import type { DateInterface } from '../dateInterface';
 import type { IDateConfig } from '../interfaces';
+import { isSameDay } from '../utils/isSameDay';
+import { isInRange, isRangePicker, nextRange } from '../utils/rangePicker';
+
+/**
+ * A day clicked in a range picker: From, then To, then From again - see nextRange. From and To are the
+ * selected days
+ */
+function rangeClicked(event: MouseEvent, ctx: DateInterface, day: Date) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const range = nextRange(ctx.config.datepickerRange, day);
+    ctx.config.datepickerRange = range;
+    ctx.selected = new Set(range.flatMap((end) => (end ? [end.getTime()] : [])));
+}
 
 function clicked(event: MouseEvent, ctx: DateInterface, currentDate: Date) {
     event.preventDefault();
@@ -11,10 +26,14 @@ function clicked(event: MouseEvent, ctx: DateInterface, currentDate: Date) {
         ctx.selected;
     }
 
+    // on the day: a date given to setSelected() can have another time than the clicked day
+    const onThisDay = [...ctx.selected].filter((time) => isSameDay(time, currentDate));
     let added = false;
-    if (ctx.selected.has(currentDate.getTime())) {
+    if (onThisDay.length) {
         added = false;
-        ctx.selected.delete(currentDate.getTime());
+        for (const time of onThisDay) {
+            ctx.selected.delete(time);
+        }
     } else {
         added = true;
         ctx.selected.add(currentDate.getTime());
@@ -55,6 +74,12 @@ function clicked(event: MouseEvent, ctx: DateInterface, currentDate: Date) {
     }
 }
 
+/**
+ * A day of the month: its number, and the classes `simple-html-date-day-dimmed` (a day of the month
+ * before or after), `-selected`, `-in-range` (between From and To of a range picker), `-today` and
+ * `-hidden` (a dimmed day with `hideDimmedDates`).
+ * A click picks it (date picker), picks From or To (range picker) or selects it (calendar)
+ */
 export function day(context: DateInterface, config: IDateConfig, year: number, month: number, block: number) {
     const FirstDateOfMonth = new Date(year, month, 1);
     const lastDayOfMonth = new Date(year, month === 11 ? 0 : month + 1, 0);
@@ -81,7 +106,10 @@ export function day(context: DateInterface, config: IDateConfig, year: number, m
 
     // if less that first we need to count downwards
     if (day < 1) {
-        FirstDateOfMonth.setDate(FirstDateOfMonth.getDate() - Math.abs(day) - config.weekStart);
+        // setDate(0) is the last day of the previous month, -1 the one before and so on.
+        // (subtracting weekStart here was only right for a monday start, with sunday the cells
+        // before the 1st were off by one and the last one showed the 1st of the previous month)
+        FirstDateOfMonth.setDate(day);
         day = FirstDateOfMonth.getDate();
         dimmedCell = true;
         if (month === 0) {
@@ -103,8 +131,23 @@ export function day(context: DateInterface, config: IDateConfig, year: number, m
 
     const currentDate = new Date(year, month, day, hour, min, 0, 0);
 
-    if (context.selected.has(currentDate.getTime()) && !dimmedCell) {
+    // on the day, the time of a selected date does not matter
+    const selected = [...context.selected].some((time) => isSameDay(time, currentDate));
+    if (selected && !dimmedCell) {
         classList.push('simple-html-date-day-selected');
+    }
+
+    // a range picker: the days between From and To. In the month shown only, as the selected days
+    const range = isRangePicker(config);
+    const dayOnly = new Date(year, month, day);
+    if (range && !dimmedCell && isInRange(context.config.datepickerRange, dayOnly)) {
+        classList.push('simple-html-date-day-in-range');
+    }
+
+    // today has a mark of its own, also when it is not the day picked. In the month shown only, as
+    // the selected day
+    if (isSameDay(Date.now(), currentDate) && !dimmedCell) {
+        classList.push('simple-html-date-day-today');
     }
 
     if (config.hideDimmedDates && dimmedCell) {
@@ -116,7 +159,11 @@ export function day(context: DateInterface, config: IDateConfig, year: number, m
         <div
             class=${classList.join(' ')}
             @click=${(e: MouseEvent) => {
-                clicked(e, context, currentDate);
+                if (range) {
+                    rangeClicked(e, context, dayOnly);
+                } else {
+                    clicked(e, context, currentDate);
+                }
                 context.render();
             }}
         >

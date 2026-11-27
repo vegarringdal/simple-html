@@ -4,7 +4,7 @@
  * @param classes
  * @returns
  */
-export function creatElement(tag: string, classes: string) {
+export function createElement(tag: string, classes: string) {
     const element = document.createElement(tag);
     element.classList.add(classes);
     return element;

@@ -1,5 +1,2793 @@
 # Changelog
 
+## 6.0.0 (in progress)
+
+v6 is allowed to break the API, see `V6_PLAN.md` for what is planned and `MIGRATION.md` for
+what to change in your code. Released in phases.
+
+### Phase 0 - foundations
+
+#### ⚠️ Breaking changes
+- **`Formater` is spelled `Formatter`** in every class, type and method name, plus a few other
+  typos in public names (`setLocaleCompare`, `deselectAll`, `placeHolderRowCurrentEntityOnly`).
+  `sortReset()` is removed, `resetSort()` did the same.
+- **Css is imported from the package root**: `@simple-html/grid/grid.css`, not `/dist/grid.css`.
+  The package has an `exports` map now, so deep imports into `dist` no longer resolve.
+- **Internal members are left out of the typings** - `GridInterface.__parseConfig` and the other
+  `__` methods, `connectGrid`, `handleEvent`, `Datasource.__select`, `getSelection`.
+- **`html`, `render`, `Grid` and `EntityHandler` are no longer exported** (`EntityHandler` still
+  is as a type).
+- **Types are stricter** - the library is compiled with TypeScript `strict`. `getFilter()` can
+  return `null`, saved config state can be `null`, `HTMLCellElement.$attribute` can be `null`.
+
+#### Fixes found by turning on strict mode
+- date picker: a calendar (`datepicker: false`) showed an hour/minute row whose arrows threw.
+  It is only shown in datepicker mode now.
+- date picker: clearing the hour or minute input made the date invalid; it keeps the old value
+- removing a `simple-html-date` element that never got an interface threw
+- `getFilterString()` showed incomplete conditions as `[UNDEFINED] <<UNDEFINED>>`, a group
+  without `logicalOperator` as `UNDEFINED`, and threw for an attribute not in the grid config
+- `setGrouping()` and then `expandGroup()`/`collapseGroup()` threw before the grouping was applied
+- `DataContainer.replace()` gave new rows no key, so `setErrors()` threw
+- `contextMenuCustom()`, `removeContextMenuElement()`, `getAttributeColumns()` and
+  `getOptionalAttributes()` threw when the grid was not in the dom yet
+- mousedown on an empty header label cell (a column with fewer rows than the tallest) threw
+- the filter editor threw on "add condition"/"add sub group" for a group set from code without
+  `filterArguments`
+
+#### Package and tooling
+- installing straight from a git branch works again: `prepare` builds `dist` on install
+  (`dist` is not committed). The tgz is `npm run build:tgz`.
+- tests are no longer shipped in the package
+- typedoc documents the public entry only, with 0 warnings: every type a public signature uses
+  is exported
+- `Listener` is the one type for event listeners (was three identical `callable` types)
+
+### Phase 1 - datasource
+
+#### ⚠️ Breaking changes
+- **A v5 call with a positional boolean throws** a `TypeError` that shows the v6 form, so plain
+  JavaScript does not quietly do something else (e.g. replace rows that were meant to be added)
+- `DataContainer.lenght()` is spelled `length()`
+- **Events are subscribed with `on()`**: `addEventListener` / `removeEventListener` are removed
+  from `Datasource`, `GridInterface` and `DateInterface`. `on(name, handler)` subscribes to one
+  event and returns a function that unsubscribes. The handler gets the payload, not
+  `{ type, data }`, typed from the event name.
+- **What a handler returns is ignored**: no more `return true` to keep listening. In v5 a listener
+  that returned nothing was dropped after its first event.
+- **Event names are kebab case**: `selectionChange` -> `selection-change`, `currentEntity` ->
+  `current-entity`, `gridConnected` -> `grid-connected`.
+- **`Listener` is removed**, and `DateInterface.callSubscribers()` is internal
+  (`__callSubscribers`).
+- **Group rows are not entities**: the group header rows in `getRows()` have their own type,
+  `GroupRow`. `getRows()` returns `(EntityUnion<T> | GroupRow)[]`, `getDataRows()` (was
+  `getRows(true)`) `EntityUnion<T>[]`, `getRow()` `EntityUnion<T> | GroupRow`.
+  The `__group*` field names are unchanged.
+- **`Entity` lost `__groupID`, `__groupName`, `__groupTotal`, `__groupChildren` and
+  `__groupExpanded`**, and `__group` is typed `never` on it: a group row can not be passed where
+  an entity is expected (`markForDeletion()`, `removeData()` ...). `__groupLvl` stays.
+- **`currentEntity` is `EntityUnion<T> | GroupRow | null`**: moving the focus from the first data
+  row up into the header filter row while grouped makes the group row above current, and so does
+  `setRowAsCurrentEntity()` with a group row's index.
+- **`getSelectedRows()` returns `EntityUnion<T>[]`** (was `Entity[]`), never a group row.
+- **The `cell-header-focus` event's `rowData` is `Entity | GroupRow | undefined`**: it is the first
+  displayed row, a group row when grouped. The other cell events and `readonlySetter()` /
+  `cellAppendClassSetter()` only get data rows, documented now.
+- **`new Datasource(options)`** replaces `new Datasource(dataContainer, options)`: `key`, `fields`,
+  `formatters`, `selectionMode` and `container` (to share rows) in one object. A `key` that is not
+  the container's key throws. `DatasourceConfigOptions` is replaced by `DatasourceOptions`.
+- **Types live in the datasource's `fields`**: `Attribute.type` is removed from the grid config,
+  the grid, sorting, grouping and filtering read `datasource.getField(name).type`. A field that is
+  not listed is `'text'`. `DataTypes` is renamed `FieldType`.
+- **`setDates()` is removed**: a `date` field sorts on the day.
+- **`date` and `datetime` replace `includesTime`**: a `date` field filters, sorts and groups on the
+  day, a `datetime` field on the timestamp. `includesTime` on the date formatters and
+  `ValueFormatter.dateIncludesTime()` are removed.
+- **Formatters are per field**: `ValueFormatter`, `DefaultValueFormatter`, `DateAndNumberFormatter`,
+  `setValueFormatter()` / `getValueFormatter()`, `setDateFormatter()` / `getDateFormatter()` and
+  `setNumberFormatter()` / `getNumberFormatter()` are removed. A field takes a `formatter`, the
+  `formatters` option sets the default per type.
+- **The built-in formatters are plain objects** with the `Formatter` methods: `fromSource`,
+  `fromSourceDisplay` and `fromSourceGrouping` are `format`, `toSource` is `parse`, `toFilter` is
+  `parseFilter`, `placeholder()` is the `placeholder` property (only the date formatters have one).
+  One `format` for the readonly cell and the edit input.
+- **`getFilterString()` / `getFilterTree()` take an optional `label(field)` function** instead of the
+  grid. The labels default to the field labels.
+- **A text field shows 0 and false** (the v5 default formatter showed them blank), and a field that
+  is not listed groups on its value as text - a `Date` in it is no longer grouped by day.
+- **`dynamicCellTypeColumn` applies to any text field**, a field that is not listed included (v5
+  needed `type: 'text'` on the column). It can name `'datetime'`.
+- **One filter format**: `FilterArgument` is replaced by `FilterExpression`, a `FilterGroup`
+  (`{ group: 'AND' | 'OR', children }`) or a `FilterCondition` (`{ field, operator, value?,
+  valueField? }`). `attribute` is `field`, a group's `logicalOperator` is `group`, `filterArguments`
+  is `children`; `type`, `logicalOperator: 'NONE'`, `valueType` and `attributeType` are removed.
+  `filter()`, `setFilter()`, `getFilter()`, `GridConfig.filter` and `saveConfig()` all use it. A
+  filter saved by v5 is ignored, `MIGRATION.md` has a function that converts one.
+- **`FilterComparisonOperator` is renamed `FilterOperator`** (same operator names), and
+  `FilterAttributeSimple`, `FilterExpressionType`, `FilterLogicalOperator` and `FilterValueType` are
+  removed. `Attribute.operator` is a `FilterOperator`.
+- **A condition's type comes only from `fields`**: `attributeType` is gone, a field that is not
+  listed is `'text'`. A number or `Date` value still compares as a number or date.
+- **`valueField` replaces `valueType: 'ATTRIBUTE'`** (with the other field's name in `value`) to
+  compare with another field of the row.
+- **`filter()`**: the array form `filter([a, b])` is removed (use `and(a, b)`), `filter(null)` removes
+  the filter (v5 ran the current one again), an empty group is kept and filters nothing (v5 turned
+  it into no filter), and a single condition stays the root: `getFilter()` returns it as given, v5
+  wrapped it in an AND group.
+- **`getFilterTree()` returns `null` when nothing of the filter is shown**, the same case where
+  `getFilterString()` returns `''`. v5 returned an empty group when every condition was incomplete.
+  A `valueField` is shown by its label (v5 showed the name).
+- **The filter editor applies only complete conditions**: a condition without a field or operator,
+  or set to compare with a field that is not picked yet, is left out (the open dialog keeps it).
+- **Options objects instead of positional booleans** on `Datasource` and `DataContainer`:
+  `setData(rows, { add, refilter })`, `sort(args, { add })`, `setOrderBy(args, { add })`,
+  `group(groups, { add })`, `select(row, { notify })`, `deselectAll({ notify })`,
+  `addNewEmpty(row, { scrollTo })`, `removeData(rows, { refilter })` and the container's
+  `setData(rows, { add, isNew })`. The defaults are unchanged. In plain js a boolean passed the v5
+  way throws a `TypeError` that shows the v6 form.
+- **The `all` flags are methods**: `markForDeletion(null, true)` is `markAllForDeletion()`,
+  `removeData(null, true)` is `removeAllData()`, on the datasource and the container.
+  `markForDeletion()` / `removeData()` take a row or a list, not `null`.
+- **`getRows(true)` is `getDataRows()`, `length(true)` is `getDataRows().length`**: `getRows()` and
+  `length()` take no argument, `getRows()` has no overloads.
+- **`getChanges()` returns plain copies, not a JSON copy**: a `Date` stays a `Date`, a field set to
+  `undefined` is kept. `JSON.stringify()` of the result is the same as before.
+- **A time only change on a `datetime` field is an edit**, and so is one on a field that is not
+  listed in `fields` (v5 compared every date on the day). A `date` field still compares on the day.
+  Dates are compared to the second, the milliseconds are ignored.
+- **Datasources sharing a container must give a field the same type**: the container tracks the
+  edits with the types of every datasource on it, a field two of them list with different types
+  throws in the constructor of the second.
+- **`EntityHandler`'s constructor takes `{ key, isNew, fieldType }`** (was `(keyString, tagAsNew)`),
+  for a handler given to `overrideEntityHandler()`.
+
+#### Fixed
+- `getChanges()` listed a field edited back to its original value in the modified entry (when
+  another field of the row was still edited); it lists the fields that differ only
+- a time only change on a `datetime` field was not an edit, so it was missing from `getChanges()`
+  and the row was not marked modified
+- `NumberFormatterComma` `parse` (was `toSource`) threw on null, undefined and a number
+- the `*THHMMSS` formatters' `parseFilter` (was `toFilter`) put the current milliseconds on a filter
+  boundary, they are 0 now
+- the date formatters' `parse` / `parseFilter` gave null for a `Date`: it passes through now, a date
+  only `parseFilter` moves it to the start of its day
+- changing the operator of a date column's header filter dropped the filter
+- a boolean typed into the filter editor was kept as text and never matched; pasted text into a
+  boolean column was stored as text
+- the date formatters turned a value that is no date, text or number (`true`) into `1970-01-01`
+- a single condition at the root of the filter (set with `setFilter()`) was filtered on, but
+  `getFilterString()` / `getFilterTree()` ignored it, so the footer showed no filter, and the header
+  filter's "Set Is Blank" dropped it
+- the filter editor applied a JSON copy of the filter, so a `Date` value became text
+- an `IN` / `NOT_IN` condition with the list as text was rewritten into an upper case array while
+  filtering
+- the header filter's "Clear Filter" and "Set Is Blank" changed the filter object in place (also the
+  one the user passed in); they set a new filter now
+
+#### Added
+- event maps `DatasourceEvents`, `GridEvents`, `DateEvents`, with every event and its payload
+  documented, plus `GridCellEventData` and `EventHandler` to type a handler written on its own
+- `GroupRow`, the type of a group header row, and `isGroupRow(row)` to tell it from a data row
+  (narrows the type, takes `null`/`undefined`)
+- the schema: `FieldType` (`'datetime'` is new), `FieldConfig` (`type`, `label`, `formatter`),
+  `datasource.getField(name)` (the resolved `Field`) and `datasource.getFormatter(field, type?)`
+- `FieldConfig.label`: the grid's column label falls back to it (`Attribute.label` still wins)
+- the `Formatter` interface, and `TextFormatter` / `BooleanFormatter`, the defaults for `text` and
+  `boolean` fields
+- `DataContainer.getKeyAttribute()`
+- filter builders `and(...children)`, `or(...children)` and `where(field, operator, value?)`, and the
+  types `FilterExpression`, `FilterGroup`, `FilterCondition`, `FilterOperator`, every operator
+  documented
+- **0 is blank** is decided: kept as it is, and documented on `FilterOperator` - `IS_BLANK` matches 0,
+  `IS_NOT_BLANK` leaves it out, the value list puts 0 under "Blank"
+- `getChanges()` is typed: `Changes<T>` (`newEntities`, `modifiedEntities`, `deletedEntities`) and
+  `ModifiedEntity<T>`, the key plus the changed fields of an edited row
+- `getDataRows()`, `markAllForDeletion()` and `removeAllData()` on the datasource;
+  `markAllForDeletion()` and `removeAllData()` on the container
+- `addNewEmpty(row)` takes `Partial<T>`, so a typed datasource can add a row with some fields
+- demo: the editing sample shows `markAllForDeletion()` and the typed `getChanges()`, the rows
+  sample `removeAllData()`, the sorting sample `sort(args, { add: true })`, the selection sample
+  `select(row, { notify: true })`
+- demo: the filtering sample uses the builders and logs `getFilter()`, the save & load sample loads a
+  config with a filter
+- demo: the formatters sample uses per field formatters and the `formatters` option, the value
+  formatter override sample is replaced by a custom formatter sample
+
+#### Internal
+- one `Emitter` (`src/emitter.ts`) instead of three copies of the listener code
+- the grid interface subscribes to each datasource event it follows and unsubscribes on
+  disconnect. Connecting the same interface again subscribes once.
+- the grid and the datasource check for group rows with `isGroupRow()`, not by reading `__group`
+- the four date formatters share one implementation (`dateFormatterParts.ts`), the two number
+  formatters one parser
+- the grid reads a column's type, label and formatter in one place each: `getCellType()` (with
+  `dynamicCellTypeColumn`), `getColumnLabel()` and `datasource.getFormatter()`
+- one rule for an ignored condition (`isIgnoredCondition`), used by the filter, `getFilterString()`,
+  `getFilterTree()` and the filter editor. The filter editor edits drafts (`Partial<FilterCondition>`)
+  and converts them when it applies
+- the filter editor's operator picker hands over a typed operator, no more round trip through the
+  display text
+- edit tracking compares in one function, `isSameValue(original, value, type)`. The container
+  passes each row's `EntityHandler` a field type lookup, filled by the datasources made on it
+  (`__addFieldTypes`)
+
+### Phase 2 - grid interface and config
+
+#### ⚠️ Breaking changes
+- **Columns are declared once**: `attributes` and `columnsPinnedLeft` / `columnsCenter` /
+  `columnsPinnedRight` are replaced by `columns` (the options of a column, keyed by field name) and
+  `layout: { left?, center, right? }`, whose columns name their `fields` (was `rows`). A field in the
+  layout without an entry in `columns` gets the defaults. The internal `__attributes` list is gone,
+  and with it the v5 bug where a header filter's text survived for a column not in `attributes`.
+- **`Attribute` is `ColumnConfig`**, without `attribute` (the key is the field) and without
+  `currentFilterValue` (state now). `Columns` is `LayoutColumn`, `Sort` is removed (use
+  `SortArgument`, the same shape).
+- **Casing fixed**: `placeHolderRow` -> `placeholderRow`, `placeHolderFilter` -> `placeholderFilter`,
+  `placeHolderRowCurrentEntityOnly` -> `placeholderRowCurrentEntityOnly`.
+- **Config and state apart**: `saveConfig()`, `loadConfig()`, `loadInitConfig()` and
+  `updateInitConfig()` are removed. `getState()` / `setState()` / `resetState()` read and set what the
+  user changes: column order, pinning and widths, sorting, grouping, expanded groups, the filter and
+  the header filters. `setState()` applies the parts it is given and keeps the rest (`loadConfig()`
+  replaced everything).
+- **`sorting`, `grouping`, `expandedGroups` and `filter` left `GridConfig`**: a grid that starts
+  sorted, grouped or filtered sets them in `initialState`, which `resetState()` goes back to (with
+  the config's `layout`). What `initialState` leaves out is cleared, in the datasource too.
+- **The header filter operator the user picks is state**, `getState().headerFilters[field].operator`.
+  `ColumnConfig.operator` is the operator a header filter starts with; v5 wrote the picked operator
+  into it.
+- **Options are not part of the state**: v5's `saveConfig()` / `loadConfig()` also carried every
+  option (`readonly`, `tooltips` ...). To change one while the grid is shown, use
+  `gridInterface.updateConfig()`. `dimRepeatedValues` toggled from the row menu is not in the state.
+- **`filter-operator-change` sends `{ field, operator, column, rebuildHeader }`** (was
+  `{ cellConfig, rebuildHeader }`, with the operator in `cellConfig.operator`).
+- The internal sizes (`__rowHeight` ...) are no longer on the `GridConfig` type.
+- **`readonlySetter()` and `cellAppendClassSetter()` are removed**: the callbacks are in the config,
+  `GridConfig.isReadonly(row, field, readonlyByConfig)` and `GridConfig.cellClass(row, field)`. The row
+  comes first, `cellClass` has no third argument, and it returns `{ input, background }` (was
+  `{ inputClass, dimmedClass }`, both optional now) or `null` / `undefined` for no classes. Set or
+  remove them later with `updateConfig()`.
+- **Methods renamed**: `triggerScrollEvent()` -> `refresh()`, `triggerRebuild()` -> `rebuild()`,
+  `getOptionalAttributes()` -> `getHiddenFields()`, `getAttributeColumns(filterSelectedColumns)` ->
+  `getLayoutFields({ selectedOnly })`. `getLayoutFields()` gives every field by default (v5's default
+  was the selected columns), and `{ selectedOnly: true }` gives `[]` when no column is selected (v5
+  gave every field). A boolean in place of the options throws a `TypeError`.
+- **`GridElement.enableCleanup` is removed** (a test flag), and `connectedCallback()` /
+  `disconnectedCallback()` are left out of the typings - the browser calls them.
+- **`new GridInterface(config, datasource)` takes the row type from the datasource**: a
+  `Datasource<Person>` gives a `GridInterface<Person>`.
+- **`contextMenuCustom()`, `getContextMenuElement()`, `setContextMenuElement()` and
+  `removeContextMenuElement()` are removed**: `openMenu(at, entries)` opens a menu of your own,
+  `closeMenu()` closes the open menu. An item has its own `action` (v5: one callback for every
+  `{ value, label, isHeader }`), clicking it closes the menu (v5 kept it open unless the callback
+  returned `true`), and labels are shown as given (v5 pretty printed them and added a colon to a
+  header). An element that should close with the menus, a dropdown grid, is a block of the menu:
+  `openMenu(cell, [{ type: 'block', id, element }])` places it, where v5 had you place it and register
+  it with `setContextMenuElement()`. `getContextMenuElement()` has no replacement.
+
+#### Fixed
+- a boolean header filter set to `false` showed as empty after the header was rebuilt, and a number
+  header filter of 0 showed nothing (the value was read with `||`)
+- the class from `cellClass` (v5 `dimmedClass`) was joined to the grid's `simple-html-readonly` /
+  `simple-html-mandatory` class without a space, so on a readonly or mandatory cell of an editable grid
+  neither class applied
+- the internal `Grid.disableResizeEvent()` / `enableResizeEvent()` did the opposite of their names.
+  They also take effect right away now: disable disconnects the resize observer (and cancels a pending
+  resize rebuild), enable makes it again for a grid in the dom
+- a menu opened from a click handler (v5 `contextMenuCustom()`) was closed again by that same click
+  reaching the document; it stays open now
+- a click inside an element registered with `setContextMenuElement()` (the dropdown grid sample)
+  closed it, so its filter input could only be used from the keyboard. A block in a menu stays open
+- the header and filter menus could open below the bottom of the window, they open above the cell
+  when there is no room below (as the row menu did). A menu that sticks out on the right of the
+  window is moved in
+
+#### Added
+- `GridConfig.columns`, `GridConfig.layout`, `GridConfig.initialState`, and the types
+  `ColumnConfig`, `GridLayout`, `LayoutColumn`, `GridState`, `HeaderFilter`
+- `gridInterface.getState()`, `setState(state)`, `resetState()`, documented with examples
+- `MIGRATION.md`: a function that converts a v5 config
+- demo: the save & load sample is a state sample (`getState` / `setState` / `resetState`,
+  `initialState`), the column layout sample logs the layout
+- **`createGrid(host, { config, datasource })`**: makes the interface and a `<simple-html-grid>`
+  element that fills the host, connects them, adds the element and returns the interface. Type
+  `CreateGridOptions`
+- **`gridInterface.destroy()`**: removes the element and disconnects the grid from the datasource,
+  the document and the `on()` handlers
+- **`gridInterface.updateConfig(partial)`**: changes options while the grid is shown and rebuilds
+  once. The keys given change, `undefined` gives back the default, `columns` replaces every column's
+  options, `layout` is shown right away (as `setState({ layout })`) and is what `resetState()` goes
+  back to, `initialState` only changes what a later `resetState()` goes back to
+- `GridConfig.isReadonly`, `GridConfig.cellClass` and the type `CellClass`
+- JSDoc with examples on `GridInterface` and `GridElement`: every public method, and the class
+- README and the demo use `createGrid()`; the samples that change an option use `updateConfig()`,
+  the cell styling sample the config callbacks. `MIGRATION.md`: setup, callbacks, `updateConfig()`
+  and a table of every renamed or removed method
+- **Menus as data**: the row, header and filter menus are lists of entries - items, section headers,
+  separators and blocks (`MenuEntry`: `MenuItem`, `MenuSection`, `MenuSeparator`, `MenuBlock`) - each
+  with a stable id. **`GridConfig.menus`** (`GridMenus`) has a function per menu, `row`, `header` and
+  `filter`, that gets the built-in entries and the `MenuContext` (field, row, row index, cell, grid
+  interface, datasource) and returns the entries to show: hide, reorder, relabel or add. An item
+  takes `action(context)`, and optional `hint`, `visible(context)`, `disabled(context)` and
+  `selected(context)`
+- **`MENU_IDS`**: every built-in id per menu, in the order shown, documented with its label and
+  when it is shown. The header filter's value list is one block entry, `filter.values`
+- **`gridInterface.openMenu(at, entries)`** opens a menu of your own at a mouse event, a position
+  (`MenuPosition`) or under an element; **`closeMenu()`** closes the open menu, the grid's own too
+- menu entries carry their id in a `data-menu-id` attribute; a disabled item has the class
+  `simple-html-grid-menu-item-disabled` and `aria-disabled="true"`
+- demo: the custom cell menu sample is a menus sample (`menus` hides a built-in entry and adds a
+  part of its own, `openMenu()` as a value picker), the dropdown sample opens its grid with
+  `openMenu()` as a block. `MIGRATION.md`: the menus, before and after
+
+#### Internal
+- the grid reads `layout.left` / `layout.center` / `layout.right` and `columns` where it read
+  `columnsPinnedLeft` / `columnsCenter` / `columnsPinnedRight` and `__attributes`; the logic is
+  unchanged. A missing `left` / `right` / `columns` is filled in once, when the interface is made
+- the header filter values and picked operators live in the grid interface (`__getHeaderFilter`,
+  `__setHeaderFilterValue`, `__setHeaderFilterOperator`, `__clearHeaderFilterValues`), one
+  `getHeaderFilterOperator()` picks the operator a header filter uses
+- `filterCallback()` takes the field, not the column config
+- the state tests replace the save/load config tests (`gridState.test.ts`)
+- the grid knows its element from the start (`new Grid(element)`), and the interface remembers the
+  grid it was connected to last, so `destroy()` also works after the element left the dom
+- one internal check for a readonly cell, `__isCellReadonly()`, used by the cells and the row menu's
+  paste and clear; `__getCellClass()` for the classes
+- the row menu's "Use dimmed values" goes through `updateConfig()`, so a later `updateConfig()` keeps it
+- tests: `createGrid.test.ts`, `updateConfig.test.ts`, `cellCallbacks.test.ts`, and refresh / rebuild
+  / resize toggle tests in `gridLifecycle.test.ts`
+- one renderer for every entry menu (`showMenu()`): the row, header and filter menus and `openMenu()`
+  share the markup, the placement and the closing. The three menus build their default entries, the
+  config's `menus` function changes them; `contextMenuCustom.ts` is gone. Rendering is unchanged: the
+  same elements and css classes, a section header followed by its solid line, the separators dashed.
+  The value list's parts are in one element of their own (a flex column, as the menu is)
+- an item click closes the menu first, then runs the action, so an action can open another menu.
+  The column chooser opens at the mouse position of the right click (it used the click on its menu
+  item)
+- the value list renders only itself again when values are checked or searched (it rendered the
+  whole filter menu)
+- tests: `gridMenus.test.ts` - the ids, hiding, reordering, custom entries and their context,
+  `visible` / `disabled`, `openMenu()` / `closeMenu()`, a dropdown grid as a block
+
+### Fixes found while writing the docs
+
+Writing the guides against the code found these. Each fix has a test that fails on the old code: `datasource/__tests__/docsFindings.test.ts`,
+`grid/__tests__/docsFindings.test.ts`, the `setSelected` and `datePickerConfig` tests in
+`date/__tests__/datePicker.test.ts` and `grid/__tests__/datePickerCell.test.ts`, the docs site tests in
+`samples/demo/__tests__/` and the typings consumer.
+
+#### ⚠️ Breaking changes
+- **`GridConfig.selectionMode` is removed**: the datasource owns the selection mode
+  (`new Datasource({ selectionMode })`, `datasource.setSelectionMode()`) and the grid reads it from
+  there. The grid used to set its own (default `'multiple'`) on the datasource on every rebuild, so
+  `new Datasource({ selectionMode: 'single' })` became `'multiple'` once shown in a grid.
+- **`setData()` runs the filter that is set by default** (`refilter: true`). The new rows bypassed a
+  filter that was still set - and still shown by the header filters and the footer. `refilter: false`
+  keeps the old behaviour; it is then the only `setData()` that sends `collection-filtered`
+  (`'__internalUpdate, forced'`, with no filter, sort or grouping).
+- **`ColumnConfig.mandatoryOnlyIfEmpty` is removed**: it was read nowhere, `mandatory` marks only the
+  empty cells. Phase 5 (validation) replaces the mandatory options.
+- **`DateInterface.selected` is a `Set<number>`** of timestamps and `getSelected()` returns `number[]`
+  (was `unknown`); `setSelected(dates)` stores the timestamps of the dates.
+- **`removeGroup(group)` finds the level by its field**: a copy removes it. A field that is not grouped
+  on changes nothing and sends no event (it used to regroup and send `collection-grouped` twice).
+
+#### Fixed
+- `setGrouping()` followed by `filter()` (or `setData()`, `reloadDatasource()` ...) grouped rows that
+  were not sorted for the grouping, so a group showed up once per run of equal values. So did
+  `setOrderBy()` or `resetSort()` while grouped. The rows are now always sorted on the grouped fields
+  first, whatever path leads to the grouping; each grouped field keeps the direction the sort gives it
+- `removeGroup()` with a copy of a grouping (e.g. from a saved state) removed nothing, but still
+  regrouped and sent the events
+- `expandGroup(id)` of a sub group whose parent is collapsed did nothing: it expands the groups above it
+  too now, so the group is shown
+- `currentEntity` kept pointing at a row of the old data after `setData()` replaced the rows: it is set
+  to `null` (and `current-entity` sent) when the current row is no longer in the data
+- `selectAll()` sent `selection-change` in the `'single'` and `'none'` selection modes, where it selects
+  nothing: it does nothing there now. Also a click on the grid's top left corner
+- `DateInterface.setSelected(dates)` showed no day as selected: it stored the `Date`s, the days were
+  matched by timestamp. A day is selected when a selected date falls on it, whatever its time, and a
+  click on such a day unselects it
+- `GridConfig.datePickerConfig` demanded a whole `IDateConfig`, though the grid fills in a default for
+  every field it reads: it is a `Partial<IDateConfig>`
+- a click on a group row logged `group selected, do I want something here ?` to the console. Two
+  unreachable `console.log('err')` went too
+- docs site: the guides' links to `../MIGRATION.md` (and other files of the repo that are not guides)
+  were a 404 on the site; the site links them to the file on github. `npm run check:docs` checks that
+  the file exists, and the heading of a markdown file
+- docs site: the dark theme's colours for new, modified and deleted rows never applied - the
+  `row-is-*` class is on the element around the row number, not on `.simple-html-selector-text`. Same
+  fix in the dev sample's dark mode (`samples/grid01`)
+
+#### Docs
+- the text header filter starts with `EQUAL`, a whole-text match (`ann` does not find `Anna`). The
+  filtering guide and `ColumnConfig.operator` show `columns: { name: { operator: 'CONTAINS' } }` for a
+  contains search per column
+- emptying a number cell stores 0 (the number formatters' `parse('')` gives 0), the row menu's Clear
+  stores `null`: in the editing and formatting guides, on the number formatters and `MENU_IDS`, with a
+  formatter that stores `null` instead
+- the selection mode's guide section has a table of what each mode does; the samples set the mode on the
+  datasource, the selection sample switches it while the grid is shown, the rows sample has a
+  `refilter: false` button
+
+### Phase 2b - save workflow, validation, config as JSON
+
+The grid config, the state and the datasource's `fields` + `formatters` are plain JSON, so they can be
+stored in a backend and given back as they are. What is code - formatters, validators and the grid's
+functions - is registered or given next to the config. Deleting a row is a tag that can be undone, the
+fields' rules validate the edits and `validate()` checks the rows before a save, and `acceptChanges()`
+closes the save round trip: one transaction with the deleted, edited and new rows, then the grid shows
+what was saved, the new rows with the server's keys.
+
+#### ⚠️ Breaking changes
+- **Deleting a new row marks it**: `markForDeletion()` and `markAllForDeletion()` no longer remove a new
+  row (from `addNewEmpty()`), they mark it like any other row - so `unmarkForDeletion()` brings it back.
+  While it is marked it is in none of the lists of `getChanges()`, as before; it stays in `getAllData()`,
+  `getDataRows()`, `getMarkedForDeletion()` and the grid until `acceptChanges()`,
+  `clearMarkedForDeletion()` or `resetData()` removes it.
+- **`getChanges().newEntities` has `__KEY` without a key field**: the temporary key of the new row, as
+  `modifiedEntities` has it, so the server's key can be given back. Typed
+  `(T & { __KEY?: string | number })[]`. With a `key` nothing changed.
+- **The row menu of an editable grid can delete rows**: a "Delete:" section (`row.delete`,
+  `row.delete.rows`, `row.delete.undo`) between "Clear:" and "Summary:", see Added. Hide it with the
+  `menus` hook where the user should not delete rows.
+- **`collection-filtered` has two more `info` values**, `'unmarkForDeletion'` and `'acceptChanges'`. The
+  grid now rebuilds on every `collection-filtered` but `'__internalUpdate, forced'`.
+- **Formatters are named by id**: `FieldConfig.formatter` and the datasource option `formatters` take
+  the id of a registered formatter, not the formatter object -
+  `fields: { price: { type: 'number', formatter: 'numberComma' } }`, `formatters: { date: 'dateDDMMYYYY' }`.
+  Register your own with `registerFormatter('money', money)` before the datasource that names it is
+  made. An id that is not registered throws when the datasource is made, listing the registered ids;
+  a formatter object where an id goes (plain JS) throws a `TypeError` saying how to register it.
+- **`isReadonly`, `cellClass` and `menus` left `GridConfig`**: they are hooks (`GridHooks`), given next
+  to the config - `createGrid(host, { config, datasource, hooks })`, `new GridInterface(config,
+  datasource, hooks)` - and changed with `gridInterface.updateHooks()`. `updateConfig()` no longer
+  takes them. A config with one of them (plain JS, or a config written for a v6 pre-release) throws a
+  `TypeError` naming the hook, in the constructor, `createGrid()` and `updateConfig()`.
+- **`CellClass` moved to the hooks** (`src/grid/gridHooks.ts`); it is still exported from the package
+  root under the same name.
+- **`ColumnConfig.mandatory` is removed**: it is the `required` validation rule of the datasource field,
+  `fields: { name: { validate: ['required'] } }`, which draws the same stripes (`simple-html-mandatory`)
+  and also validates. A config with `mandatory` (plain JS, a stored config) throws a `TypeError` naming
+  the field, in the `GridInterface` constructor, `createGrid()` and `updateConfig()`. The stripes now
+  show where `required` fails: a number field of 0 is striped (0 is missing, as for `IS_BLANK`), an
+  unchecked checkbox is not (`false` is a value).
+- **`Field` (from `getField()`) has `validate`**: the field's rules written out, `[]` without. A
+  `toEqual()` on a whole `getField()` result has to add it.
+- **The grid shows `__rowError`** (`setErrors()`) on the row number: the class `simple-html-row-error`
+  and the message as its tooltip. It showed nothing before.
+- **`DatasourceEvents` has a `validate` event**, and the methods that remove rows can send
+  `current-entity` and `selection-change` (see Fixed): a `switch` over every event name has to add it.
+- **`EntityHandler` takes `onEdit`** in its options and its set trap calls it: a handler of your own
+  (`overrideEntityHandler()`) has to call it, or the edits are not validated.
+
+#### Added
+- **Validation**, for item 47 of the plan:
+  - **rules in the fields, as JSON**: `fields: { age: { type: 'number', validate: ['required', { id: 'min',
+    value: 0 }, { id: 'max', value: 150, message: 'too old' }] } }`. A rule is the id of a validator, or
+    `{ id, ...options, message? }`. Types `ValidationRule`, `ValidationRuleObject`, `ValidationOption`.
+  - **`registerValidator(id, validator)`**, one registry for the page like the formatters. A `Validator`
+    is `(value, row, rule) => string | null`: the message, a message id, or `null` when valid. The
+    datasource looks its ids up when it is made: an unknown id throws listing the registered ones, and so
+    do rules that are no list, a rule without an id, a `message` that is not text, and a built-in rule
+    with a wrong option (`min` without a number, a `pattern` that is no regular expression). A validator
+    that returns something else than text or `null` throws a `TypeError`.
+  - **built-ins**: `required` (fails on `null`, `undefined`, `''`, an invalid Date and 0 - like
+    `IS_BLANK`, because an emptied number cell stores 0; `false` passes), `min`, `max` (numbers),
+    `minLength`, `maxLength`, `pattern` (text; a regular expression as text, not anchored). All but
+    `required` pass a blank value, and the values not of their kind.
+  - **messages by id**, `VALIDATION_MESSAGES`: `'validation.required'` `Required`, `'validation.min'`
+    `Must be at least {value}`, `'validation.max'` `Must be at most {value}`, `'validation.minLength'`
+    `Must be at least {value} characters`, `'validation.maxLength'` `Must be at most {value} characters`,
+    `'validation.pattern'` `Not in the expected format`. A rule's `message` replaces the default, and
+    `{name}` is replaced by the rule's option `name`. The ids are for the texts map of phase 3.
+  - **when it runs**: an edit, from the grid or from code - the field, and the row's fields that have an
+    error, so an error that reads another field clears once that is fixed. The rows from `setData()` and
+    the new rows from `addNewEmpty()` are not validated until they are edited or `validate()` runs.
+  - **`datasource.validate(rows?)`** checks every field with rules of every row (or the rows given),
+    keeps the errors and returns them as `ValidationError<T>[]` - `{ row, field, messages }`, in the
+    order of the rows and the rules - and sends `validate` (`{ errors }`). **`getErrors(rows?)`** and
+    **`hasErrors()`** read the errors there are now. A row marked for deletion is skipped and has none
+    (they are back when it is unmarked). `acceptChanges()` and `resetData()` clear them,
+    `resetDataSelectionOnly()` those of the selected rows.
+  - **kept apart from the server's errors**: `setErrors()` / `__rowError` does not change them, and
+    `validate()` / `getErrors()` / `hasErrors()` do not read it. The grid shows both on the row number.
+  - **shared containers**: the rules are the container's, like the field types - an edit through any
+    datasource on it is validated; two datasources that both give a field rules must give the same
+    ones (the order of a rule's options does not matter), or the second throws.
+  - **in the grid**: a cell with an error gets `simple-html-cell-error` (a red border inside, a tint)
+    and its messages as the tooltip, one per line; the row number `simple-html-row-error` (a red bar, a
+    tint) with the server's error and a `Label: messages` line per field. An edit in the grid shows them
+    as the user types, without rendering the input again; `validate()` shows them through its event.
+    The grid's own tooltip shows them (`tooltips: false` turns it off, `data-tooltip` is written
+    either way); it is on the grid's body now, hidden on wheel and when the grid leaves the page, and
+    keeps the line breaks (`white-space: pre-line`). New css variables `--simple-html-grid-error-color`
+    and `--simple-html-grid-error-bg-color`, a lighter red in the demo's dark theme.
+- **`unmarkForDeletion(rows)` and `unmarkAllForDeletion()`** on `Datasource` and `DataContainer`: undo a
+  delete. The row is as it was before it was marked - its edits kept, a new row new again. Sends
+  `collection-filtered` with `info: 'unmarkForDeletion'`.
+- **`acceptChanges({ rows?, newKeys? })`** on `Datasource` and `DataContainer`, for after a successful
+  save. For every row, or the `rows` given: a row marked for deletion is removed (a new one too), a new
+  row becomes an ordinary row, the values it has now become its originals (nothing counts as edited),
+  and its error is cleared. `newKeys` is a `ReadonlyMap` from each temporary key (as in
+  `getChanges().newEntities`) to the server's key, compared as text (`-1` and `'-1'` are the same key):
+  the new row gets it in its key field, or as its `__KEY` without one - no edit, and a selected row stays
+  selected. A key in `newKeys` that is not the key of a new row accepted, or a blank server key, throws
+  before anything changes; a new row not in it keeps its key. The rows themselves in place of the
+  options (plain JS) throw a `TypeError`. The datasource rebuilds its displayed rows and sends one
+  `collection-filtered`, `info: 'acceptChanges'`.
+- **`hasChanges()`** on `Datasource` and `DataContainer`: `true` when `getChanges()` lists a row.
+- **Row menu "Delete:"**, in an editable grid: *Rows (selected rows)* marks the selected rows for
+  deletion - the rows stay in the grid until the changes are accepted - and is greyed out when no
+  selected row is left to mark; *Undo (selected rows)* takes the mark off, shown when a selected row is
+  marked. A row the `isReadonly` hook returns `true` for in every column of the layout is locked, delete
+  skips it; the columns' `readonly` option does not lock a row, and undo works on every marked row (a
+  hook that makes the marked rows readonly does not stop it). In `MENU_IDS.row` and the menus guide.
+- **`registerFormatter(id, formatter)`**: one registry for the page. The built-ins are registered from
+  the start: `'text'`, `'boolean'`, `'numberDot'`, `'numberComma'`, `'dateYYYYMMDD'`, `'dateDDMMYYYY'`,
+  `'datetimeYYYYMMDD'`, `'datetimeDDMMYYYY'`; the defaults per type are `'text'`, `'numberDot'`,
+  `'boolean'`, `'dateYYYYMMDD'` and `'datetimeYYYYMMDD'`. The datasource looks its ids up once, when it
+  is made: registering an id again replaces it for the datasources made after (a built-in id too). An
+  id that is not text, or a formatter without `format()` / `parse()`, throws a `TypeError`.
+  `getFormatter()` and `getField().formatter` still give the formatter object, and the exported
+  formatter objects stay.
+- **`GridHooks<T>`** - `isReadonly`, `cellClass` and `menus`, with the same behaviour as before. With a
+  `Datasource<Person>` the hooks get typed rows (`EntityUnion<Person>`). `CreateGridOptions.hooks`.
+- **`gridInterface.updateHooks(hooks)`**: only the keys given change, `undefined` removes a hook; the
+  visible cells are rendered again once (a menu uses its new function the next time it opens). The
+  grid keeps a copy of the hooks object.
+- JSDoc with examples on `registerFormatter`, `GridHooks` and `updateHooks`; every built-in formatter
+  says its id. `GridState` and `setState()` say what happens to a `Date` stored as JSON.
+- guides: "Hooks" and "Saving the config" in the grid config guide, "A formatter of your own" and the
+  ids in the formatting guide, "Dates in a saved state" in the state guide; the other guides, README
+  and `MIGRATION.md` (before/after for formatter ids and the hooks) use ids and hooks
+- samples: the formatter samples register their formatters and name them by id, the cell styling
+  sample uses `updateHooks()`, the menus sample gives `menus` as a hook, `samples/grid01` registers its
+  switchable formatters
+- samples, save workflow: a new "Saving" sample (edit, add, delete, then a fake server call that
+  gives the new rows ids, `acceptChanges({ newKeys })`, `hasChanges()`); "Add & remove rows" deletes
+  by marking, with an undo, and keeps `removeData()` / `removeAllData()` as the untracked removal;
+  "Editing & row state" has undo buttons and logs `hasChanges()`; `samples/grid01` unmarks and
+  accepts. The demo's light theme colours the row numbers by row state, a deleted row's struck through.
+- guides, save workflow: "Deleting rows" (tag, undo, the row menu, `removeData()` for the untracked
+  case) and "Saving" (the round trip in one transaction, the keys of new rows) in the editing guide,
+  linked from the datasource guide; the new `info` values in the events guide; the delete entries in
+  the menus guide
+
+#### Fixed
+- **The methods that remove rows let go of them**: `removeData()`, `removeAllData()`,
+  `clearMarkedForDeletion()`, `acceptChanges()` (rows marked for deletion), `resetData()` and
+  `resetDataSelectionOnly()` (new rows) left `currentEntity` on a row they removed, and its key in the
+  selection - a row added later with the same key came back selected. They now set `currentEntity` to
+  `null` the way `setData()` does, take the removed rows out of the selection, and send
+  `current-entity` / `selection-change` after their own event when that changed something.
+
+#### Docs
+- **Validation**: a "Validation" section in the editing guide (the rules, the built-ins and why 0 fails
+  `required`, messages, rules of your own, when it runs, validating before a save, how the grid shows
+  the errors) and "Errors from a server" says how they relate; "Validation rules" in the datasource
+  guide; `mandatory` gone from the grid config guide, the `validate` event in the events guide, a line
+  in "0 is blank"; the migrating guide and `MIGRATION.md` (mandatory -> required, the new API, the
+  grid showing `__rowError`, the v5 config converter keeps the mandatory fields). JSDoc with examples on
+  `registerValidator`, `VALIDATION_MESSAGES`, the rule types, `Validator`, `ValidationError`,
+  `validate()`, `getErrors()`, `hasErrors()`, `FieldConfig.validate`.
+- samples: a new "Validation" sample (required, min/max, maxLength, pattern and a validator of its own
+  with options, a save that validates first, a server error next to the validation errors); "Mandatory &
+  placeholders" is "Required fields & placeholders" (`required-placeholders`), with the rule in the
+  fields and a validate button; `samples/grid01` has its mandatory columns as required fields and a
+  validate button; the events samples log `validate`.
+- **A `Date` in a stored state**: JSON turns it into its ISO text, and `setState()` keeps the text (it
+  does not turn it back into a `Date`); `getState()` then gives the text. A `date` or `datetime` field
+  reads the text as the same moment - the same rows, the same date in the header filter and
+  `getFilterString()`. A field that is not listed as `date` / `datetime` filters on a `Date` as a date
+  only while it is a `Date`: after JSON it compares the text and filters other rows. The same goes for
+  a `Date` in `initialState`. Pinned by tests, written in the state guide.
+
+#### Internal
+- tests: `saveWorkflow.test.ts` - unmark (one row, a list, all, a new row, the events), a new row marked
+  (not in `getChanges()`, dropped by `acceptChanges()`, back on unmark), `acceptChanges()` for every row
+  and for the rows given (deleted removed, new ordinary, edits the originals, errors cleared,
+  `hasChanges()` false, one event), `newKeys` (key field and `__KEY`, no edit, without a key field, as
+  text, the errors, the selection), the options guard, a shared container, the whole round trip twice.
+  `rowMenuDelete.test.ts` - when the delete entries show, their actions, the `isReadonly` lock, one
+  rebuild, the grid after `acceptChanges()`. The tests that pinned the removal of a new row on
+  `markForDeletion()` / `markAllForDeletion()` pin the mark now
+- typings consumer: the new methods, `newEntities[0].__KEY`, the new `info` values, and
+  `@ts-expect-error` checks that the rows in place of the options and a plain object as `newKeys` do
+  not compile
+- `Selection.replaceKey()` keeps a row selected when `acceptChanges()` changes its key
+- the grid reads the hooks from the interface (`__getHooks()`), not from the parsed config
+- tests: `configJson.test.ts` - a config with every option, a `getState()` result and the datasource
+  `fields` + `formatters` go through `JSON.parse(JSON.stringify())` unchanged, and a grid made from the
+  copy shows the same (state, rows, markup); the Date cases above. `formatterRegistry.test.ts` - the
+  built-in ids, registering, replacing, the errors. Hook tests moved to `GridHooks` / `updateHooks()`
+  (`cellCallbacks.test.ts`, `gridMenus.test.ts`), plus the `TypeError` for a hook in the config
+  (`createGrid.test.ts`, `updateConfig.test.ts`). Tests that register a formatter use an id of their
+  own, and the one that replaces a built-in id puts it back in `afterAll`
+- tests: `validation.test.ts` - the built-ins (what `required` takes as missing, 0 included, and that
+  the stripes use the same test), messages and their options, `registerValidator` (replacing, a built-in
+  put back in `afterAll`, the errors), the rules in the fields and their errors, when it runs (edits from
+  code, the fields with an error checked again, new rows, `validate()` of all rows / the rows given, the
+  event, copies), rows marked for deletion, clearing, server errors apart, shared containers.
+  `removedRows.test.ts` - `currentEntity`, the selection and the events after each removing method.
+  `validationInGrid.test.ts` - the required stripes (0, readonly), the `mandatory` guard, the error class
+  and tooltip of a cell and a row number while typing and after `change`, `validate()` without a
+  refresh, `acceptChanges()`, a row marked for deletion, server errors alone and with validation errors,
+  the tooltip on hover and `tooltips: false`. `configJson.test.ts` - the rules (a built-in with a message,
+  one of your own with options) survive JSON and validate the same. Tests that register a validator use
+  an id of their own
+- typings consumer: `registerValidator`, rules, `validate()`, `getErrors()`, `hasErrors()`,
+  `ValidationError<T>`, `getField().validate`, the `validate` event, `@ts-expect-error` checks that
+  `ColumnConfig.mandatory` and a validator that is no function do not compile, and the JSON check of
+  the fields with `validate` in them
+- typings consumer: `registerFormatter`, formatter ids, hooks, `updateHooks`, typed hook rows,
+  `@ts-expect-error` checks that a formatter object in the options and `isReadonly` / `cellClass` /
+  `menus` in `GridConfig` no longer compile, and a type-level check that `GridConfig`, `GridState` and
+  the `fields` + `formatters` options hold no function anywhere
+
+### Phase 3 - UI
+
+Every text the grid shows has an id, and every one can be replaced: one texts map, plain JSON, so a
+translation can be stored with the config in a backend.
+
+#### ⚠️ Breaking changes
+- **A v5 option left in a grid config throws** a `TypeError` naming where it went in v6 (was only
+  `mandatory`): a config stored before v6 can not lose a setting without a word
+- **`GridConfig.tooltipText` and `TOOLTIPS` are removed**: the tooltips are texts like the others,
+  their ids end with `.tooltip` - `tooltipText: { 'filterEditor.close': 'Lukk' }` is
+  `texts: { 'filterEditor.close.tooltip': 'Lukk' }`. Some of the old ids without `.tooltip` are now the
+  text of the element itself (`filterEditor.title` is `Filter Editor`).
+- **`OPERATORS` is removed**: what `getFilterString()` shows for an operator is the text
+  `filterString.operator.<FilterOperator>`, AND / OR are `filterString.and` / `filterString.or`. The
+  string is the same with the default texts.
+- **`IDateConfig.monthHeader` and `weekHeader` are removed**, and the grid no longer reads them from
+  `datePickerConfig`: each name is a text, `datePicker.month.january` ... and `datePicker.day.sunday`
+  ... A `DateInterface` of your own uses the page's texts, or its own in the new `IDateConfig.texts`.
+- **`VALIDATION_MESSAGES` is removed** (it came in phase 2b): the default messages are the texts
+  `validation.*` in `TEXTS`.
+
+#### Added
+- **`TEXTS`**: every text by id with its English default, 190 ids grouped by area - the menus (the ids
+  of `MENU_IDS`, a hint is `<id>.hint`), the value list (`filter.values.*`), the column chooser, the
+  filter editor, the footer, labels for screen readers, the date picker, and the texts the datasource
+  makes: the validation messages, `getFilterString()` and the name of the group of blank values
+  (`grouping.blank`). A tooltip is `<id>.tooltip`. An operator has a name in each place it is shown:
+  `filterEditor.operator.*`, `footer.operator.*`, `filterString.operator.*`. Types `Texts` and `TextId`.
+- **`setTexts(texts)`**: the texts of the page, for every grid and datasource. It replaces the texts set
+  before, `setTexts({})` is English again. Throws a `TypeError` for a text that is not a string.
+- **`GridConfig.texts`**: the texts of one grid, they win over the page's. `updateConfig({ texts })`
+  replaces them as a whole and rebuilds. The lookup is `GridConfig.texts`, then `setTexts()`, then
+  `TEXTS`; the texts the datasource makes come from `setTexts()` and `TEXTS` only (it has no grid, and
+  validation runs in the `DataContainer` that datasources share - so no texts option on the datasource).
+- **Values in texts**: `{name}` is filled in when the text is shown - `'Count: {count}'`,
+  `'{shown}/{total}'`, `'{count} rows found'`.
+- **Text ids for your own messages**: a validator, or a rule's `message`, can return a text id; its
+  text comes from `setTexts()`, so a message of your own is translated like the built-ins'. An id
+  without a text is shown as it is.
+- New guide `guides/12-texts.md`: how to translate, the lookup order, when a changed text shows, and
+  every id with its English text. New sample "Translation": the grid in Norwegian, every id typed
+  `Record<TextId, string>` so the compiler names a missing one.
+
+#### Changed
+- A changed text is read when what shows it is made: the grid after its next rebuild, a menu, the
+  filter editor and the date picker the next time they open, `getFilterString()` on its next call. A
+  validation message is made when the value is validated, so after `setTexts()` an error already there
+  keeps its text until the field is validated again; the blank group's name changes the next time the
+  rows are grouped.
+- The name of the group of blank values is `'Country: blank'` (was `'Country:  blank'` with two
+  spaces; the html showed one). Its id is still `' blank'`.
+- `getFilterString()` shows an operator that is not one (plain JS) as it is, not as `UNDEFINED`.
+- The filter editor shows an operator that is not one as it is, not prettified.
+- **One label per column, wherever the grid shows it.** A column without a `label` of its own or of
+  its field showed `First Name` in the header, the column chooser and the attribute menu, but
+  `first_name` in the footer filter, the filter editor, the group chip, the drag ghost and a copied
+  table. Now it is `First Name` in all of them. A grouping made by dragging gets that label as its
+  `title`.
+
+#### Docs
+- `guides/12-texts.md`; the grid config, editing (messages), filtering, events (date picker) and menus
+  guides say where their texts come from. `MIGRATION.md` has a Texts section: `tooltipText` /
+  `TOOLTIPS`, `OPERATORS` and the month and day names.
+
+#### Internal
+- `src/texts.ts`: the defaults, `setTexts()` and the lookup (`findText`, `getText`, `fillText`), used
+  by the datasource and the date picker; `gridText(ctx, id)` adds the grid's own texts. The validation
+  messages use the same `{name}` filling as the texts.
+- tests: `src/__tests__/texts.test.ts` - the lookup order, values, what `setTexts()` takes, every id
+  and its English text in the tables of the texts guide (and nothing else), and a scan of the
+  `html` / `svg` templates in `src` for text of their own (between the tags, and in `placeholder`,
+  `title`, `aria-label`, `data-tooltip`). `src/grid/__tests__/texts.test.ts` - every text replaced by
+  its id in «»: the menus, the value list, the column chooser, the filter editor and its menus, the
+  footer (every operator, the collapsed box), the date picker (every month), the validation messages,
+  the group rows and `getFilterString()` are opened one by one; nothing with a letter may be left
+  outside «», and every id has to be shown. Once with `setTexts()`, once with the grid's texts in the
+  config and the datasource's from `setTexts()`. Plus the lookup order in a grid, `updateConfig({ texts })`,
+  `setTexts()` after a rebuild, the date picker's texts. `datasourceTexts.test.ts` - the validation
+  messages (built-ins, ids of your own, a rule's message as an id, made at validation time),
+  `getFilterString()` and the blank group. Tests that call `setTexts()` go back to `setTexts({})`
+  after each test.
+- typings consumer: `setTexts`, `TEXTS`, `Texts`, `TextId`, `GridConfig.texts`, `IDateConfig.texts`,
+  a `Record<TextId, string>` translation, and `@ts-expect-error` checks that `tooltipText`,
+  `monthHeader`, a text that is not a string and changing `TEXTS` do not compile
+
+#### Menus and the filter editor on the platform
+
+The menus are popovers and the filter editor is a modal `<dialog>`: the browser shows them in the top
+layer, over everything on the page, and does the focus and Esc of the editor. Before, they were
+elements put on `document.body` by hand, with a z-index, and removed by hand.
+
+- ⚠️ **The menus are `popover="manual"`**: the row, header and filter menus, `openMenu()`, the column
+  chooser, the field and operator pickers of the filter editor and the date picker. In the top layer
+  a container with `overflow: hidden` does not cut them off, and no z-index puts anything over them.
+  They get the class `simple-html-grid-popover`, which undoes the browser's popover style; their
+  `position: absolute` moved from an inline style to it, the `z-index: 500` of `.simple-html-grid-menu`
+  and the date picker's inline `z-index: 2000` are gone. `manual` and not `auto`: where `contextmenu`
+  comes on the button press (macOS, Linux), the pointerup after it is outside the menu, and the
+  browser's light dismiss of an `auto` popover would close a right click menu as soon as it opened.
+  So the grid still closes them itself - one at a time, on a click outside, on scroll, when the grid
+  leaves the page - and `closeMenu()` and the `menus` hook are unchanged.
+- **Esc closes the open menu.** It is canceled (`preventDefault()`), so a modal dialog under the menu -
+  the filter editor - stays open. The column chooser stays open on Esc elsewhere, a click outside and
+  another menu (columns are dragged from it), and closes on Esc in its search field.
+- **A menu item does not take the focus** (its mousedown is canceled): the focus stays on the cell the
+  menu was opened from. When the focus is in a menu as it closes (a search field), it goes back to the
+  element that had it when the menu opened.
+- **A menu opened from an element in a `<dialog>` or a popover of the page is put inside it**, not on
+  the body: outside a modal dialog it would be inert, outside a `popover="auto"` a click in it would
+  close that popover. The filter editor's pickers and date picker are in its dialog.
+- ⚠️ **The filter editor is `<dialog class="simple-html-grid filter-editor-content">`, opened with
+  `showModal()`**. Modal, as the grey layer over the page made it before: the grid behind it can not be
+  used - now the keyboard can not reach it either (the focus used to stay on the cell). The grey layer
+  is its `::backdrop`; the `.filter-editor-container` element and the `.simple-html-grid` element in it
+  are gone, `.filter-editor-content` is the dialog itself. The browser moves the focus to the dialog
+  when it opens (it has `autofocus` and `tabindex="-1"`, so a value field does not get it and show the
+  keyboard on a phone) and gives it back when it closes. Esc closes it (a picker open in it first).
+- **The filter editor is dragged and resized with pointer events**: by its title bar, from every edge
+  and corner, with a mouse, a finger or a pen. The pointer is captured on the handle
+  (`setPointerCapture`), the title bar and the handles have `touch-action: none`. Only the primary
+  pointer with its main button; pointercancel stops where it got to.
+- **The filter editor is rendered again in the same dialog** on every edit (it was thrown away and made
+  again): lit keeps the elements, so the place, the size and the focus stay. The value fields use
+  `live()`. Closed and opened again, it is in the middle of the window.
+- **The tooltip is put in the dialog or popover of the element it describes** (the filter editor, a
+  menu), else on the body as before: on the body it would be behind them. Hidden, it is out of the
+  document, so a closed dialog is not kept in memory by it.
+- Fixed: on a scrolled page the menus were off by the scroll (viewport coordinates on an absolute
+  element). They are placed from the top left of the page, and move with it when it scrolls.
+- The css of the editor's value fields is `.filter-editor-content .grid-condition input` / `textarea`
+  (was `.simple-html-grid .filter-editor-content input`): the menus in the dialog keep their own look.
+- Browser support: `showPopover()` / `hidePopover()` are in every browser since April 2024 (MDN; MDN
+  lists the Popover API as a whole, with parts the grid does not use, as Baseline 2025), `<dialog>`
+  long before.
+- Docs: `guides/10-menus.md` "How a menu opens and closes", the filter editor in
+  `guides/06-filtering.md`, the JSDoc of `openMenu()`, `closeMenu()` and `openFilterEditor()`,
+  `MIGRATION.md` "The menus are popovers, the filter editor is a modal dialog".
+- Internal: `openMenuElement()` (shows an element as the grid's menu), `placeMenu()`, `moveMenu()` and
+  `popoverParent()` in `showMenu.ts`, used by every menu; `closePopover()` in `removeContextMenu.ts`
+  gives the focus back. `addBodyClickListener.ts` is `addMenuListeners.ts`: the click and keydown
+  listeners on the document, removed with an `AbortController` (`Grid.menuListenersAbort`, was
+  `clickListener: any`). `Grid.filterEditorContainer` is `Grid.filterEditor` (the dialog), new
+  `Grid.menuReturnFocus`; `closeFilterEditor()` closes it for its buttons, after Esc (the `close`
+  event) and when the grid leaves the page. The editor's drag and resize use `followPointer()`.
+- tests: happy-dom 20.11 has `<dialog>`'s `show()` / `showModal()` / `close()` (they set `open`,
+  `close()` sends `close` at once), but no top layer, no inert page, no focus moved or given back, and
+  Esc does nothing (no `cancel`). It has the `popover` attribute but no `showPopover()` /
+  `hidePopover()`, no `toggle` events, no light dismiss. `src/__tests__/popoverStub.ts` (loaded by the
+  new `vitest.config.ts`) adds a minimal `showPopover()` / `hidePopover()` that keeps whether a popover
+  is shown (`isPopoverShown()`) and throws as a browser does without the attribute or out of the
+  document. The rest - the top layer, inertness, focus into and out of the dialog, Esc closing it - is
+  checked by reading the HTML spec; the tests check what the grid does around it. `filterEditor.test.ts`
+  (the dialog, modal, autofocus, rendered in place, closing, Esc, its menus in the dialog, drag and
+  resize from all 8 handles by pointer, touch, pointercancel, a second pointer, kept in the window,
+  minimum size), `gridMenus.test.ts` (popover, Esc, focus back, an item keeps the focus, dialogs and
+  popovers of the page, page scroll, the column chooser, a dropdown grid's own menu),
+  `datePickerCell.test.ts` and `gridLifecycle.test.ts` (the document listeners are aborted).
+
+#### Touch and pen
+
+Column drag/drop and resizing listen to pointer events, not mouse events: moving, resizing and
+sorting in the header work with a mouse, a pen and a finger.
+
+- ⚠️ **Pointer events, not mouse events**: the header labels, the group chips, the fields of the column
+  chooser and the resize handles listen to `pointerdown` / `pointermove` / `pointerup` /
+  `pointercancel`. Code that sends them mouse events (tests, scripts) has to send pointer events, see
+  `MIGRATION.md`.
+- ⚠️ **A click is a press that does not move**: it sorts however long it is held, a press that moves
+  5px is a drag. v5 went by time: held for 200ms was a drag, a quick drag was a click and sorted.
+- **Touch**: a finger held still on a label for 200ms drags it, a finger that moves sooner scrolls
+  the grid (as on the rows), a tap sorts. A finger on a resize handle resizes. The grid does not
+  scroll under a finger that drags or resizes. Labels, chips, chooser fields and resize handles get
+  `touch-action: none`, so the browser does not pan the page under them (and cancel the pointer).
+- **Pen**: as a mouse.
+- Only the primary pointer with its main button drags or resizes - the left mouse button, the first
+  finger, the pen's tip. A right click or a second finger does nothing (the resize handle took any
+  mouse button).
+- **pointercancel** (the browser takes the pointer: a system gesture, the pen leaves the screen ...)
+  ends a drag without a drop, and gives a column being resized its width back.
+- The drop target is what the browser's hit test (`elementFromPoint`) finds under the pointer, and the
+  drag highlights it - on touch as well. The drop zones and the panel lost their mouse enter/leave/move
+  handlers.
+- Fixed: the element that follows the pointer was `position: absolute` at viewport coordinates: on a
+  scrolled page it was off by the scroll. It is `position: fixed`, and `pointer-events: none` (inline).
+- Fixed: a label dropped on the panel of another grid on the page grouped its own grid on the field.
+- Touch scrolling is unchanged: touch events, a swipe moves the rows and columns by the finger's
+  distance, without momentum.
+- Docs: `guides/02-grid-config.md` "Moving and resizing columns" (linked from getting started, state and
+  sorting), `MIGRATION.md` "Column drag/drop and resizing use pointer events".
+- Internal: `followPointer()` and `isPrimaryPress()` (`src/grid/gridFunctions/followPointer.ts`) follow
+  one pointer from pointerdown to pointerup/pointercancel, for the drag/drop and the resize handle. The
+  listeners are on the document, filtered by `pointerId`. The dragged cell captures the pointer
+  (`setPointerCapture`) once the press is a drag - before that a click on a child (the remove icon of a
+  group chip) still reaches the child; the resize handle captures on pointerdown.
+- tests: `columnDragDrop.test.ts` - every drop target, click or drag (`DRAG_DISTANCE`, a slow click,
+  shift), the ghost and the highlighted target, capture only once dragging, empty label cells, primary
+  pointer and left button only, the events of another pointer, pointercancel, a pen, another grid's
+  panel, `touch-action`, and touch: a tap, held for `TOUCH_HOLD` then dragged (the grid does not scroll),
+  a swipe (scrolls, no drag, no sort), a swipe on the rows. New `columnResize.test.ts` - follows the
+  pointer, rebuilds once on release, 25px minimum, pinned left and right, pointercancel, primary only, a
+  finger. The helpers `pointerEvent()` (happy-dom's defaults are not a browser's: `isPrimary` false,
+  `pointerId` 0, no bubbling), `pointerOver()` (happy-dom does no layout, `elementFromPoint` is always
+  null), `touchAt()` and `resizeHandle()`; `dragAndDrop()` and `dragResizeHandle()` send pointer events.
+  happy-dom 20.11 has `PointerEvent`, `TouchEvent` and `setPointerCapture` / `hasPointerCapture` /
+  `releasePointerCapture`, but capture is bookkeeping only: no retargeting, no `gotpointercapture` /
+  `lostpointercapture`, no implicit release.
+- the touch scrolling looked up `' simple-html-grid-middle-scroller'` (a leading space); browsers ignore
+  it, happy-dom threw.
+
+#### Theming (item 25)
+
+##### ⚠️ Breaking changes
+- **The colours are `light-dark()`** and the grid follows the page's `color-scheme`. Needs Chrome/Edge
+  123, Firefox 120, Safari 17.5; in an older browser the colours are invalid (set the variables with
+  plain colours in `@supports not (color: light-dark(white, black))`).
+- **The focus style**: the dashed border and outline on `:focus` are replaced by a 2px inset outline
+  on `:focus-visible`, in `--simple-html-grid-focus-color`.
+- **`grid.css` no longer styles every `input` of the page**: its `z-index` / `pointer-events` rule is
+  `.simple-html-grid input`.
+
+##### Added
+- **Dark theme**: `color-scheme: dark` on `:root` or `body` (or `light dark` to follow the OS). Every
+  variable has a dark colour, checked for contrast (text at least 4.5:1).
+- **Visible keyboard focus** in the grid, its menus, the filter editor and the date picker.
+- New variables: `--simple-html-grid-focus-color`, `--simple-html-date-focus-color`,
+  `--simple-html-grid-warning-font-color`, `--simple-html-grid-danger-font-color`,
+  `--simple-html-grid-danger-border`, `--simple-html-grid-readonly-stripe-color`,
+  `--simple-html-grid-required-stripe-color`, `--simple-html-grid-stripe-bg-color`,
+  `--simple-html-grid-menu-shadow-color`, `--simple-html-grid-dialog-shadow-color`,
+  `--simple-html-grid-tooltip-shadow-color`, `--simple-html-grid-scrollbar-shadow-color`,
+  `--simple-html-grid-backdrop-color`.
+- Guide `guides/13-theming.md` (every variable with its light and dark colour) and the sample
+  "Theming & dark mode".
+
+##### Fixed
+- The column resize handle can be grabbed over its full height: the filter input covered its lower
+  half.
+- 17 colours were written in the css, out of reach of a theme.
+- `--simple-html-grid-font-weight-cell` was used but never defined (menu items, the filter editor's
+  title): it is `--simple-html-grid-font-weight`.
+- The date picker's hour and minute inputs had no focus outline.
+
+#### Accessibility (item 22)
+
+##### ⚠️ Breaking changes
+- The grid's accessibility structure is new: `role="grid"` / `"treegrid"` is on a new
+  `.simple-html-grid-aria` element, `<simple-html-grid>` no longer has `role="table"`.
+- Only the row element of the row selector is `role="row"` and has `aria-rowindex`; `aria-rowindex`
+  counts the header rows (the first data row is 3 with labels and filters).
+- Cell inputs no longer have `role="cell"`; their `aria-label` is the column label, not the field name.
+- Text id `grid.focusHelper` is removed. `row.paste.cell` / `row.clear.cell` default to `Paste cell` /
+  `Clear cell` (both were `Cell`).
+- Grid elements get ids `simple-html-grid-<n>-...`.
+
+##### Added
+- Grid / treegrid semantics that stay right with virtual rows and columns: `aria-rowcount`,
+  `aria-colcount`, `aria-rowindex`, `aria-colindex`, rows and cells put in order with `aria-owns`.
+  Checked in Chrome's accessibility tree.
+- `aria-sort` on the first sort column, `aria-selected` on the rows (selection modes single and
+  multiple), `aria-multiselectable`, `aria-level` and `aria-expanded` while grouped.
+- Keyboard: column headers sort with Enter/Space (Shift adds), reached with Alt+ArrowUp from the
+  filter; the group expand/collapse is a labelled button (Enter/Space); the group chip's remove and
+  the footer filter chips are buttons. The footer row count is a live status.
+- Text ids `grid.label`, `grid.filter`, `grid.groupToggle`, `grid.removeGroup`.
+- Guide `guides/14-accessibility.md`: what a screen reader gets, every key, focus, the labels, the
+  known limits.
+
+##### Fixed
+- Keyboard trap (WCAG 2.1.2): Tab on the last cell and Shift+Tab on the first header filter kept the
+  focus in the grid. They leave it now.
+- The focus helper input was a Tab stop announced as "dummy cell".
+- The filter inputs were named "🔍"; they are "Filter <column label>".
+- Paste and clear in the row menu had the same text.
+
+### Phase 4 - performance
+
+#### Scroll handlers (item 26)
+
+Measured in Chromium on a grid of 100 000 rows and 305 columns (3 pinned left, 2 right), JS time in
+the scroll listeners per scroll step, one machine:
+
+| step | before | after |
+| --- | --- | --- |
+| vertical, 22px | 6.4 ms | 6.2 ms |
+| vertical, 450px | 14.7 ms | 13.5 ms |
+| horizontal, 20px | 2.5 ms | 1.8 ms |
+| horizontal, 400px | 6.4 ms | 5.4 ms |
+
+The linear scan for the first row/column was a small part (0.17 ms per event at the end of 100 000
+rows); the vertical time is rendering every cell of every row on screen, which stays (see item 36).
+
+##### Performance
+- The first row and column on screen are found with a binary search instead of a scan from 0 on every
+  scroll event.
+- Horizontal scrolling of a wide grid costs 20-30% less JS per event: the header columns are placed
+  once per event instead of once per row, the partly visible left column keeps its element, styles
+  are only written when they change, and the scroll listeners look their elements up once.
+
+##### Fixed
+- A middle section narrower than its last column showed no columns when scrolled to the end.
+- A viewport shorter than the last row showed no rows when scrolled to the end.
+- After a long scrollbar drag the rows came back 300 ms after it stopped, now 150 ms (the delayed
+  render compared with the position of the first jump, and hid the rows again).
+
+##### Internal
+- One code path for the left, middle and right sections (`pinnedSection.ts`); `assignPool.ts` decides
+  which row/column each pooled element shows; `firstIndexAtOrAfter.ts` is the binary search.
+- The dead horizontal `largeScroll` / `largeScrollLeftTimer` / `delayScrollRender` code is removed. The
+  vertical one is kept and documented: a jump of more than 500px hides the rows and renders them once
+  the scrolling stops, instead of rendering every row on every event of a scrollbar drag.
+- Tests: the binary search, the pool assignment, and the rendered rows and columns checked against
+  what the sizes say after small and large scrolls both ways, with pinned columns and grouping.
+
+### Phase 5 - editing
+
+#### Edited cells and the row state (items 27, 29)
+
+##### ⚠️ Breaking changes
+- The row number shows the row's state with an icon (`GridConfig.rowStatus`, default on) and is 14px
+  wider; `rowStatus: false` gives the old look and width.
+- The row number's tooltip starts with the state ("Edited", "New row", "Marked for deletion") before
+  the errors.
+- The cells of a row marked for deletion are struck through (with `rowStatus`).
+
+##### Added
+- **Row status**: icons for new, edited, deleted and error rows (one icon: deleted, then error, then
+  new/edited), the state in the tooltip, and as text for screen readers in the row number cell.
+- **Edited cell marker** (`GridConfig.editedMarker`, default on): a corner triangle on an edited cell
+  (not on new rows); its tooltip shows the original value (formatted, `(blank)` for a blank), a click
+  reverts the cell - one undo step. The marker shows in a readonly grid but does nothing there.
+- **Changed rows only**: `datasource.filterChangedOnly(on)` and `isChangedOnly()` show only new, edited
+  and deleted rows, ANDed with the filter (the filter itself, `getFilter()` and the state are not
+  changed). Row menu `row.view.changedOnly` (a toggle), a footer chip; the footer's Clear and Clear All
+  Filters turn it off. A row edited back to its original drops out on the next filter run, not while
+  the user types.
+- Theme variables `--simple-html-grid-edited-color`, `--simple-html-grid-new-color`,
+  `--simple-html-grid-deleted-color` (light and dark, 3:1 against the rows).
+- Text ids `rowStatus.*`, `cell.editedMarker.*`, `row.view.changedOnly`, `footer.changedOnly`.
+- The editing sample shows the status, the markers, a validation rule and a "Changed rows only"
+  button, without its own RS column.
+
+##### Fixed
+- The `row-is-*` states had no built-in look.
+- A row's errors were in its tooltip only; a screen reader now gets them with the row number.
+
+#### The date picker redesigned, no rounded buttons (user request)
+
+##### ⚠️ Breaking changes
+- The date picker's generic class names are prefixed (they also picked up page css): `.year` ->
+  `.simple-html-date-year`; `.main` -> `.simple-html-date-month-title` / `.simple-html-date-month-name`;
+  `.month` is gone (`.simple-html-date-month-header` is the row); `.side` -> `.simple-html-date-time-field`;
+  `.icon` -> `.simple-html-date-nav` / `.simple-html-date-step`; `.date-flex` -> `.simple-html-date-time-row`;
+  `.date-flex-col` -> `.simple-html-date-actions`; the time `<label>` -> `.simple-html-date-time-label`.
+- `--simple-html-date-main-bg-border` colours only the lines (button frames:
+  `--simple-html-date-button-border`, the selected frame: `--simple-html-date-selected-border`);
+  `--simple-html-date-main-bg-selected` is no longer the button hover (`--simple-html-date-hover-bg-color`).
+- `datepickerHeight` defaults to 282 (was 317): the picker is 277px tall now.
+
+##### Changed
+- Flat and square, the grid's font: month and year on one line with square « ‹ › » buttons (« »
+  change the year); quieter week numbers and other months' days (readable now: they were 1.3:1);
+  today bold with a bar under it, apart from the selected day (fill and frame); hour and minute a number
+  between two square steppers; Clear / Now / Use an equal-width button bar, Use the primary. Text at
+  least 4.5:1, the marks 3:1, light and dark.
+- **No rounded corners in the grid's own UI**: the footer chips, Clear, the row count, the filter
+  group box, the filter editor and its buttons, the column chooser and filter menu buttons, the tooltip.
+- New `DateInterface.nextYear()` / `prevYear()`; texts `datePicker.previousYear` / `previousMonth` /
+  `nextMonth` / `nextYear` (the buttons' names); variables `--simple-html-date-button-border`,
+  `-hover-bg-color`, `-selected-border`, `-today-color`.
+
+##### Fixed
+- The picker's buttons are `type="button"`: a picker in a `<form>` no longer submits it. The hour and
+  minute inputs have names for screen readers.
+
+#### The wheel scrolls the grid, not the page
+
+##### Fixed
+- The wheel over the grid also scrolled the page under it (the event was not cancelled): it is now,
+  so a grid in a scrolling page keeps the wheel, also at its first and last row. Ctrl+wheel (the
+  browser's zoom, a trackpad's pinch) is left alone.
+- The wheel used the non-standard `wheelDeltaY` (Firefox has none): it uses `deltaX` / `deltaY`, a
+  wheel that counts lines or pages moves as many px, and left/right (a trackpad, Shift+wheel) scrolls
+  the middle columns.
+
+#### Header filters say what to type
+
+##### ⚠️ Breaking changes
+- An empty text or number header filter shows its type, `Text` / `Number` (text ids
+  `filter.placeholder.text` / `filter.placeholder.number`), where it showed a 🔍 - like a date filter
+  shows its format. A column's `placeholderFilter` still wins; a boolean filter is a checkbox as before.
+
+#### Menus stay in the window
+
+##### Fixed
+- A menu taller than the room below and above the cell (the row menu in a small window) was cut off.
+  It now goes next to the point (right, else left), as near it as the window allows; a menu taller
+  than the window scrolls. Every menu keeps 4px from the window's edges; a menu near the right edge
+  is measured at its natural width (it was squeezed by the edge, then grew past it once moved).
+
+#### Row menu: undo a cell edit, a row's edits
+
+##### ⚠️ Breaking changes
+- The row menu's "Edit:" section is first in the menu (it was after Delete). Default texts:
+  `row.edit.undo` "Undo last change", `row.edit.revertCell` "Undo cell edit", `row.edit.revertRows`
+  "Undo row edits" (with the hint "selected rows").
+
+##### Added
+- `row.edit.revertRow` "Undo row edits": the row right clicked back to its original values and
+  unmarked for deletion, without selecting it first - one undo step.
+
+#### Undo and redo (item 28)
+
+##### ⚠️ Breaking changes
+- The custom entity handler hook is `onEdit(row, field, oldValue)` (`DataContainer.overrideEntityHandler`):
+  a handler that leaves out `oldValue` records `undefined` as the value before an edit.
+- Edits from code are recorded in the undo history. `setData()` without `add`, `removeAllData()`,
+  `resetData()` and `acceptChanges()` clear it.
+- `resetDataSelectionOnly()` is an undo step.
+- Row menu: a new "Edit:" section between Delete and Summary - `MENU_IDS.row` has 5 more ids, the ones
+  after it moved.
+
+##### Added
+- **Undo/redo history** on the DataContainer, shared by the datasources on it: `datasource.undo()`,
+  `redo()`, `canUndo()`, `canRedo()`, `clearHistory()`, and the event `history-changed`
+  (`info: 'edit' | 'undo' | 'redo' | 'clear' | 'remove'`). A step is what the user typed in one cell, a
+  paste, a clear, a (un)mark for deletion, a revert, or one synchronous run of code. The last 100 steps
+  are kept. New rows are not in the history: undo never adds or removes a row.
+- **`datasource.resetField(row, field)` and `datasource.resetRows(rows)`**: a cell or rows back to their
+  original values (deletion marks off). Reverts are undo steps; a new row stays, with the values it was
+  added with.
+- **Keys**: Ctrl/Cmd+Z undoes, Ctrl/Cmd+Y and Ctrl/Cmd+Shift+Z redo, in a cell of an editable grid. While
+  typing in a cell Ctrl+Z is the input's own undo, until the typing is undone or the cell is left.
+- **Row menu "Edit:"**: `row.edit.undo`, `row.edit.redo`, `row.edit.revertCell`, `row.edit.revertRows`,
+  with text ids `row.edit*`.
+- The grid renders its cells again after an undo or redo, also one from code or from another datasource
+  on the same container.
+- Guides: "Undo and redo" and "Reverting a cell or a row" in the editing guide; the editing sample has
+  Undo/Redo buttons that follow `history-changed`.
+
+#### Multiline text (item 30)
+
+##### ⚠️ Breaking changes
+- `datasource.getField()` returns a `multiline` property.
+- A text cell whose value has a line break is no longer typed in directly: its input is readonly and
+  shows the first line, Enter opens the editor instead of moving down.
+
+##### Added
+- `FieldConfig.multiline` (text fields only; throws on another type or a non-boolean) and
+  `Field.multiline`. Automatic for any text value with a line break.
+- Multiline cells show the first line, a marker, the whole text as the tooltip (errors first, cut at
+  15 lines / 600 characters) and `aria-describedby` for screen readers.
+- The editor over the cell (a popover, works inside a dialog): Enter / F2 / double click / typing a
+  character open it (a typed character goes at the end, never replaces the text); Ctrl/Cmd+Enter saves,
+  Esc cancels, Enter is a new line, Tab / Shift+Tab save and move on; a click outside, scrolling, a
+  menu, the filter editor or `destroy()` save and close it. One undo step, LF line breaks, validation;
+  read-only in readonly grids and cells.
+- Texts `cell.multiline.more`, `cell.multiline.hint`, `cell.multiline.hintReadonly`; theme variable
+  `--simple-html-grid-multiline-color`; the sample "Multiline text".
+
+##### Fixed
+- Line breaks in a text value were lost when its cell was edited (the input strips them, and the
+  stripped value was written back).
+- The edited-cell marker's tooltip cuts a long original value.
+
+### Phase 6 - selection and clipboard
+
+#### Cell ranges and the clipboard (items 32, 33)
+
+##### ⚠️ Breaking changes
+- Alt+Shift+arrows in a cell select a range of cells (they moved like Alt+arrows).
+- Shift+click on a cell no longer makes its row current or opens the date picker; Ctrl/Cmd+click no
+  longer opens the date picker; Shift/Ctrl/Cmd+click on a checkbox no longer toggles it.
+- Esc in a cell with ranges clears them and cancels the key (a dialog the grid is in stays open for
+  that Esc).
+- Ctrl+C in a cell with no text selected copies the cell's value (it copied nothing).
+- `MENU_IDS.row` has `row.copy.range`, `row.paste.range`, `row.clear.range`; the Paste:/Clear:
+  sections also show on a readonly cell when there are ranges. The row menu's copy listener runs in
+  the document's capture phase.
+
+##### Added
+- **Cell ranges**: drag across cells (pinned sections and stacked fields included), Shift+click,
+  Ctrl/Cmd+click or drag for more ranges, Alt+Shift+arrows, Esc clears, auto-scroll while dragging.
+  `getRanges()`, `setRanges()`, `clearRanges()`, event `range-change`, type `CellRange`
+  (`{ fromRow, fromField, toRow, toField }`). Cleared when the displayed rows or the layout's fields
+  change. `aria-selected="true"` on the gridcells in a range.
+- **Copy** a range (Ctrl+C) as TSV and an HTML table - pastes into Excel / Sheets; **paste** TSV with
+  Excel's quoting (Ctrl+V): a block from the top left of the range, one value fills the ranges,
+  readonly cells skipped, parsed per field type, no rows added, one undo step. **Delete / Backspace**
+  clear a range. Row menu Copy: Range, Paste range, Clear range.
+- `CsvOptions.rows: 'range'`.
+- Theme variables `--simple-html-grid-range-bg-color`, `--simple-html-grid-range-border-color`;
+  classes `simple-html-cell-in-range`, `simple-html-cell-range-top/-bottom/-left/-right`.
+- Guide "Selection and clipboard", sample "Ranges & clipboard".
+
+##### Fixed
+- Cells copied from a spreadsheet and pasted into a cell went into that one cell, tabs and all, line
+  breaks turned into spaces; they go into the grid's cells now.
+- A single value pasted into a checkbox, a multiline cell or an `allowPasteClearOnly` column did nothing.
+
+### Phase 7 - live data
+
+#### Reactive cells, merge by key, conflicts (items 36, 37, 38 data)
+
+##### ⚠️ Breaking changes
+- A vertical scroll renders only the rows that scroll in. Something the cells show that changed
+  outside the datasource (what the `isReadonly` / `cellClass` hooks read, a value on an object of your
+  own) needs `gridInterface.refresh()`; before, the next scroll showed it by accident.
+- No render, `refresh()` included, renders the cell input the user has typed in since it got the
+  focus; it is rendered once the focus leaves it.
+- `collection-changed` `info` can be `'upsert'`; `history-changed` `'remove'` is also sent by `upsert()`
+  (removed rows, and history changes that became no-ops after a merge).
+
+##### Added
+- **Reactive cells**: a value set on a row (from code, undo/redo, `resetField()` / `resetRows()`,
+  `upsert()`), a deletion mark or a `setErrors()` error shows without `refresh()`: the grid renders the
+  changed rows on screen once per animation frame. Event `rows-changed` `{ rows, fields }`, once per
+  run of code.
+- **`datasource.upsert(rows, { removeMissing, refilter })`**: merges rows by key as server values
+  (value and original, not edited, no undo step, validated), adds new keys, and with `removeMissing`
+  removes the rows the server did not send (rows with local changes stay, in conflict). Keeps the
+  selection, scroll position and expanded groups, runs filter/sort/group once, returns
+  `{ added, updated, removed, conflicts }`. Keys compare as text (`7` matches `'7'`).
+- **Conflicts**: an edit the user has not saved, or a cell being typed in (or open in the multiline
+  editor), is never overwritten by a merge - the server's value becomes a conflict. `getConflicts()`,
+  `hasConflicts()`, `resolveConflict(row, field, 'local' | 'remote')`, event `conflicts-changed`, types
+  `Conflict`, `ValueConflict`, `RemovedConflict`, `UpsertOptions`, `UpsertResult`.
+- `datasource.getMergedAt(row, field)`: when the last merge changed a field, for a highlight.
+- Undoing an edit after the server changed the field goes back to the server's value, not the stale
+  original (the history is rebased on a merge).
+- Guide "Live data", sample "Live data".
+
+##### Fixed
+- `setData(rows, { add: true })` with very many rows (300 000) threw `RangeError: Maximum call stack
+  size exceeded` (`push(...rows)`).
+
+##### Performance
+- Vertical scroll, one row per step: 6.4 -> 2.3 ms on a 100 000 x 305 grid, 5.2 -> 2.2 ms grouped.
+- Reading a field through the row proxy has a fast path: sorting 100 000 rows 52 -> 44 ms, grouping
+  122 -> 112 ms.
+- `upsert()` of 100 000 rows with 1% changed: 56 ms (1000 rows into 100 000: 17 ms), plus the
+  filter/sort/group run when they are set.
+
+### Phase 8 - more
+
+#### Aggregates (item 40)
+
+##### Added
+- `ColumnConfig.aggregate`: `'sum' | 'avg' | 'min' | 'max' | 'count'`, shown in each group row
+  (`GridConfig.groupAggregates`, default `true`) in the column's place, and in a totals row under the
+  rows (`GridConfig.totalsRow`, default `false`). sum/avg/min/max need a number field; a wrong config
+  throws a `TypeError`.
+- `datasource.aggregate(field, fn, rows?)`: over the filtered rows, a group row's rows (collapsed
+  sub-groups included) or a list of rows; type `AggregateFunction`. Blanks skipped, nothing rounded
+  (the formatter formats), a compensated sum (100 000 x 0.1 is 10000), kept until a value of the field
+  changes - edits and merges update them in the next frame.
+- Texts `aggregate.sum` / `avg` / `min` / `max` / `count` / `total`; theme variables
+  `--simple-html-grid-totals-bg-color`, `--simple-html-grid-totals-font-color`,
+  `--simple-html-grid-aggregate-label-color`.
+- Accessibility: an aggregate is a gridcell of its column; the totals row is the grid's last row with
+  "Total" as its row header.
+- Guide "Aggregates", sample "Aggregates". Not in the CSV export.
+
+##### Fixed
+- Row menu "Summary:": the max of negative numbers was 0, min skipped 0, the average was rounded to a
+  whole number and counted blank cells. A text value (`'12'`) is no longer read as a number.
+
+#### Aggregates: several per column, on lines of their own, from the header menu (user request)
+
+##### ⚠️ Breaking changes
+- A group row with aggregates has its **name on a line of its own** and the aggregates on the lines
+  under it: 1 + n lines (n the most functions a column has), where it was one line with the name over
+  the first columns. The totals row has the n lines.
+- Each aggregate line has its **label at the left and its value at the right** of the column (was the
+  label in front of a right aligned value). In a column that stacks fields the label says which field:
+  `Avg Age`. The lines of a column are its fields' functions from the top (an aggregate of a stacked
+  field is no longer on the line of its field).
+- `GridState` has `aggregates` and `totalsRow`: `getState()` gives them, `setState()` applies them,
+  `resetState()` goes back to the config's. `updateConfig()` changes the totals row only when it is
+  given `totalsRow`.
+
+##### Added
+- **Several functions per column**: `ColumnConfig.aggregate: ['sum', 'avg']`, a line each, in the order
+  sum, avg, min, max, count.
+- **The header menu** (right click a column label) has an "Aggregate:" section: Sum, Average, Min, Max
+  (number columns) and Count as toggles with a ✓, and Totals row. Ids `header.aggregate.*`, texts too.
+- For a screen reader a field's aggregates are one gridcell named with all its lines.
+
+#### Fit and reset column widths and row heights, like Excel; the multiline tooltip (user request)
+
+##### ⚠️ Breaking changes
+- `autoResizeColumns()` is deprecated, use `fitColumns()`: it measures the text as the cells show it
+  (formatted, `numberOverride`), only the rows the filter lets through, a multiline text by its widest
+  line (it measured the stored values of every row).
+- Header menu: `header.size.column` / `header.size.all` read "Fit column width" / "Fit all columns".
+- A multiline cell's tooltip shows the first 5 lines and "… N more lines"
+  (`GridConfig.multilineTooltipLines`), each line cut at 100 characters (was 15 lines / 600).
+- The row menu has a "Size:" section before "Export:" (new ids in `MENU_IDS.row`).
+
+##### Added
+- `gridInterface.fitColumns(fields?, { rows? })` (one, some or every column; `{ rows: [row] }` fits a
+  column to one cell) and `resetColumnWidths(fields?)` (back to the widths `resetState()` gives). A
+  double-click on a column's resize handle fits it.
+- `gridInterface.fitRows(rows?)` / `resetRowHeights(rows?)`: a row as many lines high as its multiline
+  cells need (at most 20), kept by row key (not in the state); a multiline cell shows its lines in a
+  taller row. 100 000 rows: `fitRows()` ~85 ms, `fitColumns()` ~180 ms (the 20 longest texts of a field
+  are measured).
+- `GridConfig.multilineTooltipLines` (default 5).
+- Header menu: Reset column width / Reset all column widths. Row menu "Size:": Fit column to this cell,
+  Fit row height, Fit rows (selected rows / ranges), Fit all rows, Reset row height, Reset all row
+  heights. Texts `row.size.*`, `header.size.reset*`, `cell.multiline.moreLines`.
+
+##### Fixed
+- Fitting columns counted rows the filter hides, skipped dates, ignored `numberOverride`, and measured
+  a multiline text as one long line.
+- A press on a resize handle that does not move rebuilt the header, so a double-click never reached it.
+- Scrolling to a selected row uses the row's own height.
+
+#### The clipboard: every range, with the column headers (user request)
+
+##### ⚠️ Breaking changes
+- A copy of more than one cell starts with a **header line of the column labels**, in the text and in
+  the html table (`<thead>`): Ctrl+C on ranges and the row menu's Copy: Column / Row / Row (selected
+  rows/col) / Range. `GridConfig.copyHeaders: false` copies the values only. One cell (Ctrl+C, Copy:
+  Cell Value) is still just its value.
+- **Several ranges are copied as one table** (they copied the last range): the rows of every range x
+  the fields of every range, a cell in no range empty.
+- The row menu's copies write the values **as the cells show them** (they wrote dates as ISO and
+  numbers raw), through the same code as Ctrl+C.
+
+##### Added
+- `GridConfig.copyHeaders` (default `true`).
+- A paste whose first line is all column labels of the grid leaves that line out: a copy of the grid
+  pasted back into it writes the values, not the labels.
+
+##### Fixed
+- The row menu's copied html table did not escape the values (a `<` broke the table); it had no header
+  in its plain text.
+
+#### Excel export (user request)
+
+##### ⚠️ Breaking changes
+- The row menu's **Export:** offers Excel instead of CSV: `row.export.excel` ("Excel, all rows") and
+  `row.export.excelSelected` ("Excel, selected rows"); `row.export.csv` / `row.export.csvSelected` and
+  their texts are gone. `getCsv()` / `downloadCsv()` stay.
+
+##### Added
+- `gridInterface.getExcel(options?)` (a `Promise<Blob>`) and `downloadExcel(filename = 'export.xlsx',
+  options?)`: a real .xlsx with no dependency - the grid writes the ZIP and the SpreadsheetML, deflated
+  with `CompressionStream` where there is one. Typed cells: numbers, dates and datetimes (the local
+  day, Excel date formats), booleans, text (line breaks wrapped). The header row is always there, bold
+  and frozen, with an autofilter over every row; the widths follow the grid's. **Always a flat list**:
+  grouped, every data row in the grouped order, collapsed groups included - no group rows, no outline,
+  no totals.
+- `ExcelOptions`: `rows: 'all' | 'selected' | 'range'`, `fields`, `sheetName` (Excel's rules, a
+  `TypeError` otherwise). More rows or columns than Excel takes reject with a `RangeError`.
+- The export guide covers Excel first; the export sample has Excel buttons.
+
+#### CSV export (item 41)
+
+##### Added
+- `gridInterface.getCsv(options?)`: the rows as CSV text (RFC 4180, CRLF line ends, a header line of
+  the column labels). By default every row the filter lets through, in the sort order (grouped: every
+  data row, collapsed groups included, no group rows), the columns of the layout in the order the user
+  sees them, each value as the cell shows it. Works without a connected grid too.
+- `gridInterface.downloadCsv(filename = 'export.csv', options?)`: saves the same text as a file, with a
+  UTF-8 BOM by default so Excel reads æøå.
+- `CsvOptions` / `CsvSeparator`, plain JSON: `rows: 'all' | 'selected'`, `fields`, `header`,
+  `formatted` (`false`: raw values, ISO dates in UTC, dot decimals), `separator: ',' | ';' | '\t'`
+  (`';'` for Excel in a locale with a decimal comma), `bom`, `escapeFormulas` (default on: text
+  starting with `=`, `+`, `-`, `@`, tab, CR, LF or their full-width forms gets a `'` in front - OWASP
+  CSV injection; numbers, dates and booleans are never escaped, a phone number `+47 ...` is). An
+  unknown option or value throws a `TypeError`.
+- Row menu **Export:** section: `row.export.csv` (CSV, all rows) and `row.export.csvSelected` (CSV, selected
+  rows, greyed out with none selected), in every grid. Texts `row.export*`.
+- Guide "Export" and sample "Export to CSV".
+
+#### Menus: submenus, much shorter, and the keyboard (user request)
+
+##### ⚠️ Breaking changes
+- **The default menus are trees of submenus**: the row menu went from 38 rows to 14, the header menu
+  from 24 to 7. The `menus` hook's `defaults` hold submenus (`MenuSubmenu`), so an entry in one is
+  changed through that submenu's `entries`; a filter on a submenu's id prefix (`row.export`) still
+  hides it as a whole. The section ids `row.edit`, `header.column` and `filter.filter` are gone from
+  `MENU_IDS` and the texts (no section headers left in the defaults); the other ids stay - the Pin
+  submenu is `header.column.pin` and the Blank one `filter.filter.blank`, so their entries keep theirs.
+- **The row menu's Summary is gone** (`row.summary`, `row.summary.count` / `.sum` / `.max` / `.min` /
+  `.avg`, ids and texts): the summary of the selected cells is in the footer (item 35).
+- Submenu labels have no colon; texts changed: "Hide column", "Column chooser…", "Advanced Filter…",
+  "Is blank", "Is not blank", "Operator". A selected item shows a ✓ and is a `menuitemcheckbox`
+  (`aria-checked`) instead of a highlighted background; "Use dimmed values" and "Changed rows only" use
+  `selected` instead of a "✓ " in the label.
+
+##### Added
+- `MenuSubmenu` (`{ type: 'submenu', id, label, entries, visible? }`) in `openMenu()` and the `menus` hook:
+  opens beside its item on hover (after 150ms), click, ArrowRight, Enter or Space; flipped left when there
+  is no room on the right, kept in the window, scrolls when taller; nests; hidden when it has nothing to
+  show. New ids `header.column.pin`, `filter.filter.blank`, `row.edit.separator`,
+  `header.aggregate.totalsSeparator`; texts `header.column.pin` ("Pin"), `filter.filter.blank` ("Blank").
+- **The keyboard in every menu** (the WAI-ARIA menu pattern): a menu opened from the keyboard focuses its
+  first item (a mouse-opened one on ArrowDown/Up), arrows, Home/End, a letter, Enter/Space, ArrowLeft/Esc
+  for a submenu, Tab closes it; the focus goes back on close. Roles `menu`, `menuitem`,
+  `menuitemcheckbox`, `aria-haspopup` / `aria-expanded` / `aria-disabled`. The filter menu's value list:
+  Tab into it, "Run Search" is a button.
+
+##### Fixed
+- Shift+F10 or the menu key on a focused column header opens the header menu (Chrome sends it to the
+  header cell, the handler was on the label in it).
+
+#### The keys of the header filter row and the rows tested
+
+##### Fixed
+- Alt+ArrowUp in the top filter of a right pinned column of several fields jumped to its bottom filter:
+  it stays, as in the left and center columns (with labels shown it goes to the label, as before)
+
+#### Grouping by week, month, quarter or year
+
+##### Added
+- a date column shown as weeks, months, quarters or years (`ColumnFormat.date` `'weekIso'`, `'weekUs'`,
+  `'month'`, `'quarter'`, `'year'`) groups by them: one group a week, `Due: 2026-W47`. Another format for
+  the column - the header menu, the dialog, `setState()` - groups the rows again
+
+#### A template on a number or date column, a link on a number column
+
+##### Added
+- `ColumnFormat.text` on a `number`, `date` or `datetime` column: `{ number: { decimals: 1 }, text: '{value}
+  kg' }` shows `72,5 kg`, `{ date: 'weekIso', text: 'due {value}' }` `due 2026-W47` - `{value}` in the
+  column's display format. An edited cell shows the value; sorting, filtering, copy and the exports use
+  the value
+- `ColumnFormat.link` on a `number` column: a link from an order number,
+  `{ link: { url: 'https://shop.example.com/order/{value}' } }`
+- the grid config dialog: *Text shown* for number and date columns, *Show as link* for number columns
+
+#### The date picker's days for a finger
+
+##### Changed
+- the grid's date picker has rows of days of 28px on a touch screen (`pointer: coarse`), 22px with a
+  mouse - `datePickerConfig.rowHeight` still wins. Whether it fits under the cell is worked out from the
+  rows' height when `datepickerHeight` is not given (it was 282 whatever `rowHeight` was)
+
+#### Helpers for an app with a backend: v5 filters, the columns from the fields, the filter to send, the 400 errors, fields known later, rows from JSON
+
+##### Added
+- a text column with a template (`format.text`, a link's text) sorts on the text it shows, as it filters on
+  it; grouped by, on its value
+- the user guide, `user-guide/` (the docs site's User Guide): for the people using a grid, a page for each kind
+  of action - filtering, sorting, grouping, columns, formatting, calculated columns, editing, selecting and
+  copying, find, export, import, views, the grid config dialog, the detail form, the keyboard
+- a text or number column shown as checkboxes has a checkbox as its header filter - checked, not checked,
+  no filter - plain conditions `toSqlWhere()` takes
+- a text column with a template (`format.text`, a link's text) is filtered on the text it shows - every
+  operator, IN and the filter menu's values; `filterAsShown: false` filters the value. For a backend:
+  `gridInterface.getShownFormulas()` and `toSqlWhere({ shown })` compare the same text in SQL
+- the grid's dialogs open within 80 % of the window's height and width (a phone: its whole width), what does
+  not fit scrolls inside; resized by the user, as large as the window
+- the Colours tab of a number column in four panels, one open at a time - Colour rules, Data bar, Colour scale,
+  Icons - each a line saying what it has and whether it has a problem
+- the **ƒ** button beside a formula (a calculated column's, a colour rule's): a menu of the functions by kind,
+  each with a tooltip of what it does; picked, put in at the caret. `MenuItem.tooltip`: a tooltip on an
+  item of a menu, its description for a screen reader too
+
+##### Fixed (a review of the above)
+- a template given by `setState()`, `initialState.formats` or the dialog to a column without a `columns`
+  entry sorts on its text too
+- another template - `setState()`, `updateConfig({ columns })`, a view, the Format menu - filters again on
+  the text it shows (only the dialog did); a template added to a column without a format did not
+- a second grid on the same datasource, once destroyed, took the first grid's template sort and filter, its
+  lookup labels and its grouping by weeks with it: the first grid's are used again
+- a field of values of more than one kind (numbers and a date in a text field) sorts every value as its text:
+  `3` and `10` against a date had no one order, equal values ended up apart
+- a header filter of a column turned to checkboxes, or back, is cleared: a text typed was no checkbox's state;
+  a number column's checked filter run again stays checked
+- the grid config dialog: the colour rule open for its problem stays open while the problem is typed away;
+  Reset column, a rename or a remove open the first rule again; Show as link turned off on a number column
+  keeps its Filter as shown; Add calculated column shows the new column's settings on a phone, Remove the list;
+  a resize does not let a tall dialog grow at once, its buttons off screen
+- `toSqlWhere()`: a `valueField` that is a column filtered on its template compares its value, as the grid; a
+  number of more digits than a number holds is a problem of the formula (`columnSettings.formula.problem.bigNumber`),
+  it was `Infinity` - a name - in the SQL; SQL Server joins texts as `nvarchar(max)` (two `nvarchar(3000)` were cut
+  at 4000) and ROUND of 10²⁷ or more is no overflow (Msg 8115)
+- the docs: LOB columns (`CLOB`, `BLOB`) are not supported by `toSqlWhere()`; the differences the SQL still has - a text over 10 000 characters, a
+  number past 1.8 × 10³⁰⁸, `=` on text in a formula; the feature overview has the new features and links the user
+  guide
+- the grid config dialog on small screens: one colour rule open, the others a line each (a sample in their
+  colours, what they match); on a phone the list of the columns and a column's settings take turns
+
+##### Locked by code: a field's case, a LOB as text
+- `FieldConfig.caseSensitive: true` - every filter on the field matches case, for a column with an index (a
+  project code). Set in the datasource's fields, not in the grid's config: Match case is on and greyed out in
+  the filter menu, the filter editor and the grid config dialog (its hint *Always for this column: set by the
+  application*, `columnSettings.matchCase.locked`); a condition set without it is kept with
+  `caseSensitive: true`. `SqlColumn.caseSensitive`: `toSqlWhere()` compares the column with its case, also
+  when the filter sends `caseSensitive: false` - `"PROJECT_CODE" = :1`, its index used
+- `FieldConfig.clobType: true` - a long text the database holds as a LOB (an Oracle `CLOB` / `NCLOB`). LOB
+  columns are still not supported as such; this filters one as plain text: Equal, Not equal, Contains, Does not
+  contain, Begins with, Ends with, Blank - no value list, no "compare with a field", no formula reads it
+  (`columnSettings.formula.problem.clobField`), a template that reads it is filtered on the value.
+  `SqlColumn.clobType`: `toSqlWhere()` writes each with `LIKE` (Equal is a `LIKE` of the whole text), any
+  other operator throws a filter error. `sqlColumnsFromFields()` copies both; `getField()` has both
+
+##### Validation rules of a grid's columns, more built-in rules
+- `ColumnConfig.validate`: validation rules in the grid's config, as a field's - added after the field's own
+  (`FieldConfig.validate`): an edit, the detail form, an import and `datasource.validate()` check both,
+  `getField().validate` lists both. Set by code, the user can not change them: not in the state or a view, the
+  grid config dialog shows them read only; `updateConfig({ columns })` replaces them, `destroy()` takes them back. An id that is
+  not registered or wrong options throw a `TypeError` naming the column
+- new built-in rules: `'integer'`, `{ id: 'decimals', value: 2 }`, `{ id: 'oneOf', value: ['Open', 'Closed'] }`,
+  `'email'` (texts `validation.integer`, `.decimals`, `.oneOf`, `.email`); `min` / `max` take a day
+  (`'2026-01-01'`) for a date or datetime. A list option in a message is its items with `, `
+- `'unique'`: no other row has the value - `{ id: 'unique', with: ['year'] }` for two or more fields
+  together, `ignoreCase: true` for text in any case. Every row with the value has the error, an edit, a
+  deletion mark or a row removed takes it from the others (the grid repaints them). A blank value is no
+  duplicate. An import compares its rows with the grid's and with each other (texts `validation.unique`,
+  `validation.uniqueWith` - `{with}` is the labels of the other fields)
+- **changed**: `'required'` takes a text of only spaces (tabs, line breaks) as missing, and the stripes of a
+  required cell show it as empty
+- the grid config dialog shows a column's rules read only, on its General tab under *Validation*: the field's
+  and the column's, each as its message (texts `columnSettings.validation`, `.hint`, `.pattern`, `.unique`,
+  `.uniqueWith`, `.ignoreCase`)
+
+##### Titles of pull requests checked, releases tagged and published by hand, the docs of branches under dev/ (user request)
+- **pull requests to master** are titled as conventional commits - `fix:`, `feat:`, `fix!:` / `feat!:`,
+  `chore:`, `docs:`, `test:`, `refactor:`, `ci:`, `build:`, `perf:`, `style:` - the `pull request` check
+  fails otherwise
+- **a release** is two workflows run by hand on master, reading the version of package.json (set by hand):
+  `tag` pushes the git tag `v<version>` and stops when it is there; `publish` (it was `release`) runs the
+  checks and publishes to GitHub Packages, and stops when that version is published already. See README,
+  *Releases*
+- **the docs site**: master's at the root of GitHub Pages after every push to master; any other branch's
+  under `dev/<branch>/` when the `pages` workflow is run on it, `dev/` lists them, deleting the branch
+  takes them down. A push to `v6_maybe` no longer deploys by itself. The sidebar shows the version before
+  the branch and the commit, and a *dev* badge on a branch's docs
+
+##### `#` in the names of columns (user request)
+- `toSqlWhere()`: a column's name may have `#` after its first character - Oracle's `PROJECT#`,
+  `HR.EMP#.PROJECT#`. Quoted as any name; `#` first still throws (a temporary table on SQL Server)
+- a calculated column's field name may have `#` after its first letter (`line#`); a formula reads a field
+  with `#` in its name as any, `{qty#}` (texts `columnSettings.calculated.name.hint` and
+  `.problem.name` say so)
+  (‹ Columns); side by side the list stays in view. Checked at 1366x768 and 1280x720 at 150 % zoom
+- a text field's date (a column of several types, `dynamicCellTypeColumn`) is filtered, sorted and grouped by
+  the text its cell shows, `2026-11-25` - not JavaScript's `Thu May 17 1990 ...`: the same rows as
+  `toSqlWhere()` on a text column with the ISO text. Values of different kinds sort by their text
+- `toSqlWhere()`: a text `EQUAL` / `NOT_EQUAL_TO` without wildcards is `=` (`LOWER(col) = $1`, an index is
+  used) on PostgreSQL, Oracle and SQLite; SQL Server keeps `LIKE`, its `=` ignores trailing spaces
+- `toSqlWhere(filter, { calculated })` (sql entry): the calculated columns of the grid (`getState().calculatedColumns`,
+  or a formula by field) - a filter on one compares its formula written as SQL, the values the grid computes,
+  on PostgreSQL (13 or later), Oracle, SQLite and SQL Server (2017 or later). Dates are their day in the
+  user's `timeZone`: a date column of wall clocks on every database, instants (`utc`, `zoned`, epoch) on
+  PostgreSQL and Oracle - on SQLite and SQL Server in UTC only
+  New type `SqlCalculatedColumn`
+- the formulas of the calculated columns and the formula colour rules: `!=` and `==` (as `<>` and `=`), and
+  the functions of text `LEFT`, `RIGHT`, `MID` / `SUBSTRING`, `LEN`, `UPPER`, `LOWER`, `TRIM`, `CONTAINS`
+- `null` in a grid config is an option left out: the options of the grid, of a column (`placeholderRow`,
+  `operator`, `aggregate`, `editor` ...) and of its `format` - the default, as a config from a backend has
+  `null` for what is not set. It threw for most of them (`operator is null`). In `updateConfig()` `null` is
+  the default again, as `undefined`
+- `gridInterface.importFile(file, options)`: an Excel workbook (the first sheet by default) or a CSV file
+  read and its rows added in one call - `readImportFile()` and `importRows()` with `header: true`
+- `convertV5Filter(filter)`, `isV5Filter(x)`, `normalizeFilter(x)` - from `@simple-html/grid` and from
+  `@simple-html/grid/sql` (no DOM): a v5 filter (`filterArguments`, `attribute`) as a v6 one, for old links,
+  bookmarks and saved configs. `normalizeFilter` takes either shape, also as JSON text, `null` for none; what
+  is neither throws a `TypeError`
+- `withoutFields(filter, fields)` - both entries: the filter without the conditions on some fields (the
+  calculated columns), a condition taken out matching every row - out of an AND group, its OR group out
+  whole - so a backend selects every row the whole filter does, maybe more
+- `sqlColumnsFromFields(fields, { nameCase, column, dateStorage })` (sql entry): the `columns` of
+  `toSqlWhere()` from the datasource's `fields`
+- `isSqlFilterError(error)` (sql entry): true for what `toSqlWhere()`, `convertV5Filter()` and
+  `normalizeFilter()` throw for the filter and the user's `timeZone` - answer with a 400 - false for the
+  other options that are wrong. The errors stay `TypeError` / `RangeError`
+- the filter types of the sql entry: `SqlFilter`, `SqlFilterGroup`, `SqlFilterCondition`,
+  `SqlFilterOperator`, `SqlV5Filter`, `SqlFieldsOptions`
+
+- `gridInterface.getServerFilter({ fields, calculated })`: the filter without the calculated columns (with
+  `calculated: 'keep'`: without those whose formula reads a field not in `fields`) and the fields the backend has not - what to send to a backend in one call. Find's *Filter rows* is not in it: it
+  filters in the browser, the rows loaded after it was turned on too
+- `datasource.setFields(fields)`: the fields replaced after the datasource is made (the metadata of a
+  query came); the rows filtered, sorted and grouped again, the event `fields-change`. A grid on it drops
+  the display formats the new types do not take (not the label, placeholder, read only)
+- `datasource.parseRow(row)` and `setData(rows, { parse: true })`: the values of rows as JSON gives them
+  read as the types of the fields - ISO text a `Date` (a day the start of it in local time), `'12.5'` a
+  number, `'true'` / `1` true
+- the event `cell-dblclick`: a data cell double-clicked, the payload of `cell-click` (a custom and a link
+  cell too, not a checkbox)
+
+##### Changed
+- `convertGridConfig()` of a v5 config throws a `TypeError` for a filter with an operator that is none
+  (it was passed on) - the v5 filter converter is the one above
+- the SQL guide's `withoutFields` sample left the other conditions of an OR group: it let fewer rows
+  through than the filter. The helper leaves the group out
+
+#### Formats by type and the default view: the Defaults tab of the grid config dialog
+
+##### Added
+- `GridConfig.typeFormats` / `GridState.typeFormats` (`TypeFormats`): a format for every `date`, `datetime`
+  and `number` column without a date or number format of its own - `{ date: 'norwegian', number: {
+  decimals: 2 } }`. A column's own format wins; checkbox and lookup columns show none. State: saved with
+  `getState()`, the views and `exportConfig()`; `updateConfig({ typeFormats })` changes it
+- the Defaults tab: **Show the views button** (`viewsButton`, set with `updateConfig()` on Apply)
+- the grid config dialog has a third tab, **Defaults**: a format picker per type and the **Default view**
+  (Standard or one of the views); *Reset formats* in its footer. A column's format picker says
+  `Default: Norwegian` when it follows its type's
+- Format ›: *Default* shows the type's format as its example
+- texts `columnSettings.tab.defaults`, `columnSettings.format.ofType`, `columnSettings.defaults.*`
+
+#### Fill down in the row menu
+
+##### Added
+- the row menu's Paste › **Fill down** (`row.paste.fillDown`, hint Ctrl+D / ⌘D): as Ctrl+D - every range's
+  top row into the rows under it; without a range the cell right clicked gets the value above it. Greyed
+  out without a range when the cell is readonly. Texts `row.paste.fillDown`, `.hint`, `.hint.mac`
+
+#### Saved views in exportConfig / importConfig; Min lines under Multiline (user request)
+
+##### Added
+- `exportConfig()` has `views`: every named view - the config's and the ones the user saved with the views
+  button (`viewsStorageKey`), as `getViews()` has them; `importConfig()` gives them back (`setViews()`). A
+  grid saved in a backend keeps its users' views. `reconcileColumns()` cleans them too.
+- The grid config dialog: *Min lines in the detail form* under *Multiline* on the Columns tab, while it is
+  on. The Detail form tab's *Min lines* follows the dialog's Multiline before Apply. New texts
+  `columnSettings.minRows`, `columnSettings.minRows.hint`.
+
+##### Changed
+- A field taken out of the detail form keeps its options (`fieldOptions`) for when it is put in again.
+
+#### The columns of a source changed: `reconcileColumns()`, `updateColumns()` (user request)
+
+##### Added
+- `reconcileColumns(saved, columns, options?)`: a saved grid (`exportConfig()`) brought up to date with
+  the columns its source has now (`SourceColumn[]`: a ColumnConfig and its field). `config.columns` is the
+  source's; a field that is gone leaves the layout, the sort, the grouping, the filter's conditions, the
+  header filters, the formats, the aggregates, the detail form, the colour rules (a condition, a rule left
+  without one, a formula naming it), the calculated columns that name it - in the config, its initialState,
+  the state and the views. A new field is listed by the column chooser (`showNew` shows it). Returns
+  `{ grid, report }`: `added`, `removed`, `removedCalculated`, `removedRules`.
+- `gridInterface.updateColumns(columns, options?)`: the same on the grid that is shown, the views saved
+  since too; returns the report.
+- The sample *Columns from a source*: a view's version 2 loses a column and gets two.
+
+#### Match case seen in the header, set in the dialog (user request)
+
+##### Added
+- A header filter that matches case - `ColumnConfig.filterCaseSensitive`, or Match case on - shows **Aa**
+  before its operator in the header (`Aa =`), its name for a screen reader "…, match case". New texts
+  `filter.indicator.case`, `filter.indicator.matchCase`; classes `.simple-html-grid-filter-case`,
+  `.simple-html-grid-filter-operator-case`.
+- The operator choice of the header filter (a click on the operator, F4) has *Match case* at its end.
+- The grid config dialog's *Header filter* tab: a *Match case* checkbox for a text column (greyed out when
+  the config says always). New texts `columnSettings.matchCase`, `.matchCase.hint`, `.matchCase.always`.
+
+##### Fixed
+- Turning Match case on or off renders the header again (it shows it now).
+
+#### The header over the rows on a phone (user request)
+
+##### Fixed
+- On a phone the header's columns were 10px to the right of the rows' when the columns were scrolled to
+  their end (and a right pinned column always): the header lined up with the rows by a scrollbar of its
+  own, as wide as the rows' on a desktop - a phone's scrollbars take no room. The header leaves the room
+  of the rows' scrollbar now (`__scrollbarSize`) and fills its corner with a block in the scrollbar's
+  track colour (`.simple-html-grid-header-gutter`). The header has no scrollbar of its own.
+
+#### The column chooser: a finger drags a field on a phone (user request)
+
+##### Fixed
+- Dragging a field out of the column chooser with a finger stopped on a phone: the list panned under it
+  and the browser cancelled the drag. The listener that keeps the list still was added once the hold made
+  it a drag - a phone's browser decides when the finger goes down whether a touch's moves can be held
+  back. It is on the field from the start now, holding them back only while a drag is on.
+- A long press on a chooser field (Android's own, at 500 ms) ended the drag: the chooser has no menu on a
+  long press, its `contextmenu` is canceled now and the drag goes on.
+
+##### Changed
+- The drag handle (⠿) of a chooser field drags at once with a finger, no hold - nothing pans under it
+  (`touch-action: none` on every `.simple-html-grid-drag-handle`). 24px wide on a touch screen.
+
+#### Changes: one kind at a time, the rows, the fields (user request)
+
+##### Added
+- `getChanges(kinds?)`, `hasChanges(kinds?)` take the kinds of change, `{ new?, modified?, deleted? }`
+  (`ChangeKinds`): left out or `null` all of them; the kinds `true` only those; only kinds `false` all but
+  those. `getChanges()` keeps its three lists, a kind not asked for is `[]`. The data container too.
+- `datasource.getChangedRows(kinds?)`: the changed rows themselves, in the order of the data - to
+  validate what a save sends (`validate(getChangedRows({ deleted: false }))`).
+- `datasource.getChangedFields(row)`: the fields of a row that differ from their original;
+  `getOriginalValue(row, field)`: the value before the edit.
+
+#### Colour rules on a date: weeks, months, quick dates - ISO or US weeks (user request)
+
+##### Added
+- A colour rule on a date (`ColorRule`, a condition of one too) takes a **period** as its value - a week
+  `'2026-W47'`, a month `'2026-11'`, a quarter `'2026 Q4'`, a year `'2026'` - and a **quick date**,
+  `datePreset` (`'thisWeek'`, `'lastMonth'`, `'next7Days'`, `'overdue'` ...: its days today) in place of
+  the value. `EQUAL` is in it, `LESS_THAN` before it, `NOT_EQUAL_TO` not in it (or blank) ... as the header
+  filter of a column shown as weeks.
+- **`week: 'iso' | 'us'`**: Monday and ISO 8601 numbers, or Sunday and week 1 with January 1 - for a typed
+  week and a quick date's week. Left out: the column's `weekIso` / `weekUs` format, else the date picker's
+  `weekStart`. `RuleWeek` is the type.
+- The dialog: *Compare with* (a date or period typed, or a quick date) and *Weeks* (as the column, ISO -
+  Monday, US - Sunday) on a rule or a condition on a date. New texts `columnSettings.rules.date.compare`,
+  `.date.typed`, `.date.placeholder`, `columnSettings.rules.week`, `.week.column`, `.week.iso`, `.week.us`.
+- `refreshDatePresets()` renders the cells again on a new day when a colour rule has a quick date.
+
+#### A saved grid has a version: `exportConfig()` / `importConfig()` (user request)
+
+##### Added
+- `gridInterface.exportConfig()`: `{ version: 2, config, state }` - the config as the app gave it (with
+  what `updateConfig()` changed) and `getState()`, plain JSON. `importConfig(saved)` takes it back:
+  `updateConfig()` with its config, `setState()` with its state (`resetState()` without one).
+- **A saved grid without a `version` is version 1, a v5 config** (`saveConfig()`), converted on the way
+  in: `attributes` → `columns`, `columns*` → `layout`, its sort, grouping, groups expanded, filter and
+  header filter values → `initialState` and the state; `type`, `mandatory`, `tooltipText` and
+  `selectionMode` left out (the datasource's in v6). `convertGridConfig(saved)` does it alone,
+  `GRID_CONFIG_VERSION` is 2, `ExportedGrid` the type. A newer version, or a v6 config without a version,
+  throws a `TypeError`.
+
+#### The detail form: sections, lines and room per field (user request)
+
+##### Added
+- **Sections** - entries of `DetailForm.fields` between the field names (`DetailFormSection`):
+  `{ section, panel?, collapsed?, paddingTop?, paddingBottom? }` has the fields after it, up to the next
+  one. Its header is a button (`aria-expanded`) that opens and closes it - the user's, while the form shows
+  these sections; `collapsed` is the default it starts with (*Open at start* in the dialog), set again by
+  the dialog's Apply, `setState` and `resetState()`. `panel` puts a frame around it. In the grid config
+  dialog's tab *Detail form* a section is a row of the list: *Add section*, moved as the fields are (drag,
+  Alt+↑/↓, Move up / down), its name, *Panel*, *Open at start*, room and *Remove section* under the list.
+- `DetailForm.fieldOptions` (`DetailFormFieldOptions`, under a field's name): `minRows` - the least lines of
+  a field of several lines (1 to 30, default 3) - and `paddingTop` / `paddingBottom`, room in px. Set for
+  the field picked in the dialog. Both are checked as the rest of the detail form (a `TypeError` that says
+  which).
+- New texts `columnSettings.detailForm.field`, `.sectionSettings`, `.section`, `.section.hint`, `.panel`,
+  `.open`, `.minRows`, `.paddingTop`, `.paddingBottom`, `.addSection`, `.removeSection`, `.newSection`,
+  `.sectionType`, `.panelBadge`. New classes `.simple-html-grid-detail-form-section` (`-header`, `-title`,
+  `-fields`, `-collapsed`) and `.simple-html-grid-detail-form-panel`.
+
+#### Menus: a line of their own colour
+
+##### Added
+- `--simple-html-grid-menu-border-color`, the line around a menu - the grid's lines by default, as before.
+  The TreDeSpace theme makes it slate-300 / slate-600: in dark the menus are the colour of the rows, and
+  a shadow of black hardly shows on slate-900.
+
+#### Text filters: `\` escapes a wildcard (user request)
+
+##### Added
+- **`\` makes the next `*`, `%`, `_` or `\` a plain character** in a text filter value - a header filter,
+  the filter editor, `where()`, colour rules: `S\_\_den` finds `S__den` and not `Sweden`, `*\%*` a text
+  with `%`, `50\%*` starts with `50%`. `_`, `*` and `%` without it stay wildcards. A `\` before any other
+  character, or at the end, is a `\` (`C:\temp`). `toSqlWhere()` selects the same rows: the escaped
+  character is plain in each dialect's pattern (`!_`, `[_]`, `[*]`).
+- `escapeTextPattern(text)`: the filter value that finds `text` as it is (`'50% off'` → `'50\% off'`).
+
+##### Changed
+- ⚠️ A saved text filter with `\*`, `\%`, `\_` or `\\` in it means the character now, not a `\` and a
+  wildcard. `literal: true` still takes all of the value as it is, `\` too.
+
+##### Fixed
+- The row menu's *Filter* on a cell's value takes the text as it is (`literal`): a cell `50%` found `500`.
+
+#### A dev build to GitHub Packages, by hand (user request)
+
+##### Added
+- The `next` workflow (`.github/workflows/next.yml`), run from the Actions tab on any branch: every check,
+  then publishes `<version>-next.<run>` - `6.0.0-next.1`, `6.0.0-next.2` ... - to GitHub Packages with the
+  npm tag `next`. `scripts/githubPackage.js next` makes the version (tested).
+
+#### The grid config dialog: a column's settings in tabs (user request)
+
+##### Changed
+- On the Columns tab the settings of the column picked are in four tabs under its name, the form was too
+  big in one: **General** (label - or a calculated column's own settings - Multiline, Read only,
+  Placeholder), **Display** (format, Filter as shown, blank / 0, text, link, checkboxes), **Header
+  filter** (operator, Filter as you type) and **Colours** (colour rules; data bars, scales, icons). The
+  preview is under every tab. A checkbox or lookup column has no Display tab, a checkbox column no Header
+  filter. The tab picked stays when another column is picked.
+- A tab with a problem in it has a small square in the error colour after its name, *Error* for a screen
+  reader. The tabs are a tab list (arrows, Home, End), as the dialog's.
+- New texts: `columnSettings.section.general`, `.display`, `.filter`, `.colours`, `columnSettings.sections`
+  (the list's name, `{column}`). New classes: `.column-settings-sections` (the list),
+  `.column-settings-section` (a tab's panel), `.column-settings-tab-problem` (the mark).
+
+#### Tab, Enter and Alt+arrows move the focus at once
+
+##### Changed
+- Tab, Enter and Alt+arrows in a cell or a header filter move the focus in the keydown, as the keys that
+  jump do: the row is scrolled into view and rendered, then the cell is focused. It was 100ms later, and
+  the keys that move or type were canceled until then: a held key went a cell per 100ms, a fast second
+  Alt+ArrowDown was lost. Now every key counts and goes on from the cell the focus is in.
+- The row the focus goes to is scrolled just into view, as the jump keys do (it kept two rows of room).
+
+##### Fixed
+- Alt+ArrowDown from a header filter into the first row did not make it the current row: the row that
+  was current stayed. Now the row the focus goes to is always the current row.
+
+#### The date picker's week numbers
+
+##### Fixed
+- The US week numbers of the date picker (`isoWeek: false`) are Excel's `WEEKNUM`, the numbers of a date
+  column's week format and of the header filter's `2026-W47`: they were another count, a week lower in
+  most years. The row across New Year is week 1.
+- `getWeekNumbers()` (the picker's count) gave 0 for the first days of a year in the last ISO week of the
+  year before (2027-01-01 is 53). The picker itself passed only Mondays, so its ISO numbers were right.
+
+#### Row numbers: Cmd+click, and Shift+click after Ctrl+clicks
+
+##### Fixed
+- Cmd+click on a row number (a Mac) adds or removes the row, as Ctrl+click; so does Cmd+click on a group
+  row's number (adds its rows) and on the corner (deselects all).
+- A second Shift+click after Ctrl+clicks dropped the rows the Ctrl+clicks selected - also after a finger's
+  taps and the row menu's *Rows from N to here* twice. Shift+click keeps the rows selected at the anchor
+  and changes only the range, as the column numbers do.
+
+#### The buttons of a dialog wrap on a phone
+
+##### Fixed
+- On a phone (390px) the grid config dialog's buttons were squeezed and *Apply & close* was cut off: a
+  dialog's buttons wrap to a second line when there is no room, the ones at the right stay at the right.
+
+#### Data bars, colour scales and icon sets; colours in the Excel export (user request)
+
+##### Added
+- **Data bars** (`ColumnFormat.bar`, `DataBarFormat { color?, min?, max? }`): a bar in a number cell, as long as
+  its value's place in the range - by default the rows the filter lets through, 0 included, so a negative value
+  draws left of an axis.
+- **Colour scales** (`scale`, `ColorScaleFormat { minColor, midColor?, maxColor, min?, mid?, max? }`): a two or
+  three colour background by value - a heat map.
+- **Icon sets** (`icons`, `IconSetFormat { set, thresholds?, unit?, reverse?, position? }`): arrows, traffic
+  lights, flags or symbols before or after the value by thresholds (percent of the range or numbers); a screen
+  reader gets *High* / *Middle* / *Low*. `--simple-html-grid-icon-green/amber/red-color`.
+- Number columns (calculated ones too); palette colours or `#rrggbb` (a custom colour drawn as a tint, the text
+  always reads); set in the grid config dialog - *Data bars, scales, icons*, with a preview - and kept in the
+  state. The range is the datasource's min / max of the rows the filter lets through, cached until a value or
+  the filter changes. A rule's background wins over a scale; a bar is drawn over it; icons show with any rule.
+- **Colours in the Excel export**: the rules' text colours, backgrounds and bold as the cells' styles (the light
+  palette), the bars, scales and icon sets as Excel's own conditional formatting (Excel computes them); the
+  number formats as before. `getExcel({ colors: false })` writes the values and formats only. CSV has no colours.
+- The full grid sample: a bar on Balance, a heat map on the months, arrows on KPI 1.
+
+#### Import: rows pasted from Excel, CSV and Excel files (user request)
+
+##### Added
+- **The import dialog**: a CSV or .xlsx file picked or dropped, or rows pasted from Excel / Google Sheets
+  (Ctrl+V in the dialog, or the row menu's Paste › *As new rows…*) become new rows. The first rows with a field
+  picker over each column (matched by name, else by position), *First row is a header*, the separator, the
+  sheet, the decimal mark and the order of dates when they matter; the problems in words ("Row 3, Age: Not a
+  number: abc") and on the cells; rows with problems imported marked or skipped. Values read as typing reads
+  them, plus a file's forms (`1 234,5`, ISO dates); validation is run before anything is added. One undo
+  step. `GridConfig.importMenu` (off by default) shows *Import rows…* in the header menu and *As new rows…*;
+  both need an editable grid and `edit.add`. `gridInterface.openImport()`, `importRows()`, `readImportFile()`,
+  `ImportFileError`, `IMPORT_LIMITS`; `datasource.addNewRows()`. Guide 24 *Import*, sample *Import*.
+- **A file is not trusted**: our own unzip (`DecompressionStream`) and xlsx reader - 20 MB a file, 100 MB
+  unzipped, 100 000 rows, 1 000 columns, 1 000 000 cells; zip bombs, lying sizes, encryption, ZIP64 and
+  `<!DOCTYPE` refused; content shown as text only.
+
+#### Named views (user request)
+
+##### Added
+- **Views**: snapshots of the state under a name - "My open orders" - the user switches between with the
+  **views button** at the left end of the footer: its name (*Standard* for the config's state), a `*` while
+  the state changed since it was applied or saved, a click opens the views menu - the views, then Save, Save
+  as new view…, Revert changes, Rename…, Delete, Default view. `GridView { id, name, state, readonly?,
+  default? }`; `getViews()`, `setViews()`, `getCurrentView()`, `isViewModified()`, `applyView()`, `saveView()`,
+  `saveViewAs()`, `renameView()`, `deleteView()`, `setDefaultView()`; the event `views-change` to store them;
+  `GridConfig.views` (a `readonly` one is shared: applied, saved as one's own, not changed),
+  `viewsStorageKey` (kept in localStorage), `viewsButton`. Sample *Named views*.
+
+#### Quick dates in the filter menu (user request)
+
+##### Added
+- **Quick dates** on date and datetime columns: under the filter menu's range block, one click for Today,
+  Yesterday, This / Last week, This / Last month, This / Last quarter, This / Last year, Last 7 / 30 days,
+  Next 7 days (and Overdue, not offered by default). The header filter keeps the preset
+  (`HeaderFilter.datePreset`) and shows its name, the footer chip too; the datasource holds a plain BETWEEN of
+  the days, so `getFilter()` and `toSqlWhere()` see dates. **Relative**: computed from today again when a
+  state is applied (`setState`, `initialState`, `resetState`) and when the window gets the focus back - a view
+  saved in November means December in December; `gridInterface.refreshDatePresets()` for a page left open.
+  The week starts as the date picker's (`datePickerConfig.weekStart`, Monday by default). Typing a preset's
+  name in the cell applies it. `ColumnConfig.datePresets` (a list, or false), `DATE_PRESETS`, `DatePreset`.
+
+#### Calculated columns; colour rules on several fields, by formula, in any colour (user request)
+
+##### Added
+- **Calculated columns**: `GridConfig.calculatedColumns` / `GridState.calculatedColumns`
+  (`{ [field]: { formula, label?, type? } }`, `CalculatedColumn`, `CalculatedType`), and *Add calculated column*
+  in the grid config dialog (the formula with the `{ }` field button, the type it gives, its value in the
+  preview row, its problems at once). A calculated field is computed when it is read - the row proxy answers
+  it - so it is never an edit, never in `getChanges()` or JSON, and always current; the filter, sort,
+  grouping, aggregates, cells, copy, exports, Find and the detail form read it as any field. Read only.
+  `toSqlWhere()` throws for a condition on one (it is no column of the database) - guide 22 shows the ways
+  round. Guide 23 *Calculated columns*, sample *Calculated columns*.
+- **Formulas** (`formula.ts`): numbers, text, `{field}`, `+ - * / &`, comparisons, AND / OR / NOT, IF, ROUND,
+  ABS, MIN, MAX, TODAY, DAYS, YEAR, MONTH, CONCAT, COALESCE, ISBLANK; checked for types before they run, a
+  blank gives a blank, a row that can not be computed a blank cell. **Safe**: read by our own tokenizer and
+  parser into a fixed set of parts - no `eval`, no `Function`, no `.` or `[]`; functions and fields from Maps
+  (`constructor`, `{__proto__}` are refused), rows read as own properties; at most 1000 characters, 500
+  parts, 32 deep; no cycles between calculated columns; results are text, never markup.
+- **Colour rules, more**: a rule is a value (as before), **conditions** on other fields of the row (AND /
+  OR, `conditions`, `combine`, `RuleCondition`) or a **formula** (`expression`) that gives true / false.
+  **14 palette colours** (amber, lime, teal, cyan, indigo, pink, brown added) and **any colour** `#rrggbb`
+  from a colour picker (`RuleColor`): on a background of its own the text is black or white, whichever
+  reads; a text colour of its own is made lighter in dark mode until it reads.
+
+#### Keyboard shortcuts help (user request)
+
+##### Added
+- **`?`** (in the grid where it types nothing: a readonly cell, a checkbox, a header, a row number) and
+  **Ctrl+/** (Cmd+/, anywhere in the grid) open a dialog of every key of the grid: 9 groups, a search, the
+  keys as `<kbd>`, on a Mac as a Mac writes them (⇧⌘Z). Keys the grid does not offer are left out (editing in
+  a readonly grid ...). `gridInterface.openShortcutHelp()`, `GridConfig.shortcutHelp: false` turns the keys
+  and the header menu's *Keyboard shortcuts…* (`header.shortcuts`) off. One list (`shortcutList.ts`) for the
+  dialog and guide 14's tables - a test keeps them equal. Texts `shortcuts.*`, the names of the keys too.
+
+##### Fixed
+- On touch the resize handle at the top right of the dialogs (filter editor, grid config) covered the middle
+  of their ✕: a tap resized the dialog.
+
+#### Docs: a Features overview (user request)
+
+##### Docs
+- **Feature overview** (`guides/00-features.md`, `#guide/features`): what the grid can do in 19 tables - data,
+  columns, display and formatting, filtering, sorting and grouping, selection, editing, find, the detail form,
+  the grid config dialog, menus, export, state, live data, theming, texts, accessibility, touch, SQL - each
+  feature with a line what it does and links to its guide section and sample; the keys at the end. A section
+  of its own in the sidebar, and the site's start page. The README has a Features list.
+- The wide tables of the guides scroll in their own box on a phone, not the whole page.
+
+#### The multiline editor: a ✕ that saves and closes (user request)
+
+##### Added
+- A **✕ at the right of the multiline editor's hint**: it saves and closes, the focus back in the cell - a
+  finger has no Ctrl+Enter. In a readonly editor it closes. Texts `cell.multiline.close` ("Save and close")
+  and `cell.multiline.closeReadonly` ("Close").
+
+#### Docs site: the full grid sample about 30 rows high (user request)
+
+##### Docs
+- The full grid sample is about 30 rows high, as the other samples at most - it filled the window, 60 rows in
+  a tall one.
+
+#### Edit permissions: add, change, delete (user request)
+
+##### Added
+- **`GridConfig.edit`** (`EditPermissions`: `{ add?, change?, delete? }`, each `true` when left out): what an
+  editable grid lets the user do. A developer's setting - not in the state, no menu or dialog can grant it;
+  `updateConfig({ edit })` replaces it (and closes an open editor, menu or picker); a `TypeError` for anything
+  else.
+  - `change: false`: the rows that were there are locked - typing, the multiline editor, the date picker,
+    lookups, checkboxes, custom cells (`readonly`), paste, clear, fill down, the detail form; the `isReadonly`
+    hook and a column's Read only can not unlock them. **A new row stays editable while `add` is allowed**,
+    until `acceptChanges()`.
+  - `delete: false`: Delete › Row / Rows greyed out on existing rows, Delete on a row number leaves them; a new
+    row can still be removed (it was never saved).
+  - `add: false`: the grid has no add-row UI of its own - it is for your own add button, and a new row your
+    code adds is not editable when `change` is false too.
+  - Undo / redo and the reverts keep working; your own code (`addNewEmpty()`, `markForDeletion()`, setting
+    values) is not stopped - `fillDown()` follows the permissions.
+- Sample *Edit permissions*.
+
+#### Colour rules: conditional colours of a column (user request)
+
+##### Added
+- **`ColumnFormat.rules`** (`ColorRule[]`, `PaletteColor`): a column's cells get a text colour, a background
+  and / or bold when their value matches a rule - `{ operator: 'LESS_THAN', value: '0', color: 'red' }`. The
+  operators of the column's header filter (Equal, Contains, Does not contain, Begins with, Greater than,
+  Between, Is blank ... - not In / Not In), the value as it is typed there and tested as the header filter
+  tests it (a lookup column its label). The first rule that matches wins. Any column; in the state with the
+  formats, a developer's in `ColumnConfig.format`; a `TypeError` for a rule that is not one.
+- **A palette**, not free colours (a hex colour is not readable in light and dark): red, orange, yellow,
+  green, blue, purple, grey - `--simple-html-grid-palette-<colour>-color` / `-bg-color`, in the default and
+  the TreDeSpace theme, light and dark, every text colour at least 4.5:1 on the rows, a selection, a range.
+  The cells get `simple-html-grid-cell-text-<colour>`, `-bg-<colour>`, `simple-html-grid-cell-bold`.
+- **Colour rules in the grid config dialog**: a rule per group - its operator, its value (From / To for
+  Between, none for the blank ones, Checked for a checkbox column), *Text colour* and *Background* as rows of
+  swatches, *Bold*, move up / down, remove, *Add rule*; the preview in the colours; the badge *Colours*.
+- The detail form's fields show them too. Not the exports.
+- The full grid sample: Balance < 0 in red text, Status = waiting on orange.
+
+##### Notes
+- A cell with a validation error or a Find match shows without its rule's colours; a range's tint is laid
+  over the background. The default dark look's text colours are pale - its rows are mid grey.
+
+#### Header filters: filter as the cells show it, filter as you type (user request)
+
+##### Added
+- **Filter as shown**: a column with a date or number display format takes the header filter's text as its
+  cells show it - `2026-W47` with weeks shown is the week (BETWEEN its Monday and Sunday), `≥ 2026-11` from
+  November 1, a quarter, a year, a Norwegian / US / UK / written out date, a minute or a second of a
+  datetime, `5` with *days until* (today + 5), `1 234,5` and `50%` with a number format. The filter stays
+  plain date / number conditions - `toSqlWhere()` needs nothing new, a week is `col >= Monday AND col <
+  next Monday`. `≠` is an OR of before, after and blank. The cell shows what was typed in the format again;
+  the state keeps the start of the period. The placeholder is an example in the format; the filter menu's
+  range block and the date pickers read and write the format. A format change runs the column's header
+  filter again in the new format. `ColumnFormat.filterAsShown: false` (*Filter as shown* in the grid config
+  dialog) types as the field's formatter reads; `weekday` and the times of day are never filtered as shown.
+- **Filter as you type**: the header filter filters 300ms after the typing stops, no Enter needed - a
+  number or date only when the text reads. On and off per column in the operator choice (its last item),
+  Filter › and the grid config dialog; `HeaderFilter.filterOnType` in the state, defaults
+  `ColumnConfig.filterOnType` and `GridConfig.filterOnType`. Not for a checkbox column.
+
+##### Fixed
+- A header rebuilt while the grid was scrolled sideways (an operator picked, a filter of the filter menu)
+  showed the headers of the first middle columns over the visible ones.
+
+#### Detail form: collapse, resize, softer fields; the column chooser: search, handles, rename (user request)
+
+##### Added
+- **The detail form collapses**: its title is a button (a chevron, `aria-expanded`): collapsed it is a 24px
+  strip at the right - a bar under the rows on a narrow grid. `DetailForm.expanded` (default true) is what
+  it shows; the title and the dialog's *Expanded* change it, the state keeps it.
+- **A splitter** on the form's left edge resizes it: a drag (mouse, pen, touch) or ArrowLeft / ArrowRight
+  on it (`role="separator"`, 10px a key); the columns follow live. `DetailForm.minWidth` (150 by default,
+  never less) and `maxWidth` - and never more than half the grid - set in the dialog next to Width; the
+  width dragged is the state's `width`.
+- **The fields of the form are moved by drag** in the dialog: a ⠿ handle at the right of each, a line where
+  it drops - Move up / Move down and Alt+↑ / Alt+↓ stay.
+- **The column chooser**: its search is an input you can see - a frame, a magnifying glass, *Search* - and
+  finds the labels (a user's too), not only the names of the fields; the list is in the order of the
+  labels. Each field has a ⠿ handle at its left, and a ✎ that renames the column right there - its label
+  in the state (`ColumnFormat.label`, as the grid config dialog's Label), empty its own again, Esc cancels.
+
+##### Changed
+- **The detail form's fields have a quiet frame** at rest (`--simple-html-grid-detail-input-border-color`),
+  the controls' frame on hover and focus; an error keeps its red.
+- Tab from the footer goes to the form's title button first.
+
+#### Find: Match case, and the find for SQL (user request)
+
+##### Added
+- **Match case** in the find bar: the `Aa` button between the count and *Filter rows* (Alt+C in the bar,
+  `aria-pressed`): the matches, the count, the marks and *Filter rows* follow it; the footer's chip gets the
+  `Aa` marker. `find(text, { caseSensitive })`, `getFind().caseSensitive`, in `find-change` too. Kept when
+  the bar closes, as the text.
+- **`FilterCondition.literal`** (`where(field, op, value, { literal: true })`): `*`, `%` and `_` of the value
+  are plain characters - in the datasource and in `toSqlWhere()` (escaped per dialect). The filter editor
+  does not keep it (it rebuilds a condition).
+
+##### Changed
+- The find input's least width is 24px (was 40px): five buttons fit a narrow grid.
+
+#### Column settings: Multiline and Read only (user request)
+
+##### Added
+- **Multiline** for a text column in the grid config dialog (`ColumnFormat.multiline`): its cells are text of
+  several lines - the first line shown, the text editor to edit - or, off, of one line; wins over the
+  field's `multiline`. Not with checkboxes, not for a lookup column.
+- **Read only** for every column (`ColumnFormat.readonly`): its cells are not edited, also in an editable
+  grid - or, off, a `readonly` column of the config is editable. Wins over `ColumnConfig.readonly`; the
+  `isReadonly` hook gets it and has the last word. Both start as the column has them; set back to that,
+  they are left out of the format. Badges *Multiline* / *Read only* in the list of the columns.
+
+#### Column settings: a label, a placeholder, blank / 0, checkboxes (user request)
+
+##### Added
+- In the Columns tab of the grid config dialog, kept in the state with the formats (`GridState.formats`), each
+  winning over the column's own option - and a developer can set them in `ColumnConfig.format`:
+  - **Label** (`ColumnFormat.label`): the column's label everywhere the grid names it - the header, the
+    menus, the filter editor, the footer's chips, the headers of copy, CSV and Excel.
+  - **Placeholder** (`placeholderRow`) or **Use the column label** (`placeholderRowLabel: true`): the
+    placeholder of the column's empty cells, over `ColumnConfig.placeholderRow` (on the current row only by
+    default, `placeholderRowCurrentEntityOnly`). The header filter keeps its own placeholder.
+  - **Show blank as 0** / **Show 0 as blank** for a number column (`numberOverride`: `'BLANK_TO_ZERO'`,
+    `'ZERO_TO_BLANK'`, or `'NONE'` to turn the column's own off).
+  - **Show as checkbox** for a text or number column of `1` / `0` (`checkbox: { checked?, unchecked? }`,
+    `'1'` / `'0'` by default, the exported type `CheckboxFormat`): a cell is checked when its value is the
+    checked one; a click or Space writes the checked / unchecked value as the field's type wants. Copy,
+    exports, sorting and filters keep the value.
+  - The column list shows what is set: Checkbox, Blank / 0, Label, Placeholder.
+- A format that does not fit throws a `TypeError`, from the config and from `setState()`.
+
+##### Fixed
+- Format › replaced the whole format of the column: it changes its date or number part only now.
+
+#### Grid config: the tabs Columns and Detail form, a detail form of the current row (user request)
+
+##### Added
+- **The detail form**: a form of the current row at the right of the rows - a label and a field per chosen
+  field, in the chosen order; a multiline text in full (a field as tall as its text), a checkbox for a
+  boolean, the link of a link column under its value, the errors of validation under a field. It edits the
+  row as the cells do: the same readonly rules, the formatter parses, validation, one undo step a field
+  (Ctrl+Z / Ctrl+Y in the form); a lookup column is read only in it. It follows the current row, edits,
+  filters and sorting; "No row" without one. On a narrow grid it goes under the rows.
+- `GridConfig.detailForm` (the developer's default) and `GridState.detailForm` (`DetailForm`:
+  `{ show, fields, width? }`, width 300 by default, at least 150): getState / setState / resetState and JSON
+  keep it, `initialState.detailForm` too; an invalid one throws a `TypeError`.
+- `gridInterface.openDetailFormSettings()`: the dialog on its Detail form tab.
+- Sample `#sample/detail-form`; texts `columnSettings.tab.*`, `columnSettings.detailForm.*`, `detailForm.*`.
+
+##### Changed
+- **The column settings dialog is "Grid config"**, with the tabs *Columns* (what it had) and *Detail form*
+  (show it, its width, the fields checked and moved up / down - Alt+↑ / Alt+↓). Apply applies both tabs,
+  Cancel neither; the resets are those of the tab shown. The gear's name is "Grid config" too
+  (`columnSettings.title`, `footer.settings`); the header menu's entry stays *Column settings…*.
+
+#### The row menu of a row number: rows only (user request)
+
+##### Changed
+- **On a row number the row menu is about rows**: Undo / Redo ›, Select ›, Copy ›, Delete › and Size ›. What
+  needs a cell or is not about rows is left out - Paste ›, Clear ›, Filter ›, View ›, Export ›, Undo cell
+  edit, Copy › Cell Value / Column / Range, Select ›'s cell entries, Fit column to this cell - where they were
+  greyed out. They are hidden with `visible`: a `menus.row` hook still gets them. On a cell nothing changed.
+
+#### Docs site: Developer Guide and User Guide (user request)
+
+##### Docs
+- The sidebar's "Guides - DEV" is **Developer Guide**, "User guide" **User Guide**.
+
+#### Dates: a range picker for Between, the date picker in the filter menu (user request)
+
+##### Added
+- **A range picker**: `IDateConfig.rangepicker` (with `datepicker: true`) shows two months side by side - one
+  on a window narrower than two months - with « ‹ › » once for the pair. The first day clicked is From, the
+  next To (swapped when it is before), a third starts again; the days between are marked
+  (`simple-html-date-day-in-range`, `--simple-html-date-in-range-bg-color`). A From / To line and Clear / Use
+  under the months. `IDateConfig.datepickerRange` is the range it opens on; the `range-select` event sends
+  `[from, to]` (an end not picked is null, open) or null for Clear. Texts `datePicker.from`, `datePicker.to`,
+  `datePicker.rangeOpen`.
+- **A date header filter with Between** opens the range picker on its from..to; Use filters, Clear empties it
+  (the operator stays Between). A `datetime` range is whole days: from 00:00:00 to 23:59:59.
+- **The filter menu's range block**: a click in the value input of a date or datetime column opens the date
+  picker, in From or To with Between the range picker - inside the filter menu, which stays open. Use fills
+  the inputs, Apply still applies; Esc closes the picker only.
+
+##### Changed
+- `DateInterface.clearSelection()` clears a range too.
+
+#### Aggregates: lines of text, the values not bold (user request)
+
+##### Changed
+- **The lines of aggregates are lines of text**: under a group row's name, and after the first line of the
+  totals row, each aggregate line is `multilineLineHeight` high (15px by default), not a whole `cellHeight` -
+  as the lines of a multiline cell. A group row with sum and avg is 52px, not 66px.
+- **The values of a group row are in the weight of the cells**: only the group's name is bold. The totals
+  row keeps its bold.
+
+#### The value list: filter on the text searched (user request)
+
+##### Added
+- **Filter on the text: contains "…"** under the value list's search box, when it has text (and the column
+  offers `CONTAINS`): checked, Apply (or Enter) filters on the text instead of the values found - the header
+  filter gets `CONTAINS` and the text, as if picked in Operator › and typed in the cell, so rows added later
+  are found too; `*`, `%` and `_` are wildcards. The list stays as a greyed out preview. Text
+  `filter.values.textSearch`.
+
+#### Tooltips over every field (user request)
+
+##### Fixed
+- **The tooltip of Aa in the filter editor was behind the fields** of the conditions under it. Every input of
+  the grid has `z-index: 1000` (in a flex row that layers it, positioned or not) and the tooltip had 600:
+  it has 10000 now, over every layer of the grid - in the filter editor, the column settings and the header.
+
+#### Column settings: the filter operator of each column (user request)
+
+##### Added
+- **Filter operator** in the column settings dialog, for every column but a checkbox: a picker of the
+  operators the column's header filter offers (Operator ›'s), the one in use shown, *Default:* and the
+  operator the column starts with under it. Apply switches the header filters whose operator changed, as
+  Operator › does (the filter again, `headerFilters[field].operator` in the state, `filter-operator-change`);
+  Reset column / Reset all go back to the default. Texts `columnSettings.operator`, `.tooltip`, `.hint`.
+
+##### Changed
+- `columnSettings.none.lookup` says a lookup column has no format (it has an operator now).
+
+#### Text filters: `_` is one character, as in SQL `LIKE` (user request)
+
+##### ⚠️ Breaking changes
+- **`_` in a text filter is a wildcard now**: one character, any (`p_mp` finds `pump`, `pump-__` finds
+  `pump-01` but not `pump-1`), next to `*` and `%` for any text. There is no escape: a `_` in the value
+  also matches a `_`, but no longer only that. `toSqlWhere()` sends it as `_` of `LIKE` (`?` of `GLOB` on
+  SQLite) - it escaped it before. A letter past U+FFFF (an emoji) is one character, in the grid as in the
+  SQL. The value list's search and `IN` / `NOT_IN` take `_` as it is, as before.
+
+#### Column settings: formats, text templates and links in a dialog (user request)
+
+##### Added
+- **The column settings dialog**: a gear at the right end of the footer (`GridConfig.settingsButton`,
+  default `true`), *Column settings…* in the header menu (`header.settings`) and
+  `gridInterface.openColumnSettings(field?)`. A list of the layout's columns; per column its display
+  format (the choices of Format ›) or, for a text column, the text shown and a link; a preview of the
+  current row; Reset column, Reset all, Cancel, Apply, Apply & close. Apply sets `GridState.formats`, so
+  `getState()` / `saveState()` keep it; a developer's defaults are `ColumnConfig.format`.
+- `ColumnFormat.text`: a template of a text column's cells - `'{firstname} {lastname}'`, `'{value} kg'`.
+  `{field}` placeholders only (`{value}` is the cell's own value), no code.
+- `ColumnFormat.link` (`LinkFormat { url, newTab? }`): the cells as links, their text the column's `text`
+  (or the value). The address starts with `https://`, `http://`, `mailto:` or `tel:`, or is one placeholder
+  that holds a whole address; values are encoded and the address is checked with `new URL()` - a row without
+  an allowed address shows its text, no link. A click on the text (or Ctrl/Cmd+click) or **Alt+Enter** opens
+  it; Enter, F2, typing and a double click beside the text edit the value. Copy, CSV, Excel, sorting and
+  filters use the value. New-tab links get `rel="noopener noreferrer"`.
+- `--simple-html-grid-link-color` (default and TreDeSpace themes, WCAG AA). 47 texts `columnSettings.*` and
+  more.
+
+##### Changed
+- The footer's last Tab stop is the settings button.
+
+##### Fixed
+- The footer's filter chips collapsed only when they started left of the selection summary; now in every
+  overlap.
+
+#### Docs site: a sample page scrolls
+
+##### Fixed
+- A sample page taller than the window was cut off and could not be scrolled - the full grid sample's grid
+  footer was below the window. The page scrolls, and the full grid sample's grid fills the height left.
+
+#### Touch: less padding (user request)
+
+##### Changed
+- On a touch screen (`pointer: coarse`) the buttons, the range block's operators and inputs and the searches
+  keep their 24px (they were 36px, out of line with the rest of a dialog), and the rows of the menus, the
+  column chooser and the filter menu's value list are 28px (were 36px).
+
+##### Added
+- `--simple-html-grid-touch-row-height` (`28px`): the height of those rows on a touch screen.
+
+#### Docs site: hide the sidebar, sample grids at most 30 rows (user request)
+
+##### Added
+- A ☰ button hides the docs site's sidebar and one in the corner shows it again (remembered). On a phone it
+  starts hidden and opens over the page.
+
+##### Changed
+- A sample's grid is 30 rows high at most (15 at least), so a long page scrolls past it; the full grid
+  sample is not capped.
+
+#### Themes: TreDeSpace, light and dark (user request)
+
+##### Added
+- **`@simple-html/grid/theme-tredespace.css`**: a second theme in the colours of the TreDeSpace UI widget
+  library (its source, `src/treDeSpaceUI`: the slate scale and its light remap, the dock roles, the
+  widgets' own classes). Import it after `grid.css` and `date.css`, and put `data-grid-theme="tredespace"`
+  on `<html>` or `<body>` - there so it reaches the grid's popovers (menus, the filter editor, the date
+  picker, tooltips). Without the attribute the default theme is used: both can be on one page.
+- Light and dark follow `color-scheme`, as the default theme does: every value is a `light-dark()`, and
+  the widget library sets `color-scheme` itself (`data-theme="light"`), so the grid switches with it.
+  Square, as the widgets; WCAG AA for the same 119 text and line pairs as the default theme.
+- Variables `--simple-html-grid-scrollbar-thumb-color`, `--simple-html-grid-tooltip-bg-color`,
+  `--simple-html-grid-tooltip-font-color`, `--simple-html-grid-tooltip-border-color`. They default to the
+  colours used before: the default theme is unchanged, pixel for pixel.
+- Docs site: a "Grid theme" select (Default / TreDeSpace) with the dark/light toggle - four looks. Guide 13
+  has a Themes section, the colour table and what does not match the widgets yet.
+
+#### Display formats: Format › in the header menu (user request)
+
+##### Added
+- **Format ›** in the header menu of date, datetime and number columns, the one picked checked, Default
+  for the field's own formatter:
+  - dates: ISO `2026-11-22`, Norwegian `22.11.2026` / `22.11.26`, US `11/22/2026`, UK `22/11/2026`, named
+    (`22. nov. 2026`, `22. november 2026`, `søndag 22. november 2026` in Norwegian), day of week, ISO week
+    (`2026-W47`), US week (Excel's `WEEKNUM`), month, quarter, year, days until; a datetime also with the
+    time (with or without seconds) and the time alone
+  - numbers: decimals as is or 0 to 4, thousands separator (none, space, comma, dot, apostrophe), decimal
+    mark (dot, comma), the presets Norwegian `1 234 567,89`, English, Swiss, Plain, and percent
+- A **view setting**, kept like a column's width: `ColumnConfig.format` (the one a column starts with) and
+  `GridState.formats` (`getState()` / `setState()` / `resetState()`), one object per column -
+  `{ date: 'weekIso' }`, `{ number: { decimals: 2, thousands: ' ', decimal: ',' } }` - so more rules fit
+  later. A format that does not fit the field throws a `TypeError`. Types `ColumnFormat`, `DateFormat`,
+  `NumberFormat`.
+- **Only the display changes**: the cells, aggregates and the totals row, the selection summary, Find,
+  `fitColumns`. Editing shows the value (a cell showing `2026-W47` is edited as `2026-11-22`), the header
+  filter is typed as before, sorting, grouping, copy and CSV keep the value. The Excel export writes the
+  value with a matching Excel number format where there is one.
+- The language of day and month names is the text `format.locale` (default `'en-US'`; set it with the
+  other texts, the Norwegian sample uses `'nb-NO'`). Texts `header.format.*`, `format.weekIso`,
+  `format.weekUs`, `format.quarter` (the patterns of week and quarter, translatable).
+
+##### Changed
+- `GridState` has a `formats` key: TypeScript code that writes a whole `GridState` (not a `Partial`) adds it.
+- `MENU_IDS.header` has the Format › entries before `header.aggregate`.
+
+#### Header filters: the operator in the cell (user request)
+
+##### Added
+- Each header filter shows its operator as a symbol in its cell - `=` `≠` `<` `≤` `>` `≥` `a..b` (Between),
+  `*a*` (Contains), `!*a*` (Does not contain), `a*` (Begins with), `*a` (Ends with) - on the right of
+  text and lookup filters, on the left of number and date filters (none on booleans). A click, a tap or
+  **F4** in the filter opens the operator choice under it: the same as Filter › Operator ›, one code path.
+  A column offering one operator shows it without a choice; under 60px wide there is no symbol.
+- `GridConfig.filterOperatorIndicator` (default `true`; `false` in the lookup dropdown grid). Texts
+  `filter.indicator`, `filter.indicator.tooltip`, `filter.indicator.<FilterOperator>`. The input is
+  described by its operator for a screen reader.
+
+##### Fixed
+- Picking a header filter operator (Operator › too) lost the focus to the page: it stays in the filter.
+
+#### Undo row edits on new rows (user request)
+
+##### Changed
+- `datasource.resetRows()` - the row menu's "Undo row edits" - marks a **new row for deletion** (with the
+  values it was added with): a revert takes a row to what the server has, and a new row is not there.
+  It is struck through and out of `getChanges()`, and removed with the other marked rows on save. One undo
+  step: Ctrl+Z brings it back. It used to stay as a new row.
+
+##### Fixed
+- "Undo row edits" and "Undo row edits (selected rows)" were greyed out for new rows not edited.
+
+#### Docs site: "Guides - DEV" and a User guide (user request)
+
+##### Changed
+- The docs site's guides are "Guides - DEV" (for developers); a "User guide" section follows it, a TODO
+  until every feature is in place.
+
+#### The filter menu: a range block for numbers and dates (user request)
+
+##### Added
+- Number, date and datetime columns get a **range block** in their filter menu, under `Filter ›` (where a
+  text column has its value list): the column's operators as a row of buttons (`=` `≠` `<` `≤` `>` `≥`
+  `Between`), an input (From and To for Between, either end may be empty), Cancel and Apply. It opens
+  with the column's header filter filled in; Apply (or Enter) does exactly what picking the operator and
+  typing in the header filter does - the header cell, the state, the footer chip, `getFilterString()`.
+  The operators follow `filterOperators`. Id `filter.range` (`MENU_IDS.filter`), texts `filter.range.value`,
+  `.from`, `.to`, `.run`, `.cancel`. Dates are typed in the field's format.
+
+##### Fixed
+- A tooltip still shown when a menu closed kept that menu in memory until the next tooltip.
+
+#### The footer: "No filter" opens the filter editor (user request)
+
+##### Added
+- Without a filter the footer shows a **No filter** button where Clear and the chips are: a click, Enter or
+  Space opens the filter editor - no menu needed. Texts `footer.noFilter`, `footer.noFilter.tooltip`. Not
+  shown with `footerHeight: 0` (the lookup dropdown grids); shown with `hideFilter` and in readonly grids.
+
+##### Changed
+- The row count is always in the band at the top of the footer, with the filter's line under it: nothing
+  moves when a filter comes or goes.
+- Clear and No filter are one button: the focus stays on it, and the filter editor gives it back to it.
+- Keyboard: without a filter, Tab from the last row stops at No filter before it leaves the grid.
+
+##### Fixed
+- Clear was a submit button: inside a form it submitted it. It is `type="button"`.
+- On a narrow grid the selected cells' summary was drawn over the collapsed chips and the row count; it is
+  cut where the filter's line ends (all of it in its tooltip).
+
+#### Menus: a drop shadow (user request)
+
+##### Fixed
+- The menus' shadow was clipped by their popover and never showed. Every popover of the grid (menus,
+  submenus, the column chooser, the date picker, the lookup's dropdown, the multiline editor) has a soft
+  drop shadow now.
+
+##### Changed
+- `--simple-html-grid-menu-shadow-color` is `rgba(0, 0, 0, 0.28)` in light and `rgba(0, 0, 0, 0.6)` in dark
+  (was `black`), the shadow `2px 4px 12px` (was `10px 5px 5px`).
+
+#### Docs site: the sidebar indented by level (user request)
+
+##### Changed
+- The docs site's sidebar is indented by level: a section's groups and pages under its title, a group's
+  pages past the group's arrow.
+
+#### Menus: the value list in use closes Filter › (user request)
+
+##### Changed
+- A block of a menu - the filter menu's value list - closes the submenu open beside it when it is used:
+  at once when it takes the focus or a press (its search, a checkbox), after the hover delay when the
+  pointer rests on it. The pointer crossing it on its way into the submenu keeps the submenu.
+
+#### SQL: values folded before they are bound (user request)
+
+##### Changed
+- `toSqlWhere()`: a text value of ASCII characters only is folded in JavaScript before it is bound -
+  `UPPER("country") IN ($1, $2)` with `['FINLAND', 'FRANCE']`, not `IN (UPPER($1), UPPER($2))`. A value with
+  another letter is still folded by the database (`UPPER($3)`), as its column, so a text always matches the
+  same text (`ß`, and SQLite's ASCII-only `UPPER()`). The rows selected are the same.
+
+#### Docs site: every sample grid shows at least 15 rows (user request)
+
+##### Fixed
+- A sample in a guide had 460px for its buttons, log, grid and what it shows under the grid: the grid of the
+  SQL sample was its header only. Every sample grid shows at least 15 rows now, in a guide and on its page.
+
+#### A finger multi-selects: taps toggle, Select › in the menus (user request)
+
+##### Added
+- **A finger's tap on a row number toggles the row**, as Ctrl+click does (selection mode `'multiple'`;
+  `'single'` selects the one row as before); on a column number it toggles the column. A tap is told
+  from a click by the click's `pointerType` (the `pointerdown`'s in browsers whose click is no
+  PointerEvent). The mouse and the pen are unchanged.
+- **Select ›** in the row menu (after Undo / Redo ›): This row (✓ when selected), Rows from N to here
+  (from the anchor, as Shift+click), All rows, a line, Range from the active cell to here (Shift+click on
+  a cell), Add this cell to the ranges (Ctrl+click on a cell), a line, Clear selection (the rows and the
+  ranges). Ids `row.select.*`. In selection mode `'none'` the row entries are left out.
+- **Select ›** in the column menu (first): This column, Columns from N to here, All columns, Clear column
+  selection. Ids `column.select.*`, `column.copy.separator`.
+- **The row numbers open the row menu**: right click, long press, Shift+F10. `MenuContext.field` is `''`
+  there and the entries of a cell are greyed out. A group row's number has none.
+- Every entry is greyed out, not hidden, when it can not act. Texts `row.select.*`, `column.select.*`.
+
+##### Fixed
+- Ctrl+click and then Shift+click on a row number above the anchor selected nothing.
+
+#### SQL from a filter: `toSqlWhere()` for Postgres, Oracle, SQLite and SQL Server (user request)
+
+##### Added
+- **`@simple-html/grid/sql`**, a separate entry point for a backend (ESM and CommonJS, no DOM, plain
+  Node): `toSqlWhere(filter, { dialect, columns, timeZone?, dateStorage?, firstParam?, limits? })` gives
+  `{ sql, params }` - the `WHERE` condition of a grid filter and its parameters. `sql` is `1=1` when
+  nothing filters, always one term (`AND ${sql}` is safe).
+- **Made for a filter sent by the browser**: it is checked as untrusted JSON. Every value is a bound
+  parameter (`$1`, `:1`, `?`, `@p1`), never SQL text. The only columns are those of `columns`, the
+  caller's whitelist - a field not in it throws, it is never dropped. Column names are checked (letters,
+  digits, `_`, up to `schema.table.column`) and quoted. Limits (depth 10, 100 conditions and groups,
+  lists of 1000, texts of 1000, 2000 parameters) throw a `RangeError`, a wrong shape a `TypeError`.
+- **The rows the grid's own filter selects**: the blank rules (0, `''`, null are blank; a blank number
+  is 0, a blank boolean false), match case, `*` / `%` wildcards with the rest literal, `BETWEEN` with
+  open ends, `IN` / `NOT_IN` with `'NULL'`, the legacy operators, `valueField`. Every condition is true or
+  false, never NULL, so `NOT (sql)` is exactly the other rows. Dates are ranges of a day (or second) in
+  the user's `timeZone`, for the column's storage (`local`, `utc`, `zoned`, `epochSeconds`,
+  `epochMillis`) - index friendly. Booleans `true`/`false` or `1`/`0` per dialect, `booleanValues` for
+  `'Y'` / `'N'` columns.
+- Guide 22 "SQL from a filter" (the security model, each dialect's driver, time zones, the differences
+  from the grid), the sample "SQL from the filter" (the four dialects, live as you filter), the API pages
+  of the new entry point.
+
+#### Touch: swipes with momentum, the long press, menus for a finger (user request)
+
+##### Added
+- **A long press opens the context menu**: a finger held still 500ms on a cell, a header label, the
+  filter row or a column number opens its menu, as a right click does (Safari on iOS sends no
+  `contextmenu` for it). One menu where the browser sends its own too (Android); the finger let go after
+  it is no tap (no row selected, no focus, no keyboard). Your own `contextmenu` listeners in the grid get
+  it too; an element in a popover of its own needs `addLongPress(element, signal)` (internal helper,
+  longPress.ts).
+- **Momentum**: a swipe keeps going after the finger lets go, slowing down as on iOS; a new touch stops it
+  (and is no tap).
+- `@media (pointer: coarse)`: menu and submenu items, the column chooser, the value list and the filter
+  editor's buttons get 36px rows; the filter editor's resize edges 10px, its corners 20px.
+
+##### Changed
+- A swipe locks to the axis it moved most on after 10px (no sideways drift), and the grid or the page
+  takes it: the grid while it can scroll that way, the page at the grid's edge - for the whole swipe.
+- The focus leaves the cell once a swipe (it went into the grid and out on every move, and focusing the
+  hidden input could show a phone's keyboard).
+- The column chooser scrolls with a finger; a field drags after a 200ms hold. The ghost of a dragged
+  column is a popover, above the chooser and above a dialog the grid is in.
+- A touch outside an open menu closes it.
+- `touch-action: manipulation` on the grid: a double tap opens a cell's editor instead of zooming.
+
+##### Fixed
+- A swipe scrolled further than the finger moved (it read the scroll position a frame late) and drifted
+  sideways; at the first row a swipe down moved neither the grid nor the page.
+- A long press on a header label started a drag and sorted on lift; it opens the header menu now.
+
+#### Filters: match case, operators per type, BETWEEN (user request)
+
+##### ⚠️ Breaking changes
+- `ColumnConfig.operator` must be an operator of the column's type that its header input takes (not
+  `IN`, `NOT_IN`, `IS_BLANK`, `IS_NOT_BLANK`, not `CONTAINS` on a number): a `TypeError` otherwise.
+- `NOT_EQUAL_TO` on a boolean is a real not-equal (it was read as `EQUAL`).
+- `FilterConditionNode` (getFilterTree) always has `caseSensitive`.
+
+##### Added
+- `FilterCondition.caseSensitive` and `where(field, operator, value, { caseSensitive: true })`: a text
+  compared as it is. Off by default.
+- The operator `BETWEEN`, value `[from, to]`, both ends in, for numbers, dates and date-times (a `date`
+  from the start of from's day to the end of to's day). A blank end is open, both blank is ignored, from
+  > to matches no row. In the header typed `10..20` (`10..`, `..20`; one value is that value / day), in
+  the filter editor two inputs, From and To.
+- `operatorsFor(type)`: the operators a type offers - text: =, ≠, contains, does not contain, begins
+  with, ends with, IN, NOT IN, blank, not blank; number / date / datetime: =, ≠, <, ≤, >, ≥, between, IN,
+  NOT IN, blank, not blank; boolean: =, ≠, blank, not blank.
+- `ColumnConfig.filterOperators` (the operators a column offers, in the type's order) and
+  `ColumnConfig.filterCaseSensitive` (a text or lookup column always matches case: header, value list,
+  row menu's Filter, editor). Both checked, `TypeError` on a wrong value.
+- The header menu: Filter › Match case (`filter.matchCase`, state `headerFilters[field].caseSensitive`;
+  the value list then keeps `Oslo` and `OSLO` apart), Operator › Less than, Greater than, Between, Does
+  not contain, Begins with, Ends with.
+- The filter editor: the operator picker offers the field's operators; an "Aa" toggle (Match case) on
+  each text condition; From / To for `BETWEEN`.
+- The footer: `Age between 10 and 20` (an open end `Age ≥ 10`), "Aa" after a value that matches case.
+  `getFilterString()`: `<<MATCH_CASE>>`, `BETWEEN '10' <<AND>> '20'`. `FilterConditionNode.valueTo`.
+- Texts `filter.operator.{lessThan,greaterThan,between,doesNotContain,beginWith,endWith}`,
+  `filter.matchCase` (+ `.hint`), `filter.placeholder.between`, `filterEditor.label.from` / `.to`,
+  `filterEditor.matchCase` (+ `.tooltip`, `filterEditor.matchCaseAlways.tooltip`),
+  `filterEditor.operator.BETWEEN`, `footer.betweenAnd`, `footer.matchCase` (+ `.tooltip`),
+  `footer.operator.BETWEEN`, `filterString.operator.BETWEEN`, `filterString.betweenAnd`,
+  `filterString.matchCase`.
+- The filtering guide's "Operators" is written per type, with how blank works for each and a SQL sketch
+  of each rule, for a backend that filters the same way.
+
+##### Changed
+- A condition with a blank value (null, undefined, `''`, an invalid Date) is ignored for every type, as
+  dates were; an emptied editor input is no value. `IN` / `NOT_IN` keep theirs (`[]`: IN no row).
+- A boolean blank (null, `''`, 0) compares as false, as the checkbox shows it: `EQUAL false` finds it.
+  `IS_BLANK` still matches null and not `false`.
+- A multi-line text is one text: `BEGIN_WITH`, `END_WITH` and wildcards match the whole value, `*` and
+  `%` span line breaks.
+- Text `<` / `>` compare without wildcards.
+- The old number and date operators (`CONTAINS`, `BEGIN_WITH` = `>=`, `END_WITH` = `<=`,
+  `DOES_NOT_CONTAIN` = `<`) still work in saved filters but are no longer offered.
+- The lookup dropdown grid's `CONTAINS` default is on its text columns only.
+
+#### The column numbers: Shift/Ctrl selection and a column menu (user request)
+
+##### Added
+- The column numbers (the row under the header filters) select like the row numbers: a click selects
+  that column, Ctrl/Cmd+click toggles one, Shift+click selects from the last click to this one - across
+  the pinned sections. A column of stacked fields is one number.
+- `gridInterface.getSelectedColumns()` (the numbers, ascending) and `selectColumns(numbers)` (`[]`
+  clears, a number that is no column is a `TypeError`); the event `column-selection-change`
+  (`{ columns, fields }`).
+- **The column menu**: right click on a number, or Shift+F10 / the menu key on a focused one. Copy
+  column (all rows), Copy selected columns (all rows), a line, Copy header names, Copy header name, Copy
+  selected header names - the entries of the selected columns greyed out with none selected. A column
+  copies as the row menu's copies do (tab separated text with the header line when `copyHeaders` is on,
+  and an html table; every displayed data row); names are one tab separated line. Ids in
+  `MENU_IDS.column`, the hook `menus.column`, `MenuContext.menu` `'column'`, texts `column.copy.*`.
+- On a focused column number: Ctrl/Cmd+C copies the selected columns (or its own column), Esc clears the
+  selection.
+
+##### Changed
+- The column selection is cleared when the layout's columns change (moved, pinned, hidden, added): it
+  pointed at another column before. It is kept on resize, filter, sort and grouping.
+- A selection change redraws the numbers in place instead of the whole header.
+- Accessibility: the column numbers are a header row of gridcells with `aria-selected` (they take the
+  focus now, so they can not stay `aria-hidden`): every `aria-rowindex` below the header, and
+  `aria-rowcount`, is one higher.
+
+#### Multiline rows: the lines of a note a text line apart (user request)
+
+##### Changed
+- A multiline cell in a row made taller by `fitRows()` shows its lines a text line apart instead of a whole
+  `cellHeight` each: a note of three lines is a row of 52px, not 66px, and reads as a paragraph. The first
+  line is as far from the second as the others are from each other. A row fitted before keeps its number
+  of lines and gets shorter.
+- The multiline cell editor's textarea uses the same line height (it was the css's 1.5).
+
+##### Added
+- `GridConfig.multilineLineHeight` (default 15): the px height of each line after the first in a
+  multiline cell of a fitted row, and the editor's line height. A whole number of 1 or more, else a
+  `TypeError`. Raise it with `cellHeight` for a larger `--simple-html-grid-font-size`.
+
+#### Undo and redo in the filter editor (user request)
+
+##### Added
+- ↶ Undo and ↷ Redo in the filter editor's footer, and Ctrl+Z / Cmd+Z, Ctrl+Y / Ctrl+Shift+Z /
+  Cmd+Shift+Z anywhere in the dialog. Every edit is a step (a condition or group added, deleted or
+  wrapped, AND/OR, a field, operator or column picked, ⇄, clear all, a date picked); what is typed in one
+  value is one step. Up to 100 steps; Apply keeps them, each open starts fresh. While a value has typing
+  of its own, Ctrl+Z is the input's until it is back where it started. After an undo or redo from the
+  keyboard the focus goes to the control that changed (or the dialog). The buttons are `aria-disabled`
+  when there is nothing to do and have `aria-keyshortcuts`.
+- Texts `filterEditor.undo`, `filterEditor.undo.tooltip` (+ `.mac`), `filterEditor.redo`,
+  `filterEditor.redo.tooltip` (+ `.mac`).
+
+#### Publishing to GitHub Packages: releases from the default branch, betas from any branch (user request)
+
+##### Package and tooling
+- The workflows `release` and `beta` (`.github/workflows`, run from the Actions tab) publish the package
+  to GitHub Packages as `@<owner>/simple-html-grid` - the scope of the repository's owner, GitHub
+  Packages takes no other; install it as `npm install @simple-html/grid@npm:@airemote/simple-html-grid`
+  so the imports stay. `release` runs from the default branch only, publishes the version of
+  package.json (`latest`) once and tags it `v<version>`; `beta` runs from any branch and publishes
+  `<version>-beta.<branch>.<run>` with the npm tag `beta-<branch>`. Both run every check first.
+  `scripts/githubPackage.js` makes the name, version and tag (tested).
+- package.json's version is 6.0.0.
+- The full grid sample has Excel buttons: the API the row menu's Export › uses (`getExcel()`,
+  `downloadExcel()`).
+
+#### The row menu keeps its shape: entries of a selection greyed out without one (user request)
+
+##### Changed
+- The row menu's entries that work on a selection - the selected rows, the ranges of cells - are always
+  listed and greyed out while there is none, instead of being left out: Copy › Column / Row / Row
+  (selected rows/col) / Range, Paste › and Clear › (selected rows) / range, Delete › Rows / Undo, Size ›
+  Fit row height (selected rows). Paste › and Clear › are in every editable grid.
+
+##### Added
+- Paste › and Clear › "Paste cell" / "Clear cell": the cell right clicked (`row.paste.current`,
+  `row.clear.current`), next to the ones for the selected rows; greyed out when the cell is readonly.
+- Delete › "Row": marks the row right clicked (`row.delete.row`), greyed out when it is marked or locked.
+
+#### Delete on a row number (user request)
+
+##### Added
+- A click on a row number puts the focus on it (as a spreadsheet's row header, not a stop of Tab); there
+  Delete or Backspace marks the selected rows for deletion - the number's row alone when it is not
+  selected - one step of the undo history, and Ctrl+Z / Ctrl+Y undo and redo. Delete in a cell is as it
+  was.
+
+#### The filter menu's value list shows what the cells show
+
+##### ⚠️ Breaking changes
+- The value list's texts are no longer upper case, and Apply after a search no longer adds a `CONTAINS`
+  of the search text: `getFilter()` has another shape for it (an `IN` of the values the search found).
+
+##### Fixed
+- The filter menu's value list shows, searches and sorts (`localeCompare`) the text the cells show - the
+  formatter's text, a lookup column's labels (`Norway`, not `NO`) - not the raw values upper cased. Apply
+  filters on the values behind the checked texts; values shown the same are one entry, their counts
+  added. The first 100 texts are listed, in order.
+- `IN` / `NOT_IN` on a number field formats a number in the list as the rows are: `[1.5]` finds
+  numberComma's `1,5`. A number lookup column's header filter with such a formatter found nothing.
+
+##### Added
+- A value list for a lookup column on a number field (its cells show labels).
+- The footer chips show a lookup column's labels: `getFilterTree(label, formatterOf)`.
+
+#### The keyboard of a spreadsheet (user request)
+
+##### Added
+- Ctrl+Home / Ctrl+End (Cmd on a Mac) go to the first cell of the first row / the last cell of the last
+  row; Alt+Home / Alt+End to the first / last cell of the row; PageUp / PageDown a page of rows (the rows
+  scroll with the focus); Alt+PageUp / Alt+PageDown a page of middle columns; Ctrl+ArrowUp / Ctrl+ArrowDown
+  to the edge of the data. Home / End still move the caret in the cell.
+- With Shift those keys extend the last range of cells: Shift+PageDown, Ctrl+Shift+End, Alt+Shift+Home,
+  Ctrl+Shift+ArrowDown.
+- A header filter has Ctrl+Home / Ctrl+End, Alt+Home / Alt+End and PageDown; a column header and a group
+  row's button have Ctrl+Home / Ctrl+End.
+- Undo / redo (Ctrl+Z / Ctrl+Y and the row menu) scroll to and focus the cell they changed.
+- On a Mac the key hints show ⌘Z / ⇧⌘Z, ⇧Enter and ⌘Enter. Texts `row.edit.undo.hint.mac`,
+  `row.edit.redo.hint.mac`, `find.previous.tooltip.mac`, `cell.multiline.hint.mac`.
+- The buttons of group rows and the footer's Clear and filter chips are Tab stops.
+
+##### Changed
+- Tab from the last cell of a row before a group row goes to the group's button, not past it; Tab from the
+  last cell of the last row goes to the footer's buttons while the rows are filtered.
+- Moving into the header filter row no longer changes the current row (it made row 0 current - a group
+  row when grouped).
+- For the 100ms after Tab, Enter or an Alt+arrow only the keys that move or type are held back, and only
+  in that grid: Esc (a menu closes), Ctrl+C and the keys of other grids pass (they were all cancelled,
+  in every grid).
+- A range extended from the keyboard that scrolls the active cell away moves the focus to the end of the
+  range, so Ctrl+C and more Shift keys keep working.
+
+#### Docs site: a full grid to try everything, the sidebar and the sources folded (user request)
+
+##### Docs
+- Sample "Full grid: try everything" (Getting started): 50 columns of every kind - text, money numbers
+  edited as the plain number, dates, a date and time, checkboxes, a lookup, a badge renderer, notes of
+  several lines, monthly sales with aggregates - pinned left and right, 5 000 rows to start and buttons to
+  add 5 000 / 50 000, editing on and off, grouping, the totals row, undo / redo, the changes. The grid is
+  most of the window (`fullPage`).
+- The sidebar's groups (the samples' "Getting started", "Datasource" ... and the API's) fold too, and every
+  part starts folded: the way to the page shown unfolds. The source of every sample starts folded.
+
+#### Formatters: a text for editing (user request)
+
+##### Added
+- `Formatter.formatForEdit(value)` (optional): what a cell shows while it is edited - from when its input
+  gets the focus until it loses it - and the text the editor over a cell starts from: the plain value to
+  type over, `'25008.76'` for `'25 008.76'`. Left out, `format` is used; a readonly cell always shows
+  `format`. The money formatters of the samples and the guide have one.
+
+#### The filter editor keeps the header filters it did not change
+
+##### Changed
+- Light mode text contrast to WCAG AA: the secondary text (`--simple-html-grid-sec-font-color`,
+  placeholders, search boxes) is `#6b6b6b` (was `#979494`, 3.0:1), the row numbers are at 80% opacity
+  (was 50%, 2.9:1), and the header filters' placeholders are no longer at 20% opacity (1.3:1).
+
+##### Fixed
+- Sorting with a collator that calls different strings equal (`setLocaleCompare(code, { sensitivity:
+  'base' })`: 'a' and 'A') put them in the order they came in, and grouping could split a value into two
+  groups. They are put by their code points now ('A' before 'a').
+- Applying the filter editor emptied every header filter cell, also of the columns whose conditions it
+  kept: the rows stayed filtered by them while the headers showed nothing. Only the cells whose column's
+  conditions were changed or removed are emptied now.
+- The dev samples' dark toggles switch the page's `color-scheme` instead of injecting v5 colours.
+
+#### The candidates list checked, small bugs fixed
+
+##### ⚠️ Breaking changes
+- `getRow(n)` is typed `EntityUnion<T> | GroupRow | undefined`: out of range it was always `undefined`, now
+  the type says so.
+- `getFilterTree()`: a group node's `logicalOperator` is `group`, the name the filter uses.
+
+##### Fixed
+- The filter menu's value list put a `false` (a text field holding booleans) under "Blank", and the IN it
+  applied then left those rows out. A false is a value of its own now.
+- A date picked in a header filter's date picker was stored as text (`getState().headerFilters`), a typed
+  one as a `Date`: both are a `Date` now. The picker opens on the date typed in the filter.
+- `cell-header-focus` (`rowData`) and the header / filter menus' `context.row` had the first displayed row
+  from when the header was rendered, stale after a filter: they are read when the focus or the menu
+  happens.
+- `__groupLvl` of the data rows: with one grouping level only the first row of each group had it, and
+  removing the grouping left it. Every grouped row has the number of levels now, 0 when not grouped.
+- A click on a group row's row selector in the 'single' or 'none' selection mode sent `selection-change`
+  with nothing selected.
+- Dim repeated values compared the formatter's text, not what the cell shows (`numberOverride`).
+- Docs site: the copy button threw without `navigator.clipboard` (plain http); it says "copy failed".
+
+#### Row classes: the `rowClass` hook
+
+##### Added
+- `GridHooks.rowClass(row, rowIndex)`: css classes for a whole row from its values (a late order, a
+  blocked customer), on the row's element in every section - the row number, pinned left, middle,
+  pinned right. They follow the row: when it is rendered (scroll, `refresh()`) and after its values
+  change (an edit, a paste, an upsert, an undo), in the next frame. Not for group rows. In
+  `updateHooks()`; a config with `rowClass` throws, it is a hook. The "Cell styling" sample marks the
+  inactive rows.
+
+#### Find: filter the rows (user request)
+
+##### Added
+- A **Filter rows** toggle in the find bar (the funnel after the count, `aria-pressed`): only the rows with
+  a match are shown, matched exactly as Find marks the cells (the shown text: formatters, numberOverride,
+  lookup labels, custom cells). It sits on top of the filter and "changed rows only" and is not part of
+  them, the state or `getFilterString()`; it filters again with the text and whenever the datasource
+  filters, not on an edit. Closing the bar (Esc, ✕, `closeFind()`) or the footer's Clear turns it off.
+- A footer chip `Find: {text}` while it hides rows.
+- `gridInterface.find(text, { filterRows })` and `FindResult.filterRows`, sent with `find-change`.
+- Texts `find.filterRows`, `find.filterRows.tooltip`, `footer.findFilter`.
+
+#### Custom cell rendering (item 39)
+
+##### Added
+- `registerCellRenderer(id, renderer)` and `ColumnConfig.renderer`: draw a column's cells with code of
+  your own - plain DOM, lit-html, React, Solid. The renderer is called once per cell element (not per
+  row), `update(context)` on every render of the cell, `destroy()` when the cell is done with it. Types
+  `CellRenderer`, `CellRendererInstance`, `CellRenderContext` (row, field, value, text, type, readonly,
+  rowIndex, gridInterface).
+- Custom cells keep the grid's keys, focus ring, copy and paste, ranges, Find, fill down, errors, the
+  edited marker and undo. A renderer can write `context.row[field]`: tracked, validated, one undo step.
+- Editing a custom cell: Enter, F2, typing and a double click open the grid's one-line editor over the
+  cell (Enter saves, Esc cancels), a click on a date cell opens the date picker, and
+  `CellRendererInstance.edit()` lets a renderer edit the value itself (a select). New text
+  `cell.editor.hint`.
+- An unknown renderer id, or a column with both `renderer` and `editor`, throws a `TypeError` when the grid
+  is made or in `updateConfig()`.
+- Guide "Custom cells" (21) and sample "Custom cells" (a badge, a progress bar, a link, a select, a date
+  with its weekday, 10 000 rows).
+
+#### The filter menu and the filter editor redone (user request)
+
+##### Changed
+- **The header filter menu** is **Filter ›** (Operator ›, Blank ›, Clear Filter, Clear All Filters,
+  Advanced Filter…) and then the value list: a framed search box ("Search values"), a "10 values" count,
+  "Select all" as the list's header (tri-state: checked, mixed, unchecked), each value's row count
+  right-aligned and muted, a scrolling list, Cancel and Apply buttons. Entry ids are unchanged;
+  `filter.filter` is the submenu (the old section id), the separator `filter.filter.blankSeparator` is gone.
+- **The filter editor**: a condition is one row - Field ▾, Operator ▾, the value (a list for IN / NOT IN,
+  none for the blank operators), ⇄, delete - with select-style pickers; a group is an indented bracket
+  with an AND/OR toggle (`aria-pressed`), "+ Condition", "+ Group", wrap and delete; an empty filter says
+  so; Cancel / Apply / Apply & close. The pickers are grid menus and work from the keyboard, the field
+  picker has a search box. The dialog is as tall as its content, up to the window, and stays in it;
+  min size 360×200.
+- Texts reworded: `filter.values.*` ("Search values", "{count} values", "Select all", "Apply", "Only values
+  in filtered rows", "Only the first {max} values are shown"), the editor's labels and pickers ("Field",
+  "Operator", "Value", "Column") and buttons ("Cancel", "Apply", "Apply & close"), "Search fields".
+
+##### Fixed
+- Nested groups in the filter editor ran past the dialog's right edge.
+- "Select all" showed checked when values of the column were filtered away.
+- The value list's count said "rows found" but counted values.
+- Menu separators showed as dots instead of lines.
+- The filter editor's focus went to its first button (Chrome 131) instead of the dialog; the focus fell to
+  the page when the focused condition was deleted; the footer's Tab order was reversed; the field
+  picker's search text carried over between openings.
+
+##### Added
+- Texts `filter.filter`, `filter.values.rowsFound.one`, `filter.values.cancel`, `filterEditor.addCondition`,
+  `filterEditor.addSubGroup`, `filterEditor.empty`; variables `--simple-html-grid-accent-color`,
+  `--simple-html-grid-accent-font-color`, `--simple-html-grid-control-border-color`.
+
+#### Lookup columns: a select or a dropdown grid (user request)
+
+##### Added
+- **Lookup columns**: `ColumnConfig.editor: { type: 'select' | 'grid', lookup, set? }` and
+  `registerLookup(id, lookup)` - a lookup is `{ datasource, valueField, labelField?, config? }` or
+  `{ gridInterface, valueField, labelField? }` (types `Lookup`, `LookupFromDatasource`,
+  `LookupFromGridInterface`, `ColumnEditor`). The cell shows the label (a value not in the lookup as
+  itself) and a square ▾ button; the list opens with the button, Alt+ArrowDown, F4, F2, Space, a double
+  click, or typing (the character is the search). **Select**: a search field over a listbox
+  (combobox, `aria-activedescendant`), at most 500 options shown. **Grid**: the lookup's datasource and
+  config in a dropdown, its label column's filter focused; or a linked `GridInterface`. A pick and its
+  `set` fields are one write, one undo step; Delete empties the cell and its `set` fields. An unknown
+  lookup, a bad `set`, a boolean/date field, `focusButton` or `dynamicCellTypeColumn` next to an editor
+  throw a `TypeError`.
+- Lookup columns sort on their labels, their header filter matches labels (as `IN` of the values), and
+  CSV / Excel export, copy, paste (a label becomes its value), clear, fill down, Find and fit widths use
+  the labels. The filter menu's value list, group rows and the filter's text show the values.
+- Texts `lookup.open`, `lookup.search`, `lookup.noMatch`, `lookup.more`; variables
+  `--simple-html-grid-lookup-button-bg-color`, `--simple-html-grid-lookup-icon-color`,
+  `--simple-html-grid-lookup-active-bg-color`.
+- Guide "Lookups: select and dropdown grid" (20), sample "Lookups"; the "Grid as dropdown" sample is a
+  few lines of config now.
+
+#### Find in the grid (item 42)
+
+##### Added
+- **Find in the grid** (Ctrl+F / Cmd+F with the focus in the grid): a find bar over the grid's top right
+  corner with an input, the count (`3 of 17`), previous / next and close. Typing finds as you go: every
+  cell whose shown text (formatted, any case) contains the text gets a tint, the current match a stronger
+  tint and a 2px line, and the grid scrolls to it, sideways too. Enter / F3 go to the next match and
+  Shift+Enter / Shift+F3 to the previous, wrapping at the ends. Esc closes the bar and puts the focus in
+  the current match's cell (its row becomes the current row). Ctrl+F outside the grid stays the
+  browser's. While open it follows the data (filter, sort, grouping, edits, upserts, layout), keeping the
+  current match while it still matches. Not in checkboxes, group row names, collapsed groups or hidden
+  fields.
+- API: `gridInterface.find(text)`, `openFind()`, `findNext()`, `findPrevious()`, `closeFind()`, `getFind()`,
+  the `find-change` event and the type `FindResult`.
+- Texts `find.label`, `find.placeholder`, `find.count`, `find.none`, `find.previous[.tooltip]`,
+  `find.next[.tooltip]`, `find.close[.tooltip]`. Variables `--simple-html-grid-find-match-color`,
+  `--simple-html-grid-find-current-color`, `--simple-html-grid-find-current-border-color`. Classes
+  `simple-html-cell-find-match`, `simple-html-cell-find-current`, `simple-html-grid-find`.
+- Accessibility: the bar is a `role="search"` region with a named input, the count is a status, the
+  buttons are named with their key in the tooltip. Find keys in the keyboard guide.
+- Guide "Find" (19) and sample "Find (Ctrl+F)".
+
+#### The row menu's undo entries in a submenu of their own (user request)
+
+##### ⚠️ Breaking changes
+- Undo last change, Redo, Undo cell edit and the two Undo row edits are in the submenu **Undo / Redo ›**
+  (`row.edit`, text `row.edit` "Undo / Redo"), first in the row menu, instead of five items and a line at
+  its top: the row menu is 9 rows. The entries keep their ids; the line `row.edit.separator` is gone.
+
+#### Fill down: Ctrl+D and the fill handle (item 34)
+
+##### Added
+- **Ctrl+D** (Cmd+D) in a cell fills down like a spreadsheet: in every range the values of its top row go
+  into the rows under it; a range of one row, or the cell alone, gets the values of the data row above.
+  `gridInterface.fillDown()` does the same from code.
+- **The fill handle**: a small square at the bottom right corner of the last range (`.simple-html-grid-fill-handle`,
+  in the range colour). Dragged down, the range grows with the pointer (the grid scrolls past the
+  bottom), and the rows it grew by get the range's rows, repeated from its top.
+- Values are copied as they are (a date as a new Date), readonly cells skipped, group rows skipped, one
+  undo step; nothing in a readonly grid (no handle, Ctrl+D stays the browser's).
+
+#### The summary of the selected cells in the footer (item 35)
+
+##### Added
+- With cell ranges of more than one cell the footer shows **Count, Sum, Average, Min, Max** at its right,
+  like a spreadsheet's status bar: the cells with a value (any type, `0` and `false` count), and the
+  numbers of the number fields, every cell once, group rows skipped, shown with the formatter of the
+  number field furthest left. It follows the ranges and edits of their values. Texts `footer.summary`
+  (its name for a screen reader), `footer.summary.count` / `.sum` / `.avg` / `.min` / `.max`; the class
+  `.footer-summary`. The filter chips collapse to one box when they would reach under it.
+
+##### Docs
+- Guide "Selection and clipboard": The summary in the footer; its known limits said several ranges copy
+  the last one - they copy as one table since the clipboard change.
+
+#### Live data: the flash of a merge, the look of a conflict (item 38)
+
+##### Added
+- **`GridConfig.mergeHighlight`** (default `true`): a cell whose value `datasource.upsert()` changed
+  flashes once - a tint that fades out over a second (`--simple-html-grid-merged-color`); the cell
+  element has the class `simple-html-cell-merged` meanwhile. The hook in the "Live data" guide is for a
+  look of your own now.
+- **The look of a conflict**: a field the server changed while the user had it edited has a larger
+  marker in the conflict colour (`--simple-html-grid-conflict-color`), with or without `editedMarker`;
+  its tooltip has the server's value and a click takes it (as `resolveConflict(row, field, 'remote')`,
+  undoable). The cell element has the class `simple-html-cell-conflict`, the marker
+  `simple-html-cell-conflict-marker`.
+- **The row number of a row in conflict** shows two arrows (`rowStatus`), its tooltip and the screen
+  reader's text say which fields (`Changed on the server too: Price`) or that the server removed the row.
+  An error wins the icon, then a conflict, then new / edited; a deleted row keeps its trash can.
+- Texts `rowStatus.conflict`, `rowStatus.removedOnServer`, `cell.conflictMarker.tooltip`,
+  `cell.conflictMarker.take`.
+- The "Live data" sample uses the grid's flash, no hook.
+
+#### Group rows: a +/- box and the lines of the levels, like a tree (user request)
+
+##### Changed
+- The `+` / `-` of a group row is a square box with a frame, in the column of its level. The line of an
+  expanded group runs from under its box down through its rows, the lines of the groups a row is in go
+  through it: where a group ends shows. In a row with aggregates the lines go down the aggregate lines too.
+- The grouping columns of the data rows are one column, no line under each row and no inset shadow.
+- New variable `--simple-html-grid-group-line-color` (the lines and the box's frame, at least 3:1 to the
+  group rows). The group row's elements have classes of their own: `.simple-html-grid-group-toggle`
+  (the button), `-group-box` / `-group-box-frame` / `-group-box-sign`, `-group-text`, `-group-levels`,
+  `-group-line`; `.simple-html-grid-grouping-row-group` is the header's grouping columns only.
+
 ## 5.0.1
 
 Large maintenance release: the whole codebase was refactored, the toolchain and all

@@ -11,7 +11,7 @@ export function updateHorizontalScrollWidth(ctx: Grid) {
     middlec.style.width = asPx(
         ctx.gridInterface
             .__getGridConfig()
-            .columnsCenter.map((e) => e.width)
+            .layout.center.map((e) => e.width)
             .reduce((prev, cur) => prev + cur, 0)
     );
 
@@ -19,14 +19,14 @@ export function updateHorizontalScrollWidth(ctx: Grid) {
     middlex.style.width = asPx(
         ctx.gridInterface
             .__getGridConfig()
-            .columnsCenter.map((e) => e.width)
+            .layout.center.map((e) => e.width)
             .reduce((prev, cur) => prev + cur, 0)
     );
     const middleh = getElementByClassName(ctx.element, 'simple-html-grid-header-row-container-pinned-middle');
     middleh.style.width = asPx(
         ctx.gridInterface
             .__getGridConfig()
-            .columnsCenter.map((e) => e.width)
+            .layout.center.map((e) => e.width)
             .reduce((prev, cur) => prev + cur, 0)
     );
 }

@@ -1,0 +1,928 @@
+/* ------------------------------------------------------------------ shell */
+
+* {
+    box-sizing: border-box;
+}
+
+/* Every colour of the site is light-dark(<light>, <dark>), like grid.css: the whole page - the
+   sidebar, the code panels, the grid - follows color-scheme. Light is the default, the dark class on
+   the body (theme.ts) turns it dark. On the body: the grid's menus, tooltips and filter editor are on
+   the body too. A custom property keeps light-dark() as it is, it is resolved where it is used */
+:root {
+    /* the page */
+    --demo-bg: light-dark(#f3f4f6, #1f2937);
+    --demo-panel: light-dark(#ffffff, #374151);
+    --demo-text: light-dark(#111827, #f3f4f6);
+    --demo-muted: light-dark(#6b7280, #9ca3af);
+    --demo-border: light-dark(#d1d5db, #4b5563);
+    --demo-accent: light-dark(#2563eb, #60a5fa);
+    /* the dev badge of a branch's docs (gh-pages dev/<branch>/) */
+    --demo-dev-badge: light-dark(#c2410c, #fb923c);
+    --demo-dev-badge-text: light-dark(#ffffff, #1c1917);
+    --demo-error: light-dark(#dc2626, #f87171);
+    /* a row the rowClass hook marks, in the cell styling sample */
+    --demo-row-marked: light-dark(#fdecec, #4a2f35);
+
+    /* the sidebar */
+    --demo-side-bg: light-dark(#ffffff, #111827);
+    --demo-side-text: light-dark(#374151, #d1d5db);
+    --demo-side-strong: light-dark(#111827, #ffffff);
+    --demo-side-muted: light-dark(#6b7280, #9ca3af);
+    --demo-side-hover: light-dark(#eef2f7, #1f2937);
+    --demo-side-border: light-dark(#e5e7eb, #1f2937);
+    --demo-side-button: light-dark(#f3f4f6, #1f2937);
+    --demo-side-button-border: light-dark(#d1d5db, #374151);
+    --demo-side-button-hover: light-dark(#9ca3af, #6b7280);
+    --demo-side-scroll-thumb: light-dark(#d1d5db, #374151);
+    --demo-side-scroll-track: light-dark(#f9fafb, #1f2937);
+
+    /* the code panels: the sample source, the code blocks of the guides and the API pages.
+       Light: GitHub's light colours, dark: One Dark */
+    --demo-code-bg: light-dark(#f6f8fa, #0d1424);
+    --demo-code-bar: light-dark(#eef1f5, #101a30);
+    --demo-code-border: light-dark(#d0d7de, #1e293b);
+    --demo-code-text: light-dark(#24292f, #abb2bf);
+    --demo-code-muted: light-dark(#57606a, #94a3b8);
+    --demo-code-button-border: light-dark(#d0d7de, #334155);
+    --demo-code-button-hover: light-dark(#8c959f, #64748b);
+    --demo-code-scroll-thumb: light-dark(#d0d7de, #334155);
+    --demo-code-scroll-track: light-dark(#f6f8fa, #101a30);
+    --demo-tok-comment: light-dark(#6e7781, #7f848e);
+    --demo-tok-string: light-dark(#0a3069, #98c379);
+    --demo-tok-number: light-dark(#0550ae, #d19a66);
+    --demo-tok-keyword: light-dark(#cf222e, #c678dd);
+    --demo-tok-type: light-dark(#953800, #e5c07b);
+    --demo-tok-fn: light-dark(#8250df, #61afef);
+}
+
+body.dark {
+    color-scheme: dark;
+}
+
+/* scrollbars - same look as the grid's own scrollers (thin, flat, themed thumb + track).
+   the shared rule reads two variables, each scrolling area sets the pair that fits its background */
+
+:root {
+    --demo-scroll-thumb: light-dark(#bdd4e7, #234882);
+    --demo-scroll-track: light-dark(#ffffff, #4b5563);
+}
+
+.sidebar-nav,
+.code-scroll,
+.doc-scroll,
+.demo-log {
+    scrollbar-color: var(--demo-scroll-thumb) var(--demo-scroll-track);
+    scrollbar-width: thin;
+}
+
+.sidebar-nav::-webkit-scrollbar,
+.code-scroll::-webkit-scrollbar,
+.doc-scroll::-webkit-scrollbar,
+.demo-log::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb,
+.code-scroll::-webkit-scrollbar-thumb,
+.doc-scroll::-webkit-scrollbar-thumb,
+.demo-log::-webkit-scrollbar-thumb {
+    background-color: var(--demo-scroll-thumb);
+    box-shadow: inset 0 0 6px rgb(0 0 0 / 30%);
+}
+
+.sidebar-nav::-webkit-scrollbar-track,
+.code-scroll::-webkit-scrollbar-track,
+.doc-scroll::-webkit-scrollbar-track,
+.demo-log::-webkit-scrollbar-track {
+    background-color: var(--demo-scroll-track);
+}
+
+body {
+    margin: 0;
+    font-family:
+        system-ui,
+        -apple-system,
+        'Segoe UI',
+        Roboto,
+        sans-serif;
+    overflow: hidden;
+}
+
+.app {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+}
+
+/* ---------------------------------------------------------------- sidebar */
+
+.sidebar {
+    width: 232px;
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    background: var(--demo-side-bg);
+    color: var(--demo-side-text);
+    border-right: 1px solid var(--demo-side-border);
+    --demo-scroll-thumb: var(--demo-side-scroll-thumb);
+    --demo-scroll-track: var(--demo-side-scroll-track);
+}
+
+.sidebar-header {
+    position: relative;
+    padding: 16px 48px 12px 16px;
+    border-bottom: 1px solid var(--demo-side-border);
+}
+
+.sidebar-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--demo-side-strong);
+}
+
+/* the branch and the commit the site is built from */
+.sidebar-build {
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--demo-side-muted);
+    overflow-wrap: anywhere;
+}
+
+.sidebar-build a {
+    color: var(--demo-accent);
+    text-decoration: none;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+}
+
+.sidebar-build a:hover {
+    text-decoration: underline;
+}
+
+/* the docs of a branch: a badge before the version, a link to the released docs */
+.sidebar-build a.sidebar-build-dev {
+    display: inline-block;
+    padding: 0 5px;
+    border-radius: 3px;
+    background: var(--demo-dev-badge);
+    color: var(--demo-dev-badge-text);
+    font-family: inherit;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.doc-status .sidebar-build {
+    display: inline;
+    margin: 0;
+    font-size: inherit;
+}
+
+.sidebar-sub {
+    margin-top: 2px;
+    font-size: 11px;
+    color: var(--demo-side-muted);
+}
+
+.sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 0 10px;
+}
+
+/* Guides, Samples, API: folds */
+.nav-section-title {
+    padding: 14px 16px 2px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--demo-side-strong);
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+}
+
+.nav-section-title::before {
+    content: '▸ ';
+    color: var(--demo-side-muted);
+}
+
+.nav-section[open] > .nav-section-title::before {
+    content: '▾ ';
+}
+
+/* a group in a section (the samples' "Getting started" ...): folds too. Indented under its section */
+.nav-group {
+    padding: 10px 16px 4px 28px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--demo-side-muted);
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+}
+
+.nav-group::-webkit-details-marker,
+.nav-section-title::-webkit-details-marker {
+    display: none;
+}
+
+.nav-group::before {
+    content: '▸ ';
+}
+
+.nav-subsection[open] > .nav-group::before {
+    content: '▾ ';
+}
+
+.nav-group:hover {
+    color: var(--demo-side-strong);
+}
+
+.nav-item {
+    display: block;
+    width: 100%;
+    padding: 6px 16px;
+    font-size: 13px;
+    text-align: left;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+    color: var(--demo-side-text);
+    background: none;
+    border: none;
+    border-left: 3px solid transparent;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+/* each level further in, so the sidebar reads as a tree: a section's own pages (Guides) under its
+   title, a group's pages (Samples › Cells) past the group's arrow */
+.nav-section .nav-item {
+    padding-left: 28px;
+}
+
+.nav-subsection .nav-item {
+    padding-left: 44px;
+}
+
+.nav-item:hover {
+    background: var(--demo-side-hover);
+    color: var(--demo-side-strong);
+}
+
+.nav-item.active {
+    background: var(--demo-side-hover);
+    color: var(--demo-side-strong);
+    border-left-color: var(--demo-accent);
+}
+
+.sidebar-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--demo-side-border);
+}
+
+/* the theme of the grids: a label and its select on one line */
+.grid-theme {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--demo-side-muted);
+}
+
+.grid-theme-select {
+    flex: 1;
+    min-width: 0;
+    padding: 4px 6px;
+    font-size: 12px;
+    font-family: inherit;
+    color: var(--demo-side-text);
+    background: var(--demo-side-button);
+    border: 1px solid var(--demo-side-button-border);
+    border-radius: 5px;
+}
+
+.theme-btn {
+    width: 100%;
+    padding: 6px 10px;
+    font-size: 12px;
+    color: var(--demo-side-text);
+    background: var(--demo-side-button);
+    border: 1px solid var(--demo-side-button-border);
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.theme-btn:hover {
+    color: var(--demo-side-strong);
+    border-color: var(--demo-side-button-hover);
+}
+
+/* the ☰ buttons (sidebarToggle.ts): hide the sidebar (in its header), show it again (the top left corner
+   of the page). Square, as the grid */
+.sidebar-toggle,
+.sidebar-open {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    font-size: 16px;
+    line-height: 1;
+    color: var(--demo-side-strong);
+    background: var(--demo-side-bg);
+    border: 1px solid var(--demo-side-border);
+    cursor: pointer;
+}
+
+.sidebar-toggle:hover,
+.sidebar-open:hover {
+    background: var(--demo-side-hover);
+}
+
+.sidebar-toggle {
+    position: absolute;
+    top: 12px;
+    right: 10px;
+}
+
+.sidebar-open {
+    display: none;
+    position: fixed;
+    top: 8px;
+    left: 8px;
+    z-index: 20;
+}
+
+body.sidebar-hidden .sidebar {
+    display: none;
+}
+
+body.sidebar-hidden .sidebar-open {
+    display: block;
+}
+
+/* the page clear of the show button */
+body.sidebar-hidden .main {
+    padding-left: 44px;
+}
+
+/* a phone or a narrow window: the sidebar opens over the page (sidebarToggle.ts NARROW), and the show
+   button is above the page, not beside it - the page keeps the whole width */
+@media (max-width: 760px) {
+    body.sidebar-hidden .main {
+        padding-left: 0;
+        padding-top: 44px;
+    }
+
+    .sidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 30;
+        width: min(280px, 85vw);
+    }
+}
+
+/* ------------------------------------------------------------------- main */
+
+.main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    /* a page taller than the window scrolls: a sample's grid is 15 rows at least, with its description and
+       buttons above it a short window has no room for it (the body does not scroll, overflow: hidden) */
+    overflow-y: auto;
+    background: var(--demo-bg);
+    color: var(--demo-text);
+}
+
+.main-header {
+    padding: 16px 22px 0;
+}
+
+.main-header h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.main-header p {
+    margin: 6px 0 0;
+    max-width: 820px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--demo-muted);
+}
+
+/* ------------------------------------------------------------- code panel */
+
+.code-panel {
+    margin: 12px 22px 0;
+    background: var(--demo-code-bg);
+    border: 1px solid var(--demo-code-border);
+    border-radius: 8px;
+    overflow: hidden;
+    --demo-scroll-thumb: var(--demo-code-scroll-thumb);
+    --demo-scroll-track: var(--demo-code-scroll-track);
+}
+
+.code-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 12px;
+    font-size: 12px;
+    color: var(--demo-code-muted);
+    background: var(--demo-code-bar);
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+}
+
+.code-summary::before {
+    content: '▸ ';
+    color: var(--demo-code-muted);
+}
+
+.code-panel[open] .code-summary::before {
+    content: '▾ ';
+}
+
+.code-summary span {
+    flex: 1;
+    margin-left: 2px;
+}
+
+.copy-btn {
+    padding: 2px 10px;
+    font-size: 11px;
+    color: var(--demo-code-muted);
+    background: transparent;
+    border: 1px solid var(--demo-code-button-border);
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.copy-btn:hover {
+    color: var(--demo-code-text);
+    border-color: var(--demo-code-button-hover);
+}
+
+.code-scroll {
+    max-height: 34vh;
+    overflow: auto;
+}
+
+.code-scroll pre {
+    margin: 0;
+    padding: 14px 16px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--demo-code-text);
+}
+
+/* the code colours, light and dark: see the tokens at the top */
+.tok-comment {
+    color: var(--demo-tok-comment);
+    font-style: italic;
+}
+.tok-string {
+    color: var(--demo-tok-string);
+}
+.tok-number {
+    color: var(--demo-tok-number);
+}
+.tok-keyword {
+    color: var(--demo-tok-keyword);
+}
+.tok-type {
+    color: var(--demo-tok-type);
+}
+.tok-fn {
+    color: var(--demo-tok-fn);
+}
+
+/* ------------------------------------------------------------- demo stage */
+
+.stage {
+    flex: 1;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    margin: 14px 22px 18px;
+}
+
+.demo-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.demo-toolbar:empty {
+    display: none;
+}
+
+.demo-btn {
+    padding: 5px 11px;
+    font-size: 12px;
+    color: var(--demo-text);
+    background: var(--demo-panel);
+    border: 1px solid var(--demo-border);
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.demo-btn:hover {
+    border-color: var(--demo-accent);
+}
+
+.demo-log {
+    height: 110px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+    padding: 6px 9px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--demo-text);
+    background: var(--demo-panel);
+    border: 1px solid var(--demo-border);
+    border-radius: 5px;
+}
+
+/*
+ * the grid of a sample shows at least 15 rows: with the grid's default heights the panel (25px), labels
+ * (22px), filters (22px) and column numbers (18px), 15 rows of 22px, the footer (45px) and a horizontal
+ * scrollbar (16px). A sample with more around its rows (stacked labels, a totals row) gets the rest from
+ * fitSampleGrids (pages.ts)
+ */
+.demo-grid-host {
+    --demo-grid-height: calc(25px + 22px + 22px + 18px + 15 * 22px + 45px + 16px);
+    /* and 30 rows at most: a sample page as high as a long window (a phone with the sidebar over it) had a
+       grid of 60 rows, the page scrolled in the grid more than past it */
+    --demo-grid-max-height: calc(25px + 22px + 22px + 18px + 30 * 22px + 45px + 16px);
+    flex: 1;
+    position: relative;
+    min-height: var(--demo-grid-height);
+    max-height: var(--demo-grid-max-height);
+}
+
+/* in a guide the stage is as high as its parts: the grid fills its host, which needs a height of its own */
+.doc-sample .demo-grid-host {
+    flex: none;
+    height: var(--demo-grid-height);
+}
+
+/* the SQL sample: the WHERE of each dialect under the grid */
+.demo-sql {
+    display: grid;
+    /* two by two, one under the other on a narrow screen */
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.demo-sql-block {
+    margin: 0;
+    max-height: 220px;
+    overflow: auto;
+    padding: 6px 9px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11.5px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--demo-text);
+    background: var(--demo-panel);
+    border: 1px solid var(--demo-border);
+    border-radius: 5px;
+}
+
+/* a full page sample (fullPage): about 30 rows high, as the other samples at most (the user: "full grid
+   sample, show height of grid to around 30 rows") - not the window's height, which was 60 rows in a tall
+   window. The page scrolls in a low window */
+.stage-full .demo-grid-host {
+    flex: none;
+    height: var(--demo-grid-max-height);
+}
+
+/* cell background classes for the cellClass sample -
+   the element behind the input has no size of its own on editable cells, so position it ourselves */
+.demo-cell-low,
+.demo-cell-high {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+.demo-cell-low {
+    background: rgba(239, 68, 68, 0.25);
+}
+
+.demo-cell-high {
+    background: rgba(34, 197, 94, 0.25);
+}
+
+/* a row the rowClass hook marks: the class is on the row element of every section. Only on a row that
+   is not selected - the selected rows keep their colour - and the text of its cells in italics */
+.simple-html-grid-row-even.demo-row-inactive,
+.simple-html-grid-row-odd.demo-row-inactive {
+    background-color: var(--demo-row-marked);
+}
+
+.demo-row-inactive .simple-html-grid-col-cell input {
+    font-style: italic;
+}
+
+/* ------------------------------------------------- guides and API pages */
+
+.doc-scroll {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.doc {
+    max-width: 920px;
+    padding: 16px 22px 48px;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.doc h1 {
+    margin: 0 0 12px;
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.doc h2 {
+    margin: 32px 0 10px;
+    padding-bottom: 4px;
+    font-size: 17px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--demo-border);
+}
+
+.doc h3 {
+    margin: 22px 0 8px;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.doc a {
+    color: var(--demo-accent);
+}
+
+.doc :not(pre) > code {
+    padding: 1px 5px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+    font-size: 12.5px;
+    background: var(--demo-panel);
+    border: 1px solid var(--demo-border);
+    border-radius: 4px;
+}
+
+/* block: a table wider than the page - a phone, a table of options - scrolls sideways in its own box, the
+   page does not. Its cells wrap first, the table in it is no wider than the page while its text can wrap */
+.doc table {
+    display: block;
+    overflow-x: auto;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 13px;
+}
+
+.doc th,
+.doc td {
+    padding: 5px 10px;
+    text-align: left;
+    vertical-align: top;
+    border: 1px solid var(--demo-border);
+}
+
+.doc th {
+    background: var(--demo-panel);
+}
+
+/* the feature overview (guides/00-features.md): every table as wide as the page, with the same columns -
+   Feature | What it does | See - so the tables read as one list. "guide · sample" on one line */
+.doc[data-guide='features'] table {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+}
+
+.doc[data-guide='features'] th:nth-child(1) {
+    width: 25%;
+}
+
+.doc[data-guide='features'] th:nth-child(3) {
+    width: 10.5em;
+}
+
+/* the keyboard shortcuts, Keys | What they do: room for Ctrl+ArrowDown */
+.doc[data-guide='features'] th:first-child:nth-last-child(2) {
+    width: 30%;
+}
+
+/* a phone: "guide ·" over "sample", the feature names and the keys a bit more room */
+@media (max-width: 600px) {
+    .doc[data-guide='features'] th,
+    .doc[data-guide='features'] td {
+        padding: 5px 6px;
+    }
+
+    .doc[data-guide='features'] th:nth-child(1) {
+        width: 28%;
+    }
+
+    .doc[data-guide='features'] th:nth-child(3) {
+        width: 5.2em;
+    }
+
+    .doc[data-guide='features'] th:first-child:nth-last-child(2) {
+        width: 45%;
+    }
+}
+
+.doc blockquote {
+    margin: 12px 0;
+    padding: 2px 14px;
+    color: var(--demo-muted);
+    border-left: 3px solid var(--demo-border);
+}
+
+/* ts blocks in guides and JSDoc, and the signatures on the API pages: the code panel's colors */
+.doc pre.code-block {
+    margin: 12px 0;
+    padding: 12px 14px;
+    overflow-x: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--demo-code-text);
+    background: var(--demo-code-bg);
+    border: 1px solid var(--demo-code-border);
+    border-radius: 8px;
+    scrollbar-color: var(--demo-code-scroll-thumb) var(--demo-code-scroll-track);
+    scrollbar-width: thin;
+}
+
+.doc pre.code-block a.tok-type {
+    text-decoration: underline dotted;
+}
+
+.doc-kind {
+    margin: -8px 0 0;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--demo-muted);
+}
+
+.doc-member {
+    padding-top: 2px;
+}
+
+.doc-samples {
+    font-size: 13px;
+}
+
+.doc-missing {
+    color: var(--demo-error);
+}
+
+/* a live sample in a guide: the source and the running sample, in a frame */
+.doc-sample {
+    margin: 16px 0;
+    padding: 0 0 4px;
+    background: var(--demo-bg);
+    border: 1px solid var(--demo-border);
+    border-radius: 8px;
+}
+
+.doc-sample-title {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px 0;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.doc-sample-title a {
+    font-weight: normal;
+}
+
+.doc-sample .code-panel {
+    margin: 8px 12px 0;
+}
+
+/* as high as its parts: the buttons, a log, the grid (15 rows at least, .demo-grid-host) and what a
+   sample shows under it - a fixed height squeezed the grid of a sample with a log or more */
+.doc-sample .stage {
+    flex: none;
+    margin: 12px;
+}
+
+/* a page of the user guide whose "Try it" tasks are all done */
+.nav-item-done::after {
+    content: ' ✓';
+    color: var(--demo-accent);
+    font-weight: 600;
+}
+
+/* the confetti of a "Try it" box all done (confetti.ts): over everything, takes no clicks */
+.demo-confetti {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    pointer-events: none;
+    z-index: 2147483647;
+}
+
+/* the user guide's "Try it" box (tryIt.ts): its tasks, ticked as they are done, over a live grid */
+.doc-tryit {
+    margin: 16px 0 24px;
+    padding: 10px 12px 12px;
+    background: var(--demo-bg);
+    border: 1px solid var(--demo-border);
+    border-left: 4px solid var(--demo-accent);
+    border-radius: 8px;
+}
+
+.tryit-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.tryit-title {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.tryit-progress {
+    color: var(--demo-muted);
+    font-size: 13px;
+}
+
+.tryit-again {
+    margin-left: auto;
+}
+
+.tryit-tasks {
+    margin: 8px 0 10px;
+    padding: 0;
+    list-style: none;
+}
+
+.tryit-task {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 3px 0;
+}
+
+.tryit-mark {
+    flex: none;
+    margin: 3px 0 0;
+}
+
+/* a task done: its tick in the accent colour, its text quieter */
+.tryit-done {
+    color: var(--demo-muted);
+}
+
+.tryit-done .tryit-mark {
+    accent-color: var(--demo-accent);
+}
+
+/* all done: the progress in the accent colour */
+.tryit-all-done .tryit-progress {
+    color: var(--demo-accent);
+    font-weight: 600;
+}
+
+.tryit-grid {
+    position: relative;
+    height: calc(25px + 22px + 22px + 18px + 12 * 22px + 45px + 16px);
+}

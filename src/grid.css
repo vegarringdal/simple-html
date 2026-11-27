@@ -1,25 +1,198 @@
+/**
+ * The theme. Every colour of the grid, its menus, the column chooser, the filter editor and the
+ * tooltips is one of these variables - they are all elements with the simple-html-grid class, so an
+ * override on .simple-html-grid reaches every one of them. guides/13-theming.md has the list.
+ *
+ * Each colour is light-dark(<light>, <dark>): the grid follows the color-scheme of the page. No
+ * color-scheme (normal) or `light` gives the first, `color-scheme: dark` the second, and
+ * `color-scheme: light dark` the one of the OS setting. color-scheme is inherited, set it on :root or
+ * body: the menus, the tooltips and the filter editor are put on the body (or in the dialog or
+ * popover the grid is in), not in the grid's container.
+ *
+ * A second theme comes with the grid: theme-tredespace.css sets every one of these variables to the
+ * colours of the TreDeSpace UI widget library, for the grids under data-grid-theme="tredespace" (on
+ * the html or body element). A variable added here needs a TreDeSpace colour there too
+ * (src/__tests__/themeTredespace.test.ts fails without it).
+ */
 .simple-html-grid {
     text-align: initial;
-    --simple-html-grid-main-bg-color: #f5f5f5;
-    --simple-html-grid-sec-bg-color: #ffffff;
-    --simple-html-grid-alt-bg-color: #ffffff;
-    --simple-html-grid-main-bg-border: #e6e5e5;
-    --simple-html-grid-pinned-border: #d1d0d0;
-    --simple-html-grid-sec-bg-border: #e6e5e5;
-    --simple-html-grid-main-bg-selected-odd: #bdd4e7;
-    --simple-html-grid-main-bg-selected-even: #afc7db;
-    --simple-html-grid-main-bg-even: #ffffff;
-    --simple-html-grid-main-bg-odd: #f7f7f7;
-    --simple-html-grid-main-font-color: #2e2d2d;
-    --simple-html-grid-sec-font-color: #979494;
-    --simple-html-grid-dropzone-color: rgba(129, 127, 127, 0.7);
-    --simple-html-grid-grouping-border: #c7c7c7;
-    --simple-html-grid-boxshadow: #fffdfd;
-    --simple-html-grid-main-hr-border: #ffffff;
+    /* the labels, the panel, the footer, the row selector, group rows, the menus, the filter editor */
+    --simple-html-grid-main-bg-color: light-dark(#f5f5f5, #374151);
+    /* the filter row, the inputs, pickers and buttons of the filter editor and the value list, the
+       value list's box, the filter chips, the tooltips */
+    --simple-html-grid-sec-bg-color: light-dark(#ffffff, #4b5563);
+    /* scrollbar tracks, the focus button of a cell */
+    --simple-html-grid-alt-bg-color: light-dark(#ffffff, #4b5563);
+    /* the lines between cells, rows and menu sections */
+    --simple-html-grid-main-bg-border: light-dark(#e6e5e5, #1f2937);
+    /* the lines at the pinned columns and under the header, frames of the dialog, the tooltips and the
+       column chooser's button, the line of a group (the bracket) in the filter editor */
+    --simple-html-grid-pinned-border: light-dark(#d1d0d0, #1f2937);
+    /* the line right of the grouping columns */
+    --simple-html-grid-sec-bg-border: light-dark(#e6e5e5, #1f2937);
+    /* selected rows (odd), a selected column's number */
+    --simple-html-grid-main-bg-selected-odd: light-dark(#bdd4e7, #234882);
+    /* selected rows (even), hover and the keyboard's item in the menus, hover on the buttons */
+    --simple-html-grid-main-bg-selected-even: light-dark(#afc7db, #274e8f);
+    /* the rows, every other one */
+    --simple-html-grid-main-bg-even: light-dark(#ffffff, #4b5563);
+    --simple-html-grid-main-bg-odd: light-dark(#f7f7f7, #5a6370);
+    /* all text */
+    --simple-html-grid-main-font-color: light-dark(#2e2d2d, #f9f7f7);
+    /* placeholders (a picker of the filter editor with nothing picked too), the "AND"/"OR" of the
+       filter chips, the too many conditions box */
+    --simple-html-grid-sec-font-color: light-dark(#6b6b6b, #c8c8c8);
+    /* where a dragged column can go, the column resize handle under the pointer */
+    --simple-html-grid-dropzone-color: light-dark(rgba(129, 127, 127, 0.7), rgba(151, 148, 148, 0.4));
+    /* the inset shadow of labels, panels and the row selector */
+    --simple-html-grid-boxshadow: light-dark(#fffdfd, #4b5563);
+    /* not used by this css, kept so overrides of them still work */
+    --simple-html-grid-grouping-border: light-dark(#c7c7c7, #1f2937);
+    --simple-html-grid-main-hr-border: light-dark(#ffffff, #4b5563);
+    /* a validation error: the border of the cell, the bar and the icon of the row selector */
+    --simple-html-grid-error-color: light-dark(#dc2626, #fca5a5);
+    /* a validation error: laid over the background of the cell and the row selector */
+    --simple-html-grid-error-bg-color: light-dark(rgba(220, 38, 38, 0.12), rgba(248, 113, 113, 0.22));
+    /* the row state (rowStatus) and the edited cells (editedMarker): the marker of an edited cell and
+       the pencil of an edited row, the plus of a new row, the trash can of a row marked for deletion.
+       At least 3:1 against the rows, the row selector and a selected row, with an error's tint too */
+    --simple-html-grid-edited-color: light-dark(#9a3412, #fdba74);
+    --simple-html-grid-new-color: light-dark(#166534, #86efac);
+    --simple-html-grid-deleted-color: light-dark(#57534e, #d1d5db);
+    /* a conflict with the server (datasource.getConflicts()): the marker of a field in conflict and the
+       arrows on the row number. At least 3:1 like the row state */
+    --simple-html-grid-conflict-color: light-dark(#6d28d9, #ddd6fe);
+    /* the flash of a cell a merge changed (GridConfig.mergeHighlight), it fades out */
+    --simple-html-grid-merged-color: light-dark(rgba(250, 204, 21, 0.45), rgba(250, 204, 21, 0.35));
+    /* the marker of a cell of several lines (FieldConfig.multiline): there are more lines than it
+       shows. At least 3:1 against the rows and a selected row, like the row state */
+    --simple-html-grid-multiline-color: light-dark(#475569, #e2e8f0);
+    /* a lookup column (ColumnConfig.editor): the button at the right of the cell - its background and
+       the triangle on it, at least 3:1 against the background - and the active option of its select */
+    --simple-html-grid-lookup-button-bg-color: light-dark(#e9edf2, #374151);
+    --simple-html-grid-lookup-icon-color: light-dark(#475569, #e2e8f0);
+    --simple-html-grid-lookup-active-bg-color: light-dark(#dbe7f3, #2f4f80);
+    /* the text of a link: a cell of a text column with a link (ColumnFormat.link) and the link in the
+       column settings' preview, underlined. At least 4.5:1 against the rows and the selected rows -
+       under the tints of an error, a range and Find too - the inputs and the bars */
+    --simple-html-grid-link-color: light-dark(#1e3a8a, #e8f1ff);
+    /* the palette of the colour rules (ColumnFormat.rules): a text colour and a background of each of its 14
+       colours, on the cells and the detail form's values. A text colour has 4.5:1 or more to the rows, the
+       selected rows - under a range's tint too - the inputs and every background of the palette; the text
+       and a link 4.5:1 to the backgrounds, the focus outline, the row state and the markers 3:1. The rows of
+       the dark look are grey: its text colours are light tints, 4.5:1 asks it. The backgrounds are
+       Tailwind's 200 in light and 900 in dark - apart from yellow and blue, amber's is its 300 and a
+       golden #805500, cyan's its 300 and 800; brown is made of orange's hue, less of it */
+    --simple-html-grid-palette-red-color: light-dark(#90101a, #ffe4dd);
+    --simple-html-grid-palette-orange-color: light-dark(#7c2f00, #ffe7c4);
+    --simple-html-grid-palette-amber-color: light-dark(#6b3a00, #ffeab0);
+    --simple-html-grid-palette-yellow-color: light-dark(#654100, #ffec6c);
+    --simple-html-grid-palette-lime-color: light-dark(#2f4a00, #e4ffb0);
+    --simple-html-grid-palette-green-color: light-dark(#00541c, #9dffb3);
+    --simple-html-grid-palette-teal-color: light-dark(#00504a, #b8fff0);
+    --simple-html-grid-palette-cyan-color: light-dark(#004a60, #c8f8ff);
+    --simple-html-grid-palette-blue-color: light-dark(#12429f, #ccf1ff);
+    --simple-html-grid-palette-indigo-color: light-dark(#3426a0, #e4e6ff);
+    --simple-html-grid-palette-purple-color: light-dark(#681aa4, #fae2ff);
+    --simple-html-grid-palette-pink-color: light-dark(#8a1050, #ffe0f0);
+    --simple-html-grid-palette-brown-color: light-dark(#5c3317, #fbe8d8);
+    --simple-html-grid-palette-grey-color: light-dark(#414853, #e3ecf9);
+    --simple-html-grid-palette-red-bg-color: light-dark(#fecaca, #7f1d1d);
+    --simple-html-grid-palette-orange-bg-color: light-dark(#fed7aa, #7c2d12);
+    --simple-html-grid-palette-amber-bg-color: light-dark(#fcd34d, #805500);
+    --simple-html-grid-palette-yellow-bg-color: light-dark(#fef08a, #713f12);
+    --simple-html-grid-palette-lime-bg-color: light-dark(#d9f99d, #365314);
+    --simple-html-grid-palette-green-bg-color: light-dark(#bbf7d0, #14532d);
+    --simple-html-grid-palette-teal-bg-color: light-dark(#99f6e4, #134e4a);
+    --simple-html-grid-palette-cyan-bg-color: light-dark(#67e8f9, #155e75);
+    --simple-html-grid-palette-blue-bg-color: light-dark(#bae6fd, #0c4a6e);
+    --simple-html-grid-palette-indigo-bg-color: light-dark(#c7d2fe, #312e81);
+    --simple-html-grid-palette-purple-bg-color: light-dark(#e9d5ff, #581c87);
+    --simple-html-grid-palette-pink-bg-color: light-dark(#fbcfe8, #831843);
+    --simple-html-grid-palette-brown-bg-color: light-dark(#e8d5c4, #4a2c1a);
+    --simple-html-grid-palette-grey-bg-color: light-dark(#d1d5db, #2b3544);
+    /* the icons of an icon set (ColumnFormat.icons): green, amber and red - the high, the middle and the low
+       icon. Marks, at least 3:1 to the rows, the selected rows - under a range's tint too - and every
+       background of the palette. Tailwind's green-800, amber-800 and red-700 in light; green and amber 300
+       and red-200 in dark - red-300 is under 3:1 to a range's tint on the lighter dark row */
+    --simple-html-grid-icon-green-color: light-dark(#166534, #86efac);
+    --simple-html-grid-icon-amber-color: light-dark(#92400e, #fcd34d);
+    --simple-html-grid-icon-red-color: light-dark(#b91c1c, #fecaca);
+    /* the totals row under the rows (GridConfig.totalsRow): its background and its text */
+    --simple-html-grid-totals-bg-color: light-dark(#e8edf3, #2a3441);
+    --simple-html-grid-totals-font-color: light-dark(#1f2328, #f9fafb);
+    /* the label in front of an aggregate ("Sum") in a group row and the totals row. At least 4.5:1
+       against both */
+    --simple-html-grid-aggregate-label-color: light-dark(#57606a, #c9d1d9);
+    /* the grouping columns: the line of each level down its group's rows, and the frame of the +/- box
+       of a group row. At least 3:1 against the group rows */
+    --simple-html-grid-group-line-color: light-dark(#8c8c8c, #9ca3af);
+    /* the "only the first 100 values" warning of the filter menu's value list */
+    --simple-html-grid-warning-font-color: light-dark(red, #fca5a5);
+    /* the footer's clear filter button under the pointer: text, border */
+    --simple-html-grid-danger-font-color: light-dark(#c0392b, #fecaca);
+    --simple-html-grid-danger-border: light-dark(#d98282, #f87171);
+    /* the red stripes of a readonly cell in an editable grid (.simple-html-readonly), the same in dark */
+    --simple-html-grid-readonly-stripe-color: rgb(255, 0, 0);
+    /* the blue stripes of an empty required cell (.simple-html-mandatory) */
+    --simple-html-grid-required-stripe-color: light-dark(rgb(0, 8, 255), rgb(120, 140, 255));
+    /* between the stripes */
+    --simple-html-grid-stripe-bg-color: light-dark(rgb(255, 255, 255), transparent);
+    /* the outline of the element that has the keyboard focus */
+    --simple-html-grid-focus-color: light-dark(#005fcc, #b3d7ff);
+    /* the filled controls of the filter menu's value list and the filter editor: the primary buttons
+       (Apply), the active AND/OR of a group, the checkboxes of the value list (accent-color). Its text
+       on it: at least 4.5:1. The fill at least 3:1 to the menus and the dialog */
+    --simple-html-grid-accent-color: light-dark(#2563eb, #93c5fd);
+    --simple-html-grid-accent-font-color: light-dark(#ffffff, #111827);
+    /* the frame of the controls of the value list and the filter editor - the search box, the pickers,
+       the value inputs, the buttons - at least 3:1 to the menus and the dialog (WCAG 1.4.11) */
+    --simple-html-grid-control-border-color: light-dark(#8c8c8c, #9ca3af);
+    /* the frame of a field of the detail form at rest: quiet, near the form's background - the field is
+       seen by its own background (--simple-html-grid-sec-bg-color). Under the pointer it has the
+       controls' frame, with the focus the focus outline */
+    --simple-html-grid-detail-input-border-color: light-dark(#d4d4d4, #5f6b7a);
+    /* a range of cells (gridInterface.getRanges()): laid over its cells - over the rows, a selected
+       row and an error's tint, the text keeps 4.5:1 - and the line around it, at least 3:1 to all of
+       those */
+    --simple-html-grid-range-bg-color: light-dark(rgba(37, 99, 235, 0.12), rgba(59, 130, 246, 0.2));
+    --simple-html-grid-range-border-color: light-dark(#1e40af, #dbeafe);
+    /* Find (Ctrl+F in the grid): laid over a cell that shows the text, a stronger one over the current
+       match, and the 2px line around the current match. The text keeps 4.5:1 over the tints, the line
+       has 3:1 or more to the rows, the selected rows and the tint - in light and dark */
+    --simple-html-grid-find-match-color: light-dark(rgba(250, 204, 21, 0.4), rgba(180, 83, 9, 0.45));
+    --simple-html-grid-find-current-color: light-dark(rgba(251, 146, 60, 0.6), rgba(194, 65, 12, 0.65));
+    --simple-html-grid-find-current-border-color: light-dark(#9a3412, #fed7aa);
+    /* shadows: the menus, the filter editor, the tooltips, the scrollbar thumbs. A plain colour is the
+       same in light and dark */
+    --simple-html-grid-menu-shadow-color: light-dark(rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.6));
+    /* the line around a menu: the grid's lines. A theme whose menus are the colour of the rows can make it
+       stronger - a shadow of black hardly shows on a dark grid */
+    --simple-html-grid-menu-border-color: var(--simple-html-grid-main-bg-border);
+    --simple-html-grid-dialog-shadow-color: light-dark(rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.6));
+    --simple-html-grid-tooltip-shadow-color: light-dark(rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.5));
+    --simple-html-grid-scrollbar-shadow-color: rgb(0 0 0 / 30%);
+    /* the thumbs of the scrollbars (their tracks are --simple-html-grid-alt-bg-color): the colour of
+       the selected rows, as they always had - a theme can give them one of their own */
+    --simple-html-grid-scrollbar-thumb-color: var(--simple-html-grid-main-bg-selected-odd);
+    /* the tooltips: their background, text and frame - the filter row's background, the text and the
+       pinned line, as they always had. A theme can give them colours of their own */
+    --simple-html-grid-tooltip-bg-color: var(--simple-html-grid-sec-bg-color);
+    --simple-html-grid-tooltip-font-color: var(--simple-html-grid-main-font-color);
+    --simple-html-grid-tooltip-border-color: var(--simple-html-grid-pinned-border);
+    /* the layer over the page behind the filter editor */
+    --simple-html-grid-backdrop-color: light-dark(rgba(129, 127, 127, 0.2), rgba(0, 0, 0, 0.4));
 
+    /* the text: the cells, the menus, the filter editor */
     --simple-html-grid-font-size: 11px;
+    /* on a touch screen (pointer: coarse): the height of a menu item, a column chooser field and a row of
+       the filter menu's value list - room for a finger, not much more. With a mouse they keep their own */
+    --simple-html-grid-touch-row-height: 28px;
     --simple-html-grid-font-weight: 500;
+    /* the labels, the menu section headings, group rows, buttons */
     --simple-html-grid-font-weight-header: 700;
+    /* the menu items, the filter editor's title and captions (was used but never set: it inherited) */
+    --simple-html-grid-font-weight-cell: var(--simple-html-grid-font-weight);
     --simple-html-grid-font-family: 'Roboto', 'Helvetica', 'Arial', 'sans-serif';
     border: 0;
 
@@ -32,7 +205,6 @@
     overflow: hidden;
     display: block;
     position: relative;
-    outline-color: var(--simple-html-grid-main-bg-color);
     font-family: var(--simple-html-grid-font-family);
     font-size: var(--simple-html-grid-font-size);
     font-weight: var(--simple-html-grid-font-weight);
@@ -42,7 +214,9 @@
     box-sizing: border-box;
 }
 
-input {
+/* the inputs of the grid: over what else is in their cell. Only in the grid, it was every input of the
+ * page before v6 */
+.simple-html-grid input {
     z-index: 1000;
     pointer-events: all;
 }
@@ -84,9 +258,21 @@ input {
     position: absolute;
     left: 0;
     right: 0;
-    overflow-y: scroll;
+    /* no scrollbar of its own: its columns leave the room of the rows' scrollbar (updateMainElementSizes),
+       the gutter fills it - a phone's scrollbar takes none, the header was wider than the rows */
+    overflow: hidden;
     pointer-events: all;
     border-bottom: 2px solid var(--simple-html-grid-pinned-border);
+}
+
+/* the corner of the header over the rows' vertical scrollbar: the scrollbar's track, from the top of the
+   header to its line */
+.simple-html-grid-header-gutter {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--simple-html-grid-alt-bg-color);
 }
 
 .simple-html-grid-header .simple-html-grid-col {
@@ -359,8 +545,8 @@ input {
 
 .simple-html-grid-middle-scroller::-webkit-scrollbar-thumb {
     box-sizing: border-box;
-    background-color: var(--simple-html-grid-main-bg-selected-odd);
-    box-shadow: inset 0 0 6px rgb(0 0 0 / 30%);
+    background-color: var(--simple-html-grid-scrollbar-thumb-color);
+    box-shadow: inset 0 0 6px var(--simple-html-grid-scrollbar-shadow-color);
     outline: 1px solid var(--simple-html-grid-main-bg-border);
     z-index: 10;
 }
@@ -371,7 +557,7 @@ input {
 }
 
 .simple-html-grid-middle-scroller {
-    scrollbar-color: var(--simple-html-grid-main-bg-selected-odd) var(--simple-html-grid-alt-bg-color);
+    scrollbar-color: var(--simple-html-grid-scrollbar-thumb-color) var(--simple-html-grid-alt-bg-color);
     scrollbar-width: thin;
 }
 
@@ -384,14 +570,14 @@ input {
 }
 
 .simple-html-grid-body-scroller {
-    scrollbar-color: var(--simple-html-grid-main-bg-selected-odd) var(--simple-html-grid-alt-bg-color);
+    scrollbar-color: var(--simple-html-grid-scrollbar-thumb-color) var(--simple-html-grid-alt-bg-color);
     scrollbar-width: thin;
 }
 
 .simple-html-grid-body-scroller::-webkit-scrollbar-thumb {
     box-sizing: border-box;
-    background-color: var(--simple-html-grid-main-bg-selected-odd);
-    box-shadow: inset 0 0 6px rgb(0 0 0 / 30%);
+    background-color: var(--simple-html-grid-scrollbar-thumb-color);
+    box-shadow: inset 0 0 6px var(--simple-html-grid-scrollbar-shadow-color);
     outline: 1px solid var(--simple-html-grid-main-bg-border);
 }
 .simple-html-grid-body-scroller::-webkit-scrollbar-track {
@@ -403,41 +589,21 @@ input {
  * scrollbar
  */
 
-.simple-html-grid-header::-webkit-scrollbar {
-    width: 10px;
-}
-
-.simple-html-grid-header {
-    scrollbar-color: var(--simple-html-grid-main-bg-selected-odd) var(--simple-html-grid-alt-bg-color);
-    scrollbar-width: thin;
-}
-
-.simple-html-grid-header::-webkit-scrollbar-thumb {
-    box-sizing: border-box;
-    background-color: var(--simple-html-grid-main-bg-selected-odd);
-    box-shadow: inset 0 0 6px rgb(0 0 0 / 30%);
-    outline: 1px solid var(--simple-html-grid-main-bg-border);
-}
-.simple-html-grid-header::-webkit-scrollbar-track {
-    box-sizing: border-box;
-    background-color: var(--simple-html-grid-main-bg-color);
-}
-
 .simple-html-dialog-scroller::-webkit-scrollbar {
     width: 10px;
-    scrollbar-color: var(--simple-html-grid-main-bg-selected-odd) var(--simple-html-grid-alt-bg-color);
+    scrollbar-color: var(--simple-html-grid-scrollbar-thumb-color) var(--simple-html-grid-alt-bg-color);
     scrollbar-width: thin;
 }
 
 .simple-html-dialog-scroller {
-    scrollbar-color: var(--simple-html-grid-main-bg-selected-odd) var(--simple-html-grid-alt-bg-color);
+    scrollbar-color: var(--simple-html-grid-scrollbar-thumb-color) var(--simple-html-grid-alt-bg-color);
     scrollbar-width: thin;
 }
 
 .simple-html-dialog-scroller::-webkit-scrollbar-thumb {
     box-sizing: border-box;
-    background-color: var(--simple-html-grid-main-bg-selected-odd);
-    box-shadow: inset 0 0 6px rgb(0 0 0 / 30%);
+    background-color: var(--simple-html-grid-scrollbar-thumb-color);
+    box-shadow: inset 0 0 6px var(--simple-html-grid-scrollbar-shadow-color);
     outline: 1px solid var(--simple-html-grid-main-bg-border);
 }
 .simple-html-dialog-scroller::-webkit-scrollbar-track {
@@ -457,10 +623,6 @@ input {
     pointer-events: all;
     /*    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);  */
     background-color: var(--simple-html-grid-sec-bg-color);
-}
-
-.simple-html-grid-grouping-row {
-    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
 .simple-html-grid-body-row-container-group .simple-html-grid-row {
@@ -532,7 +694,7 @@ input {
     margin: 6px;
     padding: 4px 10px;
     border: 1px solid var(--simple-html-grid-pinned-border);
-    border-radius: 3px;
+    border-radius: 0;
     background-color: var(--simple-html-grid-sec-bg-color);
     pointer-events: all;
     font-family: var(--simple-html-grid-font-family);
@@ -624,11 +786,11 @@ input {
     filter: opacity(0.2);
     background-image: repeating-linear-gradient(
         -45deg,
-        rgb(255, 255, 255),
-        rgb(255, 0, 0) 1px,
-        rgb(255, 255, 255),
+        var(--simple-html-grid-stripe-bg-color),
+        var(--simple-html-grid-readonly-stripe-color) 1px,
+        var(--simple-html-grid-stripe-bg-color),
         1px,
-        rgb(255, 0, 0) 1px
+        var(--simple-html-grid-readonly-stripe-color) 1px
     );
 }
 
@@ -647,16 +809,763 @@ input {
     filter: opacity(0.2);
     background-image: repeating-linear-gradient(
         45deg,
-        rgb(255, 255, 255),
-        rgb(0, 8, 255) 1px,
-        rgb(255, 255, 255),
+        var(--simple-html-grid-stripe-bg-color),
+        var(--simple-html-grid-required-stripe-color) 1px,
+        var(--simple-html-grid-stripe-bg-color),
         1px,
-        rgb(0, 8, 255) 1px
+        var(--simple-html-grid-required-stripe-color) 1px
     );
+}
+
+/**
+ * a row cell with a validation error: a border inside the cell and a tint, the messages are its
+ * tooltip. The cell's input is transparent, so both show through it
+ */
+.simple-html-grid-col-cell.simple-html-cell-error {
+    box-shadow: inset 0 0 0 1px var(--simple-html-grid-error-color);
+    background-color: var(--simple-html-grid-error-bg-color);
+}
+
+/**
+ * a cell in a range of cells (gridInterface.getRanges(), see rangeSelection.ts): a tint under the
+ * cell's input - over the row's colour, a selected row's and an error's tint - and a line on the sides
+ * that are an edge of the range (the -top, -bottom, -left and -right classes). The line is a layer
+ * over the cell the pointer goes through, under the input (1000): the input is transparent
+ */
+/* over a data bar (dataBars.ts): its image under the tint */
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-in-range {
+    background-image:
+        linear-gradient(var(--simple-html-grid-range-bg-color), var(--simple-html-grid-range-bg-color)),
+        var(--simple-html-grid-cell-bar-image, none);
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-in-range::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    box-sizing: border-box;
+    pointer-events: none;
+    border: 0 solid var(--simple-html-grid-range-border-color);
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-range-top::after {
+    border-top-width: 2px;
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-range-bottom::after {
+    border-bottom-width: 2px;
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-range-left::after {
+    border-left-width: 2px;
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-range-right::after {
+    border-right-width: 2px;
+}
+
+/* the fill handle at the bottom right corner of the last range (fillDown.ts): drag it down to fill the
+   rows under the range. In the range's colour with a frame of the cell's, over the input (1000) */
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-fill-handle {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 7px;
+    height: 7px;
+    box-sizing: border-box;
+    z-index: 1002;
+    background-color: var(--simple-html-grid-range-border-color);
+    border: 1px solid var(--simple-html-grid-sec-bg-color);
+    cursor: crosshair;
+    touch-action: none;
+}
+
+/**
+ * Find (Ctrl+F in the grid, findBar.ts): a cell that shows the text gets a tint under its input, the
+ * current match a stronger one and a 2px line inside its edge. Over a range's tint (both show) and an
+ * error's. The line is a shadow inside the cell, with an error's border inside it
+ */
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-find-match {
+    background-image: linear-gradient(var(--simple-html-grid-find-match-color), var(--simple-html-grid-find-match-color));
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-find-match.simple-html-cell-in-range {
+    background-image:
+        linear-gradient(var(--simple-html-grid-find-match-color), var(--simple-html-grid-find-match-color)),
+        linear-gradient(var(--simple-html-grid-range-bg-color), var(--simple-html-grid-range-bg-color));
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-find-current {
+    background-image: linear-gradient(var(--simple-html-grid-find-current-color), var(--simple-html-grid-find-current-color));
+    box-shadow: inset 0 0 0 2px var(--simple-html-grid-find-current-border-color);
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-find-current.simple-html-cell-in-range {
+    background-image:
+        linear-gradient(var(--simple-html-grid-find-current-color), var(--simple-html-grid-find-current-color)),
+        linear-gradient(var(--simple-html-grid-range-bg-color), var(--simple-html-grid-range-bg-color));
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-find-current.simple-html-cell-error {
+    box-shadow:
+        inset 0 0 0 2px var(--simple-html-grid-find-current-border-color),
+        inset 0 0 0 3px var(--simple-html-grid-error-color);
+}
+
+/**
+ * the find bar (Ctrl+F, findBar.ts): over the top right corner of the grid - the panel, or the labels
+ * without one - over the inputs of the cells (1000). The input, the count of the matches, previous,
+ * next and close in a row; it gets narrower with the grid
+ */
+.simple-html-grid .simple-html-grid-find {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 2000;
+    box-sizing: border-box;
+    display: flex;
+    align-items: stretch;
+    gap: 2px;
+    max-width: 100%;
+    height: 25px;
+    padding: 2px;
+    background-color: var(--simple-html-grid-main-bg-color);
+    border: 1px solid var(--simple-html-grid-pinned-border);
+    box-shadow: 0 2px 6px var(--simple-html-grid-tooltip-shadow-color);
+    color: var(--simple-html-grid-main-font-color);
+    pointer-events: all;
+}
+
+.simple-html-grid .simple-html-grid-find[hidden] {
+    display: none;
+}
+
+/* the input gives way after the count: five buttons of 21px stay whole in a grid of 160px */
+.simple-html-grid .simple-html-grid-find-input {
+    flex: 1 1 160px;
+    width: 160px;
+    min-width: 24px;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0 4px;
+    border: 1px solid var(--simple-html-grid-pinned-border);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+}
+
+.simple-html-grid .simple-html-grid-find-input::placeholder {
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+/* the count gives way first in a narrow grid, the buttons stay */
+.simple-html-grid .simple-html-grid-find-count {
+    flex: 0 1 auto;
+    min-width: 0;
+    padding: 0 4px;
+    overflow: hidden;
+    line-height: 19px;
+    text-align: center;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.simple-html-grid .simple-html-grid-find-button {
+    flex: 0 0 auto;
+    width: 21px;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 0;
+    background-color: transparent;
+    color: var(--simple-html-grid-main-font-color);
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.simple-html-grid .simple-html-grid-find-button:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+    border-color: var(--simple-html-grid-pinned-border);
+}
+
+/* "Filter rows" while it is on (aria-pressed): filled with the accent colour, as the AND / OR in use in
+ * the filter editor - the funnel in the accent's text colour */
+.simple-html-grid .simple-html-grid-find-button[aria-pressed='true'] {
+    border-color: var(--simple-html-grid-accent-color);
+    background-color: var(--simple-html-grid-accent-color);
+    color: var(--simple-html-grid-accent-font-color);
+}
+
+.simple-html-grid .simple-html-grid-find-button[aria-pressed='true']:hover {
+    filter: brightness(1.1);
+}
+
+/* "Match case": the text Aa, in the weight of the filter editor's toggle Aa - filled with the accent
+ * colour while it is on, as "Filter rows" */
+.simple-html-grid .simple-html-grid-find-case {
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+/* the funnel of "Filter rows", in the colour of the button's text */
+.simple-html-grid .simple-html-grid-find-filter-icon {
+    display: block;
+    width: 12px;
+    height: 12px;
+    margin: auto;
+    fill: currentColor;
+}
+
+/**
+ * the row selector of a row with an error - a validation error, or the server's (setErrors()): a bar
+ * on its left and a tint over its background, the messages are its tooltip. The tint is a layer over
+ * the background colour, so the current row still shows
+ */
+.simple-html-row-error {
+    background-image: linear-gradient(var(--simple-html-grid-error-bg-color), var(--simple-html-grid-error-bg-color));
+    box-shadow:
+        inset 3px 0 0 0 var(--simple-html-grid-error-color),
+        inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
 }
 
 .simple-html-selector {
     box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
+}
+
+/**
+ * the row state on the row number (GridConfig.rowStatus): the element around the number has room on
+ * its left for the icon, ROW_STATUS_WIDTH in rowStatus.ts - the row numbers are that much wider. The
+ * number stays centered in the rest. The icon is 10px, in the middle of the number's line (1.5em)
+ */
+.simple-html-grid .simple-html-row-status {
+    position: relative;
+    padding-left: 14px;
+}
+
+.simple-html-grid .simple-html-row-status-icon {
+    position: absolute;
+    left: 4px;
+    top: calc(0.75em - 5px);
+    width: 10px;
+    height: 10px;
+    fill: currentColor;
+}
+
+.simple-html-grid .simple-html-row-status-new {
+    color: var(--simple-html-grid-new-color);
+}
+
+.simple-html-grid .simple-html-row-status-edited {
+    color: var(--simple-html-grid-edited-color);
+}
+
+.simple-html-grid .simple-html-row-status-deleted {
+    color: var(--simple-html-grid-deleted-color);
+}
+
+.simple-html-grid .simple-html-row-status-error {
+    color: var(--simple-html-grid-error-color);
+}
+
+.simple-html-grid .simple-html-row-status-conflict {
+    color: var(--simple-html-grid-conflict-color);
+}
+
+/* a row marked for deletion: its number and the text of its cells struck through - a custom cell's
+ * text too, the line goes on to the inline content of the host */
+.simple-html-grid .row-is-deleted.simple-html-row-status .simple-html-selector-text,
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-deleted input,
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-deleted .simple-html-grid-cell-lines,
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-deleted .simple-html-grid-cell-custom {
+    text-decoration: line-through;
+}
+
+/**
+ * the marker of an edited cell (GridConfig.editedMarker): a triangle in the top left corner, over the
+ * input (1000). Its tooltip has the original value; a click reverts the cell, in an editable grid.
+ * The clip-path is the triangle, and what the pointer hits: the rest of the corner is the input's
+ */
+.simple-html-grid .simple-html-grid-col-cell .simple-html-cell-edited-marker {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 8px;
+    height: 8px;
+    z-index: 1001;
+    background-color: var(--simple-html-grid-edited-color);
+    clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+
+.simple-html-grid .simple-html-grid-col-cell .simple-html-cell-edited-marker-revert {
+    cursor: pointer;
+}
+
+/* a field in conflict: the marker in the conflict colour, larger - the user has to choose */
+.simple-html-grid .simple-html-grid-col-cell .simple-html-cell-conflict-marker {
+    width: 10px;
+    height: 10px;
+    background-color: var(--simple-html-grid-conflict-color);
+}
+
+/**
+ * the flash of a cell a merge changed (GridConfig.mergeHighlight, showCellMerged.ts): a tint over the
+ * cell that fades out, once - when the class is added. data-merged-again is flipped for a new merge
+ * while the cell has the class: an animation of another name starts again. A layer the pointer goes
+ * through, under the input (1000)
+ */
+@keyframes simple-html-grid-merged {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes simple-html-grid-merged-again {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-merged::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background-color: var(--simple-html-grid-merged-color);
+    opacity: 0;
+    animation: simple-html-grid-merged 1s ease-out;
+}
+
+.simple-html-grid .simple-html-grid-col-cell.simple-html-cell-merged[data-merged-again]::before {
+    animation-name: simple-html-grid-merged-again;
+}
+
+/**
+ * a cell of several lines (FieldConfig.multiline, or a value with a line break) shows its first line:
+ * the marker at its right says there are more, over the input (1000) like the marker of an edited
+ * cell. The pointer goes through it to the input - its tooltip (the cell's) has the whole text, a
+ * double click opens the editor. The input's text stops before it
+ */
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-cell-more {
+    position: absolute;
+    top: calc(50% - 5px);
+    right: 3px;
+    width: 10px;
+    height: 10px;
+    z-index: 1001;
+    pointer-events: none;
+    color: var(--simple-html-grid-multiline-color);
+}
+
+/* the focus button (30px) is at the right edge while the cell has the focus: the marker left of it */
+.simple-html-grid .simple-html-grid-col-cell:has(.simple-html-grid-focus-button) .simple-html-grid-cell-more {
+    right: 33px;
+}
+
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-cell-more-icon {
+    display: block;
+    width: 10px;
+    height: 10px;
+    fill: currentColor;
+}
+
+.simple-html-grid .simple-html-grid-col-cell input.simple-html-grid-cell-multiline {
+    padding-right: 16px;
+}
+
+/**
+ * the other lines of a multiline cell in a row made taller (gridInterface.fitRows): under the input,
+ * which has the first line. A line of text is GridConfig.multilineLineHeight high (15px by default),
+ * the element gets its top and line-height from renderRowCell (rowHeights.ts, linesUnderTop): the
+ * lines read as a paragraph, the first under the input's line as far as the others are apart. The
+ * input is transparent and over it, the pointer finds the input. The text starts and stops where the
+ * input's does: its padding, the room for the marker at the right
+ */
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-cell-lines {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    box-sizing: border-box;
+    padding: 0 16px 0 3px;
+    overflow: hidden;
+    white-space: pre;
+    pointer-events: none;
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+}
+
+/**
+ * a custom cell (ColumnConfig.renderer, customCell.ts): the host the renderer renders into fills the
+ * cell, over its stripes and under its markers - where the input of a default cell is (1000). Its
+ * content is in the middle of the line, at the left with the input's padding, in the grid's font; what
+ * does not fit is cut off. It is the focus target: the outline of the keyboard's focus is the one of
+ * every control (:focus-visible, below). Transparent: an error, a range, a match of Find show through
+ */
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-cell-custom {
+    box-sizing: border-box;
+    position: absolute;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 3px;
+    overflow: hidden;
+    white-space: nowrap;
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+}
+
+/**
+ * the link of a text column (ColumnFormat.link, linkCell.ts): the <a> in the host of its custom cell, its
+ * text cut with an ellipsis. With an address it is underlined in the link colour and the pointer is a
+ * hand over it; without one (the row has no address the grid links to) it is the cell's text
+ */
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-cell-link {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: inherit;
+    text-decoration: none;
+}
+
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-cell-link[href] {
+    color: var(--simple-html-grid-link-color);
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/**
+ * the editor of a multiline cell: a popover over the cell (see textEditor.ts), the textarea and a
+ * hint under it. The textarea can be resized, the popover follows its size
+ */
+.simple-html-grid.simple-html-grid-text-editor {
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+    border: 1px solid var(--simple-html-grid-pinned-border);
+    box-shadow: 0 2px 8px var(--simple-html-grid-dialog-shadow-color);
+}
+
+.simple-html-grid .simple-html-grid-text-editor-input {
+    box-sizing: border-box;
+    display: block;
+    margin: 0;
+    min-width: 120px;
+    min-height: 3em;
+    padding: 3px;
+    border: 0;
+    resize: both;
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    line-height: 1.5;
+    color: var(--simple-html-grid-main-font-color);
+    background-color: var(--simple-html-grid-sec-bg-color);
+    /* .simple-html-grid turns selecting text off */
+    user-select: text;
+}
+
+/* the editor of one line of a custom cell: an input, as high as its line */
+.simple-html-grid .simple-html-grid-text-editor-input.simple-html-grid-text-editor-line {
+    min-height: 0;
+    resize: none;
+}
+
+.simple-html-grid .simple-html-grid-text-editor-footer {
+    display: flex;
+    align-items: center;
+    border-top: 1px solid var(--simple-html-grid-main-bg-border);
+    color: var(--simple-html-grid-main-font-color);
+    background-color: var(--simple-html-grid-main-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-text-editor-hint {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 1px 4px;
+}
+
+/* the ✕ at the right of the hint: saves and closes - a finger has no Ctrl+Enter. Square, no frame until
+   the pointer is on it */
+.simple-html-grid .simple-html-grid-text-editor-close {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    margin: 0 1px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 0;
+    font: inherit;
+    line-height: 1;
+    color: inherit;
+    background: transparent;
+    cursor: pointer;
+}
+
+.simple-html-grid .simple-html-grid-text-editor-close:hover {
+    border-color: var(--simple-html-grid-control-border-color);
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid .simple-html-grid-text-editor-close:focus-visible {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: -2px;
+}
+
+/* a finger: a target of a touch row's height */
+@media (pointer: coarse) {
+    .simple-html-grid .simple-html-grid-text-editor-close {
+        width: var(--simple-html-grid-touch-row-height);
+        height: var(--simple-html-grid-touch-row-height);
+    }
+}
+
+/**
+ * a lookup column (ColumnConfig.editor, lookupEditor.ts): the button at the right of a cell that can
+ * be edited opens the list. Over the input (1000), square corners, inside the 2px of the cell's focus
+ * outline so the outline goes around it. Shown while the pointer is over the cell and while the cell
+ * has the focus - the input's text stops before it either way, so it does not move when it shows
+ */
+.simple-html-grid .simple-html-grid-col-cell input.simple-html-grid-cell-lookup {
+    padding-right: 20px;
+}
+
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-lookup-button {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    bottom: 2px;
+    width: 16px;
+    z-index: 1001;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    color: var(--simple-html-grid-lookup-icon-color);
+    background-color: var(--simple-html-grid-lookup-button-bg-color);
+    cursor: pointer;
+}
+
+.simple-html-grid .simple-html-grid-col-cell:hover .simple-html-grid-lookup-button,
+.simple-html-grid .simple-html-grid-col-cell:focus-within .simple-html-grid-lookup-button {
+    display: flex;
+}
+
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-lookup-button:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid .simple-html-grid-lookup-icon {
+    display: block;
+    width: 8px;
+    height: 8px;
+    fill: currentColor;
+}
+
+/**
+ * The operator indicator of a header filter (GridConfig.filterOperatorIndicator,
+ * filterOperatorIndicator.ts): the symbol of its operator, on the right of a text filter, on the left
+ * of a number or date filter. 1.8em wide, the widest symbol (a..b) fits; the input's padding on that
+ * side keeps the text typed clear of it. Inside the 2px of the input's focus outline, square corners.
+ * Over the input (1000) and the column's resize handle (1001): a column is resized from its label or
+ * its column number there. Quiet, in the colour of a placeholder; one that can be clicked (a button)
+ * has the text colour and a background under the pointer and with the keyboard focus
+ */
+.simple-html-grid .simple-html-grid-col-cell input.simple-html-grid-cell-filter-input-operator-right {
+    padding-right: calc(1.8em + 5px);
+}
+
+.simple-html-grid .simple-html-grid-col-cell input.simple-html-grid-cell-filter-input-operator-left {
+    padding-left: calc(1.8em + 5px);
+}
+
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-filter-operator {
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    width: 1.8em;
+    z-index: 1002;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    line-height: 1;
+    color: var(--simple-html-grid-sec-font-color);
+    background-color: transparent;
+    user-select: none;
+}
+
+/* a header filter that matches case (filterCaseSensitive, Match case): Aa before the symbol, in the
+   accent colour - wider, and the input keeps that much clear */
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-filter-operator.simple-html-grid-filter-operator-case {
+    width: 3.4em;
+    gap: 3px;
+}
+
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-filter-case {
+    font-weight: var(--simple-html-grid-font-weight-header);
+    color: var(--simple-html-grid-link-color);
+}
+
+.simple-html-grid .simple-html-grid-col-cell input.simple-html-grid-cell-filter-input-operator-right.simple-html-grid-cell-filter-input-case {
+    padding-right: calc(3.4em + 5px);
+}
+
+.simple-html-grid .simple-html-grid-col-cell input.simple-html-grid-cell-filter-input-operator-left.simple-html-grid-cell-filter-input-case {
+    padding-left: calc(3.4em + 5px);
+}
+
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-filter-operator-right {
+    right: 2px;
+}
+
+.simple-html-grid .simple-html-grid-col-cell .simple-html-grid-filter-operator-left {
+    left: 2px;
+}
+
+.simple-html-grid .simple-html-grid-col-cell button.simple-html-grid-filter-operator {
+    cursor: pointer;
+}
+
+.simple-html-grid .simple-html-grid-col-cell button.simple-html-grid-filter-operator:hover,
+.simple-html-grid .simple-html-grid-col-cell button.simple-html-grid-filter-operator:focus-visible {
+    color: var(--simple-html-grid-main-font-color);
+    background-color: var(--simple-html-grid-lookup-button-bg-color);
+}
+
+/**
+ * the editor of a lookup column: a popover under the cell, like the editor of a multiline cell. The
+ * select is a search field over a list that scrolls, ten options high; the dropdown grid is a grid
+ * element sized by lookupEditor.ts
+ */
+.simple-html-grid.simple-html-grid-lookup {
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+    border: 1px solid var(--simple-html-grid-pinned-border);
+    box-shadow: 0 2px 8px var(--simple-html-grid-dialog-shadow-color);
+    background-color: var(--simple-html-grid-main-bg-color);
+}
+
+.simple-html-grid.simple-html-grid-lookup-select {
+    max-width: 360px;
+}
+
+.simple-html-grid .simple-html-grid-lookup-search {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    height: 24px;
+    margin: 0;
+    padding: 0 6px;
+    border: 0;
+    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
+    border-radius: 0;
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    color: var(--simple-html-grid-main-font-color);
+    background-color: var(--simple-html-grid-sec-bg-color);
+    /* .simple-html-grid turns selecting text off */
+    user-select: text;
+}
+
+.simple-html-grid .simple-html-grid-lookup-search::placeholder {
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+.simple-html-grid .simple-html-grid-lookup-list {
+    position: relative;
+    /* ten options and the padding */
+    max-height: 204px;
+    overflow-y: auto;
+    padding: 2px 0;
+}
+
+.simple-html-grid .simple-html-grid-lookup-option {
+    position: relative;
+    box-sizing: border-box;
+    height: 20px;
+    line-height: 20px;
+    padding: 0 10px 0 22px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--simple-html-grid-main-font-color);
+    cursor: pointer;
+}
+
+.simple-html-grid .simple-html-grid-lookup-option-active {
+    background-color: var(--simple-html-grid-lookup-active-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-lookup-option-current {
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+/* the check of the current value, left of its label */
+.simple-html-grid .simple-html-grid-lookup-check {
+    position: absolute;
+    left: 7px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+}
+
+.simple-html-grid .simple-html-grid-lookup-note {
+    padding: 3px 10px;
+    border-top: 1px solid var(--simple-html-grid-main-bg-border);
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+/**
+ * text for a screen reader only: the state of a row on its row number, the marker of a multiline
+ * cell. On the page, but 1px and clipped - display: none would hide it from the screen reader too
+ */
+.simple-html-grid .simple-html-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
 }
 
 .simple-html-absolute-fill {
@@ -696,9 +1605,6 @@ input {
     background-color: var(--simple-html-grid-dropzone-color);
 }
 
-.simple-html-grid-header input::placeholder {
-    filter: opacity(0.2);
-}
 
 /* 
  * used when dragdrop is actived, 
@@ -710,7 +1616,7 @@ input {
     bottom: 0;
     left: 0;
     width: 5px;
-    z-index: 15;
+    z-index: 1002;
 }
 
 .simple-html-grid .dragdrop-state .simple-html-grid-drop-zone-left-panel {
@@ -732,7 +1638,7 @@ input {
     bottom: 0;
     right: 0;
     width: 5px;
-    z-index: 15;
+    z-index: 1002;
 }
 
 /* 
@@ -745,7 +1651,7 @@ input {
     left: 5px;
     right: 5px;
     height: 5px;
-    z-index: 15;
+    z-index: 1002;
 }
 
 /* 
@@ -758,7 +1664,7 @@ input {
     left: 5px;
     right: 5px;
     height: 5px;
-    z-index: 15;
+    z-index: 1002;
 }
 
 /* 
@@ -771,19 +1677,27 @@ input {
     left: 5px;
     right: 5px;
     bottom: 5px;
-    z-index: 15;
+    z-index: 1002;
 }
 
+/* the row number, quieter than the cells: at least 4.5:1 to the row numbers' background, a selected
+   row's too, light and dark (it was 0.5, 2.5:1) */
 .simple-html-selector-text {
-    filter: opacity(0.5);
+    filter: opacity(0.8);
 }
 
+/**
+ * The column resize handle, the full height of a header column. A header column is a stacking
+ * context (it has a transform), in it: the filter input 1000 < the resize handle 1001 < the drop zones
+ * of the label cells 1002, which only have a size while a column is dragged. So the handle can be
+ * grabbed over the filter input too, and a column can still be dropped on the right edge of a label
+ */
 .simple-html-grid-col-resize {
     position: absolute;
     bottom: 0;
     right: 0;
     cursor: ew-resize;
-    z-index: 8;
+    z-index: 1001;
     top: 0;
     width: 10px;
     opacity: 0.2;
@@ -794,7 +1708,7 @@ input {
     bottom: 0;
     left: 0;
     cursor: ew-resize;
-    z-index: 8;
+    z-index: 1001;
     top: 0;
     width: 10px;
     opacity: 0.2;
@@ -831,6 +1745,27 @@ input {
     padding: 2px;
 }
 
+/*
+ * the grouping columns, like a tree: a column per level of grouping (GROUP_LEVEL_WIDTH, 15px, in
+ * getGroupingWidth.ts) with the line of its groups down the middle. In a data row the lines of all the
+ * levels; in a group row those of the groups it is in, its +/- box in the column of its level and,
+ * expanded, its line from under the box down. Together the line of a group runs from its box down to its
+ * last row
+ */
+.simple-html-grid-grouping-row,
+.simple-html-grid-group-levels,
+.simple-html-grid-group-line {
+    background-image: linear-gradient(
+        to right,
+        transparent 7px,
+        var(--simple-html-grid-group-line-color) 7px,
+        var(--simple-html-grid-group-line-color) 8px,
+        transparent 8px
+    );
+    background-size: 15px 100%;
+}
+
+/* in the rows: one column over the rows, no line under each */
 .simple-html-grid-grouping-row {
     height: 100%;
     box-sizing: border-box;
@@ -840,7 +1775,64 @@ input {
     left: 0;
     background-color: var(--simple-html-grid-main-bg-color);
     border-right: 1px solid var(--simple-html-grid-main-bg-border);
-    box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
+}
+
+/* in a group row: the lines of the groups it is in, and the line of an expanded group, from the middle of
+   the name line (under the box, which is over it) to the bottom */
+.simple-html-grid-group-levels,
+.simple-html-grid-group-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    pointer-events: none;
+}
+
+.simple-html-grid-group-line {
+    width: 15px;
+}
+
+/* the button with the +/- box: the whole column of its level, the box in the middle */
+.simple-html-grid-group-toggle {
+    position: relative;
+    flex: none;
+    align-self: stretch;
+    width: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.simple-html-grid-group-box {
+    width: 11px;
+    height: 11px;
+    display: block;
+    overflow: visible;
+}
+
+.simple-html-grid-group-box-frame {
+    fill: var(--simple-html-grid-sec-bg-color);
+    stroke: var(--simple-html-grid-group-line-color);
+    stroke-width: 1;
+}
+
+.simple-html-grid-group-box-sign {
+    fill: none;
+    stroke: var(--simple-html-grid-main-font-color);
+    stroke-width: 1;
+}
+
+.simple-html-grid-group-toggle:hover .simple-html-grid-group-box-frame {
+    stroke: var(--simple-html-grid-main-font-color);
+}
+
+.simple-html-grid-group-text {
+    align-self: center;
+    padding-left: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .simple-html-grid-grouping-row-group {
@@ -853,6 +1845,140 @@ input {
     background-color: var(--simple-html-grid-main-bg-color);
     border-right: 1px solid var(--simple-html-grid-sec-bg-border);
     box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
+}
+
+/*
+ * aggregates (ColumnConfig.aggregate, aggregates.ts): a cell per aggregate in the place of its field,
+ * in a group row and in the totals row. The three sections have the places of the body's: the right
+ * and left pinned borders are there, transparent in a group row
+ */
+
+/* the name of a group row with aggregates: the first line, the whole width - the aggregates are on the
+   lines under it, so it covers none of them */
+.simple-html-grid-group-name {
+    box-sizing: border-box;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    padding-right: 8px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.simple-html-grid-aggregates-left,
+.simple-html-grid-aggregates-middle,
+.simple-html-grid-aggregates-right {
+    box-sizing: border-box;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    overflow: hidden;
+}
+
+.simple-html-grid-aggregates-left {
+    left: 0;
+    border-right: 2px solid transparent;
+}
+
+.simple-html-grid-aggregates-right {
+    right: 0;
+    border-left: 2px solid transparent;
+}
+
+/* a line of an aggregate: the label at the left, the value at the right of the column - labels and
+   numbers line up. Too narrow, the label gives way first (it shrinks 1000 times faster), then the
+   value ends in an ellipsis */
+.simple-html-grid-aggregate {
+    box-sizing: border-box;
+    position: absolute;
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+    padding: 0 4px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.simple-html-grid-aggregate-label,
+.simple-html-grid-aggregate-value {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.simple-html-grid-aggregate-label {
+    flex: 0 1000 auto;
+}
+
+.simple-html-grid-aggregate-value {
+    flex: 0 1 auto;
+}
+
+/* the values of a group row in the weight of the cells: only the group's name is bold - every line
+ * bold was a lot (the user). The totals row keeps its bold, as the totals of a spreadsheet */
+.simple-html-grid-group-aggregates .simple-html-grid-aggregate {
+    font-weight: var(--simple-html-grid-font-weight);
+}
+
+/* "Sum" in front of the value */
+.simple-html-grid-aggregate-label {
+    font-size: 0.9em;
+    font-weight: var(--simple-html-grid-font-weight);
+    color: var(--simple-html-grid-aggregate-label-color);
+}
+
+/* the totals row: over the footer, the horizontal scrollbar is painted over its top */
+.simple-html-grid-totals {
+    box-sizing: border-box;
+    position: absolute;
+    left: 0;
+    overflow: hidden;
+    pointer-events: all;
+    font-weight: var(--simple-html-grid-font-weight-header);
+    color: var(--simple-html-grid-totals-font-color);
+    background-color: var(--simple-html-grid-totals-bg-color);
+}
+
+.simple-html-grid-totals-row {
+    box-sizing: border-box;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/* "Total", under the row numbers */
+.simple-html-grid-totals-label {
+    box-sizing: border-box;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    padding: 0 2px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-align: center;
+    border-right: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+.simple-html-grid-totals-cells {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+}
+
+.simple-html-grid-totals .simple-html-grid-aggregates-left {
+    border-right-color: var(--simple-html-grid-pinned-border);
+}
+
+.simple-html-grid-totals .simple-html-grid-aggregates-right {
+    border-left-color: var(--simple-html-grid-pinned-border);
 }
 
 .simple-html-grid .simple-html-grid-icon {
@@ -905,7 +2031,6 @@ input {
 }
 
 .simple-html-grid input {
-    outline-color: var(--simple-html-grid-main-bg-color);
     color: var(--simple-html-grid-main-font-color);
     font-family: var(--simple-html-grid-font-family);
     font-size: var(--simple-html-grid-font-size);
@@ -923,18 +2048,44 @@ input {
     background-color: var(--simple-html-grid-main-bg-selected-odd);
 }
 
+/**
+ * The menus - the row, header and filter menus, openMenu(), the column chooser, the pickers of the
+ * filter editor and the date picker - are popovers (popover="manual"): shown in the top layer, over
+ * everything on the page, so no z-index. The element is a .simple-html-grid with this class.
+ *
+ * The browser's popover style is undone: it centers a popover (position: fixed, inset: 0,
+ * margin: auto) and gives it padding. The grid sets left/top itself, from the top left of the page
+ * (position: absolute in the top layer), so a menu moves with the page when the page scrolls, as it
+ * did on the body. Border, background and colour come from .simple-html-grid and
+ * .simple-html-grid-reset, as before. Two classes: .simple-html-grid sets position: relative.
+ */
+.simple-html-grid.simple-html-grid-popover {
+    position: absolute;
+    inset: auto;
+    margin: 0;
+    padding: 0;
+    /* a menu's drop shadow, on the popover: the menu in it is clipped by its overflow (it scrolls a long
+       menu), an element's own shadow is not. Every popover of the grid has it - the menus, submenus, the
+       column chooser, the date picker, the lookup's dropdown, the multiline editor */
+    box-shadow: 2px 4px 12px var(--simple-html-grid-menu-shadow-color);
+}
+
+/* the browser hides a popover that is not open with display: none, .simple-html-grid would show it */
+.simple-html-grid.simple-html-grid-popover:not(:popover-open) {
+    display: none;
+}
+
 .simple-html-grid .simple-html-grid-menu {
     display: flex;
     flex-direction: column;
     position: relative;
-    z-index: 500;
     background-color: var(--simple-html-grid-main-bg-color);
-    box-shadow: 10px 5px 5px black;
-    border: 1px solid var(--simple-html-grid-main-bg-border);
+    border: 1px solid var(--simple-html-grid-menu-border-color);
 }
 
 .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item {
     pointer-events: all;
+    position: relative;
     box-sizing: border-box;
     border: 0;
     border-radius: initial;
@@ -952,7 +2103,6 @@ input {
     padding-right: 15px;
 
     transition: initial;
-    outline-color: var(--simple-html-grid-main-bg-color);
     color: var(--simple-html-grid-main-font-color);
 }
 
@@ -975,7 +2125,6 @@ input {
     padding-left: 5px;
     padding-right: 15px;
     transition: initial;
-    outline-color: var(--simple-html-grid-main-bg-color);
     color: var(--simple-html-grid-main-font-color);
 
     border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
@@ -990,36 +2139,92 @@ input {
  * The section headers are not clickable, they have pointer-events: none above.
  */
 .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item,
-.simple-html-grid .simple-html-grid-menu .simple-html-label-button-menu-bottom,
-.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-checkbox,
-.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-checkbox input,
-.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-checkbox label {
+.simple-html-grid .simple-html-grid-menu .simple-html-label-button-menu-bottom {
     cursor: pointer;
 }
 
+/* an item hidden by a search (the filter editor's field picker): display: block above would show it */
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item[hidden] {
+    display: none;
+}
+
 /**
- * a row in the excel style value list - checkbox plus label, the whole row is clickable
+ * The search box of the filter editor's field picker, over its fields: framed as an input, the text
+ * from the left. It stays at the top while a long menu scrolls
  */
-.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-checkbox {
-    padding: 2px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-search {
+    position: sticky;
+    top: 0;
+    box-sizing: border-box;
+    width: auto;
+    height: 24px;
+    margin: 4px 6px;
+    padding: 0 6px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    text-align: left;
+    /* the margin around it in the menu's colour: the fields scrolled under it do not show there */
+    box-shadow: 0 0 0 4px var(--simple-html-grid-main-bg-color);
 }
 
-.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-checkbox:hover {
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-search::placeholder {
+    color: var(--simple-html-grid-sec-font-color);
+    opacity: 1;
+}
+
+/**
+ * an item with a `selected` callback (a menuitemcheckbox) has room for a ✓ in front of its label;
+ * the ✓ is shown while the callback returns true (aria-checked="true"). The alt text after the / is
+ * empty: aria-checked says it to a screen reader. A browser without the alt text syntax drops that
+ * line and keeps the first
+ */
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item[role='menuitemcheckbox'] {
+    padding-left: 20px;
+}
+
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item-selected::before {
+    content: '✓';
+    content: '✓' / '';
+    position: absolute;
+    left: 7px;
+}
+
+/**
+ * an item that opens a submenu: a › at its right
+ */
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item[aria-haspopup='menu'] {
+    padding-right: 24px;
+}
+
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item[aria-haspopup='menu']::after {
+    content: '›';
+    content: '›' / '';
+    position: absolute;
+    right: 8px;
+    font-size: 15px;
+    line-height: 17px;
+}
+
+/**
+ * a menu item whose `disabled` callback returned true: greyed out, clicking it does nothing
+ */
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item-disabled {
+    filter: opacity(0.5);
+    cursor: default;
+}
+
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item-disabled:hover {
+    background-color: var(--simple-html-grid-main-bg-color);
+}
+
+/**
+ * the item the keyboard is on, a disabled one too, and the item whose submenu is open: lit as under
+ * the pointer. The keyboard's has the focus outline as well (:focus-visible, below)
+ */
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item:focus,
+.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item[aria-expanded='true'] {
     background-color: var(--simple-html-grid-main-bg-selected-even);
-}
-
-.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-checkbox label {
-    flex: 1 1 auto;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item-selected {
-    background-color: var(--simple-html-grid-main-bg-selected-odd);
 }
 
 .simple-html-grid .simple-html-grid-menu .hr-solid {
@@ -1033,6 +2238,8 @@ input {
     width: 0; /*  yes... they made it to messy */
 }
 
+/* a separator: a line across the menu. No side margins - the browser's auto ones made it a dot in the
+ * middle of the menu (a flex column does not stretch an item with auto margins) */
 .simple-html-grid .simple-html-grid-menu .hr-dashed {
     border-top: 0px dashed;
     border-bottom: 1px dashed;
@@ -1040,23 +2247,359 @@ input {
     box-sizing: content-box;
     height: 0;
     overflow: visible;
-    width: 0; /*  yes... they made it to messy */
-    margin-top: 1px;
-    margin-bottom: 1px;
+    margin: 1px 0;
 }
 
-.simple-html-grid .simple-html-grid-menu .max-row-info {
-    padding: 2px;
-    margin: auto;
-    width: fit-content;
-    filter: opacity(0.75);
+/**
+ * The value list of the filter menu (contextmenuFilter.ts), a block under the menu's items: the search
+ * box, "Only values in filtered rows", how many values there are, the list - "Select all" over a box
+ * that scrolls - and Cancel / Apply. Wide enough for the values, a long one is cut off with an
+ * ellipsis (its tooltip has it whole)
+ */
+.simple-html-grid .simple-html-grid-value-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    box-sizing: border-box;
+    min-width: 220px;
+    max-width: 320px;
+    padding: 6px 8px 8px;
+    border-top: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
-.simple-html-grid .simple-html-grid-menu .max-row-info-warning {
-    padding: 2px;
-    color: red;
-    margin: auto;
-    width: fit-content;
+/* framed as an input, the text from the left */
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-search {
+    box-sizing: border-box;
+    width: 100%;
+    height: 24px;
+    margin: 0;
+    padding: 0 6px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    text-align: left;
+}
+
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-search::placeholder {
+    color: var(--simple-html-grid-sec-font-color);
+    opacity: 1;
+}
+
+/* how many values there are: quiet, the text colour at 70% (4.5:1 in light and dark) */
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-info {
+    padding: 0 2px;
+    opacity: 0.7;
+}
+
+/* the list is cut off at 100 values: not quiet */
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-info:has(.simple-html-grid-value-warning) {
+    opacity: 1;
+}
+
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-warning {
+    color: var(--simple-html-grid-warning-font-color);
+}
+
+/* the list: "Select all" as its header, a line under it, the values in a box that scrolls */
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-box {
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+    background-color: var(--simple-html-grid-sec-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-all {
+    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-scroll {
+    max-height: 242px;
+    overflow-y: auto;
+}
+
+/* a checkbox and its text, the whole row a click on the checkbox. Lit under the pointer and when its
+ * checkbox has the keyboard focus, as the items of the menus */
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 22px;
+    padding: 0 6px 0 4px;
+    cursor: pointer;
+}
+
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-row:hover,
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-row:has(input:focus-visible) {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+/* the option over the list is on the menu's background, no frame: a row of the menu */
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-option {
+    padding-left: 2px;
+}
+
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-row input {
+    flex: none;
+    width: 13px;
+    height: 13px;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+    accent-color: var(--simple-html-grid-accent-color);
+}
+
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-row input:disabled {
+    cursor: default;
+}
+
+/* the checkboxes have room around them: the focus outline outside */
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-row input:focus-visible {
+    outline-offset: 1px;
+}
+
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* a text search: the values are a preview of what it finds, greyed out - not to be checked or hovered
+ * (the list still scrolls: the wheel goes to the box under the rows) */
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-preview {
+    opacity: 0.6;
+}
+
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-preview .simple-html-grid-value-row {
+    pointer-events: none;
+}
+
+/* "Blank", the empty values: not a value of the column */
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-blank {
+    font-style: italic;
+}
+
+/* the number of rows of a value, on the right: quiet, as the info above */
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-count {
+    flex: none;
+    padding-left: 8px;
+    opacity: 0.7;
+    font-variant-numeric: tabular-nums;
+}
+
+.simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+/**
+ * A button of the value list and the filter editor: square, framed, the grid's font. The primary one
+ * (Apply, Apply & close) filled with the accent colour. The focus outline is outside: a filled button
+ * would hide an inset one, and the buttons have room around them
+ */
+.simple-html-grid .simple-html-grid-button {
+    box-sizing: border-box;
+    min-width: 64px;
+    height: 24px;
+    margin: 0;
+    padding: 0 10px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.simple-html-grid .simple-html-grid-button:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid .simple-html-grid-button.simple-html-grid-button-primary {
+    border-color: var(--simple-html-grid-accent-color);
+    background-color: var(--simple-html-grid-accent-color);
+    color: var(--simple-html-grid-accent-font-color);
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+.simple-html-grid .simple-html-grid-button.simple-html-grid-button-primary:hover {
+    filter: brightness(1.1);
+}
+
+.simple-html-grid .simple-html-grid-button:focus-visible {
+    outline-offset: 1px;
+}
+
+/**
+ * The range block of the filter menu (contextmenuFilter.ts) of a number or date column, where a text
+ * column has the value list, as wide: the operators in a row, an input - From and To for Between - and
+ * Cancel / Apply
+ */
+.simple-html-grid .simple-html-grid-range {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-sizing: border-box;
+    min-width: 220px;
+    max-width: 320px;
+    padding: 6px 8px 8px;
+    border-top: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+/* the operators: square buttons side by side, one line between two, as wide as the block */
+.simple-html-grid .simple-html-grid-range .simple-html-grid-range-operators {
+    display: flex;
+}
+
+/* an operator: the label is the button, its radio is in it - invisible, over all of it */
+.simple-html-grid .simple-html-grid-range .simple-html-grid-range-operator {
+    position: relative;
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 5px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-weight: var(--simple-html-grid-font-weight-header);
+    white-space: nowrap;
+    user-select: none;
+    cursor: pointer;
+}
+
+.simple-html-grid .simple-html-grid-range .simple-html-grid-range-operator + .simple-html-grid-range-operator {
+    border-left: 0;
+}
+
+.simple-html-grid .simple-html-grid-range .simple-html-grid-range-operator:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+/* the one picked: filled with the accent colour, as the AND / OR in use of the filter editor */
+.simple-html-grid .simple-html-grid-range .simple-html-grid-range-operator:has(input:checked) {
+    border-color: var(--simple-html-grid-accent-color);
+    background-color: var(--simple-html-grid-accent-color);
+    color: var(--simple-html-grid-accent-font-color);
+    cursor: default;
+}
+
+.simple-html-grid .simple-html-grid-range .simple-html-grid-range-operator input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: inherit;
+}
+
+/* the keyboard on an operator: the outline on the button, outside - inside a filled one it would not
+ * show - over the buttons next to it */
+.simple-html-grid .simple-html-grid-range .simple-html-grid-range-operator:has(input:focus-visible) {
+    z-index: 1;
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: 1px;
+}
+
+/* the inputs: framed as the value list's search box */
+.simple-html-grid .simple-html-grid-range .simple-html-grid-range-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 24px;
+    margin: 0;
+    padding: 0 6px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    text-align: left;
+}
+
+.simple-html-grid .simple-html-grid-range .simple-html-grid-range-input::placeholder {
+    color: var(--simple-html-grid-sec-font-color);
+    opacity: 1;
+}
+
+/* From and To: a label and its input on each line, the inputs lined up */
+.simple-html-grid .simple-html-grid-range .simple-html-grid-range-ends {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 4px 6px;
+}
+
+.simple-html-grid .simple-html-grid-range .simple-html-grid-range-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 2px;
+}
+
+/**
+ * The quick dates of the filter menu of a date column (datePresetBlock.ts), under the range block and as
+ * wide: a button each in two columns - this one and the one before side by side - one click filters. The
+ * one in use filled with the accent colour, as the operator picked in the range block. 24px high on a
+ * touch screen too, as the range block's buttons: the WCAG 2.2 minimum target, the block stays compact
+ */
+.simple-html-grid .simple-html-grid-date-presets {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+    box-sizing: border-box;
+    min-width: 220px;
+    max-width: 320px;
+    padding: 6px 8px 8px;
+    border-top: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+.simple-html-grid .simple-html-grid-date-presets .simple-html-grid-date-preset {
+    box-sizing: border-box;
+    min-width: 0;
+    height: 24px;
+    margin: 0;
+    padding: 0 6px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+
+.simple-html-grid .simple-html-grid-date-presets .simple-html-grid-date-preset:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+/* the one the header filter filters on */
+.simple-html-grid .simple-html-grid-date-presets .simple-html-grid-date-preset[aria-current='true'] {
+    border-color: var(--simple-html-grid-accent-color);
+    background-color: var(--simple-html-grid-accent-color);
+    color: var(--simple-html-grid-accent-font-color);
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+/* the keyboard on one: the outline outside, inside a filled one it would not show */
+.simple-html-grid .simple-html-grid-date-presets .simple-html-grid-date-preset:focus-visible {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: 1px;
 }
 
 .simple-html-draggable-element {
@@ -1085,29 +2628,114 @@ input {
     line-height: 1.2;
 }
 
-/* filter active - float the count in the scrollbar band, painted in front of the horizontal
- * scrollbar (which is a later sibling and would otherwise cover it), so it costs no vertical
- * space and the chips keep the rest of the height */
-.simple-html-grid .footer-inner.has-filter {
+/* the filter's row under the count - Clear and the chips with a filter (has-filter), the button "No
+ * filter" without one (no-filter): float the count in the scrollbar band, painted in front of the
+ * horizontal scrollbar (which is a later sibling and would otherwise cover it), so it costs no vertical
+ * space and the row keeps the rest of the height. The same with and without a filter: the count does
+ * not move when a filter comes or goes */
+.simple-html-grid .footer-inner.has-filter,
+.simple-html-grid .footer-inner.no-filter {
     justify-content: center;
 }
 
-.simple-html-grid .footer-inner.has-filter .footer-count {
+.simple-html-grid .footer-inner.has-filter .footer-count,
+.simple-html-grid .footer-inner.no-filter .footer-count {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     margin: 0 auto;
-    /* a small opaque pill so the number stays readable over the scrollbar track/thumb */
+    /* a small opaque box so the number stays readable over the scrollbar track/thumb, square as the chips */
     width: fit-content;
     max-width: 100%;
     padding: 0 6px;
-    border-radius: 8px;
+    border-radius: 0;
     background-color: var(--simple-html-grid-main-bg-color);
     color: var(--simple-html-grid-main-font-color);
     text-align: center;
     pointer-events: none;
     z-index: 20;
+}
+
+/* the summary of the selected cells (ranges of more than one cell, selectionSummary.ts): at the right,
+ * like the status bar of a spreadsheet - on the line of the filter's row, Clear and the chips or "No
+ * filter" (its top is set to the horizontal scrollbar's band). The filter chips collapse to one box when
+ * they would reach under it, and it is cut where the row ends (fitSummary in rebuildFooter.ts). Cut on
+ * a narrow grid, its tooltip has all of it */
+.simple-html-grid .footer-summary {
+    position: absolute;
+    right: 8px;
+    bottom: 4px;
+    max-width: 45%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    overflow: hidden;
+    white-space: nowrap;
+    color: var(--simple-html-grid-main-font-color);
+}
+
+.simple-html-grid .footer-summary-item {
+    flex: 0 0 auto;
+}
+
+/* the settings button (GridConfig.settingsButton, rebuildFooter.ts): a gear at the right end of the
+ * footer, on the line of the filter's row (its top is set to the horizontal scrollbar's band). No frame,
+ * framed under the pointer as the icon buttons of the filter editor. With it the footer keeps 32px on
+ * both sides (has-settings): the filter's row stays in the middle and never reaches under the gear, the
+ * summary of the selected cells ends left of it */
+.simple-html-grid .footer-settings {
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    width: 26px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 0;
+    background-color: transparent;
+    color: var(--simple-html-grid-main-font-color);
+    cursor: pointer;
+    pointer-events: all;
+}
+
+.simple-html-grid .footer-settings:hover {
+    border-color: var(--simple-html-grid-control-border-color);
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid .footer-settings .footer-settings-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.simple-html-grid .footer-inner.has-settings {
+    padding-left: 32px;
+    padding-right: 32px;
+}
+
+.simple-html-grid .footer-inner.has-settings .footer-summary {
+    right: 36px;
+}
+
+/* "changed rows only" (datasource.filterChangedOnly()): a chip of its own in front of the filter's,
+ * not part of it - not a button, it keeps its size */
+.simple-html-grid .footer-filter-changed-only {
+    flex: 0 0 auto;
+}
+
+/* Find's "Filter rows" (findBar.ts): a chip of its own too, with the text - a long one is cut with an
+ * ellipsis, the chip's tooltip has all of it */
+.simple-html-grid .footer-filter-find-text {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* filter too large to show as chips - a single summary box */
@@ -1116,7 +2744,7 @@ input {
     box-sizing: border-box;
     padding: 1px 10px;
     border: 1px dashed var(--simple-html-grid-pinned-border);
-    border-radius: 10px;
+    border-radius: 0;
     background-color: var(--simple-html-grid-sec-bg-color);
     color: var(--simple-html-grid-sec-font-color);
     white-space: nowrap;
@@ -1133,7 +2761,11 @@ input {
     pointer-events: all;
 }
 
-.simple-html-grid .footer-filter-clear {
+/* "✕ Clear" while the rows are filtered, and "No filter" in its place without a filter (it opens the
+ * filter editor): one look, square. Under the pointer Clear turns red, "No filter" gets the hover of
+ * the grid's buttons */
+.simple-html-grid .footer-filter-clear,
+.simple-html-grid .footer-filter-none {
     flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
@@ -1141,7 +2773,7 @@ input {
     box-sizing: border-box;
     padding: 1px 7px;
     border: 1px solid var(--simple-html-grid-main-bg-border);
-    border-radius: 10px;
+    border-radius: 0;
     background-color: var(--simple-html-grid-sec-bg-color);
     color: var(--simple-html-grid-main-font-color);
     font-family: inherit;
@@ -1151,11 +2783,16 @@ input {
 }
 
 .simple-html-grid .footer-filter-clear:hover {
-    border-color: #d98282;
-    color: #c0392b;
+    border-color: var(--simple-html-grid-danger-border);
+    color: var(--simple-html-grid-danger-font-color);
 }
 
-.simple-html-grid .footer-filter-clear:active {
+.simple-html-grid .footer-filter-none:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid .footer-filter-clear:active,
+.simple-html-grid .footer-filter-none:active {
     background-color: var(--simple-html-grid-main-bg-color);
 }
 
@@ -1179,7 +2816,7 @@ input {
     box-sizing: border-box;
     padding: 1px 6px;
     border: 1px solid var(--simple-html-grid-pinned-border);
-    border-radius: 12px;
+    border-radius: 0;
     background-color: color-mix(in srgb, var(--simple-html-grid-sec-bg-color) 55%, transparent);
 }
 
@@ -1201,7 +2838,7 @@ input {
     max-width: 260px;
     padding: 1px 8px;
     border: 1px solid var(--simple-html-grid-main-bg-border);
-    border-radius: 10px;
+    border-radius: 0;
     background-color: var(--simple-html-grid-sec-bg-color);
     white-space: nowrap;
 }
@@ -1239,254 +2876,2467 @@ input {
     content: "'";
 }
 
+/* the marker of a condition that matches case, after its value: "Aa", small and quiet */
+.simple-html-grid .footer-filter-case {
+    flex: 0 0 auto;
+    padding: 0 3px;
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+    color: var(--simple-html-grid-sec-font-color);
+    font-size: 0.85em;
+    line-height: 1.3;
+}
+
 /****************************************************************************
  * filter editor css
  */
 
-.filter-editor-container {
-    position: fixed;
-    background-color: rgba(129, 127, 127, 0.2);
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    overflow: hidden;
-    z-index: 500;
-}
-
 /**
- * left/top are set from renderFilterEditor so the dialog can be dragged, the size here is
- * only the starting size - the user can resize from the bottom right corner
+ * The filter editor is a modal <dialog class="simple-html-grid filter-editor-content">, opened with
+ * showModal(): in the top layer, over everything on the page, the page behind it inert.
+ * The browser's dialog style is replaced: it centers a dialog (inset: 0, margin: auto), gives it
+ * padding, a border, a max size and its own colours. left/top are set from renderFilterEditor so the
+ * dialog can be dragged, the size here is only the starting size - the user can resize it from every
+ * edge and corner. Two classes: .simple-html-grid sets position: relative and a border.
+ * :not([open]) below wins over its display: flex, it has the attribute too.
  */
-.simple-html-grid .filter-editor-content {
+.simple-html-grid.filter-editor-content {
+    /* the titlebar, the groups (they scroll), the buttons */
+    display: flex;
+    flex-direction: column;
     background-color: var(--simple-html-grid-main-bg-color);
     position: fixed;
+    inset: auto;
+    margin: 0;
+    padding: 0;
+    /* as high as what is in it, up to the window: then the groups scroll */
     width: 650px;
-    height: 650px;
-    min-width: 460px;
-    min-height: 240px;
+    height: auto;
+    min-width: min(360px, 100vw);
+    min-height: min(200px, 100vh);
+    /* never larger than 80 % of the window: a small laptop at 150 % zoom keeps the page around it, what does
+     * not fit scrolls inside - also when more opens in it later. Resized by the user, as large as the
+     * window (.simple-html-dialog-resized). A phone (below 600px) uses its whole width */
     max-width: 100vw;
-    max-height: 100vh;
+    max-height: 80vh;
     overflow: hidden;
     box-sizing: border-box;
     border: 1px solid var(--simple-html-grid-pinned-border);
-    border-radius: 4px;
-    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.32);
+    border-radius: 0;
+    box-shadow: 0 8px 26px var(--simple-html-grid-dialog-shadow-color);
+}
+
+@media (min-width: 600px) {
+    .simple-html-grid.filter-editor-content {
+        max-width: 80vw;
+    }
+}
+
+.simple-html-grid.filter-editor-content.simple-html-dialog-resized {
+    max-width: 100vw;
+    max-height: 100vh;
+}
+
+/* the browser hides a dialog that is not open with display: none, .simple-html-grid would show it */
+.simple-html-grid.filter-editor-content:not([open]) {
+    display: none;
+}
+
+/* the grey layer over the page behind the editor (was the .filter-editor-container element).
+ * A ::backdrop inherits from its dialog (Chrome 122, Firefox 120, Safari 17.4), so it has the variables */
+.simple-html-grid.filter-editor-content::backdrop {
+    background: var(--simple-html-grid-backdrop-color);
 }
 
 /**
  * Resize grab areas, one per edge and one per corner.
  * css `resize` only offers the bottom right corner, so these are wired up in
- * renderFilterEditor instead.
+ * renderFilterEditor instead, with pointer events.
  */
-.simple-html-grid .filter-editor-content .simple-html-resize-handle {
+.simple-html-grid.filter-editor-content .simple-html-resize-handle {
     position: absolute;
     z-index: 2;
+    /* a finger on a handle resizes, it does not scroll or zoom the page */
+    touch-action: none;
 }
 
-.simple-html-grid .filter-editor-content .handle-n,
-.simple-html-grid .filter-editor-content .handle-s {
+.simple-html-grid.filter-editor-content .handle-n,
+.simple-html-grid.filter-editor-content .handle-s {
     left: 0;
     right: 0;
     height: 5px;
     cursor: ns-resize;
 }
 
-.simple-html-grid .filter-editor-content .handle-n {
+.simple-html-grid.filter-editor-content .handle-n {
     top: 0;
 }
 
-.simple-html-grid .filter-editor-content .handle-s {
+.simple-html-grid.filter-editor-content .handle-s {
     bottom: 0;
 }
 
-.simple-html-grid .filter-editor-content .handle-w,
-.simple-html-grid .filter-editor-content .handle-e {
+.simple-html-grid.filter-editor-content .handle-w,
+.simple-html-grid.filter-editor-content .handle-e {
     top: 0;
     bottom: 0;
     width: 5px;
     cursor: ew-resize;
 }
 
-.simple-html-grid .filter-editor-content .handle-w {
+.simple-html-grid.filter-editor-content .handle-w {
     left: 0;
 }
 
-.simple-html-grid .filter-editor-content .handle-e {
+.simple-html-grid.filter-editor-content .handle-e {
     right: 0;
 }
 
 /* corners sit on top of the edges, so the diagonal cursor wins there */
-.simple-html-grid .filter-editor-content .handle-nw,
-.simple-html-grid .filter-editor-content .handle-ne,
-.simple-html-grid .filter-editor-content .handle-sw,
-.simple-html-grid .filter-editor-content .handle-se {
+.simple-html-grid.filter-editor-content .handle-nw,
+.simple-html-grid.filter-editor-content .handle-ne,
+.simple-html-grid.filter-editor-content .handle-sw,
+.simple-html-grid.filter-editor-content .handle-se {
     width: 12px;
     height: 12px;
     z-index: 3;
 }
 
-.simple-html-grid .filter-editor-content .handle-nw {
+.simple-html-grid.filter-editor-content .handle-nw {
     top: 0;
     left: 0;
     cursor: nwse-resize;
 }
 
-.simple-html-grid .filter-editor-content .handle-ne {
+.simple-html-grid.filter-editor-content .handle-ne {
     top: 0;
     right: 0;
     cursor: nesw-resize;
 }
 
-.simple-html-grid .filter-editor-content .handle-sw {
+.simple-html-grid.filter-editor-content .handle-sw {
     bottom: 0;
     left: 0;
     cursor: nesw-resize;
 }
 
-.simple-html-grid .filter-editor-content .handle-se {
+.simple-html-grid.filter-editor-content .handle-se {
     bottom: 0;
     right: 0;
     cursor: nwse-resize;
 }
 
-.simple-html-grid .filter-editor-content .filter-editor-titlebar {
+.simple-html-grid.filter-editor-content .filter-editor-titlebar {
+    flex: none;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 8px;
     cursor: move;
     user-select: none;
+    /* a finger on the titlebar moves the dialog, it does not scroll the page */
+    touch-action: none;
     margin: 0;
-    padding: 4px 8px;
+    padding: 6px 6px 6px 12px;
+    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
-.simple-html-grid .filter-editor-content .filter-editor-close {
-    cursor: pointer;
-    padding: 0 6px;
-    border-radius: 3px;
-    font-size: var(--simple-html-grid-font-size);
-}
-
-.simple-html-grid .filter-editor-content .filter-editor-close:hover {
-    background-color: var(--simple-html-grid-main-bg-selected-even);
-}
-
-.simple-html-grid .filter-editor-content .filter-editor-footer {
-    border-top: 1px solid var(--simple-html-grid-main-bg-border);
-    padding-top: 6px;
-    margin-bottom: 8px;
-}
-
-.simple-html-grid .filter-editor-content .grid-button {
-    min-width: 100px;
-    margin: 2px;
-    padding: 3px 6px;
-    cursor: pointer;
-    border-radius: 3px;
-    background-color: var(--simple-html-grid-sec-bg-color);
-    border: 1px solid var(--simple-html-grid-main-bg-border);
-}
-
-.simple-html-grid .filter-editor-content .grid-button:hover {
-    background-color: var(--simple-html-grid-main-bg-selected-even);
-}
-
-.simple-html-grid .filter-editor-content .grid-button-primary {
+.simple-html-grid.filter-editor-content .filter-editor-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: calc(var(--simple-html-grid-font-size) + 3px);
     font-weight: var(--simple-html-grid-font-weight-header);
-    border-color: var(--simple-html-grid-pinned-border);
+}
+
+/* the ✕: a button without a frame */
+.simple-html-grid.filter-editor-content .filter-editor-close {
+    flex: none;
+    box-sizing: border-box;
+    width: 24px;
+    height: 24px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background-color: transparent;
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    cursor: pointer;
+}
+
+.simple-html-grid.filter-editor-content .filter-editor-close:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+/* the ✕ over the resize handle of the top right corner: a tap on it closes the dialog. On a touch screen
+ * the handle is 20px (below) and covered the middle of the ✕ - a finger resized the dialog instead */
+.simple-html-grid.filter-editor-content .filter-editor-close {
+    position: relative;
+    z-index: 4;
+}
+
+/* the groups: they scroll when the dialog is as high as the window, or made smaller */
+.simple-html-grid.filter-editor-content .filter-editor-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    padding: 10px 12px;
+}
+
+/* Cancel, Apply, Apply & close: the buttons of the value list's look, see .simple-html-grid-button */
+/* the buttons of a dialog: they wrap to a second line on a narrow dialog (a phone) - not squeezed, a text
+ * of a button cut off ("Apply & cl"). The buttons at the right stay at the right of their line */
+.simple-html-grid.filter-editor-content .filter-editor-footer {
+    flex: none;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+    padding: 8px 12px;
+    border-top: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
 /**
- * the "click me to select ..." cells that open the attribute/operator menus
+ * A group: its header, then its conditions and sub groups behind a line down its left side - a
+ * bracket. Each level is indented by the bracket, its content as wide as what is left: nothing gets
+ * wider than the dialog (min-width: 0 lets a flex item be narrower than its content)
  */
-.simple-html-grid .filter-editor-content .grid-pick {
-    cursor: pointer;
-    border-radius: 3px;
-    border: 1px dashed var(--simple-html-grid-main-bg-border);
-    margin: 0 2px;
-    padding: 1px 2px;
+.simple-html-grid.filter-editor-content .filter-editor-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
 }
 
-.simple-html-grid .filter-editor-content .grid-pick:hover {
+.simple-html-grid.filter-editor-content .filter-editor-group-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.simple-html-grid.filter-editor-content .filter-editor-group-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    margin-left: 11px;
+    padding: 2px 0 2px 10px;
+    border-left: 2px solid var(--simple-html-grid-pinned-border);
+}
+
+/* the root group without conditions */
+.simple-html-grid.filter-editor-content .filter-editor-empty {
+    padding: 4px 0;
+    font-style: italic;
+    opacity: 0.7;
+}
+
+/* AND / OR: two buttons side by side, the one in use (aria-pressed) filled */
+.simple-html-grid.filter-editor-content .filter-editor-segment {
+    display: flex;
+}
+
+.simple-html-grid.filter-editor-content .filter-editor-segment-button {
+    box-sizing: border-box;
+    min-width: 40px;
+    height: 24px;
+    margin: 0;
+    padding: 0 8px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight-header);
+    cursor: pointer;
+}
+
+/* one line between the two */
+.simple-html-grid.filter-editor-content .filter-editor-segment-button + .filter-editor-segment-button {
+    border-left: 0;
+}
+
+.simple-html-grid.filter-editor-content .filter-editor-segment-button:hover {
     background-color: var(--simple-html-grid-main-bg-selected-even);
 }
 
-.simple-html-grid .filter-editor-content .grid-button-small {
-    min-width: 40px;
-    margin: 2px;
-    padding: 1px;
+.simple-html-grid.filter-editor-content .filter-editor-segment-button[aria-pressed='true'] {
+    border-color: var(--simple-html-grid-accent-color);
+    background-color: var(--simple-html-grid-accent-color);
+    color: var(--simple-html-grid-accent-font-color);
+    cursor: default;
+}
+
+/* "+ Condition", "+ Group": as wide as their text */
+.simple-html-grid.filter-editor-content .filter-editor-add {
+    min-width: 0;
+    padding: 0 8px;
+}
+
+/* wrap and delete, at the right end of the header. They wrap to the next line together */
+.simple-html-grid.filter-editor-content .filter-editor-group-tools {
+    display: flex;
+    gap: 6px;
+    margin-left: auto;
+}
+
+/* a button with an icon only: wrap, delete, switch value / column. Framed under the pointer */
+.simple-html-grid.filter-editor-content .filter-editor-icon {
+    flex: none;
+    box-sizing: border-box;
+    width: 24px;
+    height: 24px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 0;
+    background-color: transparent;
+    color: var(--simple-html-grid-main-font-color);
     cursor: pointer;
-    border-radius: 3px;
+}
+
+.simple-html-grid.filter-editor-content .filter-editor-icon:hover {
+    border-color: var(--simple-html-grid-control-border-color);
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+/* the room of an icon a condition does not have: its pickers and value stay under the others' */
+.simple-html-grid.filter-editor-content .filter-editor-icon-space {
+    flex: none;
+    width: 24px;
+    height: 24px;
+}
+
+/* Match case of a text condition: "Aa", filled with the accent colour while it is on (aria-pressed), as
+ * the AND / OR in use. A column that always matches case has it on and greyed out (aria-disabled) */
+.simple-html-grid.filter-editor-content .filter-editor-case {
+    border-color: var(--simple-html-grid-control-border-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight-header);
+    line-height: 22px;
+}
+
+.simple-html-grid.filter-editor-content .filter-editor-icon.filter-editor-case[aria-pressed='true'],
+.simple-html-grid.filter-editor-content .filter-editor-icon.filter-editor-case[aria-pressed='true']:hover {
+    border-color: var(--simple-html-grid-accent-color);
+    background-color: var(--simple-html-grid-accent-color);
+    color: var(--simple-html-grid-accent-font-color);
+}
+
+/* Undo and Redo, at the left end of the footer: the buttons that apply at the right */
+.simple-html-grid.filter-editor-content .filter-editor-undo-redo {
+    display: flex;
+    gap: 2px;
+    margin-right: auto;
+}
+
+/* nothing to undo / redo: greyed out as a disabled menu item, no frame under the pointer. It is
+ * aria-disabled, not disabled: it keeps the focus and its tooltip */
+.simple-html-grid.filter-editor-content .filter-editor-icon[aria-disabled='true'] {
+    filter: opacity(0.5);
+    cursor: default;
+}
+
+.simple-html-grid.filter-editor-content .filter-editor-icon[aria-disabled='true']:hover {
+    border-color: transparent;
+    background-color: transparent;
+}
+
+/* the outline outside the buttons of the editor: they have room around them, and an inset one would
+ * hide in a filled one. Over the button next to it. Not the buttons of the menus and the date picker
+ * put in the dialog (see popoverParent): they keep their own */
+.simple-html-grid.filter-editor-content .filter-editor-titlebar button:focus-visible,
+.simple-html-grid.filter-editor-content .filter-editor-body button:focus-visible,
+.simple-html-grid.filter-editor-content .filter-editor-footer button:focus-visible {
+    position: relative;
+    z-index: 1;
+    outline-offset: 1px;
+}
+
+/**
+ * A condition: one row - field, operator, the value (it takes the room left), switch, delete. It
+ * wraps when the dialog is narrow: the value goes to the next line, then the operator
+ */
+.simple-html-grid.filter-editor-content .filter-editor-condition {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 4px;
+    min-width: 0;
+}
+
+/* a picker: a button framed as a select, with a chevron on the right */
+.simple-html-grid.filter-editor-content .filter-editor-pick {
+    flex: 1 1 130px;
+    max-width: 220px;
+    min-width: 0;
+    position: relative;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    height: 24px;
+    margin: 0;
+    padding: 0 22px 0 6px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    text-align: left;
+    cursor: pointer;
+}
+
+.simple-html-grid.filter-editor-content .filter-editor-pick:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid.filter-editor-content .filter-editor-pick::after {
+    content: '';
+    position: absolute;
+    right: 9px;
+    top: 50%;
+    width: 5px;
+    height: 5px;
+    margin-top: -5px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(45deg);
+}
+
+.simple-html-grid.filter-editor-content .filter-editor-pick-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* nothing picked: the placeholder, in the colour of the placeholders */
+.simple-html-grid.filter-editor-content .filter-editor-pick-empty .filter-editor-pick-text {
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+/* the value: the room that is left. Its input, textarea or column picker fills it - the two inputs of
+ * a BETWEEN (from, to) side by side */
+.simple-html-grid.filter-editor-content .filter-editor-value-slot {
+    flex: 3 1 140px;
+    min-width: 80px;
+    display: flex;
+    gap: 4px;
+}
+
+.simple-html-grid.filter-editor-content .filter-editor-value-slot > * {
+    flex: 1 1 auto;
+    max-width: none;
+}
+
+/* the value input and the textarea of IN / NOT_IN (a value per line): framed as the pickers */
+.simple-html-grid.filter-editor-content .filter-editor-value {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 24px;
+    margin: 0;
+    padding: 0 6px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    text-align: left;
+}
+
+.simple-html-grid.filter-editor-content textarea.filter-editor-value {
+    height: auto;
+    min-height: 24px;
+    padding: 3px 6px;
+    line-height: 1.4;
+    resize: vertical;
+}
+
+.simple-html-grid.filter-editor-content .filter-editor-value::placeholder {
+    color: var(--simple-html-grid-sec-font-color);
+    opacity: 1;
+}
+
+/**
+ * The column settings dialog (columnSettings.ts): a dialog of the filter editor's look - it has the
+ * class filter-editor-content too, its title bar, body, footer and resize handles are the filter
+ * editor's. Wider; its body the list of the columns at the left and the settings of the one picked at
+ * the right, side by side - under each other when the dialog is made narrow
+ */
+.simple-html-grid.filter-editor-content.column-settings {
+    width: 720px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-body {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px;
+    /* its width decides the layout below: side by side, or one at a time (a phone) */
+    container-type: inline-size;
+}
+
+/* side by side: the list stays in view while the settings scroll (a laptop at 150 %: some 300px of body) */
+.simple-html-grid.filter-editor-content .column-settings-columns {
+    position: sticky;
+    top: 0;
+}
+
+/* "‹ Columns": only where the list and the settings take turns */
+.simple-html-grid.filter-editor-content .column-settings-back {
+    display: none;
+    align-self: flex-start;
+}
+
+/*
+ * Narrow (a phone, a small window): the list of the columns, or the settings of the one picked - never
+ * the one under the other, the settings a long scroll down past every column. A column clicked, or Enter
+ * in the list, shows its settings; "‹ Columns" the list again (ColumnSettings.detail)
+ */
+@container (max-width: 520px) {
+    .simple-html-grid.filter-editor-content .column-settings-body:not(.column-settings-detail) .column-settings-panel {
+        display: none;
+    }
+
+    .simple-html-grid.filter-editor-content .column-settings-body.column-settings-detail .column-settings-columns {
+        display: none;
+    }
+
+    .simple-html-grid.filter-editor-content .column-settings-columns {
+        position: static;
+        flex-basis: 100%;
+        max-width: none;
+    }
+
+    .simple-html-grid.filter-editor-content .column-settings-list {
+        max-height: none;
+    }
+
+    .simple-html-grid.filter-editor-content .column-settings-back {
+        display: inline-flex;
+        align-items: center;
+    }
+}
+
+/* the columns: a listbox framed as the inputs, its option picked lit as a selected row. The list has
+ * the focus (aria-activedescendant): the outline is on the option picked */
+.simple-html-grid.filter-editor-content .column-settings-list {
+    flex: 1 1 200px;
+    min-width: 160px;
+    max-width: 260px;
+    /* the room of a low window too: the list scrolls in itself, its Add calculated column in view */
+    max-height: max(120px, min(360px, calc(80vh - 220px)));
+    overflow-y: auto;
+    box-sizing: border-box;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    background-color: var(--simple-html-grid-sec-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-list:focus-visible {
+    outline: none;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-option {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 3px 6px;
+    padding: 3px 6px;
+    cursor: pointer;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-option:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-option[aria-selected='true'] {
+    background-color: var(--simple-html-grid-main-bg-selected-odd);
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-list:focus-visible .column-settings-option[aria-selected='true'] {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: -2px;
+}
+
+/* the label: 80px at least on its line, else the badges go to the next line (a long label is cut off) */
+.simple-html-grid.filter-editor-content .column-settings-option-label {
+    flex: 1 1 80px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* the type of a column: in the list in the text colour (on a selected option too), in the heading quiet */
+.simple-html-grid.filter-editor-content .column-settings-option-type {
+    flex: none;
+    font-weight: var(--simple-html-grid-font-weight);
+}
+
+/* what a column has set - Format, Text, Link, Checkbox, Blank / 0, Label, Placeholder, Error: together at
+ * the right, on a line of their own under the label when the option has no room for them */
+.simple-html-grid.filter-editor-content .column-settings-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 3px;
+    margin-left: auto;
+}
+
+/* a badge: a small box on the inputs' background, so its text keeps its contrast on a selected option */
+.simple-html-grid.filter-editor-content .column-settings-badge {
+    flex: none;
+    padding: 0 4px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-size: 0.9em;
+    font-weight: var(--simple-html-grid-font-weight);
+    line-height: 1.4;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-badge-problem {
+    border-color: var(--simple-html-grid-error-color);
+    color: var(--simple-html-grid-danger-font-color);
+}
+
+/* the settings of the column picked: its name and type, the settings, the preview */
+.simple-html-grid.filter-editor-content .column-settings-panel {
+    flex: 3 1 280px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-heading {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: calc(var(--simple-html-grid-font-size) + 2px);
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+/* the tabs of a column's settings (ColumnSection in columnSettings.ts): the dialog's tabs, without their
+ * room at the sides. A tab's panel lays its settings out as the panel did */
+.simple-html-grid.filter-editor-content .column-settings-tabs.column-settings-sections {
+    flex-wrap: wrap;
+    padding: 0;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-section[hidden] {
+    display: none;
+}
+
+/* a setting of the tab has a problem: a square in the colour of the Error badge (no corner is round),
+ * "Error" for a screen reader */
+.simple-html-grid.filter-editor-content .column-settings-tab-problem {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-left: 5px;
+    background-color: var(--simple-html-grid-error-color);
+    vertical-align: middle;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-heading .column-settings-option-type {
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+/* a setting: its label, the input (or the picker) and its field button, the hint and the problems */
+.simple-html-grid.filter-editor-content .column-settings-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-label {
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-input-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-input-row > .filter-editor-value {
+    flex: 1 1 auto;
+}
+
+/* the pickers of the format and of the filter operator: as wide as each other */
+.simple-html-grid.filter-editor-content .column-settings-input-row > .column-settings-format,
+.simple-html-grid.filter-editor-content .column-settings-input-row > .column-settings-operator {
+    max-width: 320px;
+}
+
+/* { }: put a field in the template, framed as the toggle of Match case */
+.simple-html-grid.filter-editor-content .column-settings-insert,
+.simple-html-grid.filter-editor-content .column-settings-insert-function {
+    border-color: var(--simple-html-grid-control-border-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight-header);
+    line-height: 22px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-hint {
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+/* the column's validation rules, read only: a list as plain as the hints */
+.simple-html-grid.filter-editor-content .column-settings-validation {
+    margin: 0;
+    padding-left: 18px;
+    overflow-wrap: anywhere;
+}
+
+/* a problem of a template: the danger colour, with a line in the error colour in front - it is said in
+ * words too, not by its colour only */
+.simple-html-grid.filter-editor-content .column-settings-problem {
+    padding-left: 6px;
+    border-left: 2px solid var(--simple-html-grid-error-color);
+    color: var(--simple-html-grid-danger-font-color);
+}
+
+/* Show as link, Open in a new tab: a checkbox and its text, as the value list's */
+.simple-html-grid.filter-editor-content .column-settings-check {
+    display: flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-check input {
+    flex: none;
+    width: 13px;
+    height: 13px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--simple-html-grid-accent-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-check input:focus-visible {
+    outline-offset: 1px;
+}
+
+/* a setting that can not be changed for the column (Filter as shown of a time of day): greyed out, the
+ * hint under it says why */
+.simple-html-grid.filter-editor-content .column-settings-check:has(input:disabled),
+.simple-html-grid.filter-editor-content .column-settings-check input:disabled {
+    color: var(--simple-html-grid-sec-font-color);
+    cursor: default;
+}
+
+/* the checked and the unchecked value of a column's checkboxes: side by side, under each other when the
+ * dialog is made narrow */
+.simple-html-grid.filter-editor-content .column-settings-values {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px 12px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-value {
+    flex: 1 1 110px;
+    min-width: 0;
+    max-width: 200px;
+}
+
+/* an input that is off - the placeholder while Use the column label is on: its frame dashed, its
+ * placeholder (the label) keeps its colour */
+.simple-html-grid.filter-editor-content .filter-editor-value:disabled {
+    border-style: dashed;
+    background-color: transparent;
+    cursor: default;
+}
+
+/* the preview of a column shown as checkboxes: the checkbox as the cell has it */
+.simple-html-grid.filter-editor-content .column-settings-preview-checkbox {
+    width: 13px;
+    height: 13px;
+    margin: 0;
+    accent-color: var(--simple-html-grid-accent-color);
+}
+
+/* a checkbox or a lookup column: it has no settings */
+.simple-html-grid.filter-editor-content .column-settings-none {
+    color: var(--simple-html-grid-sec-font-color);
+    font-style: italic;
+}
+
+/* the preview: the row's text as the cell shows it, its link and address, why it has none */
+.simple-html-grid.filter-editor-content .column-settings-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px 8px;
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+    background-color: var(--simple-html-grid-sec-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-preview-title {
+    color: var(--simple-html-grid-sec-font-color);
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-preview-cell {
+    min-height: 1.3em;
+    overflow-wrap: anywhere;
+}
+
+/* the preview in the colours of a colour rule: a little room around the text on its background */
+.simple-html-grid.filter-editor-content .column-settings-preview-cell.simple-html-grid-cell-bg {
+    padding: 1px 4px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-preview-link {
+    color: var(--simple-html-grid-link-color);
+    text-decoration: underline;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-preview-address {
+    color: var(--simple-html-grid-sec-font-color);
+    font-family: ui-monospace, monospace;
+    overflow-wrap: anywhere;
+}
+
+/**
+ * The colour rules of a column (columnSettingsRules.ts): each rule a box of the dialog's lines - its
+ * operator picker, value and buttons on a line (they wrap when the dialog is narrow), a row of swatches
+ * for its text colour and one for its background, Bold, its problems
+ */
+.simple-html-grid.filter-editor-content .column-settings-rules {
+    gap: 6px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rules-empty {
+    color: var(--simple-html-grid-sec-font-color);
+    font-style: italic;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px;
     border: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
-.simple-html-grid .filter-editor-content .grid-button-small:hover {
+.simple-html-grid.filter-editor-content .column-settings-rule-condition {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-condition > .column-settings-rule-operator {
+    flex: 0 1 170px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-value {
+    flex: 1 1 140px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-buttons {
+    display: flex;
+    gap: 2px;
+    margin-left: auto;
+}
+
+/* Move up at the first rule, Move down at the last: greyed out, aria-disabled - they keep the focus */
+.simple-html-grid.filter-editor-content .column-settings-rule-button[aria-disabled='true'] {
+    filter: opacity(0.5);
+    cursor: default;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-button[aria-disabled='true']:hover {
+    border-color: transparent;
+    background-color: transparent;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-style {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 3px 8px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-style-label {
+    flex: 0 0 90px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+/* the radio buttons of the palette, wrapping as one with the swatches: the colour picker after them */
+.simple-html-grid.filter-editor-content .column-settings-swatch-group {
+    display: contents;
+}
+
+/* the colour picker of a custom colour (#rrggbb), after the swatches: a box of the swatches' frame with a
+ * + while no custom colour is picked - the picker is over it, not seen - and the colour picked in it once
+ * one is, the frame of the swatch checked (the swatches have none checked then) */
+.simple-html-grid.filter-editor-content .column-settings-swatch-custom-box {
+    position: relative;
+    flex: none;
+    box-sizing: border-box;
+    width: 28px;
+    height: 20px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    line-height: 18px;
+    text-align: center;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-custom-box:has(.column-settings-swatch-custom-picked) {
+    border: 2px solid var(--simple-html-grid-main-font-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-custom-box:focus-within {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: 1px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-custom {
+    position: absolute;
+    inset: 0;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 1px;
+    border: none;
+    border-radius: 0;
+    background-color: transparent;
+    cursor: pointer;
+    opacity: 0;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-custom:focus-visible {
+    outline: none;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-custom-picked {
+    opacity: 1;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-custom::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-custom::-webkit-color-swatch {
+    border: none;
+    border-radius: 0;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-custom::-moz-color-swatch {
+    border: none;
+    border-radius: 0;
+}
+
+/* the first line of a rule: the kind of its condition (Value, Conditions, Formula) and its buttons */
+.simple-html-grid.filter-editor-content .column-settings-rule-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+}
+
+/* the panels of the Colours tab of a number column (columnSettings.ts colourSettings): Colour rules, Data
+ * bar, Colour scale, Icons - each a line, the one open with its settings under it */
+.simple-html-grid.filter-editor-content .column-settings-colour-panel {
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-colour-panel-toggle {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 8px;
+    min-height: 28px;
+    margin: 0;
+    padding: 2px 6px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-colour-panel-toggle:hover {
     background-color: var(--simple-html-grid-main-bg-selected-even);
 }
 
-.simple-html-grid .filter-editor-content .grid-flex-reverse {
-    display: flex;
-    flex-direction: row-reverse;
+.simple-html-grid.filter-editor-content .column-settings-colour-panel-toggle:focus-visible {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: -2px;
 }
 
-.simple-html-grid .filter-editor-content .grid-flex {
-    display: flex;
+.simple-html-grid.filter-editor-content .column-settings-colour-panel-title {
+    font-weight: var(--simple-html-grid-font-weight-header);
 }
 
-.simple-html-grid .filter-editor-content .grid-mt-6 {
-    margin-top: 6px;
+.simple-html-grid.filter-editor-content .column-settings-colour-panel-summary {
+    color: var(--simple-html-grid-sec-font-color);
 }
 
-.simple-html-grid .filter-editor-content .grid-m-4 {
-    margin: 4px;
-}
-
-.simple-html-grid .filter-editor-content .grid-flex-1 {
-    flex: 1 1 0%;
-}
-
-.simple-html-grid .filter-editor-content .grid-flex-column {
+.simple-html-grid.filter-editor-content .column-settings-colour-panel-body {
     display: flex;
     flex-direction: column;
+    gap: 10px;
+    padding: 6px;
+    border-top: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
-.simple-html-grid .filter-editor-content .grid-sub-group {
-    margin-left: 10px;
+/* in a panel the section's own heading is the panel's title: kept for a screen reader, not shown twice */
+.simple-html-grid.filter-editor-content .column-settings-colour-panel-body > .column-settings-field > .column-settings-label:first-child {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
 }
 
-.simple-html-grid .filter-editor-content .grid-condition {
-    border-bottom: 1px dashed var(--simple-html-grid-main-bg-border);
-    border-left: 1px dashed var(--simple-html-grid-main-bg-border);
-    padding: 2px;
-    padding-top: 5px;
+/* a closed rule: one line - a button with its sample in its colours and what it matches, the arrows and
+ * the remove after it. The summary is cut with … when the line has no room */
+.simple-html-grid.filter-editor-content .column-settings-rule-closed .column-settings-rule-head {
+    flex-wrap: nowrap;
 }
 
-.simple-html-grid .filter-editor-content .grid-group {
-    border-bottom: 1px dashed var(--simple-html-grid-main-bg-border);
-    border-left: 1px dashed var(--simple-html-grid-main-bg-border);
-    padding: 2px;
-    padding-top: 5px;
+.simple-html-grid.filter-editor-content .column-settings-rule-toggle {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    min-height: 24px;
+    margin: 0;
+    padding: 0 4px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
 }
 
-.simple-html-grid .filter-editor-content .grid-group-indent {
-    padding: 2px;
-    padding-top: 5px;
+.simple-html-grid.filter-editor-content .column-settings-rule-toggle:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
 }
 
-.simple-html-grid .filter-editor-content .grid-text-center {
+.simple-html-grid.filter-editor-content .column-settings-rule-toggle:focus-visible {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: -2px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-chevron {
+    flex: none;
+    width: 1em;
+}
+
+/* the sample: the rule's colours as a cell has them (the classes and custom properties of colorRules.ts) */
+.simple-html-grid.filter-editor-content .column-settings-rule-sample {
+    flex: none;
+    padding: 0 6px;
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-sample:not(.simple-html-grid-cell-bg) {
+    background-color: var(--simple-html-grid-main-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-summary {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-kind {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 10px;
+}
+
+/* the label of the kind: as wide as its text, the three choices beside it */
+.simple-html-grid.filter-editor-content .column-settings-rule-kind > .column-settings-rule-style-label {
+    flex: none;
+}
+
+/* a condition of the kind Conditions: its field, operator and value on a line, as the Value's - a little
+ * narrower, the field picker takes room too */
+.simple-html-grid.filter-editor-content .column-settings-rule-condition > .column-settings-rule-field {
+    flex: 0 1 120px;
+    min-width: 0;
+}
+
+.simple-html-grid.filter-editor-content
+    .column-settings-rule-condition:has(> .column-settings-rule-field)
+    > .column-settings-rule-operator {
+    flex: 0 1 130px;
+    min-width: 0;
+}
+
+.simple-html-grid.filter-editor-content
+    .column-settings-rule-condition:has(> .column-settings-rule-field)
+    > .column-settings-rule-value {
+    flex: 1 1 90px;
+    min-width: 60px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-combine {
+    flex: 0 1 170px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-rule-expression {
+    flex: 1 1 200px;
+}
+
+/**
+ * The data bar, colour scale and icons of a number column (columnSettingsBars.ts): a checkbox each, the
+ * settings of one that is on in a box of the dialog's lines - its swatches as a rule's, its numbers on a
+ * line (they wrap when the dialog is narrow). Under them five cells of the column's range as the cells
+ * will be: as wide as a narrow column, the number at the right, the icon in its room
+ */
+.simple-html-grid.filter-editor-content .column-settings-bars {
+    gap: 6px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-bars-part {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px;
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-bars-numbers {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 12px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-bars-number {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-bars-number > .filter-editor-value {
+    flex: none;
+    width: 80px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-bars-choice {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 10px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-bars-set-icons {
+    display: inline-flex;
+    gap: 2px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-bars-samples {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-bars-sample-row {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-bars-sample {
+    position: relative;
+    box-sizing: border-box;
+    width: 84px;
+    padding: 2px 4px;
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+    overflow: hidden;
+    white-space: nowrap;
+    text-align: right;
+}
+
+/* a preview cell with an icon - the row's, the five of the section: the icon's room, as in a cell */
+.simple-html-grid.filter-editor-content .column-settings-preview-icon-before {
+    position: relative;
+    padding-left: 19px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-preview-icon-after {
+    position: relative;
+    padding-right: 19px;
+}
+
+/* the list of the columns with Add calculated column under it */
+.simple-html-grid.filter-editor-content .column-settings-columns {
+    flex: 1 1 200px;
+    min-width: 160px;
+    max-width: 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-columns > .column-settings-list {
+    flex: none;
+    min-width: 0;
+    max-width: none;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-calculated-add {
+    align-self: flex-start;
+}
+
+/* a calculated column's settings: a group framed as a rule, at the top of the column's */
+.simple-html-grid.filter-editor-content .column-settings-calculated {
+    padding: 6px;
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-calculated-name {
+    font-family: var(--simple-html-grid-font-family);
+}
+
+/* a swatch: a radio button drawn as a square of its colour in the controls' frame, 20px and 4px apart -
+ * 24px from one to the next (WCAG 2.5.8). The one picked has a frame of the text's colour, 2px, inside
+ * a ring of the input's colour: it is said by its shape too, not by a colour only. None is crossed out */
+.simple-html-grid.filter-editor-content .column-settings-swatch {
+    appearance: none;
+    -webkit-appearance: none;
+    flex: none;
+    box-sizing: border-box;
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    cursor: pointer;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch:checked {
+    border: 2px solid var(--simple-html-grid-main-font-color);
+    box-shadow: inset 0 0 0 2px var(--simple-html-grid-sec-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch:focus-visible {
+    outline-offset: 1px;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-none {
+    background-image: linear-gradient(
+        to top right,
+        transparent calc(50% - 1px),
+        var(--simple-html-grid-main-font-color) calc(50% - 1px),
+        var(--simple-html-grid-main-font-color) calc(50% + 1px),
+        transparent calc(50% + 1px)
+    );
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-red {
+    background-color: var(--simple-html-grid-palette-red-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-orange {
+    background-color: var(--simple-html-grid-palette-orange-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-amber {
+    background-color: var(--simple-html-grid-palette-amber-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-yellow {
+    background-color: var(--simple-html-grid-palette-yellow-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-lime {
+    background-color: var(--simple-html-grid-palette-lime-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-green {
+    background-color: var(--simple-html-grid-palette-green-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-teal {
+    background-color: var(--simple-html-grid-palette-teal-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-cyan {
+    background-color: var(--simple-html-grid-palette-cyan-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-blue {
+    background-color: var(--simple-html-grid-palette-blue-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-indigo {
+    background-color: var(--simple-html-grid-palette-indigo-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-purple {
+    background-color: var(--simple-html-grid-palette-purple-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-pink {
+    background-color: var(--simple-html-grid-palette-pink-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-brown {
+    background-color: var(--simple-html-grid-palette-brown-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-text-grey {
+    background-color: var(--simple-html-grid-palette-grey-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-red {
+    background-color: var(--simple-html-grid-palette-red-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-orange {
+    background-color: var(--simple-html-grid-palette-orange-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-amber {
+    background-color: var(--simple-html-grid-palette-amber-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-yellow {
+    background-color: var(--simple-html-grid-palette-yellow-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-lime {
+    background-color: var(--simple-html-grid-palette-lime-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-green {
+    background-color: var(--simple-html-grid-palette-green-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-teal {
+    background-color: var(--simple-html-grid-palette-teal-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-cyan {
+    background-color: var(--simple-html-grid-palette-cyan-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-blue {
+    background-color: var(--simple-html-grid-palette-blue-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-indigo {
+    background-color: var(--simple-html-grid-palette-indigo-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-purple {
+    background-color: var(--simple-html-grid-palette-purple-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-pink {
+    background-color: var(--simple-html-grid-palette-pink-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-brown {
+    background-color: var(--simple-html-grid-palette-brown-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-swatch-bg-grey {
+    background-color: var(--simple-html-grid-palette-grey-bg-color);
+}
+
+/* Reset column, Reset all: at the left end of the footer, the buttons that apply at the right */
+.simple-html-grid.filter-editor-content .column-settings-resets {
+    display: flex;
+    gap: 6px;
+    margin-right: auto;
+}
+
+/* Apply while a template has a problem: greyed out, aria-disabled - it keeps the focus and its tooltip */
+.simple-html-grid.filter-editor-content .simple-html-grid-button[aria-disabled='true'] {
+    filter: opacity(0.5);
+    cursor: default;
+}
+
+/* the panel of the tab not shown, the resets of the other tab: hidden - over their own display */
+.simple-html-grid.filter-editor-content.column-settings [hidden] {
+    display: none;
+}
+
+/**
+ * The tabs of the grid config dialog (gridConfigTabs.ts): Columns and Detail form under the title bar,
+ * compact and square. The tab shown has the body's background and a line in the accent colour under
+ * its text - it is said by aria-selected too, not by its colour only
+ */
+.simple-html-grid.filter-editor-content .column-settings-tabs {
+    flex: none;
+    display: flex;
+    gap: 2px;
+    padding: 4px 12px 0;
+    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-tab {
+    box-sizing: border-box;
+    height: 24px;
+    margin: 0 0 -1px;
+    padding: 0 10px;
+    border: 1px solid transparent;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background-color: transparent;
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.simple-html-grid.filter-editor-content .column-settings-tab:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-tab[aria-selected='true'] {
+    border-color: var(--simple-html-grid-main-bg-border);
+    border-bottom-color: var(--simple-html-grid-accent-color);
+    background-color: var(--simple-html-grid-sec-bg-color);
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+.simple-html-grid.filter-editor-content .column-settings-tab:focus-visible {
+    position: relative;
+    z-index: 1;
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: -2px;
+}
+
+/* the Detail form tab (detailFormSettings.ts): its settings under each other, the list of the fields as
+ * the list of the columns */
+.simple-html-grid.filter-editor-content .detail-form-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* the Defaults tab (gridDefaultsSettings.ts): its settings under each other, a heading over each group */
+.simple-html-grid.filter-editor-content .grid-defaults-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+
+/* Width, Min width, Max width: side by side, under each other where the dialog is narrow */
+.simple-html-grid.filter-editor-content .detail-form-settings-widths {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+}
+
+.simple-html-grid.filter-editor-content .detail-form-settings-width-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: 110px;
+}
+
+.simple-html-grid.filter-editor-content .detail-form-settings-list {
+    max-width: 480px;
+    max-height: 300px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    background-color: var(--simple-html-grid-sec-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .detail-form-settings-list:focus-visible {
+    outline: none;
+}
+
+.simple-html-grid.filter-editor-content .detail-form-settings-list:focus-visible .column-settings-option[aria-selected='true'] {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: -2px;
+}
+
+.simple-html-grid.filter-editor-content .detail-form-settings-option {
+    align-items: center;
+}
+
+/* the box of a field in the form: a square checkbox, ✓ when the field is in the form */
+.simple-html-grid.filter-editor-content .detail-form-settings-box {
+    flex: none;
+    box-sizing: border-box;
+    width: 13px;
+    height: 13px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-size: 10px;
+    font-weight: var(--simple-html-grid-font-weight-header);
+    line-height: 11px;
     text-align: center;
+}
+
+.simple-html-grid.filter-editor-content .detail-form-settings-option[aria-checked='true'] .detail-form-settings-box {
+    border-color: var(--simple-html-grid-accent-color);
+    background-color: var(--simple-html-grid-accent-color);
+    color: var(--simple-html-grid-accent-font-color);
+}
+
+/* a section's row in the list of the fields (DetailFormSection): § and its name in the header's weight, the
+ * rows under it - its fields - follow it */
+.simple-html-grid.filter-editor-content .detail-form-settings-section-option {
+    font-weight: var(--simple-html-grid-font-weight-header);
+    border-top: 1px solid var(--simple-html-grid-main-bg-border);
+}
+
+.simple-html-grid.filter-editor-content .detail-form-settings-section-mark {
+    flex: none;
+    width: 13px;
+    text-align: center;
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+.simple-html-grid.filter-editor-content .detail-form-settings-moves {
+    display: flex;
+    gap: 6px;
+}
+
+/* the drag handle of a field, at the right end of its option: it moves the field (dragField). A finger
+ * drags it at once, it does not scroll the list */
+.simple-html-grid.filter-editor-content .detail-form-settings-handle {
+    margin-left: auto;
+    touch-action: none;
+}
+
+/* the field dragged: quiet, the line shows where it goes - a 2px line in the accent colour over the
+ * option it goes before, or under the last one. Inset: the list's edge does not cut it off */
+.simple-html-grid.filter-editor-content .detail-form-settings-dragged {
+    opacity: 0.5;
+}
+
+.simple-html-grid.filter-editor-content .detail-form-settings-drop-before {
+    box-shadow: inset 0 2px 0 0 var(--simple-html-grid-accent-color);
+}
+
+.simple-html-grid.filter-editor-content .detail-form-settings-drop-after {
+    box-shadow: inset 0 -2px 0 0 var(--simple-html-grid-accent-color);
+}
+
+/**
+ * The import dialog (importDialog.ts): a dialog of the filter editor's look - its title bar, body,
+ * footer and resize handles. Its body under each other: where the rows come from, the drop zone, the
+ * options, the first rows with a field picker over each column (they scroll sideways in their box), the
+ * count and the problems. Square, the grid's colours only
+ */
+.simple-html-grid.filter-editor-content.import-dialog {
+    width: 720px;
+}
+
+.simple-html-grid.filter-editor-content .import-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Choose file… and the file's name */
+.simple-html-grid.filter-editor-content .import-source {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+}
+
+.simple-html-grid.filter-editor-content .import-source-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+/* where a file can be dropped: a dashed frame, lit while a file is dragged over the dialog */
+.simple-html-grid.filter-editor-content .import-drop {
+    padding: 8px;
+    border: 1px dashed var(--simple-html-grid-control-border-color);
+    color: var(--simple-html-grid-sec-font-color);
+    text-align: center;
+}
+
+.simple-html-grid.filter-editor-content.import-dropping .import-drop {
+    border-style: solid;
+    border-color: var(--simple-html-grid-accent-color);
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+    color: var(--simple-html-grid-main-font-color);
+}
+
+.simple-html-grid.filter-editor-content .import-hint {
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+/* what is wrong with the file, no field picked: in words, a line in the error colour in front */
+.simple-html-grid.filter-editor-content .import-error {
+    padding-left: 6px;
+    border-left: 2px solid var(--simple-html-grid-error-color);
+    color: var(--simple-html-grid-danger-font-color);
+}
+
+/* the header, the separator, the sheet, the decimal mark, the dates, the rows with problems: side by side,
+ * on more lines where the dialog is narrow */
+.simple-html-grid.filter-editor-content .import-options {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 14px;
+}
+
+.simple-html-grid.filter-editor-content .import-option {
+    display: flex;
+    align-self: center;
+    align-items: center;
+    gap: 6px;
+}
+
+.simple-html-grid.filter-editor-content .import-option-label {
+    white-space: nowrap;
+}
+
+.simple-html-grid.filter-editor-content .import-select {
+    width: auto;
+    max-width: 220px;
+    padding: 0 2px;
+}
+
+/* the first rows: a table that scrolls in its box, sideways too */
+.simple-html-grid.filter-editor-content .import-preview {
+    max-height: 260px;
+    overflow: auto;
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+    background-color: var(--simple-html-grid-sec-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .import-table {
+    border-collapse: collapse;
+}
+
+.simple-html-grid.filter-editor-content .import-table :is(th, td) {
+    max-width: 200px;
+    padding: 2px 6px;
+    overflow: hidden;
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* the field pickers, over the columns */
+.simple-html-grid.filter-editor-content .import-table thead tr:first-child th {
+    padding: 3px;
+    background-color: var(--simple-html-grid-main-bg-color);
+}
+
+.simple-html-grid.filter-editor-content .import-field {
+    min-width: 90px;
+    max-width: 190px;
+}
+
+/* the header row of the file: its names, quiet - it is not imported */
+.simple-html-grid.filter-editor-content .import-header-row th {
+    color: var(--simple-html-grid-sec-font-color);
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+/* a column that is skipped: its values quiet */
+.simple-html-grid.filter-editor-content .import-table td.import-skipped {
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+/* a value that is not of its field's type, or breaks a rule: the cell's error look, its message the tooltip */
+.simple-html-grid.filter-editor-content .import-table td.import-cell-problem {
+    background-color: var(--simple-html-grid-error-bg-color);
+    box-shadow: inset 0 0 0 1px var(--simple-html-grid-error-color);
+}
+
+.simple-html-grid.filter-editor-content .import-summary {
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+/* the problems in words: the danger colour, a line in the error colour in front */
+.simple-html-grid.filter-editor-content .import-problems {
+    margin: 0;
+    padding: 0 0 0 6px;
+    border-left: 2px solid var(--simple-html-grid-error-color);
+    color: var(--simple-html-grid-danger-font-color);
+    list-style: none;
+}
+
+.simple-html-grid.filter-editor-content .import-problems .import-more {
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+/**
+ * A drag handle - six dots - of a row that can be dragged: a field of the Detail form tab (at its
+ * right) and of the column chooser (at its left), the same look in both. The quiet text colour, a grab
+ * cursor; it does not take the width of the text around it. A finger drags by it at once - no hold, no
+ * pan (`touch-action: none`) - and has 24px of it
+ */
+.simple-html-grid .simple-html-grid-drag-handle {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    width: 12px;
+    color: var(--simple-html-grid-sec-font-color);
+    cursor: grab;
+    -webkit-user-select: none;
+    user-select: none;
+    /* a finger drags it at once: the browser pans nothing under it (dragEvent, dragField) */
+    touch-action: none;
+}
+
+/* a finger: a handle wide enough to hit, the dots in its middle */
+@media (pointer: coarse) {
+    .simple-html-grid .simple-html-grid-drag-handle {
+        width: 24px;
+    }
+}
+
+.simple-html-grid .simple-html-grid-drag-handle:active {
+    cursor: grabbing;
+}
+
+.simple-html-grid .simple-html-grid-drag-handle-icon {
+    width: 6px;
+    height: 10px;
+    fill: currentColor;
+}
+
+/**
+ * The keyboard shortcuts help (shortcutHelp.ts): a dialog of the filter editor's look - it has the class
+ * filter-editor-content too, its title bar, body and resize handles are the filter editor's. Under the
+ * title bar the search (framed as the column chooser's) and a hint, then the groups of keys that scroll: a
+ * table each, its title the caption, a row per entry - the keys in boxes (<kbd>), what they do. The
+ * colours are the dialog's own variables, no theme needs more. Square, as the rest of the grid. On a phone
+ * it is as wide as the window, the keys wrap between the alternatives
+ */
+.simple-html-grid.filter-editor-content.shortcut-help {
+    width: 560px;
+}
+
+.simple-html-grid.filter-editor-content .shortcut-help-top {
+    flex: none;
+    padding: 8px 12px 0;
+}
+
+/* the search: the column chooser's, as wide as the dialog */
+.simple-html-grid.filter-editor-content .shortcut-help-top .simple-html-grid-chooser-search {
+    margin: 0;
+}
+
+.simple-html-grid.filter-editor-content .shortcut-help-hint,
+.simple-html-grid.filter-editor-content .shortcut-help-none {
+    margin-top: 6px;
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+/* no room while the search has matches: the status is empty. Shown still, a screen reader reads it out
+ * when it gets its text */
+.simple-html-grid.filter-editor-content .shortcut-help-none:empty {
+    margin-top: 0;
+}
+
+.simple-html-grid.filter-editor-content .shortcut-help-group {
+    width: 100%;
+    margin: 0 0 10px;
+    border-collapse: collapse;
+}
+
+.simple-html-grid.filter-editor-content .shortcut-help-group caption {
+    padding: 2px 0 4px;
+    text-align: left;
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+.simple-html-grid.filter-editor-content .shortcut-help-group th,
+.simple-html-grid.filter-editor-content .shortcut-help-group td {
+    padding: 3px 0;
+    border-top: 1px solid var(--simple-html-grid-main-bg-border);
+    text-align: left;
+    vertical-align: top;
+    font-weight: var(--simple-html-grid-font-weight);
+}
+
+/* the keys: the first column, what they do beside them */
+.simple-html-grid.filter-editor-content .shortcut-help-group th {
+    width: 45%;
+    padding-right: 12px;
+}
+
+/* a combination of keys stays on one line */
+.simple-html-grid.filter-editor-content .shortcut-help-keys {
+    font: inherit;
+    white-space: nowrap;
+}
+
+/* a key: a box framed as the controls, its lower edge thicker - a key cap */
+.simple-html-grid.filter-editor-content .shortcut-help-keys kbd {
+    display: inline-block;
+    box-sizing: border-box;
+    min-width: 18px;
+    margin: 1px;
+    padding: 0 4px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-bottom-width: 2px;
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    line-height: 15px;
+    text-align: center;
+}
+
+/* the / between the keys that do the same */
+.simple-html-grid.filter-editor-content .shortcut-help-or {
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+/**
+ * The detail form (detailForm.ts): a panel in the grid at the right of the rows - under them in a narrow
+ * grid - with the current row as a form. updateMainElementSizes places it, its look is here: the
+ * grid's colours, compact, square. A label over each value, the values on the inputs' background in a
+ * quiet frame (--simple-html-grid-detail-input-border-color) - the controls' frame under the pointer,
+ * the focus outline with the focus, the error colour with an error; a readonly one without a frame of
+ * its own colour. It scrolls on its own, the page does not scroll with it. Collapsed it is its title
+ * bar: a strip at the right with the title going down, a bar under the rows. Its left edge is a splitter
+ * (detailFormResize.ts)
+ */
+.simple-html-grid .simple-html-grid-detail-form {
+    position: absolute;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    isolation: isolate;
+    border-left: 2px solid var(--simple-html-grid-pinned-border);
+    background-color: var(--simple-html-grid-main-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    pointer-events: all;
+}
+
+.simple-html-grid .simple-html-grid-detail-form[hidden] {
+    display: none;
+}
+
+.simple-html-grid .simple-html-grid-detail-form.simple-html-grid-detail-form-below {
+    border-left: 0;
+    border-top: 2px solid var(--simple-html-grid-pinned-border);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-titlebar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 22px;
+    padding: 0 6px 0 0;
+    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
+    box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
+}
+
+/* the title is the button that collapses and expands the form: the chevron in front of it says where it
+ * goes, the whole bar can be pressed */
+.simple-html-grid .simple-html-grid-detail-form-toggle {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+    margin: 0;
+    padding: 0 0 0 6px;
+    border: 0;
+    border-radius: 0;
+    background-color: transparent;
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    text-align: left;
+    cursor: pointer;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-toggle:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid .simple-html-grid-chevron-icon {
+    flex: none;
+    width: 8px;
+    height: 8px;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-row {
+    flex: none;
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+/* the chevron points where the form goes: right at the right of the rows (collapses it there), left
+ * when it is collapsed (expands it); down under the rows, up when it is collapsed there */
+.simple-html-grid .simple-html-grid-detail-form-collapsed .simple-html-grid-chevron-icon {
+    transform: rotate(180deg);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-below .simple-html-grid-chevron-icon {
+    transform: rotate(90deg);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-below.simple-html-grid-detail-form-collapsed .simple-html-grid-chevron-icon {
+    transform: rotate(-90deg);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-body[hidden] {
+    display: none;
+}
+
+/* collapsed at the right of the rows: a strip as high as the rows, the chevron at its top and the title
+ * going down under it. Under the rows the title bar keeps its look */
+.simple-html-grid .simple-html-grid-detail-form-collapsed:not(.simple-html-grid-detail-form-below) .simple-html-grid-detail-form-titlebar {
+    flex: 1 1 auto;
+    height: auto;
+    padding: 0;
+    border-bottom: 0;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-collapsed:not(.simple-html-grid-detail-form-below) .simple-html-grid-detail-form-toggle {
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 6px;
+    padding: 7px 0;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-collapsed:not(.simple-html-grid-detail-form-below) .simple-html-grid-detail-form-title {
+    flex: 0 1 auto;
+    writing-mode: vertical-rl;
+}
+
+/* the splitter of the form's left edge (detailFormResize.ts): over the line, a few px into the form. The
+ * column resize handle's colour under the pointer and while it is dragged, the focus outline with the
+ * focus. None under the rows: the form is as wide as the grid there */
+.simple-html-grid .simple-html-grid-detail-form-resize {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    bottom: 0;
+    left: -2px;
+    width: 6px;
+    cursor: col-resize;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-resize:hover,
+.simple-html-grid .simple-html-grid-detail-form-resize-dragged {
+    background-color: var(--simple-html-grid-dropzone-color);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-below .simple-html-grid-detail-form-resize {
+    display: none;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 4px 6px 6px;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 22px;
+    margin: 0;
+    padding: 0 4px;
+    border: 1px solid var(--simple-html-grid-detail-input-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+/* a field that can be edited, under the pointer and with the focus: the controls' frame (3:1) - with
+ * the focus the focus outline over it too */
+.simple-html-grid .simple-html-grid-detail-form-input:not([readonly]):hover,
+.simple-html-grid .simple-html-grid-detail-form-input:not([readonly]):focus {
+    border-color: var(--simple-html-grid-control-border-color);
+}
+
+/* text of several lines: as tall as its lines, all of it can be read - it grows with the text where the
+ * browser has field-sizing, else it has a row per line (rows) and can be made taller */
+.simple-html-grid .simple-html-grid-detail-form-input.simple-html-grid-detail-form-text {
+    height: auto;
+    /* 48px, or the field's minRows (DetailFormFieldOptions) lines: 1.4em each, the padding and the border */
+    min-height: 48px;
+    padding: 2px 4px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    resize: vertical;
+    field-sizing: content;
+}
+
+/* the field's minRows (DetailFormFieldOptions, set on the textarea): that many lines at least */
+.simple-html-grid .simple-html-grid-detail-form-input.simple-html-grid-detail-form-text[style*='--simple-html-grid-detail-form-min-rows'] {
+    min-height: calc(var(--simple-html-grid-detail-form-min-rows) * 1.4em + 6px);
+}
+
+/* a section of the form (DetailFormFieldOptions.section): its header a button over the whole width that
+ * collapses it - the chevron points down while it is expanded, right while it is collapsed - and a line
+ * under it */
+.simple-html-grid .simple-html-grid-detail-form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-section-header {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    min-height: 22px;
+    margin: 4px 0 0;
+    padding: 0 2px;
+    border: 0;
+    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
+    border-radius: 0;
+    background-color: transparent;
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight-header);
+    text-align: left;
+    cursor: pointer;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-section-header:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-section-header:focus-visible {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: -2px;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-section-header .simple-html-grid-chevron-icon {
+    transform: rotate(90deg);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-section-collapsed .simple-html-grid-detail-form-section-header .simple-html-grid-chevron-icon {
+    transform: none;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-section-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-section-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-section-fields[hidden] {
+    display: none;
+}
+
+/* a panel (DetailFormSection.panel): a frame around its header and its fields - the frame of the form's
+ * inputs, the header inside it */
+.simple-html-grid .simple-html-grid-detail-form-section.simple-html-grid-detail-form-panel {
+    padding: 0 6px 6px;
+    border: 1px solid var(--simple-html-grid-detail-input-border-color);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-panel > .simple-html-grid-detail-form-section-header {
+    /* over the panel's padding, from frame to frame */
+    width: auto;
+    margin: 0 -6px;
+    padding: 0 8px;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-panel.simple-html-grid-detail-form-section-collapsed {
+    padding-bottom: 0;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-panel.simple-html-grid-detail-form-section-collapsed > .simple-html-grid-detail-form-section-header {
+    border-bottom: 0;
+}
+
+.simple-html-grid .simple-html-grid-detail-form-input[readonly] {
+    border-color: var(--simple-html-grid-main-bg-border);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-input:focus-visible,
+.simple-html-grid .simple-html-grid-detail-form-check:focus-visible,
+.simple-html-grid .simple-html-grid-detail-form-link:focus-visible {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: -2px;
+}
+
+/* an error: the error colour, under the pointer and with the focus too - the errors under the field say
+ * it in words */
+.simple-html-grid .simple-html-grid-detail-form-input[aria-invalid='true'],
+.simple-html-grid .simple-html-grid-detail-form-input[aria-invalid='true']:hover,
+.simple-html-grid .simple-html-grid-detail-form-input[aria-invalid='true']:focus {
+    border-color: var(--simple-html-grid-error-color);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-check {
+    width: 13px;
+    height: 13px;
+    margin: 2px 0;
+    accent-color: var(--simple-html-grid-accent-color);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-link {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--simple-html-grid-link-color);
+    text-decoration: underline;
+}
+
+/* the errors of a value: the danger colour, with a line in the error colour in front - said in words */
+.simple-html-grid .simple-html-grid-detail-form-errors {
+    padding-left: 6px;
+    border-left: 2px solid var(--simple-html-grid-error-color);
+    color: var(--simple-html-grid-danger-font-color);
+}
+
+.simple-html-grid .simple-html-grid-detail-form-empty {
+    color: var(--simple-html-grid-sec-font-color);
+    font-style: italic;
+}
+
+/**
+ * The colour rules of a column (ColumnFormat.rules, colorRules.ts): the classes of the rule that matches a
+ * cell's value, on the cell element (showCellColor.ts) - and on a value of the detail form and the preview
+ * of the grid config dialog. The colours are the palette's variables, no others: readable in light and
+ * dark. The background is the element's: over the row's colour (a selected row's too), under a range's
+ * tint. The text colour is the element's, the text of a cell takes it - its input, the lines of a
+ * multiline cell, a custom cell, a link (inherit); a custom cell that sets a colour of its own keeps it.
+ * An error and a match of Find win: such a cell shows as without a rule, the error's or Find's tint over
+ * the row and the grid's text. Bold stays
+ */
+.simple-html-grid .simple-html-grid-cell-text-red:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-red-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-text-orange:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-orange-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-text-amber:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-amber-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-text-yellow:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-yellow-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-text-lime:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-lime-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-text-green:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-green-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-text-teal:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-teal-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-text-cyan:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-cyan-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-text-blue:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-blue-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-text-indigo:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-indigo-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-text-purple:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-purple-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-text-pink:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-pink-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-text-brown:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-brown-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-text-grey:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: var(--simple-html-grid-palette-grey-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-red:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-red-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-orange:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-orange-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-amber:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-amber-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-yellow:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-yellow-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-lime:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-lime-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-green:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-green-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-teal:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-teal-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-cyan:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-cyan-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-blue:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-blue-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-indigo:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-indigo-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-purple:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-purple-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-pink:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-pink-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-brown:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-brown-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-grey:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-palette-grey-bg-color);
+}
+
+/* a custom colour of a rule (#rrggbb, ruleColors.ts): the cell's custom properties, set by the grid with
+ * style.setProperty() - the text in light and in dark (made lighter there), the background */
+.simple-html-grid .simple-html-grid-cell-text-custom:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    color: light-dark(var(--simple-html-grid-rule-text-light), var(--simple-html-grid-rule-text-dark));
+}
+
+.simple-html-grid .simple-html-grid-cell-bg-custom:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: var(--simple-html-grid-rule-bg);
+}
+
+/**
+ * The data bar and the colour scale of a number column (ColumnFormat.bar, scale - dataBars.ts), on the cell
+ * element (showCellColor.ts) and the cells of the dialog's preview. The colours are custom properties of
+ * the cell: a palette background's variable, or a custom colour's tints as light-dark() - built from a
+ * palette name or a checked #rrggbb only. The grid's text reads on every one of them.
+ *
+ * The bar is a background image of the cell from --simple-html-grid-bar-start to -end, over the cell's
+ * background (a rule's) and under a range's tint: the image is the custom property
+ * --simple-html-grid-cell-bar-image, the range's rule lays its tint over it. No rounded corners. The
+ * scale is the cell's background, a mix of two colours (color-mix in srgb), a rule's background wins over
+ * it (the grid gives such a cell none). An error and a match of Find show as without them, as without a
+ * rule's colours
+ */
+.simple-html-grid .simple-html-grid-cell-bar:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    --simple-html-grid-cell-bar-image: linear-gradient(
+        to right,
+        transparent var(--simple-html-grid-bar-start),
+        var(--simple-html-grid-bar-color) var(--simple-html-grid-bar-start),
+        var(--simple-html-grid-bar-color) var(--simple-html-grid-bar-end),
+        transparent var(--simple-html-grid-bar-end)
+    );
+}
+
+.simple-html-grid .simple-html-grid-col-cell,
+.simple-html-grid .column-settings-preview-cell,
+.simple-html-grid .column-settings-bars-sample {
+    background-image: var(--simple-html-grid-cell-bar-image, none);
+}
+
+.simple-html-grid .simple-html-grid-cell-scale:not(.simple-html-cell-error, .simple-html-cell-find-match) {
+    background-color: color-mix(
+        in srgb,
+        var(--simple-html-grid-scale-to) var(--simple-html-grid-scale-at),
+        var(--simple-html-grid-scale-from)
+    );
+}
+
+/**
+ * The icon of an icon set (ColumnFormat.icons, cellIcon.ts): 12px at the left of the cell, or its right,
+ * in the middle of its line - over the input (1000) as the marker of a multiline cell, the pointer goes
+ * through it. The input's text stops before it. In the theme's icon colours
+ */
+.simple-html-grid .simple-html-grid-cell-icon {
+    position: absolute;
+    top: calc(50% - 6px);
+    width: 12px;
+    height: 12px;
+    z-index: 1001;
+    pointer-events: none;
+}
+
+.simple-html-grid .simple-html-grid-cell-icon-before {
+    left: 4px;
+}
+
+.simple-html-grid .simple-html-grid-cell-icon-after {
+    right: 4px;
+}
+
+/* the focus button (30px) is at the right edge while the cell has the focus: the icon left of it */
+.simple-html-grid .simple-html-grid-col-cell:has(.simple-html-grid-focus-button) .simple-html-grid-cell-icon-after {
+    right: 34px;
+}
+
+.simple-html-grid .simple-html-grid-cell-icon-svg {
+    display: block;
+    width: 12px;
+    height: 12px;
+    fill: currentColor;
+}
+
+.simple-html-grid .simple-html-grid-cell-icon-green {
+    color: var(--simple-html-grid-icon-green-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-icon-amber {
+    color: var(--simple-html-grid-icon-amber-color);
+}
+
+.simple-html-grid .simple-html-grid-cell-icon-red {
+    color: var(--simple-html-grid-icon-red-color);
+}
+
+.simple-html-grid .simple-html-grid-col-cell input.simple-html-grid-cell-with-icon-before {
+    padding-left: 19px;
+}
+
+.simple-html-grid .simple-html-grid-col-cell input.simple-html-grid-cell-with-icon-after {
+    padding-right: 19px;
+}
+
+/* the text of a cell takes the cell's colour: its input, the lines under it, a custom cell's host, a link -
+ * and the link of the dialog's preview */
+.simple-html-grid
+    .simple-html-grid-cell-text:not(.simple-html-cell-error, .simple-html-cell-find-match)
+    :is(
+        input,
+        .simple-html-grid-cell-lines,
+        .simple-html-grid-cell-custom,
+        .simple-html-grid-cell-link[href],
+        .column-settings-preview-link
+    ) {
+    color: inherit;
+}
+
+.simple-html-grid .simple-html-grid-cell-bold,
+.simple-html-grid .simple-html-grid-cell-bold :is(input, .simple-html-grid-cell-lines, .simple-html-grid-cell-custom) {
+    font-weight: var(--simple-html-grid-font-weight-header);
 }
 
 /**
  * Built in tooltip.
  *
- * The element is created once and lives on document.body, positioned from js - see
- * gridFunctions/tooltip.ts. It cannot be a ::after on the element it describes, because
+ * The element is created once and shown on document.body - or in the dialog or menu of the
+ * element it describes, so it is not hidden behind them in the top layer - positioned from js,
+ * see gridFunctions/tooltip.ts. It cannot be a ::after on the element it describes, because
  * the filter editor clips its content (overflow hidden, needed for resize) and the
- * tooltip would be cut off at the edges.
+ * tooltip would be cut off at the edges; position: fixed is not.
  *
  * data-tooltip is always written to the elements. The `tooltips` grid config option, on
  * by default, decides whether this built in one is rendered - turn it off and hook up
@@ -1496,105 +5346,26 @@ input {
  * the element also carries .simple-html-grid, so font family/size/weight and the theme
  * colours come from there and the tooltip always matches the grid text.
  * The compound selector is only to win over the position/overflow in that base rule.
+ * Over every layer of the grid: its inputs are at 1000 (a flex item paints by its z-index, also when it is
+ * not positioned - the filter editor's fields were over the tooltip of Aa), its highest layer is at 2000
  */
 .simple-html-grid.simple-html-grid-tooltip {
     position: fixed;
-    z-index: 600;
+    z-index: 10000;
     max-width: 260px;
     width: max-content;
     height: auto;
     padding: 3px 6px;
-    border-radius: 3px;
-    border: 1px solid var(--simple-html-grid-pinned-border);
-    background-color: var(--simple-html-grid-sec-bg-color);
+    border-radius: 0;
+    border: 1px solid var(--simple-html-grid-tooltip-border-color);
+    background-color: var(--simple-html-grid-tooltip-bg-color);
+    color: var(--simple-html-grid-tooltip-font-color);
     text-align: left;
-    white-space: normal;
+    /* a line per message: the validation tooltips join them with a newline */
+    white-space: pre-line;
     overflow: visible;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+    box-shadow: 0 2px 8px var(--simple-html-grid-tooltip-shadow-color);
     pointer-events: none;
-}
-
-.simple-html-grid .filter-editor-content .grid-text-title {
-    font-family: var(--simple-html-grid-font-family);
-    font-size: medium;
-    font-weight: var(--simple-html-grid-font-weight-cell);
-    background-color: var(--simple-html-grid-main-bg-color);
-    margin: 4px;
-    border-bottom: 1px solid var(--simple-html-grid-main-bg-border);
-}
-
-.simple-html-grid .filter-editor-content .grid-text-label {
-    box-sizing: border-box;
-    border: 0;
-    border-radius: initial;
-    display: block;
-    height: 20px;
-    text-align: center;
-    overflow: hidden;
-    user-select: none;
-    font-family: var(--simple-html-grid-font-family);
-    font-size: var(--simple-html-grid-font-size);
-    font-weight: var(--simple-html-grid-font-weight-cell);
-    background-color: var(--simple-html-grid-main-bg-color);
-    margin: 0px;
-    filter: opacity(0.5);
-    transition: initial;
-    outline-color: var(--simple-html-grid-main-bg-color);
-}
-
-/**
- * The AND/OR toggle shares .grid-text-label with the small captions above the condition
- * fields, but it is a button you click - it should not be dimmed like a caption.
- * Comes after the rule above so it wins on background too.
- */
-.simple-html-grid .filter-editor-content .grid-button-small.grid-text-label {
-    filter: none;
-    background-color: transparent;
-}
-
-.simple-html-grid .filter-editor-content .grid-button-small.grid-text-label:hover {
-    background-color: var(--simple-html-grid-main-bg-selected-even);
-}
-
-.simple-html-grid .filter-editor-content .grid-overflow-auto {
-    overflow: auto;
-}
-
-.simple-html-grid .filter-editor-content .grid-w-full {
-    width: 100%;
-}
-
-.simple-html-grid .filter-editor-content .grid-h-full {
-    height: 100%;
-}
-
-.simple-html-grid .filter-editor-content input {
-    background-color: var(--simple-html-grid-sec-bg-color);
-    outline-color: var(--simple-html-grid-main-bg-color);
-    color: var(--simple-html-grid-main-font-color);
-    font-family: var(--simple-html-grid-font-family);
-    font-size: var(--simple-html-grid-font-size);
-    font-weight: var(--simple-html-grid-font-weight);
-    margin-left: 3px;
-    margin-right: 3px;
-    text-align: center;
-    padding: 3px;
-    border: 1px solid var(--simple-html-grid-main-bg-border);
-}
-.simple-html-grid .filter-editor-content textarea {
-    background-color: var(--simple-html-grid-sec-bg-color);
-    outline-color: var(--simple-html-grid-main-bg-color);
-    color: var(--simple-html-grid-main-font-color);
-    font-family: var(--simple-html-grid-font-family);
-    font-size: var(--simple-html-grid-font-size);
-    font-weight: var(--simple-html-grid-font-weight);
-    margin-left: 3px;
-    margin-right: 3px;
-    max-width: 145px;
-    min-width: 145px;
-    text-align: center;
-    padding: 3px;
-    border: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
 .simple-html-grid .simple-html-grid-menu-sub {
@@ -1606,26 +5377,6 @@ input {
  * filter editor css
  ****************************************************************************/
 
-.simple-html-grid input:focus {
-    border: 1px dashed;
-    outline: thin;
-    outline-color: var(--simple-html-grid-main-font-color);
-    opacity: 1;
-}
-
-.simple-html-grid input[type='checkbox']:focus {
-    outline: 1px dashed var(--simple-html-grid-main-font-color);
-    opacity: 1;
-}
-
-.simple-html-grid textarea:focus {
-    border: 1px dashed;
-    outline: thin;
-    outline-color: var(--simple-html-grid-main-bg-color);
-    /* incase someone uses duplicate value class with opacity */
-    opacity: 1;
-}
-
 /*
  * override left pinned border
  */
@@ -1634,22 +5385,137 @@ input {
     border-right: 1px solid var(--simple-html-grid-main-bg-border);
 }
 
-.simple-html-grid-menu-item-input {
+/**
+ * The column chooser (contextMenuColumnChooser.ts). Its search is framed as the inputs of the dialogs -
+ * the controls' frame, the inputs' background, a magnifying glass in front - the focus outline on the
+ * frame. A field: the drag handle at its left (the whole row drags), its label, the ✎ at its right -
+ * shown under the pointer and with the focus (always on a touch screen, below). The ✎ opens an input
+ * in place of the label, framed as the search
+ */
+.simple-html-grid .simple-html-grid-chooser-search {
+    display: flex;
+    align-items: center;
+    gap: 4px;
     box-sizing: border-box;
-    margin-left: 1px;
+    height: 24px;
+    margin: 4px 6px;
+    padding: 0 6px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-sec-font-color);
+    cursor: text;
+}
+
+.simple-html-grid .simple-html-grid-chooser-search:has(:focus-visible) {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: -2px;
+}
+
+.simple-html-grid .simple-html-grid-search-icon {
+    flex: none;
+    width: 10px;
+    height: 10px;
+}
+
+.simple-html-grid .simple-html-grid-chooser-search .simple-html-grid-menu-item-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    margin: 0;
+    padding: 0;
     border: 0;
-    border-radius: initial;
-    height: 20px;
-    text-align: center;
-    overflow: hidden;
-    user-select: none;
+    border-radius: 0;
+    background-color: transparent;
+    color: var(--simple-html-grid-main-font-color);
     font-family: var(--simple-html-grid-font-family);
     font-size: var(--simple-html-grid-font-size);
     font-weight: var(--simple-html-grid-font-weight-cell);
-    transition: initial;
-    outline-color: var(--simple-html-grid-main-bg-color);
+    text-align: left;
+}
+
+/* the frame has the outline */
+.simple-html-grid .simple-html-grid-chooser-search .simple-html-grid-menu-item-input:focus-visible {
+    outline: none;
+}
+
+.simple-html-grid .simple-html-grid-chooser-search .simple-html-grid-menu-item-input::placeholder {
+    color: var(--simple-html-grid-sec-font-color);
+    opacity: 1;
+}
+
+.simple-html-grid .simple-html-grid-column-chooser .simple-html-grid-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+.simple-html-grid .simple-html-grid-chooser-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.simple-html-grid .simple-html-grid-chooser-rename {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 0;
+    background-color: transparent;
+    color: var(--simple-html-grid-sec-font-color);
+    cursor: pointer;
+    opacity: 0;
+}
+
+.simple-html-grid .simple-html-grid-column-chooser .simple-html-grid-menu-item:hover .simple-html-grid-chooser-rename,
+.simple-html-grid .simple-html-grid-chooser-rename:focus-visible {
+    opacity: 1;
+}
+
+.simple-html-grid .simple-html-grid-chooser-rename:hover {
+    border-color: var(--simple-html-grid-control-border-color);
+    background-color: var(--simple-html-grid-sec-bg-color);
     color: var(--simple-html-grid-main-font-color);
-    background-color: var(--simple-html-grid-alt-bg-color);
+}
+
+.simple-html-grid .simple-html-grid-pencil-icon {
+    width: 10px;
+    height: 10px;
+    fill: currentColor;
+}
+
+.simple-html-grid .simple-html-grid-chooser-label-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    box-sizing: border-box;
+    height: 18px;
+    margin: 0;
+    padding: 0 4px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight-cell);
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+.simple-html-grid .simple-html-grid-chooser-label-input::placeholder {
+    color: var(--simple-html-grid-sec-font-color);
+    opacity: 1;
 }
 
 .simple-html-grid-focus-button {
@@ -1658,3 +5524,289 @@ input {
     z-index: 1000;
     cursor: pointer;
 }
+
+/****************************************************************************
+ * keyboard focus
+ */
+
+/**
+ * The element with the keyboard focus gets an outline in --simple-html-grid-focus-color: a cell, a
+ * filter input, a checkbox, a menu item, a button of the filter editor, the date picker - and what is
+ * made focusable later, the selectors are generic. On .simple-html-grid, so the grid, its menus, the
+ * column chooser and the filter editor dialog.
+ *
+ * Inset (outline-offset -2px): the cells are packed edge to edge in containers with overflow: hidden,
+ * an outline outside the element would be painted over by the next cell or cut off at the edge of the
+ * grid or a menu. It covers the border of the element, if it has one.
+ *
+ * :focus-visible and not :focus: the browser decides when focus is shown. A click on a checkbox or
+ * a button shows no outline, the keyboard does. An input you type in shows it on a click too.
+ */
+.simple-html-grid:focus-visible,
+.simple-html-grid :focus-visible {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: -2px;
+}
+
+/* the filter editor's dialog takes the focus when it opens, Tab goes on into it: it is not a control */
+.simple-html-grid.filter-editor-content:focus-visible {
+    outline: none;
+}
+
+/* a checkbox of a cell is wider than its cell (width 100% and the browser's margin), its outline
+ * would stick out over the next cell: the outline goes on the cell instead */
+.simple-html-grid .simple-html-grid-col-cell input[type='checkbox']:focus-visible {
+    outline: none;
+}
+
+.simple-html-grid .simple-html-grid-col-cell:has(input[type='checkbox']:focus-visible) {
+    outline: 2px solid var(--simple-html-grid-focus-color);
+    outline-offset: -2px;
+}
+
+/* the date picker of the grid has the grid's focus colour, date.css draws the same outline */
+.simple-html-grid .simple-html-date {
+    --simple-html-date-focus-color: var(--simple-html-grid-focus-color);
+}
+
+/* a focused input or textarea is never dimmed, a repeated value (dimRepeatedValues) included */
+.simple-html-grid input:focus,
+.simple-html-grid textarea:focus {
+    opacity: 1;
+}
+
+/****************************************************************************
+ * touch: a finger (longPress.ts, touchScroll.ts, dragEvent.ts)
+ */
+
+/* a double tap is the grid's - it opens the editor of a multiline cell or a lookup column (dblclick) -
+ * not the browser's zoom; panning and a pinch stay the browser's (touch-action: manipulation). The
+ * labels, the resize handles and the fill handle are `none`, the column chooser's fields `pan-y` */
+.simple-html-grid {
+    touch-action: manipulation;
+}
+
+/* the field dragged from the header or the column chooser is a popover (dragEvent.ts createGhost), in
+ * the top layer over the chooser: the browser's popover style centers it (inset: 0, margin: auto) and
+ * gives it padding and a scroll box. The drag places it with left / top and a transform */
+.simple-html-draggable-element[popover] {
+    inset: auto;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+}
+
+/**
+ * A screen that is touched (the primary pointer is coarse: a finger): the menus, their submenus, the
+ * column chooser, the filter menu's value list and range block and the filter editor's grab areas get
+ * targets a finger hits - rows of 36px, as the 32-48px of the touch guidelines (Material 48dp, Apple 44pt) in a menu of
+ * the grid's small font. The grid's own rows keep their height: `cellHeight` is the app's
+ */
+@media (pointer: coarse) {
+    .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item {
+        height: var(--simple-html-grid-touch-row-height);
+        line-height: var(--simple-html-grid-touch-row-height);
+    }
+
+    .simple-html-grid .simple-html-grid-menu .simple-html-grid-menu-item[aria-haspopup='menu']::after {
+        line-height: var(--simple-html-grid-touch-row-height);
+    }
+
+    /* the column chooser: its list (more rows of the taller ones) and Close. Its search keeps the 24px of
+       the other searches. The ✎ of a field is always shown - a finger does not hover - a 24px target as
+       the buttons, and its input as tall */
+    .simple-html-grid .simple-html-grid-menu-sub {
+        max-height: min(360px, 50vh);
+    }
+
+    .simple-html-grid .simple-html-grid-chooser-rename {
+        width: 24px;
+        height: 24px;
+        opacity: 1;
+    }
+
+    .simple-html-grid .simple-html-grid-chooser-label-input {
+        height: 24px;
+    }
+
+    /* the detail form: the splitter of its edge wider for a finger, inside the form */
+    .simple-html-grid .simple-html-grid-detail-form-resize {
+        width: 10px;
+    }
+
+    .simple-html-grid .simple-html-grid-menu .simple-html-label-button-menu-bottom {
+        padding: 6px;
+    }
+
+    /* the buttons, the range block's operators and inputs and the searches keep their size (24px, the
+       WCAG 2.2 minimum target): taller they were out of line with the rest of a dialog (the user: "some
+       buttons is higher than I like"). The rows of lists are what a finger needs room for */
+
+    .simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-row {
+        min-height: var(--simple-html-grid-touch-row-height);
+    }
+
+    .simple-html-grid .simple-html-grid-value-list .simple-html-grid-value-scroll {
+        max-height: min(360px, 50vh);
+    }
+
+    /* the column settings dialog: the rows of its list of the columns, as the value list's rows. Its
+       buttons, inputs and the gear in the footer keep their size */
+    .simple-html-grid.filter-editor-content .column-settings-option {
+        box-sizing: border-box;
+        align-items: center;
+        min-height: var(--simple-html-grid-touch-row-height);
+    }
+
+    /* the filter editor: edges and corners a finger can take to resize it */
+    .simple-html-grid.filter-editor-content .handle-n,
+    .simple-html-grid.filter-editor-content .handle-s {
+        height: 10px;
+    }
+
+    .simple-html-grid.filter-editor-content .handle-w,
+    .simple-html-grid.filter-editor-content .handle-e {
+        width: 10px;
+    }
+
+    .simple-html-grid.filter-editor-content .handle-nw,
+    .simple-html-grid.filter-editor-content .handle-ne,
+    .simple-html-grid.filter-editor-content .handle-sw,
+    .simple-html-grid.filter-editor-content .handle-se {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+/**
+ * The name of a view, asked for by Save as new view… and Rename… of the views menu (viewsMenu.ts): a
+ * block of a menu of its own - its label, the input framed as the range block's, a line that says what
+ * is wrong with the name, Cancel and Save / Rename
+ */
+.simple-html-grid .simple-html-grid-view-name {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    box-sizing: border-box;
+    width: 260px;
+    max-width: calc(100vw - 8px);
+    padding: 6px 8px 8px;
+}
+
+.simple-html-grid .simple-html-grid-view-name .simple-html-grid-view-name-label {
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+.simple-html-grid .simple-html-grid-view-name .simple-html-grid-view-name-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 24px;
+    margin: 0;
+    padding: 0 6px;
+    border: 1px solid var(--simple-html-grid-control-border-color);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: var(--simple-html-grid-font-family);
+    font-size: var(--simple-html-grid-font-size);
+    font-weight: var(--simple-html-grid-font-weight);
+    text-align: left;
+}
+
+/* the line under the input: no name yet in the quiet colour of a hint, a name taken as a warning. Its
+ * height kept, the buttons do not move when it comes and goes */
+.simple-html-grid .simple-html-grid-view-name .simple-html-grid-view-name-problem {
+    min-height: 1.4em;
+    color: var(--simple-html-grid-sec-font-color);
+}
+
+.simple-html-grid .simple-html-grid-view-name .simple-html-grid-view-name-taken {
+    color: var(--simple-html-grid-warning-font-color);
+}
+
+.simple-html-grid .simple-html-grid-view-name .simple-html-grid-view-name-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+/* Save while the name is not fine: greyed out, aria-disabled - it keeps the focus */
+.simple-html-grid .simple-html-grid-view-name .simple-html-grid-button[aria-disabled='true'] {
+    filter: opacity(0.5);
+    cursor: default;
+}
+
+
+/* the views button (GridConfig.viewsButton, viewsMenu.ts): at the left end of the footer, on the line of
+ * the filter's row (its top is set to the horizontal scrollbar's band), as the gear is at the right. The
+ * area is that line, the button in its middle, square and framed as "No filter": the name of the view
+ * shown, a * when it changed, a chevron. The name is cut with an ellipsis where the filter's row starts
+ * (fitViews in rebuildFooter.ts), the * and the chevron stay. With it the footer keeps 36px on both sides
+ * (has-views) - room for a button cut to its * and chevron - and the filter's row stays in the middle. The
+ * same size on a touch screen, as the footer's other buttons */
+.simple-html-grid .footer-views {
+    position: absolute;
+    left: 4px;
+    bottom: 4px;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    max-width: 40%;
+    pointer-events: none;
+}
+
+.simple-html-grid .footer-views-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 1px 4px;
+    border: 1px solid var(--simple-html-grid-main-bg-border);
+    border-radius: 0;
+    background-color: var(--simple-html-grid-sec-bg-color);
+    color: var(--simple-html-grid-main-font-color);
+    font-family: inherit;
+    font-size: inherit;
+    line-height: 1.5;
+    white-space: nowrap;
+    overflow: hidden;
+    cursor: pointer;
+    pointer-events: all;
+}
+
+.simple-html-grid .footer-views-button:hover {
+    background-color: var(--simple-html-grid-main-bg-selected-even);
+}
+
+.simple-html-grid .footer-views-button:active {
+    background-color: var(--simple-html-grid-main-bg-color);
+}
+
+.simple-html-grid .footer-views-name {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* changed since the view was applied or saved: a * in the colour of an edited cell's marker */
+.simple-html-grid .footer-views-modified {
+    flex: none;
+    color: var(--simple-html-grid-edited-color);
+    font-weight: var(--simple-html-grid-font-weight-header);
+}
+
+/* the chevron points down: the button opens a list, as a select does */
+.simple-html-grid .footer-views-button .simple-html-grid-chevron-icon {
+    transform: rotate(90deg);
+}
+
+.simple-html-grid .footer-inner.has-views {
+    padding-left: 36px;
+    padding-right: 36px;
+}
+

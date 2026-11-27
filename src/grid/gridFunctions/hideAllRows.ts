@@ -1,43 +1,23 @@
 import type { Grid } from '../grid';
 
 /**
- * sets all rows to display 'none
- * @param ctx
+ * Hides the row elements of every section, for a large scroll jump: see verticalScrollHandler. Which
+ * row each one shows is kept, the next render shows them again
  */
-
 export function hideAllRows(ctx: Grid) {
-    ctx.containerGroupRowCache.forEach((e) => {
-        const el = ctx.rows.get(e.id);
-        if (el) {
-            el.style.display = 'none';
+    const rowCaches = [
+        ctx.containerGroupRowCache,
+        ctx.containerSelectorRowCache,
+        ctx.containerLeftRowCache,
+        ctx.containerMiddleRowCache,
+        ctx.containerRightRowCache
+    ];
+    for (const rowCache of rowCaches) {
+        for (const entry of rowCache) {
+            const rowElement = ctx.rows.get(entry.id);
+            if (rowElement) {
+                rowElement.style.display = 'none';
+            }
         }
-    });
-
-    ctx.containerSelectorRowCache.forEach((e) => {
-        const el = ctx.rows.get(e.id);
-        if (el) {
-            el.style.display = 'none';
-        }
-    });
-
-    ctx.containerLeftRowCache.forEach((e) => {
-        const el = ctx.rows.get(e.id);
-        if (el) {
-            el.style.display = 'none';
-        }
-    });
-
-    ctx.containerMiddleRowCache.forEach((e) => {
-        const el = ctx.rows.get(e.id);
-        if (el) {
-            el.style.display = 'none';
-        }
-    });
-
-    ctx.containerRightRowCache.forEach((e) => {
-        const el = ctx.rows.get(e.id);
-        if (el) {
-            el.style.display = 'none';
-        }
-    });
+    }
 }

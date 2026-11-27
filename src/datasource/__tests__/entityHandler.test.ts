@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DataContainer } from '../dataContainer';
-import type { Entity } from '../entity';
+import { Datasource } from '../dataSource';
+import { type DataEntity, isGroupRow } from '../entity';
 
 /**
  * EntityHandler is the proxy handler behind every row.
@@ -9,9 +10,9 @@ import type { Entity } from '../entity';
  * Rows are always created through DataContainer.setData, so that is how we build them here.
  */
 
-function makeRow(data: Record<string, any>, keyAttribute?: string, tagAsNew = false): Entity {
+function makeRow(data: Record<string, any>, keyAttribute?: string, tagAsNew = false): DataEntity {
     const container = new DataContainer(keyAttribute);
-    container.setData([data], false, tagAsNew);
+    container.setData([data], { isNew: tagAsNew });
     return container.getDataSet()[0];
 }
 
@@ -144,13 +145,37 @@ describe('entityHandler - edit tracking', () => {
     });
 
     /**
-     * only the day matters - both sides are normalised to midnight before comparing,
-     * so a different time on the same day is not treated as a change
+     * the container has no field types here (no datasource), so `when` is not a date field: it
+     * compares to the second, a time change is an edit. v5 compared every date on the day - a
+     * `date` field still does, see changeTracking.test.ts
      */
-    it('expect a different time on the same day to not count as an edit', () => {
+    it('expect a different time on the same day to count as an edit when the field is not a date field', () => {
         const row = makeRow({ when: new Date(2020, 0, 1, 8, 30, 0) });
         row.when = new Date(2020, 0, 1, 17, 45, 0);
+        expect(row.__controller.__edited).toEqual(true);
+    });
+
+    it('expect only the milliseconds changed to not count as an edit', () => {
+        const row = makeRow({ when: new Date(2020, 0, 1, 8, 30, 0, 0) });
+        row.when = new Date(2020, 0, 1, 8, 30, 0, 999);
         expect(row.__controller.__edited).toEqual(false);
+    });
+
+    it('expect a different time on the same day to not count as an edit on a date field', () => {
+        const container = new DataContainer();
+        new Datasource({ container, fields: { when: 'date' } });
+        container.setData([{ when: new Date(2020, 0, 1, 8, 30, 0) }]);
+        const row = container.getDataSet()[0];
+
+        row.when = new Date(2020, 0, 1, 17, 45, 0);
+        expect(row.__controller.__edited).toEqual(false);
+    });
+
+    it('expect a prop set back to its original to stay in __editedProps as false', () => {
+        const row = makeRow({ name: 'person1' });
+        row.name = 'changed';
+        row.name = 'person1';
+        expect(row.__controller.__editedProps).toEqual({ name: false });
     });
 
     it('expect a non date value set back to its original to clear the flag, for contrast', () => {
@@ -227,7 +252,8 @@ describe('entityHandler - __KEY', () => {
     it('expect setting __KEY to null to not throw', () => {
         const row = makeRow({ id: 'abc', name: 'person1' }, 'id');
         expect(() => {
-            row.__KEY = null;
+            // null! - null is not a valid key type, the proxy has to accept it anyway
+            row.__KEY = null!;
         }).not.toThrow();
     });
 
@@ -245,7 +271,8 @@ describe('entityHandler - group properties', () => {
         container.setData([data]);
         const row = container.getDataSet()[0];
 
-        row.__group = true;
+        // the Entity type says a data row never has __group, set it past the type to test the proxy
+        Reflect.set(row, '__group', true);
         row.__groupLvl = 2;
         row.__groupName = 'group1';
 
@@ -257,10 +284,17 @@ describe('entityHandler - group properties', () => {
 
     it('expect group properties to not count as edits', () => {
         const row = makeRow({ name: 'person1' });
-        row.__group = true;
+        Reflect.set(row, '__group', true);
         row.__groupID = 'id1';
         row.__groupExpanded = true;
         expect(row.__controller.__edited).toEqual(false);
+    });
+
+    it('expect a __group property in the data to be hidden, so the row is still a data row', () => {
+        const row = makeRow({ name: 'person1', __group: true, __groupID: 'x' });
+        expect(row.__group).toBeUndefined();
+        expect(row.__groupID).toBeUndefined();
+        expect(isGroupRow(row)).toBe(false);
     });
 
     it('expect __rowError to be settable and readable', () => {
@@ -268,5 +302,25 @@ describe('entityHandler - group properties', () => {
         row.__rowError = 'something went wrong';
         expect(row.__rowError).toEqual('something went wrong');
         expect(row.__controller.__edited).toEqual(false);
+    });
+});
+
+describe('entityHandler - names that look like the proxy fields', () => {
+    it('expect a field with one underscore, or an empty name, read off the target', () => {
+        const row = makeRow({ _id: 7, _: 'x', '': 'empty', __own: 'not a proxy field' });
+        expect(row._id).toBe(7);
+        expect(row._).toBe('x');
+        expect(row['']).toBe('empty');
+        // a __ name the proxy does not know is the target's too
+        expect(row.__own).toBe('not a proxy field');
+    });
+
+    it('expect a symbol property read off the target', () => {
+        const tag = Symbol('tag');
+        const data: Record<string | symbol, unknown> = { name: 'a' };
+        data[tag] = 'tagged';
+        const row = makeRow(data as Record<string, any>) as unknown as Record<symbol, unknown>;
+        expect(row[tag]).toBe('tagged');
+        expect(row[Symbol.iterator]).toBeUndefined();
     });
 });

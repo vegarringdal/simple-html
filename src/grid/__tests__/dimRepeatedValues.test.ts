@@ -1,8 +1,11 @@
 // @vitest-environment happy-dom
 
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import type { Formatter } from '../../datasource/formatter';
+import { registerFormatter } from '../../datasource/formatterRegistry';
 import type { GridConfig } from '../gridConfig';
-import { mountGrid, simpleConfig, stubCanvas, stubElementSizes } from './gridTestHelpers';
+import type { GridElement } from '../gridElement';
+import { mountGrid, shownRowElements, simpleConfig, stubCanvas, stubElementSizes } from './gridTestHelpers';
 
 /**
  * dimRepeatedValues dims a cell when it repeats the row above, and starts over at the top
@@ -26,10 +29,7 @@ const dimConfig = (): GridConfig => {
  * data-repeated-value per rendered row, in the order the user sees them
  */
 function repeatedFlags(element: HTMLElement, attribute: string): string[] {
-    const container = element.querySelector('.simple-html-grid-body-row-container-pinned-middle');
-    return Array.from(container?.children || [])
-        .filter((row) => (row as HTMLElement).style.display !== 'none')
-        .sort((a, b) => Number(a.getAttribute('aria-rowindex')) - Number(b.getAttribute('aria-rowindex')))
+    return shownRowElements(element as GridElement)
         .map((row) => row.querySelector(`input[data-attribute="${attribute}"]`)?.getAttribute('data-repeated-value') || '')
         .filter((v) => v !== '');
 }
@@ -86,20 +86,22 @@ describe('dimRepeatedValues - on', () => {
     });
 });
 
-describe('dimRepeatedValues - value formaters', () => {
+describe('dimRepeatedValues - field formatters', () => {
     /**
-     * this is a visual feature - if a formater makes two different source values render as
+     * this is a visual feature - if a formatter makes two different source values render as
      * the same text, they look repeated and should dim
      */
     it('expect two different source values that display the same to count as repeated', async () => {
-        const mounted = await mountGrid(dimConfig(), [
-            { firstname: 'aaa', lastname: 'x', age: 1 },
-            { firstname: 'bbb', lastname: 'x', age: 2 }
-        ]);
-
-        const formater = mounted.datasource.getValueFormater();
-        formater.fromSource = () => 'same for everything';
-        mounted.gridInterface.triggerScrollEvent();
+        const same: Formatter = { format: () => 'same for everything', parse: (text) => text };
+        registerFormatter('dimRepeatedValues.same', same);
+        const mounted = await mountGrid(
+            dimConfig(),
+            [
+                { firstname: 'aaa', lastname: 'x', age: 1 },
+                { firstname: 'bbb', lastname: 'x', age: 2 }
+            ],
+            { fields: { age: 'number', firstname: { formatter: 'dimRepeatedValues.same' } } }
+        );
 
         expect(repeatedFlags(mounted.element, 'firstname')).toEqual(['false', 'true']);
     });
@@ -144,5 +146,34 @@ describe('dimRepeatedValues - grouping', () => {
         // every group starts with a full strength cell
         expect(flags[0]).toEqual('false');
         expect(flags).toContain('true');
+    });
+});
+
+describe('dimRepeatedValues - numberOverride', () => {
+    /**
+     * the cells compare the text they show: with numberOverride a blank can show 0 and a 0 nothing. The
+     * formatter's text alone was compared, '' and '0'
+     */
+    const ages = () => [
+        { firstname: 'a', lastname: 'a', age: null },
+        { firstname: 'b', lastname: 'b', age: null },
+        { firstname: 'c', lastname: 'c', age: 0 },
+        { firstname: 'd', lastname: 'd', age: 0 }
+    ];
+
+    it('expect BLANK_TO_ZERO to dim a blank or a 0 under a blank shown as 0', async () => {
+        const config = dimConfig();
+        config.columns = { age: { numberOverride: 'BLANK_TO_ZERO' } };
+        const { element } = await mountGrid(config, ages());
+
+        expect(repeatedFlags(element, 'age')).toEqual(['false', 'true', 'true', 'true']);
+    });
+
+    it('expect ZERO_TO_BLANK not to dim a 0 under a 0: both show nothing, a run of blanks is not dimmed', async () => {
+        const config = dimConfig();
+        config.columns = { age: { numberOverride: 'ZERO_TO_BLANK' } };
+        const { element } = await mountGrid(config, ages());
+
+        expect(repeatedFlags(element, 'age')).toEqual(['false', 'false', 'false', 'false']);
     });
 });

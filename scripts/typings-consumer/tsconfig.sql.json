@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "target": "es2022",
+        "module": "node16",
+        "moduleResolution": "node16",
+        "lib": ["es2022"],
+        "types": [],
+        "strict": true,
+        "skipLibCheck": false,
+        "noEmit": true
+    },
+    "files": ["sql.mts", "sql.cts"]
+}

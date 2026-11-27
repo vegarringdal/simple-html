@@ -1,15 +1,21 @@
 import type { Grid } from '../grid';
-import type { Columns } from '../gridConfig';
+import type { LayoutColumn } from '../gridConfig';
+import { headerCellId, headerRowCount } from './ariaGrid';
 import { asPx } from './asPx';
 import type { ColType, ColumnCache } from './colType';
-import { creatElement } from './createElement';
+import { addColumnNumberListeners } from './columnNumbers';
+import { createElement } from './createElement';
 import { DIV } from './DIV';
 import { dragEvent } from './dragEvent';
-import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGH_PINNED_COLTYPE, SELECTOR_COLTYPE } from './GROUP_COLTYPE';
+import { followPointer, isPrimaryPress } from './followPointer';
+import { LEFT_PINNED_COLTYPE, MIDDLE_PINNED_COLTYPE, RIGHT_PINNED_COLTYPE, SELECTOR_COLTYPE } from './GROUP_COLTYPE';
 import { getElementByClassName } from './getElementByClassName';
 import { getGroupingWidth } from './getGroupingWidth';
+import { gridText } from './gridText';
 import type { HTMLCellElement } from './HTMLCellElement';
-import { horizontalScrollHandler } from './horizontalScrollHandler';
+import { headerLabelKeydown } from './headerLabelKeydown';
+import { horizontalScrollHandler, placeHeaderColumns } from './horizontalScrollHandler';
+import { getMiddleColumnsNeeded } from './rebuildRowColumns';
 import { renderCell } from './renderCell';
 import { updateHorizontalScrollWidth } from './updateHorizontalScrollWidth';
 import { updateMainElementSizes } from './updateMainElementSizes';
@@ -24,22 +30,21 @@ export function rebuildHeaderColumns(ctx: Grid) {
     /**
      * helper to generate cols and rows elements
      */
-    const addColumns = (parent: HTMLElement, columns: Columns[], maxColumns: number, coltype: ColType) => {
+    const addColumns = (parent: HTMLElement, columns: LayoutColumn[], maxColumns: number, coltype: ColType) => {
         let columnsNeeded = maxColumns === 0 ? columns.length : maxColumns;
         if (columns.length < columnsNeeded) {
             columnsNeeded = columns.length;
         }
 
-        if (!parent) {
-            console.log('err');
-        } else {
+        // always there: the row and header containers are made before the columns
+        if (parent) {
             let left = getGroupingWidth(ctx, coltype);
 
             while (parent.firstChild) {
                 parent.removeChild(parent.firstChild);
             }
             if (coltype === 'left-pinned') {
-                const columnElement = creatElement(DIV, 'simple-html-grid-grouping-row-group');
+                const columnElement = createElement(DIV, 'simple-html-grid-grouping-row-group');
                 columnElement.style.width = asPx(left);
                 if (left === 0) {
                     columnElement.style.display = 'none';
@@ -51,7 +56,9 @@ export function rebuildHeaderColumns(ctx: Grid) {
                  * generate column
                  */
 
-                const columnElement = creatElement(DIV, 'simple-html-grid-col');
+                const columnElement = createElement(DIV, 'simple-html-grid-col');
+                // its label and filter cells are owned by the header rows, see ariaGrid.ts
+                columnElement.setAttribute('role', 'none');
 
                 columnElement.style.transform = `translate3d(${left}px, 0px, 0px)`;
                 columnElement.style.width = asPx(columns[i].width);
@@ -74,12 +81,13 @@ export function rebuildHeaderColumns(ctx: Grid) {
                  */
                 if (!config.hideLabels) {
                     for (let y = 0; y < config.__columnCells; y++) {
-                        const cell = creatElement(DIV, 'simple-html-grid-col-cell');
+                        const cell = createElement(DIV, 'simple-html-grid-col-cell');
                         cell.classList.add('simple-html-label');
                         cell.style.top = asPx(top);
                         cell.style.height = asPx(config.cellHeaderLabelHeight);
                         cell.setAttribute('type', 'label');
                         cell.setAttribute('cellNo', y.toString());
+                        cell.id = headerCellId(ctx, coltype, i, 'label', y);
 
                         columnElement.appendChild(cell);
 
@@ -87,32 +95,37 @@ export function rebuildHeaderColumns(ctx: Grid) {
                         top = top + config.cellHeaderLabelHeight;
 
                         /**
-                         * next part handles drop zones in cells, but only if they are/have attribute set
+                         * drop zones, they only have a size while a column is dragged. dragEvent
+                         * highlights the one under the pointer
                          */
-                        const addEvent = (child: HTMLElement, parent: HTMLElement) => {
-                            child.onmouseenter = () => {
-                                if ((parent as HTMLCellElement).$attribute) {
-                                    child.classList.toggle('simple-html-grid-col-resize-hover');
-                                }
-                            };
-                            child.onmouseleave = () => {
-                                if ((parent as HTMLCellElement).$attribute) {
-                                    child.classList.toggle('simple-html-grid-col-resize-hover');
-                                }
-                            };
-                            parent.appendChild(child);
-                        };
-
-                        addEvent(creatElement(DIV, 'simple-html-grid-drop-zone-left'), cell);
-                        addEvent(creatElement(DIV, 'simple-html-grid-drop-zone-right'), cell);
-                        addEvent(creatElement(DIV, 'simple-html-grid-drop-zone-top'), cell);
-                        addEvent(creatElement(DIV, 'simple-html-grid-drop-zone-bottom'), cell);
-                        addEvent(creatElement(DIV, 'simple-html-grid-drop-zone-center'), cell);
+                        cell.appendChild(createElement(DIV, 'simple-html-grid-drop-zone-left'));
+                        cell.appendChild(createElement(DIV, 'simple-html-grid-drop-zone-right'));
+                        cell.appendChild(createElement(DIV, 'simple-html-grid-drop-zone-top'));
+                        cell.appendChild(createElement(DIV, 'simple-html-grid-drop-zone-bottom'));
+                        cell.appendChild(createElement(DIV, 'simple-html-grid-drop-zone-center'));
 
                         /**
-                         * logic for dragdrop and sort event
+                         * logic for dragdrop and sort event, and the keys of a label (Enter sorts)
                          */
                         dragEvent(ctx, cell as HTMLCellElement, true);
+                        cell.addEventListener('keydown', (event) => headerLabelKeydown(ctx, cell as HTMLCellElement, event));
+                        // Shift+F10 and the menu key send contextmenu to the column header with the
+                        // focus, the header menu listens on the label in it (renderHeaderLabel): handed
+                        // on to the label, at the same point
+                        cell.addEventListener('contextmenu', (event) => {
+                            const label = cell.querySelector('[data-attribute-header]');
+                            if (event.target === cell && label) {
+                                event.preventDefault();
+                                label.dispatchEvent(
+                                    new MouseEvent('contextmenu', {
+                                        bubbles: true,
+                                        cancelable: true,
+                                        clientX: event.clientX,
+                                        clientY: event.clientY
+                                    })
+                                );
+                            }
+                        });
                     }
                 }
 
@@ -121,11 +134,12 @@ export function rebuildHeaderColumns(ctx: Grid) {
                  */
                 if (!config.hideFilter) {
                     for (let y = 0; y < config.__columnCells; y++) {
-                        const cell = creatElement(DIV, 'simple-html-grid-col-cell');
+                        const cell = createElement(DIV, 'simple-html-grid-col-cell');
                         cell.style.top = asPx(top);
                         cell.style.height = asPx(config.cellHeight);
                         cell.setAttribute('type', 'filter');
                         cell.setAttribute('cellNo', y.toString());
+                        cell.id = headerCellId(ctx, coltype, i, 'filter', y);
                         columnElement.appendChild(cell);
                         renderCell(ctx, cell, 0, i, y, coltype);
                         top = top + config.cellHeight;
@@ -136,12 +150,18 @@ export function rebuildHeaderColumns(ctx: Grid) {
                  * column selector
                  */
                 if (config.selectSizeHeight) {
-                    const cell = creatElement(DIV, 'simple-html-grid-col-cell');
+                    const cell = createElement(DIV, 'simple-html-grid-col-cell');
                     cell.classList.add('simple-html-label');
                     cell.style.top = asPx(top);
                     cell.style.height = asPx(config.cellHeight);
                     cell.setAttribute('type', SELECTOR_COLTYPE);
                     cell.setAttribute('cellNo', '0');
+                    // a cell of the header row of numbers for a screen reader (ariaGrid.ts), it can have
+                    // the focus (a click puts it there): its keys and the column menu, see columnNumbers.ts
+                    cell.id = headerCellId(ctx, coltype, i, SELECTOR_COLTYPE, 0);
+                    cell.setAttribute('role', 'gridcell');
+                    cell.setAttribute('tabindex', '-1');
+                    addColumnNumberListeners(ctx, cell as HTMLCellElement);
 
                     columnElement.appendChild(cell);
                     renderCell(ctx, cell, 0, i, 0, coltype);
@@ -153,55 +173,79 @@ export function rebuildHeaderColumns(ctx: Grid) {
 
                 // create element we use for resizing, right pinned needs own class
                 let resizeElement: HTMLElement;
-                if (coltype === RIGH_PINNED_COLTYPE) {
-                    resizeElement = creatElement(DIV, 'simple-html-grid-col-resize-right');
+                if (coltype === RIGHT_PINNED_COLTYPE) {
+                    resizeElement = createElement(DIV, 'simple-html-grid-col-resize-right');
                 } else {
-                    resizeElement = creatElement(DIV, 'simple-html-grid-col-resize');
+                    resizeElement = createElement(DIV, 'simple-html-grid-col-resize');
                 }
+                // for the mouse, nothing for a screen reader
+                resizeElement.setAttribute('aria-hidden', 'true');
                 columnElement.appendChild(resizeElement);
 
                 /**
-                 * event for resizing
+                 * the column of the layout the handle is the edge of now: the column element is slot i
+                 * (its refID), the column cache says which column of the layout the slot shows now
                  */
-                resizeElement.onmousedown = (event) => {
-                    // resizing event started, we need to get refID (created column number)
-                    const refID = parseInt((event.target as HTMLElement).parentElement.getAttribute('refID'), 10);
-
-                    // first section here is to collect data we need
-                    const clientX = event.clientX;
+                const layoutColumn = (): LayoutColumn => {
+                    const refID = i;
                     let column: ColumnCache[];
-                    let columnNumber: number;
-                    let col: Columns;
-
-                    const scrollLeft = getElementByClassName(ctx.element, 'simple-html-grid-body-view-pinned-middle').scrollLeft;
+                    // addColumns is only called with the 3 pinned types, so one of the ifs below sets it
+                    let col!: LayoutColumn;
 
                     if (coltype === LEFT_PINNED_COLTYPE) {
                         column = ctx.containerLeftColumnCache.filter((e) => e.refID === refID);
-                        columnNumber = column[0].column;
-                        col = ctx.gridInterface.__getGridConfig().columnsPinnedLeft[columnNumber];
+                        col = ctx.gridInterface.__getGridConfig().layout.left[column[0].column];
                     }
 
                     if (coltype === MIDDLE_PINNED_COLTYPE) {
                         column = ctx.containerMiddleColumnCache.filter((e) => e.refID === refID);
-                        columnNumber = column[0].column;
-                        col = ctx.gridInterface.__getGridConfig().columnsCenter[columnNumber];
+                        col = ctx.gridInterface.__getGridConfig().layout.center[column[0].column];
                     }
 
-                    if (coltype === RIGH_PINNED_COLTYPE) {
+                    if (coltype === RIGHT_PINNED_COLTYPE) {
                         column = ctx.containerRightColumnCache.filter((e) => e.refID === refID);
-                        columnNumber = column[0].column;
-                        col = ctx.gridInterface.__getGridConfig().columnsPinnedRight[columnNumber];
+                        col = ctx.gridInterface.__getGridConfig().layout.right[column[0].column];
                     }
+                    return col;
+                };
+
+                /**
+                 * a double click on the handle fits the column to its content, as Excel does
+                 * (gridInterface.fitColumns). Its two presses are resizes that did not move: they do
+                 * not rebuild the header, so both clicks are on this handle
+                 */
+                resizeElement.addEventListener('dblclick', () => {
+                    ctx.gridInterface.fitColumns(layoutColumn().fields);
+                });
+
+                /**
+                 * event for resizing: pointer events, so a mouse, a pen or a finger. The handle
+                 * captures the pointer, its events come to the handle wherever the pointer goes (see
+                 * followPointer). touch-action none: the browser would scroll the page under a finger
+                 */
+                resizeElement.style.touchAction = 'none';
+                resizeElement.addEventListener('pointerdown', (event) => {
+                    if (!isPrimaryPress(event)) {
+                        return;
+                    }
+
+                    // first section here is to collect data we need
+                    const clientX = event.clientX;
+                    const col = layoutColumn();
+
+                    const scrollLeft = getElementByClassName(ctx.element, 'simple-html-grid-body-view-pinned-middle').scrollLeft;
 
                     const originalWidth = col.width;
 
-                    // when user move mouse, we update
-                    const mousemove = (event: MouseEvent) => {
-                        if (col) {
-                            if (coltype === RIGH_PINNED_COLTYPE) {
-                                col.width = originalWidth - (event.clientX - clientX);
+                    resizeElement.setPointerCapture(event.pointerId);
+
+                    followPointer(resizeElement, event, {
+                        // the edge follows the pointer, the sizes are updated without a rebuild
+                        move: (moveEvent) => {
+                            if (coltype === RIGHT_PINNED_COLTYPE) {
+                                col.width = originalWidth - (moveEvent.clientX - clientX);
                             } else {
-                                col.width = originalWidth + (event.clientX - clientX);
+                                col.width = originalWidth + (moveEvent.clientX - clientX);
                             }
 
                             if (col.width < 25) {
@@ -215,7 +259,7 @@ export function rebuildHeaderColumns(ctx: Grid) {
                                 horizontalScrollHandler(ctx, scrollLeft, MIDDLE_PINNED_COLTYPE);
                             }
 
-                            if (coltype === RIGH_PINNED_COLTYPE) {
+                            if (coltype === RIGHT_PINNED_COLTYPE) {
                                 horizontalScrollHandler(ctx, 0, coltype);
                                 horizontalScrollHandler(ctx, scrollLeft, MIDDLE_PINNED_COLTYPE);
                             }
@@ -230,19 +274,24 @@ export function rebuildHeaderColumns(ctx: Grid) {
                             );
 
                             updateHorizontalScrollWidth(ctx);
+                        },
+                        // narrower columns (or a narrower pinned side) can mean more columns on
+                        // screen than the middle section has elements for, rebuild recounts them.
+                        // Not after a press that did not resize: the header would be made again, and
+                        // the second click of a double click be on another handle
+                        up: () => {
+                            if (col.width !== originalWidth) {
+                                ctx.rebuild();
+                            }
+                        },
+                        // the resize did not finish: the column gets its width back
+                        cancel: () => {
+                            col.width = originalWidth;
+                            ctx.gridInterface.__parseConfig();
+                            ctx.rebuild();
                         }
-                    };
-
-                    // when user lets go of mouse button we need to clean up events
-                    const mouseup = () => {
-                        document.removeEventListener('mousemove', mousemove);
-                        document.removeEventListener('mouseup', mouseup);
-                    };
-
-                    // add events to when user moves/stops resizing
-                    document.addEventListener('mousemove', mousemove);
-                    document.addEventListener('mouseup', mouseup);
-                };
+                    });
+                });
             }
         }
     };
@@ -252,36 +301,46 @@ export function rebuildHeaderColumns(ctx: Grid) {
 
     addColumns(
         getElementByClassName(ctx.element, 'simple-html-grid-header-row-container-pinned-left'),
-        config.columnsPinnedLeft,
+        config.layout.left,
         0,
         LEFT_PINNED_COLTYPE
     );
 
-    // get params we will use to apply max columns
-    const bodyWidth = getElementByClassName(ctx.element, 'simple-html-grid-body').clientWidth;
-    const middleWidth = bodyWidth - (config.__leftWidth + config.__scrollbarSize + config.__rightWidth + config.selectSizeHeight);
-
     addColumns(
         getElementByClassName(ctx.element, 'simple-html-grid-header-row-container-pinned-middle'),
-        config.columnsCenter,
-        middleWidth / 50,
+        config.layout.center,
+        getMiddleColumnsNeeded(ctx),
         MIDDLE_PINNED_COLTYPE
     );
 
     addColumns(
         getElementByClassName(ctx.element, 'simple-html-grid-header-row-container-pinned-right'),
-        config.columnsPinnedRight,
+        config.layout.right,
         0,
-        RIGH_PINNED_COLTYPE
+        RIGHT_PINNED_COLTYPE
     );
+
+    // the middle columns were made at the start of the section: where the rows' columns are when it is
+    // scrolled sideways - a header rendered on its own has no scroll after it (horizontalScrollHandler.ts)
+    placeHeaderColumns(ctx, MIDDLE_PINNED_COLTYPE);
 
     /**
      * for slection in top left cornor
      */
     const selectorTopLeft = getElementByClassName(ctx.element, 'simple-html-grid-header-row-container-selector');
+    // the column header of the row numbers, see createDom. A text, it can have changed. In the first
+    // header row (ariaGrid.ts): with the labels, the filters and the column numbers hidden there is
+    // none, and a column header outside a row is not allowed
+    selectorTopLeft.setAttribute('aria-label', gridText(ctx, 'grid.rowSelector'));
+    if (headerRowCount(config)) {
+        selectorTopLeft.removeAttribute('aria-hidden');
+    } else {
+        selectorTopLeft.setAttribute('aria-hidden', 'true');
+    }
     selectorTopLeft.onclick = (e: MouseEvent) => {
-        if (e.ctrlKey) {
-            ctx.gridInterface.getDatasource().deSelectAll(true);
+        // Ctrl+click (Cmd+click on a Mac) deselects all
+        if (e.ctrlKey || e.metaKey) {
+            ctx.gridInterface.getDatasource().deselectAll({ notify: true });
         } else {
             ctx.gridInterface.getDatasource().selectAll();
         }

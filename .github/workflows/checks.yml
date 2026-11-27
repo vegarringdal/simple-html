@@ -1,0 +1,57 @@
+# The checks of the repo, on every push and pull request. Each check is a job of its own, so they
+# all run and report even when one of them fails.
+# The docs workflow (pages.yml) does not wait for these: the site is deployed either way.
+name: checks
+
+on:
+    push:
+    pull_request:
+
+permissions:
+    contents: read
+
+jobs:
+    check:
+        name: ${{ matrix.check }}
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                check:
+                    - npm run typecheck
+                    - npx vitest run
+                    - npx biome check . --diagnostic-level=error
+                    - npm run check:typings
+                    - npm run check:docs
+        steps:
+            - uses: actions/checkout@v7
+
+            - uses: actions/setup-node@v7
+              with:
+                  node-version: 24
+                  cache: npm
+
+            - run: npm ci
+
+            - run: ${{ matrix.check }}
+
+    # the browser checks (scripts/browser): the docs site in a real Chromium. Not in the matrix above, so
+    # `npm run verify` leaves them out - run them with `npm run build:demo && npm run check:browser`
+    browser:
+        name: browser checks
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+
+            - uses: actions/setup-node@v7
+              with:
+                  node-version: 24
+                  cache: npm
+
+            - run: npm ci
+
+            - run: npx playwright install --with-deps chromium
+
+            - run: npm run build:demo
+
+            - run: npm run check:browser -- --jobs 3

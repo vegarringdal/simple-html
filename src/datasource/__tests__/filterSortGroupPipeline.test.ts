@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Datasource } from '../dataSource';
+import { isGroupRow } from '../entity';
+import { and, where } from '../filterExpression';
 
 /**
  * The datasource keeps three collections: all data -> filtered -> displayed.
@@ -24,12 +26,12 @@ const build = () => {
 };
 
 const names = (ds: Datasource) => ds.getRows().map((r: any) => r.name);
-const dataRowNames = (ds: Datasource) => ds.getRows(true).map((r: any) => r.name);
+const dataRowNames = (ds: Datasource) => ds.getDataRows().map((r: any) => r.name);
 
 describe('pipeline - filter then sort', () => {
     it('expect sorting to apply to the filtered rows only', () => {
         const ds = build();
-        ds.filter([{ attribute: 'company', operator: 'EQUAL', value: 'comp1' }] as any);
+        ds.filter(and(where('company', 'EQUAL', 'comp1')));
         ds.sort([{ attribute: 'name', ascending: true }]);
 
         expect(names(ds)).toEqual(['a', 'b', 'c']);
@@ -38,7 +40,7 @@ describe('pipeline - filter then sort', () => {
     it('expect the sort to survive a later filter change', () => {
         const ds = build();
         ds.sort([{ attribute: 'name', ascending: false }]);
-        ds.filter([{ attribute: 'company', operator: 'EQUAL', value: 'comp1' }] as any);
+        ds.filter(and(where('company', 'EQUAL', 'comp1')));
 
         expect(names(ds)).toEqual(['c', 'b', 'a']);
     });
@@ -46,26 +48,26 @@ describe('pipeline - filter then sort', () => {
     it('expect clearing the filter to keep the sort applied to all rows', () => {
         const ds = build();
         ds.sort([{ attribute: 'name', ascending: true }]);
-        ds.filter([{ attribute: 'company', operator: 'EQUAL', value: 'comp1' }] as any);
+        ds.filter(and(where('company', 'EQUAL', 'comp1')));
         ds.setFilter(null);
         ds.filter();
 
         expect(names(ds)).toEqual(['a', 'b', 'c', 'd', 'e']);
     });
 
-    it('expect length() to report displayed rows and length(true) the filtered rows', () => {
+    it('expect length() to report displayed rows and getDataRows().length the filtered rows', () => {
         const ds = build();
-        ds.filter([{ attribute: 'company', operator: 'EQUAL', value: 'comp1' }] as any);
+        ds.filter(and(where('company', 'EQUAL', 'comp1')));
 
         expect(ds.length()).toEqual(3);
-        expect(ds.length(true)).toEqual(3);
+        expect(ds.getDataRows().length).toEqual(3);
     });
 });
 
 describe('pipeline - filter then group', () => {
     it('expect grouping to only contain filtered rows', () => {
         const ds = build();
-        ds.filter([{ attribute: 'company', operator: 'EQUAL', value: 'comp1' }] as any);
+        ds.filter(and(where('company', 'EQUAL', 'comp1')));
         ds.group([{ attribute: 'product' }] as any);
         ds.expandGroup();
 
@@ -77,15 +79,15 @@ describe('pipeline - filter then group', () => {
         ds.group([{ attribute: 'company' }] as any);
         expect(ds.getRows()).toHaveLength(2);
 
-        ds.filter([{ attribute: 'company', operator: 'EQUAL', value: 'comp1' }] as any);
+        ds.filter(and(where('company', 'EQUAL', 'comp1')));
 
-        expect(ds.getRows().filter((r: any) => r.__group)).toHaveLength(1);
+        expect(ds.getRows().filter(isGroupRow)).toHaveLength(1);
     });
 
     it('expect a filter matching nothing to leave no groups', () => {
         const ds = build();
         ds.group([{ attribute: 'company' }] as any);
-        ds.filter([{ attribute: 'company', operator: 'EQUAL', value: 'nope' }] as any);
+        ds.filter(and(where('company', 'EQUAL', 'nope')));
 
         expect(ds.getRows()).toHaveLength(0);
     });
@@ -110,7 +112,7 @@ describe('pipeline - grouping with sorting', () => {
 
         const comp1 = ds
             .getRows()
-            .filter((r: any) => !r.__group && r.company === 'comp1')
+            .filter((r) => !isGroupRow(r) && r.company === 'comp1')
             .map((r: any) => r.name);
         expect(comp1).toEqual(['c', 'b', 'a']);
     });
@@ -122,8 +124,8 @@ describe('pipeline - grouping with sorting', () => {
 
         const levels = ds
             .getRows()
-            .filter((r: any) => r.__group)
-            .map((r: any) => r.__groupLvl);
+            .filter(isGroupRow)
+            .map((r) => r.__groupLvl);
         expect(Math.max(...levels)).toBeGreaterThan(Math.min(...levels));
     });
 
@@ -166,24 +168,24 @@ describe('pipeline - setData with active filter/sort/grouping', () => {
         const ds = build();
         ds.sort([{ attribute: 'name', ascending: true }]);
 
-        ds.setData([{ company: 'comp3', product: 'group3', qty: 9, name: 'aa' }], false, true);
+        ds.setData([{ company: 'comp3', product: 'group3', qty: 9, name: 'aa' }], { refilter: true });
 
         expect(names(ds)).toEqual(['aa']);
     });
 
     it('expect a rerun filter to apply to newly added data', () => {
         const ds = build();
-        ds.filter([{ attribute: 'company', operator: 'EQUAL', value: 'comp1' }] as any);
+        ds.filter(and(where('company', 'EQUAL', 'comp1')));
         expect(ds.length()).toEqual(3);
 
-        ds.setData([{ company: 'comp1', product: 'group9', qty: 9, name: 'new' }], true, true);
+        ds.setData([{ company: 'comp1', product: 'group9', qty: 9, name: 'new' }], { add: true, refilter: true });
 
         expect(ds.length()).toEqual(4);
     });
 
     it('expect reloadDatasource to reapply the current filter', () => {
         const ds = build();
-        ds.filter([{ attribute: 'company', operator: 'EQUAL', value: 'comp1' }] as any);
+        ds.filter(and(where('company', 'EQUAL', 'comp1')));
         ds.reloadDatasource();
 
         expect(ds.length()).toEqual(3);
@@ -198,7 +200,7 @@ describe('pipeline - getFilterString', () => {
 
     it('expect a simple filter to be described', () => {
         const ds = build();
-        ds.filter([{ attribute: 'company', operator: 'EQUAL', value: 'comp1' }] as any);
+        ds.filter(and(where('company', 'EQUAL', 'comp1')));
 
         const text = ds.getFilterString();
         expect(text).toContain('COMPANY');

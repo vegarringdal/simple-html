@@ -76,21 +76,21 @@ describe('datasource selection', () => {
     });
 
     it('select row 2 and 4', () => {
-        datasource.getSelection().deSelectAll();
+        datasource.getSelection().deselectAll();
         datasource.getSelection().highlightRow({ ctrlKey: true } as any, 2);
         datasource.getSelection().highlightRow({ ctrlKey: true } as any, 4);
         expect(datasource.getSelection().getSelectedRows()).toEqual([2, 4]);
     });
 
     it('select row 2 and 4', () => {
-        datasource.getSelection().deSelectAll();
+        datasource.getSelection().deselectAll();
         datasource.getSelection().highlightRow({} as any, 2);
         datasource.getSelection().highlightRow({ ctrlKey: true } as any, 4);
         expect(datasource.getSelection().getSelectedRows()).toEqual([2, 4]);
     });
 
-    it('deSelectAll, select -1, then shiftkey row 4', () => {
-        datasource.getSelection().deSelectAll();
+    it('deselectAll, select -1, then shiftkey row 4', () => {
+        datasource.getSelection().deselectAll();
         datasource.getSelection().highlightRow({} as any, -1);
         datasource.getSelection().highlightRow({ shiftKey: true } as any, 4);
         expect(datasource.getSelection().getSelectedRows()).toEqual([4]);
