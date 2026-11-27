@@ -48,6 +48,8 @@ function text(selector: string) {
 describe('docs site', { timeout: 30_000 }, () => {
     // the css of the site as built: index.css, the grid's css files in it
     let siteCss = '';
+    /** the build.json of the build: what it is built from, the list of dev/ on gh-pages reads it */
+    let buildJson: Record<string, unknown> = {};
 
     beforeAll(() => {
         stubCanvas();
@@ -58,6 +60,7 @@ describe('docs site', { timeout: 30_000 }, () => {
             execFileSync('node', ['scripts/buildDemo.js', outDir], { cwd: ROOT, stdio: 'pipe' });
             const bundle = fs.readFileSync(path.join(outDir, 'index.js'), 'utf8');
             siteCss = fs.readFileSync(path.join(outDir, 'index.css'), 'utf8');
+            buildJson = JSON.parse(fs.readFileSync(path.join(outDir, 'build.json'), 'utf8'));
             new Function(bundle)();
         } finally {
             fs.rmSync(outDir, { recursive: true, force: true });
@@ -119,8 +122,13 @@ describe('docs site', { timeout: 30_000 }, () => {
         const line = document.querySelector('.sidebar-header .sidebar-build');
         const branch = execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: ROOT }).toString().trim();
         const commit = execFileSync('git', ['rev-parse', '--short=7', 'HEAD'], { cwd: ROOT }).toString().trim();
-        expect(line?.textContent).toContain(`${branch} @ ${commit}`);
+        const version = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
+        expect(line?.textContent).toContain(`v${version} · ${branch} @ ${commit}`);
         expect(line?.querySelector('a')?.getAttribute('href')).toMatch(/^https:\/\/[^@]+\/commit\/[0-9a-f]{40}$/);
+        // not the docs of a branch on gh-pages (DOCS_DEV=1): no dev badge
+        expect(line?.querySelector('.sidebar-build-dev')).toBeNull();
+        expect(buildJson).toMatchObject({ branch, commit, version, dev: false });
+        expect(buildJson.built).toMatch(/^\d{4}-\d\d-\d\dT/);
     });
 
     it("picks the grids' theme in the sidebar: the default or TreDeSpace, its css in the site", () => {

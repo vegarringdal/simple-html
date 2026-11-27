@@ -66,6 +66,12 @@ declare module 'docs:status' {
         localChanges: boolean;
         /** the commit on github, '' when unknown */
         url: string;
+        /** the version in package.json */
+        version: string;
+        /** the docs of a branch, deployed under dev/ on gh-pages */
+        dev: boolean;
+        /** when the site was built, ISO */
+        built: string;
     }
     const status: {
         build: BuildInfo;

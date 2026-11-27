@@ -1,0 +1,31 @@
+# A pull request to master: its title says what merging it releases (release.yml), and it leaves the
+# version alone - the release sets it. Fails until the title is one of
+#   fix: ...   feat: ...   fix!: ...   feat!: ...         a patch, a minor, a major release
+#   chore: ... docs: ... test: ... refactor: ... ci: ... build: ... perf: ... style: ...   no release
+# (a scope is fine: feat(grid): ...). Renaming the pull request runs it again. The tests are checks.yml.
+# Merge with "Squash and merge" and the title as the commit's: the release reads it from there.
+# See scripts/releaseVersion.js.
+name: pull request
+
+on:
+    pull_request:
+        branches: [master]
+        types: [opened, edited, synchronize, reopened]
+
+permissions:
+    contents: read
+
+jobs:
+    title-and-version:
+        name: title and version
+        runs-on: ubuntu-latest
+        steps:
+            # all of it: the package.json of the base branch
+            - uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0
+
+            - run: node scripts/releaseVersion.js check-pr
+              env:
+                  TITLE: ${{ github.event.pull_request.title }}
+                  BASE: origin/${{ github.base_ref }}

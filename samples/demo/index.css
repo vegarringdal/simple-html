@@ -16,6 +16,9 @@
     --demo-muted: light-dark(#6b7280, #9ca3af);
     --demo-border: light-dark(#d1d5db, #4b5563);
     --demo-accent: light-dark(#2563eb, #60a5fa);
+    /* the dev badge of a branch's docs (gh-pages dev/<branch>/) */
+    --demo-dev-badge: light-dark(#c2410c, #fb923c);
+    --demo-dev-badge-text: light-dark(#ffffff, #1c1917);
     --demo-error: light-dark(#dc2626, #f87171);
     /* a row the rowClass hook marks, in the cell styling sample */
     --demo-row-marked: light-dark(#fdecec, #4a2f35);
@@ -154,6 +157,19 @@ body {
 
 .sidebar-build a:hover {
     text-decoration: underline;
+}
+
+/* the docs of a branch: a badge before the version, a link to the released docs */
+.sidebar-build a.sidebar-build-dev {
+    display: inline-block;
+    padding: 0 5px;
+    border-radius: 3px;
+    background: var(--demo-dev-badge);
+    color: var(--demo-dev-badge-text);
+    font-family: inherit;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
 
 .doc-status .sidebar-build {

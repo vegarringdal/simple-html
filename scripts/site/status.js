@@ -47,13 +47,18 @@ function httpsUrl(remote) {
 /**
  * What the site is built from
  * @param {NodeJS.ProcessEnv} [env] the environment: in a github action GITHUB_REF_NAME, GITHUB_SHA,
- *   GITHUB_SERVER_URL and GITHUB_REPOSITORY say it
+ *   GITHUB_SERVER_URL and GITHUB_REPOSITORY say it. DOCS_SHA, when set, is the commit instead of
+ *   GITHUB_SHA: the release builds the site from the commit it made, after the one that started it.
+ *   DOCS_DEV=1: the docs of a branch, deployed under dev/ (pages.yml)
  * @param {(args: string[]) => string} [runGit] for the tests
- * @returns {{ branch: string, commit: string, sha: string, date: string, localChanges: boolean, url: string }}
- *   commit: the short hash; date: the commit's (ISO); url: the commit on github, '' when unknown
+ * @param {string} [version] the version in package.json
+ * @returns {{ branch: string, commit: string, sha: string, date: string, localChanges: boolean, url: string,
+ *   version: string, dev: boolean, built: string }}
+ *   commit: the short hash; date: the commit's (ISO); url: the commit on github, '' when unknown;
+ *   built: when the site was built (ISO, UTC)
  */
-function buildInfo(env = process.env, runGit = git) {
-    const sha = env.GITHUB_SHA || runGit(['rev-parse', 'HEAD']);
+function buildInfo(env = process.env, runGit = git, version = packageVersion()) {
+    const sha = env.DOCS_SHA || env.GITHUB_SHA || runGit(['rev-parse', 'HEAD']);
     const repo =
         env.GITHUB_SERVER_URL && env.GITHUB_REPOSITORY
             ? `${env.GITHUB_SERVER_URL}/${env.GITHUB_REPOSITORY}`
@@ -65,8 +70,20 @@ function buildInfo(env = process.env, runGit = git) {
         date: runGit(['log', '-1', '--format=%cI']),
         // an action builds a clean checkout; locally the site can be built from files not committed yet
         localChanges: !env.GITHUB_ACTIONS && runGit(['status', '--porcelain']) !== '',
-        url: repo && sha ? `${repo}/commit/${sha}` : ''
+        url: repo && sha ? `${repo}/commit/${sha}` : '',
+        version,
+        dev: env.DOCS_DEV === '1',
+        built: new Date().toISOString()
     };
+}
+
+/** the version in package.json, '' when it can not be read */
+function packageVersion() {
+    try {
+        return JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version ?? '';
+    } catch {
+        return '';
+    }
 }
 
 /**

@@ -1,24 +1,29 @@
-# Publishes the package to GitHub Packages (npm.pkg.github.com) as a release: the version in
-# package.json, npm tag `latest`, and a git tag v<version>. Only from the repository's default branch
-# (master): run it from the Actions tab, "Run workflow". From another branch it stops before anything
-# is published - betas come from beta.yml.
+# A release on every push to master that brings a fix: or feat: - the pull requests' titles say it
+# (pr.yml checks them): fix: a patch, feat: a minor version, fix!: or feat!: a major one. chore:,
+# docs:, test: ... release nothing. See scripts/releaseVersion.js.
+#
+# A release: the checks, the version bumped in package.json and package-lock.json and committed to
+# master (chore(release): <version>), the git tag v<version>, the package published to GitHub
+# Packages with the npm tag `latest`, a GitHub release with the titles as notes. Then the docs at the
+# root of GitHub Pages (pages.yml), with or without a release.
 #
 # The package is `@<owner>/simple-html-grid` there: GitHub Packages takes only the scope of the
 # repository's owner. Install it under its usual name with an npm alias, so the imports stay:
 #   npm install @simple-html/grid@npm:@<owner>/simple-html-grid
-# (an .npmrc with `@<owner>:registry=https://npm.pkg.github.com` and a token that may read packages).
-# See scripts/githubPackage.js.
+# See scripts/githubPackage.js. The commit is pushed with the workflow's token: it starts no workflow,
+# and a protected master has to let github-actions push.
 name: release
 
 on:
-    workflow_dispatch:
+    push:
+        branches: [master]
 
 permissions:
-    # the git tag of the release
+    # the release commit, the tag, the GitHub release, gh-pages
     contents: write
     packages: write
 
-# one release at a time
+# one release at a time, in order: a run waiting for another checks out master after its release commit
 concurrency:
     group: release
     cancel-in-progress: false
@@ -26,18 +31,14 @@ concurrency:
 jobs:
     release:
         runs-on: ubuntu-latest
+        outputs:
+            sha: ${{ steps.sha.outputs.sha }}
         steps:
-            - name: only from the default branch
-              env:
-                  BRANCH: ${{ github.ref_name }}
-                  DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-              run: |
-                  if [ "$BRANCH" != "$DEFAULT_BRANCH" ]; then
-                      echo "::error::a release is published from $DEFAULT_BRANCH only, not from $BRANCH - use the beta workflow"
-                      exit 1
-                  fi
-
+            # master as it is now, all of it: the commits since the last tag
             - uses: actions/checkout@v7
+              with:
+                  ref: ${{ github.ref_name }}
+                  fetch-depth: 0
 
             - uses: actions/setup-node@v7
               with:
@@ -45,45 +46,82 @@ jobs:
                   cache: npm
                   registry-url: https://npm.pkg.github.com
 
+            # the version, written to package.json and package-lock.json - or released=false
+            - id: next
+              run: node scripts/releaseVersion.js next
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  # the notes of the release, out of the checkout
+                  RELEASE_NOTES: ${{ runner.temp }}/release-notes.md
+
             # npm ci builds dist too (the prepare script)
             - run: npm ci
+              if: steps.next.outputs.released == 'true'
 
             # the checks of checks.yml: nothing is published that does not pass them
-            - run: npm run typecheck
-            - run: npx vitest run
-            - run: npx biome check . --diagnostic-level=error
-            - run: npm run check:typings
-            - run: npm run check:docs
+            - name: checks
+              if: steps.next.outputs.released == 'true'
+              run: |
+                  npm run typecheck
+                  npx vitest run
+                  npx biome check . --diagnostic-level=error
+                  npm run check:typings
+                  npm run check:docs
 
+            # both or neither: a tag without its commit, or the other way round, is not pushed
+            - name: commit and tag
+              if: steps.next.outputs.released == 'true'
+              env:
+                  VERSION: ${{ steps.next.outputs.version }}
+                  BRANCH: ${{ github.ref_name }}
+              run: |
+                  git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -q -m "chore(release): $VERSION" -- package.json package-lock.json
+                  git tag "v$VERSION"
+                  git push --atomic origin "HEAD:refs/heads/$BRANCH" "v$VERSION"
+
+            - id: sha
+              run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+            # the name and the registry of GitHub Packages, in the checkout only
             - id: package
+              if: steps.next.outputs.released == 'true'
               run: node scripts/githubPackage.js release
 
-            - name: the version must be new
-              env:
-                  VERSION: ${{ steps.package.outputs.version }}
-              run: |
-                  if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" > /dev/null; then
-                      echo "::error::v$VERSION is released already - change the version in package.json"
-                      exit 1
-                  fi
-
-            - run: npm publish --tag "${{ steps.package.outputs.tag }}"
+            - run: npm publish --tag latest
+              if: steps.next.outputs.released == 'true'
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: tag the release
+            - name: github release
+              if: steps.next.outputs.released == 'true'
               env:
-                  VERSION: ${{ steps.package.outputs.version }}
-              run: |
-                  git tag "v$VERSION"
-                  git push origin "v$VERSION"
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  VERSION: ${{ steps.next.outputs.version }}
+                  RELEASE_NOTES: ${{ runner.temp }}/release-notes.md
+              run: gh release create "v$VERSION" --title "v$VERSION" --notes-file "$RELEASE_NOTES" --verify-tag
 
             - name: summary
               env:
+                  RELEASED: ${{ steps.next.outputs.released }}
                   NAME: ${{ steps.package.outputs.name }}
-                  VERSION: ${{ steps.package.outputs.version }}
+                  VERSION: ${{ steps.next.outputs.version }}
+                  RELEASE_NOTES: ${{ runner.temp }}/release-notes.md
               run: |
+                  if [ "$RELEASED" != "true" ]; then
+                      echo "No release: no fix: or feat: since the last one" >> "$GITHUB_STEP_SUMMARY"
+                      exit 0
+                  fi
                   echo "Published $NAME@$VERSION (latest)" >> "$GITHUB_STEP_SUMMARY"
                   echo '```' >> "$GITHUB_STEP_SUMMARY"
                   echo "npm install @simple-html/grid@npm:$NAME@$VERSION" >> "$GITHUB_STEP_SUMMARY"
                   echo '```' >> "$GITHUB_STEP_SUMMARY"
+                  cat "$RELEASE_NOTES" >> "$GITHUB_STEP_SUMMARY"
+
+    # the docs of master at the root of GitHub Pages, built from the release commit
+    pages:
+        needs: release
+        uses: ./.github/workflows/pages.yml
+        with:
+            ref: ${{ needs.release.outputs.sha }}
+        permissions:
+            contents: write

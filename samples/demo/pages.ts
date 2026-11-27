@@ -198,6 +198,18 @@ function commitDate(iso: string) {
 export function buildLine(build: BuildInfo): HTMLElement {
     const line = document.createElement('div');
     line.className = 'sidebar-build';
+    // the docs of a branch (gh-pages dev/<branch>/): said, with the way to the released ones
+    if (build.dev) {
+        const dev = document.createElement('a');
+        dev.className = 'sidebar-build-dev';
+        dev.href = '../../';
+        dev.textContent = 'dev';
+        dev.title = 'the docs of a branch, not released - the released docs are here';
+        line.append(dev, ' ');
+    }
+    if (build.version) {
+        line.append(`v${build.version} · `);
+    }
     const label = `${build.branch} @ ${build.commit}`;
     if (build.url) {
         const link = document.createElement('a');

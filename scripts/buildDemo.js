@@ -1,10 +1,11 @@
 const fs = require('node:fs');
 const esbuild = require('esbuild');
 const { docsPlugin } = require('./site/esbuildPlugin');
+const { buildInfo } = require('./site/status');
 
 /**
  * Builds the docs site (samples/demo: guides, samples and API pages) once into ./dist_demo as a
- * static site. This is what the "demo" github action publishes to the gh-pages branch.
+ * static site. This is what the "pages" github action publishes to the gh-pages branch.
  * `npm start` serves the same app with hot reload while working on it.
  *
  * `node scripts/buildDemo.js <folder>` builds into another folder, the smoke test of the site
@@ -16,6 +17,8 @@ const { docsPlugin } = require('./site/esbuildPlugin');
  * - index.css  esbuild writes the css the app imports next to the js
  * - index.html
  * - .nojekyll  github pages serves the folder as it is, without running jekyll on it
+ * - build.json what it is built from (scripts/site/status.js buildInfo): the list of dev/ on gh-pages
+ *              reads it (scripts/pages.js)
  */
 
 const OUT_DIR = process.argv[2] || './dist_demo';
@@ -54,6 +57,7 @@ async function run() {
 
     fs.writeFileSync(`${OUT_DIR}/index.html`, INDEX_HTML);
     fs.writeFileSync(`${OUT_DIR}/.nojekyll`, '');
+    fs.writeFileSync(`${OUT_DIR}/build.json`, `${JSON.stringify(buildInfo(), null, 4)}\n`);
 }
 
 run().catch((err) => {

@@ -58,10 +58,11 @@ npm install @simple-html/grid@npm:@airemote/simple-html-grid@6.0.0-next.3  # one
 npm install @simple-html/grid@npm:@airemote/simple-html-grid@beta-v6-maybe # the last beta of a branch
 ```
 
-A release is published from the default branch only (the `release` workflow), a dev build from any
-branch (the `next` workflow, `<version>-next.<run>`, npm tag `next`), a beta from any branch (the `beta`
-workflow, `<version>-beta.<branch>.<run>`, npm tag `beta-<branch>`); all run from the Actions tab and
-only publish what passes the checks. See `scripts/githubPackage.js`.
+A release is published when a pull request with `fix:` or `feat:` is merged to master (the `release`
+workflow, see [Releases](#releases)). A dev build from any branch (the `next` workflow,
+`<version>-next.<run>`, npm tag `next`) and a beta from any branch (the `beta` workflow,
+`<version>-beta.<branch>.<run>`, npm tag `beta-<branch>`) are run from the Actions tab. All of them only
+publish what passes the checks. See `scripts/githubPackage.js`.
 
 Or install it from a git branch, the `prepare` script builds `dist` on install:
 
@@ -154,6 +155,40 @@ npm start # the docs and samples site on http://localhost:8080
   `samples/`
 - `npm test` runs the tests, `npm run check:docs` checks the guides, the JSDoc and their examples
 - `npm run build` builds `dist`, `npm run build:tgz` the tgz
-- publishing: the workflows `release` (the default branch only: the version of package.json, npm tag
-  `latest`, a git tag) and `beta` (any branch) in `.github/workflows`, run from the Actions tab - bump
-  the version in package.json before a release
+- publishing and the docs site: see [Releases](#releases) below
+
+### Releases
+
+Every change goes to master through a pull request. Its title says what merging it releases, the
+`pull request` check (`.github/workflows/pr.yml`) fails until it is one of:
+
+| Title | Release |
+| --- | --- |
+| `fix: ...` | a patch, 6.0.0 -> 6.0.1 |
+| `feat: ...` | a minor version, 6.0.0 -> 6.1.0 |
+| `fix!: ...`, `feat!: ...` | a major version, something breaks: 6.0.0 -> 7.0.0 |
+| `chore:`, `docs:`, `test:`, `refactor:`, `ci:`, `build:`, `perf:`, `style:` | none |
+
+A scope is fine (`feat(grid): a find bar`). The pull request leaves the version in package.json
+alone, the check fails if it changes it: the release sets it. The tests run on it as on every push
+(`checks.yml`). Merge it with **Squash and merge**, the title as the commit's (Settings -> General ->
+Pull Requests -> squash merging: "Default to pull request title"): the release reads the titles from
+master's commits. A merge commit works too, its pull request's title is looked up.
+
+On each push to master the `release` workflow (`release.yml`, `scripts/releaseVersion.js`) reads the
+titles merged since the last tag: the biggest of them bumps the version. A release runs the checks,
+commits the new version to master (`chore(release): 6.1.0`), tags it `v6.1.0`, publishes the package
+to GitHub Packages (npm tag `latest`) and makes a GitHub release with the titles as its notes. Then the
+docs site of master goes to the root of GitHub Pages, released or not.
+
+### The docs site
+
+`.github/workflows/pages.yml` puts the docs site (`npm run build:demo`) on the `gh-pages` branch:
+
+- master's at the root, https://airemote.github.io/simple-html/, after every push to master
+- any other branch's under `dev/<branch>/` (https://airemote.github.io/simple-html/dev/v6-maybe/), by
+  hand: Actions -> pages -> Run workflow, pick the branch. `dev/` lists them. Run it with "remove"
+  ticked to take a branch's docs down; deleting the branch takes them down too
+
+The sidebar of the site says what it is built from: the version, the branch, the commit and its date,
+and a **dev** badge on a branch's docs that links to the released ones.

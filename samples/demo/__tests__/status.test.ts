@@ -77,13 +77,16 @@ describe('docs site status - what it is built from', () => {
             'log -1 --format=%cI': '2026-11-21T17:50:52+01:00',
             'status --porcelain': ' M file.ts'
         };
-        expect(status.buildInfo({}, (args: string[]) => answers[args.join(' ')] ?? '')).toEqual({
+        expect(status.buildInfo({}, (args: string[]) => answers[args.join(' ')] ?? '', '6.0.0')).toEqual({
             branch: 'v6_maybe',
             commit: 'abcdef1',
             sha: 'abcdef1234567890abcdef1234567890abcdef12',
             date: '2026-11-21T17:50:52+01:00',
             localChanges: true,
-            url: 'https://github.com/a/b/commit/abcdef1234567890abcdef1234567890abcdef12'
+            url: 'https://github.com/a/b/commit/abcdef1234567890abcdef1234567890abcdef12',
+            version: '6.0.0',
+            dev: false,
+            built: expect.stringMatching(/^\d{4}-\d\d-\d\dT[\d:.]+Z$/)
         });
     });
 
@@ -104,6 +107,20 @@ describe('docs site status - what it is built from', () => {
             false,
             'https://github.com/airemote/simple-html/commit/1234567890abcdef1234567890abcdef12345678'
         ]);
+    });
+
+    it('expect DOCS_SHA to be the commit over GITHUB_SHA (the release), DOCS_DEV=1 a dev build', () => {
+        const env = {
+            GITHUB_ACTIONS: 'true',
+            GITHUB_REF_NAME: 'master',
+            GITHUB_SHA: '1111111111111111111111111111111111111111',
+            DOCS_SHA: '2222222222222222222222222222222222222222',
+            DOCS_DEV: '1'
+        };
+        const build = status.buildInfo(env, () => '');
+        expect([build.commit, build.dev]).toEqual(['2222222', true]);
+        // the version of the repo's package.json when none is given
+        expect(build.version).toMatch(/^\d+\.\d+\.\d+/);
     });
 
     it('expect no git at all to give unknown, and no link', () => {
