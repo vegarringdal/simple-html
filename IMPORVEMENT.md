@@ -5719,6 +5719,14 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
   task, not on opening, the big one on the last box, Start again forgets, a changed box or junk starts
   over). Seen in Chromium: confetti over the shortcuts dialog, the canvas gone after, the sidebar ✓
 
+### The build line of a pull request: its branch, not `64/merge` (2026-11-27)
+`scripts/site/status.js` `buildInfo()`, `samples/demo/__tests__/site.test.ts`
+
+The checks of pull request #64 failed in `npx vitest run`: in a pull request GITHUB_REF_NAME is
+`64/merge` and the checkout has no branch, so the site said `64/merge` and the test, asking git, wanted
+`HEAD`. The branch is now GITHUB_HEAD_REF (the pull request's branch, only set in one), then
+GITHUB_REF_NAME, then git - and the test takes it the same way. A test of status.js for it.
+
 ## Considered, not done
 
 ## Candidates / not started

@@ -120,7 +120,11 @@ describe('docs site', { timeout: 30_000 }, () => {
 
     it('shows the branch and the commit the site is built from, at the top of the sidebar', () => {
         const line = document.querySelector('.sidebar-header .sidebar-build');
-        const branch = execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: ROOT }).toString().trim();
+        // in a github action the branch is its variable (status.js): it checks out the commit alone
+        const branch =
+            process.env.GITHUB_HEAD_REF ||
+            process.env.GITHUB_REF_NAME ||
+            execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: ROOT }).toString().trim();
         const commit = execFileSync('git', ['rev-parse', '--short=7', 'HEAD'], { cwd: ROOT }).toString().trim();
         const version = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
         expect(line?.textContent).toContain(`v${version} · ${branch} @ ${commit}`);

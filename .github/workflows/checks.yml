@@ -1,6 +1,6 @@
 # The checks of the repo, on every push and pull request. Each check is a job of its own, so they
 # all run and report even when one of them fails.
-# The demo workflow (demo.yml) does not wait for these: the site is deployed either way.
+# The docs workflow (pages.yml) does not wait for these: the site is deployed either way.
 name: checks
 
 on:

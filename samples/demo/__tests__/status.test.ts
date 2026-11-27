@@ -109,6 +109,11 @@ describe('docs site status - what it is built from', () => {
         ]);
     });
 
+    it("expect a pull request's branch, not its ref name 64/merge", () => {
+        const env = { GITHUB_ACTIONS: 'true', GITHUB_REF_NAME: '64/merge', GITHUB_HEAD_REF: 'v6_maybe' };
+        expect(status.buildInfo(env, () => 'HEAD').branch).toBe('v6_maybe');
+    });
+
     it('expect DOCS_DEV=1 to be a dev build, the version of package.json when none is given', () => {
         const env = {
             GITHUB_ACTIONS: 'true',

@@ -47,7 +47,8 @@ function httpsUrl(remote) {
 /**
  * What the site is built from
  * @param {NodeJS.ProcessEnv} [env] the environment: in a github action GITHUB_REF_NAME, GITHUB_SHA,
- *   GITHUB_SERVER_URL and GITHUB_REPOSITORY say it. DOCS_DEV=1: the docs of a branch, deployed under
+ *   GITHUB_SERVER_URL and GITHUB_REPOSITORY say it - for a pull request GITHUB_HEAD_REF, its branch (the
+ *   ref name is `64/merge` there). DOCS_DEV=1: the docs of a branch, deployed under
  *   dev/ (pages.yml)
  * @param {(args: string[]) => string} [runGit] for the tests
  * @param {string} [version] the version in package.json
@@ -63,7 +64,7 @@ function buildInfo(env = process.env, runGit = git, version = packageVersion()) 
             ? `${env.GITHUB_SERVER_URL}/${env.GITHUB_REPOSITORY}`
             : httpsUrl(runGit(['remote', 'get-url', 'origin']));
     return {
-        branch: env.GITHUB_REF_NAME || runGit(['rev-parse', '--abbrev-ref', 'HEAD']) || 'unknown',
+        branch: env.GITHUB_HEAD_REF || env.GITHUB_REF_NAME || runGit(['rev-parse', '--abbrev-ref', 'HEAD']) || 'unknown',
         commit: sha ? sha.slice(0, 7) : 'unknown',
         sha,
         date: runGit(['log', '-1', '--format=%cI']),
