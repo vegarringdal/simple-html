@@ -1,4 +1,4 @@
-# @simple-html/grid
+# simple-html grid
 
 A data grid for plain TypeScript or JavaScript apps, no framework needed. A `Datasource` holds your
 rows and knows the type of each field: it sorts, filters and groups them, keeps the selection, and
@@ -13,6 +13,9 @@ hooks, given next to the config.
 
 Docs, guides and live samples: https://vegarringdal.github.io/simple-html/. The guides are also in this
 repo, see [Guides](#guides) below.
+
+It is installed from GitHub Packages as `@vegarringdal/simple-html-grid`, under the name
+`@simple-html/grid` that the imports use - see [Install](#install).
 
 ## Features
 
