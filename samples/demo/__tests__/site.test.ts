@@ -216,7 +216,7 @@ describe('docs site', { timeout: 30_000 }, () => {
         }
         const migration = [...hrefs].filter((href) => href.includes('MIGRATION.md'));
 
-        expect(migration).toContain('https://github.com/airemote/simple-html/blob/v6_maybe/MIGRATION.md#package');
+        expect(migration).toContain('https://github.com/vegarringdal/simple-html/blob/master/MIGRATION.md#package');
         // used to be ../MIGRATION.md#package, a 404 on the site
         expect([...hrefs].filter((href) => href.startsWith('../') || href.startsWith('./'))).toEqual([]);
     });

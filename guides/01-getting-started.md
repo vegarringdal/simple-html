@@ -6,12 +6,26 @@ on a page.
 
 ## Install
 
-The package is not on npm. Install it from a git branch: the `prepare` script builds `dist` when it
-is installed.
+The package is not on npmjs.com. It is on GitHub Packages as
+[`@vegarringdal/simple-html-grid`](https://github.com/vegarringdal/simple-html/pkgs/npm/simple-html-grid):
+install it under its usual name with an npm alias, so the imports stay `@simple-html/grid`. GitHub
+Packages needs a token that may read packages (a personal access token with `read:packages`), in an
+`.npmrc` next to your package.json:
+
+```ini
+@vegarringdal:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
+
+```sh
+npm install @simple-html/grid@npm:@vegarringdal/simple-html-grid
+```
+
+Or install it from a git branch: the `prepare` script builds `dist` when it is installed.
 
 ```json
 "dependencies": {
-    "@simple-html/grid": "github:airemote/simple-html#<branch>"
+    "@simple-html/grid": "github:vegarringdal/simple-html#<branch>"
 }
 ```
 
