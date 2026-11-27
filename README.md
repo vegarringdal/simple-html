@@ -173,6 +173,10 @@ run by hand from the Actions tab on master; neither pushes a commit:
 - `publish` (`publish.yml`): the checks, then the package to GitHub Packages with the npm tag `latest`.
   Stops when that version is published already
 
+A pull request to master runs both as a dry run (`release dry run`, `release-dry-run.yml`): their own
+steps, nothing tagged or published, so a release that would fail fails in the pull request. A version
+tagged or published already is a warning there.
+
 ### The docs site
 
 `.github/workflows/pages.yml` puts the docs site (`npm run build:demo`) on the `gh-pages` branch:
