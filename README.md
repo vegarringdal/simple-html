@@ -11,13 +11,13 @@ say. Formatters and validators are named by id (`registerFormatter()`, `register
 the functions of a grid - readonly cells and css classes from the row, changes to the menus - are
 hooks, given next to the config.
 
-Docs, guides and live samples: https://airemote.github.io/simple-html/. The guides are also in this
+Docs, guides and live samples: https://vegarringdal.github.io/simple-html/. The guides are also in this
 repo, see [Guides](#guides) below.
 
 ## Features
 
 The highlights. Every feature, each linked to its guide and a live sample:
-[Feature overview](https://airemote.github.io/simple-html/#guide/features) (in this repo:
+[Feature overview](https://vegarringdal.github.io/simple-html/#guide/features) (in this repo:
 [guides/00-features.md](guides/00-features.md)).
 
 - Typed fields - text, numbers, dates, date and time, yes/no - sorted, filtered and edited by their type
@@ -177,8 +177,8 @@ run by hand from the Actions tab on master; neither pushes a commit:
 
 `.github/workflows/pages.yml` puts the docs site (`npm run build:demo`) on the `gh-pages` branch:
 
-- master's at the root, https://airemote.github.io/simple-html/, after every push to master
-- any other branch's under `dev/<branch>/` (https://airemote.github.io/simple-html/dev/v6-maybe/), by
+- master's at the root, https://vegarringdal.github.io/simple-html/, after every push to master
+- any other branch's under `dev/<branch>/` (https://vegarringdal.github.io/simple-html/dev/v6-maybe/), by
   hand: Actions -> pages -> Run workflow, pick the branch. `dev/` lists them. Run it with "remove"
   ticked to take a branch's docs down; deleting the branch takes them down too
 
