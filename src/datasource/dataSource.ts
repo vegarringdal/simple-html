@@ -130,6 +130,19 @@ export type FilterNode = FilterConditionNode | FilterGroupNode;
 const NO_RULES: readonly ValidationRuleObject[] = Object.freeze([]);
 
 /**
+ * a `unique` rule with the labels of its `with` fields for `{with}` in its message (a copy, the rule
+ * given is kept as it is) - a field that is not listed in `fields` is its name; the other rules as they are
+ */
+function withLabels(resolved: ResolvedRule, configs: ReadonlyMap<string, FieldConfig>): ResolvedRule {
+    if (!resolved.unique) {
+        return resolved;
+    }
+    const others = (resolved.rule.with as string[] | undefined) ?? [];
+    const withText = others.map((other) => configs.get(other)?.label || other).join(', ');
+    return { ...resolved, unique: { ...resolved.unique, withText } };
+}
+
+/**
  * The rows of a grid, and what is done with them: the data, the fields (type, label and formatter of
  * each), the filter, sorting, grouping, selection, the current row and the edits (`getChanges()`).
  * It works without a grid too.
@@ -434,6 +447,12 @@ export class Datasource<T = any> {
         const rules = new Map(own);
         for (const [field, added] of columns ?? []) {
             rules.set(field, [...(own.get(field) ?? []), ...added]);
+        }
+        for (const [field, fieldRules] of rules) {
+            rules.set(
+                field,
+                fieldRules.map((resolved) => withLabels(resolved, configs))
+            );
         }
         this.__dataContainer.__addFields(
             this,

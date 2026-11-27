@@ -5615,8 +5615,46 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
   `'YYYY-MM-DD'` in local time (a datetime on the day of max is within it). errorMessage joins a list option
   with `, ` (`Must be one of Open, Closed`). The doc example of a validator of one's own was `oneOf`: now
   `afterStart` (a row's other field)
-* not added: a `required` that takes only spaces as missing (a change of what it does now); `unique` in the
-  column (reads every row on every key); showing the rules read only in the dialog - easy to add if wanted
+* not added then: a `required` that takes only spaces as missing; `unique`; the rules read only in the dialog -
+  the user asked for all three next (below)
+
+### Validation: required with only spaces, unique, the rules in the dialog (2026-11-27)
+
+* the user: "if required and only spaces it should show as still missing / unique is wanted, but also support
+  2 or more column as unique check / yes, show as readonly in dialog"
+* **required**: isMissingValue takes a text that trims to '' as missing - the rule and the grid's stripes
+  (renderRowCell) use it, so both change. validation.test's table: `' '` and `'\t \n'` fail now
+* **unique** is a built-in in the registry with `unique: true` and a validator that is never called:
+  resolveRules gives the ResolvedRule a UniqueCheck (`fields` - its own and `with`, sorted, so `code` with
+  `year` and `year` with `code` share an index - `ignoreCase`, `withText`). runRules takes a `duplicate`
+  callback from the container, which has the rows. Datasource.giveRules puts the labels of the `with`
+  fields in withText (a field not listed is its name - a datasource may list only some of its fields, so a
+  `with` field is not checked against them)
+* **the index** (DataContainer.__uniqueIndexes, per check): key -> rows, made the first time a row is
+  checked, then kept up to date: toEntity adds a row, every value set goes through onEdit -> validateEdit,
+  which moves the row (moveInUnique - not a row that left the container), rowsLeft / allRowsLeft /
+  acceptChanges' removal take rows out. Rows marked for deletion stay in, isDuplicate skips them. Key:
+  uniqueKey - null when a field is blank (as SQL's NULL), a date its time, text lower cased with ignoreCase,
+  the rest String() (3 is '3'), joined with \u0000
+* **the other rows**: an edit validates the rows of the old key that have an error on the rule's field (it
+  may be gone) and the rows of the new key that are duplicates now (they get it) - on that field, all its
+  rules; a row whose errors changed is sent in rows-changed (changed(row, null)), the grid renders only the
+  rows an event names. A deletion mark (and its undo) does the same for its groups, a removed row clears
+  its partners, validate(some rows) gives the partners the error too. A removal only clears - resetData()
+  then leaves the originals unchecked, as it does for every rule
+* **the import**: __checkRow became __checkRows(rows) - per check it counts the keys of the file, so two rows
+  of a file with one code both have the problem, and isDuplicate compares with the container's rows
+* **the dialog**: General tab, after Read only - `Validation`, a <ul> of the rules (getField().validate: the
+  field's and the column's), the hint "set by the application". A rule is its `message`, a `pattern` its
+  expression, `unique` "Unique" / "Unique together with {labels}" (+ ", in any case"), else
+  `validation.<id>`'s text, else the id. No control: the rules are code-only (the user's call, 2026-11-26)
+* the guide's example of a validator of one's own registered `oneOf` again (it would replace the built-in):
+  now `inList`
+* tests: datasource/__tests__/unique.test.ts (one field, with, marks, removal, upsert, resetData, import),
+  columnValidate.test.ts (the error on both cells, the dialog's list, the import), texts.test.ts (name
+  unique, notes unique with active in any case, the dialog on Notes)
+* left: the server can still have the value (a row not loaded) - the guide says keep the constraint in the
+  database
 
 ## Considered, not done
 

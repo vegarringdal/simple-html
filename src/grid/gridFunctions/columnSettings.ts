@@ -4,7 +4,9 @@ import { styleMap } from 'lit-html/directives/style-map.js';
 import { type Entity, isGroupRow } from '../../datasource/entity';
 import type { FieldType } from '../../datasource/field';
 import type { FilterOperator } from '../../datasource/filterExpression';
-import type { TextId } from '../../texts';
+import type { ValidationRuleObject } from '../../datasource/validator';
+import { errorMessage } from '../../datasource/validatorRegistry';
+import { findText, type TextId } from '../../texts';
 import {
     type CalculatedColumn,
     type CompiledColumn,
@@ -1690,7 +1692,49 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                 ? html`${checkbox('columnSettings.multiline', isMultiline, (on) => set('multiline', on))}
                   ${isMultiline ? minRowsSetting() : nothing}`
                 : nothing;
-        return html`${multiline} ${checkbox('columnSettings.readonly', format?.readonly ?? own.readonly, (on) => set('readonly', on))}`;
+        return html`${multiline} ${checkbox('columnSettings.readonly', format?.readonly ?? own.readonly, (on) => set('readonly', on))}
+        ${validationSettings()}`;
+    };
+
+    /**
+     * Under Read only: the column's validation rules, read only - the field's (`FieldConfig.validate`) and
+     * the grid's (`ColumnConfig.validate`), set by the application's code, never by the user. A rule is
+     * its own message, else what the built-in says (`Must be at least 0`), else its id. None: nothing
+     */
+    const validationSettings = () => {
+        const rules = gridInterface.getDatasource().getField(field).validate;
+        if (!rules.length) {
+            return nothing;
+        }
+        const labelId = idOf(ctx, 'validation');
+        const hintId = idOf(ctx, 'validation-hint');
+        return html`<div class="column-settings-field">
+            <span class="column-settings-label" id=${labelId}>${text('columnSettings.validation')}</span>
+            <ul class="column-settings-validation" aria-labelledby=${labelId} aria-describedby=${hintId}>
+                ${rules.map((rule) => html`<li>${ruleText(rule)}</li>`)}
+            </ul>
+            <div class="column-settings-hint" id=${hintId}>${text('columnSettings.validation.hint')}</div>
+        </div>`;
+    };
+
+    /** how the dialog names a validation rule, see validationSettings */
+    const ruleText = (rule: ValidationRuleObject): string => {
+        if (rule.message !== undefined) {
+            return errorMessage(rule.message, rule);
+        }
+        if (rule.id === 'unique') {
+            const others = Array.isArray(rule.with) ? rule.with.map((other) => labelOf(String(other))) : [];
+            const unique = others.length
+                ? text('columnSettings.validation.uniqueWith', { with: others.join(', ') })
+                : text('columnSettings.validation.unique');
+            return rule.ignoreCase === true ? text('columnSettings.validation.ignoreCase', { rule: unique }) : unique;
+        }
+        if (rule.id === 'pattern') {
+            return text('columnSettings.validation.pattern', { value: rule.value });
+        }
+        // a built-in's message, or one of the application's given with setTexts(): validation.<id>
+        const id = `validation.${rule.id}`;
+        return findText(id) === undefined ? rule.id : errorMessage(id, rule);
     };
 
     /**

@@ -143,10 +143,14 @@ number cell, deleting all the text may give 0; **Clear › Clear cell** leaves i
 ## Errors in what you typed
 
 Your app can have rules for the values: a field that must be filled in, a number that must be at least
-1 or a whole number, a text of at most 50 characters, one of a list of values, an email address. You can
-not change them - the grid config dialog does not show them.
+1 or a whole number, a text of at most 50 characters, one of a list of values, an email address, a
+value no other row has. You can not change them, but you can see them: in the grid config dialog, on a
+column's **General** tab, under **Validation**.
 
 - An **empty cell that must be filled in** has stripes (blue in the normal look) until it has a value.
+  Only spaces count as empty.
+- A **value that must be unique**: when two rows have it, both cells show the error **Another row has
+  the same value**. Change one of them, or delete the row, and it goes from both.
 - A **cell with an error** has a red border. Point at it to read the message, such as **Required** or
   **Must be at least 1**.
 - The **row number** of a row with an error has a red bar and **!**. Point at it to see every error of

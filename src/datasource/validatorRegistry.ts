@@ -6,13 +6,71 @@ import type { ValidationRule, ValidationRuleObject, Validator } from './validato
 /**
  * @internal
  * true when a value counts as missing for the `required` rule: what {@link isBlank} counts as blank
- * (null, undefined, '', an invalid Date), and 0 - like the filter's IS_BLANK, see "0 is blank" on
- * `FilterOperator`. An emptied number cell stores 0 (the number formatters parse '' as 0), so a
- * required number field must not take it. `false` is a value, the grid's checkbox has no other way
- * to be empty. The grid's stripes on a required cell use this too
+ * (null, undefined, '', an invalid Date), a text of only spaces (tabs, line breaks), and 0 - like the
+ * filter's IS_BLANK, see "0 is blank" on `FilterOperator`. An emptied number cell stores 0 (the number
+ * formatters parse '' as 0), so a required number field must not take it. `false` is a value, the
+ * grid's checkbox has no other way to be empty. The grid's stripes on a required cell use this too
  */
 export function isMissingValue(value: unknown): boolean {
-    return isBlank(value) || value === 0;
+    return isBlank(value) || value === 0 || (typeof value === 'string' && value.trim() === '');
+}
+
+/**
+ * @internal
+ * What the datasource keeps of a `unique` rule: the fields whose values together are unique - the
+ * rule's own field and its `with`, in the order of their names, so `code` with `year` and `year` with
+ * `code` are one check - and whether text is compared in any case
+ */
+export interface UniqueCheck {
+    /** the rule's own field and its `with`, sorted */
+    fields: string[];
+    /** `ignoreCase: true`: `Ann` and `ANN` are the same */
+    ignoreCase: boolean;
+    /** what `{with}` in the message is: the labels of the `with` fields, set by the datasource */
+    withText: string;
+}
+
+/**
+ * @internal
+ * The values of a row's unique fields as one text, the same for two rows that break the rule: null
+ * when one of them is blank (as {@link isMissingValue}, 0 apart) - a blank value is no duplicate, as
+ * NULL in a UNIQUE constraint of SQL. A date is its time, other values their text: 3 is '3'
+ */
+export function uniqueKey(row: object, check: UniqueCheck): string | null {
+    let key = '';
+    for (const field of check.fields) {
+        const value: unknown = (row as Record<string, unknown>)[field];
+        if (isBlank(value) || (typeof value === 'string' && value.trim() === '')) {
+            return null;
+        }
+        const part =
+            value instanceof Date
+                ? `\u0001${value.getTime()}`
+                : typeof value === 'string' && check.ignoreCase
+                  ? value.toLocaleLowerCase()
+                  : String(value);
+        key += `${part}\u0000`;
+    }
+    return key;
+}
+
+/**
+ * the problem with the options of `unique`: `with` a list of other fields, `ignoreCase` true or false
+ */
+function checkUnique(rule: ValidationRuleObject, field: string): string | null {
+    const others = rule.with;
+    if (
+        others !== undefined &&
+        (!Array.isArray(others) ||
+            others.some((other) => typeof other !== 'string' || other === '' || other === field) ||
+            new Set(others).size !== others.length)
+    ) {
+        return `takes the other fields as with, a list of their names without '${field}': { id: 'unique', with: ['year'] }`;
+    }
+    if (rule.ignoreCase !== undefined && typeof rule.ignoreCase !== 'boolean') {
+        return 'takes ignoreCase as true or false';
+    }
+    return null;
 }
 
 /**
@@ -118,7 +176,9 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 interface RegisteredValidator {
     validate: Validator;
     /** the problem with the rule's options, null when there is none. Run when the datasource is made */
-    check?: (rule: ValidationRuleObject) => string | null;
+    check?: (rule: ValidationRuleObject, field: string) => string | null;
+    /** the built-in `unique`: the container compares the rows, the validator is never called */
+    unique?: true;
 }
 
 /**
@@ -207,7 +267,9 @@ const registry = new Map<string, RegisteredValidator>([
                 }
             }
         }
-    ]
+    ],
+    // the rows are compared by the container (DataContainer), which has them: see runRules
+    ['unique', { validate: () => null, check: checkUnique, unique: true }]
 ]);
 
 /**
@@ -220,7 +282,8 @@ const registry = new Map<string, RegisteredValidator>([
  *
  * | id | the value fails when | message id |
  * | --- | --- | --- |
- * | `'required'` | it is `null`, `undefined`, `''`, an invalid Date or 0 | `'validation.required'` |
+ * | `'required'` | it is `null`, `undefined`, `''`, only spaces, an invalid Date or 0 | `'validation.required'` |
+ * | `'unique'` | another row has the same value - with `with: ['year']` the same value and `year` | `'validation.unique'`, `'validation.uniqueWith'` |
  * | `'min'` | it is a number below `value`, or a date before the day `value` (`'2026-01-01'`) | `'validation.min'` |
  * | `'max'` | it is a number above `value`, or a date after the day `value` | `'validation.max'` |
  * | `'integer'` | it is a number with decimals | `'validation.integer'` |
@@ -231,6 +294,14 @@ const registry = new Map<string, RegisteredValidator>([
  * | `'maxLength'` | it is text longer than `value` | `'validation.maxLength'` |
  * | `'pattern'` | it is text the regular expression `value` (as text) does not find | `'validation.pattern'` |
  *
+ * - **Only spaces fail `required`**: `'  '` is as empty as `''` - tabs and line breaks too.
+ * - **`unique` compares the rows** of the datasource's container, the rows marked for deletion left
+ *   out: every row with the value has the error, and it goes from all of them once one of them is
+ *   changed (or deleted). `with` lists other fields whose values go with it - `{ id: 'unique', with:
+ *   ['year'] }` on `code`: a code once per year, the error on `code`; give the rule to `year` too for
+ *   the error on both. A blank value is no duplicate (as NULL in SQL): add `'required'`. Text is
+ *   compared as it is, `ignoreCase: true` takes `Ann` and `ANN` as the same; a date by its time, other
+ *   values as text. The import compares its rows with the grid's and with each other.
  * - **0 fails `required`**, like the filter's `IS_BLANK` takes 0 as blank: an emptied number cell
  *   stores 0 (the number formatters parse `''` as 0), so a required number must not take it. `false`
  *   passes, it is a value. For a number where 0 is a real value, register a rule of your own (below).
@@ -298,6 +369,8 @@ export function registerValidator(id: string, validator: Validator): void {
 export interface ResolvedRule {
     rule: ValidationRuleObject;
     validate: Validator;
+    /** the built-in `unique`: the fields the container compares, see UniqueCheck */
+    unique?: UniqueCheck;
 }
 
 /**
@@ -334,9 +407,18 @@ export function resolveRules(
         if (rule.message !== undefined && typeof rule.message !== 'string') {
             throw new TypeError(`${where} has the rule '${rule.id}' with a message that is not a text`);
         }
-        const problem = registered.check?.(rule);
+        const problem = registered.check?.(rule, field);
         if (problem) {
             throw new TypeError(`${where} has the rule '${rule.id}', which ${problem}`);
+        }
+        if (registered.unique) {
+            const others = (rule.with as string[] | undefined) ?? [];
+            const unique: UniqueCheck = {
+                fields: [field, ...others].sort(),
+                ignoreCase: rule.ignoreCase === true,
+                withText: others.join(', ')
+            };
+            return { rule, validate: registered.validate, unique };
         }
         return { rule, validate: registered.validate };
     });
@@ -349,24 +431,40 @@ export function resolveRules(
  * when there is one. `{name}` is replaced by the rule's option `name` - a list as its items with `, ` -
  * a name the rule does not have is left as it is
  */
-export function errorMessage(result: string, rule: ValidationRuleObject): string {
+export function errorMessage(result: string, rule: ValidationRuleObject, unique?: UniqueCheck): string {
     const message = rule.message ?? result;
     // a list option is its items with a comma and a space: `Norway, Sweden`
     const options = Object.fromEntries(
         Object.entries(rule).map(([name, option]) => [name, Array.isArray(option) ? option.join(', ') : option])
     );
+    // unique: {with} is the labels of the fields, not their names
+    if (unique) {
+        options.with = unique.withText;
+    }
     return fillText(findText(message) ?? message, options);
 }
 
 /**
  * @internal
  * The messages of the rules a value fails, in the order of the rules. [] when it passes every one
+ * @param duplicate for a `unique` rule: true when another row has the row's values of its fields - the
+ * container's, which has the rows. Without it a `unique` rule passes
  * @throws a `TypeError` when a validator returns something that is not a message or null (plain js)
  */
-export function runRules(rules: readonly ResolvedRule[], value: unknown, row: Entity): string[] {
+export function runRules(
+    rules: readonly ResolvedRule[],
+    value: unknown,
+    row: Entity,
+    duplicate?: (check: UniqueCheck) => boolean
+): string[] {
     const messages: string[] = [];
-    for (const { rule, validate } of rules) {
-        const result: unknown = validate(value, row, rule);
+    for (const { rule, validate, unique } of rules) {
+        let result: unknown;
+        if (unique) {
+            result = duplicate?.(unique) ? (unique.fields.length > 1 ? 'validation.uniqueWith' : 'validation.unique') : null;
+        } else {
+            result = validate(value, row, rule);
+        }
         // '' is no message either
         if (result === null || result === undefined || result === '') {
             continue;
@@ -376,7 +474,7 @@ export function runRules(rules: readonly ResolvedRule[], value: unknown, row: En
                 `the validator '${rule.id}' returned ${JSON.stringify(result)}: return null when the value is valid, else the message`
             );
         }
-        messages.push(errorMessage(result, rule));
+        messages.push(errorMessage(result, rule, unique));
     }
     return messages;
 }

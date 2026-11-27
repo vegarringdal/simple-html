@@ -142,12 +142,12 @@ describe('DataContainer.__recordAdded - the import as one step of the undo histo
     });
 });
 
-describe('DataContainer.__checkRow - the rules of a row before it is added', () => {
+describe('DataContainer.__checkRows - the rules of rows before they are added', () => {
     it('expect the messages of every field with rules, nothing kept', () => {
         const datasource = people();
         const container = datasource.getDataContainer();
-        expect(container.__checkRow({ name: 'Ok', age: 3 })).toEqual(new Map());
-        expect([...container.__checkRow({ age: -2 })]).toEqual([
+        expect(container.__checkRows([{ name: 'Ok', age: 3 }])).toEqual([new Map()]);
+        expect([...container.__checkRows([{ age: -2 }])[0]]).toEqual([
             ['name', ['Required']],
             ['age', ['Must be at least 0']]
         ]);

@@ -3599,6 +3599,13 @@
     color: var(--simple-html-grid-sec-font-color);
 }
 
+/* the column's validation rules, read only: a list as plain as the hints */
+.simple-html-grid.filter-editor-content .column-settings-validation {
+    margin: 0;
+    padding-left: 18px;
+    overflow-wrap: anywhere;
+}
+
 /* a problem of a template: the danger colour, with a line in the error colour in front - it is said in
  * words too, not by its colour only */
 .simple-html-grid.filter-editor-content .column-settings-problem {

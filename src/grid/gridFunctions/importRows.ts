@@ -26,8 +26,9 @@ import { writeCellValue } from './lookupColumn';
  *   thousands separators and a decimal mark of the file (`decimalMark`), dates as ISO, `31.12.2026` and
  *   with `/` (`dateOrder`), typed cells of a workbook. A text that is not a value of the field's type
  *   is a problem, its cell is left empty - never a value guessed from part of it
- * - **The validation** runs on each row before it is added (DataContainer.__checkRow), with the rules of
- *   the fields: its messages are problems too
+ * - **The validation** runs on each row before it is added (DataContainer.__checkRows), with the rules of
+ *   the fields: its messages are problems too. A `unique` rule compares the rows with the grid's and with
+ *   each other
  * - **The rows** are added as new rows, at once (`datasource.addNewRows()`), validated - the grid shows
  *   the errors on the cells - and one step of the undo history: undo takes them out again (marks them for
  *   deletion, as Delete does a new row), redo brings them back. A row with values that could not be read
@@ -305,13 +306,17 @@ export function planImport(
                 problems.push({ row: index, field, value: cell, kind: 'value', message: problem });
             }
         });
-        // the rules of every field, also of a field the file does not have (a required one)
-        for (const [field, messages] of container.__checkRow(values)) {
+        read.push({ index, values, problems });
+    });
+    // the rules of every field, also of a field the file does not have (a required one) - unique compares
+    // the rows of the file with each other too
+    container.__checkRows(read.map((row) => row.values)).forEach((errors, at) => {
+        const { index, problems } = read[at];
+        for (const [field, messages] of errors) {
             for (const message of messages) {
-                problems.push({ row: index, field, value: cells[fields.indexOf(field)] ?? null, kind: 'rule', message });
+                problems.push({ row: index, field, value: rows[index][fields.indexOf(field)] ?? null, kind: 'rule', message });
             }
         }
-        read.push({ index, values, problems });
     });
     return { header, fields, rows: read };
 }

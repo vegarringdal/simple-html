@@ -727,6 +727,12 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.minRows` | `Min lines in the detail form` | under Multiline while it is on: `DetailForm.fieldOptions[field].minRows` |
 | `columnSettings.minRows.hint` | `1 to 30, the least lines of its box in the detail form - empty: 3` | under it |
 | `columnSettings.readonly` | `Read only` | the checkbox of every column: its cells are not edited, also in an editable grid (`ColumnFormat.readonly`) |
+| `columnSettings.validation` | `Validation` | the heading of the column's validation rules, read only - only a column whose field has rules (`FieldConfig.validate`, `ColumnConfig.validate`). A rule is its own `message`, else the built-in's message (`validation.*`), else its id |
+| `columnSettings.validation.hint` | `Set by the application: checked on every edit, not changed here` | under them |
+| `columnSettings.validation.pattern` | `Must match {value}` | a `pattern` rule without a message: `{value}` is its regular expression |
+| `columnSettings.validation.unique` | `Unique` | a `unique` rule |
+| `columnSettings.validation.uniqueWith` | `Unique together with {with}` | a `unique` rule with `with`: the labels of the columns |
+| `columnSettings.validation.ignoreCase` | `{rule}, in any case` | a `unique` rule with `ignoreCase`: `{rule}` is one of the two above |
 | `columnSettings.badge.checkbox` | `Checkbox` | the column is shown as checkboxes |
 | `columnSettings.badge.numberOverride` | `Blank / 0` | the column shows a blank as 0, or 0 as blank (or neither, over its `numberOverride`) |
 | `columnSettings.badge.label` | `Label` | the column has a label of the user's |
@@ -1355,6 +1361,8 @@ rule can be in a message by its name.
 | `validation.decimals` | `Must have at most {value} decimals` | `decimals` |
 | `validation.oneOf` | `Must be one of {value}` | `oneOf`: the list, `Norway, Sweden` |
 | `validation.email` | `Not an email address` | `email` |
+| `validation.unique` | `Another row has the same value` | `unique` |
+| `validation.uniqueWith` | `Another row has the same value and {with}` | `unique` with `with`: `{with}` is the labels of those fields, `Year, Month` |
 
 ### getFilterString()
 

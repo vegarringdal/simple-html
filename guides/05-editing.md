@@ -665,8 +665,9 @@ expression). `getField(name).validate` gives the rules of a field, written out a
 A column can have rules in the grid's config too, `ColumnConfig.validate` - the same rules, for what this
 grid edits: a datasource shared by two screens, a field of a backend's metadata without rules, a rule of
 the screen (a project code of this form). They are **set by code and the user can not change them**: they
-are not in the state, a view or the grid config dialog - `getState()` has none, `setState()` and
-`resetState()` keep them, `updateConfig({ columns })` replaces them.
+are not in the state or a view - `getState()` has none, `setState()` and `resetState()` keep them,
+`updateConfig({ columns })` replaces them. The grid config dialog shows them, read only: see
+[The rules in the dialog](#the-rules-in-the-dialog).
 
 ```ts
 import type { GridConfig } from '@simple-html/grid';
@@ -699,7 +700,7 @@ They take their option as `value`:
 
 | rule | the value fails when | message |
 | --- | --- | --- |
-| `'required'` | it is `null`, `undefined`, `''`, an invalid Date, or 0 | `Required` |
+| `'required'` | it is `null`, `undefined`, `''`, only spaces, an invalid Date, or 0 | `Required` |
 | `{ id: 'min', value: 0 }` | it is a number below `value` - or, with a day (`'2026-01-01'`), a date before it | `Must be at least {value}` |
 | `{ id: 'max', value: 150 }` | it is a number above `value` - or, with a day, a date after it (a datetime on the day is within) | `Must be at most {value}` |
 | `'integer'` | it is a number with decimals | `Must be a whole number` |
@@ -709,7 +710,11 @@ They take their option as `value`:
 | `{ id: 'minLength', value: 2 }` | it is text shorter than `value` | `Must be at least {value} characters` |
 | `{ id: 'maxLength', value: 50 }` | it is text longer than `value` | `Must be at most {value} characters` |
 | `{ id: 'pattern', value: '^[A-Z]{2}$' }` | it is text the regular expression does not find | `Not in the expected format` |
+| `'unique'` | another row has the same value - see [Unique](#unique-no-two-rows-with-the-same-value) | `Another row has the same value` |
+| `{ id: 'unique', with: ['year'] }` | another row has the same value and the same `year` | `Another row has the same value and {with}`: `Year` |
 
+- **Only spaces fail `required`**: `'  '` is as empty as `''` - tabs and line breaks too. The stripes
+  of a required cell show it as empty.
 - **0 fails `required`.** The filter takes 0 as blank too (see [0 is blank](06-filtering.md#0-is-blank)),
   and an emptied number cell stores 0 - the number formatters parse `''` as 0 - so with 0 as a value
   a required number would never fail in the grid. `false` passes: it is a value, and a checkbox has
@@ -725,6 +730,53 @@ They take their option as `value`:
   digits only. Written as text, so it stays JSON. In TypeScript a `\` is written twice.
 - Every rule runs: a value can fail more than one, and gets a message for each.
 
+### Unique: no two rows with the same value
+
+`'unique'` compares the rows: a value that another row has fails, in **every** row that has it - the
+user sees both, and fixes the one that is wrong. Change one of them (or delete it) and the error goes
+from the others too, without a `validate()`.
+
+```ts
+import { Datasource } from '@simple-html/grid';
+
+const datasource = new Datasource({
+    fields: {
+        email: { validate: ['required', 'email', { id: 'unique', ignoreCase: true }] },
+        // a code once per year: the error on the code
+        code: { validate: [{ id: 'unique', with: ['year'] }] },
+        year: { type: 'number', label: 'Year' }
+    }
+});
+```
+
+- **`with`** lists other fields whose values go with it, two or more columns as one check: `code` with
+  `with: ['year']` is unique per year. The error is on the field that has the rule; give the rule to
+  `year` as well (`with: ['code']`) to mark both cells. The message names the other fields by their
+  labels: `Another row has the same value and Year`.
+- **A blank value is no duplicate**, as NULL in a UNIQUE constraint of SQL: two empty rows pass - add
+  `'required'` to make them fail. With `with`, a row with a blank in one of the fields passes.
+- **How values compare**: text as it is, with its case - `ignoreCase: true` takes `Ann` and `ANN` as the
+  same; dates by their time; numbers and other values as text (`3` and `'3'` are the same). 0 is a value.
+- **The rows** are the rows of the datasource's container, also the ones a filter hides. A row marked for
+  deletion does not count: it is not saved. Rows set with `setData()` are not validated (below), and
+  neither is a loaded duplicate - until a row is edited to its value, or `validate()` runs.
+- **An edit checks the other rows too**: the rows with the old value lose the error when it was theirs,
+  the rows with the new value get it - they are validated again on that field, and the grid repaints them.
+  It looks the value up in an index of the rows, not by going through them on every key.
+- **An import** compares the rows of the file with the grid's rows and with each other: two rows of the
+  file with the same code both have the problem.
+- The datasource checks the rows it has. A value can still be taken on the server - by a row that is
+  not loaded, or saved by another user meanwhile: keep the unique constraint in the database.
+
+### The rules in the dialog
+
+The grid config dialog shows a column's rules on its General tab, under *Read only*: a list under
+*Validation*, read only, with the hint that the application sets them - the field's own rules
+(`FieldConfig.validate`) and the grid's (`ColumnConfig.validate`). A rule is shown as its own `message`
+(`Like AB-123`), else as the built-in's message (`Must be at least 0`) - a `pattern` as its expression,
+`unique` as `Unique` (`Unique together with Year`) - and a rule of your own as the text of
+`validation.<its id>` when `setTexts()` has one, else its id. There is no control to change one.
+
 ### Messages
 
 A rule's `message` replaces the default, and `{name}` in it is replaced by the rule's option `name`:
@@ -732,8 +784,8 @@ A rule's `message` replaces the default, and `{name}` in it is replaced by the r
 
 The default messages are texts: `'validation.required'`, `'validation.min'`, `'validation.max'`,
 `'validation.minLength'`, `'validation.maxLength'`, `'validation.pattern'`, `'validation.integer'`,
-`'validation.decimals'`, `'validation.oneOf'` and `'validation.email'` in `TEXTS`; a list option is its
-items with `, ` in a message. Translate
+`'validation.decimals'`, `'validation.oneOf'`, `'validation.email'`, `'validation.unique'` and
+`'validation.uniqueWith'` in `TEXTS`; a list option is its items with `, ` in a message. Translate
 them with `setTexts()` - for the page, the datasource has no grid, so a grid's `texts` do not change
 them. A rule's `message` can be a text id as well, see [Texts](12-texts.md#messages-of-your-own).
 
@@ -760,8 +812,8 @@ import { Datasource, registerValidator } from '@simple-html/grid';
 // a number that must be there, 0 included
 registerValidator('present', (value) => (value === null || value === undefined ? 'validation.required' : null));
 
-// { id: 'oneOf', values: [...] }: the options come from the rule
-registerValidator('oneOf', (value, _row, rule) => {
+// { id: 'inList', values: [...] }: the options come from the rule (the built-in oneOf does this)
+registerValidator('inList', (value, _row, rule) => {
     if (value === null || value === undefined || value === '') {
         return null; // an empty value is the required rule's job
     }
@@ -776,7 +828,7 @@ registerValidator('afterStart', (value, row) =>
 const datasource = new Datasource({
     fields: {
         discount: { type: 'number', validate: ['present'] },
-        country: { validate: [{ id: 'oneOf', values: ['Norway', 'Sweden'] }] },
+        country: { validate: [{ id: 'inList', values: ['Norway', 'Sweden'] }] },
         start: 'date',
         end: { type: 'date', validate: ['afterStart'] }
     }

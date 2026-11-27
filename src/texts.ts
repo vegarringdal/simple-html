@@ -388,6 +388,13 @@ const DEFAULTS = {
     'columnSettings.minRows': 'Min lines in the detail form',
     'columnSettings.minRows.hint': '1 to 30, the least lines of its box in the detail form - empty: 3',
     'columnSettings.readonly': 'Read only',
+    // the column's validation rules, read only: set by the application's code
+    'columnSettings.validation': 'Validation',
+    'columnSettings.validation.hint': 'Set by the application: checked on every edit, not changed here',
+    'columnSettings.validation.pattern': 'Must match {value}',
+    'columnSettings.validation.unique': 'Unique',
+    'columnSettings.validation.uniqueWith': 'Unique together with {with}',
+    'columnSettings.validation.ignoreCase': '{rule}, in any case',
     'columnSettings.badge.checkbox': 'Checkbox',
     'columnSettings.badge.numberOverride': 'Blank / 0',
     'columnSettings.badge.label': 'Label',
@@ -1088,6 +1095,8 @@ const DEFAULTS = {
     'validation.decimals': 'Must have at most {value} decimals',
     'validation.oneOf': 'Must be one of {value}',
     'validation.email': 'Not an email address',
+    'validation.unique': 'Another row has the same value',
+    'validation.uniqueWith': 'Another row has the same value and {with}',
     // getFilterString(), which upper cases the whole string
     'filterString.and': 'AND',
     'filterString.or': 'OR',

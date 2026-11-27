@@ -10,7 +10,7 @@ import { History } from './history';
 import { isBlank } from './isBlank';
 import type { Conflict, UpsertResult } from './liveData';
 import type { ValidationError } from './validator';
-import { type ResolvedRule, runRules } from './validatorRegistry';
+import { type ResolvedRule, runRules, type UniqueCheck, uniqueKey } from './validatorRegistry';
 
 /**
  * a conflict as the container keeps it, see DataContainer.__conflicts. `getConflicts()` makes a
@@ -92,6 +92,17 @@ export class DataContainer {
      * with it
      */
     private __errors = new WeakMap<Entity, Map<string, string[]>>();
+
+    /** the `unique` rules of __rules: the field that has the rule and what it compares, see setUniqueRules */
+    private __unique: { field: string; check: UniqueCheck }[] = [];
+
+    /**
+     * per `unique` check (see uniqueId), the rows by the key of their values (uniqueKey): made the first
+     * time a row is checked, then kept up to date - an edit moves its row (validateEdit), a row added
+     * goes in (toEntity), a row that leaves goes out (rowsLeft). The rows marked for deletion stay in,
+     * a check skips them
+     */
+    private __uniqueIndexes = new Map<string, UniqueIndex>();
 
     /**
      * @internal
@@ -251,6 +262,7 @@ export class DataContainer {
         for (const [field, fieldRules] of rules) {
             this.__rules.set(field, fieldRules);
         }
+        this.setUniqueRules();
         // other rules: the errors the rows have are of the old ones - checked again with the new
         if (rulesKey(this.__rules) !== rulesBefore) {
             for (const row of this.__collection) {
@@ -270,12 +282,175 @@ export class DataContainer {
      * error is not checked: an edit never adds an error to another field.
      */
     private validateEdit(row: Entity, field: string) {
+        // a `unique` rule that compares the field: its row moves in the index, the rows it left and
+        // the rows it joined are checked again - and its own field with the rule, also another field
+        const moved = this.__unique.length ? this.moveInUnique(row, field) : [];
         const errors = this.__errors.get(row);
-        if (!errors && !this.__rules.has(field)) {
+        if (!errors && !this.__rules.has(field) && !moved.length) {
             return; // the common case: nothing to check
         }
         const fields = new Set([field, ...(errors?.keys() ?? [])]);
+        for (const { rule } of moved) {
+            fields.add(rule.field);
+        }
         this.validateRow(row, fields);
+        for (const { rule, keys } of moved) {
+            const index = this.uniqueIndex(rule.check);
+            const [before, after] = keys;
+            // the rows it left lose their error when it was theirs, the rows it joined get it
+            this.recheckUnique(rule, before === null ? undefined : index.groups.get(before), row, false);
+            this.recheckUnique(rule, after === null ? undefined : index.groups.get(after), row, true);
+        }
+    }
+
+    /**
+     * the `unique` rules from __rules, and the indexes of the checks no rule makes any more go
+     */
+    private setUniqueRules() {
+        this.__unique = [];
+        for (const [field, fieldRules] of this.__rules) {
+            for (const { unique } of fieldRules) {
+                if (unique) {
+                    this.__unique.push({ field, check: unique });
+                }
+            }
+        }
+        const used = new Set(this.__unique.map(({ check }) => uniqueId(check)));
+        for (const id of this.__uniqueIndexes.keys()) {
+            if (!used.has(id)) {
+                this.__uniqueIndexes.delete(id);
+            }
+        }
+    }
+
+    /**
+     * the index of a `unique` check, made from the rows when there is none yet
+     */
+    private uniqueIndex(check: UniqueCheck): UniqueIndex {
+        const id = uniqueId(check);
+        let index = this.__uniqueIndexes.get(id);
+        if (!index) {
+            index = { check, keys: new Map(), groups: new Map() };
+            for (const row of this.__collection) {
+                addToIndex(index, row);
+            }
+            this.__uniqueIndexes.set(id, index);
+        }
+        return index;
+    }
+
+    /**
+     * true when another row has the row's values of a `unique` check - a row marked for deletion does
+     * not count, it is not saved. A blank value is no duplicate (uniqueKey)
+     * @param row a row of the container, or values of a row that is not in it (the import's)
+     */
+    private isDuplicate(check: UniqueCheck, row: object): boolean {
+        const key = uniqueKey(row, check);
+        if (key === null) {
+            return false;
+        }
+        for (const other of this.uniqueIndex(check).groups.get(key) ?? []) {
+            if (other !== row && !other.__controller?.__isDeleted) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * a field of a row was set: the row moves in the indexes of the `unique` checks that compare the
+     * field - an index not made yet is made when it is first needed, with the value there is then. The
+     * rules that compare the field, with the keys the row had and has
+     */
+    private moveInUnique(row: Entity, field: string): { rule: UniqueRule; keys: [string | null, string | null] }[] {
+        const rules = this.__unique.filter((rule) => rule.check.fields.includes(field));
+        // the keys first, then the moves: two rules can share an index (code with year, year with code)
+        const moved = rules.map((rule) => {
+            const before = this.__uniqueIndexes.get(uniqueId(rule.check))?.keys.get(row) ?? null;
+            const keys: [string | null, string | null] = [before, uniqueKey(row, rule.check)];
+            return { rule, keys };
+        });
+        for (const rule of rules) {
+            const index = this.__uniqueIndexes.get(uniqueId(rule.check));
+            // a row that left the container is not put back
+            if (index?.keys.has(row)) {
+                removeFromIndex(index, row);
+                addToIndex(index, row);
+            }
+        }
+        return moved;
+    }
+
+    /**
+     * the rows of a group of a `unique` check validated again on the rule's field, the row that made
+     * the change left out: a row that has an error on it (it may be gone now) - and with `gain` a row
+     * that is a duplicate now. A row whose errors changed is sent in `rows-changed`, the grid shows it
+     * @param gain false when a row left the group: none of the others can get the error from that
+     */
+    private recheckUnique(rule: UniqueRule, group: ReadonlySet<Entity> | undefined, skip: Entity | null, gain: boolean) {
+        for (const other of group ?? []) {
+            if (other === skip || other.__controller?.__isDeleted) {
+                continue;
+            }
+            const before = this.__errors.get(other)?.get(rule.field);
+            if (!before && !(gain && this.isDuplicate(rule.check, other))) {
+                continue;
+            }
+            this.validateRow(other, [rule.field]);
+            const after = this.__errors.get(other)?.get(rule.field);
+            if (before?.join('\n') !== after?.join('\n')) {
+                this.changed(other, null);
+            }
+        }
+    }
+
+    /**
+     * the rows of the groups the rows are in, of every `unique` rule, validated again (recheckUnique) -
+     * the rows themselves left out
+     */
+    private recheckGroupsOf(rows: readonly Entity[], gain: boolean) {
+        const given = new Set(rows);
+        for (const rule of this.__unique) {
+            const index = this.__uniqueIndexes.get(uniqueId(rule.check));
+            if (!index) {
+                continue; // no row was checked yet: none has the error
+            }
+            const keys = new Set(rows.map((row) => index.keys.get(row) ?? null));
+            for (const key of keys) {
+                for (const other of key === null ? [] : [...(index.groups.get(key) ?? [])]) {
+                    if (!given.has(other)) {
+                        this.recheckUnique(rule, new Set([other]), null, gain);
+                    }
+                }
+            }
+        }
+    }
+
+    /** rows left the container: out of the indexes, the rows they were duplicates of checked again */
+    private leaveUnique(rows: readonly Entity[]) {
+        if (!this.__uniqueIndexes.size || !rows.length) {
+            return;
+        }
+        // the groups first, then the rows out: two rules can share an index
+        const left: { rule: UniqueRule; group: Set<Entity> }[] = [];
+        for (const rule of this.__unique) {
+            const index = this.__uniqueIndexes.get(uniqueId(rule.check));
+            for (const row of index ? rows : []) {
+                const key = index?.keys.get(row);
+                const group = key ? index?.groups.get(key) : undefined;
+                if (group) {
+                    left.push({ rule, group });
+                }
+            }
+        }
+        for (const index of this.__uniqueIndexes.values()) {
+            for (const row of rows) {
+                removeFromIndex(index, row);
+            }
+        }
+        for (const { rule, group } of left) {
+            this.recheckUnique(rule, group, null, false);
+        }
     }
 
     /**
@@ -286,7 +461,7 @@ export class DataContainer {
         const checked = new Map<string, string[]>();
         for (const field of fields) {
             const rules = this.__rules.get(field);
-            checked.set(field, rules ? runRules(rules, row[field], row) : []);
+            checked.set(field, rules ? runRules(rules, row[field], row, this.duplicateOf(row)) : []);
         }
         const before = this.__errors.get(row);
         // in the order of the rules, so the errors are listed the same way every time
@@ -319,6 +494,10 @@ export class DataContainer {
             for (const row of checked) {
                 this.validateRow(row, this.__rules.keys());
             }
+        }
+        // some rows: the rows they are duplicates of get the error too
+        if (rows !== undefined && this.__unique.length) {
+            this.recheckGroupsOf(checked, true);
         }
         return this.__getErrors(checked);
     }
@@ -496,6 +675,20 @@ export class DataContainer {
     private afterMarkChange(row: DataEntity) {
         this.settleConflicts(row);
         this.changed(row, null);
+        // unique: the rows with the same values lose the error when it was this one's (marked), or get
+        // it (unmarked) - and so does the row itself
+        if (this.__unique.length) {
+            const unmarked = !row.__controller.__isDeleted;
+            this.recheckGroupsOf([row], unmarked);
+            for (const rule of unmarked ? this.__unique : []) {
+                this.recheckUnique(rule, new Set([row]), null, true);
+            }
+        }
+    }
+
+    /** for runRules: the `unique` check of a row - a row of the container, or values that are not in it */
+    private duplicateOf(row: object): (check: UniqueCheck) => boolean {
+        return (check) => this.isDuplicate(check, row);
     }
 
     /**
@@ -572,6 +765,7 @@ export class DataContainer {
     private rowsLeft(rows: readonly Entity[]) {
         this.__history.forget(rows);
         this.dropConflicts(rows);
+        this.leaveUnique(rows);
     }
 
     /**
@@ -581,6 +775,7 @@ export class DataContainer {
     private allRowsLeft() {
         this.__history.clear();
         this.clearConflicts();
+        this.__uniqueIndexes.clear();
     }
 
     /** every conflict goes, and every "kept" mark */
@@ -1107,20 +1302,43 @@ export class DataContainer {
 
     /**
      * @internal
-     * The validation errors a row would have, without keeping any: every field with rules, of any object
-     * with the fields - the grid's import checks the rows of a file with it before it adds them. The
-     * messages by field, in the order of the rules; empty when it passes every rule
-     * @param row the values, a plain object or a row
+     * The validation errors rows would have, without keeping any: every field with rules, of any object
+     * with the fields - the grid's import checks the rows of a file with it before it adds them. Per row
+     * the messages by field, in the order of the rules; empty when it passes every rule. A `unique` rule
+     * compares them with the container's rows and with each other: two rows of the file with the same
+     * value both fail
+     * @param rows the values, plain objects or rows
      */
-    public __checkRow(row: object): Map<string, string[]> {
-        const errors = new Map<string, string[]>();
-        for (const [field, rules] of this.__rules) {
-            const messages = runRules(rules, (row as Record<string, unknown>)[field], row as Entity);
-            if (messages.length) {
-                errors.set(field, messages);
+    public __checkRows(rows: readonly object[]): Map<string, string[]>[] {
+        // per unique check, how many of the rows have each key
+        const counts = new Map<string, Map<string, number>>();
+        for (const { check } of this.__unique) {
+            const id = uniqueId(check);
+            if (!counts.has(id)) {
+                const keys = new Map<string, number>();
+                for (const row of rows) {
+                    const key = uniqueKey(row, check);
+                    if (key !== null) {
+                        keys.set(key, (keys.get(key) ?? 0) + 1);
+                    }
+                }
+                counts.set(id, keys);
             }
         }
-        return errors;
+        return rows.map((row) => {
+            const duplicate = (check: UniqueCheck) => {
+                const key = uniqueKey(row, check);
+                return key !== null && ((counts.get(uniqueId(check))?.get(key) ?? 0) > 1 || this.isDuplicate(check, row));
+            };
+            const errors = new Map<string, string[]>();
+            for (const [field, rules] of this.__rules) {
+                const messages = runRules(rules, (row as Record<string, unknown>)[field], row as Entity, duplicate);
+                if (messages.length) {
+                    errors.set(field, messages);
+                }
+            }
+            return errors;
+        });
     }
 
     /**
@@ -1480,6 +1698,7 @@ export class DataContainer {
         }
         if (removed.size) {
             this.__collection = this.__collection.filter((row) => !removed.has(row));
+            this.leaveUnique([...removed]);
         }
         // saved: the user's values are the server's now, nothing left to choose between
         this.dropConflicts(accepted);
@@ -1655,7 +1874,61 @@ export class DataContainer {
         if (isBlank(entity.__KEY)) {
             entity.__KEY = this.getKey();
         }
+        // a row added: in the indexes of the unique checks that are made
+        for (const index of this.__uniqueIndexes.values()) {
+            addToIndex(index, entity);
+        }
         return entity;
+    }
+}
+
+/** a `unique` rule: the field that has it and the fields it compares */
+interface UniqueRule {
+    field: string;
+    check: UniqueCheck;
+}
+
+/**
+ * the rows of a `unique` check by their key: `keys` has every row of the container (null for one with
+ * a blank value), `groups` the rows of each key that is not null
+ */
+interface UniqueIndex {
+    check: UniqueCheck;
+    keys: Map<Entity, string | null>;
+    groups: Map<string, Set<Entity>>;
+}
+
+/** the id of a check: two rules that compare the same fields the same way share an index */
+function uniqueId(check: UniqueCheck): string {
+    return `${check.ignoreCase ? 'i' : 'c'}${JSON.stringify(check.fields)}`;
+}
+
+function addToIndex(index: UniqueIndex, row: Entity) {
+    if (index.keys.has(row)) {
+        return;
+    }
+    const key = uniqueKey(row, index.check);
+    index.keys.set(row, key);
+    if (key !== null) {
+        let group = index.groups.get(key);
+        if (!group) {
+            group = new Set();
+            index.groups.set(key, group);
+        }
+        group.add(row);
+    }
+}
+
+function removeFromIndex(index: UniqueIndex, row: Entity) {
+    const key = index.keys.get(row);
+    if (key === undefined) {
+        return;
+    }
+    index.keys.delete(row);
+    const group = key === null ? undefined : index.groups.get(key);
+    group?.delete(row);
+    if (group && !group.size) {
+        index.groups.delete(key as string);
     }
 }
 

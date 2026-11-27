@@ -46,9 +46,12 @@ describe('validation - the built-in validators', () => {
         ['', true],
         [new Date('x'), true],
         [0, true],
+        // only spaces are as empty as ''
+        [' ', true],
+        ['\t \n', true],
         // values
         ['0', false],
-        [' ', false],
+        [' a ', false],
         [false, false],
         [1, false],
         [new Date(2026, 10, 21), false]
@@ -114,7 +117,9 @@ describe('validation - the built-in validators', () => {
             'validation.integer': 'Must be a whole number',
             'validation.decimals': 'Must have at most {value} decimals',
             'validation.oneOf': 'Must be one of {value}',
-            'validation.email': 'Not an email address'
+            'validation.email': 'Not an email address',
+            'validation.unique': 'Another row has the same value',
+            'validation.uniqueWith': 'Another row has the same value and {with}'
         });
     });
 });

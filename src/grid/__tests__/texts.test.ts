@@ -213,9 +213,12 @@ const fields = {
                 'required',
                 { id: 'minLength', value: 6 },
                 { id: 'maxLength', value: 3 },
-                { id: 'pattern', value: '^x$' },
+                // the dialog shows the expression: no letter but in «»
+                { id: 'pattern', value: '^«x»$' },
                 { id: 'oneOf', value: ['«x»', '«y»'] },
-                'email'
+                'email',
+                // «bob» is in several rows
+                'unique'
             ]
         },
         age: {
@@ -224,8 +227,10 @@ const fields = {
         },
         born: 'date' as const,
         updated: { type: 'datetime' as const, formatter: 'texts-datetime' },
-        active: 'boolean' as const,
-        notes: { multiline: true },
+        // its label is the {with} of the notes' unique rule
+        active: { type: 'boolean' as const, label: '«Active»' },
+        // the same notes in every row: the rows that are active break it, in the dialog "in any case"
+        notes: { multiline: true, validate: [{ id: 'unique', with: ['active'], ignoreCase: true }] },
         // a lookup column whose case is locked by code: the dialog's hint "set by the application"
         code: { caseSensitive: true },
         // a long text (a CLOB) no formula reads
@@ -362,6 +367,9 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
     check();
     // a field whose case is locked (FieldConfig.caseSensitive): greyed out, set by the application
     option('«Code»').click();
+    check();
+    // the rules of a column, read only: unique with another field, in any case
+    option('«Notes»').click();
     check();
     // a number column: its format picker and the menu of the formats - one picked, the badge
     option('«Age»').click();
