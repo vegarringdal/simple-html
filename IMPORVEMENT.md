@@ -5698,6 +5698,27 @@ conditional formatting" and "7. Colours in the Excel export (the rules and forma
 * tests: sqlInjection (oracle / mssql quoting, a formula reading it, SQLite for real; `#temp`, `schema.#temp`
   refused), calculatedColumns (`{qty#}` read, `total#` shown and filtered, `#x` refused)
 
+### The Try it boxes remember what is done, confetti when a box is (2026-11-27)
+
+* the user: "In our getting started userguide, it should remember whats done, and show some nice confetti
+  when completing a full set"
+* **remembered**: tryIt.ts keeps the tasks done per box in localStorage `simple-html-demo-tryit`,
+  `{ <id>: { done: [indexes], of: <number of tasks> } }` - a box with another number of tasks now starts
+  over, indexes out of range or not numbers are dropped, storage that throws or holds no object is nothing.
+  The box opens with them ticked; its grid starts as new (the state of the grid is not kept, only the
+  ticks). Start again unticks and forgets them
+* **confetti** (samples/demo/confetti.ts, no library): a canvas of paper bits shot up from the progress
+  text, falling, turning and fluttering, faded out and removed after 3.2s - frame-rate independent. Only on
+  the change to all done, not when a page opens with the box done. The last box of the guide: "All done -
+  and every Try it of the guide 🎉" and a bigger burst, from the two bottom corners too. The canvas is a
+  manual popover: in the top layer, over a modal dialog (the getting started box's last task opens the
+  keyboard shortcuts window). Nothing with prefers-reduced-motion, or without a 2d canvas
+* **the sidebar**: a ✓ after a user guide page whose boxes are all done (index.ts reads the ids from the
+  page's html, `data-tryit`), updated on the window event `tryit-progress` ({ id, done, everyOne })
+* tests: samples/demo/__tests__/tryIt.test.ts (confetti mocked: kept and ticked again, once on the last
+  task, not on opening, the big one on the last box, Start again forgets, a changed box or junk starts
+  over). Seen in Chromium: confetti over the shortcuts dialog, the canvas gone after, the sidebar ✓
+
 ## Considered, not done
 
 ## Candidates / not started

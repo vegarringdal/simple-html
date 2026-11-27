@@ -1,4 +1,5 @@
 import { createGrid, Datasource, type GridConfig, type GridInterface, isGroupRow } from '@simple-html/grid';
+import { confetti } from './confetti';
 import { baseFields, baseGridConfig, generateRows } from './demoUtils';
 
 /**
@@ -8,6 +9,11 @@ import { baseFields, baseGridConfig, generateRows } from './demoUtils';
  * open), so any way of doing a task counts: the filter row, a menu, the filter editor, the keyboard. A
  * task the grid can not see (a download) has a checkbox the reader ticks. "Start again" puts the grid
  * and the tasks back.
+ *
+ * The tasks done are remembered in the browser (localStorage, `simple-html-demo-tryit`): a box shows them
+ * ticked when the page is opened again, the grid starts as new. When the last task of a box is done it
+ * shoots confetti (confetti.ts) - more of it when that was the last box of the guide - and the sidebar
+ * ticks the page (the event `tryit-progress`, index.ts).
  *
  * No code is shown: the user guide is for the people using a grid.
  */
@@ -380,6 +386,62 @@ function fields() {
     };
 }
 
+// ---------------------------------------------------------------- the tasks done, remembered
+
+const STORAGE_KEY = 'simple-html-demo-tryit';
+
+/** what is kept of a box: the tasks done by index, and how many it had - a box changed since starts over */
+type Saved = Record<string, { done: number[]; of: number }>;
+
+/** localStorage can throw (blocked site data) or hold something else: then nothing is remembered */
+function readSaved(): Saved {
+    try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
+        return saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {};
+    } catch {
+        return {};
+    }
+}
+
+/** the tasks of a box done before, by index; none when the box has another number of tasks now */
+export function savedDone(tryIt: TryIt): Set<number> {
+    const saved = readSaved()[tryIt.id];
+    if (!saved || saved.of !== tryIt.tasks.length || !Array.isArray(saved.done)) {
+        return new Set();
+    }
+    return new Set(saved.done.filter((index) => Number.isInteger(index) && index >= 0 && index < tryIt.tasks.length));
+}
+
+function saveDone(tryIt: TryIt, done: ReadonlySet<number>) {
+    const saved = readSaved();
+    if (done.size) {
+        saved[tryIt.id] = { done: [...done].sort((a, b) => a - b), of: tryIt.tasks.length };
+    } else {
+        delete saved[tryIt.id];
+    }
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+    } catch {
+        // only for this page then
+    }
+}
+
+/** every task of the box is done, remembered */
+export function isTryItDone(id: string): boolean {
+    const tryIt = TRY_ITS.find((each) => each.id === id);
+    return tryIt !== undefined && savedDone(tryIt).size === tryIt.tasks.length;
+}
+
+/**
+ * What the `tryit-progress` event on window says, sent when a box's tasks change: `done`, all of its
+ * tasks are; `everyOne`, those of every box of the guide are
+ */
+export interface TryItProgress {
+    id: string;
+    done: boolean;
+    everyOne: boolean;
+}
+
 /**
  * Puts a "Try it" box in a div.doc-tryit[data-tryit=<id>] of a user guide page: the grid, the tasks,
  * Start again. Looks at the grid while the box is on the page
@@ -412,7 +474,10 @@ export function renderTryIt(block: HTMLElement) {
     block.append(head, list, host);
 
     let look: Look;
-    const done = new Set<number>();
+    // done before: ticked again, the grid starts as new
+    const done = savedDone(tryIt);
+    /** all done when last shown: the confetti only when the last one is done, not when the page opens */
+    let wasAllDone = done.size === tryIt.tasks.length;
     const items = tryIt.tasks.map((task, index) => {
         const item = document.createElement('li');
         item.className = 'tryit-task';
@@ -437,12 +502,32 @@ export function renderTryIt(block: HTMLElement) {
         return { item, mark };
     });
 
-    const show = () => {
+    /** the ticks and the progress on screen; `changed`: the tasks done changed, so they are kept */
+    const show = (changed = true) => {
         items.forEach(({ item, mark }, index) => {
             mark.checked = done.has(index);
             item.classList.toggle('tryit-done', done.has(index));
         });
-        progress.textContent = done.size === tryIt.tasks.length ? 'All done' : `${done.size} of ${tryIt.tasks.length} done`;
+        const allDone = done.size === tryIt.tasks.length;
+        if (changed) {
+            saveDone(tryIt, done);
+        }
+        const everyOne = allDone && TRY_ITS.every((each) => isTryItDone(each.id));
+        progress.textContent = everyOne
+            ? 'All done - and every Try it of the guide 🎉'
+            : allDone
+              ? 'All done 🎉'
+              : `${done.size} of ${tryIt.tasks.length} done`;
+        block.classList.toggle('tryit-all-done', allDone);
+        if (changed) {
+            window.dispatchEvent(
+                new CustomEvent<TryItProgress>('tryit-progress', { detail: { id: tryIt.id, done: allDone, everyOne } })
+            );
+        }
+        if (allDone && !wasAllDone) {
+            confetti(progress, everyOne);
+        }
+        wasAllDone = allDone;
     };
 
     const start = () => {
@@ -453,11 +538,15 @@ export function renderTryIt(block: HTMLElement) {
         const config = tryIt.config ? tryIt.config(base) : base;
         const grid = createGrid(host, { config, datasource });
         look = { grid, datasource, start: datasource.getAllData().length, done };
+    };
+    // Start again: the tasks too, and forgotten
+    again.addEventListener('click', () => {
+        start();
         done.clear();
         show();
-    };
-    again.addEventListener('click', start);
+    });
     start();
+    show(false);
 
     // the tasks the grid tells, every 400ms while the box is on the page; a task done stays done
     const timer = setInterval(() => {

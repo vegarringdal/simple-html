@@ -836,6 +836,29 @@ body.sidebar-hidden .main {
     margin: 12px;
 }
 
+/* a page of the user guide whose "Try it" tasks are all done */
+.nav-item-done::after {
+    content: ' ✓';
+    color: var(--demo-accent);
+    font-weight: 600;
+}
+
+/* the confetti of a "Try it" box all done (confetti.ts): over everything, takes no clicks */
+.demo-confetti {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    pointer-events: none;
+    z-index: 2147483647;
+}
+
 /* the user guide's "Try it" box (tryIt.ts): its tasks, ticked as they are done, over a live grid */
 .doc-tryit {
     margin: 16px 0 24px;
@@ -891,6 +914,12 @@ body.sidebar-hidden .main {
 
 .tryit-done .tryit-mark {
     accent-color: var(--demo-accent);
+}
+
+/* all done: the progress in the accent colour */
+.tryit-all-done .tryit-progress {
+    color: var(--demo-accent);
+    font-weight: 600;
 }
 
 .tryit-grid {

@@ -11,6 +11,7 @@ import { buildLine, renderApiPage, renderGuidePage, renderSamplePage, renderStat
 import { SAMPLES } from './sampleList';
 import { addSidebarToggle } from './sidebarToggle';
 import { applyGridTheme, currentGridTheme, GRID_THEMES, type GridTheme, initTheme, toggleTheme } from './theme';
+import { isTryItDone } from './tryIt';
 
 initTheme();
 
@@ -168,6 +169,22 @@ if (userGuide.length) {
             render: (main: HTMLElement) => renderGuidePage(main, page)
         }))
     );
+    // a ✓ after a page whose "Try it" tasks are all done (tryIt.ts remembers them), at once when one is
+    const markDone = () => {
+        for (const page of userGuide) {
+            const ids = Array.from(page.html.matchAll(/data-tryit="([^"]+)"/g), (match) => match[1]);
+            const link = pages.get(`user-guide/${page.id}`)?.link;
+            const done = ids.length > 0 && ids.every(isTryItDone);
+            link?.classList.toggle('nav-item-done', done);
+            if (done) {
+                link?.setAttribute('title', 'Try it: all done');
+            } else {
+                link?.removeAttribute('title');
+            }
+        }
+    };
+    markDone();
+    window.addEventListener('tryit-progress', markDone);
 }
 navSection(
     'Samples',
