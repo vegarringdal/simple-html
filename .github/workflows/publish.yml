@@ -8,7 +8,7 @@
 # release's address with no token and no alias:
 #   npm install https://github.com/<owner>/simple-html/releases/download/v<version>/simple-html-grid-<version>.tgz
 # The notes are the version's section of CHANGELOG.md (scripts/releaseNotes.js). The release makes the
-# git tag v<version> on this commit when it is not there; tag.yml makes the tag on its own. A tag on
+# git tag v<version> on this commit when it is not there - there is no workflow of its own for it. A tag on
 # another commit stops the release. The release comes before `npm publish`, and a run again after a failed
 # publish replaces its tgz: a failed run can be run again.
 #

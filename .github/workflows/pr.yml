@@ -3,7 +3,7 @@
 #   fix: ...   feat: ...   fix!: ...   feat!: ...   (! - something breaks)
 #   chore: ... docs: ... test: ... refactor: ... ci: ... build: ... perf: ... style: ...
 # (a scope is fine: feat(grid): ...). Renaming the pull request runs it again. The tests are checks.yml.
-# The version is not made from it: package.json has it, see tag.yml and publish.yml.
+# The version is not made from it: package.json has it, see publish.yml.
 # See scripts/prTitle.js.
 name: pull request
 

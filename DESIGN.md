@@ -711,9 +711,10 @@ no imports, shared so that the grid and the SQL behave the same. `src/sql.ts` de
   `npm run hooks`) runs it. The browser checks are left out of it, because they take minutes.
 - `pr.yml` checks that a pull request title is a conventional commit (`scripts/prTitle.js`); `!` is allowed on
   `fix` and `feat`. The version is not made from it: it is set by hand in `package.json`.
-- `release-dry-run.yml` runs `tag.yml` and `publish.yml` with `dry_run` on a pull request to master, so a
-  release that would fail fails there. "Tagged already" and "published already" are only warnings there.
-- `tag.yml` (by hand, from the default branch) pushes the tag `v<version>`, never a commit. `publish.yml` (by
+- `release-dry-run.yml` runs `publish.yml` with `dry_run` on a pull request to master, so a release that
+  would fail fails there. "Published already" and a tag on another commit are only warnings there.
+- There is no workflow for the tag alone: the release makes it (a `tag.yml` was removed, two release
+  workflows were confusing). `publish.yml` (by
   hand, from the default branch, in a concurrency group that is never cancelled) runs the checks, then
   publishes to GitHub Packages with the `latest` tag, and stops if the version is published already.
 - `publish.yml` also makes the GitHub Release `v<version>` with the package as a tgz, for apps that use no
@@ -721,7 +722,7 @@ no imports, shared so that the grid and the SQL behave the same. `src/sql.ts` de
   It is packed before `githubPackage.js` renames the package, so it is `@simple-html/grid`. Its notes are
   the version's section of CHANGELOG.md (`scripts/releaseNotes.js`). The release comes before
   `npm publish`, and a run again replaces its tgz (`gh release upload --clobber`): a run that failed in the
-  publish can be run again. Creating the release makes the tag on the commit when it is missing; a tag on
+  publish can be run again. Creating the release makes the tag on the commit; a tag on
   another commit stops it, as the tgz would not be the tagged code. `publish.yml` needs `contents: write`
   for it, so `release-dry-run.yml` gives that to its dry run.
   `next.yml` publishes `<version>-next.<run>` with the tag `next`. `beta.yml` publishes

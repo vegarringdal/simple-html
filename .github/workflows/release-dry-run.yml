@@ -1,6 +1,6 @@
-# A pull request to master: the release workflows, tag.yml and publish.yml, as a dry run - their own
-# steps in their order, nothing tagged or published. A release that would fail once it is merged fails
-# here. "Tagged already" and "published already" are warnings: a pull request need not bump the version.
+# A pull request to master: the release workflow, publish.yml, as a dry run - its own steps in their
+# order, nothing tagged, released or published. A release that would fail once it is merged fails here.
+# "Published already" and a tag on another commit are warnings: a pull request need not bump the version.
 name: release dry run
 
 on:
@@ -11,16 +11,9 @@ permissions:
     contents: read
 
 jobs:
-    tag:
-        # what tag.yml asks for; nothing is pushed in a dry run (a fork's pull request gets read only)
-        permissions:
-            contents: write
-        uses: ./.github/workflows/tag.yml
-        with:
-            dry_run: true
-
     publish:
-        # what publish.yml asks for (the release); nothing is made in a dry run
+        # what publish.yml asks for (the release); nothing is made in a dry run (a fork's pull request gets
+        # read only)
         permissions:
             contents: write
             packages: write
