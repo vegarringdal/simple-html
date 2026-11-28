@@ -5,35 +5,35 @@ are subscribed one by one, and filters, menus and options are plain data. The co
 datasource's fields are plain JSON: formatters are named by id, and the functions of a grid are
 hooks next to the config. TypeScript points to most of the places to change.
 
-[MIGRATION.md](../MIGRATION.md) has every breaking change with code before and after:
+[MIGRATION2V6.md](../MIGRATION2V6.md) has every breaking change with code before and after:
 
-- [Package](../MIGRATION.md#package): the css path, installing from git
-- [Renamed](../MIGRATION.md#renamed) and [Removed](../MIGRATION.md#removed): `Formater` is
+- [Package](../MIGRATION2V6.md#package): the css path, installing from git
+- [Renamed](../MIGRATION2V6.md#renamed) and [Removed](../MIGRATION2V6.md#removed): `Formater` is
   `Formatter`, `deSelectAll` is `deselectAll` ...
-- [Events](../MIGRATION.md#events): `on()` instead of `addEventListener`, kebab case names
-- [Group rows are not entities](../MIGRATION.md#group-rows-are-not-entities): `GroupRow`,
+- [Events](../MIGRATION2V6.md#events): `on()` instead of `addEventListener`, kebab case names
+- [Group rows are not entities](../MIGRATION2V6.md#group-rows-are-not-entities): `GroupRow`,
   `isGroupRow()`
-- [Fields and formatters](../MIGRATION.md#fields-and-formatters): `new Datasource(options)`, types in
+- [Fields and formatters](../MIGRATION2V6.md#fields-and-formatters): `new Datasource(options)`, types in
   `fields`, `date` and `datetime`, formatters per field by id, `registerFormatter()`
-- [Filters](../MIGRATION.md#filters): one filter format, `and()` / `or()` / `where()`, and
-  [a converter for saved v5 filters](../MIGRATION.md#saved-configs)
-- [Options objects instead of boolean flags](../MIGRATION.md#options-objects-instead-of-boolean-flags)
-- [Change tracking](../MIGRATION.md#change-tracking-getchanges): the typed `getChanges()`, a new
+- [Filters](../MIGRATION2V6.md#filters): one filter format, `and()` / `or()` / `where()`, and
+  [a converter for saved v5 filters](../MIGRATION2V6.md#saved-configs)
+- [Options objects instead of boolean flags](../MIGRATION2V6.md#options-objects-instead-of-boolean-flags)
+- [Change tracking](../MIGRATION2V6.md#change-tracking-getchanges): the typed `getChanges()`, a new
   row marked for deletion stays (marked), `unmarkForDeletion()`, `acceptChanges()`
-- [Validation](../MIGRATION.md#validation-mandatory-is-the-required-rule): `mandatory` is the
+- [Validation](../MIGRATION2V6.md#validation-mandatory-is-the-required-rule): `mandatory` is the
   field's `required` rule, `registerValidator()`, `validate()`
-- [Grid config](../MIGRATION.md#grid-config): `columns` and `layout`, the state, and
-  [a converter for a v5 config](../MIGRATION.md#a-v5-config-converted)
-- [Setup, callbacks and methods of the grid](../MIGRATION.md#setup-callbacks-and-methods-of-the-grid):
+- [Grid config](../MIGRATION2V6.md#grid-config): `columns` and `layout`, the state, and
+  [a converter for a v5 config](../MIGRATION2V6.md#a-v5-config-converted)
+- [Setup, callbacks and methods of the grid](../MIGRATION2V6.md#setup-callbacks-and-methods-of-the-grid):
   `createGrid()`, the `isReadonly` / `cellClass` hooks, `updateConfig()`, `updateHooks()`, renamed
   methods
-- [Menus](../MIGRATION.md#menus): the `menus` hook, `openMenu()`
-- [Texts](../MIGRATION.md#texts): every text has an id, `setTexts()` and `GridConfig.texts`;
+- [Menus](../MIGRATION2V6.md#menus): the `menus` hook, `openMenu()`
+- [Texts](../MIGRATION2V6.md#texts): every text has an id, `setTexts()` and `GridConfig.texts`;
   `tooltipText` is `texts` with `.tooltip` ids, `OPERATORS` and the month and day names are texts
-- [Other behaviour changes](../MIGRATION.md#other-behaviour-changes): `currentEntity` after
+- [Other behaviour changes](../MIGRATION2V6.md#other-behaviour-changes): `currentEntity` after
   `setData()`, `selectAll()`, `removeGroup()`, `expandGroup()`, grouping always sorted
-- [Internals are no longer in the typings](../MIGRATION.md#internals-are-no-longer-in-the-typings)
-  and [Types are stricter](../MIGRATION.md#types-are-stricter)
+- [Internals are no longer in the typings](../MIGRATION2V6.md#internals-are-no-longer-in-the-typings)
+  and [Types are stricter](../MIGRATION2V6.md#types-are-stricter)
 
 Below are the ten changes almost every app has to make.
 
@@ -195,8 +195,8 @@ datasource.filter(and(where('age', 'GREATER_THAN', 18)));
 datasource.filter(null); // no filter. In v5 filter(null) ran the filter again
 ```
 
-The type comes from the datasource's `fields`. A filter saved by v5 is ignored, MIGRATION.md has a
-[converter](../MIGRATION.md#saved-configs). See [Filtering](06-filtering.md).
+The type comes from the datasource's `fields`. A filter saved by v5 is ignored, MIGRATION2V6.md has a
+[converter](../MIGRATION2V6.md#saved-configs). See [Filtering](06-filtering.md).
 
 ## 6. Options objects instead of boolean flags
 

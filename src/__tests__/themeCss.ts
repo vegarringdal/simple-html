@@ -335,7 +335,7 @@ export const mixColours = (a: Rgba, b: Rgba, share: number): Rgba => mix(a, b, s
 
 /**
  * The contrasts of the grid and the date picker - what the theming guide promises for the default
- * theme (theme.test.ts, IMPORVEMENT.md "contrast"), every theme keeps them, light and dark
+ * theme (theme.test.ts), every theme keeps them, light and dark
  */
 export const CONTRAST_PAIRS: ContrastPair[] = [
     // the text: on the bars and the menus, the inputs, the rows, the selected rows, the active option

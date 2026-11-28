@@ -62,7 +62,7 @@ function headingSlug(text, seen) {
 
 /**
  * The file of the repo a relative link in a guide goes to, when it is not a guide: the guides are in
- * guides/, so `../MIGRATION.md#package` is `{ file: 'MIGRATION.md', anchor: 'package' }`.
+ * guides/, so `../MIGRATION2V6.md#package` is `{ file: 'MIGRATION2V6.md', anchor: 'package' }`.
  * null for a guide file, a hash, an absolute path, a link to another site, and a path out of the repo.
  */
 function repoFile(href, folder = 'guides') {
@@ -83,8 +83,8 @@ function repoFile(href, folder = 'guides') {
  * - 02-datasource.md            -> #guide/datasource
  * - 02-datasource.md#selection  -> #guide/datasource/selection
  * - #selection, in the guide    -> #guide/<guideId>/selection
- * - ../MIGRATION.md#package, a file of the repo that is no guide (MIGRATION.md, CHANGELOG.md,
- *   README.md ...) -> the file on github: https://github.com/vegarringdal/simple-html/blob/master/MIGRATION.md#package.
+ * - ../MIGRATION2V6.md#package, a file of the repo that is no guide (MIGRATION2V6.md, CHANGELOG.md,
+ *   README.md ...) -> the file on github: https://github.com/vegarringdal/simple-html/blob/master/MIGRATION2V6.md#package.
  *   The site has no page for it, the relative link would 404
  * - #guide/.., #sample/.., #api/.., and links to other sites stay as they are
  */

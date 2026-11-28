@@ -12,7 +12,7 @@ import { menuEntry, openRowMenu } from './interactionTestHelpers';
  * Fill down (plan item 34, fillDown.ts): Ctrl+D / Cmd+D in a cell and gridInterface.fillDown() copy the
  * top row of each range into the rows under it - a range of one row, or the cell with the focus, takes
  * the row above - and the fill handle at the bottom right corner of the last range fills the rows it is
- * dragged over. The drag itself is checked in the real browser (fill-check.js, IMPORVEMENT.md): happy-dom
+ * dragged over. The drag itself is checked in the real browser (fill-check.js): happy-dom
  * has no hit test.
  */
 

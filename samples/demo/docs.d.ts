@@ -52,7 +52,7 @@ declare module 'docs:api' {
     export default api;
 }
 
-/** what the site is built from, and the work in progress page (scripts/site/status.js) */
+/** what the site is built from, and the known limits page (scripts/site/status.js) */
 declare module 'docs:status' {
     export interface BuildInfo {
         /** the branch, 'unknown' when git could not say */
@@ -75,9 +75,7 @@ declare module 'docs:status' {
     }
     const status: {
         build: BuildInfo;
-        /** the "Now:" line of V6_PLAN.md */
-        now: string;
-        /** the open items of the plan and the known issues, as html */
+        /** the "Known limits and next" section of DESIGN.md, as html */
         html: string;
     };
     export default status;

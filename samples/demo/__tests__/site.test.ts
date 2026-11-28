@@ -81,7 +81,7 @@ describe('docs site', { timeout: 30_000 }, () => {
 
         expect(routesOf('#sample/').length).toBeGreaterThan(0);
         expect(routesOf('#api/').length).toBeGreaterThan(0);
-        // no hash: the start page, the first guide - the feature overview. The work in progress page is
+        // no hash: the start page, the first guide - the feature overview. The known limits page is
         // first in the sidebar
         expect(location.hash).toBe(routesOf('#guide/')[0] ?? routesOf('#')[0]);
         expect(location.hash).toBe('#guide/features');
@@ -169,12 +169,11 @@ describe('docs site', { timeout: 30_000 }, () => {
         expect(localStorage.getItem('simple-html-demo-sidebar')).toBe('shown');
     });
 
-    it('renders the work in progress page: the open items of the plan and the known issues', async () => {
-        await open('#status/work-in-progress');
+    it('renders the known limits page: the "Known limits and next" section of DESIGN.md', async () => {
+        await open('#status/known-limits');
 
-        expect(text('.doc h1')).toBe('Work in progress');
-        const headings = [...document.querySelectorAll('.doc h2')].map((el) => el.textContent);
-        expect(headings).toEqual(['Open in the plan', 'Known issues and candidates']);
+        expect(text('.doc h1')).toBe('Known limits');
+        expect(document.querySelectorAll('.doc h3').length).toBeGreaterThan(0);
         expect(document.querySelector('.doc .doc-status .sidebar-build')).not.toBeNull();
     });
 
@@ -206,7 +205,7 @@ describe('docs site', { timeout: 30_000 }, () => {
         }
     });
 
-    it('links a guide to a file of the repo (../MIGRATION.md) on github, the site has no page for it', async () => {
+    it('links a guide to a file of the repo (../MIGRATION2V6.md) on github, the site has no page for it', async () => {
         const hrefs = new Set<string>();
         for (const route of routesOf('#guide/')) {
             await open(route);
@@ -214,10 +213,10 @@ describe('docs site', { timeout: 30_000 }, () => {
                 hrefs.add(link.getAttribute('href') || '');
             }
         }
-        const migration = [...hrefs].filter((href) => href.includes('MIGRATION.md'));
+        const migration = [...hrefs].filter((href) => href.includes('MIGRATION2V6.md'));
 
-        expect(migration).toContain('https://github.com/vegarringdal/simple-html/blob/master/MIGRATION.md#package');
-        // used to be ../MIGRATION.md#package, a 404 on the site
+        expect(migration).toContain('https://github.com/vegarringdal/simple-html/blob/master/MIGRATION2V6.md#package');
+        // used to be ../MIGRATION2V6.md#package, a 404 on the site
         expect([...hrefs].filter((href) => href.startsWith('../') || href.startsWith('./'))).toEqual([]);
     });
 

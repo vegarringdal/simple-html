@@ -32,7 +32,7 @@ import { undoRedoKey } from './undoRedoKey';
  * another row on every scroll step, `update()` changes it), destroyed when the cell shows something else
  * (releaseRenderer) or the cells are thrown away (releaseAllRenderers).
  *
- * Editing (step 2 of custom_render.md): Enter, F2, a character typed and a double click open the grid's
+ * Editing (DESIGN.md, custom cells): Enter, F2, a character typed and a double click open the grid's
  * text editor over the cell - one line, Enter saves; a text of several lines gets the multiline editor -
  * and a click on a date cell the date picker, as the default cell. A renderer with an `edit()` of its own
  * gets those instead. A boolean has no editor: it is the renderer's.
