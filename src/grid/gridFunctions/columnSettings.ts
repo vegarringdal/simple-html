@@ -1671,7 +1671,8 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
      * edit mode"): *Multiline* for a text column that is not shown as checkboxes (`ColumnFormat.multiline`)
      * and *Read only* for every column (`ColumnFormat.readonly`: not edited, also in an editable grid). Each
      * starts as the column has it - the field's `multiline`, the column's `readonly` - and set back to that
-     * it is left out of the format
+     * it is left out of the format. A field the app locked (`FieldConfig.readonly`) has Read only checked
+     * and greyed out, its hint says so - as Match case of a field with `caseSensitive`
      */
     const editingSettings = () => {
         const own = {
@@ -1692,8 +1693,17 @@ function renderColumnSettings(ctx: Grid, settings: ColumnSettings) {
                 ? html`${checkbox('columnSettings.multiline', isMultiline, (on) => set('multiline', on))}
                   ${isMultiline ? minRowsSetting() : nothing}`
                 : nothing;
-        return html`${multiline} ${checkbox('columnSettings.readonly', format?.readonly ?? own.readonly, (on) => set('readonly', on))}
-        ${validationSettings()}`;
+        const readonlyHint = idOf(ctx, 'readonly-hint');
+        const readonly = gridInterface.getDatasource().getField(field).readonly
+            ? html`<div class="column-settings-field">
+                  <label class="column-settings-check">
+                      <input type="checkbox" class="column-settings-readonly" aria-describedby=${readonlyHint} .checked=${true} disabled />
+                      <span>${text('columnSettings.readonly')}</span>
+                  </label>
+                  <div class="column-settings-hint" id=${readonlyHint}>${text('columnSettings.readonly.locked')}</div>
+              </div>`
+            : checkbox('columnSettings.readonly', format?.readonly ?? own.readonly, (on) => set('readonly', on));
+        return html`${multiline} ${readonly} ${validationSettings()}`;
     };
 
     /**

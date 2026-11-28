@@ -365,6 +365,7 @@ const norwegian: Record<TextId, string> = {
     'columnSettings.minRows': 'Minst linjer i detaljskjemaet',
     'columnSettings.minRows.hint': '1 til 30, minst antall linjer i feltet i detaljskjemaet - tom: 3',
     'columnSettings.readonly': 'Skrivebeskyttet',
+    'columnSettings.readonly.locked': 'Alltid for denne kolonnen: satt av programmet',
     'columnSettings.validation': 'Validering',
     'columnSettings.validation.hint': 'Satt av programmet: sjekkes ved hver endring, kan ikke endres her',
     'columnSettings.validation.pattern': 'Må passe med {value}',

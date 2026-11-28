@@ -8,6 +8,7 @@ import { editorOperators } from '../gridFunctions/columnFilterOptions';
 import { matchCaseItem, setHeaderFilterCaseSensitive } from '../gridFunctions/contextmenuFilter';
 import { getHeaderFilterOperator, isHeaderFilterCaseSensitive } from '../gridFunctions/getHeaderFilterOperator';
 import { headerOperatorItems } from '../gridFunctions/headerOperatorMenu';
+import { importFields } from '../gridFunctions/importRows';
 import type { MenuContext } from '../gridMenus';
 import { mountGrid, stubCanvas, stubElementSizes } from './gridTestHelpers';
 import { gridOf, openFilterMenu, typeInHeaderFilter } from './interactionTestHelpers';
@@ -15,7 +16,8 @@ import { gridOf, openFilterMenu, typeInHeaderFilter } from './interactionTestHel
 /**
  * The fields' locks in a grid (FieldConfig, set by code): `clobType` - a long text filtered with LIKE
  * only: no value list, no formula reads it, a template that reads it is filtered on the value - and
- * `caseSensitive` - Match case always on, the user can not turn it off
+ * `caseSensitive` - Match case always on, the user can not turn it off - and `readonly` - the field is never
+ * edited, the user can not turn that off
  */
 
 beforeAll(() => {
@@ -135,5 +137,57 @@ describe('caseSensitive', () => {
         expect(dialog.querySelector(`#${box.getAttribute('aria-describedby')}`)?.textContent?.trim()).toBe(
             'Always for this column: set by the application'
         );
+    });
+});
+
+describe('readonly', () => {
+    const locked: DatasourceOptions = { key: 'id', fields: { id: 'number', code: { readonly: true } } };
+
+    it('expect its cells readonly in an editable grid, whatever the column, the user and the hook say', async () => {
+        const { element, datasource, gridInterface } = await mountGrid(
+            { readonly: false, columns: { code: { readonly: false, format: { readonly: false } } }, layout },
+            rows(),
+            locked,
+            { isReadonly: () => false }
+        );
+        const row = datasource.getAllData()[0];
+        expect(gridInterface.__isCellReadonly(row, 'code')).toBe(true);
+        expect(gridInterface.__isCellReadonly(row, 'name')).toBe(false);
+        // the cells: readonly inputs with the readonly stripes behind them
+        const inputs = (field: string) => [...element.querySelectorAll<HTMLInputElement>(`input[data-attribute="${field}"]`)];
+        expect(inputs('code').length).toBe(2);
+        expect(
+            inputs('code').map((input) => [
+                input.readOnly,
+                input.previousElementSibling?.classList.contains('simple-html-readonly')
+            ])
+        ).toEqual([
+            [true, true],
+            [true, true]
+        ]);
+        expect(inputs('name').map((input) => input.readOnly)).toEqual([false, false]);
+    });
+
+    it('expect the import to leave it out', async () => {
+        const { gridInterface } = await mountGrid({ readonly: false, columns: {}, layout }, rows(), locked);
+        expect(importFields(gridInterface)).toEqual(['id', 'notes', 'name']);
+    });
+
+    it("expect the dialog's Read only checked and greyed out, its hint: set by the application", async () => {
+        const { gridInterface } = await mountGrid({ readonly: false, columns: {}, layout }, rows(), locked);
+        gridInterface.openColumnSettings('code');
+        const dialog = document.querySelector('dialog.column-settings') as HTMLDialogElement;
+        const box = dialog.querySelector('.column-settings-readonly') as HTMLInputElement;
+        expect([box.checked, box.disabled]).toEqual([true, true]);
+        expect(dialog.querySelector(`#${box.getAttribute('aria-describedby')}`)?.textContent?.trim()).toBe(
+            'Always for this column: set by the application'
+        );
+    });
+
+    it("expect the dialog's Read only of another column a checkbox the user changes", async () => {
+        const { gridInterface } = await mountGrid({ readonly: false, columns: {}, layout }, rows(), locked);
+        gridInterface.openColumnSettings('name');
+        const dialog = document.querySelector('dialog.column-settings') as HTMLDialogElement;
+        expect(dialog.querySelector('.column-settings-readonly')).toBeNull();
     });
 });

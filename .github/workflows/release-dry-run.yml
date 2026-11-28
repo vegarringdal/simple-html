@@ -20,8 +20,9 @@ jobs:
             dry_run: true
 
     publish:
+        # what publish.yml asks for (the release); nothing is made in a dry run
         permissions:
-            contents: read
+            contents: write
             packages: write
         uses: ./.github/workflows/publish.yml
         with:

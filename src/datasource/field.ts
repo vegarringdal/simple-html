@@ -156,6 +156,24 @@ export interface FieldConfig {
      * ```
      */
     clobType?: boolean;
+
+    /**
+     * `true`: no grid on the datasource lets the user edit the field - its cells, paste, fill down, the
+     * detail form and the import leave it as it is, also in an editable grid. Set in the fields only, by
+     * code - not in the grid's config, and the user can not turn it off: "Read only" is on and greyed out
+     * in the grid config dialog. The column's own `readonly` (`ColumnConfig.readonly`) is a default the
+     * user can change, this is not; the `isReadonly` hook is not asked for the field either. Code still
+     * sets its values (`row.status = 'Closed'`, `setData()`, `upsert()`). Any type. Default `false`
+     *
+     * @example
+     * ```ts
+     * import { Datasource } from '@simple-html/grid';
+     *
+     * // the id from the database: shown, never edited
+     * const datasource = new Datasource({ key: 'id', fields: { id: { type: 'number', readonly: true } } });
+     * ```
+     */
+    readonly?: boolean;
 }
 
 /**
@@ -191,6 +209,11 @@ export interface Field {
     caseSensitive: boolean;
     /** `true` when `fields` gave the field `clobType: true`: a long text filtered with `LIKE` only */
     clobType: boolean;
+    /**
+     * `true` when `fields` gave the field `readonly: true`: no grid lets the user edit it. A calculated
+     * column of a grid is `true` too, it is computed
+     */
+    readonly: boolean;
 }
 
 /**

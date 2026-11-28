@@ -1,7 +1,8 @@
 # Tags a release, by hand: the Actions tab, "tag", "Run workflow". Reads the version from package.json
 # (set by hand, a final version like 6.1.0) and pushes the git tag v<version> on the commit it runs on -
 # only the tag is pushed, never a commit. Only from the default branch (master); stops when the tag is
-# there already. Publishing the package is publish.yml, run by hand as well.
+# there already. Publishing the package is publish.yml, run by hand as well - its GitHub Release makes the
+# tag when this has not, so this is for a tag without a release.
 #
 # A pull request to master runs it too (pr.yml), with dry_run: the same steps from any branch, nothing
 # pushed, and "tagged already" a warning - a release that would fail fails there.

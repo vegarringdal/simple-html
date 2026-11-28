@@ -64,6 +64,8 @@ The big ones, one line each. [MIGRATION2V6.md](MIGRATION2V6.md) has every change
   `role="table"`.
 - **The date picker's class names are prefixed** (`.year` -> `.simple-html-date-year` ...);
   `datepickerHeight` defaults to 282.
+- **The text inside a header label cell is `simple-html-label-text`**, the cell keeps `simple-html-label`
+  (both were `simple-html-label`).
 - **Text filters**: `_` is a wildcard for one character, and `\` makes the next wildcard a plain character.
 - **The row number shows the row's state** with an icon and is 14px wider (`rowStatus: false` for the
   old look).
@@ -80,7 +82,7 @@ The big ones, one line each. [MIGRATION2V6.md](MIGRATION2V6.md) has every change
 #### Datasource
 
 - `fields` is the schema: `FieldConfig` (`type`, `label`, `formatter`, `validate`, `multiline`,
-  `caseSensitive`), `FieldType` with `'datetime'` new, `getField()`, and `setFields()` for fields known
+  `caseSensitive`, `clobType`, `readonly`), `FieldType` with `'datetime'` new, `getField()`, and `setFields()` for fields known
   later (event `fields-change`).
 - Typed events: `DatasourceEvents`, `GridEvents`, `DateEvents`, every event and its payload documented.
 - `datasource.parseRow(row)` and `setData(rows, { parse: true })` read rows from JSON as the field types.
@@ -108,7 +110,8 @@ The big ones, one line each. [MIGRATION2V6.md](MIGRATION2V6.md) has every change
   grid config dialog. The formulas are parsed by the grid's own parser: no `eval`.
 - **Aggregates**: `ColumnConfig.aggregate` (`'sum'`, `'avg'`, `'min'`, `'max'`, `'count'`, or several) in the
   group rows (`groupAggregates`) and a totals row (`totalsRow`); also from the header menu.
-  `datasource.aggregate(field, fn, rows?)`.
+  `datasource.aggregate(field, fn, rows?)`. An average shows 2 decimals unless the column's number
+  format has its own; in a narrow column the label (`Sum`) goes whole before the value is cut.
 - `fitColumns()`, `resetColumnWidths()`, `fitRows()` and `resetRowHeights()`; a double-click on a resize
   handle fits the column. `autoResizeColumns()` is deprecated.
 - The column chooser has a search and renames a column in place.
@@ -165,6 +168,9 @@ The big ones, one line each. [MIGRATION2V6.md](MIGRATION2V6.md) has every change
 - **Multiline text**: `FieldConfig.multiline`, an editor over the cell, `multilineLineHeight`,
   `multilineTooltipLines`.
 - **Edit permissions**: `GridConfig.edit` (`{ add?, change?, delete? }`).
+- **A field locked against edits**: `FieldConfig.readonly` - no grid lets the user edit it, and they can not
+  turn it off (*Read only* is greyed out in the grid config dialog). A column's `readonly` stays a default
+  the user can change.
 - **Lookup columns**: `ColumnConfig.editor: { type: 'select' | 'grid', lookup }` and `registerLookup()`.
 - **Fill down**: Ctrl+D, the fill handle, `gridInterface.fillDown()`.
 - `Formatter.formatForEdit(value)`: the text a cell shows while it is edited.
@@ -281,6 +287,8 @@ Fixes to things that did not work in v5:
   an npm alias, so the imports stay `@simple-html/grid`:
   `npm install @simple-html/grid@npm:@vegarringdal/simple-html-grid`. See the README for the `.npmrc`.
   Dev builds are published with the npm tag `next`.
+- Every release is also a GitHub Release with the package as a tgz: `npm install` from its address needs no
+  token and no alias.
 - The `exports` map: `@simple-html/grid`, `@simple-html/grid/sql` (ESM and CommonJS, no DOM, for Node),
   `@simple-html/grid/grid.css`, `@simple-html/grid/date.css` and `@simple-html/grid/theme-tredespace.css`.
 - Typings: compiled with TypeScript `strict`, internal members left out, and every type a public

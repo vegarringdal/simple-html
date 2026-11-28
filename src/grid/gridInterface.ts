@@ -3540,15 +3540,17 @@ export class GridInterface<T> {
 
     /**
      * @internal
-     * Is the cell readonly: a calculated column's always; on a row the edit permissions (`GridConfig.edit`)
+     * Is the cell readonly: a calculated column's and a locked field's (`FieldConfig.readonly`) always - the
+     * hook is not asked; on a row the edit permissions (`GridConfig.edit`)
      * do not let the user change, every cell is - whatever the hook says. Else the `isReadonly` hook decides, and when it gives no
      * answer (anything but `true` / `false`) the column's `readonly` option. The grid's own `readonly`
      * is not part of it, the callers check that first
      * @param row a row of the datasource, so one of its `EntityUnion<T>` rows
      */
     public __isCellReadonly(row: Entity, field: string): boolean {
-        // a calculated column is computed, never edited; a row the edit permissions lock, every cell
-        if (this.__isCalculated(field) || !mayChangeRow(this.gridConfig.edit, row)) {
+        // a calculated column is computed, never edited; a field the app locked, neither; a row the edit
+        // permissions lock, every cell
+        if (this.__isCalculated(field) || this.dataSource.__isFieldReadonly(field) || !mayChangeRow(this.gridConfig.edit, row)) {
             return true;
         }
         // the user's (format.readonly) over the column's

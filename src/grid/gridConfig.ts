@@ -1039,7 +1039,8 @@ export type ColumnConfig = {
      * makes the column's cells readonly while the grid is editable (`GridConfig.readonly: false`). The
      * grid draws red stripes behind them. The `isReadonly` hook ({@link GridHooks}) can decide per row
      * instead. The user's from the grid config dialog (`format.readonly`, Read only) wins - so it is a
-     * default the user can change, `GridConfig.edit` ({@link EditPermissions}) is what they may not
+     * default the user can change, `GridConfig.edit` ({@link EditPermissions}) is what they may not. A
+     * field that is never edited is locked in the datasource's fields (`FieldConfig.readonly`)
      */
     readonly?: boolean;
 

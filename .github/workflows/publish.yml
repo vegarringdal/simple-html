@@ -1,8 +1,16 @@
 # Publishes the package to GitHub Packages (npm.pkg.github.com), by hand: the Actions tab, "publish",
 # "Run workflow". The version is the one in package.json, set by hand (a final version like 6.1.0), with
 # the npm tag `latest`. Only from the default branch (master), and never twice: it stops when that
-# version is published already. The git tag is tag.yml's, run by hand as well - this one does not
-# need it, it says so in the summary when it is missing.
+# version is published already.
+#
+# It also makes the GitHub Release v<version> with the package as a tgz (`npm pack`), for those who do
+# not use a registry: the tgz keeps the package's own name, @simple-html/grid, so it installs from the
+# release's address with no token and no alias:
+#   npm install https://github.com/<owner>/simple-html/releases/download/v<version>/simple-html-grid-<version>.tgz
+# The notes are the version's section of CHANGELOG.md (scripts/releaseNotes.js). The release makes the
+# git tag v<version> on this commit when it is not there; tag.yml makes the tag on its own. A tag on
+# another commit stops the release. The release comes before `npm publish`, and a run again after a failed
+# publish replaces its tgz: a failed run can be run again.
 #
 # The package is `@<owner>/simple-html-grid` there: GitHub Packages takes only the scope of the
 # repository's owner. Install it under its usual name with an npm alias, so the imports stay:
@@ -25,7 +33,8 @@ on:
                 default: false
 
 permissions:
-    contents: read
+    # the release and its tag
+    contents: write
     packages: write
 
 # one at a time: two runs of one version must not both find it unpublished. A dry run waits for none
@@ -71,6 +80,13 @@ jobs:
                   npm run check:typings
                   npm run check:docs
 
+            # the tgz of the release, in build/ - before the package step, so it keeps the package's own name
+            # (npm pack builds dist again, the prepare script)
+            - id: tgz
+              run: |
+                  node scripts/pack.js
+                  echo "file=$(cd build && ls *.tgz)" >> "$GITHUB_OUTPUT"
+
             # the name and the registry of GitHub Packages, in the checkout only - and the version check
             - id: package
               run: node scripts/githubPackage.js release
@@ -100,6 +116,45 @@ jobs:
                       stop "could not tell whether $NAME@$VERSION is published"
                   fi
 
+            # the tag of the release on this commit, or not there yet (the release makes it): a tag on another
+            # commit would name other code than the tgz has. A dry run (a pull request's merge commit) warns
+            - name: the tag on this commit
+              env:
+                  VERSION: ${{ steps.package.outputs.version }}
+              run: |
+                  # the last line: the commit of an annotated tag (^{}), else the tag's
+                  sha=$(git ls-remote --tags origin "refs/tags/v$VERSION" "refs/tags/v$VERSION^{}" | tail -n 1 | cut -f 1)
+                  if [ -n "$sha" ] && [ "$sha" != "$GITHUB_SHA" ]; then
+                      message="v$VERSION is tagged on $sha, not on $GITHUB_SHA - change the version in package.json"
+                      if [ "$DRY_RUN" = "true" ]; then
+                          echo "::warning::$message"
+                          exit 0
+                      fi
+                      echo "::error::$message"
+                      exit 1
+                  fi
+
+            # the GitHub Release with the tgz; a run again (npm publish failed) replaces the tgz of the one there
+            - name: release
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  GH_REPO: ${{ github.repository }}
+                  VERSION: ${{ steps.package.outputs.version }}
+                  FILE: ${{ steps.tgz.outputs.file }}
+              run: |
+                  node scripts/releaseNotes.js "$VERSION" "$FILE" build/notes.md
+                  if [ "$DRY_RUN" = "true" ]; then
+                      echo "Dry run: the release v$VERSION would have $FILE:" >> "$GITHUB_STEP_SUMMARY"
+                      tar -tzf "build/$FILE" | sed 's/^/    /' | head -n 40 >> "$GITHUB_STEP_SUMMARY"
+                      exit 0
+                  fi
+                  if gh release view "v$VERSION" > /dev/null 2>&1; then
+                      gh release upload "v$VERSION" "build/$FILE" --clobber
+                  else
+                      gh release create "v$VERSION" "build/$FILE" --target "$GITHUB_SHA" --title "v$VERSION" \
+                          --notes-file build/notes.md --latest
+                  fi
+
             - run: npm publish --tag latest ${{ env.DRY_RUN == 'true' && '--dry-run' || '' }}
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -108,15 +163,15 @@ jobs:
               env:
                   NAME: ${{ steps.package.outputs.name }}
                   VERSION: ${{ steps.package.outputs.version }}
+                  FILE: ${{ steps.tgz.outputs.file }}
+                  REPOSITORY: ${{ github.repository }}
               run: |
                   if [ "$DRY_RUN" = "true" ]; then
                       echo "Dry run: publish would publish $NAME@$VERSION (latest)" >> "$GITHUB_STEP_SUMMARY"
                       exit 0
                   fi
-                  echo "Published $NAME@$VERSION (latest)" >> "$GITHUB_STEP_SUMMARY"
+                  echo "Published $NAME@$VERSION (latest) and the release v$VERSION with $FILE" >> "$GITHUB_STEP_SUMMARY"
                   echo '```' >> "$GITHUB_STEP_SUMMARY"
                   echo "npm install @simple-html/grid@npm:$NAME@$VERSION" >> "$GITHUB_STEP_SUMMARY"
+                  echo "npm install https://github.com/$REPOSITORY/releases/download/v$VERSION/$FILE" >> "$GITHUB_STEP_SUMMARY"
                   echo '```' >> "$GITHUB_STEP_SUMMARY"
-                  if ! git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" > /dev/null; then
-                      echo "No git tag v$VERSION yet - run the tag workflow" >> "$GITHUB_STEP_SUMMARY"
-                  fi

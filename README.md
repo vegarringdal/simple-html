@@ -41,7 +41,17 @@ The highlights. Every feature, each linked to its guide and a live sample:
 
 ## Install
 
-The package is not on npmjs.com. It is published to **GitHub Packages** as
+The package is not on npmjs.com. The simplest: every release has the package as a tgz on its
+[GitHub Release](https://github.com/vegarringdal/simple-html/releases). Install it from its address -
+no token, no alias, the imports are `@simple-html/grid`:
+
+```sh
+npm install https://github.com/vegarringdal/simple-html/releases/download/v6.0.0/simple-html-grid-6.0.0.tgz
+```
+
+Or download the tgz, put it in your project and install the file (`npm install ./libs/simple-html-grid-6.0.0.tgz`).
+
+It is also published to **GitHub Packages** as
 [`@vegarringdal/simple-html-grid`](https://github.com/vegarringdal/simple-html/pkgs/npm/simple-html-grid)
 (the scope of the repository's owner): install it under its usual name
 with an npm alias, so the imports stay `@simple-html/grid`. GitHub Packages needs a token that may read
@@ -167,15 +177,19 @@ on every push (`checks.yml`).
 
 The version is set by hand in package.json (and package-lock.json, `npm version 6.1.0
 --no-git-tag-version`), in a pull request like any other change. A release is then two workflows, both
-run by hand from the Actions tab on master; neither pushes a commit:
+run by hand from the Actions tab on master - `publish` is the one a release needs. Neither pushes a commit:
 
-- `tag` (`tag.yml`): tags the commit `v<version>`, the version of package.json. Stops when the tag is
-  there already
-- `publish` (`publish.yml`): the checks, then the package to GitHub Packages with the npm tag `latest`.
-  Stops when that version is published already
+- `publish` (`publish.yml`): the checks, then the GitHub Release `v<version>` with the package as a tgz
+  (`npm pack`, the name `@simple-html/grid`) and the version's section of CHANGELOG.md as its notes
+  (`scripts/releaseNotes.js`), then the package to GitHub Packages with the npm tag `latest`. Stops when
+  that version is published already. The release makes the tag `v<version>` on the commit when it is
+  not there, and stops when the tag is on another commit
+- `tag` (`tag.yml`): only the tag `v<version>`, for a tag without a release. Stops when the tag is there
+  already
 
 A pull request to master runs both as a dry run (`release dry run`, `release-dry-run.yml`): their own
-steps, nothing tagged or published, so a release that would fail fails in the pull request. A version
+steps, nothing tagged, released or published, so a release that would fail fails in the pull request.
+The run's summary lists the files of the tgz. A version
 tagged or published already is a warning there.
 
 ### The docs site

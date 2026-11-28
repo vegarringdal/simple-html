@@ -226,7 +226,8 @@ const fields = {
             validate: [{ id: 'min', value: 15 }, { id: 'max', value: 25 }, 'integer', { id: 'decimals', value: 0 }]
         },
         born: 'date' as const,
-        updated: { type: 'datetime' as const, formatter: 'texts-datetime' },
+        // locked by code: the dialog's Read only greyed out, its hint "set by the application"
+        updated: { type: 'datetime' as const, formatter: 'texts-datetime', readonly: true },
         // its label is the {with} of the notes' unique rule
         active: { type: 'boolean' as const, label: '«Active»' },
         // the same notes in every row: the rows that are active break it, in the dialog "in any case"
@@ -612,6 +613,10 @@ function showColumnSettings({ datasource, gridInterface }: MountedGrid, check: (
             button.textContent?.includes('columnSettings.cancel')
         ) as HTMLElement
     ).click();
+
+    // a field locked by code (FieldConfig.readonly): Read only greyed out, its hint
+    gridInterface.openColumnSettings('updated');
+    check();
 
     // the current row, then no rows at all
     datasource.setRowAsCurrentEntity(0);

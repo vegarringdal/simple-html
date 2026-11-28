@@ -26,7 +26,8 @@ describe('schema - getField', () => {
             validate: [],
             multiline: false,
             caseSensitive: false,
-            clobType: false
+            clobType: false,
+            readonly: false
         });
     });
 
@@ -40,7 +41,8 @@ describe('schema - getField', () => {
             validate: [],
             multiline: false,
             caseSensitive: false,
-            clobType: false
+            clobType: false,
+            readonly: false
         });
         expect(ds.getField('died')).toEqual({
             name: 'died',
@@ -50,7 +52,8 @@ describe('schema - getField', () => {
             validate: [],
             multiline: false,
             caseSensitive: false,
-            clobType: false
+            clobType: false,
+            readonly: false
         });
     });
 
@@ -64,7 +67,8 @@ describe('schema - getField', () => {
             validate: [],
             multiline: false,
             caseSensitive: false,
-            clobType: false
+            clobType: false,
+            readonly: false
         });
     });
 

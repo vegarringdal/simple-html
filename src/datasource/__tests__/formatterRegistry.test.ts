@@ -54,7 +54,8 @@ describe('formatter registry - registerFormatter()', () => {
             validate: [],
             multiline: false,
             caseSensitive: false,
-            clobType: false
+            clobType: false,
+            readonly: false
         });
     });
 

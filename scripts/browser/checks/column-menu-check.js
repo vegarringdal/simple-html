@@ -187,7 +187,7 @@ const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
                 }
                 return out;
             };
-            const gridNode = nodes.find((n) => n.role?.value === 'grid' && n.name?.value === 'Grid');
+            const gridNode = nodes.find((n) => n.role?.value === 'grid' && n.name?.value === 'Data grid');
             const collect = (n, roles, out = []) => {
                 for (const k of kids(n)) {
                     if (roles.includes(k.role?.value)) {

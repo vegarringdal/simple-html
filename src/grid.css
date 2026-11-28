@@ -672,7 +672,10 @@
     bottom: 0;
 }
 
-.simple-html-label {
+/* a label cell of the header (the column's label, its number) and the text inside it: simple-html-label
+   is the cell, simple-html-label-text the element in it */
+.simple-html-label,
+.simple-html-label-text {
     box-shadow: inset 1px 1px 3px 0 var(--simple-html-grid-boxshadow);
     background-color: var(--simple-html-grid-main-bg-color);
     pointer-events: all;
@@ -1890,32 +1893,32 @@
 }
 
 /* a line of an aggregate: the label at the left, the value at the right of the column - labels and
-   numbers line up. Too narrow, the label gives way first (it shrinks 1000 times faster), then the
-   value ends in an ellipsis */
+   numbers line up. Too narrow, the label goes whole (a cut "S.." was hard to read), then the value ends
+   in an ellipsis: the items are laid out from the right, the value first (order), and a label that
+   does not fit beside it wraps onto a second line, which the cell's height and overflow hide */
 .simple-html-grid-aggregate {
     box-sizing: border-box;
     position: absolute;
     display: flex;
+    flex-flow: row-reverse wrap;
+    align-content: flex-start;
     justify-content: space-between;
-    gap: 4px;
+    column-gap: 4px;
     padding: 0 4px;
     overflow: hidden;
     white-space: nowrap;
 }
 
-.simple-html-grid-aggregate-label,
-.simple-html-grid-aggregate-value {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
 .simple-html-grid-aggregate-label {
-    flex: 0 1000 auto;
+    flex: none;
+    order: 1;
 }
 
 .simple-html-grid-aggregate-value {
     flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* the values of a group row in the weight of the cells: only the group's name is bold - every line

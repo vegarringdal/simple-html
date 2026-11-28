@@ -59,7 +59,7 @@ export function renderHeaderLabel(
 
         render(
             html`<div
-                class="simple-html-label"
+                class="simple-html-label-text"
                 data-attribute-header=${attribute}
                 @contextmenu=${(e: MouseEvent) => {
                     e.preventDefault();
