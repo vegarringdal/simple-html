@@ -405,6 +405,9 @@ export class Datasource<T = any> {
             if (config.multiline && (config.type ?? 'text') !== 'text') {
                 throw new Error(`Datasource: field '${name}' is multiline, that is for text fields only, not '${config.type}'`);
             }
+            if (config.readonly !== undefined && typeof config.readonly !== 'boolean') {
+                throw new Error(`Datasource: field '${name}' has readonly '${config.readonly}', it is true or false`);
+            }
             // a locked case and a LOB are of text: on another type they would do nothing
             for (const option of ['caseSensitive', 'clobType'] as const) {
                 if (config[option] !== undefined && typeof config[option] !== 'boolean') {
@@ -594,8 +597,8 @@ export class Datasource<T = any> {
      *
      * const datasource = new Datasource({ fields: { born: { type: 'date', label: 'Born' } } });
      *
-     * datasource.getField('born'); // { name: 'born', type: 'date', label: 'Born', formatter: DateFormatterYYYYMMDD, validate: [], multiline: false, caseSensitive: false, clobType: false }
-     * datasource.getField('name'); // { name: 'name', type: 'text', label: 'name', formatter: TextFormatter, validate: [], multiline: false, caseSensitive: false, clobType: false }
+     * datasource.getField('born'); // { name: 'born', type: 'date', label: 'Born', formatter: DateFormatterYYYYMMDD, validate: [], multiline: false, caseSensitive: false, clobType: false, readonly: false }
+     * datasource.getField('name'); // { name: 'name', type: 'text', label: 'name', formatter: TextFormatter, validate: [], multiline: false, caseSensitive: false, clobType: false, readonly: false }
      * // formatter: the formatter object, looked up by its id when the datasource was made
      * ```
      */
@@ -611,7 +614,8 @@ export class Datasource<T = any> {
                 validate: NO_RULES,
                 multiline: false,
                 caseSensitive: false,
-                clobType: false
+                clobType: false,
+                readonly: true
             };
         }
         const config = this.__fields.get(name);
@@ -623,8 +627,18 @@ export class Datasource<T = any> {
             validate: this.__fieldRules.get(name) ?? NO_RULES,
             multiline: config?.multiline === true,
             caseSensitive: config?.caseSensitive === true,
-            clobType: config?.clobType === true
+            clobType: config?.clobType === true,
+            readonly: config?.readonly === true
         };
+    }
+
+    /**
+     * @internal
+     * true when the field is locked against the user's edits (`FieldConfig.readonly`): for the grid's
+     * `__isCellReadonly`, asked for every cell it renders - without the object getField() makes
+     */
+    public __isFieldReadonly(name: string): boolean {
+        return this.__fields.get(name)?.readonly === true;
     }
 
     /**
@@ -2116,8 +2130,6 @@ export class Datasource<T = any> {
         // sort
         if (!this.__grouping.getGrouping().length) {
             if (args) {
-                // TODO: if we have grouping we need to add it to this..
-
                 this.__sorting.setOrderBy(args, add);
                 this.__sorting.runOrderBy(this.__collectionFiltered);
             } else {

@@ -2026,7 +2026,7 @@ change:
   `aria-colindex`. The input's `aria-label` is the column label (`First Name`), not the field name.
 * **Elements get ids** `simple-html-grid-<n>-...` for `aria-owns`, one `<n>` per grid.
 * **Texts**: `grid.focusHelper` is removed (the focus helper is hidden from screen readers). New:
-  `grid.label` (the grid's name, `Grid` - give each grid its own in `GridConfig.texts`),
+  `grid.label` (the grid's name, `Data grid` - give each grid its own in `GridConfig.texts`),
   `grid.filter`, `grid.groupToggle`, `grid.removeGroup`. `row.paste.cell` / `row.clear.cell` are
   `Paste cell` / `Clear cell` (both were `Cell`).
 * **Tab leaves the grid at its ends**: Tab on the last cell of the last row and Shift+Tab on the first
@@ -2119,6 +2119,11 @@ New in v6, see [Undo and redo](guides/05-editing.md#undo-and-redo). What can cha
 * **Copies of more than one cell start with a header line** of the column labels (text and html), and
   several ranges copy as one table. `copyHeaders: false` gives the values only. The row menu's copies
   write what the cells show (not ISO dates / raw numbers).
+
+* **The text inside a header label cell is `simple-html-label-text`**: in v5 the label cell and the
+  element with its text in it were both `simple-html-label`, and so was the element in a column's
+  number. The cell keeps `simple-html-label`; css of your own for the text inside it needs
+  `.simple-html-label-text`.
 
 * **The date picker's class names are prefixed** (`.year` -> `.simple-html-date-year`, `.side` ->
   `.simple-html-date-time-field`, `.date-flex-col` -> `.simple-html-date-actions` ..., see the

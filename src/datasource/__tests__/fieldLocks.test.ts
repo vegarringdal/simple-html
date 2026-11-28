@@ -34,6 +34,33 @@ describe('the options', () => {
     });
 });
 
+describe('readonly: no grid lets the user edit the field', () => {
+    it('expect getField to give it on any type, false when not set', () => {
+        const datasource = new Datasource({
+            fields: { id: { type: 'number', readonly: true }, born: { type: 'date', readonly: true } }
+        });
+        expect(datasource.getField('id').readonly).toBe(true);
+        expect(datasource.getField('born').readonly).toBe(true);
+        expect(datasource.getField('other').readonly).toBe(false);
+        expect(datasource.__isFieldReadonly('id')).toBe(true);
+        expect(datasource.__isFieldReadonly('other')).toBe(false);
+    });
+
+    it('expect it not true / false to throw', () => {
+        expect(() => new Datasource({ fields: { n: { readonly: 'yes' as never } } })).toThrow(
+            "Datasource: field 'n' has readonly 'yes', it is true or false"
+        );
+    });
+
+    it('expect code to still set its values', () => {
+        const datasource = new Datasource({ key: 'id', fields: { id: 'number', code: { readonly: true } } });
+        datasource.setData([{ id: 1, code: 'a' }]);
+        const row = datasource.getAllData()[0] as { code: string };
+        row.code = 'b';
+        expect(row.code).toBe('b');
+    });
+});
+
 describe('caseSensitive: every filter on the field matches case', () => {
     it('expect a condition without caseSensitive kept as a copy with it, and run so', () => {
         const datasource = new Datasource({ key: 'id', fields: { id: 'number', code: { caseSensitive: true } } });

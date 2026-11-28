@@ -47,7 +47,7 @@ From `CLAUDE.MD` and what held up while v6 was built:
 - **No positional booleans.** Options objects and named methods: `setData(rows, { add, refilter })`,
   `markAllForDeletion()`, `removeAllData()`, `deselectAll({ notify })`.
 - **What only the developer decides stays in code.** Validation rules, field locks (`caseSensitive`,
-  `clobType`) and edit permissions (`GridConfig.edit`) are set by the app. They are not in `GridState`, a
+  `clobType`, `readonly`) and edit permissions (`GridConfig.edit`) are set by the app. They are not in `GridState`, a
   saved view or the grid config dialog, so the user can not change them.
 - **No server-side row model.** The grid holds all its rows. `toSqlWhere()` is a helper for the app's own
   backend, not a paging data source.
@@ -235,6 +235,13 @@ anything changes. See `guides/05-editing.md`.
   non-blanks. The sum is Neumaier-compensated. Results are cached per group row and per filtered list,
   keyed by a change counter per field that the container bumps on every write, so editing a field that is
   not aggregated recomputes nothing.
+- The grid shows an average rounded to 2 decimals when the column's number format has none
+  (`formatAggregate`, `aggregates.ts`): the field's formatter shows every decimal, and `38.69346733668342`
+  pushed the label out. A cell of an aggregate is a wrapping flex row laid out from the right, the value
+  first: a label that does not fit beside the value wraps onto a second line, which the cell hides. So the
+  label goes whole (it was cut to `S..`), then the value ends in an ellipsis.
+- The values of a group row are in the cells' weight, only its name is bold. The totals row stays bold, as
+  the totals of a spreadsheet are (the user: "total row is ok").
 
 ## Grid
 
@@ -387,8 +394,11 @@ keyboard.
   a menu, and destroy, and writes `parse(text)` once, only when the text changed, so CRLF from a server
   survives.
 - Readonly is decided in one place, `__isCellReadonly`: the `edit` permissions, then the column's `readonly`
-  (the user's `format.readonly` wins), then the `isReadonly` hook. Calculated columns are always readonly.
-  Clear, paste, fill and delete ask the same function.
+  (the user's `format.readonly` wins), then the `isReadonly` hook. Calculated columns and locked fields
+  (`FieldConfig.readonly`) are always readonly, the hook is not asked. Clear, paste, fill and delete ask the
+  same function. The lock is the field's, not the column's, as `caseSensitive` is: the column's `readonly`
+  is a default the user may change in the grid config dialog, the field's is the app's (`__isFieldReadonly`,
+  no object made per cell). The import leaves locked fields out.
 - The edited marker (`showCellEdited.ts`) is an element of its own, hidden from aria. A click restores the
   original value. The row number shows one status icon with the precedence deleted > conflict/error >
   new/edited (`rowStatusIcon`, `rowStatus.ts`).
@@ -701,11 +711,29 @@ no imports, shared so that the grid and the SQL behave the same. `src/sql.ts` de
   `npm run hooks`) runs it. The browser checks are left out of it, because they take minutes.
 - `pr.yml` checks that a pull request title is a conventional commit (`scripts/prTitle.js`); `!` is allowed on
   `fix` and `feat`. The version is not made from it: it is set by hand in `package.json`.
-- `release-dry-run.yml` runs `tag.yml` and `publish.yml` with `dry_run` on a pull request to master, so a
-  release that would fail fails there. "Tagged already" and "published already" are only warnings there.
-- `tag.yml` (by hand, from the default branch) pushes the tag `v<version>`, never a commit. `publish.yml` (by
+- `pr.yml` also guards the version (`scripts/prVersion.js`): it changes only in a release pull request - a
+  branch of the repository (not a fork) named `release/<version>`, the title `chore: <version>`, a final
+  version above master's, package-lock.json the same - and a `release/...` branch must change it. A bump by
+  accident in a feature branch, or from a fork, fails. Master's version is read from the base commit, which
+  it fetches: the checkout is the pull request merged.
+- `release-dry-run.yml` runs `publish.yml` with `dry_run` on a pull request to master, so a release that
+  would fail fails there. "Published already" and a tag on another commit are only warnings there.
+- There is no workflow for the tag alone: the release makes it (a `tag.yml` was removed, two release
+  workflows were confusing). `publish.yml` (by
   hand, from the default branch, in a concurrency group that is never cancelled) runs the checks, then
   publishes to GitHub Packages with the `latest` tag, and stops if the version is published already.
+- `publish.yml` also makes the GitHub Release `v<version>` with the package as a tgz, for apps that use no
+  registry: installed from the release's address it needs no token and no alias (a public repository).
+  It is packed before `githubPackage.js` renames the package, so it is `@simple-html/grid`. Its notes are
+  the CHANGELOG.md entries since the release before (`scripts/releaseNotes.js`): every change gets a dated
+  entry at the top, `- **2026.12.01** (>6.0.0):` - after the version package.json had, which the owner
+  bumps at release time, maybe more than once between releases. So a release takes the entries from the
+  version of the release before (the highest tag `v<x.y.z>` below its own) up to its own; the commits stay
+  one line. 6.0.0 has a `## 6.0.0` section instead, which counts too. The release comes before
+  `npm publish`, and a run again replaces its tgz (`gh release upload --clobber`): a run that failed in the
+  publish can be run again. Creating the release makes the tag on the commit; a tag on
+  another commit stops it, as the tgz would not be the tagged code. `publish.yml` needs `contents: write`
+  for it, so `release-dry-run.yml` gives that to its dry run.
   `next.yml` publishes `<version>-next.<run>` with the tag `next`. `beta.yml` publishes
   `<version>-beta.<branch>.<run>` with the tag `beta-<branch>`. GitHub shows "Run workflow" only for workflows
   on the default branch.
@@ -727,11 +755,6 @@ What is known and not done. Limits of one area are also listed in their guides:
 
 - **The start page of the docs site**: the Feature overview (`#guide/features`) is the start page now; it
   was Getting started (`samples/demo/index.ts`, `fromHash()`). Keep it?
-- **Read only of the developer**: in the grid config dialog the user can uncheck *Read only* on a column the
-  config has as `readonly: true`, because `ColumnFormat.readonly: false` wins over `ColumnConfig.readonly`.
-  Should the developer's `readonly: true` be locked against that, as `GridConfig.edit` is (not in the state)?
-- **The totals row bold**: the values of a group row are in the cells' weight now, but the totals row stays
-  bold, as the totals of a spreadsheet are. Keep that, or use the cells' weight there too?
 - **The amber of the traffic lights** (icon sets, `--simple-html-grid-icon-amber-color`): `#92400e` in light
   mode looks brown beside the red. It is that dark to keep 3:1 on selected rows and on the palette's
   backgrounds. An outlined icon would allow a brighter fill. Is it worth it?
@@ -749,6 +772,8 @@ What is known and not done. Limits of one area are also listed in their guides:
 
 ### Bugs
 
+- **Made for the desktop first**: the grid was built and checked with a mouse and a keyboard. Touch works,
+  but some things may be odd on a phone or a tablet - see the touch items below and under Features.
 - **Touch has not been tried on a device**: the touch work was checked in Chromium's emulation only. Worth a
   look on real phones:
   - Safari on iOS: there is no `contextmenu`, so the grid times the long press. A canceled touchend drops the
@@ -772,15 +797,8 @@ What is known and not done. Limits of one area are also listed in their guides:
   - Missing keys: Shift+Space / Ctrl+Space (a row, a column); Ctrl+Left / Ctrl+Right to the edge of the data
     sideways (they are the input's word moves); Alt+Shift+PageUp / PageDown; the treegrid's ArrowRight /
     ArrowLeft on a group row.
-- **`grid.label`** defaults to `Grid`, which is read as "Grid grid". A better default needs the app's context.
 - **Only Chrome's accessibility tree** has been tried. Firefox, Safari (weaker `aria-owns`) and real screen
   readers (NVDA, JAWS, VoiceOver) have not.
-
-### Code quality
-
-- **Class names**: the label cell and its inner text div share the class `simple-html-label` (so does the
-  inner div of a column-selector cell). Using `simple-html-label-text` for the inner ones would make selectors
-  exact. This is a CSS change for apps that style them.
 
 ### Tooling
 

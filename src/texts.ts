@@ -388,6 +388,8 @@ const DEFAULTS = {
     'columnSettings.minRows': 'Min lines in the detail form',
     'columnSettings.minRows.hint': '1 to 30, the least lines of its box in the detail form - empty: 3',
     'columnSettings.readonly': 'Read only',
+    // under it when the application locked the field (FieldConfig.readonly)
+    'columnSettings.readonly.locked': 'Always for this column: set by the application',
     // the column's validation rules, read only: set by the application's code
     'columnSettings.validation': 'Validation',
     'columnSettings.validation.hint': 'Set by the application: checked on every edit, not changed here',
@@ -888,7 +890,7 @@ const DEFAULTS = {
     'filter.indicator.END_WITH': '*a',
 
     // labels for screen readers (aria-label)
-    'grid.label': 'Grid',
+    'grid.label': 'Data grid',
     'grid.rowSelector': 'row selector',
     'grid.filter': 'Filter {label}',
     'grid.groupToggle': '{name} ({total})',

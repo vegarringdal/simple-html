@@ -727,6 +727,7 @@ keep the braces - `{value}` is the cell's own value in a template, keep it as it
 | `columnSettings.minRows` | `Min lines in the detail form` | under Multiline while it is on: `DetailForm.fieldOptions[field].minRows` |
 | `columnSettings.minRows.hint` | `1 to 30, the least lines of its box in the detail form - empty: 3` | under it |
 | `columnSettings.readonly` | `Read only` | the checkbox of every column: its cells are not edited, also in an editable grid (`ColumnFormat.readonly`) |
+| `columnSettings.readonly.locked` | `Always for this column: set by the application` | under it when the field is locked (`FieldConfig.readonly`): checked and greyed out |
 | `columnSettings.validation` | `Validation` | the heading of the column's validation rules, read only - only a column whose field has rules (`FieldConfig.validate`, `ColumnConfig.validate`). A rule is its own `message`, else the built-in's message (`validation.*`), else its id |
 | `columnSettings.validation.hint` | `Set by the application: checked on every edit, not changed here` | under them |
 | `columnSettings.validation.pattern` | `Must match {value}` | a `pattern` rule without a message: `{value}` is its regular expression |
@@ -1235,7 +1236,7 @@ guide](14-accessibility.md) has what a screen reader gets.
 
 | id | English | shown |
 | --- | --- | --- |
-| `grid.label` | `Grid` | the name of the grid. Give each grid its own in its config: `texts: { 'grid.label': 'Orders' }` |
+| `grid.label` | `Data grid` | the name of the grid. Give each grid its own in its config: `texts: { 'grid.label': 'Orders' }` |
 | `grid.rowSelector` | `row selector` | the column header of the row numbers, the top left corner |
 | `grid.filter` | `Filter {label}` | a header filter. `{label}`: the column's label |
 | `grid.groupToggle` | `{name} ({total})` | the expand/collapse button of a group row, which also says whether it is expanded. `{name}`: the group's name, `Country: Norway`; `{total}`: its number of rows. The row shows `{name} ({total})` |

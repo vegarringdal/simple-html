@@ -1,10 +1,16 @@
-# A pull request to master: its title must be a conventional commit, so master's history says what each
-# change is. Fails until the title is one of
+# A pull request to master: two checks.
+#
+# title - a conventional commit, so master's history says what each change is. Fails until the title is one of
 #   fix: ...   feat: ...   fix!: ...   feat!: ...   (! - something breaks)
 #   chore: ... docs: ... test: ... refactor: ... ci: ... build: ... perf: ... style: ...
 # (a scope is fine: feat(grid): ...). Renaming the pull request runs it again. The tests are checks.yml.
-# The version is not made from it: package.json has it, see tag.yml and publish.yml.
+# The version is not made from it: package.json has it, see publish.yml.
 # See scripts/prTitle.js.
+#
+# version - the version in package.json changes only in a release pull request, so it is not bumped by
+# accident: from a branch of this repository (not a fork) named release/<version>, the title
+# chore: <version>, a final version higher than master's, package-lock.json the same. A branch release/...
+# must change it. See scripts/prVersion.js and the README, "Releases".
 name: pull request
 
 on:
@@ -25,3 +31,26 @@ jobs:
             - run: node scripts/prTitle.js
               env:
                   TITLE: ${{ github.event.pull_request.title }}
+
+    version:
+        name: version
+        runs-on: ubuntu-latest
+        steps:
+            # the pull request merged into master
+            - uses: actions/checkout@v7
+
+            # master's version: its commit is not in the checkout
+            - name: the version of master
+              env:
+                  BASE_SHA: ${{ github.event.pull_request.base.sha }}
+              run: |
+                  git fetch --no-tags --depth=1 origin "$BASE_SHA"
+                  version=$(git show "$BASE_SHA:package.json" | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version")
+                  echo "BASE_VERSION=$version" >> "$GITHUB_ENV"
+
+            - run: node scripts/prVersion.js
+              env:
+                  BRANCH: ${{ github.head_ref }}
+                  TITLE: ${{ github.event.pull_request.title }}
+                  HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+                  REPO: ${{ github.repository }}

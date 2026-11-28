@@ -214,7 +214,7 @@ describe('accessibility - the grid', () => {
 
         const grids = element.querySelectorAll('[role="grid"], [role="treegrid"]');
         expect(grids.length).toBe(1);
-        expect(grids[0].getAttribute('aria-label')).toEqual('Grid');
+        expect(grids[0].getAttribute('aria-label')).toEqual('Data grid');
         // it was role="table", around the grid: a table with a grid in it
         expect(element.hasAttribute('role')).toBe(false);
     });

@@ -65,6 +65,47 @@ const check = (name, ok, detail = '') => results.push(`${ok ? 'PASS' : 'FAIL'}  
             );
             check(`${scheme}: every text inside its row`, look.textInside);
         }
+        // a narrow column (the user's screenshot: "S.. 1 217 217 261...."): the label goes whole, not cut,
+        // then the value ends in an ellipsis - and both stay on the cell's line
+        const narrow = await page.evaluate(async () => {
+            const gi = document.querySelector('.stage simple-html-grid').grid.gridInterface;
+            const balance = gi.__getGridConfig().layout.center.find((column) => column.fields[0] === 'balance');
+            balance.width = 70;
+            gi.rebuild();
+            await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            return [...document.querySelectorAll('.stage [data-aggregate="sum:balance"]')]
+                .filter((cell) => cell.textContent.trim())
+                .map((cell) => {
+                    const box = cell.getBoundingClientRect();
+                    const label = cell.querySelector('.simple-html-grid-aggregate-label');
+                    const value = cell.querySelector('.simple-html-grid-aggregate-value');
+                    const labelBox = label.getBoundingClientRect();
+                    const valueBox = value.getBoundingClientRect();
+                    const labelShown = labelBox.top < box.bottom && labelBox.bottom > box.top;
+                    return {
+                        labelShown,
+                        labelCut: labelShown && label.scrollWidth > label.clientWidth + 0.5,
+                        valueOnLine: valueBox.top >= box.top - 0.5 && valueBox.bottom <= box.bottom + 0.5,
+                        valueCut: value.scrollWidth > value.clientWidth
+                    };
+                });
+        });
+        check(`${scheme}: narrow - sums shown`, narrow.length > 0, String(narrow.length));
+        check(
+            `${scheme}: narrow - no label cut, a label shown whole or not at all`,
+            narrow.every((cell) => !cell.labelCut),
+            JSON.stringify(narrow[0])
+        );
+        check(
+            `${scheme}: narrow - the label of a long sum hidden`,
+            narrow.some((cell) => !cell.labelShown),
+            JSON.stringify(narrow[0])
+        );
+        check(
+            `${scheme}: narrow - every value on its line`,
+            narrow.every((cell) => cell.valueOnLine),
+            JSON.stringify(narrow[0])
+        );
         if (shots) {
             await page.screenshot({
                 path: `${shots}/aggregate-lines-${scheme}.png`,

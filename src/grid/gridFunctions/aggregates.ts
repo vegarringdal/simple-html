@@ -170,9 +170,17 @@ export function showsGroupAggregates(config: ParsedGridConfig): boolean {
 }
 
 /**
+ * The decimals of an average a column shows when its display format has none: an average of whole
+ * numbers is rarely one - `38.69346733668342` pushed its label out of the cell
+ */
+export const AVERAGE_DECIMALS = 2;
+
+/**
  * An aggregate as text: `count` as a whole number, the others as the cells show a value - the field's
- * formatter, with the column's display format (`ColumnConfig.format`: `1 234,50`). '' for null, the
- * average (min, max) of no numbers
+ * formatter, with the column's display format (`ColumnConfig.format`: `1 234,50`). An average is rounded
+ * to {@link AVERAGE_DECIMALS} first when the column's format has no decimals of its own
+ * (`format.number.decimals`) - the formatter shows every decimal a number has. `datasource.aggregate()`
+ * gives the exact one. '' for null, the average (min, max) of no numbers
  */
 function formatAggregate(ctx: Grid, field: string, fn: AggregateFunction, value: number | null): string {
     if (value === null) {
@@ -181,7 +189,13 @@ function formatAggregate(ctx: Grid, field: string, fn: AggregateFunction, value:
     if (fn === 'count') {
         return String(value);
     }
-    return ctx.gridInterface.__getCellFormatter(field).format(value);
+    let shown = value;
+    if (fn === 'avg' && ctx.gridInterface.__getColumnFormat(field)?.number?.decimals === undefined) {
+        const factor = 10 ** AVERAGE_DECIMALS;
+        // || 0: -0.001 is 0, not -0
+        shown = Math.round(value * factor) / factor || 0;
+    }
+    return ctx.gridInterface.__getCellFormatter(field).format(shown);
 }
 
 /**
@@ -195,8 +209,8 @@ function aggregateLabel(ctx: Grid, aggregated: AggregatedField): string {
 
 /**
  * The line of an aggregate: its label at the left and its value at the right of the field's column -
- * the labels line up, and so do the numbers. When the column is too narrow the label gives way first
- * (css). Empty when the value is null.
+ * the labels line up, and so do the numbers. When the column is too narrow the label goes, whole - not
+ * cut to `S..` - then the value ends in an ellipsis (css). Empty when the value is null.
  *
  * For a screen reader the first line of a field is the field's gridcell, named with all its lines
  * (`ariaText`); the field's other lines are hidden from it, as are all of them when `hidden` - the

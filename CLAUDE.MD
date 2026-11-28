@@ -22,5 +22,20 @@
     * the user guide in `user-guide/` - for the people who use a grid, by kind of action (filtering, sorting, grouping, columns, formatting, editing, export, import ...): what they see and click, the names of the buttons and menus as the grid shows them (src/texts.ts), no code
     * each page has a "Try it" box (```` ```tryit <id> ````, samples/demo/tryIt.ts): a live grid and tasks that tick when done - a new feature a user can try gets a task, its check must not tick before the user does it (user-guide-check.js)
     * a new text id: src/texts.ts, its row in guides/12-texts.md, and the Norwegian of the demo (samples/demo/samples/translation.ts)
-    * CHANGELOG.md for what a user of the package sees, DESIGN.md for how and why
+    * CHANGELOG.md (see below), DESIGN.md for how and why
 * `npm run check:docs` checks the guides, the API examples and the user guide's links: it is part of verify
+
+## Changelog - an entry for every change, written in the same pass as the code
+
+* never bump the version in package.json: the owner does that at release time
+* add the entry at the top of CHANGELOG.md, under the `# Changelog` title:
+
+      - **YYYY.MM.DD** (>PACKAGEVERSION):
+        What changed and, when it matters, why - for a user of the package.
+
+* PACKAGEVERSION is the version in package.json now (the entry comes after that release). Read
+  package.json and today's date when you write the entry; reuse the heading on top only when both its
+  date and its version still match, else start a new heading above it. Several changes on one day are
+  lines under one heading
+* a release's notes are these entries since the release before it (scripts/releaseNotes.js): keep the format
+* git commit messages stay one short line: the changelog has the prose, DESIGN.md the how and why

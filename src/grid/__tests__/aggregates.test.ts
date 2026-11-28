@@ -406,6 +406,20 @@ describe('aggregates - the totals row', () => {
         expect(count()).toEqual('Count 3');
     });
 
+    it("expect an average rounded to 2 decimals, or to the decimals of the column's number format", async () => {
+        // 30, 40 and 21: 30.333... - every decimal pushed the label out of the cell
+        const { element, datasource, gridInterface } = await mount({ totalsRow: true });
+        datasource.filter(where('id', 'NOT_EQUAL_TO', 3));
+        expect(textOf(aggregateCell(totalsRow(element), 'avg:age'))).toEqual('Avg Age 30.33');
+        // the exact one from code
+        expect(datasource.aggregate('age', 'avg')).toBeCloseTo(30.3333333, 6);
+
+        gridInterface.updateConfig({
+            columns: { ...config().columns, age: { aggregate: 'avg', format: { number: { decimals: 3 } } } }
+        });
+        expect(textOf(aggregateCell(totalsRow(element), 'avg:age'))).toEqual('Avg Age 30.333');
+    });
+
     it('expect an empty cell for the average of no numbers', async () => {
         const { element, datasource } = await mount({ totalsRow: true });
         datasource.filter(where('country', 'EQUAL', 'nowhere'));

@@ -6,7 +6,17 @@ on a page.
 
 ## Install
 
-The package is not on npmjs.com. It is on GitHub Packages as
+The package is not on npmjs.com. Every release has it as a tgz on its
+[GitHub Release](https://github.com/vegarringdal/simple-html/releases): install it from its address, no
+token and no alias - the imports are `@simple-html/grid`:
+
+```sh
+npm install https://github.com/vegarringdal/simple-html/releases/download/v6.0.0/simple-html-grid-6.0.0.tgz
+```
+
+Or download the tgz into your project and install the file: `npm install ./libs/simple-html-grid-6.0.0.tgz`.
+
+It is also on GitHub Packages as
 [`@vegarringdal/simple-html-grid`](https://github.com/vegarringdal/simple-html/pkgs/npm/simple-html-grid):
 install it under its usual name with an npm alias, so the imports stay `@simple-html/grid`. GitHub
 Packages needs a token that may read packages (a personal access token with `read:packages`), in an

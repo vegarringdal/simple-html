@@ -97,7 +97,8 @@ On the **General** tab:
 - **Label**: the name of the column wherever the grid shows it. Leave it empty for the column's own.
 - **Placeholder**: a grey text shown in an empty cell, as a hint of what to fill in. Or tick **Use the
   column label** to show the label there.
-- **Read only**: the column's cells can not be edited.
+- **Read only**: the column's cells can not be edited. When it is checked and greyed out, the
+  application has locked the column: it is never edited.
 
 ## Colour rules
 

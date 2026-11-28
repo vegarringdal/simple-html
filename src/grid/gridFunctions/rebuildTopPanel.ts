@@ -37,7 +37,6 @@ export function rebuildTopPanel(ctx: Grid) {
         label.appendChild(createElement(DIV, 'simple-html-grid-drop-zone-left-panel'));
 
         const removeGroup = () => {
-            // TODO: look into group logic
             const updateGrouping = ctx.gridInterface
                 .getDatasource()
                 .getGrouping()

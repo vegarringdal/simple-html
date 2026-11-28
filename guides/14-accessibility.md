@@ -13,7 +13,7 @@ column of two fields), scrolled down and to the right: columns 3 and 4 are scrol
 numbers in parentheses are the `aria-colindex`es.
 
 ```text
-grid "Grid"  aria-rowcount=503  aria-colcount=10
+grid "Data grid"  aria-rowcount=503  aria-colcount=10
   row  aria-rowindex=1
     columnheader "row selector" (1), "Company" (2), "Phone" (5), "date" (6) ... "Balance" (10)
   row  aria-rowindex=2
@@ -561,7 +561,7 @@ The texts a screen reader reads are texts like the others, with an id - see
 
 | id | English |
 | --- | --- |
-| `grid.label` | `Grid` - the name of the grid |
+| `grid.label` | `Data grid` - the name of the grid |
 | `grid.rowSelector` | `row selector` - the column header of the row numbers |
 | `grid.filter` | `Filter {label}` - a header filter |
 | `grid.groupToggle` | `{name} ({total})` - the button of a group row |
@@ -570,7 +570,7 @@ The texts a screen reader reads are texts like the others, with an id - see
 The cells and the column headers use the column's label (`columns[field].label`, else the field's
 label, else the field name).
 
-Give each grid a name of its own, a page with two grids called "Grid" is hard to find your way in:
+Give each grid a name of its own, a page with two grids called "Data grid" is hard to find your way in:
 
 ```ts
 import { createGrid, type GridConfig } from '@simple-html/grid';

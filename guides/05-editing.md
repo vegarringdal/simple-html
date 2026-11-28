@@ -34,6 +34,18 @@ and editable when it returns `false`. When it returns nothing (or there is none)
 for `isReadonly`. Readonly cells of an editable grid are shown with stripes. What the user may do at
 all - add rows, change values, delete rows - is `edit`, see [Edit permissions](#edit-permissions-add-change-delete).
 
+A column's `readonly` is a default: the user can turn it off in the grid config dialog (*Read only*).
+A field that must never be edited - an id, a value the server sets - is locked in the datasource's
+fields, `readonly: true` (`FieldConfig.readonly`). No grid on the datasource lets the user edit it,
+the `isReadonly` hook is not asked for it, the import leaves it out, and *Read only* is checked and
+greyed out in the dialog. Code still sets its values.
+
+```ts
+import { Datasource } from '@simple-html/grid';
+
+const datasource = new Datasource({ key: 'id', fields: { id: { type: 'number', readonly: true }, name: 'text' } });
+```
+
 ```sample editing
 ```
 
@@ -62,7 +74,7 @@ gridInterface.updateConfig({ edit: { add: true, change: false, delete: user.isAd
 
 - **A permission is yours, not the user's**: it is not part of the state (`getState()` has none), and
   no menu or dialog changes it. A column's `readonly` is different: it is a default the user can turn
-  off in the grid config dialog (*Read only*).
+  off in the grid config dialog (*Read only*) - a field's `readonly` (`FieldConfig.readonly`) is not.
 - **`updateConfig({ edit })` replaces all three**: one left out is allowed again. The cells follow at
   once; what is open - a menu, the date picker, a lookup's list, the editor of a multiline cell - is
   closed, what was typed in the editor is not saved.

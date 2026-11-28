@@ -41,7 +41,17 @@ The highlights. Every feature, each linked to its guide and a live sample:
 
 ## Install
 
-The package is not on npmjs.com. It is published to **GitHub Packages** as
+The package is not on npmjs.com. The simplest: every release has the package as a tgz on its
+[GitHub Release](https://github.com/vegarringdal/simple-html/releases). Install it from its address -
+no token, no alias, the imports are `@simple-html/grid`:
+
+```sh
+npm install https://github.com/vegarringdal/simple-html/releases/download/v6.0.0/simple-html-grid-6.0.0.tgz
+```
+
+Or download the tgz, put it in your project and install the file (`npm install ./libs/simple-html-grid-6.0.0.tgz`).
+
+It is also published to **GitHub Packages** as
 [`@vegarringdal/simple-html-grid`](https://github.com/vegarringdal/simple-html/pkgs/npm/simple-html-grid)
 (the scope of the repository's owner): install it under its usual name
 with an npm alias, so the imports stay `@simple-html/grid`. GitHub Packages needs a token that may read
@@ -165,18 +175,41 @@ of `fix:`, `feat:`, `fix!:` / `feat!:` (something breaks), `chore:`, `docs:`, `t
 `ci:`, `build:`, `perf:` or `style:`. A scope is fine (`feat(grid): a find bar`). The tests run on it as
 on every push (`checks.yml`).
 
-The version is set by hand in package.json (and package-lock.json, `npm version 6.1.0
---no-git-tag-version`), in a pull request like any other change. A release is then two workflows, both
-run by hand from the Actions tab on master; neither pushes a commit:
+The version is set by hand in package.json (and package-lock.json), in a release pull request - see
+[Making a release](#making-a-release) below. A release is then one workflow, `publish` (`publish.yml`), run by
+hand from the Actions tab on master. It pushes no commit:
 
-- `tag` (`tag.yml`): tags the commit `v<version>`, the version of package.json. Stops when the tag is
-  there already
-- `publish` (`publish.yml`): the checks, then the package to GitHub Packages with the npm tag `latest`.
-  Stops when that version is published already
+- the checks
+- the GitHub Release `v<version>` with the package as a tgz (`npm pack`, the name `@simple-html/grid`)
+  and the CHANGELOG.md entries since the release before as its notes (`scripts/releaseNotes.js`). The release makes
+  the tag `v<version>` on the commit, and stops when the tag is on another commit
+- the package to GitHub Packages with the npm tag `latest`. Stops when that version is published already
 
-A pull request to master runs both as a dry run (`release dry run`, `release-dry-run.yml`): their own
-steps, nothing tagged or published, so a release that would fail fails in the pull request. A version
-tagged or published already is a warning there.
+A pull request to master runs it as a dry run (`release dry run`, `release-dry-run.yml`): its own steps,
+nothing tagged, released or published, so a release that would fail fails in the pull request. The run's
+summary lists the files of the tgz. A version published already is a warning there.
+
+#### Making a release
+
+The version changes only in a release pull request: the `version` check of `pr.yml`
+(`scripts/prVersion.js`) fails a pull request that changes it unless it comes from a branch of this
+repository (not a fork) named `release/<version>`, with the title `chore: <version>`, a final version
+higher than master's, and package-lock.json at the same version. A `release/...` branch that does not
+change the version fails too. So a version is not bumped by accident.
+
+In a clone of `vegarringdal/simple-html`:
+
+```sh
+git switch master && git pull
+git switch -c release/6.0.1
+npm version 6.0.1 --no-git-tag-version   # package.json and package-lock.json, no git tag
+git commit -am "chore: 6.0.1" && git push -u origin release/6.0.1
+```
+
+Open a pull request from `release/6.0.1` to master with the title `chore: 6.0.1`. When its checks and
+`release dry run` are green, merge it, then run **publish** (Actions -> publish -> Run workflow, on
+master). It makes the release `v6.0.1` with the tgz and its tag, and publishes to GitHub Packages. The
+release notes are the changelog's entries since the release before.
 
 ### The docs site
 

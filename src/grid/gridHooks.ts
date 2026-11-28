@@ -57,7 +57,8 @@ export interface GridHooks<T = unknown> {
      *
      * Return `true` (readonly) or `false` (editable). `null` or `undefined` leaves it to the config:
      * the column's `readonly` option, which is passed in as `readonlyByConfig`. The grid's own
-     * `readonly: true` makes every cell readonly, whatever this returns - and so do the edit
+     * `readonly: true` makes every cell readonly, whatever this returns - and so do a locked field
+     * (`FieldConfig.readonly`, the hook is not asked for it), a calculated column and the edit
      * permissions on a row they lock (`GridConfig.edit`: `change: false` and a row that is not new).
      *
      * A row it returns `true` for in every column of the layout is locked: the row menu's delete

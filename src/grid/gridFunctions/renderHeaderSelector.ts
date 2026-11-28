@@ -38,8 +38,8 @@ export function renderHeaderSelector(
     setAria(cell, 'aria-selected', String(selected));
 
     const className = selected
-        ? 'simple-html-absolute-fill simple-html-label simple-html-label-odd'
-        : 'simple-html-absolute-fill simple-html-label';
+        ? 'simple-html-absolute-fill simple-html-label-text simple-html-label-odd'
+        : 'simple-html-absolute-fill simple-html-label-text';
 
     render(
         html`<div class=${className}>

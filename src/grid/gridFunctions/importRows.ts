@@ -199,12 +199,14 @@ export function isBlankCell(cell: ImportCell | undefined): boolean {
 
 /**
  * The fields the import can write, in the order a picker lists them: the fields of the layout, then the
- * other columns of the config (hidden, or not in the layout) - not a readonly column (ImportOptions.fields)
+ * other columns of the config (hidden, or not in the layout) - not a readonly column, nor a field the app
+ * locked (`FieldConfig.readonly`) (ImportOptions.fields)
  */
 export function importFields(gridInterface: GridInterface<any>): string[] {
     const columns = gridInterface.__getGridConfig().columns;
+    const datasource = gridInterface.getDatasource();
     const fields = [...new Set([...getLayoutFields(gridInterface), ...Object.keys(columns)])];
-    return fields.filter((field) => !readonlyOf(columns[field]));
+    return fields.filter((field) => !readonlyOf(columns[field]) && !datasource.__isFieldReadonly(field));
 }
 
 /**
