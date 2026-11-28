@@ -181,7 +181,7 @@ hand from the Actions tab on master. It pushes no commit:
 
 - the checks
 - the GitHub Release `v<version>` with the package as a tgz (`npm pack`, the name `@simple-html/grid`)
-  and the version's section of CHANGELOG.md as its notes (`scripts/releaseNotes.js`). The release makes
+  and the CHANGELOG.md entries since the release before as its notes (`scripts/releaseNotes.js`). The release makes
   the tag `v<version>` on the commit, and stops when the tag is on another commit
 - the package to GitHub Packages with the npm tag `latest`. Stops when that version is published already
 

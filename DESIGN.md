@@ -720,7 +720,11 @@ no imports, shared so that the grid and the SQL behave the same. `src/sql.ts` de
 - `publish.yml` also makes the GitHub Release `v<version>` with the package as a tgz, for apps that use no
   registry: installed from the release's address it needs no token and no alias (a public repository).
   It is packed before `githubPackage.js` renames the package, so it is `@simple-html/grid`. Its notes are
-  the version's section of CHANGELOG.md (`scripts/releaseNotes.js`). The release comes before
+  the CHANGELOG.md entries since the release before (`scripts/releaseNotes.js`): every change gets a dated
+  entry at the top, `- **2026.12.01** (>6.0.0):` - after the version package.json had, which the owner
+  bumps at release time, maybe more than once between releases. So a release takes the entries from the
+  version of the release before (the highest tag `v<x.y.z>` below its own) up to its own; the commits stay
+  one line. 6.0.0 has a `## 6.0.0` section instead, which counts too. The release comes before
   `npm publish`, and a run again replaces its tgz (`gh release upload --clobber`): a run that failed in the
   publish can be run again. Creating the release makes the tag on the commit; a tag on
   another commit stops it, as the tgz would not be the tagged code. `publish.yml` needs `contents: write`

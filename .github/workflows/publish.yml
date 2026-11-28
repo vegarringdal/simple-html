@@ -7,7 +7,7 @@
 # not use a registry: the tgz keeps the package's own name, @simple-html/grid, so it installs from the
 # release's address with no token and no alias:
 #   npm install https://github.com/<owner>/simple-html/releases/download/v<version>/simple-html-grid-<version>.tgz
-# The notes are the version's section of CHANGELOG.md (scripts/releaseNotes.js). The release makes the
+# The notes are the CHANGELOG.md entries since the release before (scripts/releaseNotes.js). The release makes the
 # git tag v<version> on this commit when it is not there - there is no workflow of its own for it. A tag on
 # another commit stops the release. The release comes before `npm publish`, and a run again after a failed
 # publish replaces its tgz: a failed run can be run again.
@@ -142,7 +142,9 @@ jobs:
                   VERSION: ${{ steps.package.outputs.version }}
                   FILE: ${{ steps.tgz.outputs.file }}
               run: |
-                  node scripts/releaseNotes.js "$VERSION" "$FILE" build/notes.md
+                  # the tags: the release before is the highest v<x.y.z> below the version (--refs: no ^{} lines)
+                  tags=$(git ls-remote --tags --refs origin 'v*' | cut -f 2 | sed 's#^refs/tags/##')
+                  node scripts/releaseNotes.js "$VERSION" "$FILE" build/notes.md $tags
                   if [ "$DRY_RUN" = "true" ]; then
                       echo "Dry run: the release v$VERSION would have $FILE:" >> "$GITHUB_STEP_SUMMARY"
                       tar -tzf "build/$FILE" | sed 's/^/    /' | head -n 40 >> "$GITHUB_STEP_SUMMARY"
