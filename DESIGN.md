@@ -711,6 +711,11 @@ no imports, shared so that the grid and the SQL behave the same. `src/sql.ts` de
   `npm run hooks`) runs it. The browser checks are left out of it, because they take minutes.
 - `pr.yml` checks that a pull request title is a conventional commit (`scripts/prTitle.js`); `!` is allowed on
   `fix` and `feat`. The version is not made from it: it is set by hand in `package.json`.
+- `pr.yml` also guards the version (`scripts/prVersion.js`): it changes only in a release pull request - a
+  branch of the repository (not a fork) named `release/<version>`, the title `chore: <version>`, a final
+  version above master's, package-lock.json the same - and a `release/...` branch must change it. A bump by
+  accident in a feature branch, or from a fork, fails. Master's version is read from the base commit, which
+  it fetches: the checkout is the pull request merged.
 - `release-dry-run.yml` runs `publish.yml` with `dry_run` on a pull request to master, so a release that
   would fail fails there. "Published already" and a tag on another commit are only warnings there.
 - There is no workflow for the tag alone: the release makes it (a `tag.yml` was removed, two release

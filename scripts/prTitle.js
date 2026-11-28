@@ -1,7 +1,7 @@
 /**
  * The title of a pull request to master (pr.yml): a conventional commit, so the history of master says
- * what each change is. The version is not made from it: package.json has it, set by hand, and the
- * tag and publish workflows read it from there.
+ * what each change is. The version is not made from it: package.json has it, set by hand in a release
+ * pull request (scripts/prVersion.js), and the publish workflow reads it from there.
  *
  *   fix: ...   feat: ...                   a fix, a feature
  *   fix!: ...  feat!: ...                  something breaks

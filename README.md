@@ -175,8 +175,8 @@ of `fix:`, `feat:`, `fix!:` / `feat!:` (something breaks), `chore:`, `docs:`, `t
 `ci:`, `build:`, `perf:` or `style:`. A scope is fine (`feat(grid): a find bar`). The tests run on it as
 on every push (`checks.yml`).
 
-The version is set by hand in package.json (and package-lock.json, `npm version 6.1.0
---no-git-tag-version`), in a pull request like any other change. A release is then one workflow, `publish` (`publish.yml`), run by
+The version is set by hand in package.json (and package-lock.json), in a release pull request - see
+[Making a release](#making-a-release) below. A release is then one workflow, `publish` (`publish.yml`), run by
 hand from the Actions tab on master. It pushes no commit:
 
 - the checks
@@ -188,6 +188,28 @@ hand from the Actions tab on master. It pushes no commit:
 A pull request to master runs it as a dry run (`release dry run`, `release-dry-run.yml`): its own steps,
 nothing tagged, released or published, so a release that would fail fails in the pull request. The run's
 summary lists the files of the tgz. A version published already is a warning there.
+
+#### Making a release
+
+The version changes only in a release pull request: the `version` check of `pr.yml`
+(`scripts/prVersion.js`) fails a pull request that changes it unless it comes from a branch of this
+repository (not a fork) named `release/<version>`, with the title `chore: <version>`, a final version
+higher than master's, and package-lock.json at the same version. A `release/...` branch that does not
+change the version fails too. So a version is not bumped by accident.
+
+In a clone of `vegarringdal/simple-html`:
+
+```sh
+git switch master && git pull
+git switch -c release/6.0.1
+npm version 6.0.1 --no-git-tag-version   # package.json and package-lock.json, no git tag
+git commit -am "chore: 6.0.1" && git push -u origin release/6.0.1
+```
+
+Open a pull request from `release/6.0.1` to master with the title `chore: 6.0.1`. When its checks and
+`release dry run` are green, merge it, then run **publish** (Actions -> publish -> Run workflow, on
+master). It makes the release `v6.0.1` with the tgz and its tag, and publishes to GitHub Packages. The
+release notes are the changelog's entries since the release before.
 
 ### The docs site
 
